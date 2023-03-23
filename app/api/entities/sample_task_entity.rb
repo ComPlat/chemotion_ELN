@@ -4,17 +4,17 @@ module Entities
   class SampleTaskEntity < ApplicationEntity
     root :sample_tasks # root key when rendering a list of sample tasks
 
-    expose :id
-    expose :measurement_value
-    expose :measurement_unit
     expose :description
-    expose :private_note
-    expose :additional_note
-    expose :sample_id
     expose :display_name
-    expose :short_label
+    expose :id
+    expose :required_scan_results
+    expose :result_unit
+    expose :result_value
+    expose :sample_id
     expose :sample_svg_file
-    expose :image, unless: :displayed_in_list
+    expose :short_label
+    expose :scan_results, using: 'Entities::ScanResultEntity'
+    expose :done
 
     expose_timestamps
 
@@ -26,10 +26,12 @@ module Entities
       object.sample&.showed_name
     end
 
-    def image
-      return nil unless object.attachment
+    def scan_results
+      object.scan_results.order(position: :asc)
+    end
 
-      Base64.encode64(object.attachment&.read_file)
+    def done
+      object.done?
     end
   end
 end

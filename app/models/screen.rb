@@ -2,16 +2,17 @@
 #
 # Table name: screens
 #
-#  id           :integer          not null, primary key
-#  description  :string
-#  name         :string
-#  result       :string
-#  collaborator :string
-#  conditions   :string
-#  requirements :string
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  deleted_at   :datetime
+#  id                   :integer          not null, primary key
+#  description          :string
+#  name                 :string
+#  result               :string
+#  collaborator         :string
+#  conditions           :string
+#  requirements         :string
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  deleted_at           :datetime
+#  component_graph_data :jsonb
 #
 # Indexes
 #

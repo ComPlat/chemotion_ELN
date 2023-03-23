@@ -2,16 +2,16 @@
 #
 # Table name: profiles
 #
-#  id                 :integer          not null, primary key
-#  show_external_name :boolean          default(FALSE)
+#  id                      :integer          not null, primary key
+#  show_external_name      :boolean          default(FALSE)
+#  user_id                 :integer          not null
+#  deleted_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  data                    :jsonb            not null
+#  curation                :integer          default(2)
 #  show_sample_name        :boolean          default(FALSE)
 #  show_sample_short_label :boolean          default(FALSE)
-#  user_id            :integer          not null
-#  deleted_at         :datetime
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  data               :jsonb            not null
-#  curation           :integer          default(2)
 #
 # Indexes
 #

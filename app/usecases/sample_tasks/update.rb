@@ -5,49 +5,29 @@ module Usecases
     class Update
       attr_accessor :params, :sample_task, :user
 
-      def initialize(params:, sample_task:, user:)
+      def initialize(params:, user:)
         @params = params
-        @sample_task = sample_task
         @user = user
+        @sample_task = SampleTask.for(user).open.find(params[:id])
       end
 
-      def update_sample_task
-        if sample_task.sample
-          update_with_scan_data
-        else
-          sample_task.update!(sample_id: params[:sample_id])
-        end
-      end
-
-      def transfer_measurement_to_sample # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-        sample_task.sample.update!(
-          real_amount_value: sample_task.measurement_value,
-          real_amount_unit: sample_task.measurement_unit,
-          description: sample_task.description,
-        )
-        return unless sample_task.private_note
-
-        PrivateNote.create!(
-          content: sample_task.private_note,
-          noteable: sample_task.sample,
-          created_by: user.id,
+      def perform!
+        sample_id = nil
+        # check permission to update sample
+        sample_id = user_accessible_samples.find(params[:sample_id]).id if params[:sample_id]
+        sample_task.update!(
+          description: params[:description],
+          sample_id: sample_id,
         )
       end
 
       private
 
-      def update_with_scan_data # rubocop:disable Metrics/AbcSize
-        file = params.delete(:file)
-        params[:attachment_attributes] = {
-          filename: file[:filename],
-          content_type: file[:type],
-          file_path: file[:tempfile].path,
-          created_by: user.id,
-        }
-
-        sample_task.update!(params)
-
-        sample_task.attachment.save!
+      # This encapsulates the logic which samples a given user can access.
+      # As in the near future the logic for shared/synched collections will change, it is feasible to extract
+      # this into its own method, even if currently there is only dummy logic used
+      def user_accessible_samples
+        user.samples
       end
     end
   end

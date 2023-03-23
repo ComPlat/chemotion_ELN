@@ -14,32 +14,41 @@ describe Chemotion::SampleTaskAPI do
       ],
     )
   end
-  let(:open_sample_task) { create(:sample_task, :open, creator: user, sample: sample) }
-  let(:open_free_scan) { create(:sample_task, :open_free_scan, creator: user) }
-  let(:done) { create(:sample_task, :done, creator: other_user, sample: sample) }
+  let(:new_sample_task) { create(:sample_task, :single_scan, creator: user, sample: sample) }
+  let(:only_sample_missing) { create(:sample_task, :single_scan, :with_scan_results, creator: user) }
+  let(:only_scan_result_missing) { create(:sample_task_with_incomplete_scan_results, creator: user, sample: sample) }
+  let(:finished_scan) { create(:sample_task_finished, creator: user, sample: sample) }
 
   describe 'GET /api/v1/sample_tasks' do
     let(:sample_task_ids) { parsed_json_response['sample_tasks'].pluck('id') }
 
     before do
-      open_sample_task
-      open_free_scan
-      done
+      new_sample_task
+      only_sample_missing
+      only_scan_result_missing
+      finished_scan
     end
 
     context 'with status = open' do
       it 'fetches all open SampleTasks for the current user' do
         get '/api/v1/sample_tasks', params: { status: :open }
 
-        expect(sample_task_ids).to eq [open_sample_task.id]
+        expect(sample_task_ids).to contain_exactly(
+          new_sample_task.id,
+          only_sample_missing.id,
+          only_scan_result_missing.id,
+        )
       end
     end
 
-    context 'with status = open_free_scan' do
-      it 'fetches all open SampleTasks that are free scans from the Chemobile app' do
-        get '/api/v1/sample_tasks', params: { status: :open_free_scan }
+    context 'with status = with_missing_scan_results' do
+      it 'fetches all open SampleTasks that require more scans from the Chemobile app' do
+        get '/api/v1/sample_tasks', params: { status: :with_missing_scan_results }
 
-        expect(sample_task_ids).to eq [open_free_scan.id]
+        expect(sample_task_ids).to contain_exactly(
+          new_sample_task.id,
+          only_scan_result_missing.id,
+        )
       end
     end
 
@@ -49,7 +58,7 @@ describe Chemotion::SampleTaskAPI do
       it 'fetches all done SampleTasks' do
         get '/api/v1/sample_tasks', params: { status: :done }
 
-        expect(sample_task_ids).to eq [done.id]
+        expect(sample_task_ids).to eq [finished_scan.id]
       end
     end
 
@@ -69,125 +78,39 @@ describe Chemotion::SampleTaskAPI do
   end
 
   describe 'POST /api/v1/sample_tasks' do
-    let(:open_sample_task_params) do
+    let(:sample_task_params) do
       {
-        create_open_sample_task: {
-          sample_id: sample.id,
-        },
+        description: 'whatever',
+        required_scan_results: 2,
+        sample_id: sample.id,
       }
     end
 
-    let(:open_free_scan_params) do
+    let(:expected_result) do
       {
-        create_open_free_scan: {
-          measurement_value: 123.45,
-          measurement_unit: 'mg',
-          description: 'description',
-          additional_note: 'additional note',
-          private_note: 'private note',
-          file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
-        },
-      }
+        description: 'whatever',
+        display_name: sample.showed_name,
+        done: false,
+        required_scan_results: 2,
+        result_unit: 'g',
+        result_value: nil,
+        sample_id: sample.id,
+        sample_svg_file: sample.sample_svg_file,
+        scan_results: [],
+        short_label: sample.short_label,
+      }.stringify_keys
     end
 
-    context 'when given a sample_id' do
-      let(:expected_result) do
-        {
-          sample_id: sample.id,
-          display_name: sample.showed_name,
-          short_label: sample.short_label,
-          sample_svg_file: sample.sample_svg_file,
-          measurement_value: nil,
-          measurement_unit: 'g', # this is the DB-default
-          description: nil,
-          additional_note: nil,
-          private_note: nil,
-          image: nil,
-        }.stringify_keys
-      end
+    it 'creates a sample task' do
+      post '/api/v1/sample_tasks', params: sample_task_params
 
-      it 'creates an open sample task' do
-        post '/api/v1/sample_tasks', params: open_sample_task_params
-
-        expect(parsed_json_response).to include(expected_result)
-      end
-    end
-
-    context 'when given data for a free scan' do
-      let(:expected_result) do
-        {
-          sample_id: nil,
-          display_name: nil,
-          short_label: nil,
-          sample_svg_file: nil,
-          measurement_value: 123.45,
-          measurement_unit: 'mg',
-          description: 'description',
-          additional_note: 'additional note',
-          private_note: 'private note',
-        }.stringify_keys
-      end
-
-      let(:expected_attachment) { Attachment.find_by(attachable_id: parsed_json_response['id']) }
-
-      it 'creates an open free scan' do
-        post '/api/v1/sample_tasks', params: open_free_scan_params
-
-        expect(parsed_json_response).to include(expected_result)
-      end
-
-      it 'returns the open free scan with the image attached' do
-        post '/api/v1/sample_tasks', params: open_free_scan_params
-
-        expect(parsed_json_response['image']).not_to be_nil
-      end
-
-      it 'returns correct attachment' do # rubocop:disable RSpec/MultipleExpectations
-        post '/api/v1/sample_tasks', params: open_free_scan_params
-        expect(expected_attachment.filename).to eq('upload.jpg')
-        expect(expected_attachment.attachment_data).not_to be_nil
-      end
-    end
-
-    context 'when given params build an invalid sample task' do
-      let(:open_free_scan_params) do
-        {
-          create_open_free_scan: {
-            measurement_value: nil,
-            measurement_unit: 'mg',
-            description: 'description',
-            additional_note: 'additional note',
-            private_note: 'private note',
-            file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
-          },
-        }
-      end
-
-      it 'returns an 400 error' do
-        post '/api/v1/sample_tasks', params: open_free_scan_params
-
-        expect(response).to have_http_status(:bad_request)
-      end
-    end
-
-    context 'when both parameter groups are given' do
-      let(:params) do
-        {}.merge(open_sample_task_params).merge(open_free_scan_params)
-      end
-
-      it 'returns an 422 error' do
-        post '/api/v1/sample_tasks', params: params
-
-        expect(response).to have_http_status(:unprocessable_entity)
-      end
+      expect(parsed_json_response).to include(expected_result)
     end
 
     context 'when the sample can not be found' do
       let(:params) do
         {
-          create_open_sample_task: {
-            sample_id: 0,
-          },
+          sample_id: 0,
         }
       end
 
@@ -197,99 +120,21 @@ describe Chemotion::SampleTaskAPI do
         expect(parsed_json_response).to eq({ 'error' => 'Sample not found' })
       end
     end
-
-    context 'when required params are missing' do
-      let(:params_with_missing_file) do
-        {
-          create_open_free_scan: {
-            measurement_value: 123.45,
-            measurement_unit: 'mg',
-            description: 'description',
-            additional_note: 'additional note',
-            private_note: 'private note',
-          },
-        }
-      end
-      let(:expected_result) do
-        { 'error' => 'create_open_free_scan[file] is missing' }
-      end
-
-      it 'responds with an error' do
-        post '/api/v1/sample_tasks', params: params_with_missing_file
-
-        expect(parsed_json_response).to eq(expected_result)
-      end
-    end
   end
 
   describe 'PUT /api/v1/sample_tasks/:id' do
     context 'when updating an open sample task' do
       let(:params) do
         {
-          update_open_sample_task: {
-            measurement_value: 123.45,
-            measurement_unit: 'mg',
-            description: 'description',
-            additional_note: 'additional note',
-            private_note: 'private note',
-            file: fixture_file_upload(Rails.root.join('spec/fixtures/upload.jpg')),
-          },
+          sample_id: sample.id,
+          description: 'whatever',
         }
       end
 
       it 'returns the updated SampleTask' do
-        put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
+        put "/api/v1/sample_tasks/#{new_sample_task.id}", params: params
 
-        expect(parsed_json_response).to include(params[:update_open_sample_task].except(:file).stringify_keys)
-      end
-
-      it 'updates the referenced sample with the measurement data' do
-        put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
-        updated_sample_task = SampleTask.find(open_sample_task.id)
-
-        expect(updated_sample_task).to have_attributes(
-          'measurement_value' => 123.45,
-          'measurement_unit' => 'mg',
-          'description' => 'description',
-          'additional_note' => 'additional note',
-          'private_note' => 'private note',
-        )
-      end
-
-      it 'creates an attachment for the referenced sample_task' do
-        put "/api/v1/sample_tasks/#{open_sample_task.id}", params: params
-        updated_sample_task = SampleTask.find(open_sample_task.id)
-
-        expect(updated_sample_task.attachment).not_to be_nil
-      end
-    end
-
-    context 'when updating an open free scan with a sample id' do
-      let(:params) do
-        {
-          update_open_free_scan: {
-            sample_id: sample.id,
-          },
-        }
-      end
-
-      it 'returns the updated SampleTask' do
-        put "/api/v1/sample_tasks/#{open_free_scan.id}", params: params
-
-        expected_attributes = { sample_id: sample.id, measurement_value: 123.45 }.stringify_keys
-        expect(parsed_json_response).to include(expected_attributes)
-      end
-
-      it 'updates the referenced sample with the measurement data' do
-        put "/api/v1/sample_tasks/#{open_free_scan.id}", params: params
-
-        sample.reload
-
-        expect(sample).to have_attributes(
-          'real_amount_value' => open_free_scan.measurement_value,
-          'real_amount_unit' => open_free_scan.measurement_unit,
-          'description' => open_free_scan.description,
-        )
+        expect(parsed_json_response).to include(params.stringify_keys)
       end
     end
   end

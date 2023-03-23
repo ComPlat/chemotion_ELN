@@ -4,16 +4,15 @@
 #
 # Table name: sample_tasks
 #
-#  id                :bigint           not null, primary key
-#  measurement_value :float
-#  measurement_unit  :string           default("g"), not null
-#  description       :string
-#  private_note      :string
-#  additional_note   :string
-#  creator_id        :bigint           not null
-#  sample_id         :bigint
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
+#  id                    :bigint           not null, primary key
+#  result_value          :float
+#  result_unit           :string           default("g"), not null
+#  creator_id            :bigint           not null
+#  sample_id             :bigint
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  description           :string
+#  required_scan_results :integer          default(1), not null
 #
 # Indexes
 #
@@ -28,32 +27,32 @@
 class SampleTask < ApplicationRecord
   belongs_to :creator, class_name: 'Person'
   belongs_to :sample, optional: true
-  has_one :attachment, as: :attachable, dependent: :destroy
+  has_many :scan_results, dependent: :destroy
 
   scope :for, ->(user) { where(creator: user) }
-  scope :open, -> { with_sample.without_attachment.without_scan_data }
-  scope :open_free_scan, -> { without_sample.with_attachment.with_scan_data }
-  scope :done, -> { with_sample.with_attachment.with_scan_data }
+  scope :open, -> { without_result_data }
+  scope :done, -> { with_sample.with_result_data }
 
   scope :with_sample, -> { where.not(sample_id: nil) }
   scope :without_sample, -> { where(sample_id: nil) }
-  scope :with_attachment, -> { joins(:attachment) }
-  scope :without_attachment, -> { left_joins(:attachment).where(attachments: { id: nil }) }
-  scope :with_scan_data, -> { where.not(measurement_value: nil) }
-  scope :without_scan_data, -> { where(measurement_value: nil) }
+  scope :with_result_data, -> { where.not(result_value: nil) }
+  scope :without_result_data, -> { where(result_value: nil) }
+  scope(
+    :with_missing_scan_results,
+    lambda do
+      left_joins(:scan_results)
+      .select('sample_tasks.*, count(scan_results.id)')
+      .group(:id)
+      .having('count(scan_results.id) < required_scan_results')
+    end,
+  )
 
-  validate :sample_or_scan_data_required, on: :create
+  validates :required_scan_results, inclusion: { in: [1, 2] }, allow_nil: false
 
-  accepts_nested_attributes_for :attachment, reject_if: :all_blank
-
-  private
-
-  def sample_or_scan_data_required
-    create_as_planned_sample_task = sample.present?
-    create_as_free_scan = sample.nil? && measurement_value.present? && attachment.present?
-
-    return if create_as_planned_sample_task || create_as_free_scan
-
-    errors.add(:base, :sample_or_scan_data_required)
+  def done?
+    sample_id.present? &&
+      result_value.present? &&
+      result_unit.present? &&
+      scan_results.count == required_scan_results
   end
 end

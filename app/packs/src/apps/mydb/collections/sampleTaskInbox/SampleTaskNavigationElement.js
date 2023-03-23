@@ -8,9 +8,6 @@ class SampleTaskNavigationElement extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      loading: false // unused until I figure out how to chain two requests and only do something if they both finish
-    };
   }
 
   componentDidMount() {
@@ -18,8 +15,7 @@ class SampleTaskNavigationElement extends React.Component {
   }
 
   loadSampleTasks() {
-    this.context.sampleTasks.loadOpenSampleTasks();
-    this.context.sampleTasks.loadOpenFreeScans()
+    this.context.sampleTasks.load();
   }
 
   render() {
@@ -34,7 +30,7 @@ class SampleTaskNavigationElement extends React.Component {
           onClick={() => this.context.sampleTasks.showSampleTaskInbox()}
           style={{ marginLeft: '10px', marginRight: '2px' }}
         >
-          SampleTasks ({this.context.sampleTasks.openSampleTaskCount} / {this.context.sampleTasks.openFreeScanCount})
+          {this.context.sampleTasks.openSampleTaskCount} open SampleTasks
         </span>
         <Glyphicon bsSize="small" glyph="refresh" style={{ marginLeft: '10px' }} onClick={() => this.loadSampleTasks()} />
       </div>
