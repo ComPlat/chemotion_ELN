@@ -12,7 +12,7 @@ export default class SearchFilter extends React.Component {
       filters: [
         {
           link: '',
-          match: 'EXACT',
+          match: '=', // to set default search type for adv search, allows users to search better!
           field: {
             table: 'samples',
             column: 'name',
