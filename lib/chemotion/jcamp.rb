@@ -109,6 +109,7 @@ module Chemotion
           wave_length: params[:wave_length],
           cyclic_volta: params[:cyclicvolta],
           jcamp_idx: params[:curve_idx],
+          simulatenmr: params[:simulatenmr],
         }
       end
 
@@ -327,7 +328,7 @@ module Chemotion
           multipart: true,
           file: file,
           molfile: molfile.size > 10 ? molfile : false,
-          simulatenrm: true,
+          simulatenmr: true,
         }
       end
 

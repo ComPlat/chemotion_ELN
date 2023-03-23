@@ -47,6 +47,7 @@ class AttachmentUploader < Shrine
     file_extension = '.svg' if file_extension == '.svg+xml'
 
     file_extension = '.jpg' if file_extension == '.jpeg'
+    file_extension = '.svg' if file_extension == '.svg+xml'
     file_extension = AttachmentUploader.get_file_extension(original) if file_extension.nil?
 
     file_basename = File.basename(file.metadata['filename'], '.*')

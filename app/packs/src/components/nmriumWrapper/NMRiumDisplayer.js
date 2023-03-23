@@ -322,6 +322,14 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     const firstSpectrum = displayingSpectra[0];
+    const { info } = firstSpectrum;
+    if (info) {
+      const { dimension } = info;
+      if (dimension === 2) {
+        return { peaksBody: '', layout: '' };
+      }
+    }
+
     const firstSpectrumPeaks = firstSpectrum.peaks;
     const { values } = firstSpectrumPeaks;
     const peaks = values;
