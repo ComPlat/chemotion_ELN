@@ -75,12 +75,18 @@ export default class ElementDetailSortTab extends Component {
     UserActions.fetchCurrentUser();
   }
 
+  // to force popups to stay anchored to button
+  // as shouldUpdatePosition prop for Overlay does not work for reactions
+  resize = () => this.forceUpdate()
+
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
+    window.addEventListener('resize', this.resize);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
+    window.removeEventListener('resize', this.resize);
   }
 
   onChangeUser(state) {
@@ -129,14 +135,16 @@ export default class ElementDetailSortTab extends Component {
         ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
       />
     );
+    const { visible, hidden } = this.state;
+    const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
         className="collection-overlay"
         id="popover-layout"
-        style={{ maxWidth: 'none', width: 'auto' }}
+        style={{ maxWidth: 'none', width: `${wd}px` }}
       >
         <div>
-          <h3 className="popover-title">Tabs Layout</h3>
+          <h3 className="popover-title">Tab Layout</h3>
           <div className="popover-content">
             {tabLayoutContainerElement}
           </div>
@@ -144,7 +152,7 @@ export default class ElementDetailSortTab extends Component {
       </Popover>
     );
     return (
-      <div>
+      <div style={{position: 'relative'}}>
         <Button
           bsStyle="info"
           bsSize="xsmall"
@@ -161,6 +169,7 @@ export default class ElementDetailSortTab extends Component {
           rootClose
           show={this.state.showTabLayoutContainer}
           target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
+          shouldUpdatePosition // works alongside resize event listener
         >
           {popoverSettings}
         </Overlay>

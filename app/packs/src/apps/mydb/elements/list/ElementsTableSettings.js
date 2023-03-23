@@ -36,14 +36,19 @@ export default class ElementsTableSettings extends React.Component {
     this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
   }
 
+  // to force popups to stay anchored to button
+  resize = () => this.forceUpdate()
+
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
     UIStore.listen(this.onChangeUI);
+    window.addEventListener('resize', this.resize);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
+    window.removeEventListener('resize', this.resize);
   }
 
   onChangeUI(state) {
@@ -212,7 +217,7 @@ export default class ElementsTableSettings extends React.Component {
         style={{ maxWidth: 'none', width: `${wd}px` }}
       >
         <div>
-          <h3 className="popover-title">Table Layout</h3>
+          <h3 className="popover-title">Tab Layout</h3>
           <div className="popover-content">
             {tabLayoutContainerElement}
           </div>
@@ -222,7 +227,7 @@ export default class ElementsTableSettings extends React.Component {
     )
 
     return (
-      <div>
+      <div style={{position: 'relative'}}>
         <Button
           bsSize="xsmall"
           style={{ margin: '10px 10px 10px 0', float: 'right' }}
@@ -238,6 +243,7 @@ export default class ElementsTableSettings extends React.Component {
           rootClose
           show={this.state.showTabLayoutContainer}
           target={() => ReactDOM.findDOMNode(this.tabLayoutButton)}
+          shouldUpdatePosition // works alongside resize event listener
         >
           {popoverSettings}
         </Overlay>
