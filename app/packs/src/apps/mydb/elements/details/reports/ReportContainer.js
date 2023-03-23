@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Panel, Tabs, Tab } from 'react-bootstrap';
+import { Panel, Tabs, Tab, ListGroup } from 'react-bootstrap';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
@@ -124,72 +124,75 @@ export default class ReportContainer extends Component {
     }
 
     const archivesTitle = this.archivesTitle();
+    const tabStyle = {padding: "15px", border: "1px solid #ddd", borderRadius: "4px"}
     return (
       <Panel
         bsStyle="default"
       >
         <Panel.Heading>{this.panelHeader()}</Panel.Heading>
-        <Tabs
-          activeKey={activeKey}
-          onSelect={this.selectTab}
-          id="report-tabs"
-          style={{padding:"15px"}}
-        >
-          <Tab eventKey={0} title="Config">
-            <Config
-              imgFormat={imgFormat}
-              fileName={fileName}
-              fileDescription={fileDescription}
-              configs={configs}
-              checkedAllConfigs={checkedAllConfigs}
-              template={template}
-              handleTemplateChanged={this.handleTemplateChanged}
-              options={templateOpts}
-            />
-          </Tab>
-          <Tab eventKey={1} title="Setting">
-            <Setting
-              template={template}
-              splSettings={splSettings}
-              checkedAllSplSettings={checkedAllSplSettings}
-              rxnSettings={rxnSettings}
-              checkedAllRxnSettings={checkedAllRxnSettings}
-              siRxnSettings={siRxnSettings}
-              checkedAllSiRxnSettings={checkedAllSiRxnSettings}
-            />
-          </Tab>
-
-          <Tab eventKey={2} title="Order">
-            <div className="panel-fit-screen">
-              <Orders selectedObjs={selectedObjs} template={template} />
-            </div>
-          </Tab>
-          <Tab eventKey={3} title="Label">
-            <div className="panel-fit-screen">
-              <Serials selMolSerials={selMolSerials} template={template} />
-            </div>
-          </Tab>
-          <Tab eventKey={4} title="Preview">
-            <div className="panel-fit-screen">
-              <Previews
-                previewObjs={previewObjs}
-                splSettings={splSettings}
-                rxnSettings={rxnSettings}
-                siRxnSettings={siRxnSettings}
-                configs={configs}
-                template={template}
-                molSerials={selMolSerials}
-                prdAtts={prdAtts}
-                attThumbNails={attThumbNails}
-              />
-            </div>
-          </Tab>
-          <Tab eventKey={5} title={archivesTitle}>
-            <div className="panel-fit-screen">
-              <Archives archives={archives} />
-            </div>
-          </Tab>
-        </Tabs>
+        <Panel.Body>
+          <ListGroup>
+            <Tabs
+              activeKey={activeKey}
+              onSelect={this.selectTab}
+              id="report-tabs"
+            >
+              <Tab eventKey={0} title="Config" style={tabStyle}>
+                <Config
+                  imgFormat={imgFormat}
+                  fileName={fileName}
+                  fileDescription={fileDescription}
+                  configs={configs}
+                  checkedAllConfigs={checkedAllConfigs}
+                  template={template}
+                  handleTemplateChanged={this.handleTemplateChanged}
+                  options={templateOpts}
+                />
+              </Tab>
+              <Tab eventKey={1} title="Setting" style={tabStyle}>
+                <Setting
+                  template={template}
+                  splSettings={splSettings}
+                  checkedAllSplSettings={checkedAllSplSettings}
+                  rxnSettings={rxnSettings}
+                  checkedAllRxnSettings={checkedAllRxnSettings}
+                  siRxnSettings={siRxnSettings}
+                  checkedAllSiRxnSettings={checkedAllSiRxnSettings}
+                />
+              </Tab>
+              <Tab eventKey={2} title="Order" style={tabStyle}>
+                <div className="panel-fit-screen">
+                  <Orders selectedObjs={selectedObjs} template={template} />
+                </div>
+              </Tab>
+              <Tab eventKey={3} title="Label" style={tabStyle}>
+                <div className="panel-fit-screen">
+                  <Serials selMolSerials={selMolSerials} template={template} />
+                </div>
+              </Tab>
+              <Tab eventKey={4} title="Preview" style={tabStyle}>
+                <div className="panel-fit-screen">
+                  <Previews
+                    previewObjs={previewObjs}
+                    splSettings={splSettings}
+                    rxnSettings={rxnSettings}
+                    siRxnSettings={siRxnSettings}
+                    configs={configs}
+                    template={template}
+                    molSerials={selMolSerials}
+                    prdAtts={prdAtts}
+                    attThumbNails={attThumbNails}
+                  />
+                </div>
+              </Tab>
+              <Tab eventKey={5} title={archivesTitle} style={tabStyle}>
+                <div className="panel-fit-screen">
+                  <Archives archives={archives} />
+                </div>
+              </Tab>
+            </Tabs>
+            </ListGroup>
+          </Panel.Body>
       </Panel>
     );
   }
