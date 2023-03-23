@@ -48,15 +48,16 @@ module Chemotion
                   description: 'ID of the sample to scan'
       end
       put ':id' do
-        task = Usecases::SampleTasks::Update.new(
-          params: declared(params, include_missing: false),
+        updater = Usecases::SampleTasks::Update.new(
+          params: params,
           user: current_user,
-        ).perform!
+        )
+        updater.perform!
 
-        finisher = Usecases::SampleTasks::Finish.new(sample_task: sample_task, user: current_user)
+        finisher = Usecases::SampleTasks::Finish.new(sample_task: updater.sample_task, user: current_user)
         finisher.perform! if finisher.sample_task_can_be_finished?
 
-        present task, with: Entities::SampleTaskEntity
+        present updater.sample_task, with: Entities::SampleTaskEntity
       end
 
       route_param :id do
