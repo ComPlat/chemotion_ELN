@@ -211,11 +211,9 @@ export default class ScreenDetails extends Component {
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>
-        <OpenCalendarButton 
-          isPanelHeader={true}
-          eventable_id={screen.id}
-          eventable_type={"Screen"}
-        />
+        {screen.isNew
+          ? null
+          : <OpenCalendarButton isPanelHeader={true} eventable_id={screen.id} eventable_type={"Screen"} />}
         <PrintCodeButton element={screen} />
       </div>
     );

@@ -337,11 +337,9 @@ export default class ReactionDetails extends Component {
           {colLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
         </div>
-        <OpenCalendarButton
-          isPanelHeader={true}
-          eventable_id={reaction.id}
-          eventable_type={"Reaction"}
-        />
+        {reaction.isNew
+          ? null
+          : <OpenCalendarButton isPanelHeader={true} eventable_id={reaction.id} eventable_type={"Reaction"} />}
         <PrintCodeButton element={reaction} />
       </div>
     );
