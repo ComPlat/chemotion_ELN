@@ -152,6 +152,10 @@ class ViewSpectra extends React.Component {
         const idx = arrSpcIdx[i];
         const spc = spcMetas.filter(x => x.idx === idx)[0];
         if (spc) {
+          const { jcamp } = spc;
+          if (jcamp.layout !== 'CYCLIC VOLTAMMETRY') {
+            return spc;
+          }
           listMuliSpcs.push(spc);
         }
         const entity = spcInfos.filter(x => x.idx === idx)[0];
