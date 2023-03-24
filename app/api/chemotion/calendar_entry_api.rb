@@ -171,6 +171,7 @@ module Chemotion
         entry = CalendarEntry.find(params[:id])
 
         content_type 'text/calendar'
+        env['api.format'] = :binary
         header['Content-Disposition'] = "attachment; filename=\"#{entry.title.parameterize}.ics\""
         entry.ical_for(current_user)
       end
