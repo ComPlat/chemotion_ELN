@@ -515,7 +515,7 @@ module ReportHelpers
         position_y: ['w.position_y', '"well y"', 10],
         # created_at: ['w.created_at', nil, 10],
         # updated_at: ['w.updated_at', nil, 10],
-        readout: ['w.readout', '"well readout"', 10],
+        readouts: ['w.readouts', '"well readouts"', 10],
         additive: ['w.additive', nil, 10]
         # deleted_at: ['w.deleted_at', nil, 10],
       },
@@ -632,7 +632,7 @@ module ReportHelpers
       name
       position_x
       position_y
-      readout
+      readouts
     ]
   }.freeze
 
