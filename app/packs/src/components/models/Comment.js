@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle,  camelcase, semi,  no-unused-vars */
-import Element from './Element';
+import Element from 'src/models/Element';
 
 export default class Comment extends Element {
   static buildEmpty() {

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import CommentButton from '../CommentButton';
-import CommentList from '../CommentList';
+import CommentButton from 'src/components/comments/CommentButton';
+import CommentList from 'src/components/comments/CommentList';
 
 export default function CommentSection(props) {
   const { comments, section } = props;

@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Table } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
-import UserStore from '../../stores/UserStore';
-import { formatSection } from '../../../helper/index';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import { formatSection } from 'src/utilities/CommentHelper';
 
 export default class CommentDetails extends Component {
   render() {
