@@ -2,6 +2,15 @@
 
 # Chemotion_ELN Changelog
 
+## [pre-v1.6.0]
+> 2023-03-28
+* Features and Improvements:
+  * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239)
+
+* Fixes
+
+
+
 ## [v1.5.1]
 > 2023-03-24
 
