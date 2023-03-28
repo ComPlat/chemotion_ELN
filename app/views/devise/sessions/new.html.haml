@@ -1,7 +1,14 @@
 .container
-  %h2 Log in
+  %br
   - flash.each do |key, value|
     %div{class: "alert alert-warning"}= value
+
+  %br
+  = render "devise/shared/omniauth"
+
+  %hr
+  %h3 Log in with registered account
+
   = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
     .form-group.field
       = f.label :login, "Email or name abbreviation(case-sensitive)"
@@ -18,5 +25,4 @@
     .form-group.actions
       = f.submit "Log in", class: 'btn btn-primary'
   = render "devise/shared/links"
-
   = link_to "Back", root_path
