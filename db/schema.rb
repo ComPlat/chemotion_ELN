@@ -1175,8 +1175,7 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
     t.datetime "locked_at"
     t.boolean "account_active"
     t.integer "matrix", default: 0
-    t.string "omniauth_provider"
-    t.string "omniauth_uid"
+    t.jsonb "providers"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -1454,8 +1453,8 @@ ActiveRecord::Schema.define(version: 2023_03_06_114227) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL

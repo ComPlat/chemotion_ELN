@@ -55,6 +55,7 @@
 
 class User < ApplicationRecord
   attr_writer :login
+  attr_accessor :provider, :uid
 
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
@@ -352,27 +353,31 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(provider, uid, email, first_name, last_name)
-    where(omniauth_provider: provider, omniauth_uid: uid).first_or_create do |user|
-      # update the email, the first_name, and the last_name on every login
-      user.email = email
-      user.first_name = first_name
-      user.last_name = last_name
-      user.password = Devise.friendly_token[0,20]
+    user = find_by(email: email)
+    if user.present?
+      providers = user.providers || {}
+      providers[provider] = uid
+      user.providers = providers
+      user.save!
+    else
+      user = User.new(
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        password: Devise.friendly_token[0, 20],
+      )
     end
+    user
   end
 
   def link_omniauth(provider, uid)
-    if User.where(omniauth_provider: provider, omniauth_uid: uid).exists?
-      return nil
-    else
-      self.omniauth_provider = provider
-      self.omniauth_uid = uid
-      self.save
-    end
+    providers = {} if providers.nil?
+    providers[provider] = uid
+    save!
   end
 
   def password_required?
-    super && omniauth_provider.blank?
+    super && provider.blank?
   end
 
   private
@@ -413,12 +418,13 @@ class User < ApplicationRecord
   def delete_data
     # TODO: logic to check if user can be really destroy or which data can be deleted
     count = samples.count
-      # + self.reactions.count
-      # + self.wellplates.count
-      # + self.screens.count
-      # + self.research_plans.count
+    # + self.reactions.count
+    # + self.wellplates.count
+    # + self.screens.count
+    # + self.research_plans.count
     update_columns(email: "#{id}_#{name_abbreviation}@deleted")
     update_columns(name_abbreviation: nil) if count.zero?
+    update_columns(providers: nil)
   end
 end
 

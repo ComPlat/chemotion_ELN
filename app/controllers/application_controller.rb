@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [
-      :email, :first_name, :last_name, :name_abbreviation, :omniauth_provider, :omniauth_uid,
+      :email, :first_name, :last_name, :name_abbreviation, :provider, :uid,
       affiliations_attributes: [
         :country,
         :organization,

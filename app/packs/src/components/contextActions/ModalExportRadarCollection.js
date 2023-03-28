@@ -125,7 +125,7 @@ export default class ModalExportRadarCollection extends React.Component {
 
                   return (
                     <li key={index}>
-                      {contributor.givenName} {contributor.familyName}, {contributorType.label}
+                      {contributor.givenName} {contributor.familyName}, {contributorType?.label}
                       {contributor.orcid && `, ${contributor.orcid}`}
                       {contributor.affiliations.length > 0 && `, ${contributor.affiliations.map(
                         affiliation => affiliation.affiliation

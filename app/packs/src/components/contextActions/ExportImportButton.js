@@ -14,12 +14,19 @@ import ModalImportCollection from 'src/components/contextActions/ModalImportColl
 import { elementShowOrNew } from 'src/utilities/routesUtils.js'
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
-
   const showRadar = UIStore.getState().hasRadar? (
-    <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
-    title='Export to RADAR'>
-    Archive current collection to RADAR
-  </MenuItem>
+    <>
+      <MenuItem divider />
+      <MenuItem onSelect={() => editMetadataFunction()}
+                disabled={isDisabled}
+                title='Edit metadata'>
+        Edit collection metadata
+      </MenuItem>
+      <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
+      title='Export to RADAR'>
+      Archive current collection to RADAR
+    </MenuItem>
+    </>
   ): <span />;
 
   return (
@@ -50,12 +57,7 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
           title='Import collections from ZIP archive'>
           Import collections
         </MenuItem>
-        <MenuItem divider />
-        <MenuItem onSelect={() => editMetadataFunction()}
-                  disabled={isDisabled}
-                  title='Edit metadata'>
-          Edit collection metadata
-        </MenuItem>
+
         {showRadar}
       </Dropdown.Menu>
     </Dropdown>
