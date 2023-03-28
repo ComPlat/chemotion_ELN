@@ -1,11 +1,13 @@
 module Chemotion
+  # rubocop: disable Metrics/ClassLength
+
   class ResearchPlanAPI < Grape::API
     include Grape::Kaminari
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers ContainerHelpers
 
-    namespace :research_plans do
+    namespace :research_plans do # rubocop:disable Metrics/BlockLength
       desc 'Return serialized research plans of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
@@ -101,7 +103,7 @@ module Chemotion
         present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
       end
 
-      namespace :table_schemas do
+      namespace :table_schemas do # rubocop:disable Metrics/BlockLength
         desc 'Return serialized table schemas of current user'
         get do
           { table_schemas: ResearchPlanTableSchema.where(creator: current_user) }
@@ -366,4 +368,6 @@ module Chemotion
       end
     end
   end
+
+  # rubocop: enable Metrics/ClassLength
 end

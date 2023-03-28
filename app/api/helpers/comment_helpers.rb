@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CommentHelpers
   extend Grape::API::Helpers
 
@@ -19,9 +21,10 @@ module CommentHelpers
   end
 
   def get_user_ids(obj, user_ids)
-    if obj.user.type.eql? 'Person'
+    case obj.user.type
+    when 'Person'
       user_ids += [obj.user_id]
-    elsif obj.user.type.eql? 'Group'
+    when 'Group'
       user_ids += obj.user.users.ids
     end
 
@@ -29,11 +32,12 @@ module CommentHelpers
   end
 
   def create_message_notification(collections, current_user)
-    message_to = User.joins(:sync_in_collections_users)
-                     .persons
-                     .where('shared_by_id IN (?) AND collection_id IN (?)', collections.pluck(:user_id), collections.ids)
-                     .ids - [current_user.id]
-    return unless message_to.present?
+    message_to =
+      User.joins(:sync_in_collections_users)
+          .persons
+          .where('shared_by_id IN (?) AND collection_id IN (?)', collections.pluck(:user_id), collections.ids)
+          .ids - [current_user.id]
+    return if message_to.blank?
 
     Message.create_msg_notification(
       channel_subject: Channel::COMMENT_ON_MY_COLLECTION,

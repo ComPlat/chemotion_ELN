@@ -23,7 +23,7 @@
 #  index_comments_on_user                                 (created_by)
 #
 
-class Comment < ActiveRecord::Base
+class Comment < ApplicationRecord
   COMMENTABLE_TYPE = %w[Sample Reaction Screen Wellplate ResearchPlan].freeze
 
   enum sample_section: {
@@ -31,7 +31,7 @@ class Comment < ActiveRecord::Base
     analyses: 'sample_analyses',
     qc_curation: 'sample_qc_curation',
     results: 'sample_results',
-    references: 'sample_references'
+    references: 'sample_references',
   }, _prefix: true
 
   enum reaction_section: {
@@ -39,19 +39,19 @@ class Comment < ActiveRecord::Base
     properties: 'reaction_properties',
     references: 'reaction_references',
     analyses: 'reaction_analyses',
-    green_chemistry: 'reaction_green_chemistry'
+    green_chemistry: 'reaction_green_chemistry',
   }, _prefix: true
 
   enum wellplate_section: {
     properties: 'wellplate_properties',
     analyses: 'wellplate_analyses',
     designer: 'wellplate_designer',
-    list: 'wellplate_list'
+    list: 'wellplate_list',
   }, _prefix: true
 
   enum screen_section: {
     properties: 'screen_properties',
-    analyses: 'screen_analyses'
+    analyses: 'screen_analyses',
   }, _prefix: true
 
   enum research_plan_section: {
@@ -59,7 +59,7 @@ class Comment < ActiveRecord::Base
     analyses: 'research_plan_analyses',
     attachments: 'research_plan_attachments',
     references: 'research_plan_references',
-    metadata: 'research_plan_metadata'
+    metadata: 'research_plan_metadata',
   }, _prefix: true
 
   enum header_section: {
@@ -67,12 +67,12 @@ class Comment < ActiveRecord::Base
     reaction: 'reaction_header',
     wellplate: 'wellplate_header',
     screen: 'screen_header',
-    research_plan: 'research_plan_header'
+    research_plan: 'research_plan_header',
   }, _prefix: true
 
   belongs_to :commentable, polymorphic: true
 
-  validates :commentable, :section, :status, presence: true
+  validates :section, :status, presence: true
 
   scope :pending, -> { where(status: 'Pending') }
   scope :resolved, -> { where(status: 'Resolved') }

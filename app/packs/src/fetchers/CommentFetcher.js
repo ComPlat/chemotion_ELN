@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 
-import { CommentManagementServices } from '../../endpoints/ApiServices';
-import Comment from '../models/Comment';
+import Comment from 'src/models/Comment';
+import { CommentManagementServices } from 'src/endpoints/ApiServices';
 
 const classify = (string) => {
   const elementType = string.replace(/([-_]\w)/g, g => g[1].toUpperCase());

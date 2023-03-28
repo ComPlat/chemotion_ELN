@@ -48,7 +48,7 @@ class Collection < ApplicationRecord
   has_many :research_plans, through: :collections_research_plans
   has_many :elements, through: :collections_elements
 
-  has_many :sync_collections_users, foreign_key: :collection_id, dependent: :destroy
+  has_many :sync_collections_users, inverse_of: :collection, dependent: :destroy
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   has_one :metadata

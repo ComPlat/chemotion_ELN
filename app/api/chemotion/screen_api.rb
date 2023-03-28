@@ -8,7 +8,7 @@ module Chemotion
     helpers CollectionHelpers
     helpers ProfileHelpers
 
-    resource :screens do
+    resource :screens do # rubocop:disable Metrics/BlockLength
       desc "Return serialized screens"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
@@ -21,24 +21,24 @@ module Chemotion
       before do
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
-      get do
+      get do # rubocop:disable Metrics/BlockLength
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        else
-          # All collection of current_user
-          Screen.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.includes(:comments, collections: :sync_collections_users).order("created_at DESC")
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).screens
+                  rescue ActiveRecord::RecordNotFound
+                    Screen.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.screens
+                  rescue ActiveRecord::RecordNotFound
+                    Screen.none
+                  end
+                else
+                  # All collection of current_user
+                  Screen.joins(:collections).where(collections: { user_id: current_user.id }).distinct
+                end.includes(:comments, collections: :sync_collections_users).order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -173,7 +173,7 @@ module Chemotion
         optional :segments, type: Array, desc: 'Segments'
         optional :component_graph_data, type: JSON
       end
-      post do
+      post do # rubocop:disable Metrics/BlockLength
         attributes = {
           name: params[:name],
           collaborator: params[:collaborator],

@@ -4,7 +4,7 @@ module Chemotion
   class CommentAPI < Grape::API
     helpers CommentHelpers
 
-    resource :comments do
+    resource :comments do # rubocop:disable Metrics/BlockLength
       desc 'Return comment by ID'
       params do
         requires :id, type: Integer, desc: 'Comment ID'
@@ -40,7 +40,7 @@ module Chemotion
         if allowed_user_ids.include? current_user.id
           comments = Comment.where(
             commentable_id: params[:commentable_id],
-            commentable_type: params[:commentable_type]
+            commentable_type: params[:commentable_type],
           ).order(:status, :section, created_at: :desc)
 
           present comments, with: Entities::CommentEntity, root: 'comments'
@@ -49,7 +49,7 @@ module Chemotion
         end
       end
 
-      resource :create do
+      resource :create do # rubocop:disable Metrics/BlockLength
         desc 'Create a comment'
         params do
           requires :content, type: String
@@ -81,7 +81,7 @@ module Chemotion
             commentable_type: params[:commentable_type],
             section: params[:section],
             created_by: current_user.id,
-            submitter: "#{current_user.first_name} #{current_user.last_name}"
+            submitter: "#{current_user.first_name} #{current_user.last_name}",
           }
           comment = Comment.new(attributes)
           comment.save!
@@ -104,7 +104,9 @@ module Chemotion
         after_validation do
           @comment = Comment.find(params[:id])
           error!('404 Comment with given id not found', 404) if @comment.nil?
-          error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id || params[:status].eql?('Resolved')
+          unless @comment.created_by == current_user.id || params[:status].eql?('Resolved')
+            error!('401 Unauthorized', 401)
+          end
           error!('422 Unprocessable Entity', 422) if @comment.resolved?
         end
 

@@ -6,11 +6,10 @@ describe Chemotion::CommentAPI do
   let!(:unauthorized_user) { create(:person) }
   let!(:author_user) { create(:person) }
   let!(:c) { create(:collection, user: unauthorized_user, is_shared: false) }
-  let!(:c2) { create(:collection, user: author_user, is_shared: false) }
-  let!(:c3) { create(:collection, user: author_user, is_shared: true) }
+  let!(:c2) { create(:collection, user: author_user, is_shared: true) }
   let!(:r) { create(:reaction, collections: [c]) }
   let!(:s) { create(:sample, collections: [c]) }
-  let!(:reaction1) { create(:reaction, collections: [c3]) }
+  let!(:reaction1) { create(:reaction, collections: [c2]) }
 
   context 'when the user is unauthorized' do
     before do
@@ -18,41 +17,42 @@ describe Chemotion::CommentAPI do
     end
 
     describe 'GET /api/v1/comments/:id' do
-      let(:comment_1) do
-        create(:comment, commentable: reaction1, section: Comment.reaction_sections[:scheme], created_by: author_user.id)
+      let(:comment1) do
+        create(:comment, commentable: reaction1, section: Comment.reaction_sections[:scheme],
+                         created_by: author_user.id)
       end
 
       before do
-        get "/api/v1/comments/#{comment_1.id}"
+        get "/api/v1/comments/#{comment1.id}"
       end
 
       it 'returns 401 status code' do
-        expect(response.status).to eq 401
+        expect(response).to have_http_status :unauthorized
       end
     end
 
     describe 'PUT /api/v1/comments/:id' do
       context 'when comment is updated with only content' do
-        let(:comment_1) do
+        let(:comment1) do
           create(:comment, commentable: r, section: Comment.reaction_sections[:scheme], created_by: author_user.id)
         end
         let(:params) do
           {
-            content: 'test comment'
+            content: 'test comment',
           }
         end
 
         before do
-          put "/api/v1/comments/#{comment_1.id}", params: params
+          put "/api/v1/comments/#{comment1.id}", params: params
         end
 
         it 'returns 401 status code' do
-          expect(response.status).to eq 401
+          expect(response).to have_http_status :unauthorized
         end
       end
 
       context 'with sample' do
-        let(:comment_1) do
+        let(:comment1) do
           create(:comment, commentable: r, section: Comment.reaction_sections[:scheme], created_by: author_user.id)
         end
         let(:params) do
@@ -60,21 +60,21 @@ describe Chemotion::CommentAPI do
             content: 'test comment',
             commentable_id: s.id,
             commentable_type: 'Sample',
-            section: Comment.sample_sections[:properties]
+            section: Comment.sample_sections[:properties],
           }
         end
 
         before do
-          put "/api/v1/comments/#{comment_1.id}", params: params
+          put "/api/v1/comments/#{comment1.id}", params: params
         end
 
         it 'returns 401 status code' do
-          expect(response.status).to eq 401
+          expect(response).to have_http_status :unauthorized
         end
       end
 
       context 'with reaction' do
-        let(:comment_1) do
+        let(:comment1) do
           create(:comment, commentable: s, section: Comment.sample_sections[:properties], created_by: author_user.id)
         end
         let(:params) do
@@ -82,22 +82,22 @@ describe Chemotion::CommentAPI do
             content: 'test comment for reaction',
             commentable_id: r.id,
             commentable_type: 'Reaction',
-            section: Comment.reaction_sections[:scheme]
+            section: Comment.reaction_sections[:scheme],
           }
         end
 
         before do
-          put "/api/v1/comments/#{comment_1.id}", params: params
+          put "/api/v1/comments/#{comment1.id}", params: params
         end
 
         it 'returns 401 status code' do
-          expect(response.status).to eq 401
+          expect(response).to have_http_status :unauthorized
         end
       end
     end
 
     describe 'DELETE /api/v1/comments/:id' do
-      let(:comment_1) do
+      let(:comment1) do
         create(:comment, content: 'test',
                          commentable: r,
                          section: Comment.reaction_sections[:scheme],
@@ -105,11 +105,11 @@ describe Chemotion::CommentAPI do
       end
 
       before do
-        delete "/api/v1/comments/#{comment_1.id}"
+        delete "/api/v1/comments/#{comment1.id}"
       end
 
       it 'returns 401 status code' do
-        expect(response.status).to eq 401
+        expect(response).to have_http_status :unauthorized
       end
     end
   end
@@ -121,26 +121,16 @@ describe Chemotion::CommentAPI do
       create(:collection, user_id: author_user.id, is_shared: false, shared_by_id: nil, is_locked: false,
                           permission_level: 0, label: "U1x's collection")
     end
-    let!(:c1_2) do
-      create(:collection, user_id: user2.id, is_shared: true, shared_by_id: author_user.id, is_locked: true,
-                          permission_level: 0, label: 'shared by U1x')
-    end
-    let!(:sc1_2) do
-      create(:sync_collections_user, collection_id: c1.id, user_id: user2.id, permission_level: 0,
-                                     shared_by_id: author_user.id, fake_ancestry: c1_2.id.to_s)
-    end
 
     let!(:s1) { create(:sample, name: 'sample 1', collections: [c1]) }
     let!(:r1) { create(:reaction, name: 'reaction 1', collections: [c1]) }
 
-    let!(:root_u2) { create(:collection, user: author_user, shared_by_id: user2.id, is_shared: true, is_locked: true) }
     let!(:root_u) { create(:collection, user: user2, shared_by_id: author_user.id, is_shared: true, is_locked: true) }
 
-    let!(:col1) { create(:collection, user: user2, shared_by_id: author_user.id, is_shared: true, permission_level: 2, ancestry: root_u.id.to_s) }
-    let!(:col2) { create(:collection, user: author_user, is_shared: false) }
-    let!(:col3) { create(:collection, user: author_user, is_shared: true) }
-    let!(:col4) { create(:collection, user: author_user, shared_by_id: user2.id, is_shared: true, ancestry: root_u2.id.to_s) }
-    let!(:col5) { create(:collection, shared_by_id: user2.id, is_shared: true) }
+    let!(:col1) do
+      create(:collection, user: user2, shared_by_id: author_user.id, is_shared: true, permission_level: 2,
+                          ancestry: root_u.id.to_s)
+    end
     let!(:reaction) { create(:reaction, collections: [col1]) }
     let!(:sample) { create(:sample, collections: [col1]) }
 
@@ -149,8 +139,7 @@ describe Chemotion::CommentAPI do
     end
 
     describe 'GET /api/v1/comments/:id' do
-
-      let(:comment_1) do
+      let(:comment1) do
         create(:comment,
                content: 'test',
                commentable_id: s1.id,
@@ -159,7 +148,7 @@ describe Chemotion::CommentAPI do
       end
 
       before do
-        get "/api/v1/comments/#{comment_1.id}"
+        get "/api/v1/comments/#{comment1.id}"
       end
 
       it 'api run success' do
@@ -168,7 +157,7 @@ describe Chemotion::CommentAPI do
 
       it 'returned data' do
         c = JSON.parse(response.body)['comment']&.symbolize_keys
-        expect(c[:id]).to eq(comment_1.id)
+        expect(c[:id]).to eq(comment1.id)
       end
     end
 
@@ -179,7 +168,7 @@ describe Chemotion::CommentAPI do
             content: 'test comment',
             commentable_id: r1.id,
             commentable_type: 'Reaction',
-            section: Comment.reaction_sections[:scheme]
+            section: Comment.reaction_sections[:scheme],
           }
         end
 
@@ -199,7 +188,7 @@ describe Chemotion::CommentAPI do
             content: 'test comment sample',
             commentable_id: s1.id,
             commentable_type: 'Sample',
-            section: Comment.sample_sections[:properties]
+            section: Comment.sample_sections[:properties],
           }
         end
 
@@ -225,7 +214,7 @@ describe Chemotion::CommentAPI do
             content: 'test comment reaction',
             commentable_id: r1.id,
             commentable_type: 'Reaction',
-            section: Comment.reaction_sections[:scheme]
+            section: Comment.reaction_sections[:scheme],
           }
         end
 
@@ -248,49 +237,50 @@ describe Chemotion::CommentAPI do
 
     describe 'PUT /api/v1/comments/:id' do
       context 'with only content' do
-        let(:comment_1) do
+        let(:comment1) do
           create(:comment, commentable: r, section: Comment.reaction_sections[:scheme], created_by: author_user.id)
         end
         let(:params) do
           {
-            content: 'update test comment'
+            content: 'update test comment',
           }
         end
 
         before do
-          put "/api/v1/comments/#{comment_1.id}", params: params
+          put "/api/v1/comments/#{comment1.id}", params: params
         end
 
         it "is able to update comment's content" do
-          comment = Comment.find(comment_1.id)
+          comment = Comment.find(comment1.id)
           expect(comment.content).to eq('update test comment')
         end
       end
 
       context 'with sample' do
-        let(:comment_1) do
+        let(:comment1) do
           create(:comment, commentable: r, section: Comment.reaction_sections[:scheme], created_by: author_user.id)
         end
         let(:params) do
           {
             content: 'update test comment sample',
             commentable_id: sample.id,
-            commentable_type: 'Sample'
+            commentable_type: 'Sample',
           }
         end
 
         before do
-          put "/api/v1/comments/#{comment_1.id}", params: params
+          put "/api/v1/comments/#{comment1.id}", params: params
         end
 
         it "is able to update comment's content" do
-          comment = Comment.find(comment_1.id)
-          expect([comment.content, comment.commentable_id, comment.commentable_type]).to eq(['update test comment sample', sample.id, 'Sample'])
+          comment = Comment.find(comment1.id)
+          expect([comment.content, comment.commentable_id,
+                  comment.commentable_type]).to eq(['update test comment sample', sample.id, 'Sample'])
         end
       end
 
       context 'with reaction' do
-        let(:comment_1) do
+        let(:comment1) do
           create(:comment, commentable: s, section: Comment.sample_sections[:properties], created_by: author_user.id)
         end
         let(:params) do
@@ -298,24 +288,25 @@ describe Chemotion::CommentAPI do
             content: 'update test comment reaction',
             commentable_id: reaction.id,
             commentable_type: 'Reaction',
-            section: Comment.reaction_sections[:scheme]
+            section: Comment.reaction_sections[:scheme],
           }
         end
 
         before do
-          put "/api/v1/comments/#{comment_1.id}", params: params
+          put "/api/v1/comments/#{comment1.id}", params: params
         end
 
         it "is able to update comment's content" do
-          comment = Comment.find(comment_1.id)
+          comment = Comment.find(comment1.id)
           puts "comment:: #{comment}"
-          expect([comment.content, comment.commentable_id, comment.commentable_type]).to eq(['update test comment reaction', reaction.id, 'Reaction'])
+          expect([comment.content, comment.commentable_id,
+                  comment.commentable_type]).to eq(['update test comment reaction', reaction.id, 'Reaction'])
         end
       end
     end
 
     describe 'DELETE /api/v1/comments/:id' do
-      let(:comment_1) do
+      let(:comment1) do
         create(:comment, content: 'test',
                          commentable: r,
                          section: Comment.reaction_sections[:scheme],
@@ -323,7 +314,7 @@ describe Chemotion::CommentAPI do
       end
 
       before do
-        delete "/api/v1/comments/#{comment_1.id}"
+        delete "/api/v1/comments/#{comment1.id}"
       end
 
       it 'is able to delete comment' do

@@ -16,8 +16,6 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import CommentButton from 'src/components/comments/CommentButton';
-import CommentList from 'src/components/comments/CommentList';
 
 export default class SampleForm extends React.Component {
   constructor(props) {

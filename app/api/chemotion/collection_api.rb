@@ -1,8 +1,10 @@
 module Chemotion
+  # rubocop: disable Metrics/ClassLength
+
   class CollectionAPI < Grape::API
     helpers CollectionHelpers
     helpers ParamsHelpers
-    resource :collections do
+    resource :collections do # rubocop:disable Metrics/BlockLength
 
       namespace :all do
         desc "Return the 'All' collection of the current user"
@@ -152,7 +154,7 @@ module Chemotion
         {} # result is not used by FE
       end
 
-      namespace :shared do
+      namespace :shared do # rubocop:disable Metrics/BlockLength
         desc "Update shared collection"
         params do
           requires :id, type: Integer
@@ -208,7 +210,7 @@ module Chemotion
           end
         end
 
-        after_validation do
+        after_validation do # rubocop:disable Metrics/BlockLength
           @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
           samples = Sample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
           reactions = Reaction.by_collection_id(@cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
@@ -279,7 +281,7 @@ module Chemotion
         end
       end
 
-      namespace :elements do
+      namespace :elements do # rubocop:disable Metrics/BlockLength
         desc 'Move elements by UI state to another collection'
         params do
           requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
@@ -290,7 +292,7 @@ module Chemotion
           optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
-        put do
+        put do # rubocop:disable Metrics/BlockLength
           to_collection_id = fetch_collection_id_for_assign(params, 4)
           error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
 
@@ -342,7 +344,7 @@ module Chemotion
           optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
-        post do
+        post do # rubocop:disable Metrics/BlockLength
           from_collection = fetch_source_collection_for_assign
           error!('401 Unauthorized import from current collection', 401) unless from_collection
           to_collection_id = fetch_collection_id_for_assign(params, 4)
@@ -387,7 +389,7 @@ module Chemotion
           end
         end
 
-        delete do
+        delete do # rubocop:disable Metrics/BlockLength
           # ui_state = params[:ui_state]
           from_collection = fetch_source_collection_for_removal
           error!('401 Unauthorized removal from collection', 401) unless from_collection
@@ -504,4 +506,6 @@ module Chemotion
       end
     end
   end
+
+  # rubocop: enable Metrics/ClassLength
 end

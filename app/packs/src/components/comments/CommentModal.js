@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, FormControl, Modal, Table, Glyphicon } from 'react-bootstrap';
+import {
+  Button, ButtonToolbar, FormControl, Modal, Table, Glyphicon
+} from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
-import CommentFetcher from 'src/components/fetchers/CommentFetcher';
+import CommentFetcher from 'src/fetchers/CommentFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -34,7 +36,7 @@ export default class CommentModal extends Component {
         isEditing: false,
       });
     }
-  }
+  };
 
   markCommentResolved = (comment) => {
     const { element } = this.props;
@@ -73,7 +75,7 @@ export default class CommentModal extends Component {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-  }
+  };
 
   updateComment = () => {
     LoadingActions.start();
@@ -93,7 +95,7 @@ export default class CommentModal extends Component {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-  }
+  };
 
   deleteComment = (comment) => {
     const { element } = this.props;
@@ -115,21 +117,22 @@ export default class CommentModal extends Component {
       isEditing: true
     });
     this.commentInput.focus();
-  }
+  };
 
-   scrollToTop = () => {
-     this.modalRef.current.scrollTo({
-       top: 0,
-       behavior: 'smooth'
-     });
-   };
+  scrollToTop = () => {
+    this.modalRef.current.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   toggleCollapse = () => {
     this.setState({ commentsCollapseAll: !this.state.commentsCollapseAll });
-  }
+  };
 
-  disableEditComment = comment => comment.status === 'Resolved'
-  commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by
+  disableEditComment = (comment) => comment.status === 'Resolved';
+
+  commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by;
 
   render() {
     const { showCommentModal, section, element } = this.props;
@@ -141,7 +144,7 @@ export default class CommentModal extends Component {
 
     let commentsTbl = null;
     if (comments && comments.length > 0) {
-      commentsTbl = comments.map(comment => (
+      commentsTbl = comments.map((comment) => (
         <tr key={comment.id}>
           <td width="20%">{comment.created_at}</td>
           <td width="35%">{comment.content}</td>
@@ -155,7 +158,8 @@ export default class CommentModal extends Component {
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
               {
-                this.commentByCurrentUser(comment, currentUser) &&
+                this.commentByCurrentUser(comment, currentUser)
+                && (
                 <Button
                   id="editCommentBtn"
                   bsSize="xsmall"
@@ -165,9 +169,11 @@ export default class CommentModal extends Component {
                 >
                   <i className="fa fa-edit" />
                 </Button>
+                )
               }
               {
-                this.commentByCurrentUser(comment, currentUser) &&
+                this.commentByCurrentUser(comment, currentUser)
+                && (
                 <Confirm
                   onConfirm={() => this.deleteComment(comment)}
                   body="Are you sure you want to delete this?"
@@ -184,6 +190,7 @@ export default class CommentModal extends Component {
                     <i className="fa fa-trash-o" />
                   </Button>
                 </Confirm>
+                )
               }
             </ButtonToolbar>
           </td>
@@ -208,7 +215,10 @@ export default class CommentModal extends Component {
           bsSize="large"
         >
           <Modal.Header closeButton>
-            <Modal.Title>Comments on:  {formatSection(section)}</Modal.Title>
+            <Modal.Title>
+              Comments on:
+              {formatSection(section)}
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div className="commentList" ref={this.modalRef}>
@@ -228,7 +238,8 @@ export default class CommentModal extends Component {
               </div>
 
               {
-                allComments && allComments.length > 0 &&
+                allComments && allComments.length > 0
+                && (
                 <Button onClick={this.toggleCollapse} id="detailsBtn">
                   <span>Details </span>
                   <Glyphicon
@@ -243,21 +254,24 @@ export default class CommentModal extends Component {
                     }}
                   />
                 </Button>
+                )
               }
 
               {
-              commentsCollapseAll && (allComments && allComments.length > 0) &&
-              <CommentDetails
-                section={section}
-                element={element}
-                disableEditComment={this.disableEditComment}
-                markCommentResolved={this.markCommentResolved}
-                commentByCurrentUser={this.commentByCurrentUser}
-                handleEditComment={this.handleEditComment}
-                deleteComment={this.deleteComment}
-                getAllComments={this.props.getAllComments}
-              />
-            }
+                commentsCollapseAll && (allComments && allComments.length > 0)
+                && (
+                <CommentDetails
+                  section={section}
+                  element={element}
+                  disableEditComment={this.disableEditComment}
+                  markCommentResolved={this.markCommentResolved}
+                  commentByCurrentUser={this.commentByCurrentUser}
+                  handleEditComment={this.handleEditComment}
+                  deleteComment={this.deleteComment}
+                  getAllComments={this.props.getAllComments}
+                />
+                )
+              }
             </div>
 
             <FormControl

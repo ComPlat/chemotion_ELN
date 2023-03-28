@@ -19,7 +19,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 import CommentModal from 'src/components/comments/CommentModal';
-import CommentFetcher from 'src/components/fetchers/CommentFetcher';
+import CommentFetcher from 'src/fetchers/CommentFetcher';
 
 const tabInfoHash = {
   metadata: {

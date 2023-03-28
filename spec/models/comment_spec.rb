@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Comment, type: :model do
+RSpec.describe Comment do
   describe 'creation' do
     let(:sample) { create(:sample) }
     let(:comment) { create(:comment, commentable: sample, section: described_class.sample_sections[:properties]) }
