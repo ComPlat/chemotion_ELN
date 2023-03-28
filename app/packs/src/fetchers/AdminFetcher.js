@@ -136,7 +136,7 @@ export default class AdminFetcher {
   }
 
   static resetUserPassword(params) {
-    return fetch('/api/v1/admin/resetPassword/', {
+    return fetch('/api/v1/admin_user/resetPassword/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -150,7 +150,7 @@ export default class AdminFetcher {
   }
 
   static createUserAccount(params) {
-    return fetch('/api/v1/admin/newUser/', {
+    return fetch('/api/v1/admin_user/newUser/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -164,7 +164,7 @@ export default class AdminFetcher {
   }
 
   static updateUser(params) {
-    return fetch('/api/v1/admin/updateUser/', {
+    return fetch('/api/v1/admin_user/updateUser/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -178,7 +178,7 @@ export default class AdminFetcher {
   }
 
   static fetchUsers() {
-    return fetch('/api/v1/admin/listUsers/all.json', {
+    return fetch('/api/v1/admin_user/listUsers/all.json', {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
@@ -186,7 +186,7 @@ export default class AdminFetcher {
   }
 
   static updateAccount(params) {
-    return fetch('/api/v1/admin/updateAccount/', {
+    return fetch('/api/v1/admin_user/updateAccount/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -273,7 +273,7 @@ export default class AdminFetcher {
   }
 
   static fetchUserGroupByName(name) {
-    return fetch(`/api/v1/admin/matrix/find_user.json?name=${name}`, {
+    return fetch(`/api/v1/matrix/find_user.json?name=${name}`, {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
@@ -281,7 +281,7 @@ export default class AdminFetcher {
   }
 
   static fetchMatrices() {
-    return fetch('/api/v1/admin/matrix/list.json', {
+    return fetch('/api/v1/matrix/list.json', {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
@@ -289,7 +289,7 @@ export default class AdminFetcher {
   }
 
   static updateMatrice(params) {
-    return fetch('/api/v1/admin/matrix/update/', {
+    return fetch('/api/v1/matrix/update/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -303,7 +303,7 @@ export default class AdminFetcher {
   }
 
   static updateMatriceJson(params) {
-    return fetch('/api/v1/admin/matrix/update_json/', {
+    return fetch('/api/v1/matrix/update_json/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -324,7 +324,7 @@ export default class AdminFetcher {
 
   static genericKlass(params, path) {
     return BaseFetcher.withBodyData({
-      apiEndpoint: `/api/v1/admin/${path}/`, requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
+      apiEndpoint: `/api/v1/admin_generic/${path}/`, requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
     });
   }
 
@@ -373,16 +373,16 @@ export default class AdminFetcher {
   }
 
   static deleteGenericRevision(id) {
-    return this.exec(`/api/v1/admin/delete_generic_revision/${id}`, 'DELETE');
+    return this.exec(`/api/v1/admin_generic/delete_generic_revision/${id}`, 'DELETE');
   }
 
   static listSegmentKlass(params = {}) {
-    const api = params.is_active === undefined ? '/api/v1/admin/list_segment_klass.json' : `/api/v1/admin/list_segment_klass.json?is_active=${params.is_active}`;
+    const api = params.is_active === undefined ? '/api/v1/admin_generic/list_segment_klass.json' : `/api/v1/admin/list_segment_klass.json?is_active=${params.is_active}`;
     return this.exec(api, 'GET');
   }
 
   static listDatasetKlass(params = {}) {
-    const api = params.is_active === undefined ? '/api/v1/admin/list_dataset_klass.json' : `/api/v1/admin/list_dataset_klass.json?is_active=${params.is_active}`;
+    const api = params.is_active === undefined ? '/api/v1/admin_generic/list_dataset_klass.json' : `/api/v1/admin/list_dataset_klass.json?is_active=${params.is_active}`;
     return this.exec(api, 'GET');
   }
 

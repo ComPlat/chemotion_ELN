@@ -66,4 +66,3 @@ RUN asdf global ruby $VRUBY
 RUN echo 'network-timeout 600000' > /home/chemotion-dev/.yarnrc
 # use node modules from outside the application directory
 RUN echo '--modules-folder /home/chemotion-dev/node_modules/' >> /home/chemotion-dev/.yarnrc
-

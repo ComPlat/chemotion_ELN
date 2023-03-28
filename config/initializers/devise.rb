@@ -1,19 +1,18 @@
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
-Devise.setup do |config|
+Devise.setup do |config| # rubocop:disable Metrics/BlockLength
   # The secret key used by Devise. Devise uses this key to generate
   # random tokens. Changing this key will render invalid all existing
   # confirmation, reset password and unlock tokens in the database.
   # Devise will use the `secret_key_base` on Rails 4+ applications as its `secret_key`
   # by default. You can change it below and use your own secret key.
-  # config.secret_key = 'a40d8a138a59413c28af31f1ac68f96f63b2161775e71abfef50899ded91236cbbfe72171a4a30aca323369c0e3b60820cb7ff72ffe08970683933a2f5088133'
+  # config.secret_key = 'SECRET_KEY'
 
   # ==> Mailer Configuration
   # Configure the e-mail address which will be shown in Devise::Mailer,
   # note that it will be overwritten if you use your own mailer class
   # with default "from" parameter.
-  config.mailer_sender = ENV['DEVISE_SENDER'] ||
-    'please-change-me-at-config-initializers-devise@example.com'
+  config.mailer_sender = ENV['DEVISE_SENDER'] || 'please-change-me-at-config-initializers-devise@example.com'
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'
 
@@ -99,7 +98,7 @@ Devise.setup do |config|
   config.stretches = Rails.env.test? ? 1 : 10
 
   # Setup a pepper to generate the encrypted password.
-  # config.pepper = '46aaed8c411fdf1f8e8643f41e82f9e3649cd54e597123bd61a57798ddb94b81228d43f0a3dd566bf9c272005cd4c49d7172e37fa8956fc816f0c0fde55408e2'
+  # config.pepper = 'PASSWORD'
 
   # ==> Configuration for :confirmable
   # A period that the user is allowed to access the website even without
@@ -239,41 +238,78 @@ Devise.setup do |config|
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
-  omniauth_config = (File.exist? Rails.root.join('config', 'omniauth.yml')) && (Rails.application.config_for :omniauth)
-  omniauth_config && Rails.application.configure do
-    if omniauth_config.key?(:github) && omniauth_config[:github][:enable]
-      config.omniauth :github, omniauth_config[:github][:client_id], omniauth_config[:github][:client_secret],
-                      scope: 'user,public_repo'
-    end
 
-    if omniauth_config.key?(:openid_connect) && omniauth_config[:openid_connect][:enable]
-      options = {
-        port: 443,
-        scheme: omniauth_config[:openid_connect][:scheme],
-        host: omniauth_config[:openid_connect][:host],
-        authorization_endpoint: omniauth_config[:openid_connect][:authorization_endpoint],
-        token_endpoint: omniauth_config[:openid_connect][:token_endpoint],
-        identifier: omniauth_config[:openid_connect][:client_id],
-        secret: omniauth_config[:openid_connect][:client_secret],
-        redirect_uri: omniauth_config[:openid_connect][:redirect_uri]
-      }
-      config.omniauth :openid_connect, scope: [:openid, :email, :profile], issuer: omniauth_config[:openid_connect][:issuer], response_type: :code, discovery: :true, client_options: options
-    end
+  begin
+    auth_config = if ActiveRecord::Base.connection.table_exists?('matrices')
+                    Matrice.find_by(name: 'userProvider')&.configs || {}
+                  else
+                    {}
+                  end
+  rescue ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable
+    auth_config = {}
+  end
 
-    if omniauth_config.key?(:orcid) && omniauth_config[:orcid][:enable]
+  auth_config && Rails.application.configure do # rubocop:disable Metrics/BlockLength
+    if auth_config.key?('orcid') && auth_config.dig('orcid', 'enable') == true
       # the regular omniauth-orcid provider, from https://github.com/datacite/omniauth-orcid
-      config.omniauth :orcid, omniauth_config[:orcid][:client_id], omniauth_config[:orcid][:client_secret],
-                member: omniauth_config[:orcid][:member], sandbox: omniauth_config[:orcid][:sandbox],
-                scope: omniauth_config[:orcid][:sandbox]
-    elsif omniauth_config.key?(:chemotion_orcid) && omniauth_config[:chemotion_orcid][:enable]
+      config.omniauth :orcid,
+                      auth_config.dig('orcid', 'client_id'),
+                      auth_config.dig('orcid', 'client_secret'),
+                      icon: auth_config.dig('orcid', 'icon'),
+                      member: auth_config.dig('orcid', 'member'),
+                      sandbox: auth_config.dig('orcid', 'sandbox'),
+                      scope: auth_config.dig('orcid', 'sandbox')
+    elsif auth_config.key?('chemotion_orcid') && auth_config.dig('chemotion_orcid', 'enable') == true
       # the special chemotion orcid provider
       require 'omniauth/strategies/chemotion_orcid'
-      config.omniauth :orcid, omniauth_config[:chemotion_orcid][:client_id], omniauth_config[:chemotion_orcid][:client_secret],
-                      member: omniauth_config[:chemotion_orcid][:member], sandbox: omniauth_config[:chemotion_orcid][:sandbox],
-                      scope: omniauth_config[:chemotion_orcid][:scope], redirect_uri: omniauth_config[:chemotion_orcid][:redirect_uri],
+      config.omniauth :orcid,
+                      auth_config.dig('chemotion_orcid', 'client_id'),
+                      auth_config.dig('chemotion_orcid', 'client_secret'),
+                      member: auth_config.dig('chemotion_orcid', 'member'),
+                      sandbox: auth_config.dig('chemotion_orcid', 'sandbox'),
+                      scope: auth_config.dig('chemotion_orcid', 'scope'),
+                      redirect_uri: auth_config.dig('chemotion_orcid', 'redirect_uri'),
                       strategy_class: OmniAuth::Strategies::ChemotionORCID
     end
 
+    if auth_config.key?('shibboleth') && auth_config.dig('shibboleth', 'enable') == true
+      config.omniauth :shibboleth, {
+        request_type: 'header',
+        uid_field: auth_config.dig('shibboleth', 'uid') || 'eppn',
+        info_fields: {
+          email: auth_config.dig('shibboleth', 'email') || 'mail',
+          first_name: auth_config.dig('shibboleth', 'first_name') || 'givenName',
+          last_name: auth_config.dig('shibboleth', 'last_name') || 'sn',
+        },
+        icon: auth_config.dig('shibboleth', 'icon'),
+      }
+    end
+
+    if auth_config.key?('github') && auth_config.dig('github', 'enable') == true
+      config.omniauth :github,
+                      auth_config.dig('github', 'client_id'), auth_config.dig('github', 'client_secret'),
+                      scope: 'user,public_repo', icon: auth_config.dig('github', 'icon')
+    end
+
+    if auth_config.key?('openid_connect') && auth_config.dig('openid_connect', 'enable') == true
+      options = {
+        port: 443,
+        scheme: auth_config.dig('openid_connect', 'scheme'),
+        host: auth_config.dig('openid_connect', 'host'),
+        authorization_endpoint: auth_config.dig('openid_connect', 'authorization_endpoint'),
+        token_endpoint: auth_config.dig('openid_connect', 'token_endpoint'),
+        identifier: auth_config.dig('openid_connect', 'client_id'),
+        secret: auth_config.dig('openid_connect', 'client_secret'),
+        redirect_uri: auth_config.dig('openid_connect', 'redirect_uri'),
+      }
+      config.omniauth :openid_connect,
+                      scope: %i[openid email profile],
+                      issuer: auth_config.dig('openid_connect', 'issuer'),
+                      response_type: :code,
+                      discovery: true,
+                      client_options: options,
+                      icon: auth_config.dig('openid_connect', 'icon')
+    end
   end
 
   # ==> Warden configuration

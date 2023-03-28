@@ -109,7 +109,7 @@ class UserStore {
   }
 
   handleOmniauthProviders(result) {
-    this.state.omniauthProviders = result.omniauth_providers;
+    this.state.omniauthProviders = result;
   }
 }
 

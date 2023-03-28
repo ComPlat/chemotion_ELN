@@ -57,6 +57,7 @@ Style/TrailingCommaInArguments:
 Metrics/BlockLength:
   Exclude:
   - 'spec/**/*_spec.rb'
+  - 'app/api/chemotion/*_api.rb'
 
 Metrics/AbcSize:
   Max: 25

@@ -1,13 +1,17 @@
 .container
+  %br
+  - if resource.password_required?
+    = render "devise/shared/omniauth"
+    %hr
+
   %h2 Sign up
   = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
     = devise_error_messages!
-
-    - if resource.password_required?
-      .form-group.field
+    .form-group.field
       = f.label :email, class: "required"
       %br/
-      = f.email_field :email, autofocus: true, class: 'form-control', required: true
+      = f.email_field :email, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
+    - if resource.password_required?
       .form-group.field
         = f.label :password
         - if @validatable
@@ -19,28 +23,14 @@
         = f.label :password_confirmation
         %br/
         = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
-      .form-group.field
-        = f.label :first_name, class: "required"
-        %br/
-        = f.text_field :first_name, autofocus: true, class: 'form-control', required: true
-      .form-group.field
-        = f.label :last_name, class: "required"
-        %br/
-        = f.text_field :last_name, autofocus: true, class: 'form-control', required: true
-    - else
-      .form-group.field
-      = f.label :email, class: "required"
+    .form-group.field
+      = f.label :first_name, class: "required"
       %br/
-      = f.email_field :email, autofocus: true, class: 'form-control', required: true, readonly: true
-      .form-group.field
-        = f.label :first_name, class: "required"
-        %br/
-        = f.text_field :first_name, autofocus: true, class: 'form-control', required: true, readonly: true
-      .form-group.field
-        = f.label :last_name, class: "required"
-        %br/
-        = f.text_field :last_name, autofocus: true, class: 'form-control', required: true, readonly: true
-
+      = f.text_field :first_name, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
+    .form-group.field
+      = f.label :last_name, class: "required"
+      %br/
+      = f.text_field :last_name, autofocus: true, class: 'form-control', required: true, readonly: !resource.password_required?
     .form-group.field
       = f.label "Name Abbreviation", class: "required"
       %em
@@ -49,9 +39,8 @@
       = f.text_field :name_abbreviation, autofocus: true, class: 'form-control', required: true
     = f.fields_for :affiliations, resource.affiliations do |a|
       = render "devise/shared/affiliations", f: a, disabled: false
-    = f.hidden_field :omniauth_provider, value: resource.omniauth_provider
-    = f.hidden_field :omniauth_uid, value: resource.omniauth_uid
-
+    = f.hidden_field :provider, value: resource.provider
+    = f.hidden_field :uid, value: resource.uid
     = render 'devise/shared/pn_and_tos'
 
     .form-group.actions
@@ -59,5 +48,4 @@
       = f.submit "Sign up", class: 'btn btn-primary'
 
   = render "devise/shared/links"
-
   = link_to "Back", root_path

@@ -57,7 +57,10 @@ module Chemotion
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
-          { omniauth_providers: Devise.omniauth_configs.keys }
+          res = {}
+          config = Devise.omniauth_configs
+          config.each { |k, _v| res[k] = { icon: File.basename(config[k].options[:icon] || '') } }
+          res
         end
       end
 

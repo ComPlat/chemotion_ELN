@@ -1,84 +1,95 @@
 # frozen_string_literal: true
 
-class Users::OmniauthController < Devise::OmniauthCallbacksController
-  def github
-    if user_signed_in?
-      current_user.link_omniauth(auth.provider, auth.uid)
-      redirect_to root_path
-    else
-      email = auth.info.email
-      first_name = auth.info.name.split[0..-2].join(' ')
-      last_name = auth.info.name.split.last
+module Users
+  class OmniauthController < Devise::OmniauthCallbacksController
+    PROVIDER_GITHUB = 'github'
 
+    def github
+      auth_handler
+    end
+
+    def orcid
+      auth_handler
+    end
+
+    def openid_connect
+      auth_handler
+    end
+
+    def shibboleth
+      auth_handler
+    end
+
+    protected
+
+    def auth
+      request.env['omniauth.auth']
+    end
+
+    def first_name
+      if auth&.provider == PROVIDER_GITHUB
+        auth&.info&.name.split[0..-2].join(' ')
+      else
+        auth&.info&.first_name
+      end
+    end
+
+    def last_name
+      if auth&.provider == PROVIDER_GITHUB
+        name.split&.last
+      else
+        auth&.info&.last_name
+      end
+    end
+
+    def email
+      auth&.info&.email
+    end
+
+    def affiliation
+      {}
+      # affiliation['organization'] = Swot.school_name(email)
+    end
+
+    def name_abbreviation
+      (first_name&.first || '') + (last_name&.first || '')
+    end
+
+    def providers
+      provider = {}
+      provider[auth.provider] = auth.uid
+      provider
+    end
+
+    def auth_signup
       @user = User.from_omniauth(auth.provider, auth.uid, email, first_name, last_name)
-
       if @user.persisted?
         sign_in_and_redirect @user, event: :authentication
       else
-        session['devise.omniauth.data'] = {
-          :provider => auth.provider,
-          :uid => auth.uid,
-          :email => email,
-          :first_name => first_name,
-          :last_name => last_name
-        }
+        session_handler
         redirect_to new_user_registration_url
       end
     end
-  end
 
-  def orcid
-    if user_signed_in?
-      current_user.link_omniauth(auth.provider, auth.uid)
-      redirect_to root_path
-    else
-      @user = User.from_omniauth(auth.provider, auth.uid, auth.info.email, auth.info.first_name, auth.info.last_name)
+    def session_handler
+      session['devise.omniauth.data'] = {
+        provider: auth.provider,
+        uid: auth.uid,
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        name_abbreviation: name_abbreviation,
+        affiliation: affiliation,
+      }
+    end
 
-      if @user.persisted?
-        sign_in_and_redirect @user, event: :authentication
+    def auth_handler
+      if user_signed_in?
+        current_user.link_omniauth(auth.provider, auth.uid)
+        redirect_to root_path
       else
-        affiliation = auth && auth.info && auth.info.employments && auth.info.employments.length > 0 && auth.info.employments[0]
-        session['devise.omniauth.data'] = {
-          :provider => auth.provider,
-          :uid => auth.uid,
-          :email => auth.info.email,
-          :first_name => auth.info.first_name,
-          :last_name => auth.info.last_name,
-          :affiliation => affiliation
-        }
-        redirect_to new_user_registration_url
+        auth_signup
       end
     end
-  end
-
-  def openid_connect
-    if user_signed_in?
-      current_user.link_omniauth(auth.provider, auth.uid)
-      redirect_to root_path
-    else
-      email = auth.info.email
-      first_name = auth.info.first_name
-      last_name = auth.info.last_name
-
-      @user = User.from_omniauth(auth.provider, auth.uid, email, first_name, last_name)
-
-      if @user.persisted?
-        sign_in_and_redirect @user, event: :authentication
-      else
-        session['devise.omniauth.data'] = {
-          :provider => auth.provider,
-          :uid => auth.uid,
-          :email => email,
-          :first_name => first_name,
-          :last_name => last_name
-        }
-        redirect_to new_user_registration_url
-      end
-    end
-  end
-
-  protected
-  def auth
-    request.env['omniauth.auth']
   end
 end
