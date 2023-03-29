@@ -72,6 +72,8 @@ class Collection < ApplicationRecord
     end
   end
 
+  scope :with_collections_acls, -> { joins('left join collection_acls acls on acls.collection_id = collections.id') }
+
   default_scope { ordered }
 
   def self.get_all_collection_for_user(user_id)
