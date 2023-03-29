@@ -60,7 +60,6 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.renderCommentModal = this.renderCommentModal.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateReactionSvg();
     }

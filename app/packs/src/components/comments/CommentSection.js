@@ -1,38 +1,55 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import CommentButton from 'src/components/comments/CommentButton';
 import CommentList from 'src/components/comments/CommentList';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import CommentStore from 'src/stores/alt/stores/CommentStore';
+import { selectCurrentUser, commentActivation } from 'src/utilities/CommentHelper';
 
-export default function CommentSection(props) {
-  const { comments, section } = props;
-  return (
-    <div>
-      <CommentButton
-        section={section}
-        comments={comments}
-        setCommentSection={props.setCommentSection}
-        toggleCommentModal={props.toggleCommentModal}
-        getSectionComments={props.getSectionComments}
-      />
+export default class CommentSection extends Component {
+  constructor(props) {
+    super(props);
+    const commentState = CommentStore.getState();
+    this.state = {
+      showCommentSection: commentState.showCommentSection,
+    };
+    this.onChange = this.onChange.bind(this);
+  }
 
-      <CommentList
-        section={section}
-        getSectionComments={props.getSectionComments}
-      />
-    </div>
-  );
+  componentDidMount() {
+    CommentStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    CommentStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState({ ...state });
+  }
+
+  render() {
+    const { section } = this.props;
+    const { showCommentSection } = this.state;
+    const currentUser = selectCurrentUser(UserStore.getState());
+
+    if (showCommentSection && MatrixCheck(currentUser.matrix, commentActivation)) {
+      return (
+        <div>
+          <CommentButton section={section} />
+          <CommentList section={section} />
+        </div>
+      );
+    }
+    return null;
+  }
 }
-
 
 CommentSection.propTypes = {
   section: PropTypes.string,
-  comments: PropTypes.array,
-  setCommentSection: PropTypes.func.isRequired,
-  toggleCommentModal: PropTypes.func.isRequired,
-  getSectionComments: PropTypes.func.isRequired,
 };
 
 CommentSection.defaultProps = {
   section: 'header',
-  comments: [],
 };
