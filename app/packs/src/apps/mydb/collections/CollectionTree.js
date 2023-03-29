@@ -21,6 +21,7 @@ export default class CollectionTree extends React.Component {
 
     this.state = {
       myCollections: collecState.myCollections,
+      mySharedCollections: collecState.mySharedCollections,
       sharedCollections: collecState.sharedCollections,
       unsharedRoots: collecState.unsharedRoots,
       sharedRoots: collecState.sharedRoots,
@@ -154,10 +155,9 @@ export default class CollectionTree extends React.Component {
 
   sharedByMeSubtrees() {
     let myCollections = this.state.myCollections;
-    const mySharedCollections = myCollections.filter(c => (c.is_shared === true && c.is_locked === false ));
 
     let { sharedToCollectionVisible } = this.state;
-    let collections = filterMySharedCollection(mySharedCollections);
+    let collections = filterMySharedCollection(myCollections);
     let sharedLabelledRoots = {};
     sharedLabelledRoots = collections.map(e => {
       return update(e, {

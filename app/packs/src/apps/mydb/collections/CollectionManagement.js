@@ -4,7 +4,6 @@ import { Tabs, Tab } from 'react-bootstrap';
 import MyCollections from 'src/apps/mydb/collections/MyCollections';
 import MySharedCollections from 'src/apps/mydb/collections/MySharedCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
-import SyncWithMeCollections from 'src/apps/mydb/collections/SyncWithMeCollections';
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 
 const CollectionManagement = () => {

@@ -58,7 +58,7 @@ module Usecases
             collection_id: c.id
           )
 
-          c_acl.update_attributes(
+          c_acl.update(
             permission_level: @collection_attributes['permission_level'],
             sample_detail_level: @collection_attributes['sample_detail_level'],
             reaction_detail_level: @collection_attributes['reaction_detail_level'],

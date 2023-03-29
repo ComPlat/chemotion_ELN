@@ -36,7 +36,7 @@ export default class MyCollections extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchUnsharedCollectionRoots()
+    CollectionActions.fetchMyCollections()
   }
 
   componentWillUnmount() {

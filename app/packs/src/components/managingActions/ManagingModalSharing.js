@@ -218,7 +218,7 @@ export default class ManagingModalSharing extends React.Component {
         user_ids: userIds,
         currentCollection
       };
-      CollectionActions.createSharedCollections(fullParams);
+      CollectionActions.createSelectedSharedCollections(fullParams);
     }
 
     if (this.props.collAction === 'Update') { CollectionActions.updateSharedCollection(params); }
@@ -231,7 +231,7 @@ export default class ManagingModalSharing extends React.Component {
         ...params,
         user_ids: userIds,
       };
-      CollectionActions.createSync(fullParams);
+      CollectionActions.createSharedCollections(fullParams);
     }
 
     this.props.onHide();

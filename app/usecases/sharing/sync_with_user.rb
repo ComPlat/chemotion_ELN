@@ -18,7 +18,7 @@ module Usecases
             user_id: acl_collection_attributes['user_id'],
             collection_id: acl_collection_attributes['collection_id']
           )
-          acl_col.update_attributes(
+          acl_col.update(
             permission_level: acl_collection_attributes['permission_level'],
             sample_detail_level: acl_collection_attributes['sample_detail_level'],
             reaction_detail_level: acl_collection_attributes['reaction_detail_level'],
