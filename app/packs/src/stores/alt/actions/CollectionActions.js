@@ -105,9 +105,9 @@ class CollectionActions {
     };
   }
 
-  createSharedCollections(params) {
+  createSelectedSharedCollections(params) {
     return (dispatch) => {
-      CollectionsFetcher.createSharedCollections(params)
+      CollectionsFetcher.createSelectedSharedCollections(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -149,9 +149,9 @@ class CollectionActions {
     };
   }
 
-  createSync(params) {
+  createSharedCollections(params) {
     return (dispatch) => {
-      CollectionsFetcher.createSync(params)
+      CollectionsFetcher.createSharedCollections(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
