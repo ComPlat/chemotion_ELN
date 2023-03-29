@@ -7,10 +7,10 @@ const filterSharedWithMeCollection = (sharedCollections) => {
 
   sharedCollections.forEach((collection) => {
     let children = [];
-    let label = `by ${collection.shared_by.initials}`;
+    let label = `by ${collection.shared_by?.initials}`;
     let user = {};
     let uid = -1;
-    let sharedCollections = collection.collection_acls.filter(acl => (acl.user.id === currentUser.id ));
+    let sharedCollections = collection?.collection_acls?.filter(acl => (acl.user.id === currentUser.id ));
     sharedCollections.forEach((acl) => {
       children.push(acl);
       user = acl.user;
@@ -34,7 +34,9 @@ const filterSharedWithMeCollection = (sharedCollections) => {
 }
 
 const filterMySharedCollection = (myCollections) => {
-  myCollections = myCollections.filter(c => (c.is_shared === true));
+  const sharedSelectedCollections = myCollections.filter(c => (c.is_shared === true && c.is_locked === false));
+  const sharedCollections = myCollections.filter(c => (c.collection_acls.length > 0 && c.is_locked === false));
+  myCollections = _.uniq(sharedSelectedCollections.concat(sharedCollections));
 
   let collections = [];
   myCollections.forEach((collection) => {
