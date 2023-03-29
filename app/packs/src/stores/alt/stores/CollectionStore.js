@@ -27,12 +27,12 @@ class CollectionStore {
       handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
       handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
       handleFetchSyncInCollectionRoots: CollectionActions.fetchSyncInCollectionRoots,
-      handleCreateSharedCollections: CollectionActions.createSharedCollections,
+      // handleCreateSharedCollectionAcls: CollectionActions.createSharedCollectionAcls,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
       handleCreateUnsharedCollection: [
         CollectionActions.createUnsharedCollection,
-        CollectionActions.createSync,
+        CollectionActions.createSharedCollections,
         CollectionActions.editSync,
         CollectionActions.deleteSync
       ],
@@ -43,6 +43,7 @@ class CollectionStore {
   }
 
   handleTakeOwnership() {
+    CollectionActions.fetchMyCollections();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
@@ -81,7 +82,8 @@ class CollectionStore {
   handleFetchSyncInCollectionRoots(results) {
     this.state.syncInRoots = results.syncCollections;
   }
-  handleCreateSharedCollections() {
+  handleCreateSharedCollectionAcls() {
+    CollectionActions.fetchMyCollections();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
@@ -98,7 +100,7 @@ class CollectionStore {
   }
 
   handleCreateUnsharedCollection(results) {
-    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchMyCollections();
   }
 
   handleUpdateCollectrionTree(visibleRootsIds) {
@@ -125,8 +127,9 @@ class CollectionStore {
 
     // if not loaded already fetch collection from backend
     if (!foundCollection) {
+      //TODO refactor endpoint
       // TODO maybe move to CollectionsFetcher
-      promise = fetch('/api/v1/collections/' + collectionId, {
+      promise = fetch('/api/v1/collection_acls/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
@@ -150,7 +153,7 @@ class CollectionStore {
     }).pop();
     let promise;
     if (!foundCollection) {
-      promise = fetch('/api/v1/temp_collections/shared/' + collectionId, {
+      promise = fetch('/api/v1/share_temp_collections/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
