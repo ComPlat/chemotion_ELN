@@ -20,10 +20,9 @@ module Entities
     )
 
     expose :children, using: 'Entities::CollectionEntity'
-    expose :collection_acls
+    expose :collection_acls, anonymize_with: []
     expose :shared_by, using: 'Entities::UserSimpleEntity'
     expose :shared_users, using: 'Entities::UserSimpleEntity'
-    expose :sync_collections_users, using: 'Entities::SyncCollectionsUserEntity'
 
     private
 

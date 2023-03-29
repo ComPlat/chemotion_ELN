@@ -170,10 +170,10 @@ export default class CollectionSubtree extends React.Component {
 
     const shared =
       (this.props.root.user_id == currentUser.id && this.props.root.collection_id) ? true : false;
-    const collectionId = shared ? root.collection_id : root.id;
+    let collectionId = root.collection_id ? root.collection_id : root.id;
     if (collectionId === undefined) return;
     const url = (shared)
-      ? `/temp_collections/shared/${collectionId}/${this.urlForCurrentElement()}`
+      ? `/share_temp_collections/${collectionId}/${this.urlForCurrentElement()}`
       : `/temp_collections/${collectionId}/${this.urlForCurrentElement()}`;
 
     Aviator.navigate(url, { silent: true });

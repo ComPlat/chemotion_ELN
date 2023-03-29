@@ -73,6 +73,9 @@ const handleNotification = (nots, act, needCallback = true) => {
         case 'CollectionActions.fetchRemoteCollectionRoots':
           CollectionActions.fetchRemoteCollectionRoots();
           break;
+        case 'CollectionActions.fetchMyCollections':
+          CollectionActions.fetchMyCollections();
+          break;
         case 'CollectionActions.fetchSyncInCollectionRoots':
           CollectionActions.fetchSyncInCollectionRoots();
           break;
@@ -86,6 +89,7 @@ const handleNotification = (nots, act, needCallback = true) => {
           ElementActions.refreshComputedProp(n.content.cprop);
           break;
         case 'RefreshChemotionCollection':
+          CollectionActions.fetchMyCollections();
           CollectionActions.fetchUnsharedCollectionRoots();
           break;
         case 'CollectionActions.fetchUnsharedCollectionRoots':

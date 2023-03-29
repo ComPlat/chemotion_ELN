@@ -14,7 +14,7 @@ import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import SampleTaskNavigationElement from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskNavigationElement';
 import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskInbox';
-import { filterMySharedCollection, filterSharedWithMeCollection } from 'src/apps/mydb/collections/CollectionTreeStructure'
+import { filterMySharedCollection, filterSharedWithMeCollection } from './CollectionTreeStructure'
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
@@ -30,6 +30,7 @@ export default class CollectionTree extends React.Component {
 
     this.state = {
       myCollections: collecState.myCollections,
+      mySharedCollections: collecState.mySharedCollections,
       sharedCollections: collecState.sharedCollections,
       unsharedRoots: collecState.unsharedRoots,
       sharedRoots: collecState.sharedRoots,
@@ -191,10 +192,9 @@ export default class CollectionTree extends React.Component {
 
   sharedByMeSubtrees() {
     let myCollections = this.state.myCollections;
-    const mySharedCollections = myCollections.filter(c => (c.is_shared === true && c.is_locked === false ));
 
     let { sharedToCollectionVisible } = this.state;
-    let collections = filterMySharedCollection(mySharedCollections);
+    let collections = filterMySharedCollection(myCollections);
     let sharedLabelledRoots = {};
     sharedLabelledRoots = collections.map(e => {
       return update(e, {

@@ -182,12 +182,12 @@ module Chemotion
 
       get do
         own_collection = false
-        scope = Sample.none
+        sample_scope = Sample.none
         if params[:is_shared]
           begin
             own_collection = false
             c = current_user.acl_collection_by_id(params[:collection_id])
-            scope = c.samples
+            sample_scope = c.samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end

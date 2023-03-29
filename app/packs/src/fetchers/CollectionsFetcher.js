@@ -50,7 +50,7 @@ export default class CollectionsFetcher {
   }
 
   static fetchMyRoots() {
-    let promise = fetch('/api/v1/temp_collections/all', {
+    let promise = fetch('/api/v1/temp_collections', {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -65,67 +65,7 @@ export default class CollectionsFetcher {
   }
 
   static fetchSharedWithMeRoots() {
-    let promise = fetch('/api/v1/temp_collections/shared', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static fetchMyRoots() {
-    let promise = fetch('/api/v1/temp_collections/all', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static fetchSharedWithMeRoots() {
-    let promise = fetch('/api/v1/temp_collections/shared', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static fetchMyRoots() {
-    let promise = fetch('/api/v1/temp_collections/all', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static fetchSharedWithMeRoots() {
-    let promise = fetch('/api/v1/temp_collections/shared', {
+    let promise = fetch('/api/v1/share_temp_collections', {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -183,8 +123,8 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static createSharedCollections(params) {
-    return fetch('/api/v1/temp_collections/shared/', {
+  static createSelectedSharedCollections(params) {
+    return fetch('/api/v1/share_temp_collections/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -195,8 +135,8 @@ export default class CollectionsFetcher {
     });
   }
 
-  static createSync(params) {
-    return fetch('/api/v1/temp_collections/synced/', {
+  static createSharedCollections(params) {
+    return fetch('/api/v1/share_temp_collections/all/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -244,7 +184,7 @@ export default class CollectionsFetcher {
   }
 
   static bulkUpdateUnsharedCollections(params) {
-    let promise = fetch('/api/v1/collections', {
+    let promise = fetch('/api/v1/temp_collections', {
       credentials: 'same-origin',
       method: 'PATCH',
       headers: {
