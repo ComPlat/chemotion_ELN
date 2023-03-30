@@ -305,7 +305,7 @@ module Chemotion
       get 'image/:attachment_id' do
         data = Usecases::Attachments::LoadImage.execute!(@attachment, params[:annotated])
         content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
+        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
         data

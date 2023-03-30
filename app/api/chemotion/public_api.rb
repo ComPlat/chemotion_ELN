@@ -78,7 +78,7 @@ module Chemotion
           @attachment = Attachment.find_by(id: att_id)
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-          header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
+          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
           env['api.format'] = :binary
           @attachment.read_file
         end
