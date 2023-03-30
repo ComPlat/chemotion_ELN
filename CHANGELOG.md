@@ -8,7 +8,7 @@
   * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239)
 
 * Fixes
-
+  * content-disposition header preventing fetching image properly [#1250](https://github.com/ComPlat/chemotion_ELN/pull/1250)
 
 
 ## [v1.5.1]
