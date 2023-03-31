@@ -281,18 +281,63 @@ class Sample < ApplicationRecord
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_chemical_entry_for_subsample(sample_id, subsample_id)
-    get_sample_as_chemical = Chemical.find_by(sample_id: sample_id) || Chemical.new
-    chemical_data = get_sample_as_chemical.chemical_data
-    attributes = {
-      chemical_data: chemical_data,
-      sample_id: subsample_id,
-    }
-    chemical = Chemical.new(attributes)
-    chemical.save!
+  def extract_product_info(chemical_data, ssdpath, chemical_data_output)
+    return unless ssdpath.any? { |s| s.key?('alfa_link') }
+
+    alfa_product_info = chemical_data[0]['alfaProductInfo']
+    chemical_data_output['alfaProductInfo'] = alfa_product_info if alfa_product_info
+
+    return unless ssdpath.any? { |s| s.key?('merck_link') }
+
+    merck_product_info = chemical_data[0]['merckProductInfo']
+    chemical_data_output['merckProductInfo'] = merck_product_info if merck_product_info
   end
 
-  def create_subsample user, collection_ids, copy_ea = false, as_chemical_entry = true
+  def chemical_data_for_entry(chemical_data)
+    if chemical_data[0] && chemical_data[0]['ssdPath']
+      ssdpath = chemical_data[0]['ssdPath']
+      safety_phrases = chemical_data[0]['safetyPhrases'] || []
+
+      chemical_data_output = {
+        'ssdPath' => ssdpath,
+      }
+      chemical_data_output['safetyPhrases'] = safety_phrases unless safety_phrases.empty?
+
+      # Extract alfaProductInfo or merckProductInfo based on ssdpath
+      extract_product_info(chemical_data, ssdpath, chemical_data_output)
+      [chemical_data_output]
+    else
+      []
+    end
+  end
+
+  def create_chemical_entry_for_subsample(sample_id, subsample_id, type)
+    chemical_entry = Chemical.find_by(sample_id: sample_id) || Chemical.new
+    chemical_data = chemical_entry.chemical_data || []
+
+    case type
+    when 'sample'
+      attributes = {
+        chemical_data: chemical_data,
+        sample_id: subsample_id,
+      }
+      chemical = Chemical.new(attributes)
+      chemical.save!
+    # create chemical entry for subsample in a reaction
+    when 'reaction'
+      update_chemical_data = chemical_data_for_entry(chemical_data)
+      unless update_chemical_data.empty?
+        attributes = {
+          chemical_data: update_chemical_data,
+          sample_id: subsample_id,
+        }
+        chemical = Chemical.new(attributes)
+        chemical.save!
+      end
+    end
+  end
+
+  def create_subsample user, collection_ids, copy_ea = false, type = nil 
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
@@ -324,8 +369,7 @@ class Sample < ApplicationRecord
     subsample.container = Container.create_root_container
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
-
-    create_chemical_entry_for_subsample(self.id, subsample.id) if as_chemical_entry
+    create_chemical_entry_for_subsample(self.id, subsample.id, type) unless type.nil?
     subsample
   end
 
