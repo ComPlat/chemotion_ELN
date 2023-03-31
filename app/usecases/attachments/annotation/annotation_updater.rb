@@ -45,7 +45,7 @@ module Usecases
         end
 
         def update_thumbnail(attachment, svg_string)
-          location_of_thumbnail = attachment.attachment_attacher.derivatives[:thumbnail].url
+          location_of_thumbnail = attachment.attachment(:thumbnail).url
           tmp_thumbnail_location = "#{location_of_thumbnail.split('.')[0]}_thumb.svg"
           xml = replace_link_with_base64(attachment.attachment.url, svg_string, attachment.attachment.mime_type)
           File.write(tmp_thumbnail_location, xml.to_xml)
