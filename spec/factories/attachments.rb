@@ -45,6 +45,11 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.csv') }
     end
 
+    trait :with_nmrium_file do
+      filename { 'upload.nmrium' }
+      file_path { Rails.root.join('spec/fixtures/upload.nmrium') }
+    end
+
     trait :with_tif_file do
       filename { 'upload.tif' }
       file_path { Rails.root.join('spec/fixtures/upload.tif') }
