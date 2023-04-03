@@ -53,7 +53,6 @@ class Report < ApplicationRecord
   after_destroy :delete_job
 
   def create_docx
-    template = self.template
     if ReportTemplate.where(id: report_templates_id).present?
       report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
       template = report_template.report_type
