@@ -686,6 +686,15 @@ RSpec.describe Attachment, type: :model do
           expect(new_attachment.csv?).to be true
         end
       end
+
+      context 'with ext = nmrium' do
+        let(:attachment) { create(:attachment, :with_nmrium_file) }
+        let(:ext) { 'nmrium' }
+
+        it 'sets the new attachment\'s aasm_state to :nmrium' do
+          expect(new_attachment.nmrium?).to be true
+        end
+      end
     end
   end
 
@@ -718,6 +727,14 @@ RSpec.describe Attachment, type: :model do
       expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'csv')
 
       attachment.generate_csv_att('somethingThatGetsPassed', 'foo')
+    end
+  end
+
+  describe '#generate_nmrium_att' do
+    it 'calls #generate_att with ext = nmrium and all other parameters verbatim' do
+      expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'nmrium')
+
+      attachment.generate_nmrium_att('somethingThatGetsPassed', 'foo')
     end
   end
 
