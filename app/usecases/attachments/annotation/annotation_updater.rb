@@ -38,7 +38,7 @@ module Usecases
         end
 
         def save_svg_string_to_file_system(sanitized_svg_string, attachment)
-          location = attachment.attachment_attacher.derivatives[:annotation].url
+          location = attachment.attachment(:annotation).url
           f = File.new(location, 'w')
           f.write(sanitized_svg_string)
           f.close
