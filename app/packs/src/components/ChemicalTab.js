@@ -19,19 +19,17 @@ export default class ChemicalTab extends React.Component {
     super(props);
     this.state = {
       chemical: undefined,
-      anti: false,
       safetySheets: [],
       displayWell: false,
       checkSaveIconThermofischer: false,
       checkSaveIconMerck: false,
       vendorValue: 'All',
-      vendorSafetyPhrasesValue: '',
-      vendorChemPropertiesValue: '',
       queryOption: 'CAS',
       safetySheetLanguage: 'en',
       safetyPhrases: '',
       warningMessage: '',
-      loading: false,
+      loadingQuerySafetySheets: false,
+      loadingSaveSafetySheets: false,
       loadChemicalProperties: false,
       openInventoryInformationTab: false,
       openSafetyTab: false,
@@ -50,55 +48,24 @@ export default class ChemicalTab extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { saveInventory, parent, pendingToSave } = this.props;
+    const { saveInventory, parent } = this.props;
     const { chemical } = this.state;
 
     if (prevState.chemical !== chemical) {
       this.updateDisplayWell();
     }
 
-    // if (chemical && prevState.chemical) {
-    //   console.log(prevState.chemical.chemical_data === chemical.chemical_data);
-    //   // console.log(chemical.chemical_data);
-    //   console.log('prove of concept');
-    // }
-
-    // console.log(prevProps);
-    // console.log(this.props);
-
-    // if (prevProps && prevState.chemical) {
-    //   console.log(prevState.chemical.chemical_data === chemical.chemical_data);
-    //   // console.log(chemical.chemical_data);
-    //   console.log('prove of concept');
-    // }
-
     if (saveInventory === true) {
-      console.log('say hello to mama');
       this.handleSubmitSave();
-      console.log(saveInventory);
-    }
-
-    if (chemical) {
-      if (chemical.changed === true && pendingToSave === false) {
-        console.log(prevState.chemical);
-        // console.log(chemical._chemical_data[0] === prevState.chemical._chemical_data[0]);
-        // console.log(prevState.chemical._chemical_data[0]);
-        // console.log(chemical._chemical_data[0]);
-        console.log('maybe');
-        console.log(chemical);
-        this.inventoryPendingToSave();
-      }
     }
   }
 
   handleFieldChanged(parameter, value) {
-    console.log(`handleFieldChanged: ${JSON.stringify(parameter)} = ${value}`);
     const { chemical } = this.state;
-    console.log(chemical);
     if (chemical) {
       chemical.buildChemical(parameter, value);
     }
-    this.setState({ chemical});
+    this.setState({ chemical });
     console.log(chemical);
   }
 
@@ -109,7 +76,7 @@ export default class ChemicalTab extends React.Component {
       return;
     }
     const chemicalData = chemical._chemical_data || null;
-    const cas = chemical._cas || null;
+    const cas = sample.xref.cas.value || '';
     const params = {
       chemical_data: chemicalData,
       cas,
@@ -136,40 +103,32 @@ export default class ChemicalTab extends React.Component {
       });
     }
     parent.setState({ saveInventoryAction: false });
-    console.log(chemical);
   }
 
   handleRemove(index, document) {
     const { safetySheets, chemical } = this.state;
     const parameters = chemical._chemical_data[0];
-    let sdsIndex;
     if (safetySheets.length !== 0) {
       safetySheets.splice(index, 1);
       this.setState({ safetySheets });
     }
     if (chemical._chemical_data[0].ssdPath.length > 0) {
       const { ssdPath } = chemical._chemical_data[0];
-      if (ssdPath[0]?.alfa_link && document.alfa_link) {
-        const alfaIndex = ssdPath.findIndex((element) => element.alfa_link);
-        sdsIndex = ssdPath[alfaIndex].alfa_link;
-        console.log(sdsIndex);
+
+      const alfaIndex = ssdPath.findIndex((element) => element.alfa_link);
+      const merckIndex = ssdPath.findIndex((element) => element.merck_link);
+      if (alfaIndex !== -1 && document.alfa_link) {
         delete parameters.alfaProductInfo;
-        chemical._chemical_data[0].ssdPath.splice(sdsIndex, 1);
-      } else if (ssdPath[0]?.merck_link && document.merck_link) {
-        const merckIndex = ssdPath.findIndex((element) => element.merck_link);
-        sdsIndex = ssdPath[merckIndex].merck_link;
-        console.log(sdsIndex);
+        chemical._chemical_data[0].ssdPath.splice(alfaIndex, 1);
+      } else if (merckIndex !== -1 && document.merck_link) {
         delete parameters.merckProductInfo;
-        chemical._chemical_data[0].ssdPath.splice(sdsIndex, 1);
+        chemical._chemical_data[0].ssdPath.splice(merckIndex, 1);
       }
-      console.log(sdsIndex);
-      console.log(chemical);
       this.setState({ chemical });
       this.handleSubmitSave();
     }
     this.setState({ warningMessage: '' });
     this.updateCheckMark(document);
-    // console.log('here', chemical);
   }
 
   handleCheckMark(vendor) {
@@ -184,14 +143,6 @@ export default class ChemicalTab extends React.Component {
     this.setState({ vendorValue: value });
   }
 
-  handleVendorSafetyOption(value) {
-    this.setState({ vendorSafetyPhrasesValue: value });
-  }
-
-  handleVendorChemPropOption(value) {
-    this.setState({ vendorChemPropertiesValue: value });
-  }
-
   handleQueryOption(value) {
     this.setState({ queryOption: value });
   }
@@ -200,15 +151,27 @@ export default class ChemicalTab extends React.Component {
     this.setState({ safetySheetLanguage: value });
   }
 
+  handlePropertiesModal(vendor) {
+    this.setState({
+      viewChemicalPropertiesModal: true,
+      viewModalForVendor: vendor
+    });
+  }
+
+  // eslint-disable-next-line react/sort-comp
+  handleMetricsChange(parameter, newValue, newUnit) {
+    const paramObj = { unit: newUnit, value: newValue };
+    this.handleFieldChanged(parameter, paramObj);
+  }
+
   querySafetySheets = () => {
     const { sample } = this.props;
-    this.setState({ loading: true });
+    this.setState({ loadingQuerySafetySheets: true });
     const sampleName = sample.showedName();
     const moleculeId = sample.molecule_name_hash ? sample.molecule_name_hash.mid : null;
     const {
       chemical, vendorValue, queryOption, safetySheetLanguage
     } = this.state;
-    console.log(chemical);
     if (chemical) {
       chemical.buildChemical('sample_name', sampleName);
       chemical.buildChemical('molecule_id', moleculeId);
@@ -218,8 +181,7 @@ export default class ChemicalTab extends React.Component {
     if (queryOption === 'Common Name') {
       searchStr = sample.molecule_name_hash.label;
     } else {
-      console.log(sample);
-      const sampleCas = sample.xref.cas ? sample.xref.cas : '';
+      const sampleCas = sample.xref.cas ? sample.xref.cas.value : '';
       searchStr = sampleCas;
     }
 
@@ -234,11 +196,10 @@ export default class ChemicalTab extends React.Component {
 
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
-      console.log(`result: ${JSON.stringify(obj)}`);
       safetySheets.splice(0, 1);
       this.setState({ safetySheets });
       this.setState({ safetySheets: Object.values(obj) });
-      this.setState({ loading: false });
+      this.setState({ loadingQuerySafetySheets: false });
       this.setState({ displayWell: true });
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -263,20 +224,16 @@ export default class ChemicalTab extends React.Component {
       precautionaryPhrases.push(st);
     }
 
-    const style = {
-      fontSize: '1.2em', fontWeight: 'bold', marginTop: '15px', marginBottom: '15px'
-    };
-
     const pictogramsArray = str.pictograms.map((i) => (i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
 
     return (
       <div>
-        <p style={style}>Pictograms: </p>
+        <p className="safety-phrases">Pictograms: </p>
         {(str.pictograms !== undefined || str.pictograms.length !== 0)
           ? pictogramsArray : <p>Could not find pictograms</p>}
-        <p style={style}>Hazard Statements: </p>
+        <p className="safety-phrases">Hazard Statements: </p>
         {HazardPhrases}
-        <p style={style}>Precautionary Statements: </p>
+        <p className="safety-phrases">Precautionary Statements: </p>
         {precautionaryPhrases}
       </div>
     );
@@ -290,7 +247,6 @@ export default class ChemicalTab extends React.Component {
     const warningMessage = 'Please fetch and save corresponding safety data sheet first';
     this.setState({ warningMessage: '' });
     ChemicalFetcher.safetyPhrases(queryParams).then((result) => {
-      console.log(result);
       if (result === warningMessage || result === 204) {
         this.setState({ warningMessage });
       } else if (result === 'Could not find H and P phrases') {
@@ -316,17 +272,12 @@ export default class ChemicalTab extends React.Component {
       productLink = chemical._chemical_data[0].merckProductInfo ? chemical._chemical_data[0].merckProductInfo.productLink : '';
     }
     const warningMessage = 'Please fetch and save corresponding safety data sheet first';
-    console.log(vendor);
-    console.log(chemical._chemical_data[0].alfaProductInfo);
 
     ChemicalFetcher.chemicalProperties(productLink).then((result) => {
       this.setState({ loadChemicalProperties: false });
       if (result === 'Could not find additional chemical properties' || result === null) {
         this.setState({ warningMessage });
       } else {
-        // Object.entries(result).forEach(([key, value]) => {
-        //   this.handleFieldChanged(key, value);
-        // });
         if (chemical && vendor === 'thermofischer') {
           chemical._chemical_data[0].alfaProductInfo.properties = result;
         } else if (chemical && vendor === 'merck') {
@@ -338,6 +289,17 @@ export default class ChemicalTab extends React.Component {
       console.log(errorMessage);
     });
   };
+
+  querySafetyPhrases = (vendor) => (
+    <div>
+      <Button
+        id="safetyPhrases-btn"
+        onClick={() => this.fetchSafetyPhrases(vendor)}
+      >
+        fetch Safety Phrases
+      </Button>
+    </div>
+  );
 
   fetchChemical(sample) {
     if (sample === undefined || sample.is_new) {
@@ -351,69 +313,6 @@ export default class ChemicalTab extends React.Component {
       console.log(errorMessage);
     });
   }
-
-  // mapToSampleProperties(vendor) {
-  //   const { sample, parent } = this.props;
-  //   const { chemical } = this.state;
-  //   const chemicalData = chemical?._chemical_data[0] || [];
-  //   let properties = {};
-  //   if (vendor === 'thermofischer') {
-  //     properties = chemicalData.alfaProductInfo.properties;
-  //     console.log(properties);
-  //   } else if (vendor === 'merck') {
-  //     properties = chemicalData.merckProductInfo.properties;
-  //   }
-  //   if (properties.boiling_point) {
-  //     const boilingPoints = properties.boiling_point.replace(/°C?/g, '').trim().split('-');
-  //     const lowerBound = boilingPoints[0];
-  //     const upperBound = boilingPoints.length === 2 ? boilingPoints[1] : Number.POSITIVE_INFINITY;
-  //     sample.updateRange('boiling_point', lowerBound, upperBound);
-  //   }
-
-  //   if (properties.melting_point) {
-  //     const MeltingPoints = properties.melting_point.replace(/°C?/g, '').trim().split('-');
-  //     const lowerBound = MeltingPoints[0];
-  //     const upperBound = MeltingPoints.length === 2 ? MeltingPoints[1] : Number.POSITIVE_INFINITY;
-  //     sample.updateRange('melting_point', lowerBound, upperBound);
-  //   }
-
-  //   if (properties.density) {
-  //     const densityNumber = properties.density.match(/[0-9.]+/g);
-  //     sample.density = densityNumber[0];
-  //   }
-  //   console.log(sample);
-  //   console.log(properties);
-
-  //   if (properties.flash_point) {
-  //     const { flash_point } = properties;
-  //     sample.xref.flash_point = flash_point;
-  //   }
-
-  //   if (properties.form) {
-  //     console.log('I was here');
-  //     const { form } = properties;
-  //     console.log(sample);
-  //     sample.xref.form = form;
-  //     console.log(sample);
-  //   }
-
-  //   if (properties.color) {
-  //     const { color } = properties;
-  //     sample.xref.color = color;
-  //   }
-
-  //   if (properties.refractive_index) {
-  //     const { refractive_index } = properties;
-  //     sample.xref.refractive_index = refractive_index;
-  //   }
-  //   if (properties.solubility) {
-  //     const { solubility } = properties;
-  //     sample.xref.solubility = solubility;
-  //   }
-  //   parent.setState({ sample });
-  //   console.log(parent);
-  //   ElementActions.updateSample(new Sample(sample), false);
-  // }
 
   /* eslint-disable prefer-destructuring */
   mapToSampleProperties(vendor) {
@@ -440,8 +339,6 @@ export default class ChemicalTab extends React.Component {
     updateSampleProperty('boiling_point', properties.boiling_point);
     updateSampleProperty('melting_point', properties.melting_point);
 
-    console.log(sample.xref.flash_point);
-
     sample.xref.flash_point = {
       unit: '°C',
       value: properties.flash_point
@@ -452,7 +349,6 @@ export default class ChemicalTab extends React.Component {
       sample.density = densityNumber[0];
     }
 
-    // sample.xref.flash_point = properties.flash_point || sample.xref.flash_point;
     sample.xref.form = properties.form || sample.xref.form;
     sample.xref.color = properties.color || sample.xref.color;
     sample.xref.refractive_index = properties.refractive_index || sample.xref.refractive_index;
@@ -474,7 +370,7 @@ export default class ChemicalTab extends React.Component {
     return (
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
-        <InputGroup style={{ width: '100%' }}>
+        <InputGroup id="chemical-status">
           <Select.Creatable
             name="chemicalStatus"
             multi={false}
@@ -489,17 +385,13 @@ export default class ChemicalTab extends React.Component {
   }
 
   textInput(data, label, parameter) {
-    const parametersArr = ['important_notes', 'disposal_info', 'vendor', 'order_number', 'price'];
-    // const bsSize = !parametersArr.includes(parameter) ? 'small' : null;
     const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
     && parameter !== 'solubility' ? 'input' : 'textarea';
-    // const noBoldLabel = { fontWeight: 'normal' };
     let value;
     if (parameter !== 'cas') {
       value = data !== undefined ? data[parameter] : '';
     } else {
       value = data || '';
-      console.log(`data: ${value}`);
     }
     let conditionalOverlay;
     if (parameter === 'date') {
@@ -561,26 +453,6 @@ export default class ChemicalTab extends React.Component {
           <i className="fa fa-clipboard" />
         </Button>
       </OverlayTrigger>
-      // <InputGroup className="sample-molecule-identifier">
-      //   {/* <FormGroup bsSize="small">
-      //     <ControlLabel>{label}</ControlLabel>
-      //     <FormControl
-      //       id={`textInput_${label}`}
-      //       componentClass="textarea"
-      //       type="text"
-      //       value={value}
-      //       onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
-      //       // rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
-      //     />
-      //   </FormGroup> */}
-      //   <InputGroup.Button>
-      //     <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-      //       <Button active className="clipboardBtn" data-clipboard-text={value}>
-      //         <i className="fa fa-clipboard" />
-      //       </Button>
-      //     </OverlayTrigger>
-      //   </InputGroup.Button>
-      // </InputGroup>
     );
   }
 
@@ -591,11 +463,9 @@ export default class ChemicalTab extends React.Component {
     const modifyStr = string.charAt(0).toUpperCase() + string.slice(1);
     const ParentLabelCondition = ['host_building', 'current_building', 'host_group', 'current_group'];
     const ParentLabel = ParentLabelCondition.includes(parameter)
-      ? <ControlLabel>{modifyStr}</ControlLabel> : <ControlLabel style={{ paddingTop: '15px' }}> </ControlLabel>;
+      ? <ControlLabel>{modifyStr}</ControlLabel> : <ControlLabel className="location-input"> </ControlLabel>;
     const paramsObj = {};
     paramsObj[domain] = parameter;
-    // const obj = data.parameter ? data.parameter[domain] : paramsObj;
-    // console.log(data.parameter);
 
     return (
       <div>
@@ -614,47 +484,6 @@ export default class ChemicalTab extends React.Component {
         </InputGroup>
       </div>
     );
-  }
-
-  textUnitInput(field, label, parameter) {
-    const noBoldLabel = { fontWeight: 'normal' };
-    let unit;
-    let value;
-    if (field && field[parameter]) {
-      if ((parameter === 'melting_point' || parameter === 'boiling_point') && (field[parameter].includes('°C') || field[parameter].includes('°'))) {
-        value = field[parameter] !== undefined ? field[parameter].replace('°C', '').replace('°', '') : '';
-        unit = '°C';
-      } else if ((parameter === 'melting_point' || parameter === 'boiling_point') && field[parameter].includes('°F') && !field[parameter].includes('°C')) {
-        value = field[parameter] !== undefined ? field[parameter].replace('°F', '') : '';
-        unit = '°F';
-      } else if (parameter === 'density') {
-        const densityArr = field[parameter] !== undefined ? field[parameter].match(/[0-9.]+/g) : [''];
-        value = densityArr[0];
-        unit = 'g/mL';
-      }
-    }
-
-    return (
-      <FormGroup bsSize="small">
-        <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
-        <InputGroup>
-          <FormControl
-            type="text"
-            value={value}
-            onChange={(e) => this.handleFieldChanged(parameter, e.target.value)}
-          />
-          <InputGroup.Addon>{unit}</InputGroup.Addon>
-        </InputGroup>
-      </FormGroup>
-    );
-  }
-
-  handleMetricsChange(parameter, newValue, newUnit) {
-    console.log(`newUnit ${newUnit}`);
-    console.log(`newValue ${newValue}`);
-    const paramObj = { unit: newUnit, value: newValue };
-    console.log(paramObj);
-    this.handleFieldChanged(parameter, paramObj);
   }
 
   numInputWithoutTable(data, label, parameter) {
@@ -677,57 +506,6 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  // onCasSelectOpen(e) {
-  //   const { sample } = this.props;
-  // }
-
-  // onChangeCas = (e) => {
-  //   // console.log(e);
-  //   const value = e ? e.value : '';
-  //   this.handleFieldChanged('cas', value);
-  // };
-
-  // casNumber(data, label) {
-  //   const { chemical } = this.state;
-  //   const { sample } = this.props;
-  //   const { molecule } = sample;
-  //   const val = data !== undefined ? data : 'hola';
-  //   const noBoldLabel = { fontWeight: 'normal' };
-  //   // const onOpen = (e) => this.onCasSelectOpen(e);
-  //   let statusOptions = [];
-
-  //   if (molecule && molecule.cas) {
-  //     const fetchCas = molecule.cas.map((c) => ({ label: c, value: c }));
-  //     statusOptions = fetchCas;
-  //   }
-
-  //   if (chemical) {
-  //     const cas = chemical._cas ? chemical._cas : '';
-  //     const casObject = [
-  //       { label: cas, value: cas }
-  //     ];
-  //     const valuesArr = statusOptions.map(({ value }) => value) || [];
-  //     statusOptions = cas !== '' && !valuesArr.includes(cas) ? statusOptions.concat(casObject) : statusOptions;
-  //   }
-  //   const onChange = (e) => this.onChangeCas(e);
-  //   return (
-  //     <FormGroup>
-  //       <ControlLabel style={noBoldLabel}>{label}</ControlLabel>
-  //       <InputGroup className="cas-number" style={{ width: '100%', paddingRight: '10px' }}>
-  //         <Select.Creatable
-  //           name="cas"
-  //           multi={false}
-  //           options={statusOptions}
-  //           onChange={onChange}
-  //           // onOpen={onOpen}
-  //           value={val || ''}
-  //           clearable
-  //         />
-  //       </InputGroup>
-  //     </FormGroup>
-  //   );
-  // }
-
   updateCheckMark(document) {
     if (document.alfa_link) {
       this.setState({ checkSaveIconThermofischer: false });
@@ -743,13 +521,13 @@ export default class ChemicalTab extends React.Component {
       checkMark = (!checkSaveIconThermofischer && document.alfa_product_number !== undefined)
         ? null : (
           <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconThermo">Saved</Tooltip>}>
-            <i className="fa fa-check-circle" style={{ paddingLeft: '10px', color: 'green' }} />
+            <i className="fa fa-check-circle" />
           </OverlayTrigger>
         );
     } else if (document.merck_link) {
       checkMark = (!checkSaveIconMerck && document.merck_product_number !== undefined) ? null : (
         <OverlayTrigger placement="top" overlay={<Tooltip id="saveCheckIconMerck">Saved</Tooltip>}>
-          <i className="fa fa-check-circle" style={{ paddingLeft: '7px', color: 'green' }} />
+          <i className="fa fa-check-circle" />
         </OverlayTrigger>
       );
     }
@@ -776,13 +554,15 @@ export default class ChemicalTab extends React.Component {
       vendorProduct = 'alfaProductInfo';
     } else if (productInfo.vendor === 'Merck') {
       vendorProduct = 'merckProductInfo';
+      this.setState({ loadingSaveSafetySheets: true });
     }
-    console.log('before', chemical);
+    const cas = sample.xref.cas.value || '';
     // update chemical data before saving it in the database
     this.handleFieldChanged(vendorProduct, productInfo);
     const params = {
-      chemical_data: chemical._chemical_data,
       sample_id: sample.id,
+      cas,
+      chemical_data: chemical._chemical_data,
       vendor_product: vendorProduct
     };
     ChemicalFetcher.saveSafetySheets(params).then((result) => {
@@ -815,10 +595,10 @@ export default class ChemicalTab extends React.Component {
             }
           }
         }
-        console.log(chemical);
+        chemical.isNew = false;
         this.setState({ chemical });
-        // this.handleFieldChanged('link', productInfo.productLink);
         this.handleSubmitSave();
+        this.setState({ loadingSaveSafetySheets: false });
         this.handleCheckMark(productInfo.vendor);
       }
     }).catch((errorMessage) => {
@@ -826,46 +606,11 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
-  /* eslint-disable camelcase */
-  // saveSafetySheetsButton(sdsInfo, index) {
-  //   const { checkSaveIconMerck, checkSaveIconThermofischer, chemical } = this.state;
-  //   const ssdPath = (chemical?._chemical_data?.[0]?.ssdPath) || [];
-  //   const {
-  //     alfa_link, alfa_product_number, alfa_product_link, merck_link, merck_product_number,
-  //     merck_product_link
-  //   } = sdsInfo;
-
-  //   const sdsLink = alfa_link || merck_link;
-  //   const productNumber = alfa_product_number || merck_product_number;
-  //   const productLink = alfa_product_link || merck_product_link;
-  //   const vendor = sdsLink === alfa_link ? 'Thermofisher' : 'Merck';
-
-  //   const checkMark = sdsLink === sdsInfo.alfa_link
-  //     ? checkSaveIconThermofischer || Boolean(ssdPath?.[index]?.alfa_link)
-  //     : checkSaveIconMerck || Boolean(ssdPath?.[index]?.merck_link);
-
-  //   const productInfo = {
-  //     vendor,
-  //     sdsLink,
-  //     productNumber,
-  //     productLink,
-  //   };
-  //   console.log(productInfo);
-
-  //   return (
-  //     <Button
-  //       bsSize="xsmall"
-  //       bsStyle="warning"
-  //       disabled={checkMark}
-  //       onClick={() => this.saveSdsFile(productInfo)}
-  //     >
-  //       <i className="fa fa-save" />
-  //     </Button>
-  //   );
-  // }
-
   saveSafetySheetsButton(sdsInfo, index) {
-    const { checkSaveIconMerck, checkSaveIconThermofischer, chemical } = this.state;
+    const {
+      checkSaveIconMerck, checkSaveIconThermofischer,
+      loadingSaveSafetySheets, chemical
+    } = this.state;
     let vendor;
     let sdsLink;
     let productNumber;
@@ -903,19 +648,13 @@ export default class ChemicalTab extends React.Component {
         disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
       >
-        <i className="fa fa-save" />
-      </Button>
-    );
-  }
-
-  saveParameters() {
-    return (
-      <Button
-        id="submit-sample-btn"
-        bsStyle="warning"
-        onClick={() => this.handleSubmitSave()}
-      >
-        Save
+        {loadingSaveSafetySheets === true && sdsInfo.merck_link !== undefined ?
+          (
+            <Spinner animation="border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
+          )
+          : <i className="fa fa-save" />}
       </Button>
     );
   }
@@ -930,8 +669,8 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <FormGroup style={{ width: '100%' }}>
-        <ControlLabel style={{ paddingRight: '100px' }}>Vendor</ControlLabel>
+      <FormGroup>
+        <ControlLabel>Vendor</ControlLabel>
         <Select
           name="chemicalVendor"
           clearable={false}
@@ -952,8 +691,8 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="ssd-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
-        <FormGroup style={{ width: '100%' }}>
-          <ControlLabel style={{ paddingRight: '25px' }}>Query SDS using</ControlLabel>
+        <FormGroup>
+          <ControlLabel>Query SDS using</ControlLabel>
           <Select
             name="queryOption"
             clearable={false}
@@ -971,13 +710,13 @@ export default class ChemicalTab extends React.Component {
     const { safetySheetLanguage } = this.state;
     const languageOptions = [
       { label: 'English', value: 'en' },
-      { label: 'Deustch', value: 'de' },
+      { label: 'Deutsch', value: 'de' },
       { label: 'French', value: 'fr' },
     ];
 
     return (
-      <FormGroup style={{ width: '100%' }}>
-        <ControlLabel style={{ paddingRight: '25px' }}>Choose Language of SDS</ControlLabel>
+      <FormGroup>
+        <ControlLabel>Choose Language of SDS</ControlLabel>
         <Select
           name="languageOption"
           clearable={false}
@@ -989,97 +728,26 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  // extractProductLink(document) {
-
-  // }
-
-  renderWarningMessage() {
-    const { warningMessage } = this.state;
-    return (
-      <div className="text-danger" style={{ width: '100%', paddingTop: '10px' }}>
-        { warningMessage !== '' ? warningMessage : null }
-      </div>
-    );
-  }
-
-  // renderSafetySheets = () => {
-  //   const { safetySheets, chemical, vendorValue, displayWell, safetyPhrases, warningMessage } = this.state;
-  //   let sdsStatus;
-  //   let savedSds;
-  //   if (chemical) {
-  //     if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-  //       savedSds = chemical._chemical_data[0].ssdPath;
-  //       sdsStatus = safetySheets.length !== 0 ? safetySheets : savedSds;
-  //     }
-  //   }
-  //   return (
-  //     (sdsStatus === undefined || sdsStatus.length === 0) ? null
-  //       : (
-  //         <ListGroup>
-  //           {sdsStatus.map((document, index) => (
-  //             document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
-  //               <div className="safety-sheets-form" style={{ width: '100%', marginTop: '15px' }}>
-  //                 <ListGroupItem key="safetySheetsFiles">
-  //                   <div style={{ width: '100%', marginTop: '10px', marginBottom: '10px' }}>
-  //                     <div className="drop-bottom" style={{ display: 'flex' }}>
-  //                       <div style={{ paddingTop: '5px', paddingRight: '10px', width: '50%' }}>
-  //                         <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
-  //                           {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
-  //                           { this.checkMarkButton(document) }
-  //                         </a>
-  //                       </div>
-  //                       <div style={{ width: '16%', paddingTop: '5px' }}>
-  //                         <ButtonToolbar>
-  //                           {this.copyButton(document)}
-  //                           {this.saveSafetySheets(document)}
-  //                           {this.removeButton(index, document)}
-  //                         </ButtonToolbar>
-  //                       </div>
-  //                       <div style={{ width: '45%' }}>
-  //                         { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
-  //                       </div>
-  //                       <div style={{ width: '20%' }}>
-  //                         { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
-  //                       </div>
-  //                     </div>
-  //                   </div>
-  //                 </ListGroupItem>
-  //               </div>
-  //             )
-  //               : (
-  //                 <ListGroupItem>
-  //                   <div>
-  //                     <p style={{ paddingTop: '10px' }}>
-  //                       {document}
-  //                     </p>
-  //                   </div>
-  //                 </ListGroupItem>
-  //               )
-  //           ))}
-  //         </ListGroup>
-  //       )
-  //   );
-  // };
   renderChildElements = (document, index) => (
-    <div style={{ width: '100%', marginTop: '10px', marginBottom: '10px' }}>
-      <div className="drop-bottom" style={{ display: 'flex' }}>
-        <div style={{ paddingTop: '5px', paddingRight: '10px', width: '50%' }}>
-          <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" style={{ cursor: 'pointer' }} rel="noreferrer">
+    <div className="render-childs">
+      <div className="child-elements">
+        <div className="link-wrapper">
+          <a href={(document.alfa_link !== undefined) ? document.alfa_link : document.merck_link} target="_blank" rel="noreferrer">
             {(document.alfa_link !== undefined) ? 'Safety Data Sheet from Thermofisher' : 'Safety Data Sheet from Merck'}
             { this.checkMarkButton(document) }
           </a>
         </div>
-        <div style={{ width: '16%', paddingTop: '5px' }}>
+        <div className="button-toolbar-wrapper">
           <ButtonToolbar>
             {this.copyButton(document)}
             {this.saveSafetySheetsButton(document, index)}
             {this.removeButton(index, document)}
           </ButtonToolbar>
         </div>
-        <div style={{ width: '45%' }}>
+        <div className="chemical-properties">
           { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
         </div>
-        <div style={{ width: '20%' }}>
+        <div className="safety-phrases">
           { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
         </div>
       </div>
@@ -1093,73 +761,28 @@ export default class ChemicalTab extends React.Component {
     }
     const savedSds = chemical._chemical_data[0].ssdPath;
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
-    console.log(safetySheets.length);
+    const mappedSafetySheets = sdsStatus.map((document, index) => {
+      const key = document.alfa_product_number || document.merck_product_number;
+      return (
+        <div className="safety-sheets-form" key={key}>
+          {document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
+            <ListGroupItem key={`${key}-file`}>
+              {this.renderChildElements(document, index)}
+            </ListGroupItem>
+          ) : (
+            <ListGroupItem key={`${key}-no-document`}>
+              <div>
+                <p className="safety-sheets-paragraph">
+                  {document}
+                </p>
+              </div>
+            </ListGroupItem>
+          )}
+        </div>
+      );
+    });
 
-    return (
-      <ListGroup>
-        {sdsStatus.map((document, index) => (
-          <div className="safety-sheets-form" style={{ width: '100%', marginTop: '15px' }} key="documentExist">
-            {document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
-              <ListGroupItem key="safetySheetsFiles">
-                {this.renderChildElements(document, index)}
-              </ListGroupItem>
-            ) : (
-              <ListGroupItem key="noDocument">
-                <div>
-                  <p style={{ paddingTop: '10px' }}>
-                    {document}
-                  </p>
-                </div>
-              </ListGroupItem>
-            )}
-          </div>
-        ))}
-      </ListGroup>
-    );
-  };
-
-  chooseVendorForSafetyPhrases() {
-    const { vendorSafetyPhrasesValue } = this.state;
-    const vendorOptions = [
-      { label: 'merck', value: 'merck' },
-      { label: 'thermofischer', value: 'thermofischer' },
-    ];
-
-    return (
-      <FormGroup>
-        <ControlLabel style={{ paddingRight: '100px' }}>Choose Vendor</ControlLabel>
-        <Select
-          name="chemicalVendorforSafetyPhrases"
-          clearable={false}
-          options={vendorOptions}
-          onChange={(e) => this.handleVendorSafetyOption(e.value)}
-          value={vendorSafetyPhrasesValue}
-        />
-      </FormGroup>
-    );
-  }
-
-  querySafetyPhrases = (vendor) => {
-    return (
-      <div>
-        <Button
-          id="safetyPhrases-btn"
-          onClick={() => this.fetchSafetyPhrases(vendor)}
-        >
-          fetch Safety Phrases
-        </Button>
-      </div>
-    );
-  };
-
-  inventoryPendingToSave() {
-    console.log('pending to save');
-    const { chemical } = this.state;
-    const { parent } = this.props;
-    parent.setState({ inventoryPendingToSave: true });
-    console.log(parent);
-    // this.setState({ anti: !this.state.anti });
-    // console.log(this.state.anti); 
+    return <ListGroup>{mappedSafetySheets}</ListGroup>;
   };
 
   renderSafetyPhrases = () => {
@@ -1170,38 +793,10 @@ export default class ChemicalTab extends React.Component {
       fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
     }
     return (
-      <div style={{ width: '100%', paddingTop: '10px' }}>
+      <div className="render-safety-phrases">
         {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
       </div>
     );
-  };
-
-  chooseVendorForChemicalProperties() {
-    const { vendorChemPropertiesValue } = this.state;
-    const vendorOptions = [
-      { label: 'merck', value: 'merck' },
-      { label: 'thermofischer', value: 'thermofischer' },
-    ];
-
-    return (
-      <FormGroup>
-        <ControlLabel style={{ paddingRight: '100px' }}>Choose Vendor</ControlLabel>
-        <Select
-          name="chemicalVendorforSafetyPhrases"
-          clearable={false}
-          options={vendorOptions}
-          onChange={(e) => this.handleVendorChemPropOption(e.value)}
-          value={vendorChemPropertiesValue}
-        />
-      </FormGroup>
-    );
-  }
-
-  handlePropertiesModal(vendor) {
-    this.setState({
-      viewChemicalPropertiesModal: true,
-      viewModalForVendor: vendor
-    });
   };
 
   closePropertiesModal() {
@@ -1211,75 +806,18 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
-  renderPropertiesModal() {
-    const { viewChemicalPropertiesModal, chemical, viewModalForVendor } = this.state;
-    const textAreaStyle = {
-      width: '500px',
-      height: '640px',
-      margin: '30px',
-      whiteSpace: 'pre-line',
-    };
-    let fetchedChemicalProperties = 'Please fetch chemical properties first to view results';
-    if (viewModalForVendor === 'thermofischer') {
-      const condition = chemical._chemical_data[0].alfaProductInfo
-      && chemical._chemical_data[0].alfaProductInfo.properties;
-      fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n') : fetchedChemicalProperties;
-    } else if (viewModalForVendor === 'merck') {
-      const condition = chemical._chemical_data[0].merckProductInfo
-      && chemical._chemical_data[0].merckProductInfo.properties;
-      fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n') : fetchedChemicalProperties;
-    }
-    if (viewChemicalPropertiesModal) {
-      // let molfile = this.molfileInput.value;
-      // molfile = molfile.replace(/\r?\n/g, '<br />');
-      console.log('inside cas');
-      return (
-        <Modal
-          show={viewChemicalPropertiesModal}
-          onHide={() => this.closePropertiesModal()}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Fetched Chemical Properties</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div>
-              <FormGroup controlId="propertiesModal">
-                <FormControl
-                  componentClass="textarea"
-                  style={textAreaStyle}
-                  readOnly
-                  disabled
-                  type="text"
-                  value={fetchedChemicalProperties}
-                />
-              </FormGroup>
-            </div>
-            <div>
-              <Button bsStyle="warning" onClick={() => this.closePropertiesModal()}>
-                Close
-              </Button>
-            </div>
-          </Modal.Body>
-        </Modal>
-      );
-    }
-    return (<div />);
-  }
-
   renderChemicalProperties = (vendor) => {
-    const { loading, loadChemicalProperties } = this.state;
+    const { loadingQuerySafetySheets, loadChemicalProperties } = this.state;
 
     return (
-      <div>
+      <div className="render-chemical-properties">
         <InputGroup.Button>
           <OverlayTrigger placement="top" overlay={<Tooltip id="renderChemProp">Info, if any found, will be copied to properties fields in sample properties tab</Tooltip>}>
             <Button
-              id="safetyPhrases-btn"
+              id="fetch-properties"
               onClick={() => this.fetchChemicalProperties(vendor)}
-              disabled={!!loading || !!loadChemicalProperties}
-              style={{ width: '200px' }}
+              disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties}
+              className="fetch-properties-button"
             >
               {loadChemicalProperties === false ? 'fetch Chemical Properties'
                 : (
@@ -1292,7 +830,7 @@ export default class ChemicalTab extends React.Component {
         </InputGroup.Button>
         <InputGroup.Button>
           <OverlayTrigger placement="top" overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}>
-            <Button active style={{ marginLeft: '-23px' }} onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
+            <Button active className="show-properties-modal" onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
           </OverlayTrigger>
         </InputGroup.Button>
 
@@ -1305,7 +843,9 @@ export default class ChemicalTab extends React.Component {
     return (
       <CollapseButton
         openTab={openInventoryInformationTab}
-        setOpenTab={() => this.setState({ openInventoryInformationTab: !openInventoryInformationTab })}
+        setOpenTab={() => this.setState(
+          { openInventoryInformationTab: !openInventoryInformationTab }
+        )}
         name="Inventory Information"
       />
     );
@@ -1334,33 +874,34 @@ export default class ChemicalTab extends React.Component {
   }
 
   inventoryInformationTab(data) {
+    const { openInventoryInformationTab } = this.state;
     return (
-      <div>
+      <div className="inventory-tab">
         {this.inventoryCollapseBtn()}
-        <Collapse in={this.state.openInventoryInformationTab}>
-          <div style={{ marginTop: '15px' }}>
-            <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ width: '22%' }}>
+        <Collapse in={openInventoryInformationTab} key="inventory-Information-collapse-list">
+          <div className="inventory-tab">
+            <div className="inventory-information">
+              <div className="inventory-information-status">
                 {this.chemicalStatus(data, 'Status', 'status')}
               </div>
-              <div style={{ width: '19%' }}>
+              <div className="inventory-text-input">
                 {this.textInput(data, 'Vendor', 'vendor')}
               </div>
-              <div style={{ width: '19%' }}>
+              <div className="inventory-text-input">
                 {this.textInput(data, 'Order number', 'order_number')}
               </div>
-              <div style={{ width: '19%' }}>
+              <div className="inventory-text-input">
                 {this.numInputWithoutTable(data, 'Amount', 'amount')}
               </div>
-              <div style={{ width: '19%' }}>
+              <div className="inventory-text-input">
                 {this.textInput(data, 'Price', 'price')}
               </div>
             </div>
-            <div className="drop-bottom" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ width: '29%' }}>
+            <div className="text-input-group">
+              <div className="text-input-person">
                 {this.textInput(data, 'Person', 'person')}
               </div>
-              <div style={{ marginTop: '-17px', width: '40%' }}>
+              <div className="text-input-date">
                 <Tabs id="tab-date">
                   <Tab eventKey="required" title="Required date">
                     {this.textInput(data, 'Date', 'required_date')}
@@ -1370,7 +911,7 @@ export default class ChemicalTab extends React.Component {
                   </Tab>
                 </Tabs>
               </div>
-              <div style={{ width: '29%' }}>
+              <div className="text-input-required-by">
                 {this.textInput(data, 'Required by', 'required_by')}
               </div>
             </div>
@@ -1381,52 +922,53 @@ export default class ChemicalTab extends React.Component {
   }
 
   locationTab(data) {
+    const { openLocationTab } = this.state;
     return (
       <div>
         {this.locationCollapseBtn()}
-        <Collapse in={this.state.openLocationTab}>
-          <div style={{ marginTop: '15px' }}>
-            <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ width: '17%' }}>
+        <Collapse in={openLocationTab} key="location-tab-collapse-list">
+          <div className="location-tab">
+            <div className="location-input-group">
+              <div>
                 {this.locationInput(data, 'host_building', 'host_location')}
               </div>
-              <div style={{ width: '16%' }}>
+              <div>
                 {this.locationInput(data, 'host_room', 'host_location')}
               </div>
-              <div style={{ width: '18%' }}>
+              <div>
                 {this.locationInput(data, 'host_cabinet', 'host_location')}
               </div>
-              <div style={{ width: '23.5%' }}>
+              <div>
                 {this.locationInput(data, 'host_group', 'host_group')}
               </div>
-              <div style={{ width: '23.5%' }}>
+              <div>
                 {this.locationInput(data, 'host_owner', 'host_group')}
               </div>
             </div>
-            <div className="drop-bottom" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ width: '17%' }}>
+            <div className="location-input-group">
+              <div>
                 {this.locationInput(data, 'current_building', 'current_location')}
               </div>
-              <div style={{ width: '16%' }}>
+              <div>
                 {this.locationInput(data, 'current_room', 'current_location')}
               </div>
-              <div style={{ width: '18%' }}>
+              <div>
                 {this.locationInput(data, 'current_cabinet', 'current_location')}
               </div>
-              <div style={{ width: '23.5%' }}>
+              <div>
                 {this.locationInput(data, 'current_group', 'current_group')}
               </div>
-              <div style={{ width: '23.5%' }}>
+              <div>
                 {this.locationInput(data, 'borrowed_by', 'current_group')}
               </div>
             </div>
-            <div className="drop-bottom" style={{ marginTop: '20px' }}>
-              <div style={{ width: '100%' }}>
+            <div className="disposal-info">
+              <div>
                 {this.textInput(data, 'Disposal information', 'disposal_info')}
               </div>
             </div>
-            <div className="drop-bottom">
-              <div style={{ width: '100%' }}>
+            <div className="important-notes">
+              <div>
                 {this.textInput(data, 'Important notes', 'important_notes')}
               </div>
             </div>
@@ -1451,7 +993,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   querySafetySheetButton() {
-    const { loading, chemical } = this.state;
+    const { loadingQuerySafetySheets, chemical } = this.state;
     let checkSavedSds = false;
     if (chemical && chemical._chemical_data) {
       checkSavedSds = chemical._chemical_data[0].ssdPath
@@ -1462,10 +1004,9 @@ export default class ChemicalTab extends React.Component {
       <Button
         id="submit-sds-btn"
         onClick={() => this.querySafetySheets()}
-        style={{ width: 150 }}
-        disabled={!!loading || checkSavedSds}
+        disabled={!!loadingQuerySafetySheets || checkSavedSds}
       >
-        {loading === false ? 'Search for SDS'
+        {loadingQuerySafetySheets === false ? 'Search for SDS'
           : (
             <Spinner animation="border" role="status">
               <span className="visually-hidden">Loading...</span>
@@ -1479,19 +1020,11 @@ export default class ChemicalTab extends React.Component {
     );
 
     const buttonElement = (
-      <div style={{ position: 'relative' }}>
+      <div className="button-container">
         {button}
         {checkSavedSds && (
           <OverlayTrigger placement="top" overlay={overlay}>
-            <div style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              top: 0,
-              left: 0,
-              zIndex: 1
-            }}
-            />
+            <div className="overlay-trigger-container" />
           </OverlayTrigger>
         )}
       </div>
@@ -1504,19 +1037,19 @@ export default class ChemicalTab extends React.Component {
     return (
       <div>
         {this.safetyCollapseBtn()}
-        <Collapse in={openSafetyTab}>
-          <div style={{ marginTop: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ width: '26%' }}>
+        <Collapse in={openSafetyTab} key="inventory-safety-tab-collapse-list">
+          <div className="safety-tab">
+            <div className="parent-element-safety">
+              <div className="choose-vendor">
                 {this.chooseVendor()}
               </div>
-              <div style={{ width: '26%' }}>
+              <div className="query-option">
                 {this.queryOption()}
               </div>
-              <div style={{ width: '26%' }}>
+              <div className="safety-sheet-language">
                 {this.safetySheetLanguage()}
               </div>
-              <div style={{ paddingTop: '25px' }}>
+              <div className="query-safety-sheet-button">
                 {this.querySafetySheetButton()}
               </div>
             </div>
@@ -1536,48 +1069,94 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  renderPropertiesModal() {
+    const { viewChemicalPropertiesModal, chemical, viewModalForVendor } = this.state;
+    let fetchedChemicalProperties = 'Please fetch chemical properties first to view results';
+    if (viewModalForVendor === 'thermofischer') {
+      const condition = chemical._chemical_data[0].alfaProductInfo
+      && chemical._chemical_data[0].alfaProductInfo.properties;
+      fetchedChemicalProperties = condition
+        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n') : fetchedChemicalProperties;
+    } else if (viewModalForVendor === 'merck') {
+      const condition = chemical._chemical_data[0].merckProductInfo
+      && chemical._chemical_data[0].merckProductInfo.properties;
+      fetchedChemicalProperties = condition
+        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n') : fetchedChemicalProperties;
+    }
+    if (viewChemicalPropertiesModal) {
+      return (
+        <Modal
+          show={viewChemicalPropertiesModal}
+          onHide={() => this.closePropertiesModal()}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Fetched Chemical Properties</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <FormGroup controlId="propertiesModal">
+                <FormControl
+                  componentClass="textarea"
+                  id="properties-modal"
+                  readOnly
+                  disabled
+                  type="text"
+                  value={fetchedChemicalProperties}
+                />
+              </FormGroup>
+            </div>
+            <div>
+              <Button bsStyle="warning" onClick={() => this.closePropertiesModal()}>
+                Close
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    return (<div />);
+  }
+
+  renderWarningMessage() {
+    const { warningMessage } = this.state;
+    return (
+      <div className="text-danger">
+        { warningMessage !== '' ? warningMessage : null }
+      </div>
+    );
+  }
+
   render() {
     const {
       chemical
     } = this.state;
-    // let cas;
     let data;
 
     if (chemical) {
       data = chemical._chemical_data ? chemical._chemical_data[0] : [];
-      // cas = chemical ? chemical._cas : null;
     }
-
-    const styleBorderless = { borderStyle: 'none' };
 
     return (
       <table className="table table-borderless">
         <tbody>
           <tr>
-            <td style={styleBorderless}>
+            <td className="chemical-table-cells">
               {this.inventoryInformationTab(data)}
             </td>
           </tr>
           <tr>
-            <td style={styleBorderless}>
+            <td className="chemical-table-cells">
               {this.safetyTab()}
             </td>
           </tr>
           <tr>
-            <td style={styleBorderless}>
+            <td className="chemical-table-cells">
               {this.locationTab(data)}
             </td>
           </tr>
           <div>
             {this.renderPropertiesModal()}
           </div>
-          {/* <tr>
-            <td style={styleBorderless}>
-              <div>
-                {this.saveParameters()}
-              </div>
-            </td>
-          </tr> */}
         </tbody>
       </table>
     );
@@ -1586,6 +1165,5 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
-  saveInventory: PropTypes.bool.isRequired,
-  pendingToSave: PropTypes.bool.isRequired
+  saveInventory: PropTypes.bool.isRequired
 };
