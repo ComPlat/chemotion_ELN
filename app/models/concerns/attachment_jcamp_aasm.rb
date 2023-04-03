@@ -232,20 +232,12 @@ module AttachmentJcampProcess
       tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
       tmp_files_to_be_deleted.push(*arr_img)
 
-      unless arr_nmrium.nil? || arr_nmrium.length == 0
-        curr_tmp_nmrium = arr_nmrium[0]
-        nmrium_att = generate_nmrium_att(curr_tmp_nmrium, '')
-        tmp_files_to_be_deleted.push(*arr_nmrium)
-        delete_related_nmrium(nmrium_att)
-      end
-
       set_done
       delete_tmps(tmp_files_to_be_deleted)
       delete_related_imgs(img_att)
       delete_edit_peak_after_done
 
       jcamp_att
-      
     end
   end
 
@@ -373,16 +365,38 @@ module AttachmentJcampProcess
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
 
     set_nmrium
-    
+
     tmp_files_to_be_deleted = [tmp_jcamp]
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_edited_jcamp(jcamp_att)
+    delete_related_edit_peak_with_att(jcamp_att)
     delete_related_nmrium(self)
     jcamp_att
   rescue StandardError => e
     set_failure
-    Rails.logger.info('**** Jcamp Peaks Generation fails ***')
+    Rails.logger.info('**** Jcamp Edit from NMRium Generation fails ***')
     Rails.logger.error(e)
+  end
+
+  def delete_related_edit_peak_with_att(attachment)
+    return unless attachment
+
+    atts = Attachment.where(attachable_id: attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      edit_jdx_name = File.basename(att.filename, '.edit.jdx')
+      peak_jdx_name = File.basename(att.filename, '.peak.jdx')
+      edit_image_name = File.basename(att.filename, '.edit.png')
+      peak_image_name = File.basename(att.filename, '.peak.png')
+      array_valid_names = [edit_jdx_name, peak_jdx_name, edit_image_name, peak_image_name]
+
+      is_delete = (
+        (att.edited? || att.peaked? || att.image?) &&
+          att.id != attachment.id &&
+          (array_valid_names.include? valid_name)
+      )
+      att.delete if is_delete
+    end
   end
 
   def delete_tmps(tmp_arr)

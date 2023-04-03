@@ -57,10 +57,10 @@ const qCheckMsg = (sample, container) => {
 };
 
 const isNMRKind = (container) => {
-    if (container.extended_metadata.kind) {
-        return container.extended_metadata.kind.includes('NMR');
-    }
-    return false;
+  if (container.extended_metadata.kind) {
+    return container.extended_metadata.kind.includes('NMR');
+  }
+  return false;
 }
 
 const SpectraEditorBtn = ({
@@ -139,6 +139,7 @@ const SpectraEditorBtn = ({
                     bsSize="xsmall"
                     onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
                     onClick={toggleNMRDisplayerModal}
+                    disabled={!hasJcamp || !sample.can_update}
                     >
                     <i className="fa fa-bar-chart"/>
                     </Button>
@@ -304,7 +305,8 @@ const headerBtnGroup = (
   }
 
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
+  // const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
+  const hasNMRium = hasNmriumWrapper;
 
   return (
     <div className="upper-btn">

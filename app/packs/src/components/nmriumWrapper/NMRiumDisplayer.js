@@ -97,6 +97,7 @@ export default class NMRiumDisplayer extends React.Component {
       const eventDataType = eventData.type;
 
       if (eventDataType === 'nmr-wrapper:data-change') {
+        
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
           const nmriumData = eventData.data;
@@ -405,6 +406,12 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   renderModalTitle() {
+    const { nmriumData } = this.state;
+    let hasSpectra = false;
+    if (nmriumData && nmriumData.spectra.length > 0) {
+      hasSpectra = true;
+    }
+
     return (
       <Modal.Header>
         <Button
@@ -421,20 +428,25 @@ export default class NMRiumDisplayer extends React.Component {
             Close without Save
           </span>
         </Button>
-        <Button
-          bsStyle="success"
-          bsSize="small"
-          className="button-right"
-          onClick={() => {
-            this.requestDataToBeSaved()
-          }}
-        >
-          <span>
-            <i className="fa fa-floppy-o" />
-            {' '}
-            Close with Save
-          </span>
-        </Button>
+        {
+          hasSpectra ?
+          (
+            <Button
+              bsStyle="success"
+              bsSize="small"
+              className="button-right"
+              onClick={() => {
+                this.requestDataToBeSaved()
+              }}
+            >
+              <span>
+                <i className="fa fa-floppy-o" />
+                {' '}
+                Close with Save
+              </span>
+            </Button>
+          ) : null
+        }
       </Modal.Header>
     );
   }
