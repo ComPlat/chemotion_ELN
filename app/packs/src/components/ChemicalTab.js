@@ -366,7 +366,6 @@ export default class ChemicalTab extends React.Component {
       { label: 'To be ordered', value: 'To be ordered' },
       { label: 'Ordered', value: 'Ordered' }
     ];
-    // const noBoldLabel = { fontWeight: 'normal' };
     return (
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
@@ -477,8 +476,6 @@ export default class ChemicalTab extends React.Component {
               componentClass="input"
               value={value}
               onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
-              // disabled
-              // readOnly
             />
           </FormGroup>
         </InputGroup>
@@ -493,14 +490,12 @@ export default class ChemicalTab extends React.Component {
     return (
       <NumericInputUnit
         field="inventory_amount"
-        // bsStyle="default"
         inputDisabled={false}
         onInputChange={
           (newValue, newUnit) => this.handleMetricsChange(parameter, newValue, newUnit)
         }
         unit={unit}
         numericValue={value}
-        // bsStyleBtnAfter="primary"
         label={label}
       />
     );
@@ -665,7 +660,6 @@ export default class ChemicalTab extends React.Component {
       { label: 'All', value: 'All' },
       { label: 'Merck', value: 'Merck' },
       { label: 'Thermofisher', value: 'Thermofisher' },
-      // { label: 'ChemicalSafety', value: 'ChemicalSafety' }
     ];
 
     return (
