@@ -13,8 +13,8 @@ module Chemotion
 
     def self.merck_request(name)
       string = name.gsub(/\s/, '-')
-      merck_res = HTTParty.get("https://www.sigmaaldrich.com/DE/en/search/#{string}?focus=products
-                                &page=1&perpage=30&sort=relevance&term=#{string}&type=product=", request_options)
+      merck_res = HTTParty.get("https://www.sigmaaldrich.com/US/en/search/#{string}?focus=products
+                                &page=1&perpage=30&sort=relevance&term=#{string}&type=product", request_options)
       Nokogiri::HTML.parse(merck_res.body).xpath("//*[contains(@class, 'MuiTableBody-root')]").children[0].children[2]
                     .children[0].attributes['href'].value
     end
@@ -215,6 +215,18 @@ module Chemotion
       chem_properties_merck(chem_properties_names, chem_properties_values)
     rescue StandardError
       'Could not find additional chemical properties'
+    end
+
+    def self.handle_exceptions
+      begin
+        yield
+      rescue ActiveRecord::StatementInvalid, ActiveRecord::RecordInvalid => e
+        error!({ error: e.message }, 422)
+      rescue JSON::ParserError => e
+        error!({ error: 'Invalid JSON data' }, 400)
+      rescue StandardError => e
+        error!({ error: e.message }, 500)
+      end
     end
   end
 end

@@ -84,6 +84,7 @@ describe Chemotion::ChemicalAPI do
           chemical_data: [{ 'alfaProductInfo' => {
             'productNumber' => 'A14672', 'vendor' => 'Thermofisher', 'sdsLink' => 'https://www.alfa.com/en/catalog/A14672'
           } }],
+          cas: '629-59-4',
           sample_id: s.id,
           vendor_product: 'alfaProductInfo',
         }
