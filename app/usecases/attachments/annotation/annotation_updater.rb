@@ -61,7 +61,7 @@ module Usecases
 
           xml = replace_link_with_base64(location_of_file, svg_string, attachment.attachment.mime_type)
           extention = File.extname(attachment.filename)
-          extention = '.png' if ['.tif', '.tiff','.svg'].include?(extention)
+          extention = '.png' if ['.tif', '.tiff', '.svg'].include?(extention)
           annotated_image_location = "#{location_of_file.split('.')[0]}_annotated" + extention
           image = MiniMagick::Image.read(xml.to_s)
           image.format(extention.delete('.'))
