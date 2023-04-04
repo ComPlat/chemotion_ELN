@@ -31,7 +31,7 @@ const GenericSearchForm = () => {
     let sections = [];
 
     Object.entries(layers)
-      .sort((a,b) => a.position - b.position)
+      .sort((a, b) => a.position - b.position)
       .map((value, i) => {
         sections.push(value[1]);
         console.log(value, value[1].condition, i);
@@ -90,6 +90,9 @@ const GenericSearchForm = () => {
               onChange={handleChangeSelection()}
             />
           </FormGroup>
+        </Col>
+        <Col md={12}>
+          <hr />
         </Col>
       </Row>
     );
