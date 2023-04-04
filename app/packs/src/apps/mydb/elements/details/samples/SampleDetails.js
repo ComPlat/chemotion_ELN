@@ -121,6 +121,7 @@ export default class SampleDetails extends React.Component {
       visible: Immutable.List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
+      saveInventoryAction: false
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -515,12 +516,14 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     const colLabel = sample.isNew ? null : (
-      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
+      <div style={{ marginLeft: '5px' }}>
+        <ElementCollectionLabels element={sample} key={sample.id} />
+      </div>
     );
 
     const inventorySample = (
       <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
-        Inventory Sample
+        Inventory
       </Checkbox>
     );
 
@@ -535,63 +538,63 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
           <span><i className="icon-sample" />{sample.title()}</span>
         </OverlayTrigger>
-        <ConfirmClose el={sample} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit(true)}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-            <i className="fa fa-times" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-          </Button>
-        </OverlayTrigger>
-        {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
-          >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <PrintCodeButton element={sample} />
+        <ShowUserLabels element={sample}/>
+        <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+        {colLabel}
+        <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+        <PubchemLabels element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
-        {decoupleCb}
-        {inventorySample}
-        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
-          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-          {colLabel}
-          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <PubchemLabels element={sample} />
+        <div style={{ marginLeft: 'auto' }}>
+          <ConfirmClose el={sample} />
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit(true)}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+              <i className="fa fa-times" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit()}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+            </Button>
+          </OverlayTrigger>
+          {copyBtn}
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+          >
+            <Button
+              bsStyle="info"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.props.toggleFullScreen()}
+            >
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          <PrintCodeButton element={sample} />
+          {/* {decoupleCb} */}
         </div>
         <ShowUserLabels element={sample} />
       </div>
@@ -1033,8 +1036,22 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  handleSubmitInventory() {
+    this.setState({ saveInventoryAction: true });
+  }
+
+  saveSampleOrInventory(closeView) {
+    const { activeTab, sample } = this.state;
+    if (activeTab === 'inventory' && sample.inventory_sample) {
+      this.handleSubmitInventory();
+    } else {
+      this.handleSubmit(closeView);
+    }
+  }
+
   sampleInventoryTab(ind) {
     const sample = this.state.sample || {};
+    const { saveInventoryAction } = this.state;
 
     return (
       <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
@@ -1042,6 +1059,8 @@ export default class SampleDetails extends React.Component {
           <ChemicalTab
             sample={sample}
             parent={this}
+            saveInventory={saveInventoryAction}
+            key={`ChemicalTab${sample.id.toString()}`}
           />
         </ListGroupItem>
         <EditUserLabels element={sample} />
@@ -1214,7 +1233,7 @@ export default class SampleDetails extends React.Component {
       <Button
         id="submit-sample-btn"
         bsStyle="warning"
-        onClick={() => this.handleSubmit(closeView)}
+        onClick={() => this.saveSampleOrInventory(closeView)}
         disabled={!this.sampleIsValid() || isDisabled}
       >
         {submitLabel}
@@ -1332,9 +1351,12 @@ export default class SampleDetails extends React.Component {
       references: this.sampleLiteratureTab(),
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
-      measurements: this.measurementsTab('measurements'),
-      inventory: this.sampleInventoryTab('inventory')
+      measurements: this.measurementsTab('measurements')
     };
+
+    if (sample.inventory_sample) {
+      tabContentsMap.inventory = this.sampleInventoryTab('inventory');
+    }
 
     if (this.enableComputedProps) {
       tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
