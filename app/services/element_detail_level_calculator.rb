@@ -48,7 +48,7 @@ class ElementDetailLevelCalculator
   # All collections containing the element that were synced to the current user
   def sync_collections_with_element
     @sync_collections_with_element ||=
-      SyncCollectionsUser.where(
+     CollectionAcl.where(
         user_id: user_ids,
         collection_id: element.collections.ids,
       )

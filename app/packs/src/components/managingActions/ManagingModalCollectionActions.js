@@ -82,13 +82,13 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   handleSubmit() {
-    const { selected, newLabel } = this.state;
+    const { selected, newLabel, selectedUsers } = this.state;
     const collection_id = selected && parseInt(selected.split("-")[0]);
     const is_shared = selected && selected.split("-")[1] == "is_shared";
     const ui_state = UIStore.getState();
 
     this.props.action({
-      ui_state, collection_id, is_shared, newLabel
+      ui_state, collection_id, is_shared, newLabel, user_ids: selectedUsers
     });
     this.props.onHide();
   }
