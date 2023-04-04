@@ -285,6 +285,12 @@
 .cdd .modal-dialog {
   left: unset !important;
   top: unset !important;
+  position: unset !important;
+  transform: unset !important;
+}
+
+.cdd .fade {
+  opacity: unset;
 }
 
 .lcss-link {
