@@ -192,31 +192,32 @@ export default class ManagingModalSharing extends React.Component {
     } = this.state;
 
     const params = {
-      id: this.props.collectionId,
-      collection_attributes: {
+      current_collection: {
+        id: this.props.collectionId,
         permission_level: permissionLevel,
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel,
         screen_detail_level: screenDetailLevel,
         element_detail_level: elementDetailLevel,
-        label: label
       },
+      new_label: label
     };
 
     if (this.props.collAction === "Create") {
       const userIds = this.state.selectedUsers;
       const uiState = UIStore.getState();
-      const currentCollection = uiState.currentCollection;
-      const filterParams =
+      let currentCollection = uiState.currentCollection;
+      let filterParams =
         this.isSelectionEmpty(uiState)
           ? this.filterParamsWholeCollection(uiState)
           : this.filterParamsFromUIState(uiState);
+      filterParams = {...filterParams, currentCollection };
+
       const fullParams = {
-        ...params,
-        elements_filter: filterParams,
+        ui_state: filterParams,
         user_ids: userIds,
-        currentCollection
+        new_label: params.new_label
       };
       CollectionActions.createSelectedSharedCollections(fullParams);
     }
