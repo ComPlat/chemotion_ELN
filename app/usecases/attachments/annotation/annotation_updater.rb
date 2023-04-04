@@ -38,14 +38,14 @@ module Usecases
         end
 
         def save_svg_string_to_file_system(sanitized_svg_string, attachment)
-          location = attachment.attachment_attacher.derivatives[:annotation].url
+          location = attachment.attachment(:annotation).url
           f = File.new(location, 'w')
           f.write(sanitized_svg_string)
           f.close
         end
 
         def update_thumbnail(attachment, svg_string)
-          location_of_thumbnail = attachment.attachment_attacher.derivatives[:thumbnail].url
+          location_of_thumbnail = attachment.attachment(:thumbnail).url
           tmp_thumbnail_location = "#{location_of_thumbnail.split('.')[0]}_thumb.svg"
           xml = replace_link_with_base64(attachment.attachment.url, svg_string, attachment.attachment.mime_type)
           File.write(tmp_thumbnail_location, xml.to_xml)
@@ -61,7 +61,7 @@ module Usecases
 
           xml = replace_link_with_base64(location_of_file, svg_string, attachment.attachment.mime_type)
           extention = File.extname(attachment.filename)
-          extention = '.png' if ['.tif', '.tiff'].include?(extention)
+          extention = '.png' if ['.tif', '.tiff', '.svg'].include?(extention)
           annotated_image_location = "#{location_of_file.split('.')[0]}_annotated" + extention
           image = MiniMagick::Image.read(xml.to_s)
           image.format(extention.delete('.'))

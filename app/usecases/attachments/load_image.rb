@@ -5,11 +5,9 @@ module Usecases
     class LoadImage
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
-      def self.execute!(attachment, annotated) # rubocop:disable  Metrics/AbcSize,Metrics/MethodLength,Metrics/PerceivedComplexity
+      def self.execute!(attachment, annotated) # rubocop:disable  Metrics/PerceivedComplexity
         # to allow reading of PDF files
-        unless attachment.type_image? || attachment.type_pdf?
-          raise "no image / PDF attachment: #{attachment.id}"
-        end
+        raise "no image / PDF attachment: #{attachment.id}" unless attachment.type_image? || attachment.type_pdf?
 
         conversion = attachment.type_image_tiff?
 
@@ -41,10 +39,10 @@ module Usecases
 
         update_attachment_data_column(attachment, result)
 
-        File.open(attachment.attachment_attacher.derivatives[:conversion].url)
+        File.open(attachment.attachment(:conversion).url)
       end
 
-      def self.update_attachment_data_column(attachment, result) # rubocop:disable Metrics/AbcSize
+      def self.update_attachment_data_column(attachment, result)
         attachment.attachment_data['derivatives']['conversion'] = {}
         root_path = attachment.attachment.storage.directory.to_s
         attachment.attachment_data['derivatives']['conversion']['id'] =
@@ -52,7 +50,7 @@ module Usecases
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      def self.load_annotated_image(attachment, _attachment_file) # rubocop:disable Metrics/AbcSize
+      def self.load_annotated_image(attachment, _attachment_file)
         return File.open(attachment.attachment.url) unless attachment.annotated?
 
         store = Rails.application.config_for :shrine
@@ -68,7 +66,7 @@ module Usecases
 
       def self.get_file_of_converted_image(attachment)
         create_converted_image(attachment) unless attachment.attachment_data['derivatives']['conversion']
-        File.open(attachment.attachment_attacher.derivatives[:conversion].url)
+        File.open(attachment.attachment(:conversion).url)
       end
     end
   end
