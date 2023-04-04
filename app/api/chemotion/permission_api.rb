@@ -19,7 +19,7 @@ module Chemotion
         end
 
         post do
-          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_shared])
+          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id])
           sel, has_sel = {}, {}
           API::ELEMENTS.each do |element|
             ui_state = params[element]
