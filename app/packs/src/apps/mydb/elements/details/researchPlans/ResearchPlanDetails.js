@@ -27,7 +27,9 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
-import CommentSection from "src/components/comments/CommentSection";
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -51,7 +53,7 @@ export default class ResearchPlanDetails extends Component {
 
   componentDidMount() {
     const { researchPlan } = this.props;
-    this.props.fetchComments(researchPlan);
+    CommentActions.fetchComments(researchPlan);
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -482,15 +484,7 @@ export default class ResearchPlanDetails extends Component {
         {researchPlan.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-        <HeaderCommentSection
-          element={researchPlan}
-          comments={comments}
-          showCommentSection={showCommentSection}
-          setCommentSection={this.props.setCommentSection}
-          getSectionComments={this.props.getSectionComments}
-          toggleCommentModal={this.props.toggleCommentModal}
-          toggleCommentSection={this.props.toggleCommentSection}
-        />
+        <HeaderCommentSection element={researchPlan} />
       </Panel.Heading>
     );
   }
@@ -507,14 +501,7 @@ export default class ResearchPlanDetails extends Component {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
           {
-            this.props.showCommentSection && !researchPlan.isNew &&
-            <CommentSection
-              section="research_plan_research_plan"
-              comments={this.props.comments}
-              setCommentSection={this.props.setCommentSection}
-              toggleCommentModal={this.props.toggleCommentModal}
-              getSectionComments={this.props.getSectionComments}
-            />
+            !researchPlan.isNew && <CommentSection section="research_plan_research_plan" />
           }
           <div style={{ margin: '5px 0px 5px 5px' }}>
             {btnMode}
@@ -526,14 +513,7 @@ export default class ResearchPlanDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
           {
-            this.props.showCommentSection && !researchPlan.isNew &&
-            <CommentSection
-              section="research_plan_analyses"
-              comments={this.props.comments}
-              setCommentSection={this.props.setCommentSection}
-              toggleCommentModal={this.props.toggleCommentModal}
-              getSectionComments={this.props.getSectionComments}
-            />
+            !researchPlan.isNew && <CommentSection section="research_plan_analyses" />
           }
           {this.renderAnalysesTab(researchPlan)}
         </Tab>
@@ -541,14 +521,7 @@ export default class ResearchPlanDetails extends Component {
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
           {
-            this.props.showCommentSection && !researchPlan.isNew &&
-            <CommentSection
-              section="research_plan_attachments"
-              comments={this.props.comments}
-              setCommentSection={this.props.setCommentSection}
-              toggleCommentModal={this.props.toggleCommentModal}
-              getSectionComments={this.props.getSectionComments}
-            />
+            !researchPlan.isNew && <CommentSection section="research_plan_attachments" />
           }
           {this.renderAttachmentsTab(researchPlan)}
         </Tab>
@@ -556,14 +529,7 @@ export default class ResearchPlanDetails extends Component {
       references: (
         <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
           {
-            this.props.showCommentSection && !researchPlan.isNew &&
-            <CommentSection
-              section="research_plan_references"
-              comments={this.props.comments}
-              setCommentSection={this.props.setCommentSection}
-              toggleCommentModal={this.props.toggleCommentModal}
-              getSectionComments={this.props.getSectionComments}
-            />
+            !researchPlan.isNew && <CommentSection section="research_plan_references" />
           }
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
@@ -582,14 +548,7 @@ export default class ResearchPlanDetails extends Component {
       metadata: (
         <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
           {
-            this.props.showCommentSection && !researchPlan.isNew &&
-            <CommentSection
-              section="research_plan_metadata"
-              comments={this.props.comments}
-              setCommentSection={this.props.setCommentSection}
-              toggleCommentModal={this.props.toggleCommentModal}
-              getSectionComments={this.props.getSectionComments}
-            />
+            !researchPlan.isNew && <CommentSection section="research_plan_metadata" />
           }
           <ResearchPlanMetadata
             parentResearchPlan={researchPlan}
@@ -636,8 +595,8 @@ export default class ResearchPlanDetails extends Component {
               researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
             }
           </ButtonToolbar>
+          <CommentModal element={researchPlan} />
         </Panel.Body>
-        {this.props.renderCommentModal(researchPlan)}
       </Panel>
     );
   }
@@ -646,14 +605,4 @@ export default class ResearchPlanDetails extends Component {
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
-  comments: PropTypes.array.isRequired,
-  section: PropTypes.string.isRequired,
-  showCommentSection: PropTypes.bool.isRequired,
-  showCommentModal: PropTypes.bool.isRequired,
-  fetchComments: PropTypes.func.isRequired,
-  renderCommentModal: PropTypes.func.isRequired,
-  getSectionComments: PropTypes.func.isRequired,
-  setCommentSection: PropTypes.func.isRequired,
-  toggleCommentModal: PropTypes.func.isRequired,
-  toggleCommentSection: PropTypes.func.isRequired,
 };

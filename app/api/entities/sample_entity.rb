@@ -20,6 +20,7 @@ module Entities
       expose! :sum_formula
       expose! :type
       expose :comments,                                     using: 'Entities::CommentEntity'
+      expose :comment_count
     end
 
     # Level 1 attributes
@@ -130,6 +131,10 @@ module Entities
 
     def type
       'sample'
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end

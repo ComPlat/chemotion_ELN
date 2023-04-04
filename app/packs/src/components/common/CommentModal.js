@@ -1,31 +1,49 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, ButtonToolbar, FormControl, Modal, Table, Glyphicon
-} from 'react-bootstrap';
+import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import CommentStore from 'src/stores/alt/stores/CommentStore';
 import CommentDetails from 'src/components/comments/CommentDetails';
-import { formatSection } from 'src/utilities/CommentHelper';
+import {
+  formatSection,
+  getAllComments,
+  getSectionComments,
+  selectCurrentUser,
+} from 'src/utilities/CommentHelper';
 
 export default class CommentModal extends Component {
   constructor(props) {
     super(props);
     this.modalRef = React.createRef();
+    const commentState = CommentStore.getState();
     this.state = {
       commentBody: '',
       isEditing: false,
       commentObj: '',
       commentsCollapseAll: false,
+      comments: commentState.comments,
+      section: commentState.section,
     };
+    this.onChange = this.onChange.bind(this);
   }
 
   componentDidMount() {
     document.addEventListener('mousedown', this.handleClickOutside);
+    CommentStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    CommentStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState({ ...state });
   }
 
   handleInputChange = (e) => {
@@ -46,7 +64,7 @@ export default class CommentModal extends Component {
     };
     CommentFetcher.updateComment(comment, params)
       .then(() => {
-        this.props.fetchComments(element);
+        CommentActions.fetchComments(element);
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -55,8 +73,8 @@ export default class CommentModal extends Component {
 
   saveComment = () => {
     LoadingActions.start();
-    const { element, section } = this.props;
-    const { commentBody } = this.state;
+    const { element } = this.props;
+    const { commentBody, section } = this.state;
     const params = {
       content: commentBody,
       commentable_id: element.id,
@@ -65,7 +83,7 @@ export default class CommentModal extends Component {
     };
     CommentFetcher.create(params)
       .then(() => {
-        this.props.fetchComments(element);
+        CommentActions.fetchComments(element);
         this.scrollToTop();
         ElementActions.refreshElements(element.type);
         this.setState({ commentBody: '' }, () => {
@@ -79,15 +97,15 @@ export default class CommentModal extends Component {
 
   updateComment = () => {
     LoadingActions.start();
-    const { commentBody } = this.state;
     const { element } = this.props;
-    const comment = this.state.commentObj;
+    const { commentBody, commentObj } = this.state;
+    const comment = commentObj;
     const params = {
       content: commentBody,
     };
     CommentFetcher.updateComment(comment, params)
       .then(() => {
-        this.props.fetchComments(element);
+        CommentActions.fetchComments(element);
         this.setState({ commentBody: '', isEditing: false }, () => {
           LoadingActions.stop();
         });
@@ -101,7 +119,7 @@ export default class CommentModal extends Component {
     const { element } = this.props;
     CommentFetcher.delete(comment)
       .then(() => {
-        this.props.fetchComments(element);
+        CommentActions.fetchComments(element);
         ElementActions.refreshElements(element.type);
         this.setState({ commentBody: '' });
       })
@@ -110,7 +128,7 @@ export default class CommentModal extends Component {
       });
   };
 
-  handleEditComment = (comment) => {
+  editComment = (comment) => {
     this.setState({
       commentBody: comment.content,
       commentObj: comment,
@@ -127,24 +145,23 @@ export default class CommentModal extends Component {
   };
 
   toggleCollapse = () => {
-    this.setState({ commentsCollapseAll: !this.state.commentsCollapseAll });
+    const { commentsCollapseAll } = this.state;
+    this.setState({ commentsCollapseAll: !commentsCollapseAll });
   };
 
+  // eslint-disable-next-line class-methods-use-this
   disableEditComment = (comment) => comment.status === 'Resolved';
 
+  // eslint-disable-next-line class-methods-use-this
   commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by;
 
-  render() {
-    const { showCommentModal, section, element } = this.props;
-    const { isEditing, commentsCollapseAll } = this.state;
-    const comments = this.props.getSectionComments(section);
-    const allComments = this.props.getAllComments(section);
-    const { currentUser } = UserStore.getState();
-    const collapseIcon = commentsCollapseAll ? 'chevron-up' : 'chevron-down';
+  renderCommentTable() {
+    const { comments, section } = this.state;
+    const sectionComments = getSectionComments(comments, section);
+    const currentUser = selectCurrentUser(UserStore.getState());
 
-    let commentsTbl = null;
-    if (comments && comments.length > 0) {
-      commentsTbl = comments.map((comment) => (
+    if (sectionComments?.length > 0) {
+      return sectionComments.map((comment) => (
         <tr key={comment.id}>
           <td width="20%">{comment.created_at}</td>
           <td width="35%">{comment.content}</td>
@@ -159,38 +176,40 @@ export default class CommentModal extends Component {
               </Button>
               {
                 this.commentByCurrentUser(comment, currentUser)
-                && (
-                <Button
-                  id="editCommentBtn"
-                  bsSize="xsmall"
-                  bsStyle="primary"
-                  onClick={() => this.handleEditComment(comment)}
-                  disabled={this.disableEditComment(comment)}
-                >
-                  <i className="fa fa-edit" />
-                </Button>
-                )
+                  ? (
+                    <Button
+                      id="editCommentBtn"
+                      bsSize="xsmall"
+                      bsStyle="primary"
+                      onClick={() => this.editComment(comment)}
+                      disabled={this.disableEditComment(comment)}
+                    >
+                      <i className="fa fa-edit" />
+                    </Button>
+                  )
+                  : null
               }
               {
                 this.commentByCurrentUser(comment, currentUser)
-                && (
-                <Confirm
-                  onConfirm={() => this.deleteComment(comment)}
-                  body="Are you sure you want to delete this?"
-                  confirmText="Confirm Delete"
-                  title="Deleting Comment"
-                  showCancelButton
-                >
-                  <Button
-                    id="deleteCommentBtn"
-                    bsStyle="danger"
-                    bsSize="xsmall"
-                    onClick={() => this.deleteComment(comment)}
-                  >
-                    <i className="fa fa-trash-o" />
-                  </Button>
-                </Confirm>
-                )
+                  ? (
+                    <Confirm
+                      onConfirm={() => this.deleteComment(comment)}
+                      body="Are you sure you want to delete this?"
+                      confirmText="Confirm Delete"
+                      title="Deleting Comment"
+                      showCancelButton
+                    >
+                      <Button
+                        id="deleteCommentBtn"
+                        bsStyle="danger"
+                        bsSize="xsmall"
+                        onClick={() => this.deleteComment(comment)}
+                      >
+                        <i className="fa fa-trash-o" />
+                      </Button>
+                    </Confirm>
+                  )
+                  : null
               }
             </ButtonToolbar>
           </td>
@@ -198,20 +217,28 @@ export default class CommentModal extends Component {
         </tr>
       ));
     }
+    return null;
+  }
 
-    const defaultAttrs = {
-      style: {
-        height: '100px',
-        marginBottom: '20px',
-      },
-    };
+  render() {
+    const { element } = this.props;
+    const {
+      isEditing,
+      commentsCollapseAll,
+      commentBody,
+      showCommentModal,
+      comments,
+      section
+    } = this.state;
+    const allComments = getAllComments(comments, section);
+    const collapseIcon = commentsCollapseAll ? 'chevron-up' : 'chevron-down';
 
     return (
       <Draggable enableUserSelectHack={false}>
         <Modal
           dialogClassName="comment-modal"
           show={showCommentModal}
-          onHide={() => this.props.toggleCommentModal(false)}
+          onHide={() => CommentActions.toggleCommentModal(false)}
           bsSize="large"
         >
           <Modal.Header closeButton>
@@ -222,63 +249,61 @@ export default class CommentModal extends Component {
           </Modal.Header>
           <Modal.Body>
             <div className="commentList" ref={this.modalRef}>
-              <div>
+              <div className="table-responsive">
                 <Table striped bordered hover>
                   <thead>
-                    <tr>
-                      <th width="20%">Date</th>
-                      <th width="35%">Comment</th>
-                      <th width="15%">From User</th>
-                      <th width="17%">Actions</th>
-                      <th width="17%">Resolved By</th>
-                    </tr>
+                  <tr>
+                    <th width="20%">Date</th>
+                    <th width="35%">Comment</th>
+                    <th width="15%">From User</th>
+                    <th width="17%">Actions</th>
+                    <th width="17%">Resolved By</th>
+                  </tr>
                   </thead>
-                  <tbody>{commentsTbl}</tbody>
+                  <tbody>{this.renderCommentTable()}</tbody>
                 </Table>
               </div>
 
               {
-                allComments && allComments.length > 0
-                && (
-                <Button onClick={this.toggleCollapse} id="detailsBtn">
-                  <span>Details </span>
-                  <Glyphicon
-                    glyph={collapseIcon}
-                    title="Collapse/Uncollapse"
-                    style={{
-                      fontSize: '20px',
-                      cursor: 'pointer',
-                      color: '#337ab7',
-                      verticalAlign: 'middle',
-                      top: 0
-                    }}
-                  />
-                </Button>
-                )
+                allComments?.length > 0
+                  ? (
+                    <Button onClick={this.toggleCollapse} id="detailsBtn">
+                      <span>Details </span>
+                      <Glyphicon
+                        className="comment-details"
+                        glyph={collapseIcon}
+                        title="Collapse/Uncollapse"
+                      />
+                    </Button>
+                  )
+                  : null
               }
 
               {
-                commentsCollapseAll && (allComments && allComments.length > 0)
-                && (
-                <CommentDetails
-                  section={section}
-                  element={element}
-                  disableEditComment={this.disableEditComment}
-                  markCommentResolved={this.markCommentResolved}
-                  commentByCurrentUser={this.commentByCurrentUser}
-                  handleEditComment={this.handleEditComment}
-                  deleteComment={this.deleteComment}
-                  getAllComments={this.props.getAllComments}
-                />
-                )
+                commentsCollapseAll && allComments?.length > 0
+                  ? (
+                    <CommentDetails
+                      section={section}
+                      element={element}
+                      disableEditComment={this.disableEditComment}
+                      markCommentResolved={this.markCommentResolved}
+                      commentByCurrentUser={this.commentByCurrentUser}
+                      editComment={this.editComment}
+                      deleteComment={this.deleteComment}
+                    />
+                  )
+                  : null
               }
             </div>
 
             <FormControl
               componentClass="textarea"
               autoFocus
-              {...defaultAttrs}
-              value={this.state.commentBody}
+              style={{
+                height: '100px',
+                marginBottom: '20px',
+              }}
+              value={commentBody}
               ref={(input) => { this.nameInput = input; }}
               inputRef={(m) => {
                 this.commentInput = m;
@@ -286,12 +311,12 @@ export default class CommentModal extends Component {
               onChange={this.handleInputChange}
             />
             <ButtonToolbar>
-              <Button onClick={() => this.props.toggleCommentModal(false)}>
+              <Button onClick={() => CommentActions.toggleCommentModal(false)}>
                 Close
               </Button>
               <Button
                 bsStyle="primary"
-                disabled={!this.state.commentBody}
+                disabled={!commentBody}
                 onClick={() => {
                   if (isEditing) {
                     this.updateComment();
@@ -311,17 +336,5 @@ export default class CommentModal extends Component {
 }
 
 CommentModal.propTypes = {
-  showCommentModal: PropTypes.bool.isRequired,
-  toggleCommentModal: PropTypes.func.isRequired,
-  comments: PropTypes.array,
-  fetchComments: PropTypes.func.isRequired,
-  getSectionComments: PropTypes.func.isRequired,
-  getAllComments: PropTypes.func.isRequired,
-  section: PropTypes.string,
   element: PropTypes.object.isRequired,
-};
-
-CommentModal.defaultProps = {
-  comments: [],
-  section: 'sample_header',
 };

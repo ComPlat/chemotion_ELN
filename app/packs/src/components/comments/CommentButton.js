@@ -1,10 +1,15 @@
 import React from 'react';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentStore from 'src/stores/alt/stores/CommentStore';
+import { getSectionComments } from 'src/utilities/CommentHelper';
 
 export default function CommentButton(props) {
   const { section } = props;
-  const comments = props.getSectionComments(section);
+  const { comments } = CommentStore.getState();
+  const sectionComments = getSectionComments(comments, section);
+
   return (
     <OverlayTrigger
       key="ot_comments"
@@ -13,11 +18,11 @@ export default function CommentButton(props) {
     >
       <Button
         id="commentBtn"
-        bsStyle={comments && comments.length > 0 ? 'success' : 'default'}
+        bsStyle={sectionComments.length > 0 ? 'success' : 'default'}
         bsSize="xsmall"
         onClick={() => {
-          props.toggleCommentModal(true);
-          props.setCommentSection(section);
+          CommentActions.toggleCommentModal(true);
+          CommentActions.setCommentSection(section);
         }}
       >
         <i className="fa fa-comments" />
@@ -26,12 +31,8 @@ export default function CommentButton(props) {
   );
 }
 
-
 CommentButton.propTypes = {
   section: PropTypes.string,
-  toggleCommentModal: PropTypes.func.isRequired,
-  getSectionComments: PropTypes.func.isRequired,
-  setCommentSection: PropTypes.func.isRequired,
 };
 
 CommentButton.defaultProps = {

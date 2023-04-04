@@ -2,9 +2,21 @@
   width: 90vw !important;
 }
 
+.table-responsive {
+  overflow-x: auto;
+}
+
 .modal-body {
   #detailsBtn {
     margin-bottom: 10px;
+  }
+
+  .comment-details {
+    font-size: 20px;
+    cursor: pointer;
+    color: #337ab7;
+    vertical-align: middle;
+    top: 0;
   }
 
   .btn-toolbar {

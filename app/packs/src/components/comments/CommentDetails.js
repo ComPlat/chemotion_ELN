@@ -3,17 +3,35 @@ import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Table } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { formatSection } from 'src/utilities/CommentHelper';
+import { formatSection, getAllComments, selectCurrentUser } from 'src/utilities/CommentHelper';
+import CommentStore from 'src/stores/alt/stores/CommentStore';
 
 export default class CommentDetails extends Component {
+  constructor(props) {
+    super(props);
+    const commentState = CommentStore.getState();
+    this.state = {
+      comments: commentState.comments,
+      section: commentState.section,
+    };
+  }
+
   render() {
-    const { section, element } = this.props;
-    const comments = this.props.getAllComments(section);
-    const { currentUser } = UserStore.getState();
+    const {
+      element,
+      disableEditComment,
+      markCommentResolved,
+      commentByCurrentUser,
+      editComment,
+      deleteComment,
+    } = this.props;
+    const { comments, section } = this.state;
+    const allComments = getAllComments(comments, section);
+    const currentUser = selectCurrentUser(UserStore.getState());
 
     let commentsTbl = null;
-    if (comments && comments.length > 0) {
-      commentsTbl = comments.map(comment => (
+    if (allComments?.length > 0) {
+      commentsTbl = allComments.map((comment) => (
         <tr key={comment.id}>
           <td width="10%">{formatSection(comment.section, element.type)}</td>
           <td width="10%">{comment.created_at}</td>
@@ -22,41 +40,46 @@ export default class CommentDetails extends Component {
           <td width="15%">
             <ButtonToolbar>
               <Button
-                disabled={this.props.disableEditComment(comment)}
-                onClick={() => this.props.markCommentResolved(comment)}
+                disabled={disableEditComment(comment)}
+                onClick={() => markCommentResolved(comment)}
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
               {
-                this.props.commentByCurrentUser(comment, currentUser) &&
-                <Button
-                  id="editCommentBtn"
-                  bsSize="xsmall"
-                  bsStyle="primary"
-                  onClick={() => this.props.handleEditComment(comment)}
-                  disabled={this.props.disableEditComment(comment)}
-                >
-                  <i className="fa fa-edit" />
-                </Button>
+                commentByCurrentUser(comment, currentUser)
+                  ? (
+                    <Button
+                      id="editCommentBtn"
+                      bsSize="xsmall"
+                      bsStyle="primary"
+                      onClick={() => editComment(comment)}
+                      disabled={disableEditComment(comment)}
+                    >
+                      <i className="fa fa-edit" />
+                    </Button>
+                  )
+                  : null
               }
               {
-                this.props.commentByCurrentUser(comment, currentUser) &&
-                <Confirm
-                  onConfirm={() => this.props.deleteComment(comment)}
-                  body="Are you sure you want to delete this?"
-                  confirmText="Confirm Delete"
-                  title="Deleting Comment"
-                  showCancelButton
-                >
-                  <Button
-                    id="deleteCommentBtn"
-                    bsStyle="danger"
-                    bsSize="xsmall"
-                    onClick={() => this.props.deleteComment(comment)}
-                  >
-                    <i className="fa fa-trash-o" />
-                  </Button>
-                </Confirm>
+                commentByCurrentUser(comment, currentUser)
+                  ? (
+                    <Confirm
+                      onConfirm={() => deleteComment(comment)}
+                      body="Are you sure you want to delete this?"
+                      confirmText="Confirm Delete"
+                      title="Deleting Comment"
+                      showCancelButton
+                    >
+                      <Button
+                        id="deleteCommentBtn"
+                        bsStyle="danger"
+                        bsSize="xsmall"
+                        onClick={() => deleteComment(comment)}
+                      >
+                        <i className="fa fa-trash-o" />
+                      </Button>
+                    </Confirm>
+                  ) : null
               }
             </ButtonToolbar>
           </td>
@@ -84,12 +107,10 @@ export default class CommentDetails extends Component {
 }
 
 CommentDetails.propTypes = {
-  section: PropTypes.string.isRequired,
   element: PropTypes.object.isRequired,
-  getAllComments: PropTypes.func.isRequired,
   disableEditComment: PropTypes.func.isRequired,
   markCommentResolved: PropTypes.func.isRequired,
   commentByCurrentUser: PropTypes.func.isRequired,
-  handleEditComment: PropTypes.func.isRequired,
+  editComment: PropTypes.func.isRequired,
   deleteComment: PropTypes.func.isRequired,
 };

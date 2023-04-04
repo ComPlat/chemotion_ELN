@@ -18,8 +18,6 @@ import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
-import CommentModal from 'src/components/comments/CommentModal';
-import CommentFetcher from 'src/fetchers/CommentFetcher';
 
 const tabInfoHash = {
   metadata: {
@@ -103,10 +101,6 @@ export default class ElementDetails extends Component {
       deletingElement,
       showTooltip: false,
       genericEls: UserStore.getState().genericEls || [],
-      comments: [],
-      section: '',
-      showCommentModal: false,
-      showCommentSection: false,
     };
 
     this.handleResize = this.handleResize.bind(this);
@@ -162,9 +156,6 @@ export default class ElementDetails extends Component {
   }
 
   content(el) {
-    const {
-      showCommentModal, showCommentSection, comments, section
-    } = this.state;
     if (el && el.klassType === 'GenericEl' && el.type != null) {
       return <GenericElDetails genericEl={el} toggleFullScreen={this.toggleFullScreen} />;
     }
@@ -174,16 +165,6 @@ export default class ElementDetails extends Component {
         return (
           <SampleDetails
             sample={el}
-            showCommentModal={showCommentModal}
-            showCommentSection={showCommentSection}
-            comments={comments}
-            section={section}
-            setCommentSection={this.setCommentSection}
-            getSectionComments={this.getSectionComments}
-            fetchComments={this.fetchComments}
-            renderCommentModal={this.renderCommentModal}
-            toggleCommentModal={this.toggleCommentModal}
-            toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -191,16 +172,6 @@ export default class ElementDetails extends Component {
         return (
           <ReactionDetails
             reaction={el}
-            showCommentModal={showCommentModal}
-            showCommentSection={showCommentSection}
-            comments={comments}
-            section={section}
-            setCommentSection={this.setCommentSection}
-            getSectionComments={this.getSectionComments}
-            fetchComments={this.fetchComments}
-            renderCommentModal={this.renderCommentModal}
-            toggleCommentModal={this.toggleCommentModal}
-            toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -208,16 +179,6 @@ export default class ElementDetails extends Component {
         return (
           <WellplateDetails
             wellplate={el}
-            showCommentModal={showCommentModal}
-            showCommentSection={showCommentSection}
-            comments={comments}
-            section={section}
-            setCommentSection={this.setCommentSection}
-            getSectionComments={this.getSectionComments}
-            fetchComments={this.fetchComments}
-            renderCommentModal={this.renderCommentModal}
-            toggleCommentModal={this.toggleCommentModal}
-            toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -225,16 +186,6 @@ export default class ElementDetails extends Component {
         return (
           <ScreenDetails
             screen={el}
-            showCommentModal={showCommentModal}
-            showCommentSection={showCommentSection}
-            comments={comments}
-            section={section}
-            setCommentSection={this.setCommentSection}
-            getSectionComments={this.getSectionComments}
-            fetchComments={this.fetchComments}
-            renderCommentModal={this.renderCommentModal}
-            toggleCommentModal={this.toggleCommentModal}
-            toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -249,16 +200,6 @@ export default class ElementDetails extends Component {
         return (
           <ResearchPlanDetails
             researchPlan={el}
-            showCommentModal={showCommentModal}
-            showCommentSection={showCommentSection}
-            comments={comments}
-            section={section}
-            setCommentSection={this.setCommentSection}
-            getSectionComments={this.getSectionComments}
-            fetchComments={this.fetchComments}
-            renderCommentModal={this.renderCommentModal}
-            toggleCommentModal={this.toggleCommentModal}
-            toggleCommentSection={this.toggleCommentSection}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -306,59 +247,6 @@ export default class ElementDetails extends Component {
     const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
     return (<div>{icon} &nbsp; {title} </div>);
   }
-
-  toggleCommentModal = (btnAction) => {
-    this.setState({ showCommentModal: btnAction });
-  };
-
-  toggleCommentSection = () => {
-    this.setState({ showCommentSection: !this.state.showCommentSection });
-  }
-
-  getSectionComments = (section) => {
-    const { comments } = this.state;
-    return comments && comments.filter(cmt => (cmt.section === section));
-  }
-
-  getAllComments = (section) => {
-    const { comments } = this.state;
-    return comments && comments.filter(cmt => (cmt.section !== section));
-  }
-
-  setCommentSection = (section) => {
-    this.setState({ section });
-  }
-
-  fetchComments = (element) => {
-    CommentFetcher.fetchByCommentableId(element.id, element.type)
-      .then((comments) => {
-        if (comments != null) {
-          this.setState({ comments });
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  };
-
-  renderCommentModal = (element) => {
-    const { showCommentModal, comments, section } = this.state;
-    if (showCommentModal) {
-      return (
-        <CommentModal
-          showCommentModal={showCommentModal}
-          element={element}
-          section={section}
-          comments={comments}
-          fetchComments={this.fetchComments}
-          getSectionComments={this.getSectionComments}
-          toggleCommentModal={this.toggleCommentModal}
-          getAllComments={this.getAllComments}
-        />
-      );
-    }
-    return <div />;
-  };
 
   render() {
     const {
