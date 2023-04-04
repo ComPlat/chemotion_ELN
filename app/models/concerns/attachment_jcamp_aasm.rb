@@ -130,7 +130,6 @@ module AttachmentJcampProcess
     return unless meta_tmp
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
     att = Attachment.children_of(self[:id]).find_by(filename: meta_filename)
 
     if att.nil?
@@ -139,7 +138,6 @@ module AttachmentJcampProcess
         file_path: meta_tmp.path,
         created_by: created_by,
         created_for: created_for,
-        content_type: content_type,
         key: SecureRandom.uuid,
       )
     end
@@ -150,7 +148,6 @@ module AttachmentJcampProcess
     att.set_csv if ext == 'csv'
     att.set_nmrium if ext == 'nmrium'
     att.update!(
-      storage: Rails.configuration.storage.primary_store,
       attachable_id: attachable_id, attachable_type: 'Container'
     )
     att
