@@ -992,7 +992,7 @@ class ElementActions {
 
   updateElementsCollection(params) {
     return (dispatch) => {
-      CollectionsFetcher.updateElementsCollection(params)
+      CollectionsFetcher.moveOrAssignElementsCollection(params, 'move')
         .then(() => { dispatch(); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
@@ -1000,7 +1000,7 @@ class ElementActions {
 
   assignElementsCollection(params) {
     return (dispatch) => {
-      CollectionsFetcher.assignElementsCollection(params)
+      CollectionsFetcher.moveOrAssignElementsCollection(params, 'assign')
         .then(() => { dispatch(); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
