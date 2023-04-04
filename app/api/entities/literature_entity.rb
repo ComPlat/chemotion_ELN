@@ -6,6 +6,9 @@ module Entities
     expose! :title
     expose! :type
     expose! :url
+    expose! :refs
+    expose! :doi
+    expose! :isbn
 
     expose_timestamps
 
