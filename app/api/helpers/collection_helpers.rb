@@ -22,8 +22,8 @@ module CollectionHelpers
     end
   end
 
-  def fetch_collection_from_col_acl(col_id, user_id)
-    collection_acl = CollectionAcl.find_by('collection_id = ? and user_id in (?)', col_id, user_id)
+  def fetch_collection_from_col_acl(coll_id, user_id)
+    collection_acl = CollectionAcl.find_by(collection_id: coll_id, user_id: user_id)
     Collection.find(collection_acl.collection_id)
   end
   # desc: given an id of coll or sync coll return detail levels as array
@@ -52,46 +52,54 @@ module CollectionHelpers
   # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
-  def fetch_collection_id_for_assign(prms = params, pl = 1)
-    c_id = prms[:collection_id]
-    if !prms[:newCollection].blank?
-      c = Collection.create(
-        user_id: current_user.id, label: prms[:newCollection],
-      )
-    elsif prms[:is_sync_to_me]
-      c = Collection.joins(:sync_collections_users).where(
-        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and (sync_collections_users.permission_level = 1 or sync_collections_users.permission_level >= ?)',
+  def fetch_collection_id_for_assign(params, permission_level = 1)
+    c_id = params['ui_state']['currentCollection']['id']
+
+    if !params[:newCollection].blank?
+      collection_attributes = @params.fetch(:collection_attributes, {})
+                                     .merge(user_id: current_user.id, label: params[:newCollection])
+      c = Collection.create(collection_attributes)
+    elsif params[:is_sync_to_me]
+      c = Collection.joins(:collection_acls).where(
+        'collection_acls.id = ? and collection_acls.user_id in (?) and (collection_acls.permission_level = 1 or collection_acls.permission_level >= ?)',
         c_id,
         user_ids,
-        pl,
+        permission_level,
       ).first
-    elsif
-      c = Collection.where(id: c_id).where(
-        'shared_by_id = ? OR (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?))',
-        current_user.id,
-        user_ids,
-        pl,
-      ).first
+    elsif params[:action] == 'share'
+      c = Collection.where(id: c_id, user_id: current_user.id).first
+    else
+      c = Collection.where(id: c_id, user_id: current_user.id)
+                    .where('permission_level >= ?', permission_level).first
     end
+
     c&.id
   end
 
-  def fetch_collection_by_ui_state_params_and_pl(pl = 2)
+  def fetch_collection_by_ui_state_params_and_pl(permission_level = 2)
     current_collection = params['ui_state']['currentCollection']
+    # Collection.find_by(id: current_collection['id'], user_id: current_user.id) ||
+    #   fetch_collection_from_col_acl(current_collection['id'], current_user.id)
+
     @collection = if current_collection['is_shared']
                     Collection.joins(:collection_acls).includes(:user).where(
-                      'collection_acls.user_id in (?) and collection_acls.collection_id = ? and sync_collections_users.permission_level >= ?',
+                      'collection_acls.user_id in (?) and collection_acls.collection_id = ? and collection_acls.permission_level >= ?',
                       current_user.id,
                       current_collection['id'],
-                      pl,
+                      permission_level
+                    ).first
+                  elsif params[:action] == 'share'
+                    Collection.where(
+                      'id = ? AND (user_id in (?))',
+                       current_collection['id'],
+                       current_user.id
                     ).first
                   else
                     Collection.where(
-                      'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?)) OR shared_by_id = ?)',
+                      'id = ? AND ((user_id in (?) AND (permission_level >= ?)))',
                       current_collection['id'],
-                      user_ids,
-                      pl,
-                      current_user,
+                      current_user.id,
+                      permission_level
                     ).first
                   end
     @collection
@@ -106,7 +114,7 @@ module CollectionHelpers
   end
 
   def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])
-    @c_id = fetch_collection_id_w_current_user(c_id, is_sync)
+    @c_id = fetch_collection_id_w_current_user(c_id)
     @c = Collection.find_by(id: @c_id)
     cu_id = current_user&.id
     @is_owned = cu_id && ((@c.user_id == cu_id && !@c.is_shared) || @c.shared_by_id == cu_id)

@@ -34,9 +34,9 @@ const filterSharedWithMeCollection = (sharedCollections) => {
 }
 
 const filterMySharedCollection = (myCollections) => {
-  const sharedSelectedCollections = myCollections.filter(c => (c.is_shared === true && c.is_locked === false));
-  const sharedCollections = myCollections.filter(c => (c.collection_acls.length > 0 && c.is_locked === false));
-  myCollections = _.uniq(sharedSelectedCollections.concat(sharedCollections));
+  // const sharedSelectedCollections = myCollections.filter(c => (c.is_shared === true && c.is_locked === false));
+  myCollections = myCollections.filter(c => (c.collection_acls.length > 0 && c.is_locked === false));
+  // myCollections = _.uniq(sharedSelectedCollections.concat(sharedCollections));
 
   let collections = [];
   myCollections.forEach((collection) => {
