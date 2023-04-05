@@ -52,6 +52,7 @@
 #  index_samples_on_user_id           (user_id)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Sample < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -632,3 +633,4 @@ private
     Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
+# rubocop:enable Metrics/ClassLength
