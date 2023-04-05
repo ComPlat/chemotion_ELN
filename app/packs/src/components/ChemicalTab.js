@@ -76,7 +76,7 @@ export default class ChemicalTab extends React.Component {
       return;
     }
     const chemicalData = chemical._chemical_data || null;
-    const cas = sample.xref.cas.value || '';
+    const cas = sample.xref && sample.xref.cas ? sample.xref.cas.value : '';
     const params = {
       chemical_data: chemicalData,
       cas,
@@ -386,7 +386,7 @@ export default class ChemicalTab extends React.Component {
   textInput(data, label, parameter) {
     const componentClass = parameter !== 'important_notes' && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
     && parameter !== 'solubility' ? 'input' : 'textarea';
-    let value;
+    let value = '';
     if (parameter !== 'cas') {
       value = data !== undefined ? data[parameter] : '';
     } else {
@@ -402,7 +402,7 @@ export default class ChemicalTab extends React.Component {
     }
     const checkLabel = label !== 'Date' ? <ControlLabel>{label}</ControlLabel> : null;
     return (
-      <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip>{conditionalOverlay}</Tooltip> : <div />}>
+      <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
         <FormGroup>
           {checkLabel}
           <FormControl
@@ -448,7 +448,7 @@ export default class ChemicalTab extends React.Component {
     }
     return (
       <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
-        <Button active className="clipboardBtn" data-clipboard-text={value} bsSize="xsmall">
+        <Button active className="clipboardBtn" data-clipboard-text={value} bsSize="xs">
           <i className="fa fa-clipboard" />
         </Button>
       </OverlayTrigger>
@@ -532,7 +532,7 @@ export default class ChemicalTab extends React.Component {
   removeButton(index, document) {
     return (
       <Button
-        bsSize="xsmall"
+        bsSize="xs"
         bsStyle="danger"
         onClick={() => this.handleRemove(index, document)}
       >
@@ -551,7 +551,7 @@ export default class ChemicalTab extends React.Component {
       vendorProduct = 'merckProductInfo';
       this.setState({ loadingSaveSafetySheets: true });
     }
-    const cas = sample.xref.cas.value || '';
+    const cas = sample.xref && sample.xref.cas ? sample.xref.cas.value : '';
     // update chemical data before saving it in the database
     this.handleFieldChanged(vendorProduct, productInfo);
     const params = {
@@ -638,7 +638,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <Button
-        bsSize="xsmall"
+        bsSize="xs"
         bsStyle="warning"
         disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
@@ -756,7 +756,7 @@ export default class ChemicalTab extends React.Component {
     const savedSds = chemical._chemical_data[0].ssdPath;
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
     const mappedSafetySheets = sdsStatus.map((document, index) => {
-      const key = document.alfa_product_number || document.merck_product_number;
+      const key = (document.alfa_product_number || document.merck_product_number) || index;
       return (
         <div className="safety-sheets-form" key={key}>
           {document !== 'Could not find safety data sheet from Thermofisher' && document !== 'Could not find safety data sheet from Merck' ? (
@@ -1087,11 +1087,11 @@ export default class ChemicalTab extends React.Component {
             <Modal.Title>Fetched Chemical Properties</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div>
+            <div className="properties-modal-dev">
               <FormGroup controlId="propertiesModal">
                 <FormControl
                   componentClass="textarea"
-                  id="properties-modal"
+                  className="properties-modal"
                   readOnly
                   disabled
                   type="text"
@@ -1124,7 +1124,7 @@ export default class ChemicalTab extends React.Component {
     const {
       chemical
     } = this.state;
-    let data;
+    let data = [];
 
     if (chemical) {
       data = chemical._chemical_data ? chemical._chemical_data[0] : [];
@@ -1148,9 +1148,13 @@ export default class ChemicalTab extends React.Component {
               {this.locationTab(data)}
             </td>
           </tr>
-          <div>
-            {this.renderPropertiesModal()}
-          </div>
+          <tr>
+            <td>
+              <div>
+                {this.renderPropertiesModal()}
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     );
