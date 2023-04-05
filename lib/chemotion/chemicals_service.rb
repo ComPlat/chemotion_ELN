@@ -3,7 +3,6 @@
 module Chemotion
   class ChemicalsService
     def self.request_options
-      # PostmanRuntime/7.28.4 can be used as user agent in case current one gets blocked
       { headers: {
         'Access-Control-Request-Method' => 'GET',
         'Accept' => '*/*',
@@ -32,8 +31,8 @@ module Chemotion
 
     def self.alfa_product(alfa_req)
       response = Nokogiri::HTML.parse(alfa_req.body)
-      if response.title && response.title != "Alfa Aesar"
-        product_number = response.css('a').map { |node| node.attribute('item_number') }.compact
+      if response.title && response.title != 'Alfa Aesar'
+        product_number = response.css('a').filter_map { |node| node.attribute('item_number') }
         product_number[0].value
       else
         str = 'search-result-number'
@@ -44,17 +43,16 @@ module Chemotion
     def self.alfa(name, language)
       chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
       alfa_req = HTTParty.get("https://www.alfa.com/en/search/?q=#{name}", request_options)
-      product_number = alfa_product(alfa_req)
-      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{product_number}"
-      { 'alfa_link' => alfa_link, 'alfa_product_number' => product_number,
-        'alfa_product_link' => "https://www.alfa.com/en/catalog/#{product_number}" }
+      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
+      { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
+        'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
     rescue StandardError
       'Could not find safety data sheet from Thermofisher'
     end
 
     def self.check_if_ssd_already_saved(file_name, ssd_files_names)
       saved = false
-      unless  ssd_files_names.length.zero?
+      unless  ssd_files_names.empty?
         ssd_files_names.each do |file|
           if file == file_name
             saved = true
@@ -120,7 +118,7 @@ module Chemotion
       pictograms = health_section.css('img').map do |e|
         e.attributes['src'].value.gsub('/static//images/pictogram/', '')
       end
-      pictograms.map { |e| pictograms_hash[e] || nil }.compact
+      pictograms.filter_map { |e| pictograms_hash[e] || nil }
     end
 
     def self.safety_phrases_thermofischer(product_number)
@@ -218,15 +216,13 @@ module Chemotion
     end
 
     def self.handle_exceptions
-      begin
-        yield
-      rescue ActiveRecord::StatementInvalid, ActiveRecord::RecordInvalid => e
-        error!({ error: e.message }, 422)
-      rescue JSON::ParserError => e
-        error!({ error: 'Invalid JSON data' }, 400)
-      rescue StandardError => e
-        error!({ error: e.message }, 500)
-      end
+      yield
+    rescue ActiveRecord::StatementInvalid, ActiveRecord::RecordInvalid => e
+      error!({ error: e.message }, 422)
+    rescue JSON::ParserError
+      error!({ error: 'Invalid JSON data' }, 400)
+    rescue StandardError
+      error!({ error: e.message }, 500)
     end
   end
 end

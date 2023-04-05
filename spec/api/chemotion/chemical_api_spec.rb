@@ -8,8 +8,11 @@ describe Chemotion::ChemicalAPI do
   let!(:chemical) { create(:chemical, sample_id: s.id) }
 
   context 'with unauthorized user find chemical' do
+    let(:warden_authentication_instance) { instance_double(WardenAuthentication) }
+
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(unauthorized_user)
+      allow(WardenAuthentication).to receive(:new).and_return(warden_authentication_instance)
+      allow(warden_authentication_instance).to receive(:current_user).and_return(unauthorized_user)
     end
 
     describe 'GET find chemical /api/v1/chemicals' do
@@ -24,7 +27,7 @@ describe Chemotion::ChemicalAPI do
       it 'is able to find chemical entry using sample_id' do
         chem = Chemical.find_by(sample_id: s.id)
         expect(chem).not_to be_nil
-        # expect(chemical.sample_id).to eq(s.id)
+        expect(chemical.sample_id).to eq(s.id)
       end
     end
 

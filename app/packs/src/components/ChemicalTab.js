@@ -1149,7 +1149,7 @@ export default class ChemicalTab extends React.Component {
             </td>
           </tr>
           <tr>
-            <td>
+            <td className="chemical-table-cells">
               <div>
                 {this.renderPropertiesModal()}
               </div>

@@ -203,7 +203,7 @@ class Sample < ApplicationRecord
   belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
-  has_one :chemicals
+  has_one :chemicals, dependent: :destroy
 
   has_many :wells
   has_many :wellplates, through: :wells
@@ -337,6 +337,12 @@ class Sample < ApplicationRecord
     end
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
+  # rubocop:disable Style/MethodDefParentheses
+  # rubocop:disable Style/OptionalBooleanParameter
+  # rubocop:disable Layout/TrailingWhitespace
   def create_subsample user, collection_ids, copy_ea = false, type = nil 
     subsample = self.dup
     subsample.name = self.name if self.name.present?
@@ -369,9 +375,15 @@ class Sample < ApplicationRecord
     subsample.container = Container.create_root_container
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
-    create_chemical_entry_for_subsample(self.id, subsample.id, type) unless type.nil?
+    create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
     subsample
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/PerceivedComplexity
+  # rubocop:enable Style/MethodDefParentheses
+  # rubocop:enable Style/OptionalBooleanParameter
+  # rubocop:enable Layout/TrailingWhitespace
 
   def reaction_description
     reactions.first.try(:description)

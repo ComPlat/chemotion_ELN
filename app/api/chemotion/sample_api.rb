@@ -53,7 +53,9 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
           Sample.where(id: sample_ids).each do |sample|
+            # rubocop:disable Lint/UselessAssignment
             subsample = sample.create_subsample(current_user, col_id, true, 'sample')
+            # rubocop:enable Lint/UselessAssignment
           end
 
           {} # JS layer does not use the reply
