@@ -260,27 +260,8 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static updateElementsCollection(params) {
-    console.log("----PUT----", params);
-    return fetch('/api/v1/collections/elements/', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: params.ui_state,
-        collection_id: params.collection_id,
-        is_shared: params.is_shared,
-        newCollection: params.newLabel,
-      })
-    }).then(response => response)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
   static moveOrAssignElementsCollection(params, action) {
-    return fetch('/api/v1/collections/elements/', {
+    return fetch('/api/v1/share_temp_collections/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -290,28 +271,8 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
         collection_id: params.collection_id,
-        is_shared: params.is_shared,
         newCollection: params.newLabel,
         action: action
-      })
-    }).then(response => response)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static assignElementsCollection(params) {
-    console.log("----POST----", params);
-    return fetch('/api/v1/collections/elements/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: params.ui_state,
-        collection_id: params.collection_id,
-        is_shared: params.is_shared,
-        newCollection: params.newLabel,
       })
     }).then(response => response)
       .catch((errorMessage) => { console.log(errorMessage); });
