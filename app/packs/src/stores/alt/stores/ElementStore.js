@@ -533,13 +533,13 @@ class ElementStore {
   }
 
   handleUpdateElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchMyCollections();
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
 
   handleAssignElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchMyCollections();
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
