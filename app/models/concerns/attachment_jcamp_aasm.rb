@@ -110,7 +110,6 @@ module AttachmentJcampAasm
 
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
-    return if new_upload
 
     generate_spectrum(true, false) if queueing?
     generate_spectrum(true, true) if regenerating?
