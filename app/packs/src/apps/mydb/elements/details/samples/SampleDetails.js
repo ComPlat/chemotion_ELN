@@ -508,7 +508,9 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     const colLabel = sample.isNew ? null : (
-      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
+      <div style={{ marginLeft: '5px' }}>
+        <ElementCollectionLabels element={sample} key={sample.id} />
+      </div>
     );
 
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
@@ -518,68 +520,70 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     return (
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-sample" />{sample.title()}</span>
+          <span>
+            <i className="icon-sample" />{sample.title()}
+          </span>
         </OverlayTrigger>
-        <ConfirmClose el={sample} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit(true)}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-            <i className="fa fa-times" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-          </Button>
-        </OverlayTrigger>
-        {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
-          >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <PrintCodeButton element={sample} />
+        <ShowUserLabels element={sample}/>
+        <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+        {colLabel}
+        <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+        <PubchemLabels element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
-        {decoupleCb}
-        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
-          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-          {colLabel}
-          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <PubchemLabels element={sample} />
+        <div style={{ marginLeft: 'auto' }}>
+          <ConfirmClose el={sample} />
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit(true)}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+              <i className="fa fa-times" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit()}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+            </Button>
+          </OverlayTrigger>
+          {copyBtn}
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+          >
+            <Button
+              bsStyle="info"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.props.toggleFullScreen()}
+            >
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          <PrintCodeButton element={sample} />
+          {/* {decoupleCb} */}
         </div>
-        <ShowUserLabels element={sample} />
       </div>
     );
   }
@@ -600,7 +604,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px' };
+    const style = { height: '200px', marginBottom: '100px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
       const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
@@ -621,6 +625,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
+          { sample.isNew ? null : <h6>{this.moleculeCas()}</h6> }
           {lcssSign}
         </Col>
         <Col md={8}>
@@ -777,8 +782,7 @@ export default class SampleDetails extends React.Component {
   moleculeCas() {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
-    const cas = xref ? xref.cas : '';
-    const casLabel = cas && cas.label ? cas.label : '';
+    const cas = xref && xref.cas ? xref.cas.value : '';
     let casArr = [];
     if (molecule && molecule.cas) {
       casArr = molecule.cas.map((element) => ({
@@ -798,27 +802,32 @@ export default class SampleDetails extends React.Component {
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
 
     return (
-      <div className="form-row">
-        <InputGroup className="sample-molecule-identifier">
-          <InputGroup.Addon>CAS</InputGroup.Addon>
-          <Select.Creatable
-            name="cas"
-            multi={false}
-            options={casArr}
-            onChange={onChange}
-            onOpen={onOpen}
-            isLoading={isCasLoading}
-            value={cas}
-            onBlur={validate}
-            disabled={!sample.can_update}
-          />
-          <InputGroup.Button>
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button active className="clipboardBtn" data-clipboard-text={casLabel}><i className="fa fa-clipboard" /></Button>
-            </OverlayTrigger>
-          </InputGroup.Button>
-        </InputGroup>
-        <div style={{ marginTop: '-11px' }}>
+      <div style={{ width: '90%', display: 'inline-block', marginLeft: 'auto' }}>
+        <div>
+          <InputGroup>
+            <InputGroup.Addon>CAS</InputGroup.Addon>
+            <Select.Creatable
+              name="cas"
+              multi={false}
+              options={casArr}
+              onChange={onChange}
+              onOpen={onOpen}
+              isLoading={isCasLoading}
+              value={cas}
+              onBlur={validate}
+              disabled={!sample.can_update}
+              style={{ fontSize: '14px' }}
+            />
+            <InputGroup.Button>
+              <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+                <Button active className="clipboardBtn" data-clipboard-text={cas} style={{ height: '36px' }}>
+                  <i className="fa fa-clipboard" />
+                </Button>
+              </OverlayTrigger>
+            </InputGroup.Button>
+          </InputGroup>
+        </div>
+        <div>
           {!validCas ? errorMessage : null }
         </div>
       </div>
@@ -828,7 +837,8 @@ export default class SampleDetails extends React.Component {
   updateCas(e) {
     let sample = this.state.sample;
     const value = e ? e.value : '';
-    sample.xref = { ...sample.xref, cas: value };
+    const updateValue = { value, label: value };
+    sample.xref = { ...sample.xref, cas: updateValue };
     this.setState({ sample });
   }
 
@@ -860,8 +870,10 @@ export default class SampleDetails extends React.Component {
       private_notes,
       ...customKeys
     } = cloneDeep(xref || {});
+    const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
 
-    if (Object.keys(customKeys).length === 0) return null;
+    if (Object.keys(customKeys).length === 0
+      || check.some((key) => Object.keys(customKeys).includes(key))) return null;
     return (
       Object.keys(customKeys).map(key => (
         <tr key={`field_${key}`}>
@@ -988,7 +1000,6 @@ export default class SampleDetails extends React.Component {
         {this.moleculeInchi(sample)}
         {this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
-        {this.moleculeCas()}
       </ListGroupItem>
     );
   }

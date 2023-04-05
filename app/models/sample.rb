@@ -252,7 +252,11 @@ class Sample < ApplicationRecord
   end
 
   def sample_xref_cas
-    xref&.dig('cas', 'value') || ''
+    if xref.is_a?(Hash) && xref['cas'].is_a?(Hash)
+      xref.dig('cas', 'value') || ''
+    else
+      ''
+    end
   end
 
   def molecule_inchikey
