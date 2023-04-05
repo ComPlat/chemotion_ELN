@@ -8,6 +8,15 @@ table.table-borderless {
     }
 }
 
+.properties-modal-dev {
+    .properties-modal {
+        width: 500px;
+        height: 640px;
+        margin: 30px;
+        white-space: pre-line;
+    }
+}
+
 .safety-phrases {
     font-size: 1.2em;
     font-weight: bold;
@@ -190,14 +199,6 @@ table.table-borderless {
     padding-top: 10px;
     width: 100%;
 }
-
-#properties-modal {
-    width: 500px;
-    height: 640px;
-    margin: 30px;
-    white-space: pre-line;
-}
-
 
 #chemical-status {
     width: 100%;
