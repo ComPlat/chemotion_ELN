@@ -3,7 +3,7 @@
 require 'rails_helper'
 require Rails.root.join 'spec/concerns/taggable.rb'
 
-RSpec.describe Sample, type: :model do
+RSpec.describe Sample do
   describe 'creation' do
     let(:sample) { create(:sample) }
 
@@ -30,24 +30,24 @@ RSpec.describe Sample, type: :model do
     it 'has a CodeLog' do
       expect(sample.code_log.value).to match(/\d{40}/)
       expect(sample.code_log.id).to match(
-        /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+        /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
       )
     end
   end
 
   describe 'deletion' do
-    let(:sample)     { create(:sample) }
-    let(:reaction_1) { create(:reaction) }
-    let(:reaction_2) { create(:reaction) }
+    let(:sample) { create(:sample) }
+    let(:reaction1) { create(:reaction) }
+    let(:reaction2) { create(:reaction) }
     let(:wellplate)  { create(:wellplate) }
     let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
     let(:collection) { create(:collection) }
 
     before do
       # CollectionsSample.create!(sample: sample, collection: collection)
-      ReactionsStartingMaterialSample.create!(sample: sample, reaction: reaction_1)
-      ReactionsReactantSample.create!(sample: sample, reaction: reaction_1)
-      ReactionsProductSample.create!(sample: sample, reaction: reaction_2)
+      ReactionsStartingMaterialSample.create!(sample: sample, reaction: reaction1)
+      ReactionsReactantSample.create!(sample: sample, reaction: reaction1)
+      ReactionsProductSample.create!(sample: sample, reaction: reaction2)
       sample.destroy
       wellplate.reload
     end
@@ -56,9 +56,9 @@ RSpec.describe Sample, type: :model do
     it 'does not destroy associations for reaction' do
       expect(collection.collections_samples).to eq []
       expect(sample.reactions_starting_material_samples).to eq []
-      # expect(reaction_1.reactions_starting_material_samples).to eq sample.reactions_starting_material_samples
-      # expect(reaction_1.reactions_reactant_samples).to eq sample
-      # expect(reaction_2.reactions_product_samples).to eq sample
+      # expect(reaction1.reactions_starting_material_samples).to eq sample.reactions_starting_material_samples
+      # expect(reaction1.reactions_reactant_samples).to eq sample
+      # expect(reaction2.reactions_product_samples).to eq sample
       # expect(wellplate.wells).to eq []
     end
 
@@ -83,7 +83,7 @@ RSpec.describe Sample, type: :model do
         all: true,
         included_ids: [],
         excluded_ids: [],
-        collection_id: c1.id
+        collection_id: c1.id,
       }
     end
 
@@ -98,7 +98,7 @@ RSpec.describe Sample, type: :model do
     end
   end
 
-  context 'updating molfile' do
+  context 'when updating molfile' do
     let(:molfile) do
       <<~MOLFILE
         H2O Water 7732185
@@ -126,13 +126,13 @@ RSpec.describe Sample, type: :model do
         #  "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg", #todo
         'molfile' => molfile.rstrip,
         'names' => %w[water oxidane],
-        'sum_formular' => 'H2O'
+        'sum_formular' => 'H2O',
       }
     end
 
     before do
-      sample.collections << FactoryBot.build(:collection)
-      sample.creator = FactoryBot.build(:person)
+      sample.collections << build(:collection)
+      sample.creator = build(:person)
     end
 
     it 'creates a molecule' do
@@ -151,12 +151,13 @@ RSpec.describe Sample, type: :model do
 
     # #Fixme : now file are anonymised
     # it 'should create the molecule svg file' do
-    #  expect(File).to receive(:new).with('public/images/molecules/XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg','w+').and_call_original
+    #  expect(File).to receive(:new)
+    #  .with('public/images/molecules/XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg','w+').and_call_original
     #  sample.save
     # end
   end
 
-  context 'count samples created by user' do
+  context 'when counting samples created by user' do
     let(:user) { create(:person) }
 
     before do
@@ -174,7 +175,7 @@ RSpec.describe Sample, type: :model do
     end
   end
 
-  context 'count subsamples created per sample' do
+  context 'when counting subsamples created per sample' do
     let(:sample) { create(:sample) }
 
     before do
@@ -189,7 +190,7 @@ RSpec.describe Sample, type: :model do
   describe 'unit conversion' do
     let(:sample) { create(:sample) }
 
-    context 'given l & molarity' do
+    context 'when given l & molarity' do
       before do
         sample.target_amount_value = 0.001991
         sample.target_amount_unit = 'l'
@@ -205,7 +206,7 @@ RSpec.describe Sample, type: :model do
       end
     end
 
-    context 'given l' do
+    context 'when given l' do
       before do
         sample.target_amount_value = 0.002231
         sample.target_amount_unit = 'l'
@@ -221,7 +222,7 @@ RSpec.describe Sample, type: :model do
       end
     end
 
-    context 'given mol' do
+    context 'when given mol' do
       before do
         sample.target_amount_value = 0.00119
         sample.target_amount_unit = 'mol'
@@ -240,22 +241,40 @@ RSpec.describe Sample, type: :model do
 
   describe 'create private note' do
     let(:reaction) { create(:reaction) }
-    let(:note_1) do
+    let(:note1) do
       create(:private_note, content: 'Note 1', noteable_id: reaction.id, noteable_type: 'Reaction')
     end
 
     before do
-      reaction.update(private_notes: [note_1])
+      reaction.update(private_notes: [note1])
     end
 
     it 'is possible to create a valid private note' do
       expect(reaction.private_notes).not_to be_nil
     end
 
-    context 'is content valid' do
+    context 'when content is valid' do
       let(:n) { reaction.private_notes[0] }
+
       it 'is content valid' do
-        expect(n.content).to eq note_1.content
+        expect(n.content).to eq note1.content
+      end
+    end
+  end
+
+  describe 'auto_set_short_label' do
+    let(:sample) { create(:sample) }
+
+    context 'when short label is "NEW SAMPLE"' do
+      before do
+        sample.short_label = 'NEW SAMPLE'
+        sample.save!
+        sample.send :auto_set_short_label
+      end
+
+      it 'short label is the user label' do
+        expected_short_label = "#{sample.creator.name_abbreviation}-#{sample.creator.counters['samples']}"
+        expect(sample.short_label).to eq expected_short_label
       end
     end
   end
