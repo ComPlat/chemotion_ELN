@@ -105,6 +105,17 @@ class CollectionActions {
     };
   }
 
+  updateTabsSegment(params) {
+    return (dispatch) => {
+      CollectionsFetcher.updateTabsLayout(params)
+        .then(() => {
+          dispatch();
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   bulkUpdateUnsharedCollections(params) {
     return (dispatch) => {
       CollectionsFetcher.bulkUpdateUnsharedCollections(params)

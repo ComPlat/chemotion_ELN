@@ -529,8 +529,7 @@ module Chemotion
         end
 
         patch do
-          updated_segment = @collection.tabs_segment.except!(params[:segment])
-          @collection.update(tabs_segment: updated_segment)
+          @collection.update(tabs_segment: params[:segment])
           status 204
         end
       end

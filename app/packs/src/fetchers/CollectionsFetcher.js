@@ -360,7 +360,7 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        id: params.currentCollectionId,
+        id: params.cId,
         segment: params.segment
       })
     }).then(response => response)

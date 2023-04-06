@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, FormControl, Modal, Col } from 'react-bootstrap';
-import _, { isEmpty } from 'lodash';
+import _ from 'lodash';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
@@ -88,11 +88,12 @@ export default class CollectionTabs extends React.Component {
       layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
       let availableTabs = (layout && Object.keys(layout)) || {};
       let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-      if (!isEmpty(node.tabs_segment[element.name])) {
+      if (!_.isEmpty(node.tabs_segment[element.name])) {
         const nodeTabs = node.tabs_segment[element.name];
         let names = segmentKlasses.filter(s => s.element_klass.name == element.name).map(s => s.label);
-        availableTabs = availableTabs.concat(names);
+        availableTabs = _.uniq(availableTabs.concat(names));
         const { visible, hidden } = getArrayFromLayout(nodeTabs, availableTabs);
+
         layout = { visible, hidden };
       } else {
         const { visible, hidden } = getArrayFromLayout(layout, availableTabs);

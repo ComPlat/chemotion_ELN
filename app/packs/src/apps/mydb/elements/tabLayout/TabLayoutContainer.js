@@ -17,15 +17,6 @@ export default class TabLayoutContainer extends React.Component {
     this.moveLayout = this.moveLayout.bind(this);
   }
 
-  componentDidUpdate(prevProps) {
-    if (this.props !== prevProps) {
-      this.setState({
-        visible: this.props.visible,
-        hidden: this.props.hidden
-      });
-    }
-  }
-
   moveLayout(dragItem, hoverItem) {
     let { visible, hidden } = this.state;
 
