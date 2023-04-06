@@ -222,7 +222,7 @@ module Chemotion
     rescue JSON::ParserError
       error!({ error: 'Invalid JSON data' }, 400)
     rescue StandardError => e
-      error!({ error: e.message }, 500)
+      Rails.logger.error("Error: #{e.message}")
     end
   end
 end
