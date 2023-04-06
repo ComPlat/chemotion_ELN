@@ -122,7 +122,7 @@ describe Chemotion::ChemicalAPI do
         stub_request(:get, 'https://www.alfa.com/en/search/?q=')
           .with(headers: { 'Access-Control-Request-Method' => 'GET', 'Accept' => '*/*', 'User-Agent': 'Google Chrome' })
           .to_return(status: 200, body: '', headers: {})
-        stub_request(:get, 'https://www.sigmaaldrich.com/DE/en/search/?focus=products%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20&page=1&perpage=30&sort=relevance&term=&type=product=')
+        stub_request(:get, 'https://www.sigmaaldrich.com/US/en/search')
           .with(headers: { 'Accept' => '*/*', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
                            'Access-Control-Request-Method' => 'GET',
                            'User-Agent' => 'Google Chrome' })

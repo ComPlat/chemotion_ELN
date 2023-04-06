@@ -221,7 +221,7 @@ module Chemotion
       error!({ error: e.message }, 422)
     rescue JSON::ParserError
       error!({ error: 'Invalid JSON data' }, 400)
-    rescue StandardError
+    rescue StandardError => e
       error!({ error: e.message }, 500)
     end
   end
