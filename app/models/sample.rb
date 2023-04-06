@@ -52,6 +52,8 @@
 #  index_samples_on_user_id           (user_id)
 #
 
+# rubocop: disable Metrics/ClassLength
+
 class Sample < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -549,12 +551,16 @@ private
     reactions.each(&:save)
   end
 
+  # rubocop: disable Metrics/AbcSize
+  # rubocop: disable Metrics/CyclomaticComplexity
+  # rubocop: disable Metrics/PerceivedComplexity
+
   def auto_set_short_label
     sh_label = self['short_label']
     return if sh_label =~ /solvents?|reactants?/
     return if short_label && !short_label_changed?
 
-    if sh_label && Sample.find_by(short_label: sh_label)
+    if sh_label && (Sample.find_by(short_label: sh_label) || sh_label.eql?('NEW SAMPLE'))
       if parent && !((parent_label = parent.short_label) =~ /solvents?|reactants?/)
         self.short_label = "#{parent_label}-#{parent.children.count.to_i.succ}"
       elsif creator && creator.counters['samples']
@@ -566,6 +572,10 @@ private
       self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
     end
   end
+
+  # rubocop: enable Metrics/AbcSize
+  # rubocop: enable Metrics/CyclomaticComplexity
+  # rubocop: enable Metrics/PerceivedComplexity
 
   def update_counter
     return if short_label =~ /solvents?|reactants?/ || self.parent
@@ -628,3 +638,5 @@ private
     Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
+
+# rubocop: enable Metrics/ClassLength
