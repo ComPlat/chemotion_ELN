@@ -15,7 +15,7 @@ import GenericElementAdmin from 'src/apps/admin/GenericElementAdmin';
 import SegmentElementAdmin from 'src/apps/admin/SegmentElementAdmin';
 import DatasetElementAdmin from 'src/apps/admin/DatasetElementAdmin';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
-import TemplateManagement from 'src/apps/admin/TemplateManagement';
+// import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -100,7 +100,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
-            <NavItem eventKey={12}>Report-template Management</NavItem>
+	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
           </Nav>
         </Col>

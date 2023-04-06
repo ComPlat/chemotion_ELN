@@ -17,11 +17,11 @@ RSpec.describe Report, type: :report do
   let!(:att1) do
     create(
       :attachment,
-      filename: rp1.file_name + '.' + ext,
+      filename: "#{rp1.file_name}.#{ext}",
       attachable_id: rp1.id,
       attachable_type: 'Report',
       content_type: docx_mime_type,
-      file_path: Rails.root.join('spec/fixtures/upload.jpg')
+      file_path: Rails.root.join('spec/fixtures/upload.jpg'),
     )
   end
 
@@ -40,11 +40,13 @@ RSpec.describe Report, type: :report do
     end
   end
 
-  describe '.create_docx' do
-    it 'returns a Sablon object' do
-      file_name = 'test_file_name'
-      template = 'supporting_information'
-      attributes = {
+  describe '.create_docx' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    let(:report_template) { create(:report_template) }
+    let(:file_name) { 'test_file_name' }
+    let(:template) { 'supporting_information' }
+    let(:report) { described_class.create(attributes) }
+    let(:attributes) do
+      {
         file_name: file_name,
         file_description: '',
         configs: {},
@@ -54,15 +56,49 @@ RSpec.describe Report, type: :report do
         objects: [{ 'id' => r1.id, 'type' => 'reaction' }],
         img_format: 'png',
         template: template,
-        author_id: user.id
+        author_id: user.id,
       }
+    end
 
-      report = described_class.create(attributes)
-      user.reports << report
-      report.create_docx
-      att = report.attachments.first
-      expect(att.filename).to include(file_name)
-      expect(report.template).to include(template)
+    context 'when no db template is requested' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      before do
+        user.reports << report
+        report.create_docx
+      end
+
+      it 'returns a Sablon object' do
+        att = report.attachments.first
+        expect(att.filename).to include(file_name)
+        expect(report.template).to include(template)
+      end
+    end
+
+    context 'when requested report template is in database' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      before do
+        attributes[:report_templates_id] = report_template.id
+        user.reports << report
+        report.create_docx
+      end
+
+      it 'returns a Sablon object' do
+        att = report.attachments.first
+        expect(att.filename).to include(file_name)
+        expect(report.template).to include(template)
+      end
+    end
+
+    context 'when requested report template is not in database' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      before do
+        attributes[:report_templates_id] = -1
+        user.reports << report
+        report.create_docx
+      end
+
+      it 'returns a Sablon object' do
+        att = report.attachments.first
+        expect(att.filename).to include(file_name)
+        expect(report.template).to include(template)
+      end
     end
   end
 

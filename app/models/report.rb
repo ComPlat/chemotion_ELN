@@ -53,18 +53,16 @@ class Report < ApplicationRecord
   after_destroy :delete_job
 
   def create_docx
-    template = self.template
-
     if ReportTemplate.where(id: report_templates_id).present?
       report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
       template = report_template.report_type
-      tpl_path = if report_template.attachment
-                   report_template.attachment.attachment_url
-                 else
-                   report_template.report_type
-                 end
+#     tpl_path = if report_template.attachment
+#                  report_template.attachment.attachment_url
+#                else
+#                  report_template.report_type
+#                end
+      tpl_path = self.class.template_path(template)
     else
-      template = self.class.template_path(template)
       tpl_path = self.class.template_path(template)
     end
     case template
@@ -98,7 +96,7 @@ class Report < ApplicationRecord
       ).process
     end
   end
-  handle_asynchronously :create_docx, run_at: proc { 30.seconds.from_now }
+  handle_asynchronously(:create_docx, run_at: proc { 30.seconds.from_now }) unless Rails.env.development?
 
   def queue_name
     "report_#{id}"

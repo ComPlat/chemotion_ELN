@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Panel, Tabs, Tab } from 'react-bootstrap';
+import { Alert, Panel, Tabs, Tab } from 'react-bootstrap';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
@@ -118,8 +118,14 @@ export default class ReportContainer extends Component {
     } = this.state;
 
     let { template } = this.state;
+    let alertTemplateNotFound = false;
+
     if (templateOpts.length > 0 && template && typeof template != 'object') {
-      const templateOpt = templateOpts.find(x => x.id == template || x.report_type == template);
+      let templateOpt = templateOpts.find(x => x.id == template || x.report_type == template);
+      if (!templateOpt) {
+        alertTemplateNotFound = true;
+        templateOpt = templateOpts.find(x => x.report_type === 'standard')
+      }
       template = { id: templateOpt.id, label: templateOpt.name, value: templateOpt.report_type };
     }
 
@@ -129,6 +135,11 @@ export default class ReportContainer extends Component {
       <Panel
         bsStyle="default"
       >
+        {alertTemplateNotFound && (
+          <Alert variant="warning">
+            Report Template not found. Set to Standard. Please check your config settings.
+          </Alert>
+        )}
         <Panel.Heading>{this.panelHeader()}</Panel.Heading>
         <Tabs
           activeKey={activeKey}

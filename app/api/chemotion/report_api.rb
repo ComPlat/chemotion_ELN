@@ -1,4 +1,3 @@
-
 # frozen_string_literal: true
 
 module Chemotion
@@ -219,6 +218,7 @@ module Chemotion
       requires :imgFormat, type: String, default: 'png', values: %w[png eps emf]
       requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       requires :templateId, type: String
+      optional :templateType, type: String, default: 'standard', values: ReportTemplate::REPORT_TYPES
       optional :fileDescription
     end
     post :reports do
@@ -238,7 +238,7 @@ module Chemotion
         prd_atts: params[:prdAtts],
         objects: params[:objTags],
         img_format: params[:imgFormat],
-        template: params[:templateId],
+        template: params[:templateType],
         report_templates_id: !!/\A\d+\z/.match(params[:templateId]) ? params[:templateId].to_i : nil,
         author_id: current_user.id
       }

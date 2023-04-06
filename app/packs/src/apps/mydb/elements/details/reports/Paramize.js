@@ -42,9 +42,9 @@ const paramize = (state) => {
     fileName,
     fileDescription,
     templateId: template.id || template,
+    templateType: template?.value,
     molSerials: selMolSerials,
   };
-
   return params;
 };
 
