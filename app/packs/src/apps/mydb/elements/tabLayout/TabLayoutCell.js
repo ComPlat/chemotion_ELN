@@ -48,7 +48,6 @@ class TabLayoutCell extends Component {
     if (!elnElements.includes(cell)) {
       const genericElements = UserStore.getState().genericEls || [];
       const genericElement = (genericElements && genericElements.find(el => el.name === cell)) || {};
-      cellIcon = genericElement.icon_name
       cellTitle = genericElement.label;
       cellDescription = genericElement.desc;
     }
@@ -59,15 +58,13 @@ class TabLayoutCell extends Component {
       </div>
     ) : (
       <div>
-        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')} >
-          {isHidden ? "\u00A0" : ''}
-        </i>
+        <p style={styleObj}>{[cellTitle, cellDescription].join(': ')}</p>
       </div>
     );
 
     content = isCollectionTab ? (
       <div style={{ width: 'auto' }}>
-        <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
+        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       content
