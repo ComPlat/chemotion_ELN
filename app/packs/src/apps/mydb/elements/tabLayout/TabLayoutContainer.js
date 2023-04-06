@@ -85,7 +85,7 @@ export default class TabLayoutContainer extends React.Component {
     });
 
     return (
-      <table className="layout-container">
+      <table className="layout-container" style={{ overflowY: 'scroll'}}>
         <tbody style={{ textAlign: 'left' }}>
           <tr>{visibleCells}</tr>
           <tr>{hiddenCells}</tr>
