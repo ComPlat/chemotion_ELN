@@ -2,6 +2,7 @@ require 'open-uri'
 #require './helpers'
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class SampleAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
@@ -562,3 +563,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

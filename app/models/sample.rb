@@ -202,7 +202,7 @@ class Sample < ApplicationRecord
   belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
-  has_one :chemicals, dependent: :destroy
+  has_one :chemical, dependent: :destroy
 
   has_many :wells
   has_many :wellplates, through: :wells
