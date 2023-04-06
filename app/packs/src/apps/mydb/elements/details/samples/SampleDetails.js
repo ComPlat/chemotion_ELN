@@ -516,11 +516,8 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     const colLabel = sample.isNew ? null : (
-      <div style={{ marginLeft: '5px' }}>
-        <ElementCollectionLabels element={sample} key={sample.id} />
-      </div>
+      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
-
     const inventorySample = (
       <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
         Inventory
@@ -534,9 +531,11 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     return (
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-sample" />{sample.title()}</span>
+          <span>
+            <i className="icon-sample" />{sample.title()}
+          </span>
         </OverlayTrigger>
         <ShowUserLabels element={sample}/>
         <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
@@ -594,9 +593,9 @@ export default class SampleDetails extends React.Component {
             </Button>
           </OverlayTrigger>
           <PrintCodeButton element={sample} />
+          { inventorySample }
           {/* {decoupleCb} */}
         </div>
-        <ShowUserLabels element={sample} />
       </div>
     );
   }
@@ -617,7 +616,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px' };
+    const style = { height: '200px', marginBottom: '100px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
       const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
@@ -638,6 +637,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
+          { sample.isNew ? null : <h6>{this.moleculeCas()}</h6> }
           {lcssSign}
         </Col>
         <Col md={8}>
@@ -866,8 +866,10 @@ export default class SampleDetails extends React.Component {
       private_notes,
       ...customKeys
     } = cloneDeep(xref || {});
+    const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
 
-    if (Object.keys(customKeys).length === 0) return null;
+    if (Object.keys(customKeys).length === 0
+      || check.some((key) => Object.keys(customKeys).includes(key))) return null;
     return (
       Object.keys(customKeys).map(key => (
         <tr key={`field_${key}`}>
@@ -994,7 +996,6 @@ export default class SampleDetails extends React.Component {
         {this.moleculeInchi(sample)}
         {this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
-        {this.moleculeCas()}
       </ListGroupItem>
     );
   }
