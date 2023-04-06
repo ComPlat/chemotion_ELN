@@ -213,7 +213,7 @@ export default class CollectionTabs extends React.Component {
           <Modal.Header closeButton>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px' }} className="collection-tab-modal-body">
+          <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px', overflow: 'auto' }} className="collection-tab-modal-body">
             {layouts.map((lay, index) => {
               var callbackRef = node => this.tabRef[index] = node;
               return (
@@ -237,6 +237,13 @@ export default class CollectionTabs extends React.Component {
             }
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
+            <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
+              <p style={{ fontSize: '10.5px' }}>
+                For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.
+                Drag and drop to select the order of segment tab layout.
+                Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
+              </p>
+            </div>
             <Button bsStyle="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
             <Button bsStyle="primary" onClick={() => this.resetLayout()}>Reset</Button>
           </Modal.Footer>
