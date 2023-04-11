@@ -2,6 +2,11 @@
 
 # Chemotion_ELN Changelog
 
+## [pre-v1.6.0-rc1] 
+> 2023-04-11
+* Fixes
+  * port fixes from v1.5.2 
+  
 ## [v1.5.2]
 > 2023-04-11
 
