@@ -249,13 +249,10 @@ module Chemotion
                   file_path: file.tempfile,
                   created_by: helper.sender.id,
                   created_for: helper.recipient.id,
-                  content_type: file.type
                 )
                 begin
                   a.save!
                   a.update!(attachable: dataset)
-                  primary_store = Rails.configuration.storage.primary_store
-                  a.update!(storage: primary_store)
                 ensure
                   tempfile.close
                   tempfile.unlink

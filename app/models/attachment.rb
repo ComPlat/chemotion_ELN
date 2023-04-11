@@ -237,8 +237,10 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def generate_key
     self.key = SecureRandom.uuid unless key
+    self.storage = 'local'
   end
 
+  # TODO: rm this during legacy store cleaning
   def new_upload
     storage == 'tmp'
   end

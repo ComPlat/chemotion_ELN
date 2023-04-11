@@ -79,7 +79,7 @@ module ContainerHelpers
     return unless can_update
     attachments.each do |att|
       if att[:is_new]
-        attachment = Attachment.where(storage: 'tmp', key: att[:id]).last
+        attachment = Attachment.where(key: att[:id], attachable: nil).last
       else
         attachment = Attachment.where(id: att[:id]).last
         container_id = attachment && attachment.container_id
@@ -93,11 +93,7 @@ module ContainerHelpers
           attachment.destroy!
           next
         end
-        #NB 2step update because moving store should be delayed job
         attachment.update!(attachable: container)
-        primary_store = Rails.configuration.storage.primary_store
-
-        attachment.update!(storage: primary_store) if att[:is_new]
       end
     end
   end

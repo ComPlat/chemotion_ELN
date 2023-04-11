@@ -118,9 +118,6 @@ module Analyses
           att.save!
         end
 
-        primary_store = Rails.configuration.storage.primary_store
-        att.update!(storage: primary_store) if att.storage == 'tmp'
-
         Zip::File.open(tmp_file.path) do |zip_file|
           res = Analyses::Converter.collect_metadata(zip_file) if name.split('.')&.last == 'zip'
           ols = res[:o] unless res&.dig(:o).nil?

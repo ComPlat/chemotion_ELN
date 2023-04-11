@@ -54,7 +54,6 @@ class DatacollectorFile < DatacollectorObject
     helper = CollectorHelper.new(device, recipient)
     dataset = helper.prepare_dataset(Time.now.strftime('%Y-%m-%d'))
     attach.update!(attachable: dataset)
-    attach.update!(storage: Rails.configuration.storage.primary_store)
 
     # add notifications
     queue = "inbox_#{device.id}_#{recipient.id}"

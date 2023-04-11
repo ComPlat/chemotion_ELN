@@ -12,15 +12,12 @@ TEMPLATE_LIST = [
 
 def create_template(file_name, template_name, template_type)
   if(file_name)
-    attachment = Attachment.create(
+    attachment = Attachment.new(
       filename: file_name,
-      key: 'file',
       file_path: "#{DIR}/#{file_name}",
       created_by: USER_ID,
       created_for: USER_ID,
-      content_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
-
     attachment.save!
     ReportTemplate.create!(
       name: "#{template_name}", report_type: "#{template_type}", attachment: attachment
