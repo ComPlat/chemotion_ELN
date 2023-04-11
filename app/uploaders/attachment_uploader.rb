@@ -18,13 +18,13 @@ class AttachmentUploader < Shrine
   def generate_location(io, context = {}) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     if context[:record]
       file_name = if io.path.include? 'thumb.jpg'
-                    "#{context[:record][:key]}.thumb.jpg"
+                    "#{context[:record][:identifier]}.thumb.jpg"
                   elsif io.path.include? 'annotation.svg'
-                    "#{context[:record][:key]}.annotation.svg"
+                    "#{context[:record][:identifier]}.annotation.svg"
                   elsif io.path.include? 'conversion.png'
-                    "#{context[:record][:key]}.conversion.png"
+                    "#{context[:record][:identifier]}.conversion.png"
                   else
-                    (context[:record][:key]).to_s
+                    (context[:record][:identifier]).to_s
                   end
 
       bucket = 1
@@ -90,6 +90,6 @@ class AttachmentUploader < Shrine
     file_ending = '.thumb.jpg' if file_stream.path.include? 'thumb.jpg'
     file_ending = '.annotation.svg' if file_stream.path.include? 'annotation.svg'
     file_ending = '.conversion.png' if file_stream.path.include? 'conversion.png'
-    "#{context[:record][:key]}#{file_ending}"
+    "#{context[:record][:identifier]}#{file_ending}"
   end
 end
