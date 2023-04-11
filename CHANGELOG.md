@@ -2,8 +2,23 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.5.2]
+> 2023-04-11
+
+* Fixes
+  * AttachmentAPI: quote filename in content-dispostion header [#1250](https://github.com/ComPlat/chemotion_ELN/pull/1250)
+  * spectra: fix cannot sync 1d data [#1227](https://github.com/ComPlat/chemotion_ELN/pull/1227)
+  * Ease shrine derivative access [#1255](https://github.com/ComPlat/chemotion_ELN/pull/1255)
+  * update chem-spectra-app to version 0.11.2 [#1263](https://github.com/ComPlat/chemotion_ELN/pull/1263)
+  * Literature entity to return reference data and doi [#1257](https://github.com/ComPlat/chemotion_ELN/pull/1257)
+  * 1260 report UI to not break if a report template cannot be found [#1261](https://github.com/ComPlat/chemotion_ELN/pull/1261)
+  * Fix the creation of sample with invalid label 'NEW SAMPLE' [#1240](https://github.com/ComPlat/chemotion_ELN/pull/1240)
+  * Use db-generated uuid for building the attachment shrine id [#1259](https://github.com/ComPlat/chemotion_ELN/pull/1259)
+
+
 ## [pre-v1.6.0]
 > 2023-03-28
+
 * Features and Improvements:
   * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239)
 
