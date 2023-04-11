@@ -10,6 +10,7 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
@@ -297,6 +298,16 @@ class ElementActions {
           console.log(errorMessage);
         });
     };
+  }
+  fetchCellLinesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      CellLinesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };   
   }
 
   // -- Samples --

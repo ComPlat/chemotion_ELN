@@ -143,7 +143,7 @@ export default class ElementsList extends React.Component {
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
       klasses = UIStore.getState().klasses;
     }
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(klasses);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_lines'].concat(klasses);
 
     elNames.forEach((type) => {
       const elementUI = state[type] || {
@@ -187,9 +187,13 @@ export default class ElementsList extends React.Component {
     const {
       visible, hidden, currentTab, totalCheckedElements
     } = this.state;
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     const { overview, showReport } = this.props;
     const elementState = this.state;
+    // ****** temporary testing code *****
+    if(visible.size==5){
+      visible.set(5,'cell_line)')
+    }
 
     const navItems = [];
     const tabContents = [];
