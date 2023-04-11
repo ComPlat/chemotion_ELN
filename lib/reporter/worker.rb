@@ -35,7 +35,6 @@ module Reporter
     def init_specific_variable
       @full_filename = "#{@file_name}.docx"
       @typ = DOCX_TYP
-      @primary_store = Rails.configuration.storage.primary_store
     end
 
     def create_tmp(raw)

@@ -481,8 +481,6 @@ module Import
     end
 
     def import_attachments
-      primary_store = Rails.configuration.storage.primary_store
-
       @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
@@ -500,8 +498,6 @@ module Import
           transferred: true,
           aasm_state: fields.fetch('aasm_state'),
           filename: fields.fetch('filename'),
-          content_type: fields.fetch('content_type'),
-          storage: primary_store,
           # checksum: fields.fetch('checksum'),
           # created_at: fields.fetch('created_at'),
           # updated_at: fields.fetch('updated_at')
