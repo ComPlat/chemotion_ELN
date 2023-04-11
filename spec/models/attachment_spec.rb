@@ -35,7 +35,7 @@ RSpec.describe Attachment, type: :model do
 
   describe '#abs_path' do
     it 'returns the absolute path of file' do
-      expected_path = Rails.root.join("uploads/test/1/#{attachment.key}").to_s
+      expected_path = Rails.root.join("uploads/test/1/#{attachment.identifier}").to_s
       expect(attachment.abs_path).to eq(expected_path)
     end
   end
@@ -395,8 +395,7 @@ RSpec.describe Attachment, type: :model do
     context 'when AttachmentJcampAasm concern is included' do
       it 'calls require_peaks_generation?' do
         expect(attachment).to receive(:require_peaks_generation?)
-
-        attachment.update(identifier: 'does-not-matter-just-need-to-trigger-update')
+        attachment.update(key: 'uuid')
       end
     end
   end
