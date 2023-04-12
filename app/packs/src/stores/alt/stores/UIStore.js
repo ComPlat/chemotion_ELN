@@ -310,9 +310,7 @@ class UIStore {
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
 
       const { profile } = UserStore.getState();
-      // ****** temporary testing code *****
-      if(profile){
-      profile.data.layout.cell_line=6;}
+
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
         if (layout.sample && layout.sample > 0) {

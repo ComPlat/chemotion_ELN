@@ -190,10 +190,6 @@ export default class ElementsList extends React.Component {
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
     const { overview, showReport } = this.props;
     const elementState = this.state;
-    // ****** temporary testing code *****
-    if(visible.size==5){
-      visible.set(5,'cell_line)')
-    }
 
     const navItems = [];
     const tabContents = [];

@@ -249,7 +249,8 @@ class User < ApplicationRecord
           'reaction' => 2,
           'wellplate' => 3,
           'screen' => 4,
-          'research_plan' => 5
+          'research_plan' => 5,
+          'cell_line' => 6,
         }) if (data['layout'].nil?)
         self.profile.update_columns(data: data)
       end
