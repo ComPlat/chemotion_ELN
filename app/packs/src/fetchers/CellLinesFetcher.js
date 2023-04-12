@@ -1,4 +1,4 @@
-import CellLine from 'src/models/CellLine';
+import CellLine from 'src/models/cellLine/CellLine';
 
 export default class CellLinesFetcher {
     static fetchByCollectionId(id, queryParams = {}, isSync = false) {
