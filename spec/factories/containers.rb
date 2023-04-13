@@ -45,6 +45,7 @@ FactoryBot.define do
       analysis.extended_metadata = {
         'kind' => 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
         'status' => 'Confirmed',
+        'instrument' => 'analysis instrument',
         # 'datasets' => [],
         'content' => '{"ops": [{"insert": "analysis contents"}]}'
       }.merge(analysis.extended_metadata || {})
