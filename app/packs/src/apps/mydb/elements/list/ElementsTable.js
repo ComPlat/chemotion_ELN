@@ -14,7 +14,9 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import Switch from 'src/apps/mydb/elements/list/Switch';
+import CellLineGroup from '../../../../models/cellLine/CellLineGroup';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -366,7 +368,15 @@ export default class ElementsTable extends React.Component {
           onChangeCollapse={(checked) => this.collapseSample(!checked)}
         />
       )
-    } else {
+    }else if (type === 'cell_line') {
+
+      elementsTableEntries = (
+        <CellLineContainer 
+          cellLineGroups={CellLineGroup.buildFromElements(elements)}
+        />
+      )
+    }
+     else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements} currentElement={currentElement}
