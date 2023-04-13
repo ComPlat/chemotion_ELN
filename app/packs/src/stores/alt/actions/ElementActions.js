@@ -13,6 +13,7 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import VesselsFetcher from 'src/fetchers/VesselsFetcher'
 import SearchFetcher from 'src/fetchers/SearchFetcher';
 import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
@@ -297,6 +298,17 @@ class ElementActions {
           console.log(errorMessage);
         });
     };
+  }
+
+  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };  
   }
 
   // -- Samples --

@@ -51,6 +51,13 @@ class UIStore {
         currentId: null,
         page: 1,
       },
+      vessel: {
+        checkedAll: false,
+        checkedIds: List(),
+        uncheckedIds: List(),
+        currentId: null,
+        page: 1,
+      },
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -230,6 +237,7 @@ class UIStore {
     this.handleUncheckAllElements({ type: 'reaction', range: 'all' });
     this.handleUncheckAllElements({ type: 'wellplate', range: 'all' });
     this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
+    this.handleUncheckAllElements({ type: 'vessel', range: 'all' });
     this.state.klasses && this.state.klasses.forEach((klass) => { this.handleUncheckAllElements({ type: klass, range: 'all' }); });
   }
 
@@ -302,6 +310,9 @@ class UIStore {
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
 
       const { profile } = UserStore.getState();
+      // *** temporary frontend testing code ***
+      if (profile){
+      profile.data.layout.vessel=6;}
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
         if (layout.sample && layout.sample > 0) {
@@ -332,6 +343,12 @@ class UIStore {
           ElementActions.fetchResearchPlansByCollectionId(
             collection.id,
             Object.assign(params, { page: state.research_plan.page }),
+          );
+        }
+        if (!isSync && layout.vessel && layout.vessel > 0) {
+          ElementActions.fetchVesselsByCollectionId(
+            collection.id,
+            Object.assign(params, { page: state.vessel.page }),
           );
         }
 

@@ -95,6 +95,13 @@ class ElementStore {
         pages: null,
         perPage: null
       },
+      vessels: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
     };
 
     this.state = {
@@ -144,6 +151,7 @@ class ElementStore {
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+      handlefetchVesselsByCollectionId: ElementActions.fetchVesselsByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -622,6 +630,10 @@ class ElementStore {
     this.state.elements.research_plans = result;
   }
 
+  handlefetchVesselsByCollectionId(result) {
+    this.state.elements.vessels = result;
+  }
+
   // -- Samples --
 
   handleFetchSampleById(result) {
@@ -1043,7 +1055,8 @@ class ElementStore {
         'fetchReactionsByCollectionId',
         'fetchWellplatesByCollectionId',
         'fetchScreensByCollectionId',
-        'fetchResearchPlansByCollectionId'
+        'fetchResearchPlansByCollectionId',
+        'fetchVesselsByCollectionId',
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1246,6 +1259,9 @@ class ElementStore {
         this.handleRefreshElements('wellplate');
         this.handleUpdateWellplateAttaches(updatedElement);
         this.handleRefreshElements('sample');
+        break;
+      case "vessel":
+        this.handleRefreshElements('vessel');
         break;
       case 'genericEl':
         this.handleRefreshElements('genericEl');
