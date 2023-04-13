@@ -723,9 +723,44 @@ RSpec.describe Attachment, type: :model do
 
   describe '#generate_csv_att' do
     it 'calls #generate_att with ext = csv and all other parameters verbatim' do
-      expect(attachment).to receive(:generate_att).with('somethingThatGetsPassed', 'foo', false, 'csv')
+      csv_temp = Tempfile.new(['jcamp', '.csv'])
+      csv_data = Array.new(10) {
+        Array.new(5) {|i| i.to_s }
+      }
+      CSV.open(csv_temp, 'wb') do |csv|
+        csv_data.each do |row|
+          csv << row
+        end
+      end
 
-      attachment.generate_csv_att('somethingThatGetsPassed', 'foo')
+      params = {
+        sample_id: 10,
+        dataset_id: 1,
+        dataset_name: 'root',
+        analysis_id: 2,
+      }
+
+      expected_csv_data = Array.new(10) { |line|
+        Array.new(5) { |i|
+          if line == 2 && i == 1
+            params[:sample_id].to_s
+          elsif line == 3 && i == 1
+            params[:analysis_id].to_s
+          elsif line == 4 && i == 1
+            params[:dataset_id].to_s
+          elsif line == 5 && i == 1
+            params[:dataset_name].to_s
+          else
+            i.to_s
+          end
+        }
+      }
+
+      att = attachment.generate_csv_att(csv_temp, 'foo', false, params)
+      generated_csv = att.read_file
+      csv_reader = CSV.new(generated_csv)
+      generated_csv_data = csv_reader.read
+      expect(generated_csv_data).to eq expected_csv_data
     end
   end
 
@@ -777,6 +812,8 @@ RSpec.describe Attachment, type: :model do
           mass: 0.0,
           ext: 'txt',
           fname: 'upload.txt',
+          dataset_id: attachment.attachable.id,
+          dataset_name: attachment.attachable.name,
         }
 
         expect(attachment.build_params({ foo: :bar })).to eq(expected_result)
