@@ -310,9 +310,6 @@ class UIStore {
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
 
       const { profile } = UserStore.getState();
-      // *** temporary frontend testing code ***
-      if (profile){
-      profile.data.layout.vessel=6;}
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
         if (layout.sample && layout.sample > 0) {

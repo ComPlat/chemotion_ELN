@@ -6,6 +6,7 @@ development:
       :wellplate: 3
       :screen: 4
       :research_plan: 5
+      :vessel: 6
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -60,6 +61,7 @@ production:
       :wellplate: 3
       :screen: 4
       :research_plan: 5
+      :vessel: 6
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -114,6 +116,7 @@ test:
       :wellplate: 3
       :screen: 4
       :research_plan: 5
+      :vessel: 6
     :layout_detail_research_plan:
       :research_plan:
         1
