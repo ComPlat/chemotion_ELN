@@ -14,4 +14,8 @@ export default class CellLine extends Element {
 
     return cellLine;
   }
+
+  title() {
+    return "New Cell line";
+  }
 }
