@@ -25,6 +25,7 @@ import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
+import CellLine from 'src/models/cellLine/CellLine';
 import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Report from 'src/models/Report';
@@ -405,6 +406,10 @@ class ElementActions {
 
   generateEmptySample(collection_id) {
     return Sample.buildEmpty(collection_id)
+  }
+
+  generateEmptyCellLine(collection_id) {
+    return  CellLine.buildEmpty(collection_id)
   }
 
   splitAsSubsamples(ui_state) {

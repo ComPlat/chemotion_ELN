@@ -106,6 +106,15 @@ const sampleShowOrNew = (e) => {
   // UIActions.selectTab(1);
 };
 
+const cellLineShowOrNew = (e) => {
+  const { new_cellLine, collectionID } = e.params;
+  if(new_cellLine){
+    ElementActions.generateEmptyCellLine(collectionID);
+  }else{
+
+  }
+}
+
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
   // UIActions.selectTab(2);
@@ -234,6 +243,9 @@ const elementShowOrNew = (e) => {
       break;
     case 'metadata':
       metadataShowOrNew(e);
+      break;
+    case 'cell_line':
+      cellLineShowOrNew(e);
       break;
     default:
       if (e && e.klassType == 'GenericEl') {

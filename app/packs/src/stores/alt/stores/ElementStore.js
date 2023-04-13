@@ -219,6 +219,7 @@ class ElementStore {
           ElementActions.generateEmptyResearchPlan,
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
+          ElementActions.generateEmptyCellLine,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
