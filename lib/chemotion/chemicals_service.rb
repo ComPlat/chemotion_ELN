@@ -50,10 +50,10 @@ module Chemotion
       'Could not find safety data sheet from Thermofisher'
     end
 
-    def self.check_if_ssd_already_saved(file_name, ssd_files_names)
+    def self.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)
       saved = false
-      unless  ssd_files_names.empty?
-        ssd_files_names.each do |file|
+      unless  safety_sheet_files_names.empty?
+        safety_sheet_files_names.each do |file|
           if file == file_name
             saved = true
             break
@@ -64,10 +64,10 @@ module Chemotion
     end
 
     def self.write_file(file_path, link)
-      req_ssd = HTTParty.get(link, request_options)
+      req_safety_sheet = HTTParty.get(link, request_options)
       file_name = "public/safety_sheets/#{file_path}"
-      if req_ssd.headers['Content-Type'] == 'application/pdf'
-        File.binwrite(file_name, req_ssd)
+      if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
+        File.binwrite(file_name, req_safety_sheet)
         true
       else
         'there is no file to save'
@@ -75,8 +75,8 @@ module Chemotion
     end
 
     def self.create_sds_file(file_path, link)
-      ssd_files_names = Dir.children('public/safety_sheets')
-      if check_if_ssd_already_saved(file_path, ssd_files_names) == false
+      safety_sheet_files_names = Dir.children('public/safety_sheets')
+      if check_if_safety_sheet_already_saved(file_path, safety_sheet_files_names) == false
         write_file(file_path, link)
       else
         'file is already saved'

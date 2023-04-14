@@ -280,30 +280,30 @@ class Sample < ApplicationRecord
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def extract_product_info(chemical_data, ssdpath, chemical_data_output)
-    return unless ssdpath.any? { |s| s.key?('alfa_link') }
+  def extract_product_info(chemical_data, safety_sheet_path, chemical_data_output)
+    return unless safety_sheet_path.any? { |s| s.key?('alfa_link') }
 
     alfa_product_info = chemical_data[0]['alfaProductInfo']
     chemical_data_output['alfaProductInfo'] = alfa_product_info if alfa_product_info
 
-    return unless ssdpath.any? { |s| s.key?('merck_link') }
+    return unless safety_sheet_path.any? { |s| s.key?('merck_link') }
 
     merck_product_info = chemical_data[0]['merckProductInfo']
     chemical_data_output['merckProductInfo'] = merck_product_info if merck_product_info
   end
 
   def chemical_data_for_entry(chemical_data)
-    if chemical_data[0] && chemical_data[0]['ssdPath']
-      ssdpath = chemical_data[0]['ssdPath']
+    if chemical_data[0] && chemical_data[0]['safetySheetPath']
+      safety_sheet_path = chemical_data[0]['safetySheetPath']
       safety_phrases = chemical_data[0]['safetyPhrases'] || []
 
       chemical_data_output = {
-        'ssdPath' => ssdpath,
+        'safetySheetPath' => safety_sheet_path,
       }
       chemical_data_output['safetyPhrases'] = safety_phrases unless safety_phrases.empty?
 
-      # Extract alfaProductInfo or merckProductInfo based on ssdpath
-      extract_product_info(chemical_data, ssdpath, chemical_data_output)
+      # Extract alfaProductInfo or merckProductInfo based on safety_sheet_path
+      extract_product_info(chemical_data, safety_sheet_path, chemical_data_output)
       [chemical_data_output]
     else
       []
@@ -313,10 +313,12 @@ class Sample < ApplicationRecord
   def create_chemical_entry_for_subsample(sample_id, subsample_id, type)
     chemical_entry = Chemical.find_by(sample_id: sample_id) || Chemical.new
     chemical_data = chemical_entry.chemical_data || []
+    cas = chemical_entry.cas.presence ? chemical_entry.cas : nil
 
     case type
     when 'sample'
       attributes = {
+        cas: cas,
         chemical_data: chemical_data,
         sample_id: subsample_id,
       }
@@ -327,6 +329,7 @@ class Sample < ApplicationRecord
       update_chemical_data = chemical_data_for_entry(chemical_data)
       unless update_chemical_data.empty?
         attributes = {
+          cas: cas,
           chemical_data: update_chemical_data,
           sample_id: subsample_id,
         }

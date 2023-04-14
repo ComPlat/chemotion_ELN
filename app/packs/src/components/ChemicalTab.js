@@ -31,9 +31,9 @@ export default class ChemicalTab extends React.Component {
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: false,
       loadChemicalProperties: false,
-      openInventoryInformationTab: false,
-      openSafetyTab: false,
-      openLocationTab: false,
+      openInventoryInformationTab: true,
+      openSafetyTab: true,
+      openLocationTab: true,
       viewChemicalPropertiesModal: false,
       viewModalForVendor: ''
     };
@@ -112,17 +112,17 @@ export default class ChemicalTab extends React.Component {
       safetySheets.splice(index, 1);
       this.setState({ safetySheets });
     }
-    if (chemical._chemical_data[0].ssdPath.length > 0) {
-      const { ssdPath } = chemical._chemical_data[0];
+    if (chemical._chemical_data[0].safetySheetPath.length > 0) {
+      const { safetySheetPath } = chemical._chemical_data[0];
 
-      const alfaIndex = ssdPath.findIndex((element) => element.alfa_link);
-      const merckIndex = ssdPath.findIndex((element) => element.merck_link);
+      const alfaIndex = safetySheetPath.findIndex((element) => element.alfa_link);
+      const merckIndex = safetySheetPath.findIndex((element) => element.merck_link);
       if (alfaIndex !== -1 && document.alfa_link) {
         delete parameters.alfaProductInfo;
-        chemical._chemical_data[0].ssdPath.splice(alfaIndex, 1);
+        chemical._chemical_data[0].safetySheetPath.splice(alfaIndex, 1);
       } else if (merckIndex !== -1 && document.merck_link) {
         delete parameters.merckProductInfo;
-        chemical._chemical_data[0].ssdPath.splice(merckIndex, 1);
+        chemical._chemical_data[0].safetySheetPath.splice(merckIndex, 1);
       }
       this.setState({ chemical });
       this.handleSubmitSave();
@@ -573,20 +573,20 @@ export default class ChemicalTab extends React.Component {
           vendorParams = 'merck_link';
         }
         pathParams[vendorParams] = value;
-        if (chemicalData[0].ssdPath === undefined || chemicalData[0].ssdPath.length === 0) {
+        if (chemicalData[0].safetySheetPath === undefined || chemicalData[0].safetySheetPath.length === 0) {
           pathArr.push(pathParams);
-          this.handleFieldChanged('ssdPath', pathArr);
-        } else if (chemicalData[0].ssdPath.length === 1 && chemicalData[0].ssdPath[0][vendorParams]
+          this.handleFieldChanged('safetySheetPath', pathArr);
+        } else if (chemicalData[0].safetySheetPath.length === 1 && chemicalData[0].safetySheetPath[0][vendorParams]
           === undefined) {
-          chemicalData[0].ssdPath.push(pathParams);
-        } else if (chemicalData[0].ssdPath.length === 1 && chemicalData[0].ssdPath[0][vendorParams]
-          !== undefined && chemicalData[0].ssdPath[0][vendorParams] !== value) {
-          chemicalData[0].ssdPath[0][vendorParams] = value;
+          chemicalData[0].safetySheetPath.push(pathParams);
+        } else if (chemicalData[0].safetySheetPath.length === 1 && chemicalData[0].safetySheetPath[0][vendorParams]
+          !== undefined && chemicalData[0].safetySheetPath[0][vendorParams] !== value) {
+          chemicalData[0].safetySheetPath[0][vendorParams] = value;
         } else {
-          for (let i = 0; i < chemicalData[0].ssdPath.length; i += 1) {
-            if (chemicalData[0].ssdPath[i][vendorParams]
-              !== undefined && chemicalData[0].ssdPath[i][vendorParams] !== value) {
-              chemicalData[0].ssdPath[i][vendorParams] = value;
+          for (let i = 0; i < chemicalData[0].safetySheetPath.length; i += 1) {
+            if (chemicalData[0].safetySheetPath[i][vendorParams]
+              !== undefined && chemicalData[0].safetySheetPath[i][vendorParams] !== value) {
+              chemicalData[0].safetySheetPath[i][vendorParams] = value;
             }
           }
         }
@@ -612,20 +612,20 @@ export default class ChemicalTab extends React.Component {
     let productLink;
     let checkMark;
     if (chemical && chemical._chemical_data) {
-      const { ssdPath } = chemical._chemical_data[0] || [];
+      const { safetySheetPath } = chemical._chemical_data[0] || [];
       if (sdsInfo.alfa_link !== undefined) {
         vendor = 'Thermofisher';
         sdsLink = sdsInfo.alfa_link;
         productNumber = sdsInfo.alfa_product_number;
         productLink = sdsInfo.alfa_product_link;
-        const hasAlfaLink = Boolean(ssdPath?.[index]?.alfa_link);
+        const hasAlfaLink = Boolean(safetySheetPath?.[index]?.alfa_link);
         checkMark = checkSaveIconThermofischer || hasAlfaLink;
       } else if (sdsInfo.merck_link !== undefined) {
         vendor = 'Merck';
         sdsLink = sdsInfo.merck_link;
         productNumber = sdsInfo.merck_product_number;
         productLink = sdsInfo.merck_product_link;
-        const hasMerckLink = Boolean(ssdPath?.[index]?.merck_link);
+        const hasMerckLink = Boolean(safetySheetPath?.[index]?.merck_link);
         checkMark = checkSaveIconMerck || hasMerckLink;
       }
     }
@@ -684,7 +684,7 @@ export default class ChemicalTab extends React.Component {
     ];
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="ssd-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
+      <OverlayTrigger placement="top" overlay={<Tooltip id="sds-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
         <FormGroup>
           <ControlLabel>Query SDS using</ControlLabel>
           <Select
@@ -753,7 +753,7 @@ export default class ChemicalTab extends React.Component {
     if (!chemical || !chemical._chemical_data || !chemical._chemical_data.length) {
       return null;
     }
-    const savedSds = chemical._chemical_data[0].ssdPath;
+    const savedSds = chemical._chemical_data[0].safetySheetPath;
     const sdsStatus = safetySheets.length ? safetySheets : savedSds;
     const mappedSafetySheets = sdsStatus.map((document, index) => {
       const key = (document.alfa_product_number || document.merck_product_number) || index;
@@ -978,7 +978,7 @@ export default class ChemicalTab extends React.Component {
     let savedSds;
     if (chemical) {
       if (chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-        savedSds = chemical._chemical_data[0].ssdPath;
+        savedSds = chemical._chemical_data[0].safetySheetPath;
         if (savedSds && savedSds.length !== 0) {
           this.setState({ displayWell: true });
         }
@@ -990,8 +990,8 @@ export default class ChemicalTab extends React.Component {
     const { loadingQuerySafetySheets, chemical } = this.state;
     let checkSavedSds = false;
     if (chemical && chemical._chemical_data) {
-      checkSavedSds = chemical._chemical_data[0].ssdPath
-        ? chemical._chemical_data[0].ssdPath.length !== 0 : false;
+      checkSavedSds = chemical._chemical_data[0].safetySheetPath
+        ? chemical._chemical_data[0].safetySheetPath.length !== 0 : false;
     }
 
     const button = (

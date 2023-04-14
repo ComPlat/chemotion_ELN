@@ -1,6 +1,5 @@
 /* eslint-disable no-underscore-dangle,  camelcase, semi,  no-unused-vars */
 import Element from 'src/models/Element';
-import { isEmpty } from 'lodash';
 
 export default class Chemical extends Element {
   static buildEmpty() {
@@ -30,12 +29,6 @@ export default class Chemical extends Element {
       this._cas = cas;
     }
   }
-
-  // // overwrite isPendingToSave method in models/Element.js
-  // get isPendingToSave() {
-  //   console.log('overwrite');
-  //   return !isEmpty(this) && (this.isNew || this.changed);
-  // }
 
   serialize() {
     return super.serialize({
