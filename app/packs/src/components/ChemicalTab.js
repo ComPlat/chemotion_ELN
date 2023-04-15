@@ -573,13 +573,16 @@ export default class ChemicalTab extends React.Component {
           vendorParams = 'merck_link';
         }
         pathParams[vendorParams] = value;
-        if (chemicalData[0].safetySheetPath === undefined || chemicalData[0].safetySheetPath.length === 0) {
+        if (chemicalData[0].safetySheetPath === undefined
+          || chemicalData[0].safetySheetPath.length === 0) {
           pathArr.push(pathParams);
           this.handleFieldChanged('safetySheetPath', pathArr);
-        } else if (chemicalData[0].safetySheetPath.length === 1 && chemicalData[0].safetySheetPath[0][vendorParams]
+        } else if (chemicalData[0].safetySheetPath.length === 1
+          && chemicalData[0].safetySheetPath[0][vendorParams]
           === undefined) {
           chemicalData[0].safetySheetPath.push(pathParams);
-        } else if (chemicalData[0].safetySheetPath.length === 1 && chemicalData[0].safetySheetPath[0][vendorParams]
+        } else if (chemicalData[0].safetySheetPath.length === 1
+          && chemicalData[0].safetySheetPath[0][vendorParams]
           !== undefined && chemicalData[0].safetySheetPath[0][vendorParams] !== value) {
           chemicalData[0].safetySheetPath[0][vendorParams] = value;
         } else {
@@ -638,6 +641,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <Button
+        id="saveSafetySheetButton"
         bsSize="xs"
         bsStyle="warning"
         disabled={checkMark}
