@@ -19,7 +19,7 @@ module Chemotion
         end
         before do
           @attachment = Attachment.find_by(id: params[:attachment_id])
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: @attachment[:attachable_id])).update?
+           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: @attachment[:attachable_id])).update?
           # error!('401 Unauthorized', 401) if @attachment.oo_editing?
         end
         post do
@@ -39,7 +39,7 @@ module Chemotion
               fileType: 'docx',
               key: token,
               title: @attachment.filename,
-              url: "http://#{request.host_with_port}api/v1/public/download?token=#{token}",
+              url: "http://#{request.host_with_port}/api/v1/public/download?token=#{token}",
               permissions: {
                 download: true,
                 edit: true,
