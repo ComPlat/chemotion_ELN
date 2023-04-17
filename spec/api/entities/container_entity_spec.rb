@@ -34,6 +34,7 @@ describe Entities::ContainerEntity do
           status: 'Confirmed',
           kind: 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
           instrument: 'analysis instrument',
+          index: '0',
           content: JSON.parse('{"ops": [{"insert": "analysis contents"}]}'),
         )
       end
