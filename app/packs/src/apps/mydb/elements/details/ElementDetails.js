@@ -17,6 +17,7 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
+import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 
 const tabInfoHash = {
@@ -217,6 +218,8 @@ export default class ElementDetails extends Component {
         return <ComputeTaskContainer task={el} />;
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
+      case 'vessel':
+        return <VesselDetails vesselItem={el}/>
       default:
         return (
           <div style={{ textAlign: 'center' }}>
