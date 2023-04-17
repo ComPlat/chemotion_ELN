@@ -21,6 +21,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
+import VesselGroup from 'src/models/VesselGroup';
+import VesselContainer from 'src/apps/mydb/elements/list/vessels/VesselContainer'
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -611,7 +613,13 @@ export default class ElementsTable extends React.Component {
           genericEl={genericEl}
           type={type}
         />
-      );
+      )
+    } else if (type === 'vessel') {
+      elementsTableEntries = (
+        <VesselContainer
+          vesselGroups={VesselGroup.buildFromElements(elements)}
+        />
+      )
     } else {
       elementsTableEntries = (
         <ElementsTableEntries

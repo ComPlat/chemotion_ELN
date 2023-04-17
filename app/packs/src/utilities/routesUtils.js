@@ -111,6 +111,15 @@ const sampleShowOrNew = (e) => {
   // UIActions.selectTab(1);
 };
 
+const vesselShowOrNew = (e) => {
+  const { new_vessel, collectionID } = e.params;
+  if(new_vessel){
+    ElementActions.generateEmptyVessel(collectionID);
+  } else {
+
+  }
+}
+
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
@@ -257,6 +266,9 @@ const elementShowOrNew = (e) => {
       break;
     case 'metadata':
       metadataShowOrNew(e);
+      break;
+    case 'vessel':
+      vesselShowOrNew(e);
       break;
     default:
       if (e && e.klassType == 'GenericEl') {

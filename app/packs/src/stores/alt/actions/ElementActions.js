@@ -27,6 +27,7 @@ import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
 import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
+import Vessel from 'src/models/Vessel'
 import Report from 'src/models/Report';
 import Format from 'src/models/Format';
 import Graph from 'src/models/Graph';
@@ -406,6 +407,10 @@ class ElementActions {
 
   generateEmptySample(collection_id) {
     return Sample.buildEmpty(collection_id)
+  }
+
+  generateEmptyVessel(collection_id) {
+    return Vessel.buildEmpty(collection_id)
   }
 
   splitAsSubsamples(ui_state) {

@@ -8,7 +8,7 @@ export default class Vessel extends Element {
     const vessel = new Vessel({
       collection_id,
       type: 'vessel',
-      vesselName: undefined,
+      vessel_name: undefined,
       vessel_id: undefined
     });
     return vessel;

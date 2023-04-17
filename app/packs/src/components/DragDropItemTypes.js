@@ -15,5 +15,6 @@ export default {
   CONTAINER: 'container',
   GENERALPROCEDURE: 'generalProcedure',
   ELEMENT_FIELD: 'element_field',
-  GENERIC_GRID: 'generic_grid'
+  GENERIC_GRID: 'generic_grid',
+  VESSEL: 'vessel'
 };

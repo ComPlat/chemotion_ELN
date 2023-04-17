@@ -226,6 +226,7 @@ class ElementStore {
           ElementActions.showDeviceControl,
           ElementActions.showLiteratureDetail,
           ElementActions.showPredictionContainer,
+          ElementActions.generateEmptyVessel
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleFetchMetadata: ElementActions.fetchMetadata,
