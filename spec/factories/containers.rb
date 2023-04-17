@@ -46,6 +46,7 @@ FactoryBot.define do
         'kind' => 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
         'status' => 'Confirmed',
         'instrument' => 'analysis instrument',
+        'index' => '0',
         # 'datasets' => [],
         'content' => '{"ops": [{"insert": "analysis contents"}]}'
       }.merge(analysis.extended_metadata || {})
