@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Reporter
   module Docx
     class DetailSample < Detail
@@ -27,11 +29,11 @@ module Reporter
       end
 
       def iupac_name
-        "#{obj.molecule_iupac_name}"
+        obj.molecule_iupac_name.to_s
       end
 
       def sum_formular
-        "#{obj.molecule[:sum_formular]}"
+        obj.molecule[:sum_formular].to_s
       end
 
       def structure
@@ -41,7 +43,7 @@ module Reporter
       def analyses
         paragraphs = merge_items(init_item, obj.analyses)
         paragraph = remove_redundant_space_break(paragraphs)
-        Sablon.content(:html, Delta.new({"ops" => paragraph}).getHTML())
+        Sablon.content(:html, Delta.new({ 'ops' => paragraph }).getHTML)
       end
 
       def literatures
@@ -52,8 +54,8 @@ module Reporter
         liters.each do |l|
           bib = l[:refs] && l[:refs]['bibtex']
           bb = DataCite::LiteraturePaser.parse_bibtex!(bib, id)
-          bb = DataCite::LiteraturePaser.get_metadata(bb, l[:doi], id) unless bb.class == BibTeX::Entry
-          output.push(DataCite::LiteraturePaser.report_hash(l, bb)) if bb.class == BibTeX::Entry
+          bb = DataCite::LiteraturePaser.get_metadata(bb, l[:doi], id) unless bb.instance_of?(BibTeX::Entry)
+          output.push(DataCite::LiteraturePaser.report_hash(l, bb)) if bb.instance_of?(BibTeX::Entry)
         end
         output
       end
@@ -61,10 +63,8 @@ module Reporter
       def init_item
         item = []
         need_rxn_desc = @spl_settings[:reaction_description]
-        has_description = obj.reactions.first&.description
-        if need_rxn_desc && has_description
-          item += obj.reactions.first.description["ops"].map(&:to_h)
-        end
+        has_description = obj.reactions.first&.dig(:description, 'ops').present?
+        item += obj.reactions.first.dig(:description, 'ops').map(&:to_h) if need_rxn_desc && has_description
         item
       end
     end
