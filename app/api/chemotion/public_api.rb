@@ -244,24 +244,21 @@ module Chemotion
 
           if helper.sender_recipient_known?
             dataset = helper.prepare_new_dataset(subject)
-            params.each do |_file_id, file|
-              next unless tempfile = file.tempfile
-
-              a = Attachment.new(
-                filename: file.filename,
-                file_path: file.tempfile,
-                created_by: helper.sender.id,
-                created_for: helper.recipient.id,
-                content_type: file.type
-              )
-              begin
-                a.save!
-                a.update!(attachable: dataset)
-                primary_store = Rails.configuration.storage.primary_store
-                a.update!(storage: primary_store)
-              ensure
-                tempfile.close
-                tempfile.unlink
+            params.each do |file_id, file|
+              if tempfile = file.tempfile
+                a = Attachment.new(
+                  filename: file.filename,
+                  file_path: file.tempfile,
+                  created_by: helper.sender.id,
+                  created_for: helper.recipient.id,
+                )
+                begin
+                  a.save!
+                  a.update!(attachable: dataset)
+                ensure
+                  tempfile.close
+                  tempfile.unlink
+                end
               end
             end
           end
