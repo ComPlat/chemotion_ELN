@@ -254,7 +254,8 @@ class Sample < ApplicationRecord
   end
 
   def sample_xref_cas
-    xref&.dig('cas', 'value') || ''
+    xref_hash = JSON.parse(xref) rescue {}
+    { xref: { cas: xref_hash.dig('cas', 'value') || '' } }
   end
 
   def molecule_inchikey
