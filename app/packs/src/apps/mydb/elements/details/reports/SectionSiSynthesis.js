@@ -87,7 +87,7 @@ const productContent = (products, settings, molSerials) => {
     const ea = productEA(p);
     counter += 1;
 
-    const cas = p.xref && p.xref.cas ? p.xref.cas.value : '- ';
+    const cas = p.xref && p.xref.cas ? p.xref.cas : '- ';
     const deltaName = settings.Name ? [
       { insert: 'Name ' },
       ...prdIdentifier(counter, m, molSerials),

@@ -254,9 +254,7 @@ export default class SampleDetails extends React.Component {
           sample.molecule = result;
           this.molfileInput.value = result.molfile;
           this.inchistringInput.value = result.inchistring;
-          casObj.value = result.cas[0] || cas;
-          casObj.label = result.cas[0] || cas;
-          sample.xref = { ...sample.xref, cas: casObj };
+          sample.xref = { ...sample.xref, cas: cas };
           this.setState({
             quickCreator: true,
             sample,
@@ -767,7 +765,7 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     const result = validateCas(cas, boolean);
     if (result !== false) {
-      sample.xref = { ...sample.xref, cas: { value: result, label: result } };
+      sample.xref = { ...sample.xref, cas: { result } };
       this.setState({ sample, validCas: result });
     } else {
       this.setState({ validCas: result });
@@ -778,7 +776,6 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref ? xref.cas : '';
-    const casLabel = cas && cas.label ? cas.label : '';
     let casArr = [];
     if (molecule && molecule.cas) {
       casArr = molecule.cas.map((element) => ({
@@ -814,7 +811,7 @@ export default class SampleDetails extends React.Component {
           />
           <InputGroup.Button>
             <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button active className="clipboardBtn" data-clipboard-text={casLabel}><i className="fa fa-clipboard" /></Button>
+              <Button active className="clipboardBtn" data-clipboard-text={cas}><i className="fa fa-clipboard" /></Button>
             </OverlayTrigger>
           </InputGroup.Button>
         </InputGroup>
