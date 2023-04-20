@@ -1,14 +1,22 @@
-- @changelog = File.read("#{Rails.root}/CHANGELOG.md")
 
 .container
   %h2
-    Chemotion ELN
-    %br/
-    - Chemotion::Application.config.version.each do |k, v|
-      %h3= "#{k.humanize}: #{v}"
-
-  = markdown @changelog
+    Chemotion ELN - About
 
   %br/
+  - Chemotion::Application.config.version.each do |k, v|
+    - next if v.to_s == '0'
+    %h4= "#{k.humanize}: #{v}"
+  %br/
+  %br/
+  %span
+    See
+    = link_to "CHANGELOG.md", "https://github.com/ComPlat/chemotion_ELN/blob/main/CHANGELOG.md##{Chemotion::Application.config.version["version"]&.gsub(/\./,'')}"
+    for more details.
+  %br/
+  %br/
+  %br/
+
+
 
   = link_to "Back", root_path
