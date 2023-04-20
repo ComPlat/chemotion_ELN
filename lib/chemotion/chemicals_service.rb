@@ -91,42 +91,40 @@ module Chemotion
                     .children[1].children[1].children[1]
     end
 
-    def self.construct_h_statements(health_section)
-      h_phrases = health_section.children[5].text.gsub(/\t|\n|Hazard Statements:/, '')
-      h_array = h_phrases.split('-')
+    def self.construct_h_statements(h_phrases)
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
       h_statements = {}
-      h_array.each do |element|
+      h_phrases.each do |element|
         h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
       end
       h_statements
     end
 
-    def self.construct_p_statements(health_section)
-      p_phrases = health_section.children[11].text.gsub(/\t|\n|Precautionary Statements:/, '')
-      p_array = p_phrases.split('-')
+    def self.construct_p_statements(p_phrases)
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
       p_statements = {}
-      p_array.each do |element|
+      p_phrases.each do |element|
         p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
       p_statements
     end
 
-    def self.construct_pictograms(health_section)
+    def self.construct_pictograms(pictograms)
       pictograms_hash = JSON.parse(File.read('./public/json/pictograms.json'))
-      pictograms = health_section.css('img').map do |e|
-        e.attributes['src'].value.gsub('/static//images/pictogram/', '')
-      end
       pictograms.filter_map { |e| pictograms_hash[e] || nil }
     end
 
     def self.safety_phrases_thermofischer(product_number)
       health_section = health_section(product_number)
-      h_statements = construct_h_statements(health_section)
+      h_phrases = health_section.children[5].text.gsub(/\t|\n|Hazard Statements:/, '').split(/[+-]/)
+      p_phrases = health_section.children[11].text.gsub(/\t|\n|Precautionary Statements:/, '').split(/[+-]/)
+      pictograms = health_section.css('img').map do |e|
+        e.attributes['src'].value.gsub('/static//images/pictogram/', '')
+      end
+      h_statements = construct_h_statements(h_phrases)
       { 'h_statements' => h_statements,
-        'p_statements' => construct_p_statements(health_section),
-        'pictograms' => construct_pictograms(health_section) }
+        'p_statements' => construct_p_statements(p_phrases),
+        'pictograms' => construct_pictograms(pictograms) }
     rescue StandardError
       'Could not find H and P phrases'
     end
@@ -140,7 +138,7 @@ module Chemotion
 
     def self.construct_h_statements_merck(safety_array)
       h_statements = {}
-      h_array = safety_array[1].split(' - ')
+      h_array = safety_array[1].split(/\s[+-]\s/)
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
       h_array.each do |element|
         h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
@@ -151,7 +149,7 @@ module Chemotion
     def self.construct_p_statements_merck(safety_array)
       p_statements = {}
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
-      p_array = safety_array[2].split(' - ')
+      p_array = safety_array[2].split(/\s[+-]\s/)
       p_array.each do |element|
         p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
