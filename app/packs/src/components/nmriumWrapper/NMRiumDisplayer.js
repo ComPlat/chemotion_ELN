@@ -7,10 +7,8 @@ import { Modal, Button } from 'react-bootstrap';
 import UIFetcher from 'src/fetchers/UIFetcher';
 import { parseBase64ToArrayBuffer } from 'src/utilities/FetcherHelper';
 import Attachment from 'src/models/Attachment';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
-import UIActions from 'src/stores/alt/actions/UIActions';
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
@@ -100,7 +98,7 @@ export default class NMRiumDisplayer extends React.Component {
         
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
-          const nmriumData = eventData.data;
+          const nmriumData = eventData.data.data;
           const { version } = nmriumData;
           if (version > 3) {
             this.setState({ nmriumData: nmriumData.data });
@@ -210,6 +208,9 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     const specInfo = this.getSpcInfo();
+    if (!specInfo) {
+      return;
+    }
 
     const { label } = specInfo;
     const specLabelParts = label.split('.');
