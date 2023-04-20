@@ -101,7 +101,7 @@ module Chemotion
         before do
           error!('401 Unauthorized', 401) if params[:key].nil?
           payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
-          error!('401 Unauthorized', 401) if payload.length.zero?
+          error!('401 Unauthorized', 401) if payload.empty?
           @status = params[:status].is_a?(Integer) ? params[:status] : 0
 
           if @status > 1
@@ -268,3 +268,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop: enable Metrics/ClassLength
