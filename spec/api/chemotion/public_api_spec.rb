@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/DurationArithmetic
+
 require 'rails_helper'
 
 describe Chemotion::PublicAPI do
@@ -63,7 +65,7 @@ describe Chemotion::PublicAPI do
         {
           att_id: attachment.id,
           user_id: user.id,
-          exp: Time.zone.now.to_i,
+          exp: (Time.zone.now + 15.minutes).to_i,
         },
         Rails.application.secrets.secret_key_base,
       )
@@ -97,7 +99,7 @@ describe Chemotion::PublicAPI do
           {
             att_id: attachment.id + 1,
             user_id: user.id,
-            exp: Time.zone.now.to_i,
+            exp: (Time.zone.now + 15.minutes).to_i,
           },
           Rails.application.secrets.secret_key_base,
         )
@@ -144,3 +146,5 @@ describe Chemotion::PublicAPI do
     end
   end
 end
+
+# rubocop:enable Rails/DurationArithmetic
