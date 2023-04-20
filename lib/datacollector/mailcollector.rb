@@ -76,16 +76,20 @@ class Mailcollector
     begin
       dataset = helper.prepare_new_dataset(message.subject)
       message.attachments.each do |attachment|
+        tempfile = Tempfile.new('mail_attachment')
+        tempfile.binmode
+        tempfile.write(attachment.decoded)
+        tempfile.rewind
         att = Attachment.new(
           filename: attachment.filename,
-          file_data: attachment.decoded,
           created_by: helper.sender.id,
           created_for: helper.recipient.id,
-          content_type: attachment.mime_type,
-          file_path: attachment.path,
+          file_path: tempfile.path,
           )
 
         att.save!
+        tempfile.close
+        tempfile.unlink
         att.update!(attachable: dataset)
       end
     rescue => e
