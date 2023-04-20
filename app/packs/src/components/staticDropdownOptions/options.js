@@ -344,6 +344,9 @@ export const purificationOptions = [{
 }, {
   label: 'Dialysis',
   value: 'Dialysis'
+}, {
+  label: 'Precipitation',
+  value: 'Precipitation'
 }];
 
 export const statusOptions = [{
