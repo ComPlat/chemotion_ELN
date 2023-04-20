@@ -81,7 +81,7 @@ describe Chemotion::ChemicalsService do
                         EUH066-H304
                       </p>
                       <p>
-                        Repeated exposure may cause skin dryness or cracking. May be fatal if swallowed and enters airways
+                        Repeated exposure may cause skin dryness or cracking.
                       </p>
                       <p>
                         <strong>Precautionary Statements:</strong>
