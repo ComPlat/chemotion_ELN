@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
+
 require 'rails_helper'
 
 describe Chemotion::SampleAPI do
