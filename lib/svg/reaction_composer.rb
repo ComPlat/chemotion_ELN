@@ -434,6 +434,7 @@ module SVG
 
     def svg_text(path)
       text = path.split(%r{^svg_text\/})[1]
+      text ||= ''
       text = text[0, 56] + '...' if text.length > 60
       text_lines = text.scan(/.{1,20}/).map do |text_line|
         "<tspan x=\"0\" dy=\"1.15em\">#{text_line}</tspan>"

@@ -26,8 +26,8 @@ module Cdxml
         y_min = y if !y_min || y < y_min
         y_max = y if !y_max || y > y_max
       end
-      @geometry = { x_max: x_max, x_min: x_min, x_len: (x_max - x_min),
-                    y_max: y_max, y_min: y_min, y_len: (y_max - y_min) }
+      @geometry = { x_max: x_max, x_min: x_min, x_len: ((x_max || 0) - (x_min || 0)),
+                    y_max: y_max, y_min: y_min, y_len: ((y_max || 0) - (y_min ||0)) }
     end
 
     def shift_cdxml
