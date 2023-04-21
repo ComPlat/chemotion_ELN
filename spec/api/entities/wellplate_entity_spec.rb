@@ -15,12 +15,13 @@ describe Entities::WellplateEntity do
     let(:detail_levels) { { Wellplate => detail_level, Well => detail_level, Sample => detail_level } }
     let(:displayed_in_list) { false }
     let(:wellplate) { create(:wellplate) }
+    let(:sample) { build(:valid_sample) }
 
     let(:wells) do
       [].tap do |wells|
         (1..8).each do |pos_y|
           (1..12).each do |pos_x|
-            wells << build_stubbed(:well, wellplate: wellplate, position_x: pos_x, position_y: pos_y)
+            wells << build_stubbed(:well, wellplate: wellplate, position_x: pos_x, position_y: pos_y, sample: sample)
           end
         end
       end
@@ -92,11 +93,11 @@ describe Entities::WellplateEntity do
       end
 
       it 'returns a wellplate without a code_log' do
-        expect(grape_entity_as_hash[:code_log]).to eq(nil)
+        expect(grape_entity_as_hash[:code_log]).to be_nil
       end
 
       it 'returns a wellplate without a container' do
-        expect(grape_entity_as_hash[:container]).to eq(nil)
+        expect(grape_entity_as_hash[:container]).to be_nil
       end
 
       it 'returns a wellplate with segments' do
@@ -106,7 +107,7 @@ describe Entities::WellplateEntity do
       end
 
       it 'returns a wellplate without a tag' do
-        expect(grape_entity_as_hash[:tag]).to eq(nil)
+        expect(grape_entity_as_hash[:tag]).to be_nil
       end
     end
 
@@ -115,11 +116,11 @@ describe Entities::WellplateEntity do
       let(:detail_level) { 10 }
 
       it 'returns a wellplate without a code_log' do
-        expect(grape_entity_as_hash[:code_log]).to eq(nil)
+        expect(grape_entity_as_hash[:code_log]).to be_nil
       end
 
       it 'returns a wellplate without a container' do
-        expect(grape_entity_as_hash[:container]).to eq(nil)
+        expect(grape_entity_as_hash[:container]).to be_nil
       end
 
       it 'returns a wellplate without segments' do

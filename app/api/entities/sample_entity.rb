@@ -15,6 +15,7 @@ module Entities
       expose! :is_restricted
       expose! :molecular_mass
       expose! :molecule,                                    using: 'Entities::MoleculeEntity'
+      expose! :molecule_computed_props,                     using: 'Entities::ComputedPropEntity'
       expose! :sum_formula
       expose! :type
     end
