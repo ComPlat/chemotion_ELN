@@ -58,16 +58,9 @@ export default class WellplatesFetcher {
       body: JSON.stringify(wellplate.serialize())
     }).then((response) => response.json()).then((json) => {
       if (newFiles.length <= 0 && delFiles.length <= 0) {
-      // return new Wellplate(json.wellplate);
         return;
       }
       return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', json.wellplate.id, delFiles)();
-      // .then(() => {
-      //   const result = _.differenceBy(json.wellplate.attachments, delFiles, 'id');
-      //   const newWellplate = new Wellplate(json.wellplate);
-      //   newWellplate.attachments = _.concat(result, newFiles);
-      //   return new Wellplate(newWellplate);
-      // });
     })
       .then(() => BaseFetcher.updateAnnotationsInContainer(wellplate))
       .then(() => WellplatesFetcher.fetchById(wellplate.id))
