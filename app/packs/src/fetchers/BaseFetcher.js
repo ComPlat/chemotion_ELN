@@ -7,20 +7,18 @@ export default class BaseFetcher {
    * @param {Object} params = { apiEndpoint, requestMethod, bodyData, jsonTranformation }
    */
   static withBodyData(params) {
-    const { apiEndpoint, requestMethod, bodyData, jsonTranformation } = params;
-    let promise = fetch(apiEndpoint, {
+    const {
+      apiEndpoint, requestMethod, bodyData, jsonTranformation
+    } = params;
+    const promise = fetch(apiEndpoint, {
       credentials: 'same-origin',
       method: requestMethod,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(bodyData)
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return jsonTranformation(json)
-    }).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
       console.log(errorMessage);
     });
 
@@ -33,14 +31,10 @@ export default class BaseFetcher {
   static withoutBodyData(params) {
     const { apiEndpoint, requestMethod, jsonTranformation } = params;
 
-    let promise = fetch(apiEndpoint, {
+    const promise = fetch(apiEndpoint, {
       credentials: 'same-origin',
       method: requestMethod
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return jsonTranformation(json)
-    }).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
       console.log(errorMessage);
     });
 
@@ -53,19 +47,19 @@ export default class BaseFetcher {
     const filterCreatedAt = queryParams.filterCreatedAt === true ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
-    const product_only = queryParams.productOnly === true ? `&product_only=true` : '&product_only=false';
-    const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}` +
-              `collection_id=${id}&page=${page}&per_page=${perPage}&` +
-              `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
-    let addQuery = type === 'samples' ?
-      `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
+    const product_only = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
+    const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
+              + `collection_id=${id}&page=${page}&per_page=${perPage}&`
+              + `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
+    let addQuery = type === 'samples'
+      ? `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
       : '';
     addQuery = type === 'generic_elements' ? `&el_type=${queryParams.name}` : '';
     return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
-    }).then(response => (
-      response.json().then(json => ({
-        elements: json[type].map(r => (new ElKlass(r))),
+    }).then((response) => (
+      response.json().then((json) => ({
+        elements: json[type].map((r) => (new ElKlass(r))),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),
@@ -74,36 +68,35 @@ export default class BaseFetcher {
     )).catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static getAttachments(container,attachments=[]){
+  static getAttachments(container, attachments = []) {
     Array.prototype.push.apply(attachments, container.attachments);
     container.children
-      .forEach(child => BaseFetcher.getAttachments(child,attachments));
-    
+      .forEach((child) => BaseFetcher.getAttachments(child, attachments));
+
     return attachments;
   }
 
-  static updateAnnotationsInContainer(element){
+  static updateAnnotationsInContainer(element) {
     const updateTasks = [];
 
-    const attachments=BaseFetcher.getAttachments(element.container,[]);
+    const attachments = BaseFetcher.getAttachments(element.container, []);
 
     attachments
-      .filter(attach => attach.updatedAnnotation)
-      .forEach(attach => {
-      let data = new FormData();
-      data.append('updated_svg_string', attach.updatedAnnotation);
-      let updateTask=fetch('/api/v1/attachments/' + attach.id + '/annotation', {
-        credentials: 'same-origin',
-        method: 'post',
-        body: data
-      })
-      .catch((errorMessage) => {
-          console.log(errorMessage);
-      })
-      updateTasks.push(updateTask);
-    })
+      .filter((attach) => attach.updatedAnnotation)
+      .forEach((attach) => {
+        const data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        const updateTask = fetch(`/api/v1/attachments/${attach.id}/annotation`, {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+        updateTasks.push(updateTask);
+      });
 
     return Promise.all(updateTasks);
   }
-  
 }
