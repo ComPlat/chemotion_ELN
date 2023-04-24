@@ -4,43 +4,65 @@ import { Dropdown, MenuItem, Glyphicon } from 'react-bootstrap';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import ModalImport from 'src/components/contextActions/ModalImport';
 import ModalExport from 'src/components/contextActions/ModalExport';
 import ModalReactionExport from 'src/components/contextActions/ModalReactionExport';
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
+import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
+import { elementShowOrNew } from 'src/utilities/routesUtils.js'
 
-const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
-  <Dropdown id='export-dropdown'>
-    <Dropdown.Toggle className={customClass}>
-      <Glyphicon glyph="import" /> <Glyphicon glyph="export" />
-    </Dropdown.Toggle>
-    <Dropdown.Menu>
-      <MenuItem onSelect={() => exportFunction(updateModalProps)}
-        title='Export to spreadsheet'>
-        Export samples from selection
-      </MenuItem>
-      <MenuItem onSelect={() => exportReactionFunction(updateModalProps)}
-        title='Export reaction smiles to csv'>
-        Export reactions from selection
-      </MenuItem>
+const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
+  const showRadar = UIStore.getState().hasRadar? (
+    <>
       <MenuItem divider />
-      <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
-        title='Import from spreadsheet or sdf'>
-        Import samples to collection
+      <MenuItem onSelect={() => editMetadataFunction()}
+                disabled={isDisabled}
+                title='Edit metadata'>
+        Edit collection metadata
       </MenuItem>
-      <MenuItem divider />
-      <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)}
-        title='Export as ZIP archive'>
-        Export collections
-      </MenuItem>
-      <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
-        title='Import collections from ZIP archive'>
-        Import collections
-      </MenuItem>
-    </Dropdown.Menu>
-  </Dropdown>
-);
+      <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
+      title='Export to RADAR'>
+      Archive current collection to RADAR
+    </MenuItem>
+    </>
+  ): <span />;
+
+  return (
+    <Dropdown id='export-dropdown'>
+      <Dropdown.Toggle className={customClass}>
+        <Glyphicon glyph="import" /> <Glyphicon glyph="export" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <MenuItem onSelect={() => exportFunction(updateModalProps)}
+          title='Export to spreadsheet'>
+          Export samples from selection
+        </MenuItem>
+        <MenuItem onSelect={() => exportReactionFunction(updateModalProps)}
+          title='Export reaction smiles to csv'>
+          Export reactions from selection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
+          title='Import from spreadsheet or sdf'>
+          Import samples to collection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)}
+          title='Export as ZIP archive'>
+          Export collections
+        </MenuItem>
+        <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
+          title='Import collections from ZIP archive'>
+          Import collections
+        </MenuItem>
+
+        {showRadar}
+      </Dropdown.Menu>
+    </Dropdown>
+  )
+};
 
 ExportImportButton.propTypes = {
   isDisabled: PropTypes.bool,
@@ -121,6 +143,35 @@ const importCollectionFunction = (updateModalProps) => {
     component,
     action,
     listSharedCollections,
+  };
+
+  updateModalProps(modalProps);
+};
+
+const editMetadataFunction = () => {
+    const { currentCollection, isSync } = UIStore.getState();
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/metadata`
+      : `/collection/${currentCollection.id}/metadata`;
+    Aviator.navigate(uri, { silent: true} );
+
+    elementShowOrNew({
+      type: 'metadata',
+      params: { collectionID: currentCollection.id }
+    });
+}
+
+const exportCollectionToRadarFunction = (updateModalProps) => {
+  const title = "Archive current Collection to RADAR";
+  const component = ModalExportRadarCollection;
+  const action = CollectionActions.exportCollectionToRadar;
+
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    action,
+    editAction: editMetadataFunction
   };
 
   updateModalProps(modalProps);

@@ -46,6 +46,7 @@ Rails.application.routes.draw do
     get 'mydb/*any', to: 'pages#welcome'
     get 'mydb', to: 'pages#welcome'
     get 'molecule_moderator', to: 'pages#molecule_moderator'
+    get 'converter_admin', to: 'pages#converter_admin'
   end
 
   # Standalone page for ChemScanner
@@ -55,6 +56,15 @@ Rails.application.routes.draw do
   # Standalone page for ChemSpectra
   get 'chemspectra', to: 'pages#chemspectra'
   get 'chemspectra-editor', to: 'pages#chemspectra_editor'
+
+  # route for the radar oauth callback
+  namespace :oauth do
+    get 'radar/archive', to: 'radar#archive'
+    get 'radar/callback', to: 'radar#callback'
+    get 'radar/select', to: 'radar#select'
+    post 'radar/select', to: 'radar#select'
+    get 'radar/export', to: 'radar#export'
+  end
 
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'

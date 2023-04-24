@@ -1,5 +1,6 @@
 module Export
   class ExportCollections
+    attr_accessor :file_path
 
     def initialize(export_id, collection_ids, format, nested)
       @export_id = export_id
@@ -44,44 +45,47 @@ module Export
         DESC
 
         # create a zip buffer
-        zip = Zip::OutputStream.write_buffer do |zip|
+        zip = Zip::OutputStream.write_buffer do |zipping|
           # write the json file into the zip file
-          export_json = self.to_json()
+          export_json = self.to_json
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
-          zip.put_next_entry 'export.json'
-          zip.write export_json
+          zipping.put_next_entry 'export.json'
+          zipping.write export_json
           description += "#{export_json_checksum} export.json\n"
 
           # write the json schema
           schema_json = File.read(@schema_file_path)
           schema_json_checksum = Digest::SHA256.hexdigest(schema_json)
-          zip.put_next_entry 'schema.json'
-          zip.write schema_json
+          zipping.put_next_entry 'schema.json'
+          zipping.write schema_json
           description += "#{schema_json_checksum} schema.json\n"
           # write all attachemnts into an attachments directory
           @attachments.each do |attachment|
             attachment_path = File.join('attachments', "#{attachment.identifier}#{File.extname(attachment.filename)}")
-            zip.put_next_entry attachment_path
-            zip.write attachment.attachment_attacher.file.read if attachment.attachment_attacher.file.present?
-            description += "#{attachment.checksum} #{attachment_path}\n"
+            next if attachment.attachment_attacher.file.blank?
 
-            annotation_path=attachment.attachment_data["derivatives"]["annotation"]["id"];
-            zip.put_next_entry attachment_path+"_annotation";
-            zip.write File.open(annotation_path).read           
+            zipping.put_next_entry attachment_path
+            zipping.write attachment.attachment_attacher.file.read
+            description += "#{attachment.checksum} #{attachment_path}\n"
+            next unless attachment.annotated_image?
+
+            annotation_path = attachment.attachment(:annotation).url
+            zipping.put_next_entry "#{attachment_path}_annotation"
+            zipping.write File.read(annotation_path)
           end
 
           # write all the images into an images directory
           @images.each do |file_path|
-            image_data = File.read(Rails.public_path.join( file_path))
+            image_data = Rails.public_path.join(file_path).read
             image_checksum = Digest::SHA256.hexdigest(image_data)
-            zip.put_next_entry file_path
-            zip.write image_data
+            zipping.put_next_entry file_path
+            zipping.write image_data
             description += "#{image_checksum} #{file_path}\n"
           end
 
           # write the description file
-          zip.put_next_entry 'description.txt'
-          zip.write description
+          zipping.put_next_entry 'description.txt'
+          zipping.write description
         end
 
         zip.set_encoding('UTF-8')
@@ -276,36 +280,38 @@ module Export
         'parent_id' => 'Container',
       })
 
-      # fetch analyses container
-      analyses_container = root_container.children.where("container_type = 'analyses'").first()
-      fetch_one(analyses_container, {
-        'containable_id' => containable_type,
-        'parent_id' => 'Container',
-      })
-
-      # fetch analysis_containers
-      analysis_containers = analyses_container.children.where("container_type = 'analysis'")
-      analysis_containers.each do |analysis_container|
-        fetch_one(analysis_container, {
+      unless root_container.nil?
+        # fetch analyses container
+        analyses_container = root_container.children.where("container_type = 'analyses'").first()
+        fetch_one(analyses_container, {
           'containable_id' => containable_type,
           'parent_id' => 'Container',
         })
 
-        # fetch attachment containers and attachments
-        attachment_containers = analysis_container.children.where("container_type = 'dataset'")
-        attachment_containers.each do |attachment_container|
-          fetch_one(attachment_container, {
+        # fetch analysis_containers
+        analysis_containers = analyses_container.children.where("container_type = 'analysis'")
+        analysis_containers.each do |analysis_container|
+          fetch_one(analysis_container, {
             'containable_id' => containable_type,
-            'parent_id' => 'Container'
-          })
-          fetch_many(attachment_container.attachments, {
-            'attachable_id' => 'Container',
-            'created_by' => 'User',
-            'created_for' => 'User'
+            'parent_id' => 'Container',
           })
 
-          # add attachments to the list of attachments
-          @attachments += attachment_container.attachments
+          # fetch attachment containers and attachments
+          attachment_containers = analysis_container.children.where("container_type = 'dataset'")
+          attachment_containers.each do |attachment_container|
+            fetch_one(attachment_container, {
+              'containable_id' => containable_type,
+              'parent_id' => 'Container'
+            })
+            fetch_many(attachment_container.attachments, {
+              'attachable_id' => 'Container',
+              'created_by' => 'User',
+              'created_for' => 'User'
+            })
+
+            # add attachments to the list of attachments
+            @attachments += attachment_container.attachments
+          end
         end
       end
     end

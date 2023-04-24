@@ -3,40 +3,31 @@
 module Usecases
   module SampleTasks
     class Create
-      attr_accessor :params, :user
+      attr_accessor :params, :user, :sample
 
       def initialize(params:, user:)
         @params = params
         @user = user
+        @sample = user_accessible_samples.find(params[:sample_id]) if params[:sample_id]
       end
 
-      def create_open_sample_task
-        sample = user_accessible_samples.find(params[:sample_id])
-
-        SampleTask.create!(creator: user, sample: sample)
-      end
-
-      def create_open_free_scan # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-        sample_task = SampleTask.create!(
+      def perform!
+        SampleTask.create!(
           creator: user,
-          measurement_value: params[:measurement_value],
-          measurement_unit: params[:measurement_unit],
-          description: params[:description],
-          additional_note: params[:additional_note],
-          private_note: params[:private_note],
-          attachment_attributes: {
-            filename: params[:file][:filename],
-            content_type: params[:file][:type],
-            file_path: params[:file][:tempfile].path,
-            created_by: user.id,
-          },
+          description: params[:description] || default_description,
+          required_scan_results: params[:required_scan_results],
+          sample_id: sample&.id,
         )
-
-        sample_task.attachment.save!
-        sample_task
       end
 
       private
+
+      def default_description
+        description = "Scan Task from #{DateTime.current}"
+        description += " for #{sample.showed_name}" if sample
+
+        description
+      end
 
       # This encapsulates the logic which samples a given user can access.
       # As in the near future the logic for shared/synched collections will change, it is feasible to extract

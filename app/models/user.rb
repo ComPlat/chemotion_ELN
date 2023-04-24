@@ -49,8 +49,14 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/MethodLength
+# rubocop: disable Metrics/AbcSize
+
+class User < ApplicationRecord
   attr_writer :login
+  attr_accessor :provider, :uid
+
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
   devise :database_authenticatable, :registerable, :confirmable,
@@ -237,6 +243,7 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
         data['chmo'] = result['ols_terms']
         data['is_templates_moderator'] = false
         data['molecule_editor'] = false
+        data['converter_admin'] = false
         data.merge!(layout: {
           'sample' => 1,
           'reaction' => 2,
@@ -283,6 +290,10 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def molecule_editor
     profile&.data&.fetch('molecule_editor', false)
+  end
+
+  def converter_admin
+    profile&.data&.fetch('converter_admin', false)
   end
 
   def matrix_check_by_name(name)
@@ -342,27 +353,31 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   def self.from_omniauth(provider, uid, email, first_name, last_name)
-    where(omniauth_provider: provider, omniauth_uid: uid).first_or_create do |user|
-      # update the email, the first_name, and the last_name on every login
-      user.email = email
-      user.first_name = first_name
-      user.last_name = last_name
-      user.password = Devise.friendly_token[0,20]
+    user = find_by(email: email)
+    if user.present?
+      providers = user.providers || {}
+      providers[provider] = uid
+      user.providers = providers
+      user.save!
+    else
+      user = User.new(
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        password: Devise.friendly_token[0, 20],
+      )
     end
+    user
   end
 
   def link_omniauth(provider, uid)
-    if User.where(omniauth_provider: provider, omniauth_uid: uid).exists?
-      return nil
-    else
-      self.omniauth_provider = provider
-      self.omniauth_uid = uid
-      self.save
-    end
+    providers = {} if providers.nil?
+    providers[provider] = uid
+    save!
   end
 
   def password_required?
-    super && omniauth_provider.blank?
+    super && provider.blank?
   end
 
   private
@@ -403,12 +418,13 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   def delete_data
     # TODO: logic to check if user can be really destroy or which data can be deleted
     count = samples.count
-      # + self.reactions.count
-      # + self.wellplates.count
-      # + self.screens.count
-      # + self.research_plans.count
+    # + self.reactions.count
+    # + self.wellplates.count
+    # + self.screens.count
+    # + self.research_plans.count
     update_columns(email: "#{id}_#{name_abbreviation}@deleted")
     update_columns(name_abbreviation: nil) if count.zero?
+    update_columns(providers: nil)
   end
 end
 
@@ -444,3 +460,7 @@ class Group < User
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins,  through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
 end
+
+# rubocop: enable Metrics/ClassLength
+# rubocop: enable Metrics/MethodLength
+# rubocop: enable Metrics/AbcSize

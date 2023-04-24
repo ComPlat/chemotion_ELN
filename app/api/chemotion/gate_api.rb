@@ -51,8 +51,8 @@ module Chemotion
         after_validation do
           target = URI.join(params[:target], '/').to_s
           resp_body = { target: target }
-          connection = Faraday.new(url: target) do |f|
-            f.use FaradayMiddleware::FollowRedirects::Middleware
+          connection = Faraday.new(url: target) do |faraday|
+            faraday.response :follow_redirects
           end
           begin
             resp = connection.get { |req| req.url('/api/v1/public/ping') }
@@ -85,9 +85,9 @@ module Chemotion
           @queue = "gate_transfer_#{@collection.id}"
           @move_queue = "move_to_collection_#{@collection.id}"
           # TODO: use persistent connection
-          connection = Faraday.new(url: @url) do |f|
-            f.use FaradayMiddleware::FollowRedirects::Middleware
-            f.headers = @req_headers
+          connection = Faraday.new(url: @url) do |faraday|
+            faraday.response :follow_redirects
+            faraday.headers = @req_headers
           end
           resp = connection.get { |req| req.url('/api/v1/gate/ping') }
           resp_body.merge!(JSON.parse(resp.body)) if resp.headers["content-type"] == "application/json"
@@ -153,7 +153,6 @@ module Chemotion
             collection_id: @collection.id
           )
           imp.import
-          primary_store = Rails.configuration.storage.primary_store
           new_attachments = []
           imp.new_attachments&.each_pair do |key, att|
             next unless (tmp = params[key]&.fetch('tempfile', nil))
@@ -164,8 +163,6 @@ module Chemotion
             att.save!
             new_attachments << att
           end
-          # TODO: delayed_jobs this
-          new_attachments.each { |att| att.update!(storage: primary_store) }
           status(200)
         end
       end

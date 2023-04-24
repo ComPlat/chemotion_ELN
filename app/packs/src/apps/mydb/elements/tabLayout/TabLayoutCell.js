@@ -35,7 +35,8 @@ class TabLayoutCell extends Component {
       fontSize: 12,
       color: '#000000',
       textAlign: 'center',
-      wordWrap: 'break-word'
+      wordWrap: 'break-word',
+      width: '85px'
     };
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
@@ -44,7 +45,7 @@ class TabLayoutCell extends Component {
     let cellDescription = '';
 
     if (!elnElements.includes(cell)) {
-      const genericElements = UserStore.getState().genericElements || [];
+      const genericElements = UserStore.getState().genericEls || [];
       const genericElement = (genericElements && genericElements.find(el => el.name === cell)) || {};
       cellIcon = genericElement.icon_name
       cellTitle = genericElement.label;
@@ -53,7 +54,7 @@ class TabLayoutCell extends Component {
 
     const content = isElementDetails ? (
       <div style={{ width: '100%' }}>
-        <i style={styleObj}>{title === 'hidden' ? '-' : title}</i>
+        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       <div>

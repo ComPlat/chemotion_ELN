@@ -18,6 +18,7 @@ import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
+import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
@@ -33,6 +34,7 @@ import DeviceControl from 'src/models/DeviceControl';
 import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
+import Metadata from 'src/models/Metadata';
 
 import _ from 'lodash';
 
@@ -70,6 +72,11 @@ class ElementActions {
 
   setSelectedDeviceId(deviceId) {
     return (dispatch) => dispatch(deviceId)
+  }
+
+  setRefreshCoefficient(id, coefficient, rId) {
+    const obj = { sId: id, rId, coefficient };
+    return (dispatch) => dispatch({ obj });
   }
 
   toggleDeviceType(device, type) {
@@ -409,10 +416,12 @@ class ElementActions {
   }
 
   showReactionMaterial(params) {
+    const sampleCoefficient = params.sample.coefficient;
     return (dispatch) => {
       SamplesFetcher.fetchById(params.sample.id)
         .then((result) => {
-          params.sample = result
+          params.coefficient = sampleCoefficient;
+          params.sample = result;
           dispatch(params);
         }).catch((errorMessage) => {
           console.log(errorMessage);
@@ -781,6 +790,30 @@ class ElementActions {
         .then((result) => { dispatch(result); })
         .then(() => { afterComplete(); })
         .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  // -- DataCite/Radar metadata --
+
+  fetchMetadata(collection_id) {
+    return (dispatch) => {
+      return MetadataFetcher.fetch(collection_id)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  storeMetadata(metadata) {
+    return (dispatch) => {
+      return MetadataFetcher.store(metadata)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 

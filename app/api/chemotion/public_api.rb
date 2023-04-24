@@ -57,7 +57,10 @@ module Chemotion
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
-          Devise.omniauth_configs.keys
+          res = {}
+          config = Devise.omniauth_configs
+          config.each { |k, _v| res[k] = { icon: File.basename(config[k].options[:icon] || '') } }
+          res
         end
       end
 
@@ -75,7 +78,7 @@ module Chemotion
           @attachment = Attachment.find_by(id: att_id)
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-          header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
+          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
           env['api.format'] = :binary
           @attachment.read_file
         end
@@ -202,16 +205,17 @@ module Chemotion
 
         desc 'Return all current groups'
         get 'groups' do
-          Affiliation.pluck('DISTINCT affiliations.group')
+          Affiliation.pluck('DISTINCT "group"')
         end
 
-        desc "Return organization's name from email domain"
-        get 'swot' do
-          return unless params[:domain].present?
-
-          Swot::school_name(params[:domain]).presence ||
-            Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
-        end
+        # TODO: mv to swot-node
+        # desc "Return organization's name from email domain"
+        # get 'swot' do
+        #  return unless params[:domain].present?
+        #
+        #  Swot::school_name(params[:domain]).presence ||
+        #    Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
+        #end
       end
     end
 
@@ -245,13 +249,10 @@ module Chemotion
                   file_path: file.tempfile,
                   created_by: helper.sender.id,
                   created_for: helper.recipient.id,
-                  content_type: file.type
                 )
                 begin
                   a.save!
                   a.update!(attachable: dataset)
-                  primary_store = Rails.configuration.storage.primary_store
-                  a.update!(storage: primary_store)
                 ensure
                   tempfile.close
                   tempfile.unlink

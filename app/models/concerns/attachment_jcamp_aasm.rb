@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip].freeze
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip nmrium].freeze
 
   extend ActiveSupport::Concern
 
@@ -15,7 +15,7 @@ module AttachmentJcampAasm
     aasm do
       state :idle, initial: true
       state :queueing, :regenerating, :done
-      state :peaked, :edited, :backup, :image, :json, :csv
+      state :peaked, :edited, :backup, :image, :json, :csv, :nmrium
       state :failure
       state :non_jcamp
       state :oo_editing
@@ -29,25 +29,25 @@ module AttachmentJcampAasm
       end
 
       event :set_queueing do
-        transitions from: %i[idle done backup failure non_jcamp queueing regenerating],
+        transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium],
                     to: :queueing
       end
 
       event :set_regenerating do
-        transitions from: %i[idle done backup failure non_jcamp queueing regenerating],
+        transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium],
                     to: :regenerating
       end
 
       event :set_force_peaked do
-        transitions from: %i[queueing regenerating], to: :peaked
+        transitions from: %i[queueing regenerating nmrium], to: :peaked
       end
 
       event :set_edited do
-        transitions from: %i[peaked queueing regenerating], to: :edited
+        transitions from: %i[peaked queueing regenerating nmrium], to: :edited
       end
 
       event :set_backup do
-        transitions from: %i[peaked edited failure], to: :backup
+        transitions from: %i[peaked edited failure nmrium], to: :backup
       end
 
       event :set_non_jcamp do
@@ -55,7 +55,7 @@ module AttachmentJcampAasm
       end
 
       event :set_done do
-        transitions from: %i[queueing regenerating], to: :done
+        transitions from: %i[queueing regenerating nmrium], to: :done
       end
 
       event :set_image do
@@ -63,15 +63,19 @@ module AttachmentJcampAasm
       end
 
       event :set_json do
-        transitions from: %i[idle peaked non_jcamp], to: :json
+        transitions from: %i[idle peaked non_jcamp json], to: :json
       end
 
       event :set_csv do
         transitions from: %i[idle peaked non_jcamp], to: :csv
       end
 
+      event :set_nmrium do
+        transitions from: %i[idle peaked edited non_jcamp queueing regenerating], to: :nmrium
+      end
+
       event :set_failure do
-        transitions from: %i[idle queueing regenerating failure], to: :failure
+        transitions from: %i[idle queueing regenerating failure nmrium], to: :failure
       end
     end
   end
@@ -106,7 +110,6 @@ module AttachmentJcampAasm
 
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
-    return if new_upload
 
     generate_spectrum(true, false) if queueing?
     generate_spectrum(true, true) if regenerating?
@@ -126,7 +129,6 @@ module AttachmentJcampProcess
     return unless meta_tmp
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
     att = Attachment.children_of(self[:id]).find_by(filename: meta_filename)
 
     if att.nil?
@@ -135,7 +137,6 @@ module AttachmentJcampProcess
         file_path: meta_tmp.path,
         created_by: created_by,
         created_for: created_for,
-        content_type: content_type,
         key: SecureRandom.uuid,
       )
     end
@@ -144,8 +145,8 @@ module AttachmentJcampProcess
     att.set_image if ext == 'png'
     att.set_json if ext == 'json'
     att.set_csv if ext == 'csv'
+    att.set_nmrium if ext == 'nmrium'
     att.update!(
-      storage: Rails.configuration.storage.primary_store,
       attachable_id: attachable_id, attachable_type: 'Container'
     )
     att
@@ -166,6 +167,10 @@ module AttachmentJcampProcess
 
   def generate_csv_att(csv_tmp, addon, to_edit = false)
     generate_att(csv_tmp, addon, to_edit, 'csv')
+  end
+
+  def generate_nmrium_att(nmrium_tmp, addon, to_edit = false)
+    generate_att(nmrium_tmp, addon, to_edit, 'nmrium')
   end
 
   def build_params(params = {})
@@ -203,18 +208,22 @@ module AttachmentJcampProcess
   def create_process(is_regen)
     params = build_params
 
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
+    if params[:ext] == 'nmrium'
+      return generate_spectrum_from_nmrium
+    end
 
-    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
+
+    check_invalid_molfile(invalid_molfile)
 
     if spc_type == 'bagit'
       read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
-    elsif arr_jcamp.count > 1
+    elsif arr_jcamp.length > 1
       read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     else
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-      img_att = generate_img_att(arr_img, 'peak')
+      img_att = generate_img_att(tmp_img, 'peak')
 
       tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
       tmp_files_to_be_deleted.push(*arr_img)
@@ -223,15 +232,16 @@ module AttachmentJcampProcess
       delete_tmps(tmp_files_to_be_deleted)
       delete_related_imgs(img_att)
       delete_edit_peak_after_done
+
       jcamp_att
     end
   end
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, _, _, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
-    check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
+    check_invalid_molfile(invalid_molfile)
 
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
     jcamp_att.update_prediction(params, spc_type, is_regen)
@@ -246,16 +256,23 @@ module AttachmentJcampProcess
       delete_related_csv(csv_att)
     end
 
-    set_backup
+    # set_backup
+    unless arr_nmrium.nil? || arr_nmrium.length == 0
+      curr_tmp_nmrium = arr_nmrium[0]
+      nmrium_att = generate_nmrium_att(curr_tmp_nmrium, '', false)
+      tmp_files_to_be_deleted.push(*arr_nmrium)
+      delete_related_nmrium(nmrium_att)
+    end
 
+    set_backup
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att)
     delete_related_edit_peak(jcamp_att)
     jcamp_att
   end
 
-  def check_invalid_molfile(tmp_img, spc_type, tmp_jcamp)
-    if tmp_img.nil? && spc_type.nil? && tmp_jcamp['invalid_molfile'] == true
+  def check_invalid_molfile(invalid_molfile = false)
+    if invalid_molfile == true
       # add message when invalid molfile
       Message.create_msg_notification(
         channel_subject: Channel::CHEM_SPECTRA_NOTIFICATION,
@@ -266,7 +283,11 @@ module AttachmentJcampProcess
   end
 
   def generate_spectrum_data(params, is_regen)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, spc_type = Tempfile.create('molfile') do |t_molfile|
+    if params[:ext] == 'nmrium'
+      return
+    end
+
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
@@ -323,7 +344,7 @@ module AttachmentJcampProcess
       tmp_img_to_deleted.push(img_att)
 
       curr_tmp_csv = arr_csv[idx]
-      csv_att = generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit")
+      _ = generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit")
       tmp_to_be_deleted.push(curr_tmp_csv)
 
       jcamp_att = curr_jcamp_att if idx == 0
@@ -333,6 +354,45 @@ module AttachmentJcampProcess
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
     jcamp_att
+  end
+
+  def generate_spectrum_from_nmrium
+    tmp_jcamp = Chemotion::Jcamp::CreateFromNMRium.jcamp_from_nmrium(abs_path)
+    jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
+
+    set_nmrium
+
+    tmp_files_to_be_deleted = [tmp_jcamp]
+    delete_tmps(tmp_files_to_be_deleted)
+    delete_related_edited_jcamp(jcamp_att)
+    delete_related_edit_peak_with_att(jcamp_att)
+    delete_related_nmrium(self)
+    jcamp_att
+  rescue StandardError => e
+    set_failure
+    Rails.logger.info('**** Jcamp Edit from NMRium Generation fails ***')
+    Rails.logger.error(e)
+  end
+
+  def delete_related_edit_peak_with_att(attachment)
+    return unless attachment
+
+    atts = Attachment.where(attachable_id: attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      edit_jdx_name = File.basename(att.filename, '.edit.jdx')
+      peak_jdx_name = File.basename(att.filename, '.peak.jdx')
+      edit_image_name = File.basename(att.filename, '.edit.png')
+      peak_image_name = File.basename(att.filename, '.peak.png')
+      array_valid_names = [edit_jdx_name, peak_jdx_name, edit_image_name, peak_image_name]
+
+      is_delete = (
+        (att.edited? || att.peaked? || att.image?) &&
+          att.id != attachment.id &&
+          (array_valid_names.include? valid_name)
+      )
+      att.delete if is_delete
+    end
   end
 
   def delete_tmps(tmp_arr)
@@ -414,6 +474,36 @@ module AttachmentJcampProcess
         att.csv? &&
           att.id != csv_att.id &&
           valid_name == fname_wo_ext(att)
+      )
+      att.delete if is_delete
+    end
+  end
+
+  def delete_related_nmrium(nmrium_att)
+    return unless nmrium_att
+
+    atts = Attachment.where(attachable_id: attachable_id)
+    valid_name = filename_parts[0]
+    atts.each do |att|
+      is_delete = (
+        att.nmrium? &&
+          att.id != nmrium_att.id &&
+          valid_name == fname_wo_ext(att)
+      )
+      att.delete if is_delete
+    end
+  end
+
+  def delete_related_edited_jcamp(jcamp_att)
+    return unless jcamp_att
+
+    atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
+    valid_name = fname_wo_ext(self)
+    atts.each do |att|
+      is_delete = (
+        att.edited? &&
+          att.id != jcamp_att.id &&
+          valid_name == att.filename_parts[0]
       )
       att.delete if is_delete
     end

@@ -119,6 +119,27 @@ export default class Element {
     return target;
   }
 
+  // Return true if the element has at least one analysis
+  analysesPresent() {
+    if (!this.container) { return false; }
+
+    const analysesContainer = this.container.children?.find((container) => container?.container_type === 'analyses');
+    if (!analysesContainer) { return false; }
+
+    const analysis = analysesContainer.children?.find((container) => container?.container_type === 'analysis');
+    return !!analysis;
+  }
+
+  // temporary alias for analyses. Still used by Report tool
+  get analyses() {
+    if (!this.container) { return []; }
+
+    const analysesContainer = this.container.children?.find((container) => container?.container_type === 'analyses');
+    if (!analysesContainer) { return []; }
+
+    return analysesContainer.children?.filter((container) => container?.container_type === 'analysis');
+  }
+
   // Default empty quill-delta
   static quillDefault() {
     return { ops: [{ insert: '\n' }] };

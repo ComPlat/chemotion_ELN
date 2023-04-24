@@ -42,6 +42,7 @@ export default class TabLayoutContainer extends React.Component {
       hidden = ArrayUtils.removeFromListByValue(hidden, 'hidden');
     }
 
+     visible = ArrayUtils.removeFromListByValue(visible, 'hidden');
     this.setState({ visible, hidden });
   }
 
@@ -52,46 +53,43 @@ export default class TabLayoutContainer extends React.Component {
     const visibleCells = visible.map((cell, index) => {
       const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
       return (
-        <tr key={index + "_visible"}>
-          <td>
-            <TabLayoutCell
-              cell={cell}
-              index={index}
-              isElementDetails={isElementDetails}
-              isHidden={false}
-              moveLayout={moveLayout}
-              title={tabTitles[cell] || defTitle}
-            />
-          </td>
-        </tr>
-      )
-    })
+        <td key={index + "_visible"}>
+          <TabLayoutCell
+            cell={cell}
+            index={index}
+            isElementDetails={isElementDetails}
+            isHidden={false}
+            moveLayout={moveLayout}
+            title={tabTitles[cell] || defTitle}
+          />
+        </td>
+      );
+    });
+
     const hiddenCells = hidden.map((cell, index) => {
       const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
       return (
-        <tr key={index + "_hidden"}>
-          <td className="hidden-layout">
-            <TabLayoutCell
-              cell={cell}
-              index={index}
-              isElementDetails={isElementDetails}
-              isHidden={true}
-              moveLayout={moveLayout}
-              title={tabTitles[cell] || defTitle}
-            />
-          </td>
-        </tr>
-      )
+        <td className="hidden-layout" key={index + "_hidden"}>
+          <TabLayoutCell
+            cell={cell}
+            index={index}
+            isElementDetails={isElementDetails}
+            isHidden
+            moveLayout={moveLayout}
+            title={tabTitles[cell] || defTitle}
+          />
+        </td>
+      );
     });
 
     return (
       <table className="layout-container">
         <tbody>
-          {visibleCells}
-          {hiddenCells}
+          <tr>{visibleCells}</tr>
+          <tr>{hiddenCells}</tr>
         </tbody>
       </table>
-    )
+    );
   }
 }
 

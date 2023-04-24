@@ -40,11 +40,13 @@
 
 /config/database.yml
 /config/storage.yml
+/config/shrine.yml
 /config/spectra.yml
 /config/editors.yml
 /config/inference.yml
 /config/omniauth.yml
 /config/scifinder_n.yml
+/config/radar.yml
 
 /node_modules
 
@@ -179,7 +181,6 @@ shrine/*
 .docker-sync/
 
 public/sprite.png
-config/shrine_config.yml
 .nyc_output/
 
 #svgeditor

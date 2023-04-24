@@ -1,42 +1,48 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormControl, FormGroup, InputGroup } from 'react-bootstrap';
-import Attachment from 'src/models/Attachment';
-import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import {
+  FormControl, FormGroup, InputGroup
+} from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import ElementStore from '../../../../../../stores/alt/stores/ElementStore';
-import {Alert} from 'react-bootstrap';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
-
-
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
-    this.state = {imageEditModalShown: false,attachments: props.attachments};
+    this.state = { imageEditModalShown: false, attachments: props.attachments };
 
     this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
 
   componentDidMount() {
     this.generateSrcOfImage(this.props.field.value.public_name);
-    ElementStore.listen(this.onElementStoreChange);   
+    ElementStore.listen(this.onElementStoreChange);
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     ElementStore.unlisten(this.onElementStoreChange);
-  } 
+  }
 
-  onElementStoreChange(state){
-    if(!state.selecteds[0]){return} 
-     const currentEntry=state.selecteds[0].body.filter(entry => entry.id==this.props.field.id)[0] ;
-     
-     this.generateSrcOfImage(currentEntry.value.public_name)
-   
+  onElementStoreChange(state) {
+    if (state.selecteds.length < 1) return;
+
+    // multiple items can be selected, we filter to only keep research plans
+    const researchPlans = state.selecteds.filter((element) => element
+        && element?.type === 'research_plan');
+
+    // we find the reasearch plan that has our image entry
+    const researchPlanWithImageEntry = researchPlans.find((element) => !!element.getBodyElementById(this.props?.field?.id));
+
+    // get the image Entry
+    const imageEntry = researchPlanWithImageEntry?.getBodyElementById(this.props?.field?.id);
+    if (!imageEntry) return;
+
+    this.generateSrcOfImage(imageEntry.value.public_name);
   }
 
   handleDrop(files) {
@@ -60,11 +66,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   }
 
   renderEdit() {
-    const { field } = this.props;  
-    const currentAttachment=this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name)
-    const is_annotationUpdated=currentAttachment!=null && currentAttachment.updatedAnnotation 
+    const { field } = this.props;
+    const currentAttachment = this.props.researchPlan.getAttachmentByIdentifier(field.value.public_name);
+    const is_annotationUpdated = currentAttachment != null && currentAttachment.updatedAnnotation;
     let content;
-    if (field.value.public_name) {     
+    if (field.value.public_name) {
       const style = (field.value.zoom == null || typeof field.value.zoom === 'undefined'
         || field.value.width === '') ? { width: 'unset' } : { width: `${field.value.zoom}%` };
       content = (
@@ -88,17 +94,17 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               defaultValue={field.value.zoom}
               onChange={(event) => this.handleResizeChange(event)}
             />
-            <InputGroup.Addon>%</InputGroup.Addon>            
+            <InputGroup.Addon>%</InputGroup.Addon>
             <div className="image-annotation-button-researchplan">
-              <ImageAnnotationEditButton                          
+              <ImageAnnotationEditButton
                 parent={this}
                 attachment={currentAttachment}
               />
             </div>
           </InputGroup>
-          
-        </FormGroup>     
-        <SaveResearchPlanWarning visible={is_annotationUpdated}/>
+
+        </FormGroup>
+        <SaveResearchPlanWarning visible={is_annotationUpdated} />
         <Dropzone
           accept="image/*"
           multiple={false}
@@ -106,10 +112,17 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           className="dropzone"
         >
           {content}
-        </Dropzone>        
+        </Dropzone>
         {this.renderImageEditModal()}
       </div>
     );
+  }
+
+  isLegacyImage(publicName) {
+    if (!publicName) {
+      return true;
+    }
+    return publicName.includes('.');
   }
 
   generateSrcOfImage(publicName) {
@@ -117,12 +130,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     let src;
     if (publicName.startsWith('blob')) {
       this.setState({ imageSrc: publicName });
-    } else if (publicName.includes('.')) {
+    } else if (this.isLegacyImage(publicName)) {
       src = `/images/research_plans/${publicName}`;
       this.setState({ imageSrc: src });
     } else {
       AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: publicName, annotated: true })
-        .then((result) => {         
+        .then((result) => {
           if (result.data != null) {
             this.setState({ imageSrc: result.data });
           }
@@ -148,7 +161,11 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     );
   }
 
-  renderImageEditModal() {   
+  renderImageEditModal() {
+    if (this.isLegacyImage(this.props.field.value.public_name)) {
+      return null;
+    }
+
     return (
       <ImageAnnotationModalSVG
         attachment={this.state.choosenAttachment}
@@ -157,8 +174,8 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
             this.state.choosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });   
-            this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);         
+            this.setState({ imageEditModalShown: false });
+            this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}

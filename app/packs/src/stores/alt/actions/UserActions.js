@@ -59,7 +59,7 @@ class UserActions {
     })
       .then(response => {
         if (response.status == 204) {
-          location.reload();
+          location = '/home';
         }
       });
   }

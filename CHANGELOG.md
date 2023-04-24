@@ -2,12 +2,80 @@
 
 # Chemotion_ELN Changelog
 
+## [pre-v1.6.0-rc1] 
+> 2023-04-11
+* Fixes
+  * port fixes from v1.5.2 
+  
+## [v1.5.2]
+> 2023-04-11
 
-## [vMAJOR.MINOR.PATCH]
-> yyyy-mm-dd
+* Fixes
+  * AttachmentAPI: quote filename in content-dispostion header [#1250](https://github.com/ComPlat/chemotion_ELN/pull/1250)
+  * spectra: fix cannot sync 1d data [#1227](https://github.com/ComPlat/chemotion_ELN/pull/1227)
+  * Ease shrine derivative access [#1255](https://github.com/ComPlat/chemotion_ELN/pull/1255)
+  * update chem-spectra-app to version 0.11.2 [#1263](https://github.com/ComPlat/chemotion_ELN/pull/1263)
+  * Literature entity to return reference data and doi [#1257](https://github.com/ComPlat/chemotion_ELN/pull/1257)
+  * 1260 report UI to not break if a report template cannot be found [#1261](https://github.com/ComPlat/chemotion_ELN/pull/1261)
+  * Fix the creation of sample with invalid label 'NEW SAMPLE' [#1240](https://github.com/ComPlat/chemotion_ELN/pull/1240)
+  * Use db-generated uuid for building the attachment shrine id [#1259](https://github.com/ComPlat/chemotion_ELN/pull/1259)
+
+
+## [pre-v1.6.0]
+> 2023-03-28
 
 * Features and Improvements:
+  * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239)
+
 * Fixes
+  * content-disposition header preventing fetching image properly [#1250](https://github.com/ComPlat/chemotion_ELN/pull/1250)
+
+
+## [v1.5.1]
+> 2023-03-24
+
+* Fixes
+  * omniauth provider entity fix [#1217](https://github.com/ComPlat/chemotion_ELN/pull/1217)
+  * PDF attachments in Analyses Tab now readable [#1197](https://github.com/ComPlat/chemotion_ELN/pull/1197)
+  * reset melting & boiling point for products on reaction copy [#1221](https://github.com/ComPlat/chemotion_ELN/pull/1221)
+  * Minor image annotation fixes [#1223](https://github.com/ComPlat/chemotion_ELN/pull/1223)
+  * cannot save 2D data [#1178](https://github.com/ComPlat/chemotion_ELN/pull/1178)
+  * tab layout popups [#1212](https://github.com/ComPlat/chemotion_ELN/pull/1212)
+  * cannot work with Bruker FID [#1232](https://github.com/ComPlat/chemotion_ELN/pull/1232)
+  * Update sample task api for changes in Chemobile App [#1216](https://github.com/ComPlat/chemotion_ELN/pull/1216)
+  *  white screen on the homepage after login [#1231](https://github.com/ComPlat/chemotion_ELN/pull/1231)
+  * Set default search type value (EXACT) [#1224](https://github.com/ComPlat/chemotion_ELN/pull/1224)
+  * Updated welcome message to point to new docs URL [#1236](https://github.com/ComPlat/chemotion_ELN/pull/1236)
+  * export wellplate samples error fix by [#1235](https://github.com/ComPlat/chemotion_ELN/pull/1235)
+
+
+## [v1.5.0]
+> 2023-03-14
+
+* Important for admin and developers:
+  * Gem Shrine is now used to handle attachment files:
+    - if you use a custom config/storage.yml file, ensure your shrine config/shrine.yml is correct or DB migrations will fail
+  * Upgrade Rails to 6.1
+
+* Features and Improvements:
+  * Image Annotation tool ([docs](https://chemotion.net/docs/eln/ui/images))
+  * collection archiving to RADAR (RADAR account needed)
+  * NMRium: NMR data can be processed in [NMRium](https://www.nmrium.org/) ([docs](https://chemotion.net/docs/chemspectra/nmr?_highlight=nmrium#analysis-using-nmrium))
+  * Integration of Chem-converter v0.9.0 ([docs]( https://chemotion.net/docs/chemconverter/)
+  * Wellplate/Screen/ResearchPlan Workflow
+  * Chemspectra: better UI for Cyclic Volt. 
+  * add cas to sample export 
+  * 
+
+* Fixes
+  * Chemspectra: The issue of multiplicities on chemspectra frontend are not removed when changing between layouts with the old JCAMP design is fixed
+  * Chemspectra: Spectra can be processed even when the molfile is invalid (https://github.com/ComPlat/chemotion_ELN/issues/951) (Warning: update chem-spectra-app service to 0.11.0)
+  * Affiliation autocomplete (sign up page)
+  * CAS not searchable (index search might need to be rebuilt)
+  * molecule image cropped in chemspectra
+  * [others](https://github.com/ComPlat/chemotion_ELN/issues?q=is%3Aissue+is%3Aclosed+closed%3A2022-11-10..2023-02-28+label%3Abug+) 
+
+
 
 ## [v1.4.1]
 > 2022-11-09

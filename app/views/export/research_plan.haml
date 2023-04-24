@@ -27,12 +27,7 @@
     %div
       %img{"src" => field[:src]}
 
-  - when 'sample'
-    %div
-      %img{"src" => field[:src]}
-      %p= field[:p]
-
-  - when 'reaction'
+  - else
     %div
       %img{"src" => field[:src]}
       %p= field[:p]

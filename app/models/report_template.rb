@@ -21,6 +21,16 @@
 #
 
 class ReportTemplate < ApplicationRecord
+  REPORT_TYPES = %w[
+    standard
+    spectrum
+    supporting_information
+    supporting_information_std_rxn
+    rxn_list_xlsx
+    rxn_list_csv
+    rxn_list_html
+  ].freeze
+
   belongs_to :attachment, foreign_key: :attachment_id, class_name: 'Attachment', dependent: :destroy, optional: true
   accepts_nested_attributes_for :attachment
 

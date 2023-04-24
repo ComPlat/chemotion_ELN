@@ -15,8 +15,7 @@ import GenericElementAdmin from 'src/apps/admin/GenericElementAdmin';
 import SegmentElementAdmin from 'src/apps/admin/SegmentElementAdmin';
 import DatasetElementAdmin from 'src/apps/admin/DatasetElementAdmin';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
-import TemplateManagement from 'src/apps/admin/TemplateManagement';
-import ConverterAdmin from 'src/apps/admin/converter/AdminApp';
+// import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -75,10 +74,7 @@ class AdminHome extends React.Component {
       return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
       return this.renderDelayedJobs();
-    } else if (pageIndex === 14) {
-      return this.renderConverterAdmin();
     }
-
     return (<div />);
   }
 
@@ -97,7 +93,6 @@ class AdminHome extends React.Component {
             <NavItem eventKey={4}>Groups &amp; Devices</NavItem>
             <NavItem eventKey={3}>Data Collector</NavItem>
             <NavItem eventKey={6}>NoVNC Settings</NavItem>
-            <NavItem eventKey={14}>Converter Profiles </NavItem>
             <NavItem eventKey={7}>UI features</NavItem>
             <NavItem eventKey={8}>Text Templates</NavItem>
             <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
@@ -105,7 +100,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
-            <NavItem eventKey={12}>Report-template Management</NavItem>
+	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
           </Nav>
         </Col>
@@ -199,15 +194,6 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <DelayedJobs />
-      </Col>
-    );
-  }
-
-  renderConverterAdmin() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <ConverterAdmin />
       </Col>
     );
   }

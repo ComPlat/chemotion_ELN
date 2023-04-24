@@ -14,7 +14,7 @@ class Home extends Component {
       <div>
         <Grid fluid>
           <Row className="card-navigation">
-            <Navigation />
+            <Navigation isHidden />
           </Row>
           <Row className="card-content">
             <WelcomeMessage />

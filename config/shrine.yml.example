@@ -1,0 +1,14 @@
+development:
+  :maximum_size: 100
+  :cache: 'uploads/development/cache'
+  :store: 'uploads/development'
+
+test:
+  :maximum_size: 100
+  :cache: 'uploads/test/cache'
+  :store: 'uploads/test'
+
+production:
+  :maximum_size: 100
+  :cache: 'uploads/cache'
+  :store: 'uploads'

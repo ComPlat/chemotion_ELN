@@ -16,67 +16,70 @@ module Export
         when 'richtext'
           @fields << {
             type: field['type'],
-            text: Chemotion::QuillToHtml.new.convert(field['value'])
+            text: Chemotion::QuillToHtml.new.convert(field['value']),
           }
         when 'table'
           @fields << {
             type: field['type'],
             columns: field['value']['columns'],
-            rows: field['value']['rows']
+            rows: field['value']['rows'],
           }
         when 'ketcher'
-          img_src = to_png('research_plans', field['value']['svg_file'])
+          # TODO: move  image location root path to model constant of method
+          img_src = to_png(Rails.public_path.join("images/research_plans/#{field['value']['svg_file']}"))
           @fields << {
             type: field['type'],
-            src: img_src
+            src: img_src,
           }
         when 'image'
           attachment = Attachment.find_by(identifier: field['value']['public_name'])
+          image_location = attachment&.attachment&.url || "/images/research_plans/#{field['value']['public_name']}"
+
           @fields << {
             type: field['type'],
-            src: attachment.attachment_data['id']
+            src: image_location,
           }
         when 'sample'
           next unless (sample = Sample.find_by(id: field['value']['sample_id']))
 
           if ElementPolicy.new(@current_user, sample).read?
-            img_src = to_png('samples', sample['sample_svg_file'])
+            img_src = to_png(sample.current_svg_full_path)
             @fields << {
               type: field['type'],
               src: img_src,
-              p: sample['name']
+              p: sample['name'],
             }
           end
         when 'reaction'
           next unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
 
           if ElementPolicy.new(@current_user, reaction).read?
-            img_src = to_png('reactions', reaction['reaction_svg_file'])
+            img_src = to_png(reaction.current_svg_full_path)
             @fields << {
               type: field['type'],
               src: img_src,
-              p: reaction['name']
+              p: reaction['name'],
             }
           end
         end
       end
     end
 
-    def to_png(sub_folder, file)
+    def to_png(svg_path)
+      return if svg_path.blank? || !File.file?(svg_path)
+
       output_file = Tempfile.new(['output', '.png'])
-      svg_file_path = File.join('public', 'images', sub_folder, file)
-      Reporter::Img::Conv.by_inkscape(svg_file_path, output_file.path, 'png')
+      Reporter::Img::Conv.by_inkscape(svg_path, output_file.path, 'png')
       output_file.path
     end
 
     def to_html
-      ActionView::Base
-        .with_empty_template_cache
-        .with_view_paths(
-          ActionController::Base.view_paths, # Rails 6 no longer has defaults
-          { name: @name, fields: @fields },
-          nil,
-        ).render(template: 'export/research_plan')
+      ApplicationController.render(
+        template: 'export/research_plan.haml',
+        assigns: { name: @name, fields: @fields },
+        formats: [:docx],
+        layout: false
+      )
     end
 
     def to_relative_html

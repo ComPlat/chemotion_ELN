@@ -52,6 +52,8 @@
 #  index_samples_on_user_id           (user_id)
 #
 
+# rubocop: disable Metrics/ClassLength
+
 class Sample < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -69,7 +71,8 @@ class Sample < ApplicationRecord
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
-    :molecule_iupac_name, :molecule_inchistring, :molecule_inchikey, :molecule_cano_smiles
+    :molecule_iupac_name, :molecule_inchistring, :molecule_inchikey, :molecule_cano_smiles,
+    :sample_xref_cas
   ]
 
   # search scopes for exact matching
@@ -102,10 +105,12 @@ class Sample < ApplicationRecord
   pg_search_scope :search_by_sample_name, against: :name
   pg_search_scope :search_by_sample_short_label, against: :short_label
   pg_search_scope :search_by_sample_external_label, against: :external_label
+  pg_search_scope :search_by_cas, against: { xref: 'cas' }
 
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :by_sample_xref_cas, ->(query) { where("xref ? 'cas'").where("xref -> 'cas' ->> 'value' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
   scope :by_exact_name, ->(query) { where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)', "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$", "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -224,6 +229,10 @@ class Sample < ApplicationRecord
 
   attr_writer :skip_reaction_svg_update
 
+  def self.rebuild_pg_search_documents
+    find_each(&:update_pg_search_document)
+  end
+
   def skip_reaction_svg_update?
     @skip_reaction_svg_update.present?
   end
@@ -242,6 +251,10 @@ class Sample < ApplicationRecord
 
   def molecule_inchistring
     self.molecule ? self.molecule.inchistring : ''
+  end
+
+  def sample_xref_cas
+    xref&.dig('cas', 'value') || ''
   end
 
   def molecule_inchikey
@@ -338,9 +351,17 @@ class Sample < ApplicationRecord
   def get_svg_path
     if self.sample_svg_file.present?
       "/images/samples/#{self.sample_svg_file}"
-    else
+    elsif self.molecule&.molecule_svg_file&.present?
       "/images/molecules/#{self.molecule.molecule_svg_file}"
+    else
+      nil
     end
+  end
+
+  # return the full path of the svg file (molecule svg if no sample svg) if it or nil.
+  def current_svg_full_path
+    file_path = full_svg_path
+    file_path&.file? ? file_path : molecule&.current_svg_full_path
   end
 
   def svg_text_path
@@ -530,12 +551,16 @@ private
     reactions.each(&:save)
   end
 
+  # rubocop: disable Metrics/AbcSize
+  # rubocop: disable Metrics/CyclomaticComplexity
+  # rubocop: disable Metrics/PerceivedComplexity
+
   def auto_set_short_label
     sh_label = self['short_label']
     return if sh_label =~ /solvents?|reactants?/
     return if short_label && !short_label_changed?
 
-    if sh_label && Sample.find_by(short_label: sh_label)
+    if sh_label && (Sample.find_by(short_label: sh_label) || sh_label.eql?('NEW SAMPLE'))
       if parent && !((parent_label = parent.short_label) =~ /solvents?|reactants?/)
         self.short_label = "#{parent_label}-#{parent.children.count.to_i.succ}"
       elsif creator && creator.counters['samples']
@@ -547,6 +572,10 @@ private
       self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
     end
   end
+
+  # rubocop: enable Metrics/AbcSize
+  # rubocop: enable Metrics/CyclomaticComplexity
+  # rubocop: enable Metrics/PerceivedComplexity
 
   def update_counter
     return if short_label =~ /solvents?|reactants?/ || self.parent
@@ -602,7 +631,12 @@ private
 #   value
   end
 
+  # build a full path of the sample svg, nil if not buildable
   def full_svg_path(svg_file_name = sample_svg_file)
+    return unless svg_file_name
+
     Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
+
+# rubocop: enable Metrics/ClassLength

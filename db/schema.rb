@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_12_02_150826) do
+ActiveRecord::Schema.define(version: 2023_03_06_114227) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -615,6 +615,14 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "metadata", force: :cascade do |t|
+    t.integer "collection_id"
+    t.jsonb "metadata"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -915,15 +923,14 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
   end
 
   create_table "sample_tasks", force: :cascade do |t|
-    t.float "measurement_value"
-    t.string "measurement_unit", default: "g", null: false
+    t.float "result_value"
+    t.string "result_unit", default: "g", null: false
     t.string "description"
-    t.string "private_note"
-    t.string "additional_note"
     t.bigint "creator_id", null: false
     t.bigint "sample_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "required_scan_results", default: 1, null: false
     t.index ["creator_id"], name: "index_sample_tasks_on_creator_id"
     t.index ["sample_id"], name: "index_sample_tasks_on_sample_id"
   end
@@ -973,6 +980,17 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
+  end
+
+  create_table "scan_results", force: :cascade do |t|
+    t.float "measurement_value", null: false
+    t.string "measurement_unit", default: "g", null: false
+    t.string "title"
+    t.integer "position", default: 0, null: false
+    t.bigint "sample_task_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_task_id"], name: "index_scan_results_on_sample_task_id"
   end
 
   create_table "scifinder_n_credentials", force: :cascade do |t|
@@ -1157,8 +1175,7 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
     t.datetime "locked_at"
     t.boolean "account_active"
     t.integer "matrix", default: 0
-    t.string "omniauth_provider"
-    t.string "omniauth_uid"
+    t.jsonb "providers"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -1436,8 +1453,8 @@ ActiveRecord::Schema.define(version: 2022_12_02_150826) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
