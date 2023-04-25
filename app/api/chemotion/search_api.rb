@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # rubocop: disable Metrics/ClassLength
 
 module Chemotion
@@ -581,3 +583,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop:enable Metrics/ClassLength
