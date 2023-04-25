@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/DurationArithmetic
+
 module Chemotion
   # Editor API
   class EditorAPI < Grape::API
@@ -28,7 +30,7 @@ module Chemotion
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: Time.zone.now.to_i,
+            exp: (Time.zone.now + 15.minutes).to_i,
           }
           @attachment.oo_editing_start!
           token = JWT.encode payload, Rails.application.secrets.secret_key_base
@@ -88,3 +90,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop:enable Rails/DurationArithmetic

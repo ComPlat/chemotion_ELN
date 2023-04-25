@@ -111,7 +111,6 @@ module Chemotion
             user_id = payload[0]['user_id']&.to_i
             @user = User.find_by(id: user_id)
             error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-            @attachment.attachable
           end
         end
 
@@ -211,13 +210,13 @@ module Chemotion
           Affiliation.pluck('DISTINCT "group"')
         end
 
-        desc "Return organization's name from email domain"
-        get 'swot' do
-          return if params[:domain].blank?
+        # desc "Return organization's name from email domain"
+        # get 'swot' do
+        #   return if params[:domain].blank?
 
-          Swot.school_name(params[:domain]).presence ||
-            Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
-        end
+        #   Swot.school_name(params[:domain]).presence ||
+        #     Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
+        # end
       end
     end
 
