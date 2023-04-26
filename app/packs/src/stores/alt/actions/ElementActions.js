@@ -409,7 +409,7 @@ class ElementActions {
   }
 
   generateEmptyCellLine(collection_id) {
-    return  CellLine.buildEmpty(collection_id)
+    return  CellLinesFetcher.fetchById(1);
   }
 
   splitAsSubsamples(ui_state) {

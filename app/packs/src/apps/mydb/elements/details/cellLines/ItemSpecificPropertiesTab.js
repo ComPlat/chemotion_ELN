@@ -8,7 +8,7 @@ export default class GeneralPropertiesTab extends React.Component {
   static contextType = StoreContext;
 
   render() {
-    const cellLineItem = this.context.cellLineDetailsStore.cellLines(1);
+    const cellLineItem = this.context.cellLineDetailsStore.cellLines(this.props.item.id);
     return (
 
       <FormGroup controlId="myGroup">

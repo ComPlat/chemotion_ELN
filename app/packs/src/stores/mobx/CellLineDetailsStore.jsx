@@ -3,7 +3,7 @@ import { types } from 'mobx-state-tree';
 const CellLineItem = types
   .model({
     cellLineId: -1,
-    id: -1,
+    id: '',
     organism: '',
     tissue: '',
     cellType: '',
@@ -37,7 +37,7 @@ export const CellLineDetailsStore = types
       if (self.cellLineItem.has(jsCellLineModel.id)) {
         return;
       }
-      self.cellLineItem.set(jsCellLineModel.cellLineId, CellLineItem.create({
+      self.cellLineItem.set(jsCellLineModel.id, CellLineItem.create({
 
         cellLineId: jsCellLineModel.cellLineId,
         id: jsCellLineModel.id,

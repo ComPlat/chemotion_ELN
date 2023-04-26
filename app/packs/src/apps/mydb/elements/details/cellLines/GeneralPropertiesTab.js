@@ -18,7 +18,7 @@ class GeneralPropertiesTab extends React.Component {
   }
 
   render() {
-    const cellLineItem = this.context.cellLineDetailsStore.cellLines(1);
+    const cellLineItem = this.context.cellLineDetailsStore.cellLines(this.props.item.id);
     return (
 
       <FormGroup controlId="myGroup">
