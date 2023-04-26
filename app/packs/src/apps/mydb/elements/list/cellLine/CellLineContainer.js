@@ -1,36 +1,35 @@
 import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CellLineEntry from './CellLineEntry';
-
+import CellLineEntry from 'src/apps/mydb/elements/list/cellLine/CellLineEntry';
 
 export default class CellLineContainer extends React.Component {
-    constructor(props) {
-      super(props);
+  constructor(props) {
+    super(props);
+  }
 
-    }
-  
-    componentDidMount() {
-      UIStore.getState();
-     // ElementStore.listen(this.onChange);
-      //UIStore.listen(this.onChangeUI);
-      this.initState();
-    }
-  
-    componentWillUnmount() {
-      //ElementStore.unlisten(this.onChange);
-      //UIStore.unlisten(this.onChangeUI);
-    }
+  componentDidMount() {
+    UIStore.getState();
+    // ElementStore.listen(this.onChange);
+    // UIStore.listen(this.onChangeUI);
+    this.initState();
+  }
 
-    render(){
-        return (
-            <div className="list-container">                      
-              {this.props.cellLineGroups.map(
-                group => <CellLineEntry cellLineGroup={group}/>)}
-            </div>
-          );
-    }
+  componentWillUnmount() {
+    // ElementStore.unlisten(this.onChange);
+    // UIStore.unlisten(this.onChangeUI);
+  }
 
-    initState() {
-       // this.onChange(ElementStore.getState());
-    }
+  render() {
+    return (
+      <div className="list-container">
+        {this.props.cellLineGroups.map(
+          (group) => <CellLineEntry cellLineGroup={group} />
+        )}
+      </div>
+    );
+  }
+
+  initState() {
+    // this.onChange(ElementStore.getState());
+  }
 }
