@@ -1,9 +1,26 @@
 
-
 # Chemotion_ELN Changelog
 
-## [pre-v1.6.0-rc1] 
+
+## [v1.5.3]
+> 2023-04-21
+
+* Fixes
+  * analyses-dataset issue [#1271]( https://github.com/ComPlat/chemotion_ELN/pull/1271)
+  * missing index in container entity [#1277](https://github.com/ComPlat/chemotion_ELN/pull/1277)
+  * Report of samples with reaction description: fix calling of descripti..[1281](https://github.com/ComPlat/chemotion_ELN/pull/1281)
+  * fix crash when open and save nmrium [#1275](https://github.com/ComPlat/chemotion_ELN/pull/1275)
+  * Mail-collector: write tmp file to pass path [#1284](https://github.com/ComPlat/chemotion_ELN/pull/1284)
+  * New purification method of Precipitation [#1290](https://github.com/ComPlat/chemotion_ELN/pull/1290)
+  * 1285 do no cache the welcome message [#1286](https://github.com/ComPlat/chemotion_ELN/pull/1286)
+  * 1289 saving wellplate causes white screen [#1295](https://github.com/ComPlat/chemotion_ELN/pull/1295)
+  * Chemdraw JS doesn't work on Google Chrome 111.05563.x [#1266](https://github.com/ComPlat/chemotion_ELN/pull/1266)
+  * show results from calculations [#1291](https://github.com/ComPlat/chemotion_ELN/pull/1291)
+  * report issue fix [#1296](https://github.com/ComPlat/chemotion_ELN/pull/1296)
+
+## [v1.6.0-rc1] 
 > 2023-04-11
+
 * Fixes
   * port fixes from v1.5.2 
   
@@ -21,7 +38,7 @@
   * Use db-generated uuid for building the attachment shrine id [#1259](https://github.com/ComPlat/chemotion_ELN/pull/1259)
 
 
-## [pre-v1.6.0]
+## [v1.6.0-rc0]
 > 2023-03-28
 
 * Features and Improvements:
