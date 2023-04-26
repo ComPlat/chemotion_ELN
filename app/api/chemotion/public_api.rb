@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop: disable Metrics/ClassLength
+
 module Chemotion
   class PublicAPI < Grape::API
     helpers do
@@ -49,7 +51,9 @@ module Chemotion
         end
         get do
           list = ElementKlass.where(is_active: true) if params[:generic_only].present? && params[:generic_only] == true
-          list = ElementKlass.where(is_active: true) unless params[:generic_only].present? && params[:generic_only] == true
+          unless params[:generic_only].present? && params[:generic_only] == true
+            list = ElementKlass.where(is_active: true)
+          end
           list.pluck(:name)
         end
       end
@@ -94,17 +98,16 @@ module Chemotion
         before do
           error!('401 Unauthorized', 401) if params[:key].nil?
           payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
-          error!('401 Unauthorized', 401) if payload&.length == 0
+          error!('401 Unauthorized', 401) if payload.empty?
           @status = params[:status].is_a?(Integer) ? params[:status] : 0
 
           if @status > 1
             attach_id = payload[0]['att_id']&.to_i
             @url = params[:url]
-            @attachment = Attachment.find_by(id: attach_id, attachable_type: 'ResearchPlan')
+            @attachment = Attachment.find_by(id: attach_id)
             user_id = payload[0]['user_id']&.to_i
             @user = User.find_by(id: user_id)
             error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-            @research_plan = @attachment.attachable if @attachment.attachable_type == 'ResearchPlan'
           end
         end
 
@@ -119,7 +122,6 @@ module Chemotion
         end
 
         post do
-
           # begin
           case @status
           when 1
@@ -205,14 +207,13 @@ module Chemotion
           Affiliation.pluck('DISTINCT "group"')
         end
 
-        # TODO: mv to swot-node
         # desc "Return organization's name from email domain"
         # get 'swot' do
-        #  return unless params[:domain].present?
-        #
-        #  Swot::school_name(params[:domain]).presence ||
-        #    Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
-        #end
+        #   return if params[:domain].blank?
+
+        #   Swot.school_name(params[:domain]).presence ||
+        #     Affiliation.where(domain: params[:domain]).where.not(organization: nil).first&.organization
+        # end
       end
     end
 
@@ -263,3 +264,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop: enable Metrics/ClassLength
