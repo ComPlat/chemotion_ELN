@@ -30,7 +30,7 @@ export default class ChemicalTab extends React.Component {
       warningMessage: '',
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: false,
-      loadChemicalProperties: false,
+      loadChemicalProperties: { vendor: '', loading: false },
       openInventoryInformationTab: true,
       openSafetyTab: true,
       openLocationTab: true,
@@ -263,7 +263,7 @@ export default class ChemicalTab extends React.Component {
   fetchChemicalProperties = (vendor) => {
     const { chemical } = this.state;
     let productLink;
-    this.setState({ loadChemicalProperties: true });
+    this.setState({ loadChemicalProperties: { vendor, loading: true } });
     this.setState({ warningMessage: '' });
 
     if (chemical && vendor === 'thermofischer') {
@@ -274,7 +274,7 @@ export default class ChemicalTab extends React.Component {
     const warningMessage = 'Please fetch and save corresponding safety data sheet first';
 
     ChemicalFetcher.chemicalProperties(productLink).then((result) => {
-      this.setState({ loadChemicalProperties: false });
+      this.setState({ loadChemicalProperties: { vendor: '', loading: false } });
       if (result === 'Could not find additional chemical properties' || result === null) {
         this.setState({ warningMessage });
       } else {
@@ -647,8 +647,8 @@ export default class ChemicalTab extends React.Component {
         disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
       >
-        {loadingSaveSafetySheets === true && sdsInfo.merck_link !== undefined ?
-          (
+        {loadingSaveSafetySheets === true && sdsInfo.merck_link !== undefined
+          ? (
             <Spinner animation="border" role="status">
               <span className="visually-hidden">Loading...</span>
             </Spinner>
@@ -814,15 +814,15 @@ export default class ChemicalTab extends React.Component {
             <Button
               id="fetch-properties"
               onClick={() => this.fetchChemicalProperties(vendor)}
-              disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties}
+              disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties.loading}
               className="fetch-properties-button"
             >
-              {loadChemicalProperties === false ? 'fetch Chemical Properties'
-                : (
+              {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
+                ? (
                   <Spinner animation="border" role="status">
                     <span className="visually-hidden">Loading...</span>
                   </Spinner>
-                )}
+                ) : 'fetch Chemical Properties'}
             </Button>
           </OverlayTrigger>
         </InputGroup.Button>

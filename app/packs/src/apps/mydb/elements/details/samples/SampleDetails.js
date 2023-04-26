@@ -307,8 +307,10 @@ export default class SampleDetails extends React.Component {
   handleInventorySample(e) {
     const { sample } = this.state;
     sample.inventory_sample = e.target.checked;
-    console.log(sample);
     this.handleSampleChanged(sample);
+    if (!e.target.checked) {
+      this.setState({ activeTab: 'properties' });
+    }
   }
 
   handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
@@ -1355,10 +1357,6 @@ export default class SampleDetails extends React.Component {
       measurements: this.measurementsTab('measurements')
     };
 
-    if (sample.inventory_sample) {
-      tabContentsMap.inventory = this.sampleInventoryTab('inventory');
-    }
-
     if (this.enableComputedProps) {
       tabContentsMap.computed_props = this.moleculeComputedProps('computed_props');
     }
@@ -1367,18 +1365,23 @@ export default class SampleDetails extends React.Component {
       tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
     }
 
+    if (sample.inventory_sample) {
+      tabContentsMap.inventory = this.sampleInventoryTab('inventory');
+    }
+
     const tabTitlesMap = {
       literature: 'References',
       qc_curation: 'QC curation',
       computed_props: 'computed props',
       nmr_sim: 'NMR Simulation',
-      measurements: 'Measurements'
+      measurements: 'Measurements',
+      inventory: 'Inventory'
     };
-
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
     const stb = [];
     const tabContents = [];
+    console.log('visible in segments', visible);
     visible.forEach((value) => {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
@@ -1435,6 +1438,7 @@ export default class SampleDetails extends React.Component {
               availableTabs={Object.keys(tabContentsMap)}
               tabTitles={tabTitlesMap}
               onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={sample.inventory_sample}
             />
             {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">

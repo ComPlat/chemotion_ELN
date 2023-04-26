@@ -25,8 +25,11 @@ const getNodeText = (node) => {
   return '';
 };
 
-const getArrayFromLayout = (layout, availableTabs) => {
+const getArrayFromLayout = (layout, availableTabs, addInventoryTab) => {
   const layoutKeys = Object.keys(layout);
+  if (addInventoryTab && !layoutKeys.includes('inventory')) {
+    layout.inventory = 7;
+  }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
   const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
   const visible = [];
@@ -55,7 +58,6 @@ const getArrayFromLayout = (layout, availableTabs) => {
     hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
   };
 };
-
 
 export default class ElementDetailSortTab extends Component {
   constructor(props) {
@@ -91,8 +93,7 @@ export default class ElementDetailSortTab extends Component {
 
   onChangeUser(state) {
     const layout = (state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]) || {};
-    const { visible, hidden } = getArrayFromLayout(layout, this.props.availableTabs);
-
+    const { visible, hidden } = getArrayFromLayout(layout, this.props.availableTabs, this.props.addInventoryTab);
     this.setState(
       { visible, hidden },
       () => this.props.onTabPositionChanged(visible)
@@ -107,7 +108,6 @@ export default class ElementDetailSortTab extends Component {
   updateLayout() {
     const { visible, hidden } = this.tabLayoutContainerElement.state;
     const layout = {};
-
     visible.forEach((value, index) => {
       layout[value] = (index + 1);
     });
@@ -181,5 +181,6 @@ export default class ElementDetailSortTab extends Component {
 ElementDetailSortTab.propTypes = {
   onTabPositionChanged: PropTypes.func,
   availableTabs: PropTypes.arrayOf(PropTypes.string),
-  tabTitles: PropTypes.object
+  tabTitles: PropTypes.object,
+  addInventoryTab: PropTypes.bool,
 };
