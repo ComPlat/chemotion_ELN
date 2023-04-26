@@ -28,7 +28,7 @@ const getNodeText = (node) => {
 const getArrayFromLayout = (layout, availableTabs, addInventoryTab) => {
   const layoutKeys = Object.keys(layout);
   if (addInventoryTab && !layoutKeys.includes('inventory')) {
-    layout.inventory = 7;
+    layout.inventory = layoutKeys.length + 1;
   }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
   const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
