@@ -14,6 +14,19 @@ export default class CommentDetails extends Component {
       comments: commentState.comments,
       section: commentState.section,
     };
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    CommentStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    CommentStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState({ ...state });
   }
 
   render() {
