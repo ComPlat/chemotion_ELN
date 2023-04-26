@@ -21,17 +21,16 @@ const CellLineItem = types
     source: '',
     growthMedium: '',
     itemComment: '',
-    itemName:''
-  })
-  .actions((cellLine) => ({ setAmount(newAmount) { cellLine.amount = newAmount; } }));
+    itemName: ''
+  });
 
 export const CellLineDetailsStore = types
   .model({
     cellLineItem: types.map(CellLineItem)
   })
   .actions((self) => ({
-    changeAmountOfCellLine(newAmount) {
-      self.cellLineItem.amount = newAmount;
+    changeAmountOfCellLine(id, newAmount) {
+      self.cellLineItem.get(id).amount = newAmount;
     },
     convertCellLineToModel(jsCellLineModel) {
       if (self.cellLineItem.has(jsCellLineModel.id)) {

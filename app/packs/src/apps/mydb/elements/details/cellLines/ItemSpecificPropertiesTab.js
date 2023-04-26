@@ -2,9 +2,10 @@ import React from 'react';
 import {
   Col, FormGroup, FormControl, ControlLabel
 } from 'react-bootstrap';
+import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class GeneralPropertiesTab extends React.Component {
+class GeneralPropertiesTab extends React.Component {
   static contextType = StoreContext;
 
   render() {
@@ -14,12 +15,17 @@ export default class GeneralPropertiesTab extends React.Component {
       <FormGroup controlId="myGroup">
         <Col componentClass={ControlLabel} sm={3}>Amount</Col>
         <Col sm={9}>
-          <FormControl type="text" name="XXX" value={cellLineItem.amount} />
+          <FormControl
+            type="text"
+            name="XXX"
+            defaultValue={cellLineItem.amount}
+            onChange={(e) => this.context.cellLineDetailsStore.changeAmountOfCellLine(this.props.item.id, Number(e.target.value))}
+          />
         </Col>
 
         <Col componentClass={ControlLabel} sm={3}>Passage</Col>
         <Col sm={9}>
-          <FormControl type="text" name="XXX" value={cellLineItem.passage} />
+          <FormControl type="text" name="XXX" value={cellLineItem.amount} />
         </Col>
 
         <Col componentClass={ControlLabel} sm={3}>Contamination</Col>
@@ -41,3 +47,5 @@ export default class GeneralPropertiesTab extends React.Component {
     );
   }
 }
+
+export default observer(GeneralPropertiesTab);
