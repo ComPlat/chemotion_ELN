@@ -44,3 +44,4 @@ services:
       DATABASE_URL: postgres://postgres:3x4mpl3@postgres:5432/chemotion_test
       PGPASSWORD: 3x4mpl3
       SECRET_KEY_BASE: my_s3cr3t_k3y
+      ONLY_OFFICE_SECRET_KEY_BASE: my_s3cr3t_k3y
