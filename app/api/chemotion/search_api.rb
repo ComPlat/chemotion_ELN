@@ -86,7 +86,7 @@ module Chemotion
         false
       end
 
-      def advanced_search(c_id = @c_id, dl = @dl) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      def advanced_search(c_id = @c_id, dl = @dl) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Naming/MethodParameterName
         query = ''
         cond_val = []
         tables = []
