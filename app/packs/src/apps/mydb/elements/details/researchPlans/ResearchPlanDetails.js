@@ -25,6 +25,7 @@ import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/resear
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -290,6 +291,7 @@ export default class ResearchPlanDetails extends Component {
   handleAttachmentImportComplete() {
     this.setState({ activeTab: 0 });
   }
+
   // render functions
 
   renderExportButton(disabled) {
@@ -526,6 +528,14 @@ export default class ResearchPlanDetails extends Component {
           />
         </Tab>
       ),
+      history: (
+        <Tab eventKey="history" title="History" key={`history_${researchPlan.id}`}>
+          <VersionsTable
+            type="research_plans"
+            id={researchPlan.id}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -556,7 +566,7 @@ export default class ResearchPlanDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
+          <Tabs mountOnEnter unmountOnExit activeKey={activeTab} onSelect={(key) => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>

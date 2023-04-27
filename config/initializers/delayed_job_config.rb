@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+return if ARGV.include?('db:create') || ARGV.include?('db:setup')
+
 # Delayed::Worker.destroy_failed_jobs = false
 # Delayed::Worker.sleep_delay = 60
 # Delayed::Worker.max_attempts = 3

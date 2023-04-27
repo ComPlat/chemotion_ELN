@@ -20,6 +20,8 @@
 #
 
 class Container < ApplicationRecord
+  has_logidze
+  acts_as_paranoid
   include ElementCodes
   include Datasetable
 

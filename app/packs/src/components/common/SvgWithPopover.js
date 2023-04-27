@@ -18,7 +18,7 @@ export default class SvgWithPopover extends Component {
         title={popObject.title}
         style={{ maxWidth: 'none', maxHeight: 'none' }}
       >
-        <img src={popObject.src} style={{ height: popObject.height, width: popObject.width }} alt="" />
+        <img src={popObject.src} style={{ height: popObject.height, width: popObject.width, objectFit: 'contain' }} alt="" />
       </Popover>
     );
   }
@@ -29,9 +29,9 @@ export default class SvgWithPopover extends Component {
     if (previewObj === '') {
       previewObj = (
         previewObject.isSVG ?
-          <SVG src={previewObject.src} className="molecule" key={previewObject.src} />
+          <SVG src={previewObject.src} className={previewObject.className || "molecule"} key={previewObject.src} />
           :
-          <img src={previewObject.src} alt="" />
+          <img src={previewObject.src} className={previewObject.className || ""} alt="" />
       );
     }
 
@@ -43,7 +43,7 @@ export default class SvgWithPopover extends Component {
   }
 
   render() {
-    const { hasPop } = this.props;
+    const { hasPop, placement } = this.props;
 
     if (!hasPop) {
       return this.renderPreview();
@@ -53,7 +53,7 @@ export default class SvgWithPopover extends Component {
       <div>
         <OverlayTrigger
           trigger={['hover', 'focus']}
-          placement="right"
+          placement={placement || "right"}
           rootClose
           onHide={null}
           overlay={this.popHover()}
@@ -67,10 +67,12 @@ export default class SvgWithPopover extends Component {
 
 SvgWithPopover.propTypes = {
   hasPop: PropTypes.bool.isRequired,
+  placement: PropTypes.string,
   previewObject: PropTypes.shape({
     txtOnly: PropTypes.string.isRequired,
     isSVG: PropTypes.bool,
     src: PropTypes.string,
+    className: PropTypes.string,
   }).isRequired,
   popObject: PropTypes.shape({
     title: PropTypes.string,

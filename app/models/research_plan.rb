@@ -12,6 +12,7 @@
 #
 
 class ResearchPlan < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include Collectable

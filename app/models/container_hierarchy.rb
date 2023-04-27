@@ -1,0 +1,2 @@
+class ContainerHierarchy < ApplicationRecord
+end

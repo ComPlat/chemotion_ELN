@@ -25,6 +25,7 @@ import ResearchplanFlowDisplay from 'src/apps/mydb/elements/details/screens/Rese
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -371,7 +372,15 @@ export default class ScreenDetails extends Component {
             saveResearchPlan={researchPlan => this.saveResearchPlan(researchPlan)}
           />
         </Tab>
-      )
+      ),
+      history: (
+        <Tab eventKey="history" title="History" key={`history_${screen.id}`}>
+          <VersionsTable
+            type="screens"
+            id={screen.id}
+          />
+        </Tab>
+      ),
     };
 
     const tabTitlesMap = {
@@ -422,7 +431,7 @@ export default class ScreenDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
+          <Tabs mountOnEnter unmountOnExit activeKey={activeTab} onSelect={key => this.handleSelect(key)} id="screen-detail-tab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>

@@ -13,6 +13,7 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { sample } from 'lodash';
 
 
 export default class SampleForm extends React.Component {
@@ -419,7 +420,6 @@ export default class SampleForm extends React.Component {
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
-
     const mpx = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
     return (
       <NumeralInputWithUnitsCompo
@@ -436,6 +436,7 @@ export default class SampleForm extends React.Component {
         block={block}
         bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
         onChange={e => this.handleFieldChanged(field, e)}
+        onMetricsChange={e => {}}
       />
     );
   }

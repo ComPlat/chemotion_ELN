@@ -20,6 +20,7 @@
 #
 
 class Screen < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model

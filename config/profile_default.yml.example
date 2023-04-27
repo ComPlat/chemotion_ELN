@@ -15,6 +15,8 @@ development:
         3
       :attachments:
         4
+      :history:
+        5
     :layout_detail_sample:
       :properties:
         1
@@ -26,6 +28,8 @@ development:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -37,6 +41,8 @@ development:
         4
       :green_chemistry:
         5
+      :history:
+        6
     :layout_detail_wellplate:
       :properties:
         1
@@ -51,6 +57,8 @@ development:
         1
       :analyses:
         2
+      :history:
+        3
 
 production:
   :layout:
@@ -69,6 +77,8 @@ production:
         3
       :attachments:
         4
+      :history:
+        5
     :layout_detail_sample:
       :properties:
         1
@@ -80,6 +90,8 @@ production:
         4
       :results:
         5
+      :history:
+        6
     :layout_detail_reaction:
       :scheme:
         1
@@ -91,6 +103,8 @@ production:
         4
       :green_chemistry:
         5
+      :history:
+        6
     :layout_detail_wellplate:
       :properties:
         1
@@ -105,6 +119,8 @@ production:
         1
       :analyses:
         2
+      :history:
+        3
 
 test:
   :layout:
@@ -123,6 +139,8 @@ test:
         3
       :attachments:
         4
+      :history:
+        5
     :layout_detail_sample:
       :properties:
         1
@@ -159,3 +177,5 @@ test:
         1
       :analyses:
         2
+      :history:
+        3

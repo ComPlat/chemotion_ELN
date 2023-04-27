@@ -15,6 +15,7 @@
 #
 
 class Residue < ApplicationRecord
+  has_logidze
 
   belongs_to :sample, optional: true
   validate :loading_present

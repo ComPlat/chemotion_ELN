@@ -1,0 +1,126 @@
+.history-legend {
+  display: flex;
+  justify-content: flex-end;
+  list-style: none;
+  padding: 0;
+  margin: 2px 2px 10px 0;
+
+  &__item {
+    font-size: 10px;
+    padding-left: .5em;
+
+    &::before {
+      content: "\f0c8";
+      font-family: FontAwesome;
+      display: inline-block;
+      padding: 0 0.2em;
+    }
+
+    &--old {
+      &::before {
+        color: #f2dede;
+      }
+    }
+
+    &--new {
+      &::before {
+        color: #dff0d8;
+      }
+    }
+
+    &--current {
+      &::before {
+        color: #f5f5f5;
+      }
+    }
+  }
+}
+
+.history-modal .modal-dialog {
+  top: 0;
+  transform: translate(-50%, 0) !important;
+}
+
+.history-alert {
+  margin-bottom: 0;
+  margin-top: 20px;
+}
+
+.history-checkbox-label {
+  margin-bottom: 0;
+  display: flex;
+  gap: 5px;
+  cursor: pointer;
+
+  input {
+    margin-top: 0 !important;
+  }
+}
+
+.history-table {
+  &__caret {
+    transition: transform .1s ease-out;
+  }
+
+  &__row {
+    cursor: pointer;
+
+    &.active {
+      .history-table__caret {
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  &-breadcrumb {
+    font-size: 13px;
+    padding: 8px 15px;
+    margin: 0;
+    list-style: none;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+
+    &:not(:first-child) {
+      margin-top: 10px;
+    }
+
+    &__element {
+      display: inline-block;
+    }
+
+    &__element + &__element:before {
+      padding: 0 5px;
+      color: #ccc;
+      content: "/ ";
+    }
+  }
+
+  .bg-current {
+    background-color: #f5f5f5;
+  }
+
+  .row-change {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 10px;
+    margin: 10px 0 0;
+    word-break: break-all;
+
+    & > [class*="col-"] {
+      padding: 6px;
+    }
+
+    .ql-container {
+      font-size: 10px;
+    }
+
+    .ql-editor {
+      padding: 0;
+    }
+
+    .ql-tooltip.ql-hidden {
+      height: 0;
+      padding-top: 10px;
+    }
+  }
+}

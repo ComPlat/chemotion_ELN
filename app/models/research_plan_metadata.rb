@@ -44,6 +44,7 @@
 
 
 class ResearchPlanMetadata < ApplicationRecord
+  has_logidze
   self.inheritance_column = nil
   acts_as_paranoid
   DATA_CITE_PREFIX = ENV['DATA_CITE_PREFIX']
