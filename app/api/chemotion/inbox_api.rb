@@ -28,13 +28,20 @@ module Chemotion
           search_string.sub!(/-?[a-zA-Z]$/, '')
           search_string.sub!(/^[a-zA-Z0-9]+-/, '')
           collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
-          samples = Sample.by_exact_name(search_string).joins(:collections_samples).where('collections_samples.collection_id in (?)', collection_ids).uniq
+          samples = Sample.by_exact_name(search_string)
+                          .joins(:collections_samples)
+                          .where(collections_samples: { collection_id: collection_ids }).uniq
           samples.select { |s| ElementPolicy.new(current_user, s).update? }
 
           ids = samples.pluck(:id)
           rs = ReactionsSample.where(sample_id: ids)
           res = samples.map do |s|
-            { id: s.id, name: s.name, short_label: s.short_label, type: rs.find { |r| r.sample_id == s.id }&.type&.sub(/^Reactions/, '')&.sub(/Sample/, '') }
+            {
+              id: s.id,
+              name: s.name,
+              short_label: s.short_label,
+              type: rs.find { |r| r.sample_id == s.id }&.type&.sub(/^Reactions/, '')&.sub(/Sample/, ''),
+            }
           end
           { samples: res }
         end
@@ -55,21 +62,18 @@ module Chemotion
           analysis_name = attachment.filename.chomp(File.extname(attachment.filename))
 
           new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: analysis_name)
-          dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id, container_type: 'dataset', name: analysis_name)
+          dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id,
+                                                           container_type: 'dataset', name: analysis_name)
           attachment.update!(attachable: dataset)
 
-          @link = if Rails.env.production?
-                    "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}/mydb/collection/all/sample/#{@sample.id}"
-                  else
-                    "http://#{ENV['HOST'] || 'localhost:3000'}/mydb/collection/all/sample/#{@sample.id}"
-                  end
+          @link = "#{Rails.application.config.root_url}/mydb/collection/all/sample/#{@sample.id}"
 
           Message.create_msg_notification(
             channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
             message_from: current_user.id,
             data_args: { filename: attachment.filename, info: "#{@sample.short_label} #{@sample.name}" },
             url: @link,
-            level: 'success'
+            level: 'success',
           )
 
           present dataset, with: Entities::ContainerEntity, root: :container
