@@ -177,6 +177,7 @@ class ElementStore {
         ElementActions.tryFetchWellplateById,
         ElementActions.tryFetchGenericElById
       ],
+      handleFetchCellLineById:ElementActions.tryFetchCellLineElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -226,7 +227,7 @@ class ElementStore {
           ElementActions.showComputedPropsTasks,
           ElementActions.showDeviceControl,
           ElementActions.showLiteratureDetail,
-          ElementActions.showPredictionContainer,
+          ElementActions.showPredictionContainer
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleFetchMetadata: ElementActions.fetchMetadata,
@@ -931,6 +932,10 @@ class ElementStore {
       // this.state.currentElement = result
       this.navigateToNewElement(result)
     }
+  }
+
+  handleFetchCellLineById(result){
+    this.changeCurrentElement(result);
   }
 
   handleCloseWarning() {

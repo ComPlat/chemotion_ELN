@@ -408,8 +408,20 @@ class ElementActions {
     return Sample.buildEmpty(collection_id)
   }
 
-  generateEmptyCellLine(collection_id) {
-    return  CellLinesFetcher.fetchById(1);
+  tryFetchCellLineElById(cellLineId) {
+    return (dispatch) => {
+      CellLinesFetcher.fetchById(cellLineId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptyCellLine(collectionId){  
+    var c = new CellLine();
+    return CellLine.buildEmpty(collectionId);
   }
 
   splitAsSubsamples(ui_state) {

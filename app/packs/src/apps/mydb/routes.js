@@ -69,6 +69,12 @@ const routes = {
     },
     '/:screenID': 'showOrNew'
   },
+  '/cell_line': {
+    target: {
+      showOrNew: routesUtils.cellLineShowOrNew
+    },
+    '/:cellLineID': 'showOrNew'
+  },
   '/devicesAnalysis': {
     target: {
       create: routesUtils.devicesAnalysisCreate,

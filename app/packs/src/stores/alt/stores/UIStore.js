@@ -350,7 +350,7 @@ class UIStore {
           );
         }
 
-        Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
+        Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'].includes(l)).forEach((key) => {
           if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
             const page = state[key] ? state[key].page : 1;
             ElementActions.fetchGenericElsByCollectionId(

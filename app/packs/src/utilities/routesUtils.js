@@ -106,12 +106,11 @@ const sampleShowOrNew = (e) => {
   // UIActions.selectTab(1);
 };
 
-const cellLineShowOrNew = (e) => {
-  const { new_cellLine, collectionID } = e.params;
-  if(new_cellLine){
-    ElementActions.generateEmptyCellLine(collectionID);
+const cellLineShowOrNew = (e) => { 
+  if(e.params.new_cellLine){
+     ElementActions.generateEmptyCellLine(e.params.collectionID);
   }else{
-
+     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
   }
 }
 
@@ -219,6 +218,7 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
+    
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
@@ -276,5 +276,6 @@ export {
   metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  cellLineShowOrNew
 };

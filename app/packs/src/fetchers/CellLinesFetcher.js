@@ -7,7 +7,7 @@ export default class CellLinesFetcher {
       const c1 = CellLine.buildEmpty(0);
       c1.cellLineName = 'Cell line 123';
       c1.cellLineId = 1;
-      c1.id = 1;
+      c1.id = '1';
       // ----- Material
       c1.organism = 'Mensch';
       c1.tissue = 'Lunge';
@@ -32,7 +32,7 @@ export default class CellLinesFetcher {
       const c2 = CellLine.buildEmpty(0);
       c2.cellLineName = 'Cell line 123';
       c2.cellLineId = 1;
-      c2.id = 2;
+      c2.id = '2';
       c2.organism = 'Mensch';
       c2.tissue = 'Lunge';
       c2.cellType = 'primary cells';
@@ -56,7 +56,7 @@ export default class CellLinesFetcher {
       const c3 = CellLine.buildEmpty(0);
       c3.cellLineName = 'Cell line 123';
       c3.cellLineId = 1;
-      c3.id = 3;
+      c3.id = '3';
       c3.organism = 'Human';
       c3.tissue = 'Lunge';
       c3.cellType = 'primary cells';
@@ -80,7 +80,7 @@ export default class CellLinesFetcher {
       const c4 = CellLine.buildEmpty(0);
       c4.cellLineName = 'Cell line 456';
       c4.cellLineId = 2;
-      c4.id = 4;
+      c4.id = '4';
       c4.organism = 'Mouse';
       c4.tissue = 'colon';
       c4.cellType = 'primary cells';
@@ -104,7 +104,7 @@ export default class CellLinesFetcher {
       const c5 = CellLine.buildEmpty(0);
       c5.cellLineName = 'Cell line 456';
       c5.cellLineId = 2;
-      c5.id = 5;
+      c5.id = '5';
       c5.organism = 'XXXX-Mouse';
       c5.tissue = 'colon';
       c5.cellType = 'primary cells';
@@ -135,30 +135,11 @@ export default class CellLinesFetcher {
     });
   }
 
-  static fetchById(id) {
-    const c1 = CellLine.buildEmpty(0);
-      c1.cellLineName = 'Cell line 123';
-      c1.cellLineId = 1;    
-      // ----- Material
-      c1.organism = 'Mensch';
-      c1.tissue = 'Lunge';
-      c1.cellType = 'primary cells';
-      c1.mutation = 'none';
-      c1.disease = 'lung cancer';
-      c1.biosafetyLevel = 'S1';
-      c1.variant = 'S1';
-      c1.optimalGrowthTemperature = 36;
-      c1.cryopreservationMedium = 'unknown';
-      c1.name = '10-15';
-      c1.materialComment = '';
-      // ----- Item
-      c1.amount = 10000;
-      c1.passage = 10;
-      c1.contamination = 'none';
-      c1.source = 'IPB';
-      c1.growthMedium = 'unknown';
-      c1.itemComment = '';
-      c1.itemName = 'CellLine 001-001';
-      return c1;
-  }
+  static fetchById(id) { 
+      return CellLinesFetcher.fetchByCollectionId(0)
+      .then((result) =>{
+        return result.elements[Number(id)-1]
+      });
+      
+  } 
 }

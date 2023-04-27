@@ -70,7 +70,7 @@ export default class CellLineItemEntry extends React.Component {
       ? `/scollection/${currentCollection.id}/${type}/${id}`
       : `/collection/${currentCollection.id}/${type}/${id}`;
     Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id, new_cellLine: true, cellLineId: id } };
+    const e = { type, params: { collectionID: currentCollection.id, new_cellLine: false, cellLineId: id } };
     e.params[`${type}ID`] = id;
 
     elementShowOrNew(e);
