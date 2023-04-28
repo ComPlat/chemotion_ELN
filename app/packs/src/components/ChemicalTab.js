@@ -66,7 +66,6 @@ export default class ChemicalTab extends React.Component {
       chemical.buildChemical(parameter, value);
     }
     this.setState({ chemical });
-    console.log(chemical);
   }
 
   handleSubmitSave() {
@@ -168,7 +167,7 @@ export default class ChemicalTab extends React.Component {
     const { sample } = this.props;
     this.setState({ loadingQuerySafetySheets: true });
     const sampleName = sample.showedName();
-    const moleculeId = sample.molecule_name_hash ? sample.molecule_name_hash.mid : null;
+    const moleculeId = sample.molecule_name_hash?.mid ?? null;
     const {
       chemical, vendorValue, queryOption, safetySheetLanguage
     } = this.state;
@@ -359,7 +358,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   chemicalStatus(data, label, parameter) {
-    const val = data !== undefined ? data[parameter] : '';
+    const val = data?.[parameter] ?? '';
     const statusOptions = [
       { label: 'Available', value: 'Available' },
       { label: 'Out of stock', value: 'Out of stock' },
@@ -388,7 +387,7 @@ export default class ChemicalTab extends React.Component {
     && parameter !== 'solubility' ? 'input' : 'textarea';
     let value = '';
     if (parameter !== 'cas') {
-      value = data !== undefined ? data[parameter] : '';
+      value = data?.[parameter] ?? '';
     } else {
       value = data || '';
     }
@@ -400,7 +399,8 @@ export default class ChemicalTab extends React.Component {
     } else {
       conditionalOverlay = null;
     }
-    const checkLabel = label !== 'Date' ? <ControlLabel>{label}</ControlLabel> : null;
+    const checkLabel = label !== 'Date' && <ControlLabel>{label}</ControlLabel>;
+
     return (
       <OverlayTrigger placement="top" overlay={parameter === 'date' || parameter === 'required_by' ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}>
         <FormGroup>
@@ -456,7 +456,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   locationInput(data, parameter, domain) {
-    const value = data !== undefined ? data[parameter] : '';
+    const value = data?.[parameter] ?? '';
     const subLabel = (parameter.split('_'))[1];
     const string = domain.replace(/_/g, ' ');
     const modifyStr = string.charAt(0).toUpperCase() + string.slice(1);
@@ -484,9 +484,8 @@ export default class ChemicalTab extends React.Component {
   }
 
   numInputWithoutTable(data, label, parameter) {
-    const value = data !== undefined && data[parameter]
-    && data[parameter].value ? data[parameter].value : 0;
-    const unit = data !== undefined && data[parameter] && data[parameter].unit ? data[parameter].unit : 'mg';
+    const value = data?.[parameter]?.value ?? 0;
+    const unit = data?.[parameter]?.value ?? 'mg';
     return (
       <NumericInputUnit
         field="inventory_amount"
@@ -993,10 +992,8 @@ export default class ChemicalTab extends React.Component {
   querySafetySheetButton() {
     const { loadingQuerySafetySheets, chemical } = this.state;
     let checkSavedSds = false;
-    if (chemical && chemical._chemical_data) {
-      checkSavedSds = chemical._chemical_data[0].safetySheetPath
-        ? chemical._chemical_data[0].safetySheetPath.length !== 0 : false;
-    }
+    checkSavedSds = chemical?._chemical_data?.[0]?.safetySheetPath?.length !== undefined
+    && chemical._chemical_data[0].safetySheetPath.length !== 0;
 
     const button = (
       <Button
@@ -1052,12 +1049,11 @@ export default class ChemicalTab extends React.Component {
               </div>
             </div>
             <div>
-              { displayWell ? (
+              { displayWell && (
                 <div>
                   {this.renderSafetySheets()}
                 </div>
-              )
-                : null}
+              ) }
             </div>
             { this.renderWarningMessage() }
             { this.renderSafetyPhrases() }
@@ -1128,12 +1124,8 @@ export default class ChemicalTab extends React.Component {
     const {
       chemical
     } = this.state;
-    let data = [];
 
-    if (chemical) {
-      data = chemical._chemical_data ? chemical._chemical_data[0] : [];
-    }
-
+    const data = chemical?._chemical_data?.[0] ?? [];
     return (
       <table className="table table-borderless">
         <tbody>

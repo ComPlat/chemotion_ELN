@@ -510,8 +510,6 @@ export default class Sample extends Element {
   }
 
   updateRange(field, lower, upper) {
-    // console.log(lower);
-    // console.log(upper);
     this[`${field}_lowerbound`] = lower;
     this[`${field}_upperbound`] = upper;
     if (lower === '' && upper === '') {
@@ -620,18 +618,6 @@ export default class Sample extends Element {
   get amount_unit() {
     return (this.amountType === 'real' ? this.real_amount_unit : this.target_amount_unit) || 'g';
   }
-
-  // set inventory_sample(inventory_sample) {
-  //   console.log('srt inventory_sample');
-  //   console.log(inventory_sample);
-  //   this._inventory_sample = inventory_sample;
-  // }
-
-  // get inventory_sample() {
-  //   console.log('this._inventory_sample');
-  //   console.log(this._inventory_sample);
-  //   return this._inventory_sample;
-  // }
 
   set amount_unit(amount_unit) {
     if (this.amountType === 'real') {

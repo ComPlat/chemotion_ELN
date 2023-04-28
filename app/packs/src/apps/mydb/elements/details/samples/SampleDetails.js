@@ -595,8 +595,8 @@ export default class SampleDetails extends React.Component {
             </Button>
           </OverlayTrigger>
           <PrintCodeButton element={sample} />
-          { inventorySample }
-          {/* {decoupleCb} */}
+          {inventorySample}
+          {decoupleCb}
         </div>
       </div>
     );
@@ -1381,7 +1381,6 @@ export default class SampleDetails extends React.Component {
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
     const stb = [];
     const tabContents = [];
-    console.log('visible in segments', visible);
     visible.forEach((value) => {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }

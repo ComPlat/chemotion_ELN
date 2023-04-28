@@ -27,7 +27,7 @@ const getNodeText = (node) => {
 
 const getArrayFromLayout = (layout, availableTabs, addInventoryTab) => {
   const layoutKeys = Object.keys(layout);
-  if (addInventoryTab && !layoutKeys.includes('inventory')) {
+  if (addInventoryTab) {
     layout.inventory = layoutKeys.length + 1;
   }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
@@ -92,8 +92,9 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
+    const { availableTabs, addInventoryTab } = this.props;
     const layout = (state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]) || {};
-    const { visible, hidden } = getArrayFromLayout(layout, this.props.availableTabs, this.props.addInventoryTab);
+    const { visible, hidden } = getArrayFromLayout(layout, availableTabs, addInventoryTab);
     this.setState(
       { visible, hidden },
       () => this.props.onTabPositionChanged(visible)

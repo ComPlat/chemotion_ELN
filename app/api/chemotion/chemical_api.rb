@@ -7,7 +7,7 @@ module Chemotion
       desc 'update chemicals'
       params do
         requires :chemical_data, type: Array[Hash], desc: 'chemical data'
-        requires :cas, type: String, desc: 'cas number'
+        optional :cas, type: String, desc: 'cas number'
       end
       route_param :sample_id do
         put do
