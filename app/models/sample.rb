@@ -255,7 +255,7 @@ class Sample < ApplicationRecord
   end
 
   def sample_xref_cas
-    xref['cas']
+    xref&.fetch('cas', '')
   end
 
   def molecule_inchikey
