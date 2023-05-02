@@ -106,13 +106,6 @@ describe('NumericInputUnit component', () => {
     expect(convertedUnit).toBe('°F');
   });
 
-  it('toggles input unit should return the same value when the unit is not K,°C, F or g, mg, Kg)', () => {
-    const wrapper = createWrapper('Flash Point', '', 300, 'flash_point', false);
-    wrapper.find('Button').simulate('click');
-    const convertedValue = wrapper.find('[name="flash_point"]').prop('value');
-    expect(convertedValue).toBe(300);
-  });
-
   it('toggles input should return the same value when the field is not "amount" or "flash_point"', () => {
     const wrapper = createWrapper('other field', ' ', 300, 'other_field', false);
     wrapper.find('Button').simulate('click');

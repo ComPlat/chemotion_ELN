@@ -38,7 +38,6 @@ export default function NumericInputUnit(props) {
   const validateConversionForFlashPoint = (valueToFormat) => {
     let formattedValue = '';
     let restOfString = '';
-    let convertedUnit;
     let convertedValue;
     const decimalPlaces = 4;
     if (typeof valueToFormat === 'string') {
@@ -49,38 +48,28 @@ export default function NumericInputUnit(props) {
         restOfString = ` ${match[2].trim()}` || '';
       }
     }
-    if (currentUnit === 'K') {
-      convertedUnit = '°C';
-      convertedValue = kelvinToCelsius(formattedValue);
-      formattedValue = formattedValue !== '' ? convertedValue : '';
-    } else if (currentUnit === '°C') {
-      convertedUnit = '°F';
-      convertedValue = celsiusToFahrenheit(formattedValue);
-      formattedValue = formattedValue !== '' ? convertedValue : '';
-    } else if (currentUnit === '°F') {
-      convertedUnit = 'K';
-      convertedValue = fahrenheitToKelvin(formattedValue);
-      formattedValue = formattedValue !== '' ? convertedValue : '';
-    }
+    const conversions = {
+      K: { convertedUnit: '°C', conversionFunc: kelvinToCelsius },
+      '°C': { convertedUnit: '°F', conversionFunc: celsiusToFahrenheit },
+      '°F': { convertedUnit: 'K', conversionFunc: fahrenheitToKelvin },
+    };
+    const { convertedUnit, conversionFunc } = conversions[currentUnit];
+    convertedValue = conversionFunc(formattedValue);
+    formattedValue = formattedValue !== '' ? convertedValue : '';
     formattedValue = handleFloatNumbers(formattedValue, decimalPlaces);
     convertedValue = `${formattedValue}${restOfString}`;
     return [convertedValue, convertedUnit];
   };
 
   const validateConversionForInventoryAmount = (valueToFormat) => {
-    let formattedValue;
-    let convertedUnit;
+    const conversionMap = {
+      g: { convertedUnit: 'mg', conversionFactor: 1000 },
+      mg: { convertedUnit: 'μg', conversionFactor: 1000 },
+      μg: { convertedUnit: 'g', conversionFactor: 0.000001 }
+    };
+    const { convertedUnit, conversionFactor } = conversionMap[currentUnit];
     const decimalPlaces = 7;
-    if (currentUnit === 'g') {
-      convertedUnit = 'mg';
-      formattedValue = weightConversion(valueToFormat, 1000);
-    } else if (currentUnit === 'mg') {
-      convertedUnit = 'μg';
-      formattedValue = weightConversion(valueToFormat, 1000);
-    } else if (currentUnit === 'μg') {
-      convertedUnit = 'g';
-      formattedValue = weightConversion(valueToFormat, 0.000001);
-    }
+    const formattedValue = weightConversion(valueToFormat, conversionFactor);
     const convertedValue = handleFloatNumbers(formattedValue, decimalPlaces);
     return [convertedValue, convertedUnit];
   };

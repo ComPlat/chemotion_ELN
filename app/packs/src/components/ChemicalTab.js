@@ -485,7 +485,7 @@ export default class ChemicalTab extends React.Component {
 
   numInputWithoutTable(data, label, parameter) {
     const value = data?.[parameter]?.value ?? 0;
-    const unit = data?.[parameter]?.value ?? 'mg';
+    const unit = data?.[parameter]?.unit ?? 'mg';
     return (
       <NumericInputUnit
         field="inventory_amount"
