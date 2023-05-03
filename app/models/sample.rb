@@ -110,7 +110,8 @@ class Sample < ApplicationRecord
   # scopes for suggestions
   scope :by_residues_custom_info, ->(info, val) { joins(:residues).where("residues.custom_info -> '#{info}' ILIKE ?", "%#{sanitize_sql_like(val)}%")}
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_sample_xref_cas, ->(query) { where("xref ? 'cas'").where("xref -> 'cas' ->> 'value' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
+  scope :by_sample_xref_cas,
+        ->(query) { where("xref ? 'cas'").where("xref ->> 'cas' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
   scope :by_exact_name, ->(query) { where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)', "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$", "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -254,7 +255,7 @@ class Sample < ApplicationRecord
   end
 
   def sample_xref_cas
-    xref&.dig('cas', 'value') || ''
+    xref&.fetch('cas', '')
   end
 
   def molecule_inchikey
