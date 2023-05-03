@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
 import Draggable from 'react-draggable';
+import moment from 'moment';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -163,7 +164,11 @@ export default class CommentModal extends Component {
     if (sectionComments?.length > 0) {
       return sectionComments.map((comment) => (
         <tr key={comment.id}>
-          <td width="20%">{comment.created_at}</td>
+          <td width="20%">
+            <span className="text-info">
+              {moment(comment.created_at).format('DD.MM.YYYY HH:mm')}
+            </span>
+          </td>
           <td width="35%">{comment.content}</td>
           <td width="15%">{comment.submitter}</td>
           <td width="15%">
