@@ -158,6 +158,8 @@ module Import
 
     def fetch_bound(value)
       bounds = value.to_s.split(/\.{2,3}/)
+      return nil if bounds.blank?
+
       lower = BigDecimal(bounds[0])
       upper = BigDecimal(bounds[1])
       if lower == -Float::INFINITY && upper == Float::INFINITY

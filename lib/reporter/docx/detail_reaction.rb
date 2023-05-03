@@ -112,7 +112,7 @@ module Reporter
         obj.products.each do |p|
           counter += 1
           m = p[:molecule]
-          cas = (p[:xref] && p[:xref][:cas] && p[:xref][:cas][:label]) || "- "
+          cas = (p[:xref] && p[:xref][:cas]) || '- '
           mol_name = sample_molecule_name_delta(p)
           delta += st_name ? name_delta(mol_name, counter, p) : []
           delta += st_formula ? sum_formular_delta(m) : []

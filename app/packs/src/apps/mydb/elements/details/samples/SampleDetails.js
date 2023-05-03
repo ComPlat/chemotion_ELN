@@ -254,9 +254,7 @@ export default class SampleDetails extends React.Component {
           sample.molecule = result;
           this.molfileInput.value = result.molfile;
           this.inchistringInput.value = result.inchistring;
-          casObj.value = result.cas[0] || cas;
-          casObj.label = result.cas[0] || cas;
-          sample.xref = { ...sample.xref, cas: casObj };
+          sample.xref = { ...sample.xref, cas: cas };
           this.setState({
             quickCreator: true,
             sample,
@@ -767,36 +765,40 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     const result = validateCas(cas, boolean);
     if (result !== false) {
-      sample.xref = { ...sample.xref, cas: { value: result, label: result } };
+      sample.xref = { ...sample.xref, cas: result };
       this.setState({ sample, validCas: result });
     } else {
       this.setState({ validCas: result });
     }
   }
 
+  updateCas(e) {
+    const { sample } = this.state;
+    const value = e?.value ?? '';
+    sample.xref = { ...sample.xref, cas: value };
+    this.setState({ sample });
+  }
+
+  onCasSelectOpen(e, casArr) {
+    const { sample } = this.state;
+    if (casArr.length === 0) {
+      this.setState({ isCasLoading: true });
+      DetailActions.getMoleculeCas(sample);
+    }
+  }
+
   moleculeCas() {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
-    const cas = xref ? xref.cas : '';
-    const casLabel = cas && cas.label ? cas.label : '';
+    const cas = xref?.cas ?? '';
     let casArr = [];
-    if (molecule && molecule.cas) {
-      casArr = molecule.cas.map((element) => ({
-        label: element, value: element
-      })).filter((element) => element.value !== null);
-    }
-    if (cas && casArr) {
-      const casObject = [
-        { label: cas, value: cas }
-      ];
-      const valuesArr = casArr.map(({ value }) => value) || [];
-      casArr = cas !== '' && !valuesArr.includes(cas) ? casArr.concat(casObject) : casArr;
-    }
+    casArr = molecule?.cas?.filter((element) => element !== null);
+    casArr = cas && casArr && cas !== '' && !casArr.includes(cas) ? [...casArr, cas] : casArr;
     const onChange = (e) => this.updateCas(e);
     const onOpen = (e) => this.onCasSelectOpen(e, casArr);
     const validate = () => this.isCASNumberValid(cas || '', true);
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
-
+    const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
       <div className="form-row">
         <InputGroup className="sample-molecule-identifier">
@@ -804,7 +806,7 @@ export default class SampleDetails extends React.Component {
           <Select.Creatable
             name="cas"
             multi={false}
-            options={casArr}
+            options={options}
             onChange={onChange}
             onOpen={onOpen}
             isLoading={isCasLoading}
@@ -814,31 +816,16 @@ export default class SampleDetails extends React.Component {
           />
           <InputGroup.Button>
             <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button active className="clipboardBtn" data-clipboard-text={casLabel}><i className="fa fa-clipboard" /></Button>
+              <Button active className="clipboardBtn" data-clipboard-text={cas}><i className="fa fa-clipboard" /></Button>
             </OverlayTrigger>
           </InputGroup.Button>
         </InputGroup>
         <div style={{ marginTop: '-11px' }}>
-          {!validCas ? errorMessage : null }
+          {!validCas && errorMessage}
         </div>
       </div>
     );
   }
-
-  updateCas(e) {
-    let sample = this.state.sample;
-    const value = e ? e.value : '';
-    sample.xref = { ...sample.xref, cas: value };
-    this.setState({ sample });
-  }
-
-  onCasSelectOpen(e, casArr) {
-    if (casArr.length === 0) {
-      this.setState({ isCasLoading: true })
-      DetailActions.getMoleculeCas(this.state.sample);
-    }
-  }
-
 
   handleSegmentsChange(se) {
     const { sample } = this.state;

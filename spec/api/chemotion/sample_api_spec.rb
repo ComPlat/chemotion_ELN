@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
+
 require 'rails_helper'
 
 describe Chemotion::SampleAPI do
@@ -495,7 +497,7 @@ describe Chemotion::SampleAPI do
       let(:c3) { create(:collection, user_id: user.id, is_shared: true, permission_level: 1) }
       let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
       let(:s2) { create(:sample, name: 'old2', target_amount_value: 0.2) }
-      let(:cas) { { 'value' => '58-08-2', 'label' => '58-08-2' } }
+      let(:cas) { '58-08-2' }
 
       let(:params) do
         {
@@ -590,7 +592,7 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'POST /api/v1/samples' do
-    let(:cas) { { 'value' => '58-08-2', 'label' => '58-08-2' } }
+    let(:cas) { '58-08-2' }
     let(:params) do
       {
         name: 'test',
@@ -825,7 +827,7 @@ describe Chemotion::SampleAPI do
         describe 'update sample analysis with a new dataset and a new img file' do
           before do
             attachment = Attachment.find_by(filename: 'upload.jpg')
-            attachment.attachable = nil 
+            attachment.attachable = nil
             attachment.save!
             put("/api/v1/samples/#{s1.id}.json",
               params: sample_upd_1_params.to_json,
@@ -903,3 +905,5 @@ describe Chemotion::SampleAPI do
     end
   end
 end
+
+# rubocop:enable RSpec/MultipleMemoizedHelpers
