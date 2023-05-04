@@ -27,12 +27,12 @@ const SearchModal = () => {
   let FormData = [
     {
       value: 'advanced',
-      label: 'Advanced Search',
+      label: 'Text Search',
       id: 0,
     },
     {
       value: 'ketcher',
-      label: 'ketcher-rails',
+      label: 'Structure search',
       id: 1,
     }
   ]

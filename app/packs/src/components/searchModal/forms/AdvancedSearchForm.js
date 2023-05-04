@@ -70,8 +70,8 @@ const AdvancedSearchForm = () => {
 
       searchStore.loadSearchResults({
         selection,
-         collectionId: collectionId,
-         isSync: uiState.isSync,
+        collectionId: collectionId,
+        isSync: uiState.isSync,
       });
       searchStore.clearSearchAndTabResults();
       searchValuesByFilters();
@@ -96,16 +96,16 @@ const AdvancedSearchForm = () => {
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0 && elementsForSelect.includes(value[0]);
     })
-    .sort((a,b) => a[1] - b[1])
-    .map((value) => {
-      return (
-        <ToggleButton
-          key={value[0]}
-          value={`${value[0]}s`}>
-          {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace('_', ' ') }
-        </ToggleButton>
-      );
-    });
+      .sort((a, b) => a[1] - b[1])
+      .map((value) => {
+        return (
+          <ToggleButton
+            key={value[0]}
+            value={`${value[0]}s`}>
+            {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace('_', ' ')}
+          </ToggleButton>
+        );
+      });
 
     return (
       <ToggleButtonGroup
@@ -134,7 +134,7 @@ const AdvancedSearchForm = () => {
   }
 
   const renderDynamicRow = () => {
-    let dynamicRow = ( <span /> );
+    let dynamicRow = (<span />);
 
     if (selectedOptions.length > 1) {
       let addedSelections = selectedOptions.filter((val, idx) => idx > 0);
@@ -156,9 +156,10 @@ const AdvancedSearchForm = () => {
   };
 
   const formElementValue = (formElement, e) => {
-    switch(formElement) {
+    switch (formElement) {
       case 'value':
-        return e.target.value;
+        const value = typeof e.target !== 'undefined' ? e.target.value : (typeof e.value !== 'undefined' ? e.value : e);
+        return value;
         break;
       case 'field':
       case 'link':
@@ -170,7 +171,8 @@ const AdvancedSearchForm = () => {
   }
 
   const handleChangeSelection = (idx, formElement) => (e) => {
-    let value = formElementValue(formElement, e);
+    console.log(formElement, e)
+    let value = formElementValue(formElement, e, e.currentTarget);
     selectedOptions[idx][formElement] = value;
     setSelectedOptions((a) => [...a]);
   }
@@ -228,7 +230,7 @@ const AdvancedSearchForm = () => {
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
-          <Panel.Body style={{minHeight: '120px'}}>
+          <Panel.Body style={{ minHeight: '120px' }}>
             <SearchResult
               handleClear={handleClear}
             />

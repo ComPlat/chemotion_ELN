@@ -150,6 +150,18 @@
     flex: 0 0 150px;
   }
 
+  .value-field-select {
+    margin: 5px 5px 22px 5px;
+    flex: 0 0 205px;
+
+    .ant-select {
+      width: 100%;
+    }
+    .ant-select-selection--single {
+      height: 36px;
+    }
+  }
+
   .value-select {
     margin: 5px;
     height: 60px;

@@ -15,7 +15,7 @@ const SearchFilter = types.model({
 
 const advancedSearch = {
   value: 'advanced',
-  label: 'Advanced Search'
+  label: 'Text Search'
 }
 
 export const SearchStore = types
@@ -110,7 +110,7 @@ export const SearchStore = types
       self.result_icon = self.search_results_visible ? "down" : "right";
       self.search_icon = self.result_icon == "right" ? "down" : "right";
     },
-    clearSearchAndTabResults () {
+    clearSearchAndTabResults() {
       self.search_results.clear();
       self.tab_search_results.clear();
       self.clearTabCurrentPage();
