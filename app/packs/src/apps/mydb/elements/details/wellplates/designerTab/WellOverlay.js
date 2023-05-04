@@ -146,7 +146,7 @@ const content = (
         <FormGroup>
           <Col
             style={{ marginTop: '7px', marginLeft: '-15px' }}
-            class="row row-no-gutters"
+            className="row row-no-gutters"
             componentClass={ControlLabel}
             sm={3}
           >
@@ -156,7 +156,7 @@ const content = (
             <InputGroup>
               <InputGroup.Addon style={bcStyle} />
               <FormControl
-                class="input-sm"
+                className="input-sm"
                 type="text"
                 readOnly
                 value={selectedColor || well.color_code}
@@ -234,7 +234,7 @@ WellOverlay.propTypes = {
   removeSampleFromWell: PropTypes.func.isRequired,
   handleWellLabel: PropTypes.func.isRequired,
   handleColorPicker: PropTypes.func.isRequired,
-  selectedColor: PropTypes.func.isRequired,
+  //selectedColor: PropTypes.func.isRequired,
   saveColorCode: PropTypes.func.isRequired,
 };
 
