@@ -153,6 +153,7 @@ class Import::ImportSdf
             sample['description'] = row['description'] if row['description'].present?
             sample['location'] = row['location'] if row['location'].present?
             sample['name'] = row['name'] if row['name'].present?
+            sample['xref']['cas'] = row['cas'] if row['cas'].present?
             sample['external_label'] = row['external_label'] if row['external_label'].present?
             sample['short_label'] = row['short_label'] if row['short_label'].present?
             sample['molarity_value'] = row['molarity']&.scan(/\d+\.*\d*/)[0] if row['molarity'].present?
