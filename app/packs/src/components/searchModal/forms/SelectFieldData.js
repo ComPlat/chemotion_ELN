@@ -46,6 +46,27 @@ export default {
         },
         label: 'Short Label'
       },
+      {
+        value: {
+          column: 'status',
+          label: 'Status'
+        },
+        label: 'Status'
+      },
+      {
+        value: {
+          column: 'conditions',
+          label: 'Conditions'
+        },
+        label: 'Conditions'
+      },
+      {
+        value: {
+          column: 'rxno',
+          label: 'Type'
+        },
+        label: 'Type'
+      },
     ],
     wellplates: [
       {
@@ -70,6 +91,34 @@ export default {
           label: 'Name'
         },
         label: 'Name'
+      },
+      {
+        value: {
+          column: 'collaborator',
+          label: 'Collaborator'
+        },
+        label: 'Collaborator'
+      },
+      {
+        value: {
+          column: 'requirements',
+          label: 'Requirements'
+        },
+        label: 'Requirements'
+      },
+      {
+        value: {
+          column: 'conditions',
+          label: 'Conditions'
+        },
+        label: 'Conditions'
+      },
+      {
+        value: {
+          column: 'result',
+          label: 'Result'
+        },
+        label: 'Result'
       },
     ],
     research_plans: [
