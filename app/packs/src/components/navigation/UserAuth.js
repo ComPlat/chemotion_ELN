@@ -537,7 +537,7 @@ export default class UserAuth extends Component {
 
                 <Row>
                   <Col smOffset={0} sm={12}>
-                    <p class="text-right">
+                    <p className="text-right">
                       DataCiteVersion: {deviceMetadata.data_cite_version}<br />
                       DataCiteUpdatedAt: {moment(deviceMetadata.data_cite_updated_at).format('YYYY-MM-DD HH:mm')}<br />
                     </p>
