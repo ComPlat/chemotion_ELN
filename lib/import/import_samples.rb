@@ -212,6 +212,7 @@ class Import::ImportSamples
       sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
     end
 
+    sample['xref']['cas'] = row['cas'] if row['cas'].present?
     sample.validate_stereo(stereo)
     sample.collections << Collection.find(collection_id)
     sample.collections << Collection.get_all_collection_for_user(current_user_id)
