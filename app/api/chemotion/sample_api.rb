@@ -88,6 +88,7 @@ module Chemotion
                 density: { field: 'density', displayName: 'Density' },
                 melting_point: { field: 'melting_point', displayName: 'Melting Point' },
                 boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
+                cas: { field: 'cas', displayName: 'Cas' },
               },
               current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
