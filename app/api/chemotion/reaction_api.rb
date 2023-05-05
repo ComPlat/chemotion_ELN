@@ -17,6 +17,7 @@ module Chemotion
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :is_shared, type: Boolean, desc: 'is collection shared with user?'
       end
       paginate per_page: 7, offset: 0
 
@@ -25,11 +26,15 @@ module Chemotion
       end
 
       get do
-        scope = if params[:collection_id]
+        scope = if params[:is_shared] == true
+                  c = current_user.acl_collection_by_id(params[:collection_id])
+                  c.reactions
+                elsif params[:collection_id]
                   begin
                     Collection.belongs_to_current_user(current_user.id, current_user.group_ids)
                               .find(params[:collection_id])
                               .reactions
+                              .distinct
                   rescue ActiveRecord::RecordNotFound
                     Reaction.none
                   end
@@ -40,8 +45,6 @@ module Chemotion
                   rescue ActiveRecord::RecordNotFound
                     Reaction.none
                   end
-                else
-                  Reaction.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
         from = params[:from_date]
