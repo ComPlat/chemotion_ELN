@@ -1,11 +1,10 @@
-describe('sign_in page', () => {
+describe('Login Page', () => {
   beforeEach(() => {
     cy.visit('users/sign_in');
   });
 
   it('allows registered user to log in', () => {
     cy.createDefaultUser('cu1@complat.edu', 'UC');
-
     cy.get('#user_login').type('UC');
     cy.get('#user_password').type('user_password');
     cy.get('.btn').contains('Log in').click();
@@ -22,7 +21,6 @@ describe('sign_in page', () => {
 
   it('allows admin to log in', () => {
     cy.createDefaultAdmin();
-
     cy.get('#user_login').type('ADM');
     cy.get('#user_password').type('admin_password');
     cy.get('.btn').contains('Log in').click();

@@ -1,4 +1,4 @@
-describe('sign_up page', () => {
+describe('Signup Page', () => {
   beforeEach(() => {
     cy.visit('users/sign_up');
     cy.get('#user_email').type('foobar@baz.com');
@@ -36,8 +36,9 @@ describe('sign_up page', () => {
   });
 
   it('rejects signup with existing name abbreviation', () => {
-    cy.createDefaultUser();
-
+    cy.createDefaultUser('foobar@kit.edu', 'UC');
+    cy.get('#user_password').type('password');
+    cy.get('#user_password_confirmation').type('password');
     cy.get('#user_name_abbreviation').clear();
     cy.get('#user_name_abbreviation').type('UC');
     cy.get('.btn').contains('Sign up').click();
@@ -45,8 +46,7 @@ describe('sign_up page', () => {
   });
 
   it('rejects signup with existing email', () => {
-    cy.createDefaultUser();
-
+    cy.createDefaultUser('complat.user@eln.edu', 'UC');
     cy.get('#user_email').clear();
     cy.get('#user_email').type('complat.user@eln.edu');
     cy.get('.btn').contains('Sign up').click();
@@ -60,8 +60,8 @@ describe('sign_up page', () => {
   });
 });
 
-describe('sign_up links', () => {
-  it.only('contains links relevant to signup', () => {
+describe('Signup Page Links', () => {
+  it('contains links relevant to signup', () => {
     cy.visit('home');
     cy.contains('Sign Up')
       .should('have.attr', 'href', '/users/sign_up');

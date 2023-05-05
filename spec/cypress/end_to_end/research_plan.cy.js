@@ -3,9 +3,8 @@ const inshiString = 'InChI=1S/H2O/h1H2';
 const molFileVersion = 'V2000';
 
 describe('Research Plan', () => {
-  beforeEach(() => {
+  it('create and delete a research plan', () => {
     cy.visit('users/sign_in');
-
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule', {
@@ -17,28 +16,22 @@ describe('Research Plan', () => {
         });
       });
     });
-  });
 
-  it.only('create and delete a research plan', () => {
-    // add test code here
     cy.login('cu1', 'user_password');
     cy.get('#tree-id-Col1').click();
     cy.visit('/mydb/collection/3');
-    cy.wait(3000);
-    // cy.stubExperimentData();
+    cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
+    cy.intercept('GET', '/api/v1/collections/*').as('req');
+    cy.wait('@req');
     cy.get('#create-split-button').click().then(() => {
       cy.contains('Create Research Plan');
       cy.get('#create-research_plan-button').as('btn');
       cy.get('@btn').click();
     });
-
     cy.get('.col-lg-8 > .form-group > .form-control').first().clear().type('My Research Plan 1');
     cy.get('.btn-toolbar > .btn-warning').click();
-
     cy.contains('My Research Plan 1');
     cy.get('#tabList-tab-4 > span').contains('1(0)');
-
-    // delete a research plan
     cy.get('#tabList-tab-4').click();
     cy.get('.elements > tbody > tr > [width="30px"] > .element-checkbox').click();
     cy.get('#remove-or-delete-btn').click();

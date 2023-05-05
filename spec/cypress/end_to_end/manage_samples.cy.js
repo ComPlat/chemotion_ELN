@@ -1,9 +1,8 @@
 import h20 from '../fixtures/h20.json';
 
-describe('Manage samples', () => {
+describe('Manage Samples', () => {
   beforeEach(() => {
     cy.visit('users/sign_in');
-
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
       cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user1[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule', {

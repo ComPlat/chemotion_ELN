@@ -66,54 +66,35 @@ Cypress.Commands.add('createCollection', (userID, label) => {
   ]);
 });
 
-// TODO
-// stub these api calls in future
-// https://docs.cypress.io/api/commands/intercept#Intercepted-requests
 Cypress.Commands.add('waitForAPIs', () => {
   cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
   cy.intercept('GET', '/api/v1/collections/shared_roots.json').as('colletions2');
   cy.intercept('GET', '/api/v1/collections/remote_roots.json').as('colletions3');
   cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json').as('colletions4');
   cy.intercept('PATCH', '/api/v1/collections').as('collections.patch');
-  cy.intercept(
-    {
-      url: '/api/v1/*ollections/*roots.json',
-      middleware: true
-    },
-    (req) => {
-      req.on('response', (res) => {
-      // Throttle the response to 1 Mbps to simulate a
-      // mobile 3G connection
-        res.setThrottle(Math.floor(Math.random() * 10) + 10);
-        res.setDelay(Math.floor(Math.random() * 500) + 1500);
-      });
-    }
-  );
-  const ro = { requestTimeout: 60000, responseTimeout: 90000 };
   cy.get('#collection-management-button').click();
   cy.wait([
     '@colletions1',
     '@colletions2',
     '@colletions3',
     '@colletions4',
-  ], ro);
+  ]);
 });
 
-const staticResponse = { /* some StaticResponse properties here... */ };
+const staticResponse = {};
 Cypress.Commands.add('stubCollections', () => {
   cy.intercept('GET', '/api/v1/collections/roots.json', staticResponse).as('colletions1');
   cy.intercept('GET', '/api/v1/collections/shared_roots.json', staticResponse).as('colletions2');
   cy.intercept('GET', '/api/v1/collections/remote_roots.json', staticResponse).as('colletions3');
   cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json', staticResponse).as('colletions4');
   cy.intercept('PATCH', '/api/v1/collections', staticResponse).as('collections.patch');
-  const ro = { requestTimeout: 60000, responseTimeout: 90000 };
   cy.get('#collection-management-button').click();
   cy.wait([
     '@colletions1',
     '@colletions2',
     '@colletions3',
     '@colletions4',
-  ], ro);
+  ]);
 });
 
 Cypress.Commands.add('stubExperimentData', () => {
@@ -184,7 +165,7 @@ Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
   });
 });
 
-Cypress.Commands.add('CreateUserWithResearchPlan', () => {
+Cypress.Commands.add('createUserWithResearchPlan', () => {
   cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
     cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user1[0].id }]]).then((collection) => {
       cy.appFactories([['create', 'molecule', { molecular_weight: 171.03448 }]]).then((molecule) => {
@@ -203,7 +184,6 @@ Cypress.Commands.add('settingPermission', (permission) => {
   cy.get('#tree-id-Col1').click();
   cy.visit('/mydb/collection/management');
   cy.get('#sync-users-btn').click();
-  // cy.get('.element-checkbox').click();
   cy.get(':nth-child(2) > #permissionLevelSelect').select(permission);
   cy.get('#sampleDetailLevelSelect').select('Everything');
   cy.get('#reactionDetailLevelSelect').select('Everything');
@@ -214,7 +194,6 @@ Cypress.Commands.add('settingPermission', (permission) => {
   cy.get('#create-sync-shared-col-btn').click();
 
   Cypress.on('uncaught:exception', () =>
-  // returning false here prevents Cypress from failing the test
     false);
   cy.clearCookie('_chemotion_session');
   cy.get('a[title="Log out"]').click();

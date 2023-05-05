@@ -1,13 +1,9 @@
-const { element } = require('prop-types');
-
-describe('create Wellplates', () => {
-  beforeEach(() => {
+describe('Wellplate Creation', () => {
+  it('create wellplat with smile', () => {
     cy.createDefaultUser().then((user) => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]);
     });
-  });
 
-  it('create wellplat with smile', () => {
     cy.login('a01', 'user_password');
     cy.visit('mydb/collection/3/');
     cy.get('div').find('[id="tree-id-Collection 1"]').click();
@@ -18,12 +14,10 @@ describe('create Wellplates', () => {
     cy.get('#smile-create-molecule').click();
     cy.get('#txinput_name').clear().type('sample A');
     cy.get('#submit-sample-btn').click();
-
     cy.get('div').find('[id="tree-id-Collection 1"]').click();
     cy.get('#create-split-button').click();
     cy.get('#create-wellplate-button').click();
     cy.get('#wellplateDetailsTab-tab-designer').click();
-
     const dataTransfer = new DataTransfer();
     cy.get('[style=""] > [style="vertical-align: middle; text-align: center;"] > .fa').trigger('dragstart', { dataTransfer });
     cy.get('[style="width: 780px; height: 540px;"] > :nth-child(3) > [draggable="true"]').trigger('drop', { dataTransfer });

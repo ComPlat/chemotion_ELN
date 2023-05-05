@@ -7,11 +7,10 @@ describe('Message Box', () => {
         });
       });
     });
-
     cy.visit('users/sign_in');
   });
 
-  it('Check message box and acknowledge messages', () => {
+  it('check message box and acknowledge messages', () => {
     cy.login('a01', 'user_password');
     cy.get('.badge').contains('3');
   });
@@ -24,14 +23,12 @@ describe('Message Box', () => {
     cy.get('.badge').contains('0');
   });
 
-  it.only('open message box and acknowledge the message one by one', () => {
+  it('open message box and acknowledge the message one by one', () => {
     cy.login('a01', 'user_password');
     cy.get('.badge').contains('3').click();
-
     cy.get('#notice-button-ack-1').click();
     cy.get('#notice-button-ack-2').click();
     cy.get('#notice-button-ack-3').click();
-
     cy.get('.close > [aria-hidden="true"]').click();
     cy.get('.badge').contains('0');
   });

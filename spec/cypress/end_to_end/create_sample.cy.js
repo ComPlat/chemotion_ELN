@@ -1,12 +1,10 @@
-describe('samples scenario', () => {
-  beforeEach(() => {
+describe('Sample Creation', () => {
+  it('create sample', () => {
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]);
     });
-    cy.visit('users/sign_in');
-  });
 
-  it('create samples', () => {
+    cy.visit('users/sign_in');
     cy.login('cu1', 'user_password');
     cy.stubCollections();
     cy.get('div').find('[id="tree-id-Collection 1"]').click();

@@ -2,7 +2,7 @@ const moleculeSVG = '81ba09b10beaa89f190c39faa85ced3ea20728cda625d884410ac0ab96b
 const inshiString = 'InChI=1S/H2O/h1H2';
 const molFileVersion = 'V2000';
 
-describe('Synchronize collections', () => {
+describe('Synchronize Collections', () => {
   beforeEach(() => {
     cy.visit('users/sign_in');
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
@@ -29,7 +29,7 @@ describe('Synchronize collections', () => {
     });
   });
 
-  it('Sync collection with write permission', () => {
+  it('sync collection with write permission', () => {
     cy.login('cu1', 'user_password');
     cy.settingPermission('Write');
     cy.login('cu2', 'user_password');
@@ -42,18 +42,16 @@ describe('Synchronize collections', () => {
     cy.get('input[name="reaction_name"').first().should('not.be.disabled');
   });
 
-  it('Sync collection with write permission can add a new sample', () => {
+  it('sync collection with write permission can add a new sample', () => {
     cy.login('cu1', 'user_password');
     cy.settingPermission('Write');
     cy.login('cu2', 'user_password');
     cy.get('#synchron-home-link').click();
     cy.get('[id^=tree-id-]').find('.glyphicon').click();
     cy.get('#tree-id-Col1').last().click();
-
     cy.get('#tabList-tab-1').click();
     cy.contains('a01-R1 Reaction 1');
     cy.get('[width="unset"] > :nth-child(1)').click();
-
     cy.get('#create-split-button').should('not.be.disabled');
     cy.get('#create-split-button').click();
     cy.get('#create-sample-button').click();
@@ -65,7 +63,7 @@ describe('Synchronize collections', () => {
     cy.contains('cu2-1');
   });
 
-  it('Sync collection with read permission', () => {
+  it('sync collection with read permission', () => {
     cy.login('cu1', 'user_password');
     cy.settingPermission('Read');
     cy.login('cu2', 'user_password');

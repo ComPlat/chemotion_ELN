@@ -1,4 +1,4 @@
-describe('Share collections', () => {
+describe('Share Collections', () => {
   beforeEach(() => {
     cy.visit('users/sign_in');
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
@@ -25,18 +25,14 @@ describe('Share collections', () => {
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
     cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-
     cy.get('#react-select-2--value').type('User').type('{downArrow}').type('{enter}');
     cy.get('#create-sync-shared-col-btn').click();
-
     Cypress.on('uncaught:exception', () =>
       // returning false here prevents Cypress from failing the test
       false);
     cy.clearCookie('_chemotion_session');
     cy.get('a[title="Log out"]').click();
-
     cy.login('cu2', 'user_password');
-
     cy.get('#shared-home-link').click();
     cy.contains('My project with User Complat');
   });
@@ -52,12 +48,10 @@ describe('Share collections', () => {
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
     cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-
     cy.get('#react-select-2--value').type('User').type('{downArrow}').type('{enter}');
     cy.get('#create-sync-shared-col-btn').click();
-
+    
     Cypress.on('uncaught:exception', () =>
-      // returning false here prevents Cypress from failing the test
       false);
     cy.clearCookie('_chemotion_session');
     cy.get('a[title="Log out"]').click();

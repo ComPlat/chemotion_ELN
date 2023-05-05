@@ -14,7 +14,6 @@ module.exports = defineConfig({
     baseUrl: `http://localhost:${port}/`,
     video: false,
     env: {
-      // login: 'users/sign_in',
       reservedList: ['CRR', 'CRS', 'CRD'],
       lengthGroup: [2, 5],
       lengthDevice: [2, 6],

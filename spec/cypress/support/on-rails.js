@@ -29,12 +29,6 @@ Cypress.Commands.add('appFactories', (options) => cy.app('factory_bot', options)
 Cypress.Commands.add('appFixtures', (options) => {
   cy.app('activerecord_fixtures', options);
 });
-// CypressOnRails: end
-
-// The next is optional
-// beforeEach(() => {
-//  cy.app('clean') // have a look at cypress/app_commands/clean.rb
-// });
 
 // comment this out if you do not want to attempt to log additional info on test fail
 Cypress.on('fail', (err, runnable) => {

@@ -1,4 +1,4 @@
-describe('testing landing page attributes', () => {
+describe('Landing Page Attributes', () => {
   it('contains all links to external resources', () => {
     cy.visit('home');
     cy.contains('h3', 'Welcome to Chemotion Electronic Lab Notebook.');
