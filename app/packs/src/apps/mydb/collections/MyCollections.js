@@ -128,7 +128,7 @@ export default class MyCollections extends React.Component {
             bsSize="xsmall"
             bsStyle="primary"
             disabled={node.isNew === true}
-            onClick={() => this.doSync(node, 'Shared')}
+            onClick={() => this.doSync(node, 'Share')}
           >
             <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
@@ -184,13 +184,13 @@ export default class MyCollections extends React.Component {
 
   doSync(node, action) {
     let { modalProps, active } = this.state
-    modalProps.title = action == "Shared"
+    modalProps.title = action == "Share"
       ? "Share '" + node.label + "'"
       : "Edit Synchronization"
     modalProps.show = true
     modalProps.action = action
     modalProps.collection = node
-    modalProps.selectUsers = action == "Shared"
+    modalProps.selectUsers = action == "Share"
       ? true
       : false
     active = node
