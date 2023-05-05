@@ -236,7 +236,7 @@ export default class ManagingModalSharing extends React.Component {
 
     if (this.props.collAction === 'EditSync') { CollectionActions.editSync(params); }
 
-    if (this.props.collAction === 'CreateSync') {
+    if (this.props.collAction === 'Shared') {
       const userIds = this.state.selectedUsers;
       const fullParams = {
         ...params,
@@ -431,7 +431,7 @@ export default class ManagingModalSharing extends React.Component {
         </FormGroup>
         {this.selectUsers()}
         <br />
-        <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
+        <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Collection</Button>
       </div>
     )
   }
