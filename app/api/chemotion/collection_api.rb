@@ -9,7 +9,10 @@ module Chemotion
       namespace :all do
         desc "Return the 'All' collection of the current user"
         get do
-          present Collection.get_all_collection_for_user(current_user.id), with: Entities::CollectionEntity, root: :collection
+          # present Collection.get_all_collection_for_user(current_user.id), with: Entities::CollectionEntity, root: :collection
+          collections = current_user.collections.with_collections_acls.includes(collection_acls: :user)
+
+          present collections.distinct, with: Entities::CollectionEntity, root: :collections
         end
       end
 
@@ -20,6 +23,8 @@ module Chemotion
       route_param :id, requirements: { id: /[0-9]*/ } do
         get do
           present Collection.find(params[:id]), with: Entities::CollectionEntity, root: :collection
+        rescue ActiveRecord::RecordNotFound
+          Collection.none
         end
 
         desc "Return collection metadata"
@@ -145,7 +150,9 @@ module Chemotion
       # TODO: check if this endpoint is really obsolete
       desc "Bulk update and/or create new collections"
       patch '/' do
-        Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
+        Collection.bulk_update(
+          current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids]
+        )
       end
 
       desc "reject a shared collections"

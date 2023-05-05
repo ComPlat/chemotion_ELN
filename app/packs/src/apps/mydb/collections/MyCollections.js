@@ -45,7 +45,7 @@ export default class MyCollections extends React.Component {
 
   onStoreChange(state) {
     let children = state.myCollections.length > 0 ? state.myCollections : [{}];
-    children = children.filter(c => (c.is_shared === false));
+    // children = children.filter(c => (c.is_shared === false));
     this.setState({
       tree: {
         label: 'My Collections',
@@ -128,7 +128,7 @@ export default class MyCollections extends React.Component {
             bsSize="xsmall"
             bsStyle="primary"
             disabled={node.isNew === true}
-            onClick={() => this.doSync(node, 'CreateSync')}
+            onClick={() => this.doSync(node, 'Shared')}
           >
             <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
@@ -184,13 +184,13 @@ export default class MyCollections extends React.Component {
 
   doSync(node, action) {
     let { modalProps, active } = this.state
-    modalProps.title = action == "CreateSync"
+    modalProps.title = action == "Shared"
       ? "Share '" + node.label + "'"
       : "Edit Synchronization"
     modalProps.show = true
     modalProps.action = action
     modalProps.collection = node
-    modalProps.selectUsers = action == "CreateSync"
+    modalProps.selectUsers = action == "Shared"
       ? true
       : false
     active = node

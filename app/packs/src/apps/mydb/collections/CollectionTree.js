@@ -126,7 +126,7 @@ export default class CollectionTree extends React.Component {
   myCollections() {
     let myCollections = this.state.myCollections;
 
-    myCollections = myCollections.filter(c => (c.is_shared === false && c.is_locked === false ));
+    // myCollections = myCollections.filter(c => (c.is_shared === false && c.is_locked === false ));
     const subtrees = myCollections.map((root, index) => {
       return <CollectionSubtree root={root} key={index} />
     })

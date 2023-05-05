@@ -181,11 +181,9 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        own_collection = false
         sample_scope = Sample.none
-        if params[:is_shared]
+        if params[:is_shared] == true
           begin
-            own_collection = false
             c = current_user.acl_collection_by_id(params[:collection_id])
             sample_scope = c.samples
           rescue ActiveRecord::RecordNotFound
