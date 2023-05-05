@@ -124,7 +124,7 @@ class CollectionStore {
     if (!foundCollection) {
       //TODO refactor endpoint
       // TODO maybe move to CollectionsFetcher
-      promise = fetch('/api/v1/collection_acls/' + collectionId, {
+      promise = fetch('/api/v1/collections/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
@@ -148,7 +148,7 @@ class CollectionStore {
     }).pop();
     let promise;
     if (!foundCollection) {
-      promise = fetch('/api/v1/share_temp_collections/' + collectionId, {
+      promise = fetch('/api/v1/share_collections/' + collectionId, {
         credentials: 'same-origin',
         method: 'GET'
       }).then((response) => {
