@@ -38,7 +38,7 @@ export default class CollectionsFetcher {
   }
 
   static fetchMyRoots() {
-    let promise = fetch('/api/v1/temp_collections', {
+    let promise = fetch('/api/v1/collections/all', {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -53,7 +53,7 @@ export default class CollectionsFetcher {
   }
 
   static fetchSharedWithMeRoots() {
-    let promise = fetch('/api/v1/share_temp_collections', {
+    let promise = fetch('/api/v1/share_collections', {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -112,7 +112,7 @@ export default class CollectionsFetcher {
   }
 
   static createSelectedSharedCollections(params) {
-      return fetch('/api/v1/share_temp_collections/', {
+      return fetch('/api/v1/share_collections/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -130,7 +130,7 @@ export default class CollectionsFetcher {
   }
 
   static createSharedCollections(params) {
-    return fetch('/api/v1/share_temp_collections/', {
+    return fetch('/api/v1/share_collections/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -179,7 +179,7 @@ export default class CollectionsFetcher {
   }
 
   static bulkUpdateUnsharedCollections(params) {
-    let promise = fetch('/api/v1/temp_collections', {
+    let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin',
       method: 'PATCH',
       headers: {
@@ -249,7 +249,7 @@ export default class CollectionsFetcher {
   }
 
   static moveOrAssignElementsCollection(params, action) {
-    return fetch('/api/v1/share_temp_collections/', {
+    return fetch('/api/v1/share_collections/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {

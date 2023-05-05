@@ -1,9 +1,9 @@
 module Chemotion
-  class ShareTempCollectionAPI < Grape::API
+  class ShareCollectionAPI < Grape::API
     helpers CollectionHelpers
     helpers ParamsHelpers
 
-    resource :share_temp_collections do
+    resource :share_collections do
       desc "Return the list of all collections shared with current user"
       get do
         collections = Collection.joins(:collection_acls).includes(:user).where('collection_acls.user_id = ?', current_user.id)

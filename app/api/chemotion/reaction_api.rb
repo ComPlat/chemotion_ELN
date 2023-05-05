@@ -36,6 +36,7 @@ module Chemotion
                     Collection.belongs_to_current_user(current_user.id, current_user.group_ids)
                               .find(params[:collection_id])
                               .reactions
+                              .distinct
                   rescue ActiveRecord::RecordNotFound
                     Reaction.none
                   end
@@ -46,9 +47,7 @@ module Chemotion
                   rescue ActiveRecord::RecordNotFound
                     Reaction.none
                   end
-                else
-                  Reaction.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end
+                end.order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
