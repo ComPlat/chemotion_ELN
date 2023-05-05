@@ -30,14 +30,14 @@ describe Chemotion::ShareTempCollectionAPI do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
     end
 
-    describe 'GET /api/v1/share_temp_collections/<id>' do
+    describe 'GET /api/v1/share_collections/<id>' do
 
       context 'when no error occurs' do
         let!(:c) { create(:collection, user_id: user.id) }
         let!(:collection_acl) { create(:collection_acl, collection: c, user: user) }
 
         before do
-          get "/api/v1/share_temp_collections/#{c.id}"
+          get "/api/v1/share_collections/#{c.id}"
         end
 
         it 'returns 200 status code' do
@@ -50,21 +50,21 @@ describe Chemotion::ShareTempCollectionAPI do
       end
     end
 
-    describe 'GET /api/v1/share_temp_collections' do
+    describe 'GET /api/v1/share_collections' do
 
       context 'when no error occurs' do
         let!(:c) { create(:collection, user_id: user.id) }
         let!(:collection_acl) { create(:collection_acl, collection: c, user: user) }
 
         it 'returns list of all collections shared with user' do
-          get '/api/v1/share_temp_collections'
+          get '/api/v1/share_collections'
 
           expect(parsed_json_response['collections'].length).to eq(1)
         end
       end
     end
 
-    describe 'POST /api/v1/share_temp_collections/all' do
+    describe 'POST /api/v1/share_collections/all' do
       describe 'sharing whole collection' do
         context 'with appropriate permissions' do
           let(:c1)  { create(:collection, user: user) }
@@ -107,7 +107,7 @@ describe Chemotion::ShareTempCollectionAPI do
           end
 
           it 'creates shared collection' do
-            post '/api/v1/share_temp_collections',
+            post '/api/v1/share_collections',
               params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
 
             expect(response).to have_http_status(:created)

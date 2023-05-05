@@ -15,7 +15,7 @@ class ElementPolicy
   # 2. there exists a shared collection, containing the sample, which he owns and where the user has
   # the required permission_level
   def read?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 0
+    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections, user_scollections) >= 0
   end
 
   def update?
@@ -55,8 +55,8 @@ class ElementPolicy
 
   private
 
-  def maximum_permission_level(collections,sync_collections=SyncCollectionsUser.none)
-    (collections.pluck(:permission_level) + sync_collections.pluck(:permission_level)).max || -1
+  def maximum_permission_level(collections, collection_acl)
+    (collections.pluck(:permission_level) + collection_acl.pluck(:permission_level)).max || -1
   end
 
   def maximum_element_permission_level(sync_collections = SyncCollectionsUser.none)
@@ -73,7 +73,7 @@ class ElementPolicy
 
   def user_scollections
     coll_ids = record.collections.pluck :id
-    SyncCollectionsUser.where("collection_id IN (?) and user_id IN (?)",coll_ids, user_ids)
+    CollectionAcl.where("collection_id IN (?) and user_id IN (?)", coll_ids, user_ids)
   end
 
   # TODO move to appropriate class
