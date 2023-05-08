@@ -26,6 +26,7 @@ module CollectionHelpers
     collection_acl = CollectionAcl.find_by(collection_id: coll_id, user_id: user_id)
     Collection.find(collection_acl.collection_id)
   end
+
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
     dl = ((is_sync && SyncCollectionsUser) || Collection).find_by(
@@ -53,64 +54,41 @@ module CollectionHelpers
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
   def fetch_collection_id_for_assign(params, permission_level = 1)
-    c_id = params['ui_state']['currentCollection']['id']
+    c_id = params[:collection_id] || params['ui_state']['currentCollection']['id']
 
-    if !params[:newCollection].blank?
-      collection_attributes = @params.fetch(:collection_attributes, {})
-                                     .merge(user_id: current_user.id, label: params[:newCollection])
-      c = Collection.create(collection_attributes)
-    elsif params[:is_sync_to_me]
-      c = Collection.joins(:collection_acls).where(
-        'collection_acls.id = ? and collection_acls.user_id in (?) and (collection_acls.permission_level = 1 or collection_acls.permission_level >= ?)',
-        c_id,
-        user_ids,
-        permission_level,
-      ).first
-    elsif params[:action] == 'share'
-      c = Collection.where(id: c_id, user_id: current_user.id).first
-    else
-      c = Collection.where(id: c_id, user_id: current_user.id)
-                    .where('permission_level >= ?', permission_level).first
-    end
+    c = if !params[:newCollection].blank?
+          collection_attributes = @params.fetch(:collection_attributes, {})
+                                         .merge(user_id: current_user.id, label: params[:newCollection])
+          Collection.create(collection_attributes)
+        else
+          fetch_collection_by_ui_state_params_and_pl(c_id, 1)
+        end
 
     c&.id
   end
 
-  def fetch_collection_by_ui_state_params_and_pl(permission_level = 2)
-    current_collection = params['ui_state']['currentCollection']
-    # Collection.find_by(id: current_collection['id'], user_id: current_user.id) ||
-    #   fetch_collection_from_col_acl(current_collection['id'], current_user.id)
+  def fetch_collection_by_ui_state_params_and_pl(collection_id, permission_level = 2)
+    collection = Collection.find_by(id: collection_id, user_id: current_user.id)
 
-    @collection = if current_collection['is_shared']
-                    Collection.joins(:collection_acls).includes(:user).where(
-                      'collection_acls.user_id in (?) and collection_acls.collection_id = ? and collection_acls.permission_level >= ?',
-                      current_user.id,
-                      current_collection['id'],
-                      permission_level
-                    ).first
-                  elsif params[:action] == 'share'
-                    Collection.where(
-                      'id = ? AND (user_id in (?))',
-                       current_collection['id'],
-                       current_user.id
-                    ).first
-                  else
-                    Collection.where(
-                      'id = ? AND ((user_id in (?) AND (permission_level >= ?)))',
-                      current_collection['id'],
-                      current_user.id,
-                      permission_level
-                    ).first
-                  end
-    @collection
+    if !collection.present?
+      collection = Collection.joins(:collection_acls).includes(:user).where(
+                     'collection_acls.user_id in (?) and collection_acls.collection_id = ? and collection_acls.permission_level >= ?',
+                     current_user.id,
+                     collection_id,
+                     permission_level
+                   ).first
+    end
+    collection
   end
 
   def fetch_source_collection_for_removal
-    fetch_collection_by_ui_state_params_and_pl(3)
+    current_collection = params['ui_state']['currentCollection']
+    fetch_collection_by_ui_state_params_and_pl(current_collection['id'], 3)
   end
 
   def fetch_source_collection_for_assign
-    fetch_collection_by_ui_state_params_and_pl(2)
+    current_collection = params['ui_state']['currentCollection']
+    fetch_collection_by_ui_state_params_and_pl(current_collection['id'], 2)
   end
 
   def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])
