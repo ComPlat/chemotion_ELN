@@ -8,8 +8,6 @@ class CollectionStore {
       myCollections: [],
       sharedCollections: [],
       genericEls: [],
-      unsharedRoots: [],
-      sharedRoots: [],
       remoteRoots: [],
       lockedRoots: [],
       syncInRoots: [],
@@ -23,13 +21,13 @@ class CollectionStore {
       handleFetchCollectionsSharedWithMe: CollectionActions.fetchCollectionsSharedWithMe,
       //handleFetchGenericEls: CollectionActions.fetchGenericEls,
       handleFetchLockedCollectionRoots: CollectionActions.fetchLockedCollectionRoots,
-      handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
-      handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
       handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
-      handleFetchSyncInCollectionRoots: CollectionActions.fetchSyncInCollectionRoots,
       // handleCreateSharedCollectionAcls: CollectionActions.createSharedCollectionAcls,
-      handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
+      handleBulkUpdateCollections: CollectionActions.bulkUpdateCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
+      handleRefreshMyCollection: [
+        CollectionActions.createSelectedSharedCollections
+      ],
       handleCreateUnsharedCollection: [
         CollectionActions.createUnsharedCollection,
         CollectionActions.createSharedCollections,
@@ -44,7 +42,6 @@ class CollectionStore {
 
   handleTakeOwnership() {
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
@@ -67,36 +64,28 @@ class CollectionStore {
     this.setState({ sharedCollections: results.collections });
   }
 
-  handleFetchUnsharedCollectionRoots(results) {
-    this.state.unsharedRoots = results.collections;
-  }
-
-  handleFetchSharedCollectionRoots(results) {
-    this.state.sharedRoots = results.collections;
-  }
-
   handleFetchRemoteCollectionRoots(results) {
     this.state.remoteRoots = results.collections;
   }
 
-  handleFetchSyncInCollectionRoots(results) {
-    this.state.syncInRoots = results.syncCollections;
-  }
   handleCreateSharedCollectionAcls() {
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
   }
 
-  handleBulkUpdateUnsharedCollections() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+  handleBulkUpdateCollections() {
+    CollectionActions.fetchMyCollections();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
   }
 
   handleUpdateSharedCollection() {
     CollectionActions.fetchSharedCollectionRoots();
+  }
+
+  handleRefreshMyCollection() {
+    CollectionActions.fetchMyCollections();
   }
 
   handleCreateUnsharedCollection(results) {
@@ -116,10 +105,8 @@ class CollectionStore {
 
   // 'repository' methods; returns a promise
   static findById(collectionId) {
-    let state = this.state;
-    let roots = state.unsharedRoots.concat(state.sharedRoots).concat(state.remoteRoots).concat(state.lockedRoots);
-
-    let foundCollection = roots.filter((root) => {
+    let roots = this.state.roots;
+    let foundCollection = roots && roots.filter((root) => {
       return root.id == collectionId;
     }).pop();
 
