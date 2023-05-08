@@ -103,35 +103,6 @@ module Chemotion
         Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
       end
 
-      desc "Return all unlocked unshared serialized collection roots of current user"
-      get :roots do
-        collects = Collection.where(user_id: current_user.id).unlocked.unshared.order('id')
-        .select(
-          <<~SQL
-            id, label, ancestry, is_synchronized, permission_level, tabs_segment, position, collection_shared_names(user_id, id) as shared_names,
-            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked,is_shared,
-            case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
-          SQL
-        )
-        .as_json
-        build_tree.call(collects,false)
-      end
-
-      desc "Return all shared serialized collections"
-      get :shared_roots do
-        collects = Collection.shared(current_user.id).order("id")
-        .select(
-          <<~SQL
-            id, user_id, label,ancestry, permission_level, user_as_json(collections.user_id) as shared_to,
-            is_shared, is_locked, is_synchronized, false as is_remoted, tabs_segment,
-            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
-            case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
-          SQL
-        )
-        .as_json
-        build_tree.call(collects,true)
-      end
-
       desc "Return all remote serialized collections"
       get :remote_roots do
         collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id]).order("id")

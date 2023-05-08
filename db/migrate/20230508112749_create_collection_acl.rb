@@ -1,8 +1,8 @@
-class CreateCollectionAcl < ActiveRecord::Migration[5.2]
+class CreateCollectionAcl < ActiveRecord::Migration[6.1]
   def change
     create_table :collection_acls do |t|
-      t.integer :user_id, null: false, index: true
-      t.integer :collection_id, null: false, index: true
+      t.integer :user_id, null: false
+      t.integer :collection_id, null: false
       t.string :label
       t.integer :permission_level,          default: 0
       t.integer :sample_detail_level,       default: 0
@@ -14,5 +14,7 @@ class CreateCollectionAcl < ActiveRecord::Migration[5.2]
 
       t.timestamps null: false
     end
+
+    add_index :collection_acls, [:user_id, :collection_id], unique: true
   end
 end
