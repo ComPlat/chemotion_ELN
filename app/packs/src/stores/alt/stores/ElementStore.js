@@ -545,7 +545,6 @@ class ElementStore {
   }
 
   handleRemoveElementsCollection() {
-    // CollectionActions.fetchUnsharedCollectionRoots();
     // UIActions.clearSearchSelection.defer()
     UIActions.uncheckWholeSelection.defer();
     this.waitFor(UIStore.dispatchToken)

@@ -53,8 +53,8 @@ const handleNotification = (nots, act, needCallback = true) => {
         case 'CollectionActions.fetchMyCollections':
           CollectionActions.fetchMyCollections();
           break;
-        case 'CollectionActions.fetchSyncInCollectionRoots':
-          CollectionActions.fetchSyncInCollectionRoots();
+        case 'CollectionActions.createSharedCollections':
+          CollectionActions.fetchMyCollections();
           break;
         case 'InboxActions.fetchInbox':
           InboxActions.fetchInbox();
@@ -67,11 +67,6 @@ const handleNotification = (nots, act, needCallback = true) => {
           break;
         case 'RefreshChemotionCollection':
           CollectionActions.fetchMyCollections();
-          CollectionActions.fetchUnsharedCollectionRoots();
-          break;
-        case 'CollectionActions.fetchUnsharedCollectionRoots':
-          CollectionActions.fetchUnsharedCollectionRoots();
-          CollectionActions.fetchSyncInCollectionRoots();
           break;
         case 'ElementActions.fetchResearchPlanById':
           ElementActions.fetchResearchPlanById(parseInt(n.content.research_plan_id, 10));

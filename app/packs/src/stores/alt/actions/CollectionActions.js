@@ -61,28 +61,6 @@ class CollectionActions {
     };
   }
 
-  fetchUnsharedCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchUnsharedRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchSharedCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchSharedRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
   fetchRemoteCollectionRoots() {
     return (dispatch) => {
       CollectionsFetcher.fetchRemoteRoots()
@@ -116,9 +94,9 @@ class CollectionActions {
     };
   }
 
-  bulkUpdateUnsharedCollections(params) {
+  bulkUpdateCollections(params) {
     return (dispatch) => {
-      CollectionsFetcher.bulkUpdateUnsharedCollections(params)
+      CollectionsFetcher.bulkUpdateCollections(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
