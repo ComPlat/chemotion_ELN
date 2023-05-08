@@ -11,6 +11,7 @@ class GeneralPropertiesTab extends React.Component {
   constructor(props) {
     super(props);
     this.state = { openPanel: 'common-properties' };
+    this.changeAmount = this.changeAmount.bind(this);    
   }
 
   render() {
@@ -18,6 +19,7 @@ class GeneralPropertiesTab extends React.Component {
 
     return (
       <div>
+        {cellLineItem.amount}
         <PanelGroup
           activeKey={this.state.openPanel}
           accordion
@@ -45,7 +47,7 @@ class GeneralPropertiesTab extends React.Component {
           >
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
             <Panel.Body collapsible>
-              {this.renderAttribute('Amount', cellLineItem.amount)}
+              {this.renderAttribute('Amount', cellLineItem.amount, this.changeAmount)}
               {this.renderAttribute('Passage', cellLineItem.passage)}
               {this.renderAttribute('Contamination', cellLineItem.contamination)}
               {this.renderAttribute('Source', cellLineItem.source)}
@@ -59,12 +61,20 @@ class GeneralPropertiesTab extends React.Component {
     );
   }
 
+  changeAmount(e){
+    this.context.cellLineDetailsStore.changeAmountOfCellLine(this.props.item.id, Number(e.target.value));
+  }
+
   renderAttribute(attributeName, defaultValue, onChangeCallBack) {
     return (
       <div>
         <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
         <Col sm={9}>
-          <FormControl type="text" name="XXX" defaultValue={defaultValue} />
+          <FormControl 
+          type="text" 
+          name="XXX" 
+          defaultValue={defaultValue}
+          onChange={onChangeCallBack} />
         </Col>
       </div>
     );
