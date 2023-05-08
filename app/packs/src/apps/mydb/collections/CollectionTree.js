@@ -23,8 +23,6 @@ export default class CollectionTree extends React.Component {
       myCollections: collecState.myCollections,
       mySharedCollections: collecState.mySharedCollections,
       sharedCollections: collecState.sharedCollections,
-      unsharedRoots: collecState.unsharedRoots,
-      sharedRoots: collecState.sharedRoots,
       remoteRoots: collecState.remoteRoots,
       lockedRoots: collecState.lockedRoots,
       syncInRoots: collecState.syncInRoots,
@@ -45,8 +43,6 @@ export default class CollectionTree extends React.Component {
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchCollectionsSharedWithMe();
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
   }
@@ -79,12 +75,6 @@ export default class CollectionTree extends React.Component {
 
     return newRoots;
   }
-  unsharedSubtrees() {
-    let roots = this.state.unsharedRoots;
-    roots = roots.filter(function (item) { return !item.isNew })
-
-    return this.subtrees(roots, null, false);
-  }
 
   myCollections() {
     let myCollections = this.state.myCollections;
@@ -101,13 +91,6 @@ export default class CollectionTree extends React.Component {
         </div>
       </div>
     );
-  }
-
-  unsharedSubtrees() {
-    let roots = this.state.unsharedRoots;
-    roots = roots.filter(function (item) { return !item.isNew })
-
-    return this.subtrees(roots, null, false);
   }
 
   inboxSubtrees() {
