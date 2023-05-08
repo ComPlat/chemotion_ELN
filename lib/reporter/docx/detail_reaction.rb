@@ -112,7 +112,7 @@ module Reporter
         obj.products.each do |p|
           counter += 1
           m = p[:molecule]
-          cas = (p[:xref] && p[:xref][:cas] && p[:xref][:cas][:label]) || "- "
+          cas = (p[:xref] && p[:xref][:cas]) || '- '
           mol_name = sample_molecule_name_delta(p)
           delta += st_name ? name_delta(mol_name, counter, p) : []
           delta += st_formula ? sum_formular_delta(m) : []
@@ -146,7 +146,7 @@ module Reporter
       end
 
       def sum_formular_delta(m)
-        delta = m[:sum_formular].scan(/\d+|\W+|[a-zA-Z]+/).map do |e|
+        delta = m[:sum_formular]&.scan(/\d+|\W+|[a-zA-Z]+/)&.map do |e|
           if e.match(/\d+/).present?
             {"attributes"=>{"script"=>"sub"}, "insert"=>e}
           elsif e.match(/\W+/).present?
@@ -155,7 +155,7 @@ module Reporter
             {"insert"=>e}
           end
         end
-        delta = [{"insert"=>"Formula: "}] + delta + [{"insert"=>"; "}]
+        [{"insert"=>"Formula: "}] + (delta || [{"insert"=>"; "}]) + [{"insert"=>"; "}]
       end
 
       def cas_delta(cas)

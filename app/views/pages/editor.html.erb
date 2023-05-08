@@ -22,6 +22,7 @@
     var title = "<%= params[:title] %>";
     var docType = "<%= params[:docType] %>";
     var key = "<%= params[:key] %>";
+    var only_office_token = "<%= params[:only_office_token] %>";
 
     var innerAlert = function (message) {
         if (console && console.log)
@@ -56,22 +57,21 @@
                     width: "100%",
                     height: "950px",
                     type: "desktop",
-                    documentType: docType,
+                    token: only_office_token,
                     document: {
+                        key: "<%= params[:token] %>",
                         title: title,
                         url: callback_server + '/api/v1/public/download?token=' + key ,
                         fileType: "<%= params[:fileType] %>",
-                        key: "<%= params[:key] %>",
                         info: {
                             author: "<%= current_user.name %>",
                             created: "<%= Time.now.to_s %>",
                         },
-
                         permissions: {
-                            edit: "true",
                             download: true,
+                            edit: true,
                             fillForms: false,
-                            review: false
+                            review: false,
                         },
                     },
                     editorConfig: {

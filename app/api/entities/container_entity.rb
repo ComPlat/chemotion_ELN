@@ -26,6 +26,8 @@ module Entities
         metadata[:report] = report
         metadata[:status] = object.extended_metadata['status']
         metadata[:kind] = object.extended_metadata['kind']
+        metadata[:index] = object.extended_metadata['index']
+        metadata[:instrument] = object.extended_metadata['instrument']
         if object.extended_metadata['content'].present?
           metadata[:content] =
             JSON.parse(object.extended_metadata['content'])

@@ -127,6 +127,7 @@ export default class Wellplate extends Element {
   }
 
   title() {
-    return `${this.short_label}     ${this.name}`;
+    const short_label = this.short_label ? this.short_label : ''
+    return this.name ? `${short_label} ${this.name}` : short_label
   }
 }

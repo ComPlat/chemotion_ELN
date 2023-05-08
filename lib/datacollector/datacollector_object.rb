@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DatacollectorObject
   attr_reader :name, :path, :sftp
 
@@ -9,6 +11,6 @@ class DatacollectorObject
   end
 
   def recipient
-    User.find_by name_abbreviation: @recipient_abbr
+    User.try_find_by_name_abbreviation @recipient_abbr
   end
 end
