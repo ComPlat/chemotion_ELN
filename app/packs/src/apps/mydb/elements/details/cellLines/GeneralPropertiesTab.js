@@ -1,55 +1,72 @@
 import React from 'react';
 import {
-  Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel, InputGroup
+  Col, PanelGroup, Panel, FormControl, ControlLabel
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
-import { CellLineDetailsStore } from 'src/stores/mobx/CellLineDetailsStore';
 
 class GeneralPropertiesTab extends React.Component {
   static contextType = StoreContext;
 
   constructor(props) {
     super(props);
-  }
-
-  componentDidMount() {
-
+    this.state = { openPanel: 'common-properties' };
   }
 
   render() {
     const cellLineItem = this.context.cellLineDetailsStore.cellLines(this.props.item.id);
+
     return (
+      <div>
+        <PanelGroup
+          activeKey={this.state.openPanel}
+          accordion
+        >
+          <Panel
+            eventKey="common-properties"
+            key="common-properties"
+          >
+            <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'common-properties' }); }}>Common Properties</Panel.Heading>
+            <Panel.Body collapsible>
+              {this.renderAttribute('Cell line name', cellLineItem.cellLineName)}
+              {this.renderAttribute('Mutation', cellLineItem.mutation)}
+              {this.renderAttribute('Disease', cellLineItem.disease)}
+              {this.renderAttribute('Organism', cellLineItem.organism)}
+              {this.renderAttribute('Tissue', cellLineItem.tissue)}
+              {this.renderAttribute('Variant', cellLineItem.variant)}
+              {this.renderAttribute('Bio Savety Level', cellLineItem.biosafetyLevel)}
+              {this.renderAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium)}
+            </Panel.Body>
+          </Panel>
 
-      <FormGroup controlId="myGroup">
-        <Col componentClass={ControlLabel} sm={3}>Cell line id</Col>
+          <Panel
+            eventKey="specific-properties"
+            key="specific-properties"
+          >
+            <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
+            <Panel.Body collapsible>
+              {this.renderAttribute('Amount', cellLineItem.amount)}
+              {this.renderAttribute('Passage', cellLineItem.passage)}
+              {this.renderAttribute('Contamination', cellLineItem.contamination)}
+              {this.renderAttribute('Source', cellLineItem.source)}
+              {this.renderAttribute('GrowthMedium', cellLineItem.growthMedium)}
+              {this.renderAttribute('Name of specific probe', cellLineItem.itemName)}
+            </Panel.Body>
+          </Panel>
+        </PanelGroup>
+
+      </div>
+    );
+  }
+
+  renderAttribute(attributeName, defaultValue, onChangeCallBack) {
+    return (
+      <div>
+        <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
         <Col sm={9}>
-          <FormControl type="text" name="XXX" value={cellLineItem.cellLineId} disabled />
+          <FormControl type="text" name="XXX" defaultValue={defaultValue} />
         </Col>
-
-        <Col componentClass={ControlLabel} sm={3}>Cell line name</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={cellLineItem.cellLineName} disabled />
-        </Col>
-
-        <Col componentClass={ControlLabel} sm={1}>Organism</Col>
-        <Col sm={3}>
-          <FormControl type="text" name="XXX" value={cellLineItem.organism} disabled />
-        </Col>
-        <Col componentClass={ControlLabel} sm={1}>Tissue</Col>
-        <Col sm={3}>
-          <FormControl type="text" name="XXX" value={cellLineItem.tissue} disabled />
-        </Col>
-        <Col componentClass={ControlLabel} sm={1}>Disease</Col>
-        <Col sm={3}>
-          <FormControl type="text" name="XXX" value={cellLineItem.disease} disabled />
-        </Col>
-        <Col sm={12}>..........</Col>
-        <Col sm={12}>..........</Col>
-        <Col sm={12}>..........</Col>
-
-      </FormGroup>
-
+      </div>
     );
   }
 }
