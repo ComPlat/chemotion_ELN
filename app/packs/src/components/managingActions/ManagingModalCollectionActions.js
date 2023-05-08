@@ -32,20 +32,15 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   collectionEntries() {
-    const cState = CollectionStore.getState();
-    const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
-    let cShared = [];
-    let cSynced = [];
-    if (this.props.listSharedCollections) {
-      cState.sharedRoots.map(sharedR => cShared = [...cShared, ...sharedR.children]);
-      cState.syncInRoots.map(syncInR => cSynced = [...cSynced, ...syncInR.children]);
-      cSynced = this.writableColls(cSynced);
-    }
+    const collStore = CollectionStore.getState();
+    const ui_state = UIStore.getState();
 
-    if (cShared.length > 0) { cShared[0] = Object.assign(cShared[0], { first: true }); }
-    if (cSynced.length > 0) { cSynced[0] = Object.assign(cSynced[0], { first: true }); }
+    let collections = collStore.myCollections;
+    collections.splice(collections.findIndex(c => c.id === ui_state.currentCollection.id),1);
 
-    const cAll = [...cUnshared, ...cShared, ...cSynced];
+    if (collections.length > 0) { collections[0] = Object.assign(collections[0], { first: true }); }
+
+    const cAll = [...collections];
     let cAllTree = [];
     this.makeTree(cAllTree, cAll, 0);
     return cAllTree;
