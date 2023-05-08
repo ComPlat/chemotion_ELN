@@ -33,7 +33,6 @@ module Chemotion
         end
         optional :collection_id, type: Integer, desc: 'Destination collection id'
         optional :newCollection, type: String, desc: 'Label for a new collection'
-        optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         optional :user_ids, type: Array
         optional :label, type: String
         optional :newCollection, type: String
@@ -41,6 +40,7 @@ module Chemotion
       end
 
       post do
+
         from_collection = case params[:action]
                           when 'move' then fetch_source_collection_for_removal
                           else fetch_source_collection_for_assign
@@ -54,6 +54,7 @@ module Chemotion
           params[:user_ids].each do |user|
             create_elements(params, from_collection, to_collection_id)
             create_generic_elements(params, from_collection, to_collection_id)
+            to_collection_id = to_collection_id ? to_collection_id : from_collection&.id
             create_acl_collection(user[:value], to_collection_id, params)
           end
         else
