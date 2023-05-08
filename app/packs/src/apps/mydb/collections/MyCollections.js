@@ -108,7 +108,7 @@ export default class MyCollections extends React.Component {
       deleted_ids: this.state.deleted_ids
     }
 
-    CollectionActions.bulkUpdateUnsharedCollections(params);
+    CollectionActions.bulkUpdateCollections(params);
   }
 
   actions(node) {

@@ -34,21 +34,6 @@ export default class CollectionsFetcher {
     });
   }
 
-  static fetchUnsharedRoots() {
-    let promise = fetch('/api/v1/collections/roots.json', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
   static fetchMyRoots() {
     let promise = fetch('/api/v1/collections/all', {
       credentials: 'same-origin'
@@ -66,21 +51,6 @@ export default class CollectionsFetcher {
 
   static fetchSharedWithMeRoots() {
     let promise = fetch('/api/v1/share_collections', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static fetchSharedRoots() {
-    let promise = fetch('/api/v1/collections/shared_roots.json', {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -138,7 +108,8 @@ export default class CollectionsFetcher {
         newCollection: params.new_label,
         action: 'share'
       })
-    });
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static createSharedCollections(params) {
@@ -155,7 +126,8 @@ export default class CollectionsFetcher {
         label: params.new_label,
         action: 'share'
       })
-    });
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static editSync(params) {
@@ -190,7 +162,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static bulkUpdateUnsharedCollections(params) {
+  static bulkUpdateCollections(params) {
     let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin',
       method: 'PATCH',
