@@ -165,8 +165,31 @@ module AttachmentJcampProcess
     generate_att(json_tmp, addon, to_edit, 'json')
   end
 
-  def generate_csv_att(csv_tmp, addon, to_edit = false)
-    generate_att(csv_tmp, addon, to_edit, 'csv')
+  def generate_csv_att(csv_tmp, addon, to_edit = false, params={})
+    csv_reader = CSV.new(csv_tmp)
+    csv_data = csv_reader.read
+    sample_id_field = csv_data[2]
+    sample_id_field[1] = params[:sample_id]
+    analysis_id_field = csv_data[3]
+    analysis_id_field[1] = params[:analysis_id]
+    dataset_id_field = csv_data[4]
+    dataset_id_field[1] = params[:dataset_id]
+    dataset_name_field = csv_data[5]
+    dataset_name_field[1] = params[:dataset_name]
+
+    csv_data[2] = sample_id_field
+    csv_data[3] = analysis_id_field
+    csv_data[4] = dataset_id_field
+    csv_data[5] = dataset_name_field
+    Tempfile.create(['jcamp', '.csv']) do |new_csv_tmp|
+      CSV.open(new_csv_tmp, 'wb') do |csv|
+        csv_data.each do |row|
+          csv << row
+        end
+      end
+      new_csv_tmp.rewind
+      generate_att(new_csv_tmp, addon, to_edit, 'csv')
+    end
   end
 
   def generate_nmrium_att(nmrium_tmp, addon, to_edit = false)
@@ -176,8 +199,17 @@ module AttachmentJcampProcess
   def build_params(params = {})
     _, extname = extension_parts
     params[:mass] = 0.0
+    params[:dataset_id] = attachable.id
+    params[:dataset_name] = attachable.name
     if attachable&.root_element.is_a?(Sample)
       params[:mass] = attachable&.root_element&.molecule&.exact_molecular_weight || 0.0
+      params[:sample_id] = attachable&.root_element.id
+
+      attachable.ancestors.each do |ancestor|
+        if ancestor.container_type == 'analysis'
+          params[:analysis_id] = ancestor.id
+        end
+      end
     end
     params[:ext] = extname.downcase
     params[:fname] = filename.to_s
@@ -217,7 +249,7 @@ module AttachmentJcampProcess
     check_invalid_molfile(invalid_molfile)
 
     if spc_type == 'bagit'
-      read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
+      read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     elsif arr_jcamp.length > 1
       read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     else
@@ -251,7 +283,7 @@ module AttachmentJcampProcess
 
     unless arr_csv.nil? || arr_csv.length == 0
       curr_tmp_csv = arr_csv[0]
-      csv_att = generate_csv_att(curr_tmp_csv, 'edit', false)
+      csv_att = generate_csv_att(curr_tmp_csv, 'edit', false, params)
       tmp_files_to_be_deleted.push(*arr_csv)
       delete_related_csv(csv_att)
     end
@@ -331,7 +363,7 @@ module AttachmentJcampProcess
     jcamp_att
   end
 
-  def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen)
+  def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     jcamp_att = nil
     tmp_to_be_deleted = []
     tmp_img_to_deleted = []
@@ -344,7 +376,7 @@ module AttachmentJcampProcess
       tmp_img_to_deleted.push(img_att)
 
       curr_tmp_csv = arr_csv[idx]
-      _ = generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit")
+      _ = generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
       tmp_to_be_deleted.push(curr_tmp_csv)
 
       jcamp_att = curr_jcamp_att if idx == 0
