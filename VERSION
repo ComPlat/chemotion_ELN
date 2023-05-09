@@ -1,2 +1,3 @@
-version: main
-base_revision: 0 
+version: 1.6.0
+base_revision: 23809bf7e 
+current_revision: 0
