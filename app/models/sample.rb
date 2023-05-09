@@ -374,8 +374,7 @@ class Sample < ApplicationRecord
     self.residues[0] && self.residues[0].custom_info['loading'].to_f
   end
 
-  def attach_svg
-    svg = self.sample_svg_file
+  def attach_svg(svg = sample_svg_file)
     return unless svg.present?
 
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
