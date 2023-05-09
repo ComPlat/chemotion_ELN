@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
 import SearchResult from './SearchResult';
@@ -15,6 +13,8 @@ const AdvancedSearchForm = () => {
     link: '',
     match: '=',
     table: 'samples',
+    element_id: 0,
+    element_table: 'samples',
     field: {
       column: 'name',
       label: 'Name',
@@ -22,6 +22,8 @@ const AdvancedSearchForm = () => {
     value: ''
   }];
 
+  const elnElements = ['samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
+  const genericElements = UserStore.getState().genericEls || [];
   const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
@@ -35,7 +37,14 @@ const AdvancedSearchForm = () => {
       (length == 0 && lastInputRow.field && lastInputRow.value);
 
     if (checkSelectedElements) {
-      selectedOptions.push({ link: 'OR', match: 'LIKE', table: selectedOptions[0].table, field: '', value: '' });
+      selectedOptions.push(
+        {
+          link: 'OR', match: 'LIKE', table: selectedOptions[0].table,
+          element_id: selectedOptions[0].element_id,
+          element_table: selectedOptions[0].element_table,
+          field: '', value: ''
+        }
+      );
       setSelectedOptions((a) => [...a]);
     }
   }, [selectedOptions, setSelectedOptions]);
@@ -84,17 +93,22 @@ const AdvancedSearchForm = () => {
   }
 
   const handleChangeElement = (element) => {
-    defaultSelections[0].table = element;
+    const table = elnElements.includes(element) ? element : 'elements';
+    const genericElement = (!elnElements.includes(element) && genericElements.find(el => el.name + 's' === element)) || {};
+
+    defaultSelections[0].table = table;
+    defaultSelections[0].element_id = (genericElement.id || 0);
+    defaultSelections[0].element_table = element
     setSelectedOptions(defaultSelections);
     setSelectedOptions((a) => [...a]);
   }
 
   const SelectSearchTable = () => {
-    const elementsForSelect = ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'];
     const layout = UserStore.getState().profile.data.layout;
 
     const buttons = Object.entries(layout).filter((value) => {
-      return value[1] > 0 && elementsForSelect.includes(value[0]);
+      return value[1] > 0
+      // && elnElements.includes(value[0] + 's');
     })
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
@@ -111,9 +125,9 @@ const AdvancedSearchForm = () => {
       <ToggleButtonGroup
         type="radio"
         name="options"
-        value={selectedOptions[0].table}
+        value={selectedOptions[0].element_table}
         onChange={handleChangeElement}
-        defaultValue={'samples'}>
+        defaultValue={0}>
         {buttons}
       </ToggleButtonGroup>
     );
@@ -171,7 +185,6 @@ const AdvancedSearchForm = () => {
   }
 
   const handleChangeSelection = (idx, formElement) => (e) => {
-    console.log(formElement, e)
     let value = formElementValue(formElement, e, e.currentTarget);
     selectedOptions[idx][formElement] = value;
     setSelectedOptions((a) => [...a]);

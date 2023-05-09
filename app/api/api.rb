@@ -123,11 +123,12 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w[name short_label external_label xref],
-    'reactions' => %w[name short_label status conditions rxno],
-    'wellplates' => %w[name short_label],
-    'screens' => %w[name collaborator requirements conditions result],
-    'research_plans' => %w[name],
+    'samples' => %w[name short_label external_label xref content],
+    'reactions' => %w[name short_label status conditions rxno content],
+    'wellplates' => %w[name short_label content],
+    'screens' => %w[name collaborator requirements conditions result content],
+    'research_plans' => %w[name body content],
+    'elements' => %w[name short_label],
   }.freeze
 
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'

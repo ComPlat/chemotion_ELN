@@ -30,6 +30,13 @@ export default {
         },
         label: 'CAS'
       },
+      {
+        value: {
+          column: 'content',
+          label: 'Private Note'
+        },
+        label: 'Private Note'
+      },
     ],
     reactions: [
       {
@@ -67,6 +74,13 @@ export default {
         },
         label: 'Type'
       },
+      {
+        value: {
+          column: 'content',
+          label: 'Private Note'
+        },
+        label: 'Private Note'
+      },
     ],
     wellplates: [
       {
@@ -82,6 +96,13 @@ export default {
           label: 'Short Label'
         },
         label: 'Short Label'
+      },
+      {
+        value: {
+          column: 'content',
+          label: 'Private Note'
+        },
+        label: 'Private Note'
       },
     ],
     screens: [
@@ -120,6 +141,13 @@ export default {
         },
         label: 'Result'
       },
+      {
+        value: {
+          column: 'content',
+          label: 'Private Note'
+        },
+        label: 'Private Note'
+      },
     ],
     research_plans: [
       {
@@ -129,6 +157,36 @@ export default {
         },
         label: 'Name'
       },
-    ]
+      {
+        value: {
+          column: 'body',
+          label: 'Text'
+        },
+        label: 'Text'
+      },
+      {
+        value: {
+          column: 'content',
+          label: 'Private Note'
+        },
+        label: 'Private Note'
+      },
+    ],
+    elements: [
+      {
+        value: {
+          column: 'name',
+          label: 'Name'
+        },
+        label: 'Name'
+      },
+      {
+        value: {
+          column: 'short_label',
+          label: 'Short Label'
+        },
+        label: 'Short Label'
+      },
+    ],
   }
 }

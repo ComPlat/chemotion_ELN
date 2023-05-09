@@ -35,7 +35,8 @@ module Chemotion
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
             optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE'], default: 'LIKE'
-            optional :table, type: String, values: %w[samples reactions wellplates screens research_plans]
+            optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements]
+            optional :element_id, type: Integer
             requires :field, type: Hash
             requires :value, type: String
           end
@@ -127,32 +128,49 @@ module Chemotion
         query = ''
         cond_val = []
         model_name = ''
+        joins = []
 
         adv_params.each do |filter|
           filter['field']['table'] = filter['table']
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
+          element_field = ''
           next unless whitelisted_table(**adv_field)
           next unless filter_with_detail_level(**adv_field)
 
           table = filter['table']
+          condition_table = "#{table}."
           model_name = table.singularize.camelize.constantize
           # tables.push(table: table, ext_key: filter['field']['ext_key'])
           field = filter['field']['column']
           words = filter['value'].split(/(\r)?\n/).map!(&:strip)
           words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
           field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
-          conditions = words.collect { "#{table}.#{field} #{filter['match']} ? " }.join(' OR ')
+          element_field = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
+
+          if filter['field']['column'] == 'body'
+            joins << 'CROSS JOIN jsonb_array_elements(body) AS element'
+            joins << "CROSS JOIN jsonb_array_elements(element -> 'value' -> 'ops') AS ops"
+            field = "(ops ->> 'insert')::TEXT"
+            condition_table = ''
+          elsif filter['field']['column'] == 'content'
+            joins << "INNER JOIN private_notes ON private_notes.noteable_type = '#{model_name.to_s}' AND private_notes.noteable_id = #{table}.id"
+            condition_table = 'private_notes.'
+          end
+
+          conditions = words.collect { "#{condition_table}#{field} #{filter['match']} ? #{element_field}" }.join(' OR ')
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
         end
-        [query, cond_val, model_name]
+        [query, cond_val, model_name, joins]
       end
 
       def advanced_search(c_id = @c_id, dl = @dl)
-        query, cond_val, model_name = filter_values_for_advanced_search(dl)
+        query, cond_val, model_name, joins = filter_values_for_advanced_search(dl)
         scope = model_name.by_collection_id(c_id.to_i)
                           .where([query] + cond_val)
+                          .joins(joins.join(' '))
         scope = order_by_molecule(scope) if model_name == Sample
+        scope = scope.group("#{model_name.table_name}.id") if model_name == ResearchPlan
         scope
       end
 
@@ -320,6 +338,7 @@ module Chemotion
         samples_data = serialize_samples(sample_ids, page, molecule_sort)
         screen_ids = elements.fetch(:screen_ids, [])
         wellplate_ids = elements.fetch(:wellplate_ids, [])
+        research_plan_ids = elements.fetch(:research_plan_ids, [])
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
@@ -334,6 +353,11 @@ module Chemotion
         paginated_screen_ids = Kaminari.paginate_array(screen_ids).page(page).per(page_size)
         serialized_screens = Screen.find(paginated_screen_ids).map do |screen|
           Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
+        end
+
+        paginated_research_plan_ids = Kaminari.paginate_array(research_plan_ids).page(page).per(page_size)
+        serialized_research_plans = ResearchPlan.find(paginated_research_plan_ids).map do |research_plan|
+          Entities::ResearchPlanEntity.represent(research_plan, displayed_in_list: true).serializable_hash
         end
 
         result = {
@@ -368,6 +392,14 @@ module Chemotion
             pages: pages(screen_ids.size),
             perPage: page_size,
             ids: screen_ids,
+          },
+          research_plans: {
+            elements: serialized_research_plans,
+            totalElements: research_plan_ids.size,
+            page: page,
+            pages: pages(research_plan_ids.size),
+            perPage: page_size,
+            ids: research_plan_ids,
           },
         }
 
@@ -483,6 +515,7 @@ module Chemotion
         user_reactions = Reaction.by_collection_id(collection_id)
         user_wellplates = Wellplate.by_collection_id(collection_id)
         user_screens = Screen.by_collection_id(collection_id)
+        user_research_plans = ResearchPlan.by_collection_id(collection_id)
         user_elements = Labimotion::Element.by_collection_id(collection_id)
 
         case scope&.first
@@ -490,23 +523,38 @@ module Chemotion
           elements[:sample_ids] = scope&.ids
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
-          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Reaction
           elements[:reaction_ids] = scope&.ids
           elements[:sample_ids] = user_samples.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
           elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
-          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
         when Wellplate
           elements[:wellplate_ids] = scope&.ids
           elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Screen
           elements[:screen_ids] = scope&.ids
           elements[:wellplate_ids] = user_wellplates.by_screen_ids(elements[:screen_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
-          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
+          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+        when ResearchPlan
+          elements[:research_plan_ids] = scope&.ids
+          sample_ids = ResearchPlan.sample_ids_by_research_plan_ids(elements[:research_plan_ids])
+          reaction_ids = ResearchPlan.reaction_ids_by_research_plan_ids(elements[:research_plan_ids])
+          elements[:sample_ids] = sample_ids.map(&:sample_id).uniq
+          elements[:reaction_ids] = reaction_ids.map(&:reaction_id).uniq
+          elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
+          elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Labimotion::Element
           elements[:element_ids] = scope&.ids
           sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
@@ -528,6 +576,7 @@ module Chemotion
             scope&.screens_ids +
             user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
           ).uniq
+
           elements[:element_ids] = (scope&.element_ids).uniq
         end
         elements
