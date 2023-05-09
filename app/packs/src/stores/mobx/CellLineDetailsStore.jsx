@@ -6,9 +6,16 @@ const CellLineAnalysis = types
     id: '',
     children: types.array(types.late(() => CellLineAnalysis)),
     name:'',
-    container_type:''
+    container_type:'',
+    extended_metadata :'',
+    description:''
 
-  });
+  }) .actions((self) => ({
+    setDescription(newValue) {
+      self.description = newValue;
+    }}
+  ));
+  
 
 const CellLineItem = types
   .model({
@@ -49,6 +56,7 @@ export const CellLineDetailsStore = types
       self.cellLineItem.get(id).container.children
         .filter(element=>~element.container_type.indexOf('analyses'))[0]
         .children.push(self.convertJsModelToMobxModel(container));
+        return container;
     },
     convertJsModelToMobxModel(container){
       return CellLineAnalysis.create({
