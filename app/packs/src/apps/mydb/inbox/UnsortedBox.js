@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
+import Pagination from 'src/apps/mydb/inbox/Pagination';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 import Container from 'src/models/Container';
@@ -24,10 +25,47 @@ export default class UnsortedBox extends React.Component {
       modal: {
         show: false,
         datasetContainer: null
-      }
+      },
+      currentPage: 1,
+      itemsPerPage: inboxState.dataItemsPerPage,
     };
     this.toggleSelectAllCheckbox = this.toggleSelectAllCheckbox.bind(this);
     this.deleteCheckedAttachment = this.deleteCheckedAttachment.bind(this);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    const { unsortedVisible } = this.props;
+    this.setState({ visible: unsortedVisible });
+    InboxStore.listen(this.onChange);
+  }
+
+  componentDidUpdate(prevProps) {
+    const { unsortedVisible } = this.props;
+    if (unsortedVisible !== prevProps.unsortedVisible) {
+      this.setState({ visible: unsortedVisible });
+    }
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState(state);
+  }
+
+  handleClick() {
+    const { visible } = this.state;
+    const { fromCollectionTree } = this.props;
+
+    InboxActions.setActiveDeviceBoxId(-1);
+
+    if (fromCollectionTree) {
+      return;
+    }
+
+    this.setState({ visible: !visible });
   }
 
   handleFileModalOpen(datasetContainer) {
@@ -44,6 +82,18 @@ export default class UnsortedBox extends React.Component {
     this.setState({ modal });
     document.body.className = document.body.className.replace('modal-open', '');
   }
+
+  handlePrevClick = () => {
+    this.setState((prevState) => ({
+      currentPage: prevState.currentPage - 1,
+    }));
+  };
+
+  handleNextClick = () => {
+    this.setState((prevState) => ({
+      currentPage: prevState.currentPage + 1,
+    }));
+  };
 
   handleUploadButton() {
     const datasetContainer = Container.buildEmpty();
@@ -80,7 +130,7 @@ export default class UnsortedBox extends React.Component {
       // eslint-disable-next-line array-callback-return
       unsortedBox.map((attachment) => {
         if (checkedId === attachment.id) {
-          InboxActions.deleteAttachment(attachment);
+          InboxActions.deleteAttachment(attachment, true);
         }
       });
     });
@@ -90,8 +140,10 @@ export default class UnsortedBox extends React.Component {
   }
 
   render() {
-    const { unsorted_box, largerInbox } = this.props;
-    const { visible, modal, checkedAll } = this.state;
+    const { unsorted_box, largerInbox, fromCollectionTree } = this.props;
+    const {
+      visible, modal, checkedAll, currentPage, itemsPerPage
+    } = this.state;
 
     const renderCheckAll = (
       <div>
@@ -143,19 +195,19 @@ export default class UnsortedBox extends React.Component {
       </span>
     );
 
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const totalPages = Math.ceil(unsorted_box.length / itemsPerPage);
 
-    const attachments = visible ? unsorted_box.map((attachment) => {
-      return (
-        <AttachmentContainer
-          key={`attach_${attachment.id}`}
-          sourceType={DragDropItemTypes.UNLINKED_DATA}
-          attachment={attachment}
-          largerInbox={largerInbox}
-        />
-      );
-    })
-      :
-      <div />;
+    const attachments = visible ? unsorted_box.slice(startIndex, endIndex).map((attachment) => (
+      <AttachmentContainer
+        key={`attach_${attachment.id}`}
+        sourceType={DragDropItemTypes.UNLINKED_DATA}
+        attachment={attachment}
+        largerInbox={largerInbox}
+        fromUnsorted
+      />
+    )) : <div />;
 
     const folderClass = `fa fa-folder${visible ? '-open' : ''}`;
 
@@ -175,11 +227,21 @@ export default class UnsortedBox extends React.Component {
 
     return (
       <div className="tree-view">
-        <div className="title">
+        <div
+          className="title"
+          onClick={() => this.handleClick()}
+          role="button"
+        >
           <button
             type="button"
             className="btn-inbox"
-            onClick={() => this.setState({ visible: !visible })}
+            onClick={InboxActions.showInboxModal}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                InboxActions.showInboxModal();
+              }
+            }}
           >
             <i
               className={folderClass}
@@ -191,6 +253,16 @@ export default class UnsortedBox extends React.Component {
           {' '}
           {uploadButton}
         </div>
+        {
+          visible && !fromCollectionTree && unsorted_box.length > itemsPerPage ? (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              handlePrevClick={this.handlePrevClick}
+              handleNextClick={this.handleNextClick}
+            />
+          ) : null
+        }
         <table>
           <tbody>
             <tr>
@@ -212,9 +284,13 @@ export default class UnsortedBox extends React.Component {
 
 UnsortedBox.propTypes = {
   unsorted_box: PropTypes.array.isRequired,
-  largerInbox: PropTypes.bool
+  largerInbox: PropTypes.bool,
+  unsortedVisible: PropTypes.bool,
+  fromCollectionTree: PropTypes.bool,
 };
 
 UnsortedBox.defaultProps = {
-  largerInbox: false
+  largerInbox: false,
+  unsortedVisible: false,
+  fromCollectionTree: false,
 };

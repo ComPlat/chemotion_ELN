@@ -261,6 +261,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", null: false
     t.integer "parent_id"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
+    t.index ["name"], name: "index_containers_on_name"
   end
 
   create_table "dataset_klasses", id: :serial, force: :cascade do |t|

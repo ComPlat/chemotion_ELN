@@ -57,9 +57,9 @@ class InboxActions {
     };
   }
 
-  fetchInboxContainer(container) {
+  fetchInboxContainer(containerId, currentPage) {
     return (dispatch) => {
-      InboxFetcher.fetchInboxByContainer(container)
+      InboxFetcher.fetchInboxByContainer(containerId, currentPage)
         .then((result) => {
           dispatch(result.inbox);
         }).catch((errorMessage) => {
@@ -92,11 +92,14 @@ class InboxActions {
     return deviceBoxId;
   }
 
-  deleteAttachment(params) {
+  deleteAttachment(params, fromUnsorted = false) {
     return (dispatch) => {
       AttachmentFetcher.deleteAttachment(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({
+            result,
+            fromUnsorted,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

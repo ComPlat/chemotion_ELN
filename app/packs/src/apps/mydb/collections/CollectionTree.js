@@ -63,6 +63,13 @@ export default class CollectionTree extends React.Component {
     InboxStore.unlisten(this.onChange);
   }
 
+  handleSectionToggle = (visible) => {
+    this.setState((prevState) => ({
+      [visible]: !prevState[visible],
+      inboxSectionVisible: false
+    }));
+  };
+
   onChange(state) {
     this.setState(state);
   }
@@ -71,7 +78,13 @@ export default class CollectionTree extends React.Component {
     const {
       inboxSectionVisible, inbox, currentPage, itemsPerPage
     } = this.state;
-    this.setState({ inboxSectionVisible: !inboxSectionVisible });
+    this.setState({
+      inboxSectionVisible: !inboxSectionVisible,
+      ownCollectionVisible: false,
+      sharedToCollectionVisible: false,
+      sharedWithCollectionVisible: false,
+      syncCollectionVisible: false,
+    });
     if (!inbox.children) {
       LoadingActions.start();
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
@@ -121,8 +134,11 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div className="title" style={{ backgroundColor: 'white' }}
-          onClick={() => this.setState({ sharedToCollectionVisible: !sharedToCollectionVisible })}>
+        <div
+          className="title"
+          style={{ backgroundColor: 'white' }}
+          onClick={() => this.handleSectionToggle('sharedToCollectionVisible')}
+        >
           <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
           My shared collections
         </div>
@@ -151,8 +167,12 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div id="shared-home-link" className="title" style={{ backgroundColor: 'white' }}
-          onClick={() => this.setState({ sharedWithCollectionVisible: !sharedWithCollectionVisible })}>
+        <div
+          id="shared-home-link"
+          className="title"
+          style={{ backgroundColor: 'white' }}
+          onClick={() => this.handleSectionToggle('sharedWithCollectionVisible')}
+        >
           <i className="fa fa-share-alt share-icon" />
           &nbsp;&nbsp;
           Shared with me &nbsp;
@@ -196,10 +216,13 @@ export default class CollectionTree extends React.Component {
             ? <div className="title" key="more" style={{ textAlign: 'center' }}><i className="fa fa-ellipsis-h" aria-hidden="true" /></div>
             : ''}
         </div>
-        {inbox.unlinked_attachments
-          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
-          : ''
-        }
+        {inbox.unlinked_attachments ? (
+          <UnsortedBox
+            key="unsorted_box"
+            unsorted_box={inbox.unlinked_attachments}
+            fromCollectionTree
+          />
+        ) : ''}
       </div>
     );
   }
@@ -223,8 +246,12 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div id="synchron-home-link" className="title" style={{ backgroundColor: 'white' }}
-          onClick={() => this.setState({ syncCollectionVisible: !syncCollectionVisible })}>
+        <div
+          id="synchron-home-link"
+          className="title"
+          style={{ backgroundColor: 'white' }}
+          onClick={() => this.handleSectionToggle('syncCollectionVisible')}
+        >
           <i className="fa fa-share-alt" />&nbsp;&nbsp;
           Synchronized with me &nbsp;
         </div>
@@ -323,8 +350,11 @@ export default class CollectionTree extends React.Component {
         <div className="tree-view">
           {this.collectionManagementButton()}
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
-            <div className="title" style={{ backgroundColor: 'white' }}
-              onClick={() => this.setState({ ownCollectionVisible: !ownCollectionVisible })}>
+            <div
+              className="title"
+              style={{ backgroundColor: 'white' }}
+              onClick={() => this.handleSectionToggle('ownCollectionVisible')}
+            >
               <i className="fa fa-list" /> &nbsp;&nbsp; Collections
             </div>
           </OverlayTrigger>

@@ -1,6 +1,6 @@
 export default class InboxFetcher {
   static fetchInbox(isCntOnly = false, queryParams = {}) {
-    const promise = fetch(`/api/v1/inbox?cnt_only=${isCntOnly}&page=${queryParams.currentPage || 1}&per_page=${queryParams.itemsPerPage || 3}`, {
+    const promise = fetch(`/api/v1/inbox?cnt_only=${isCntOnly}&page=${queryParams.currentPage || 1}&per_page=${queryParams.itemsPerPage || 20}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())
@@ -12,8 +12,8 @@ export default class InboxFetcher {
     return promise;
   }
 
-  static fetchInboxByContainer(container) {
-    const promise = fetch(`/api/v1/inbox/containers/id?id=${container.id}`, {
+  static fetchInboxByContainer(containerId, currentPage) {
+    const promise = fetch(`/api/v1/inbox/containers/id?id=${containerId}&dataset_page=${currentPage || 1}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())

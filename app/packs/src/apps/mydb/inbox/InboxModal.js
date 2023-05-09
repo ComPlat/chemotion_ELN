@@ -1,6 +1,8 @@
 import React from 'react';
 import Draggable from 'react-draggable';
-import { Badge, Button, Panel, Glyphicon, Pagination } from 'react-bootstrap';
+import {
+  Badge, Button, Panel, Glyphicon, Pagination
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -42,8 +44,8 @@ export default class InboxModal extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { currentPage, itemsPerPage } = this.state;
-    if (prevState.currentPage !== this.state.currentPage ||
-        prevState.itemsPerPage !== this.state.itemsPerPage) {
+    if (prevState.currentPage !== this.state.currentPage
+        || prevState.itemsPerPage !== this.state.itemsPerPage) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
   }
@@ -147,17 +149,21 @@ export default class InboxModal extends React.Component {
       <div className="tree-view">
         {boxes}
         {this.renderPagination()}
-        {inbox.unlinked_attachments
-          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} largerInbox />
-          : ''
-        }
+        {inbox.unlinked_attachments ? (
+          <UnsortedBox
+            key="unsorted_box"
+            unsorted_box={inbox.unlinked_attachments}
+            unsortedVisible={activeDeviceBoxId === -1}
+            largerInbox
+          />
+        ) : ''}
       </div>
     );
   }
 
   render() {
     const { showCollectionTree } = this.props;
-    const { visible, inboxVisible } = this.state;
+    const { visible, inboxVisible, numberOfAttachments } = this.state;
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -183,7 +189,13 @@ export default class InboxModal extends React.Component {
                   <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
                 </button>
                 {
-                  this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
+                  numberOfAttachments > 0 ? (
+                    <Badge>
+                      {' '}
+                      {numberOfAttachments}
+                      {' '}
+                    </Badge>
+                  ) : ''
                 }
                 <Button
                   bsStyle="danger"
