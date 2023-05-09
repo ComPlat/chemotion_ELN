@@ -2,6 +2,29 @@
 # Chemotion_ELN Changelog
 
 
+## [v1.6.0] 
+> 2023-05-09
+
+* Features and Improvements:
+  * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239)
+  * Chemspectra: UI for Cyclic Voltametry and CDS layouts [#1272](https://github.com/ComPlat/chemotion_ELN/pull/1273)
+
+* Fixes
+  * port fixes from v1.5.3 v1.5.4
+ 
+## [v1.5.4]
+> 2023-05-09
+
+* Fixes
+  * datacollector: find user by insensitive case name_abbreviation [#1302](https://github.com/ComPlat/chemotion_ELN/pull/1302)
+  * eln to work with onlyoffice 7 [#1278](https://github.com/ComPlat/chemotion_ELN/pull/1278)
+  * correct url building for inbox item notification [#1299](https://github.com/ComPlat/chemotion_ELN/pull/1299)
+  * Cas datamodel change [#1287](https://github.com/ComPlat/chemotion_ELN/pull/1287)
+  * Migration fixes [#1307](https://github.com/ComPlat/chemotion_ELN/pull/1307)
+  * reactants from reagent list do not appear above reaction arrow [#1308](https://github.com/ComPlat/chemotion_ELN/pull/1308)
+  * Search api: fix ActiveRecord::UnknownAttributeReference on sum-formulae [#1310](https://github.com/ComPlat/chemotion_ELN/pull/1310)
+ 
+
 ## [v1.5.3]
 > 2023-04-21
 
