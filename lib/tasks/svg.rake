@@ -52,7 +52,7 @@ namespace :svg do
       svg = Ketcherails::SVGProcessor.new(svg)
       svg = svg.centered_and_scaled_svg
 
-      FileUtils.rm(svg_path) if svg_file_exists
+      FileUtils.rm_f(svg_path) if svg_file_exists
 
       element.attach_svg(svg)
       element.save(touch: false)
