@@ -42,7 +42,7 @@
     "immutable": "^4.0.0-rc.12",
     "jcampconverter": "^2.11.0",
     "js-yaml": "^3.13.1",
-    "jsdom": "^9.8.0",
+    "jsdom": "^16.5.0",
     "lodash": "^4.17.20",
     "mobx": "^6.6.0",
     "mobx-react": "^7.5.0",
