@@ -1,5 +1,4 @@
 import React, { useContext, useState, useEffect } from 'react';
-import SVG from 'react-inlinesvg';
 import { Tab, Pagination } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -125,7 +124,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
   }
 
   const tabContentList = () => {
-    let contentList = <div key={list.index} className="search-result-tab-content-list">No results</div>;
+    let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
     let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
     let tabResultByPage = resultsByPage != undefined ? resultsByPage.results : { elements: [] };
 
@@ -134,19 +133,29 @@ const SearchResultTabContent = ({ list, tabResult }) => {
         let previous = elements[i - 1];
         let previousMolecule = previous ? previous.molecule_formula : '';
         let moleculeName = previous && previousMolecule == object.molecule_formula ? '' : <SampleName sample={object} />;
-        let shortLabelWithName = object.type == 'screen' ? object.name : [object.short_label, object.name].join(" - ");
+        let shortLabelWithName = ['screen', 'research_plan'].includes(object.type) ? object.name : [object.short_label, object.name].join(" - ");
 
-        return (
-          <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
-            <div key={moleculeName} className={`search-result-molecule ${object.type}`}>
-              {svgPreview(object)}
-              {moleculeName}
+        if (['sample', 'reaction'].includes(object.type)) {
+          return (
+            <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+              <div key={moleculeName} className={`search-result-molecule ${object.type}`}>
+                {svgPreview(object)}
+                {moleculeName}
+              </div>
+              <span className="search-result-tab-content-list-name">
+                {shortLabelWithName}
+              </span>
             </div>
-            <span className="search-result-tab-content-list-name">
-              {shortLabelWithName}
-            </span>
-          </div>
-        )
+          )
+        } else {
+          return (
+            <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
+              <div key={object.type}>
+                {shortLabelWithName}
+              </div>
+            </div>
+          )
+        }
       });
     } else if (tabResult.total_elements != 0) {
       contentList = <div className="tab-spinner"><i className="fa fa-spinner fa-pulse fa-3x fa-fw" /></div>;

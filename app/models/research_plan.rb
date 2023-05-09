@@ -22,7 +22,27 @@ class ResearchPlan < ApplicationRecord
   validates :creator, :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :includes_for_list_display, ->() { includes(:attachments) }
+  scope :includes_for_list_display, -> { includes(:attachments) }
+  scope :by_sample_ids, lambda { |ids|
+    joins('CROSS JOIN jsonb_array_elements(body) AS element')
+      .where("(element -> 'value'->> 'sample_id')::INT = ANY(array[?])", ids)
+  }
+  scope :by_reaction_ids, lambda { |ids|
+    joins('CROSS JOIN jsonb_array_elements(body) AS element')
+      .where("(element -> 'value'->> 'reaction_id')::INT = ANY(array[?])", ids)
+  }
+  scope :sample_ids_by_research_plan_ids, lambda { |ids|
+    select("(element -> 'value'->> 'sample_id') AS sample_id")
+      .joins('CROSS JOIN jsonb_array_elements(body) AS element')
+      .where(id: ids)
+      .where("(element -> 'value'->> 'sample_id')::INT IS NOT NULL")
+  }
+  scope :reaction_ids_by_research_plan_ids, lambda { |ids|
+    select("(element -> 'value'->> 'reaction_id') AS reaction_id")
+      .joins('CROSS JOIN jsonb_array_elements(body) AS element')
+      .where(id: ids)
+      .where("(element -> 'value'->> 'reaction_id')::INT IS NOT NULL")
+  }
 
   after_create :create_root_container
 
