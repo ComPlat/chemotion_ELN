@@ -50,6 +50,15 @@ export default class CellLineAnalysisHeader extends React.Component {
     this.props.parent.handleChange(container);
   }
 
+  handleDeleteContainer(container, e) {
+    // To prevent showing the content of the restored analysis i will stop the event here
+    e.stopPropagation();
+    if (confirm('Delete the analysis?')) {
+      container.is_deleted = true;
+      this.props.parent.handleChange(container);
+    }
+  }
+
   renderNotDeletedContainer() {
     const { container } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
@@ -65,6 +74,14 @@ export default class CellLineAnalysisHeader extends React.Component {
       <div className="analysis-header">
         <div className="preview">{this.renderImagePreview(container)}</div>
         <div className="abstract">
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            className="button-right"
+            onClick={(e) => { this.handleDeleteContainer(container, e); }}
+          >
+            <i className="fa fa-trash" />
+          </Button>
           <div className="lower-text">
             <div className="main-title">{container.name}</div>
             <div className="sub-title">
