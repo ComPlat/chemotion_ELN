@@ -2,10 +2,9 @@ import React, { Component } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
-import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import QuillViewer from 'src/components/QuillViewer';
+import CellLineAnalysisHeader from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisHeader';
 
 class CellLineDetailsContainers extends Component {
   static contextType = StoreContext;
@@ -37,18 +36,18 @@ class CellLineDetailsContainers extends Component {
   }
 
   renderContainerPanel() {
-    const amount = this.context.cellLineDetailsStore.analysisAmount(this.props.item.id);
     const { currentElement } = ElementStore.getState();
     const containers = currentElement.container.children[0].children;
 
-    if (amount > 0) {
+    if (containers.length > 0) {
       return (
-
         <div>
           <PanelGroup
+            id={`cellLineAnalysisPanelGroupOf:${currentElement.id}`}
             defaultActiveKey="none"
             activeKey={this.state.openPanel}
             accordion
+            onSelect={(e) => {}}
           >
 
             {containers.map((container) => (
@@ -59,7 +58,7 @@ class CellLineDetailsContainers extends Component {
                 <Panel.Heading
                   onClick={(e) => this.handleClickOnPanelHeader(container.id)}
                 >
-                  {this.renderAnalysisHeader(container)}
+                  <CellLineAnalysisHeader container={container} parent={this} />
                 </Panel.Heading>
                 <Panel.Body collapsible>
                   <ContainerComponent
@@ -81,7 +80,6 @@ class CellLineDetailsContainers extends Component {
   }
 
   handleChange(editedContainer) {
-    console.log('Hallo');
     this.forceUpdate();
   }
 
@@ -102,39 +100,7 @@ class CellLineDetailsContainers extends Component {
   }
 
   renderAnalysisHeader(container) {
-    const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
-    const contentOneLine = {
-      ops: content.ops.map((x) => {
-        const c = { ...x };
-        if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
-        return c;
-      }),
-    };
 
-    if (container.is_deleted) {
-
-    } else {
-      return (
-        <div className="lower-text">
-          <div className="main-title">{container.name}</div>
-          <div className="sub-title">
-            Type:
-            {container.type || ''}
-          </div>
-          <div className="sub-title">
-            Status:
-            {container.status || ''}
-          </div>
-          <div className="desc sub-title">
-            <span style={{ float: 'left', marginRight: '5px' }}>
-              Content:
-            </span>
-            <QuillViewer value={contentOneLine} preview />
-          </div>
-
-        </div>
-      );
-    }
   }
 }
 export default observer(CellLineDetailsContainers);

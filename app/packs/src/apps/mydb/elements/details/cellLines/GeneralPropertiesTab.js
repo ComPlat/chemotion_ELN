@@ -11,7 +11,7 @@ class GeneralPropertiesTab extends React.Component {
   constructor(props) {
     super(props);
     this.state = { openPanel: 'common-properties' };
-    this.changeAmount = this.changeAmount.bind(this);    
+    this.changeAmount = this.changeAmount.bind(this);
   }
 
   render() {
@@ -19,10 +19,11 @@ class GeneralPropertiesTab extends React.Component {
 
     return (
       <div>
-        {cellLineItem.amount}
         <PanelGroup
+          id={`cellLinePropertyPanelGroupOf:${cellLineItem.id}`}
           activeKey={this.state.openPanel}
           accordion
+          onSelect={(e) => {}}
         >
           <Panel
             eventKey="common-properties"
@@ -61,7 +62,7 @@ class GeneralPropertiesTab extends React.Component {
     );
   }
 
-  changeAmount(e){
+  changeAmount(e) {
     this.context.cellLineDetailsStore.changeAmountOfCellLine(this.props.item.id, Number(e.target.value));
   }
 
@@ -70,11 +71,12 @@ class GeneralPropertiesTab extends React.Component {
       <div>
         <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
         <Col sm={9}>
-          <FormControl 
-          type="text" 
-          name="XXX" 
-          defaultValue={defaultValue}
-          onChange={onChangeCallBack} />
+          <FormControl
+            type="text"
+            name="XXX"
+            defaultValue={defaultValue}
+            onChange={onChangeCallBack}
+          />
         </Col>
       </div>
     );
