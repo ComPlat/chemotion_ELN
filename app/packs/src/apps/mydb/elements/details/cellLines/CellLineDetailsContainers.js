@@ -21,8 +21,6 @@ class CellLineDetailsContainers extends Component {
         <p>
           {this.addButton()}
         </p>
-
-        {this.context.cellLineDetailsStore.analysisAmount(this.props.item.id)}
         { this.renderContainerPanel()}
 
       </div>

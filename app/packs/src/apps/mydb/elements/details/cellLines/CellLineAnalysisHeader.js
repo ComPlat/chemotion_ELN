@@ -4,11 +4,7 @@ import PropTypes from 'prop-types';
 import Container from 'src/models/Container';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
-import {
-
-  Button
-
-} from 'react-bootstrap';
+import { Checkbox, Button } from 'react-bootstrap';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 
 export default class CellLineAnalysisHeader extends React.Component {
@@ -88,6 +84,14 @@ export default class CellLineAnalysisHeader extends React.Component {
             analyses={[container]}
             ident={container.id}
           />
+          <span className="button-right add-to-report">
+            <Checkbox
+              onClick={(e) => { this.toggleContainerInReport(container, e); }}
+              defaultChecked={container.extended_metadata.report}
+            >
+              <span>Add to Report</span>
+            </Checkbox>
+          </span>
           <div className="lower-text">
             <div className="main-title">{container.name}</div>
             <div className="sub-title">
@@ -133,6 +137,13 @@ export default class CellLineAnalysisHeader extends React.Component {
         />
       </div>
     );
+  }
+
+  toggleContainerInReport(container, e) {
+    // To prevent showing the content of the restored analysis i will stop the event here
+    e.stopPropagation();
+    container.extended_metadata.report = !container.extended_metadata.report;
+    this.props.parent.handleChange(container);
   }
 
   render() {
