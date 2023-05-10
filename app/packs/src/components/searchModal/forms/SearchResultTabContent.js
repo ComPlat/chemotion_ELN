@@ -139,7 +139,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
           return (
             <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
               <div key={moleculeName} className={`search-result-molecule ${object.type}`}>
-                {svgPreview(object)}
+                {moleculeName ? svgPreview(object) : ''}
                 {moleculeName}
               </div>
               <span className="search-result-tab-content-list-name">

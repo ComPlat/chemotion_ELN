@@ -147,13 +147,14 @@ module Chemotion
           field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
           element_field = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
 
-          if filter['field']['column'] == 'body'
+          case filter['field']['column']
+          when 'body'
             joins << 'CROSS JOIN jsonb_array_elements(body) AS element'
             joins << "CROSS JOIN jsonb_array_elements(element -> 'value' -> 'ops') AS ops"
             field = "(ops ->> 'insert')::TEXT"
             condition_table = ''
-          elsif filter['field']['column'] == 'content'
-            joins << "INNER JOIN private_notes ON private_notes.noteable_type = '#{model_name.to_s}' AND private_notes.noteable_id = #{table}.id"
+          when 'content'
+            joins << "INNER JOIN private_notes ON private_notes.noteable_type = '#{model_name}' AND private_notes.noteable_id = #{table}.id"
             condition_table = 'private_notes.'
           end
 
