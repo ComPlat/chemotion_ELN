@@ -257,6 +257,7 @@ class ElementStore {
         ElementActions.updateWellplate,
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan,
+        ElementActions.updateCellLine,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -1247,7 +1248,7 @@ class ElementStore {
         this.handleUpdateResearchPlanAttaches(updatedElement);
         break;
       case 'cell_line':
-        this.handleRefreshElements('cell_line');         
+        this.handleRefreshElements('cell_line');
         break;
       case 'wellplate':
         fetchOls('wellplate');

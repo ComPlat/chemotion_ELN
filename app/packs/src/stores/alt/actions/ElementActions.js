@@ -773,6 +773,18 @@ class ElementActions {
     };
   }
 
+  updateCellLine(params){
+    console.log("hallo")
+      return (dispatch) => {
+        CellLinesFetcher.update(params)
+          .then((result) => {
+            dispatch(result);
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+      };
+  }
+
   updateResearchPlan(params) {
     return (dispatch) => {
       ResearchPlansFetcher.update(params)

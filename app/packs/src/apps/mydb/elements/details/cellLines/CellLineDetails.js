@@ -1,6 +1,9 @@
 import React from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 
 import {
   Panel, ButtonToolbar, Button,
@@ -42,16 +45,30 @@ class CellLineDetails extends React.Component {
             <Tab eventKey="tab2" title="Analyses" key="tab2"><CellLineDetailsContainers item={item} /></Tab>
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary">
-              Save
-            </Button>
-            <Button bsStyle="warning">
+            <Button bsStyle="primary" onClick={(e) => { this.handleClose(this.props.cellLineItem); }}>
               Close
+            </Button>
+            <Button bsStyle="warning" onClick={(e) => { this.handleSubmit(this.props.cellLineItem); }}>
+              Save
             </Button>
           </ButtonToolbar>
         </Panel.Body>
       </Panel>
     );
+  }
+
+  handleSubmit(cellLineItem) {
+    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
+    cellLineItem.amount = mobXItem.amount;
+    CellLinesFetcher.cellLineId = 5;
+    // Here transformation/merging between the mobx store und elementStore
+    ElementActions.updateCellLine(cellLineItem);
+  }
+
+  handleClose(cellLineItem) {
+    if (confirm('Unsaved data will be lost.Close sample?')) {
+      DetailActions.close(cellLineItem, true);
+    }
   }
 
   onTabPositionChanged(visible) {

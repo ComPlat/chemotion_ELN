@@ -1,12 +1,14 @@
 import CellLine from 'src/models/cellLine/CellLine';
 
 export default class CellLinesFetcher {
+  static amount = 10;
+  static cellLineId=1;
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return new Promise((resolve, reject) => {
       const result = {};
       const c1 = CellLine.buildEmpty(0);
       c1.cellLineName = 'Cell line 123';
-      c1.cellLineId = 1;
+      c1.cellLineId = CellLinesFetcher.cellLineId;
       c1.id = '1';
       // ----- Material
       c1.organism = 'Mensch';
@@ -21,7 +23,7 @@ export default class CellLinesFetcher {
       c1.name = '10-15';
       c1.materialComment = '';
       // ----- Item
-      c1.amount = 10000;
+      c1.amount = CellLinesFetcher.amount;
       c1.passage = 10;
       c1.contamination = 'none';
       c1.source = 'IPB';
@@ -140,6 +142,10 @@ export default class CellLinesFetcher {
       .then((result) =>{
         return result.elements[Number(id)-1]
       });
-      
   } 
+
+  static update(cellLineItem){
+    CellLinesFetcher.amount=cellLineItem.amount
+    return CellLinesFetcher.fetchById(1);
+  }
 }
