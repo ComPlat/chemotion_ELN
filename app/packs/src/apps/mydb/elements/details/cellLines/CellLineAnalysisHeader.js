@@ -9,6 +9,7 @@ import {
   Button
 
 } from 'react-bootstrap';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
 
 export default class CellLineAnalysisHeader extends React.Component {
   constructor(props) {
@@ -82,6 +83,11 @@ export default class CellLineAnalysisHeader extends React.Component {
           >
             <i className="fa fa-trash" />
           </Button>
+          <PrintCodeButton
+            element={this.props.element}
+            analyses={[container]}
+            ident={container.id}
+          />
           <div className="lower-text">
             <div className="main-title">{container.name}</div>
             <div className="sub-title">
@@ -139,5 +145,6 @@ export default class CellLineAnalysisHeader extends React.Component {
 
 CellLineAnalysisHeader.propTypes = {
   content: PropTypes.instanceOf(Container),
-  parent: PropTypes.object
+  parent: PropTypes.object,
+  element: PropTypes.object
 };

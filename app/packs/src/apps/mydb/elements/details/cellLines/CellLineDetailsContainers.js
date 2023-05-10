@@ -58,7 +58,7 @@ class CellLineDetailsContainers extends Component {
                 <Panel.Heading
                   onClick={(e) => this.handleClickOnPanelHeader(container.id)}
                 >
-                  <CellLineAnalysisHeader container={container} parent={this} />
+                  <CellLineAnalysisHeader element={currentElement} container={container} parent={this} />
                 </Panel.Heading>
                 <Panel.Body collapsible>
                   <ContainerComponent
