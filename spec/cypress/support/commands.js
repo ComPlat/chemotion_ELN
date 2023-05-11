@@ -105,42 +105,6 @@ Cypress.Commands.add('stubExperimentData', () => {
   cy.intercept('GET', '/api/v1/research_plans.json', staticResponse);
 });
 
-Cypress.Commands.add('createMolecule', (iupacName, molWeight) => {
-  cy.appFactories([
-    ['create', 'molecule', {
-      iupac_name: iupacName,
-      inchistring: 'inchistring',
-      density: 0.12345,
-      molecular_weight: molWeight,
-      exact_molecular_weight: 18.0106,
-      molfile: `H2O Water 7732185
-      ##CCCBDB 8251509:58
-      Geometry Optimized at HF/STO-3G
-        3  2  0  0  0  0  0  0  0  0    V2000
-          0.0000    0.0000    0.1271 O  0000000000000000000
-          0.0000    0.7580   -0.5085 H  0000000000000000000
-          0.0000   -0.7580   -0.5085 H  0000000000000000000
-        1  2  1  0     0  0
-        1  3  1  0     0  0
-      M  END,
-      melting_point: 150.00,
-      boiling_point: 100.00,
-      sum_formular: 'H2O',
-      names: ['name1', 'sum_formular', 'iupac_name'],
-      iupac_name: iupacName,
-      molecule_svg_file: 'molecule.svg'`,
-    }],
-  ]);
-});
-
-Cypress.Commands.add('createSample', (sampleName) => {
-  cy.appFactories([
-    ['create', 'sample', {
-      name: sampleName,
-    }],
-  ]);
-});
-
 Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
   cy.appFactories([['create', 'message', {
     channel_id: channelID,
