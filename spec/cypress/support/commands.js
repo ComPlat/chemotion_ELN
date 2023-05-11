@@ -66,7 +66,7 @@ Cypress.Commands.add('createCollection', (userID, label) => {
   ]);
 });
 
-Cypress.Commands.add('waitForAPIs', () => {
+Cypress.Commands.add('waitForCollections', () => {
   cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
   cy.intercept('GET', '/api/v1/collections/shared_roots.json').as('colletions2');
   cy.intercept('GET', '/api/v1/collections/remote_roots.json').as('colletions3');

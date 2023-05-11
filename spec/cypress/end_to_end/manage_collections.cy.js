@@ -6,7 +6,7 @@ describe('Manage Collections', () => {
 
   it('create an unshared collection', () => {
     cy.login('cu1', 'user_password');
-    cy.waitForAPIs();
+    cy.waitForCollections();
     cy.stubExperimentData();
     cy.get('#add-new-collection-button').should('be.visible');
     cy.get('#add-new-collection-button').click();
@@ -20,7 +20,7 @@ describe('Manage Collections', () => {
   it('rename an unshared collection', () => {
     cy.createCollection(1, 'Hello Collection');
     cy.login('cu1', 'user_password');
-    cy.waitForAPIs();
+    cy.waitForCollections();
     cy.get('input[value="Hello Collection"]').last().as('input');
     cy.get('@input').clear().type('Foo-Bar');
     cy.get('#save-collections-button').click();
@@ -30,7 +30,7 @@ describe('Manage Collections', () => {
   it('delete an unshared collection', () => {
     cy.createCollection(1, 'Hello Collection');
     cy.login('cu1', 'user_password');
-    cy.waitForAPIs();
+    cy.waitForCollections();
     cy.get('#delete-collection-button_3').click();
     cy.get('#save-collections-button').click();
     cy.contains('div', 'Hello Collections').should('not.exist');
