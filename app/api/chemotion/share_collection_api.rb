@@ -34,7 +34,6 @@ module Chemotion
         optional :collection_id, type: Integer, desc: 'Destination collection id'
         optional :newCollection, type: String, desc: 'Label for a new collection'
         optional :user_ids, type: Array
-        optional :label, type: String
         optional :newCollection, type: String
         optional :action, type: String
       end
@@ -63,6 +62,40 @@ module Chemotion
         end
 
         status 204
+      end
+
+      desc 'Update Share collection'
+      params do
+        requires :id, type: Integer
+        optional :collection_attributes, type: Hash do
+          optional :permission_level, type: Integer
+          optional :sample_detail_level, type: Integer
+          optional :reaction_detail_level, type: Integer
+          optional :wellplate_detail_level, type: Integer
+          optional :screen_detail_level, type: Integer
+          optional :element_detail_level, type: Integer
+          optional :label, type: String
+        end
+      end
+
+      put ':id' do
+        collection_acl = CollectionAcl.find(params[:id])
+        error!('404 Share collection id not found', 404) unless collection_acl
+
+        collection_acl&.update!(params[:collection_attributes])
+      end
+
+      desc "Delete a share collection"
+      params do
+        requires :id, type: Integer, desc: "collection_acl id"
+      end
+      route_param :id do
+        delete do
+          collection_acl = CollectionAcl.find(params[:id])
+          error!('404 Share collection id not found', 404) unless collection_acl
+
+          collection_acl&.destroy
+        end
       end
     end
   end
