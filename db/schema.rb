@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_08_112749) do
+ActiveRecord::Schema.define(version: 2023_05_11_115408) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -115,9 +115,10 @@ ActiveRecord::Schema.define(version: 2023_05_08_112749) do
     t.integer "screen_detail_level", default: 0
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["user_id", "collection_id"], name: "index_collection_acls_on_user_id_and_collection_id", unique: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
+    t.index ["user_id"], name: "index_collection_acls_on_user_id"
   end
 
   create_table "collections", id: :serial, force: :cascade do |t|
