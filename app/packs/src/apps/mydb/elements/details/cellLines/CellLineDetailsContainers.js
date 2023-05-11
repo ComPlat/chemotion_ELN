@@ -6,13 +6,13 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CellLineAnalysisOrderRow from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisOrderRow';
 import CellLineAnalysisEditRow from 'src/apps/mydb/elements/details/cellLines/CellLineDetailsEditRow';
 
-
 class CellLineDetailsContainers extends Component {
   static contextType = StoreContext;
 
   constructor(props) {
     super();
-    this.state = { openPanel: 'none',mode:'edit'};
+    this.state = { openPanel: 'none', mode: 'edit' };
+    this.handleChange.bind(this);
   }
 
   render() {
@@ -39,9 +39,9 @@ class CellLineDetailsContainers extends Component {
   renderContainerPanel() {
     const { currentElement } = ElementStore.getState();
     const containers = currentElement.container.children[0].children;
-    const analysisRows=this.state.mode==='edit'?
-      containers.map((container) => (<CellLineAnalysisEditRow parent = {this} element={currentElement} container={container}/>), this):
-      containers.map((container) => (<CellLineAnalysisOrderRow container={container}/>), this);
+    const analysisRows = this.state.mode === 'edit'
+      ? containers.map((container) => (<CellLineAnalysisEditRow parent={this} element={currentElement} container={container} />), this)
+      : containers.map((container) => (<CellLineAnalysisOrderRow updateFunction={() => { this.handleChange(); }} container={container} />), this);
 
     if (containers.length > 0) {
       return (
@@ -61,22 +61,23 @@ class CellLineDetailsContainers extends Component {
     return <div />;
   }
 
-  handleModeToggle(){
-    if(this.state.mode==='edit'){
+  handleModeToggle() {
+    if (this.state.mode === 'edit') {
       this.setState({ mode: 'order' });
-    }else{
+    } else {
       this.setState({ mode: 'edit' });
     }
   }
 
   handleChange(editedContainer) {
+    console.log('Hallo');
     this.forceUpdate();
   }
 
-  renderOrderModeButton(){
+  renderOrderModeButton() {
     return (
-      <Button  bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
-        mode
+      <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
+        {this.state.mode}
       </Button>
     );
   }
@@ -100,6 +101,7 @@ class CellLineDetailsContainers extends Component {
   renderAnalysisHeader(container) {
 
   }
+
   toggleMode() {
     const { mode } = this.state;
     if (mode === 'edit') {

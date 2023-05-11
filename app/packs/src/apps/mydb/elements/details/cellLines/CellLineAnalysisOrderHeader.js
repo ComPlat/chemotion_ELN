@@ -29,10 +29,6 @@ export default class CellLineAnalysisOrderHeader extends React.Component {
     );
   }
 
- 
-
- 
-
   renderNotDeletedContainer() {
     const { container } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
@@ -94,6 +90,7 @@ export default class CellLineAnalysisOrderHeader extends React.Component {
       </div>
     );
   }
+
   render() {
     if (this.props.container.is_deleted) {
       return this.renderDeletedContainer();
