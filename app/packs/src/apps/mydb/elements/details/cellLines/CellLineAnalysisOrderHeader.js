@@ -4,10 +4,8 @@ import PropTypes from 'prop-types';
 import Container from 'src/models/Container';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
-import { Checkbox, Button } from 'react-bootstrap';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 
-export default class CellLineAnalysisHeader extends React.Component {
+export default class CellLineAnalysisOrderHeader extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -27,34 +25,13 @@ export default class CellLineAnalysisHeader extends React.Component {
           {titleKind}
           {titleStatus}
         </strike>
-        <Button
-          className="pull-right"
-          bsSize="xsmall"
-          bsStyle="danger"
-
-          onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
-        >
-          <i className="fa fa-undo" />
-        </Button>
       </div>
     );
   }
 
-  handleUndoDeletionOfContainer(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    container.is_deleted = false;
-    this.props.parent.handleChange(container);
-  }
+ 
 
-  handleDeleteContainer(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    if (confirm('Delete the analysis?')) {
-      container.is_deleted = true;
-      this.props.parent.handleChange(container);
-    }
-  }
+ 
 
   renderNotDeletedContainer() {
     const { container } = this.props;
@@ -71,27 +48,6 @@ export default class CellLineAnalysisHeader extends React.Component {
       <div className="analysis-header">
         <div className="preview">{this.renderImagePreview(container)}</div>
         <div className="abstract">
-          <Button
-            bsSize="xsmall"
-            bsStyle="danger"
-            className="button-right"
-            onClick={(e) => { this.handleDeleteContainer(container, e); }}
-          >
-            <i className="fa fa-trash" />
-          </Button>
-          <PrintCodeButton
-            element={this.props.element}
-            analyses={[container]}
-            ident={container.id}
-          />
-          <span className="button-right add-to-report">
-            <Checkbox
-              onClick={(e) => { this.toggleContainerInReport(container, e); }}
-              defaultChecked={container.extended_metadata.report}
-            >
-              <span>Add to Report</span>
-            </Checkbox>
-          </span>
           <div className="lower-text">
             <div className="main-title">{container.name}</div>
             <div className="sub-title">
@@ -138,14 +94,6 @@ export default class CellLineAnalysisHeader extends React.Component {
       </div>
     );
   }
-
-  toggleContainerInReport(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    container.extended_metadata.report = !container.extended_metadata.report;
-    this.props.parent.handleChange(container);
-  }
-
   render() {
     if (this.props.container.is_deleted) {
       return this.renderDeletedContainer();
@@ -154,8 +102,6 @@ export default class CellLineAnalysisHeader extends React.Component {
   }
 }
 
-CellLineAnalysisHeader.propTypes = {
+CellLineAnalysisOrderHeader.propTypes = {
   container: PropTypes.instanceOf(Container),
-  parent: PropTypes.object,
-  element: PropTypes.object
 };

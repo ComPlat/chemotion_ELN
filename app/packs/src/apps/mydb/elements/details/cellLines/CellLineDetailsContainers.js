@@ -2,16 +2,17 @@ import React, { Component } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import { PanelGroup, Panel, Button } from 'react-bootstrap';
-import ContainerComponent from 'src/components/container/ContainerComponent';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CellLineAnalysisHeader from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisHeader';
+import CellLineAnalysisOrderRow from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisOrderRow';
+import CellLineAnalysisEditRow from 'src/apps/mydb/elements/details/cellLines/CellLineDetailsEditRow';
+
 
 class CellLineDetailsContainers extends Component {
   static contextType = StoreContext;
 
   constructor(props) {
     super();
-    this.state = { openPanel: 'none' };
+    this.state = { openPanel: 'none',mode:'edit'};
   }
 
   render() {
@@ -19,6 +20,7 @@ class CellLineDetailsContainers extends Component {
     return (
       <div>
         <p>
+          {this.renderOrderModeButton()}
           {this.addButton()}
         </p>
         { this.renderContainerPanel()}
@@ -31,11 +33,15 @@ class CellLineDetailsContainers extends Component {
     const newContainer = this.context.cellLineDetailsStore.addEmptyContainer(this.props.item.id);
     const { currentElement } = ElementStore.getState();
     currentElement.container.children[0].children.push(newContainer);
+    this.forceUpdate();
   }
 
   renderContainerPanel() {
     const { currentElement } = ElementStore.getState();
     const containers = currentElement.container.children[0].children;
+    const analysisRows=this.state.mode==='edit'?
+      containers.map((container) => (<CellLineAnalysisEditRow parent = {this} element={currentElement} container={container}/>), this):
+      containers.map((container) => (<CellLineAnalysisOrderRow container={container}/>), this);
 
     if (containers.length > 0) {
       return (
@@ -47,29 +53,7 @@ class CellLineDetailsContainers extends Component {
             accordion
             onSelect={(e) => {}}
           >
-
-            {containers.map((container) => (
-              <Panel
-                eventKey={container.id}
-                key={container.id}
-              >
-                <Panel.Heading
-                  onClick={(e) => this.handleClickOnPanelHeader(container.id)}
-                >
-                  <CellLineAnalysisHeader element={currentElement} container={container} parent={this} />
-                </Panel.Heading>
-                <Panel.Body collapsible>
-                  <ContainerComponent
-                    templateType="researchPlan"
-                    readOnly={false}
-                    disabled={false}
-                    container={container}
-                    onChange={(container) => this.handleChange(container)}
-                  />
-                </Panel.Body>
-              </Panel>
-
-            ), this)}
+            {analysisRows}
           </PanelGroup>
         </div>
       );
@@ -77,8 +61,24 @@ class CellLineDetailsContainers extends Component {
     return <div />;
   }
 
+  handleModeToggle(){
+    if(this.state.mode==='edit'){
+      this.setState({ mode: 'order' });
+    }else{
+      this.setState({ mode: 'edit' });
+    }
+  }
+
   handleChange(editedContainer) {
     this.forceUpdate();
+  }
+
+  renderOrderModeButton(){
+    return (
+      <Button  bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
+        mode
+      </Button>
+    );
   }
 
   addButton() {
@@ -99,6 +99,14 @@ class CellLineDetailsContainers extends Component {
 
   renderAnalysisHeader(container) {
 
+  }
+  toggleMode() {
+    const { mode } = this.state;
+    if (mode === 'edit') {
+      this.setState({ mode: 'order' });
+    } else {
+      this.setState({ mode: 'edit' });
+    }
   }
 }
 export default observer(CellLineDetailsContainers);
