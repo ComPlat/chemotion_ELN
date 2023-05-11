@@ -1,10 +1,7 @@
 describe('Change Profile', () => {
-  beforeEach(() => {
+  it('sets "Show external name" from false to true, and vice versa', () => {
     cy.createDefaultUser('complat.user@complat.edu', 'CU');
     cy.visit('users/sign_in');
-  });
-
-  it('sets "Show external name" from false to true, and vice versa', () => {
     cy.login('CU', 'user_password');
     cy.visit('pages/profiles');
     cy.get('#profile_show_external_name').should('not.be.checked');
