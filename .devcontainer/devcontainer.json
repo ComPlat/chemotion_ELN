@@ -60,5 +60,5 @@
   "overrideCommand": true, // override the commands in the compose file
   "containerEnv": {
     "RAILS_ENV": "development"
-  }
+  },
 }

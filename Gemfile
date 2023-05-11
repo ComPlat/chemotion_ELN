@@ -178,6 +178,7 @@ end
 
 group :test do
   gem 'capybara'
+  gem 'cypress-on-rails'
 
   gem 'database_cleaner'
   gem 'database_cleaner-active_record'
