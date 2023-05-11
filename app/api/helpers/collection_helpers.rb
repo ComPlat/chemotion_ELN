@@ -6,21 +6,19 @@ module CollectionHelpers
   #  or to the sync_collections_user
   # return 0 if no association
   def fetch_collection_id_w_current_user(id)
-      (Collection.find_by(id: id.to_i, user_id: user_ids) ||
-        Collection.find_by(id: id.to_i, shared_by_id: current_user.id))&.id.to_i
+    Collection.find_by(id: id.to_i, user_id: user_ids)
   end
 
   def fetch_collection_w_current_user(id, is_shared = false)
-    if is_shared
-      fetch_collection_from_col_acl(id.to_i, user_ids)
-    else
-      Collection.find_by(id: id.to_i, user_id: user_ids) || fetch_collection_from_col_acl(id.to_i, current_user.id)
-    end
-  end
+    collection = Collection.find_by(id: id.to_i, user_id: user_ids)
 
-  def fetch_collection_from_col_acl(coll_id, user_id)
-    collection_acl = CollectionAcl.find_by(collection_id: coll_id, user_id: user_id)
-    Collection.find(collection_acl.collection_id)
+    if !collection.present?
+      collection = Collection.joins(:collection_acls).includes(:user).where(
+        'collection_acls.user_id in (?) and collection_acls.collection_id = ?', current_user.id, collection_id
+      ).first
+    end
+
+    collection
   end
 
   # desc: given an id of coll or sync coll return detail levels as array
@@ -133,8 +131,8 @@ module CollectionHelpers
   end
 
   def create_acl_collection(user_id, collection_id, params)
-    label = params[:label] || params[:newCollection]
     currentCollection = params['ui_state']['currentCollection']
+    label = params[:newCollection] || currentCollection['label']
 
     c_acl = CollectionAcl.find_or_create_by(
       user_id: user_id,

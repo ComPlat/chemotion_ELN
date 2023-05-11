@@ -23,9 +23,6 @@ export default class CollectionTree extends React.Component {
       myCollections: collecState.myCollections,
       mySharedCollections: collecState.mySharedCollections,
       sharedCollections: collecState.sharedCollections,
-      remoteRoots: collecState.remoteRoots,
-      lockedRoots: collecState.lockedRoots,
-      syncInRoots: collecState.syncInRoots,
       ownCollectionVisible: true,
       sharedWithCollectionVisible: false,
       sharedToCollectionVisible: false,
@@ -40,11 +37,8 @@ export default class CollectionTree extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onChange);
-    CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchCollectionsSharedWithMe();
-    CollectionActions.fetchRemoteCollectionRoots();
-    CollectionActions.fetchSyncInCollectionRoots();
   }
 
   componentWillUnmount() {
@@ -59,12 +53,6 @@ export default class CollectionTree extends React.Component {
 
   onChange(state) {
     this.setState(state);
-  }
-
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
   }
 
   removeOrphanRoots(roots) {

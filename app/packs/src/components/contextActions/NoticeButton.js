@@ -70,9 +70,6 @@ const handleNotification = (nots, act, needCallback = true) => {
       const { currentPage, itemsPerPage } = InboxStore.getState();
 
       switch (n.content.action) {
-        case 'CollectionActions.fetchRemoteCollectionRoots':
-          CollectionActions.fetchRemoteCollectionRoots();
-          break;
         case 'CollectionActions.fetchMyCollections':
           CollectionActions.fetchMyCollections();
           break;

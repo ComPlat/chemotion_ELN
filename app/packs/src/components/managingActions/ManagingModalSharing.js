@@ -192,16 +192,16 @@ export default class ManagingModalSharing extends React.Component {
     } = this.state;
 
     const params = {
+      id: this.props.collectionId,
       current_collection: {
-        id: this.props.collectionId,
         permission_level: permissionLevel,
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel,
         screen_detail_level: screenDetailLevel,
         element_detail_level: elementDetailLevel,
-      },
-      new_label: label
+        label: label
+      }
     };
 
     if (this.props.collAction === "Create") {
@@ -217,14 +217,14 @@ export default class ManagingModalSharing extends React.Component {
       const fullParams = {
         ui_state: filterParams,
         user_ids: userIds,
-        new_label: params.new_label
+        new_label: label
       };
       CollectionActions.createSelectedSharedCollections(fullParams);
     }
 
     if (this.props.collAction === 'Update') { CollectionActions.updateSharedCollection(params); }
 
-    if (this.props.collAction === 'EditSync') { CollectionActions.editSync(params); }
+    if (this.props.collAction === 'Edit Share') { CollectionActions.editShare(params); }
 
     if (this.props.collAction === 'Share') {
       const userIds = this.state.selectedUsers;
