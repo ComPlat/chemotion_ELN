@@ -8,9 +8,6 @@ class CollectionStore {
       myCollections: [],
       sharedCollections: [],
       genericEls: [],
-      remoteRoots: [],
-      lockedRoots: [],
-      syncInRoots: [],
       visibleRootsIds: [],
     };
 
@@ -20,22 +17,16 @@ class CollectionStore {
       handleFetchMyCollections: CollectionActions.fetchMyCollections,
       handleFetchCollectionsSharedWithMe: CollectionActions.fetchCollectionsSharedWithMe,
       //handleFetchGenericEls: CollectionActions.fetchGenericEls,
-      handleFetchLockedCollectionRoots: CollectionActions.fetchLockedCollectionRoots,
-      handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
       // handleCreateSharedCollectionAcls: CollectionActions.createSharedCollectionAcls,
       handleBulkUpdateCollections: CollectionActions.bulkUpdateCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
       handleRefreshMyCollection: [
-        CollectionActions.createSelectedSharedCollections
-      ],
-      handleCreateUnsharedCollection: [
-        CollectionActions.createUnsharedCollection,
         CollectionActions.createSharedCollections,
-        CollectionActions.editSync,
-        CollectionActions.deleteSync
+        CollectionActions.createSelectedSharedCollections,
+        CollectionActions.editShare,
+        CollectionActions.deleteShare
       ],
       handleRejectSharedCollection: CollectionActions.rejectShared,
-      handleRejectSyncdCollection: CollectionActions.rejectSync,
       handleUpdateCollectrionTree: CollectionActions.updateCollectrionTree
     })
   }
@@ -43,18 +34,12 @@ class CollectionStore {
   handleTakeOwnership() {
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-    CollectionActions.fetchSyncInCollectionRoots();
   }
 
   //handleFetchGenericEls(result) {
   //  console.log(result);
   //  this.state.genericEls = result.genericEls;
   //}
-
-  handleFetchLockedCollectionRoots(results) {
-    this.state.lockedRoots = results.collections;
-  }
 
   handleFetchMyCollections(results) {
     this.setState({ myCollections: results.collections });
@@ -64,20 +49,14 @@ class CollectionStore {
     this.setState({ sharedCollections: results.collections });
   }
 
-  handleFetchRemoteCollectionRoots(results) {
-    this.state.remoteRoots = results.collections;
-  }
-
   handleCreateSharedCollectionAcls() {
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
   }
 
   handleBulkUpdateCollections() {
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
   }
 
   handleUpdateSharedCollection() {
@@ -88,19 +67,12 @@ class CollectionStore {
     CollectionActions.fetchMyCollections();
   }
 
-  handleCreateUnsharedCollection(results) {
-    CollectionActions.fetchMyCollections();
-  }
-
   handleUpdateCollectrionTree(visibleRootsIds) {
     this.state.visibleRootsIds = visibleRootsIds
   }
 
   handleRejectSharedCollection(results) {
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
-  handleRejectSyncdCollection(results) {
-    CollectionActions.fetchSyncInCollectionRoots();
+    CollectionActions.fetchMyCollections();
   }
 
   // 'repository' methods; returns a promise
@@ -134,7 +106,7 @@ class CollectionStore {
     return promise;
   }
   static findBySId(collectionId) {
-    let roots = this.state.syncInRoots;
+    let roots = this.state.sharedCollections;
     let foundCollection = roots.filter((root) => {
       return root.id == collectionId;
     }).pop();
@@ -161,7 +133,7 @@ class CollectionStore {
 
   static findAllCollection() {
     let state = this.state;
-    let roots = state.lockedRoots;
+    let roots = state.myCollections;
 
     let foundCollection = roots.filter((root) => {
       return root.label == 'All';
