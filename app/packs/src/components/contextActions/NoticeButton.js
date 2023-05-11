@@ -47,9 +47,6 @@ const handleNotification = (nots, act, needCallback = true) => {
       NotificationActions.add(notification);
 
       switch (n.content.action) {
-        case 'CollectionActions.fetchRemoteCollectionRoots':
-          CollectionActions.fetchRemoteCollectionRoots();
-          break;
         case 'CollectionActions.fetchMyCollections':
           CollectionActions.fetchMyCollections();
           break;
