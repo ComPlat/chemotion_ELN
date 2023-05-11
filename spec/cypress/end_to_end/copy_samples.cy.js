@@ -5,6 +5,8 @@ describe('Copy Samples', () => {
     });
     cy.visit('users/sign_in');
     cy.login('cu1', 'user_password');
+    // Why `collection/3`?
+    // The collection db table is already populated with 2 entries ('All' and 'chemotion-repository.net').
     cy.visit('mydb/collection/3/');
     cy.get('#tree-id-Col1').click();
     cy.get('#create-split-button').click();
