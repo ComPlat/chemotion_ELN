@@ -50,38 +50,6 @@ class CollectionActions {
   }
 
   // TODO #2...centralized error handling maybe ErrorActions?
-  fetchLockedCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchLockedRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchRemoteCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchRemoteRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchSyncInCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchSyncRemoteRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
 
   createSelectedSharedCollections(params) {
     return (dispatch) => {
@@ -116,17 +84,6 @@ class CollectionActions {
     };
   }
 
-  createUnsharedCollection(params) {
-    return (dispatch) => {
-      CollectionsFetcher.createUnsharedCollection(params)
-        .then(() => {
-          dispatch();
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
   createSharedCollections(params) {
     return (dispatch) => {
       CollectionsFetcher.createSharedCollections(params)
@@ -138,9 +95,9 @@ class CollectionActions {
     };
   }
 
-  editSync(params) {
+  editShare(params) {
     return (dispatch) => {
-      CollectionsFetcher.editSync(params)
+      CollectionsFetcher.editShare(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -148,19 +105,9 @@ class CollectionActions {
         });
     };
   }
-  deleteSync(params) {
+  deleteShare(params) {
     return (dispatch) => {
-      CollectionsFetcher.deleteSync(params)
-        .then(() => {
-          dispatch();
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-  rejectSync(params) {
-    return (dispatch) => {
-      CollectionsFetcher.deleteSync(params)
+      CollectionsFetcher.deleteShare(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {

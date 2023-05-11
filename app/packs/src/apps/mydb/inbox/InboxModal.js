@@ -54,12 +54,6 @@ export default class InboxModal extends React.Component {
     InboxActions.fetchInbox();
   }
 
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
-  }
-
   inboxSubtrees() {
     const { inbox } = this.state;
 
