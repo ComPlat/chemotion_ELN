@@ -1,0 +1,10 @@
+{
+    "moleculeSVG": "81ba09b10beaa89f190c39faa85ced3ea20728cda625d884410ac0ab96bc62824375cff5da9c3ea19bf335aa6a872591e58cf07eb7ec7878318b011e4fe362a5.svg",
+    "inshiString": "InChI=1S/H2O/h1H2",
+    "molFileVersion": "V2000",
+    "smiles": "[2H]OC([2H])([2H])[2H]",
+    "inchiKey": "OKKJLVBELUTLKV-MZCSYVLQSA-N",
+    "boiling_point": "[98, 100]",
+    "melting_point": "[0.5, 1]",
+    "ratio": "100"
+}
