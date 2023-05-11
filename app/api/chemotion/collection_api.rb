@@ -80,44 +80,6 @@ module Chemotion
         end
       end
 
-      desc "Return all locked and unshared serialized collection roots of current user"
-      get :locked do
-        roots = current_user.collections.includes(:shared_users).locked.unshared.roots.order(label: :asc)
-
-        present roots, with: Entities::CollectionEntity, root: :collections
-      end
-
-      get_child = Proc.new do |children, collects|
-        children.each do |obj|
-          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root']}
-          get_child.call(child, collects) if child.count>0
-          obj[:children] = child
-        end
-      end
-
-      build_tree = Proc.new do |collects, delete_empty_root|
-        col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
-        get_child.call(col_tree,collects)
-        col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
-        Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
-      end
-
-      desc "Return all remote serialized collections"
-      get :remote_roots do
-        collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id]).order("id")
-        .select(
-          <<~SQL
-            id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by, tabs_segment,
-            case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root,
-            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared,
-            shared_user_as_json(collections.user_id, #{current_user.id}) as shared_to,position
-          SQL
-        )
-        .as_json
-        build_tree.call(collects,true)
-      end
-
       # TODO: check if this endpoint is really obsolete
       desc "Bulk update and/or create new collections"
       patch '/' do
@@ -130,133 +92,6 @@ module Chemotion
       patch '/reject_shared' do
         Collection.reject_shared(current_user.id, params[:id])
         {} # result is not used by FE
-      end
-
-      namespace :shared do
-        desc "Update shared collection"
-        params do
-          requires :id, type: Integer
-          requires :collection_attributes, type: Hash do
-            requires :permission_level, type: Integer
-            requires :sample_detail_level, type: Integer
-            requires :reaction_detail_level, type: Integer
-            requires :wellplate_detail_level, type: Integer
-            requires :screen_detail_level, type: Integer
-            optional :research_plan_detail_level, type: Integer
-            optional :element_detail_level, type: Integer
-          end
-        end
-
-        put ':id' do
-          Collection.shared(current_user.id).find(params[:id]).update!(params[:collection_attributes])
-          {} # result is not used by FE
-        end
-
-        desc "Create shared collections"
-        params do
-          requires :elements_filter, type: Hash do
-            requires :sample, type: Hash do
-              use :ui_state_params
-            end
-            requires :reaction, type: Hash do
-              use :ui_state_params
-            end
-            requires :wellplate, type: Hash do
-              use :ui_state_params
-            end
-            requires :screen, type: Hash do
-              use :ui_state_params
-            end
-            optional :research_plan, type: Hash do
-              use :ui_state_params
-            end
-          end
-          requires :collection_attributes, type: Hash do
-            requires :permission_level, type: Integer
-            requires :sample_detail_level, type: Integer
-            requires :reaction_detail_level, type: Integer
-            requires :wellplate_detail_level, type: Integer
-            requires :screen_detail_level, type: Integer
-            optional :research_plan_detail_level, type: Integer
-          end
-          requires :user_ids, type: Array do
-            requires :value
-          end
-          requires :currentCollection, type: Hash do
-            requires :id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
-          end
-        end
-
-        after_validation do
-          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
-          samples = Sample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
-          reactions = Reaction.by_collection_id(@cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
-          wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
-          screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
-          research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
-          elements = {}
-          ElementKlass.find_each do |klass|
-            elements[klass.name] = Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
-          end
-          top_secret_sample = samples.pluck(:is_top_secret).any?
-          top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
-          top_secret_wellplate = wellplates.flat_map(&:samples).map(&:is_top_secret).any?
-          top_secret_screen = screens.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
-
-          is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
-
-          share_samples = ElementsPolicy.new(current_user, samples).share?
-          share_reactions = ElementsPolicy.new(current_user, reactions).share?
-          share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
-          share_screens = ElementsPolicy.new(current_user, screens).share?
-          share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
-          share_elements = !(elements&.length > 0)
-          elements.each do |k, v|
-            share_elements = ElementsPolicy.new(current_user, v).share?
-            break unless share_elements
-          end
-
-          sharing_allowed = share_samples && share_reactions &&
-            share_wellplates && share_screens && share_research_plans && share_elements
-          error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
-
-          @sample_ids = samples.pluck(:id)
-          @reaction_ids = reactions.pluck(:id)
-          @wellplate_ids = wellplates.pluck(:id)
-          @screen_ids = screens.pluck(:id)
-          @research_plan_ids = research_plans.pluck(:id)
-          @element_ids = elements&.transform_values { |v| v && v.pluck(:id) }
-        end
-
-        post do
-          uids = params[:user_ids].map do |user_id|
-            val = user_id[:value].to_s.downcase
-            if val =~ /^[0-9]+$/
-              val.to_i
-            # elsif val =~ Devise::email_regexp
-            else
-              User.where(email: val).pluck :id
-            end
-          end.flatten.compact.uniq
-          Usecases::Sharing::ShareWithUsers.new(
-            user_ids: uids,
-            sample_ids: @sample_ids,
-            reaction_ids: @reaction_ids,
-            wellplate_ids: @wellplate_ids,
-            screen_ids: @screen_ids,
-            research_plan_ids: @research_plan_ids,
-            element_ids: @element_ids,
-            collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
-          ).execute!
-          Message.create_msg_notification(
-            channel_subject: Channel::SHARED_COLLECTION_WITH_ME,
-            message_from: current_user.id, message_to: uids,
-            data_args: { 'shared_by': current_user.name }, level: 'info'
-          )
-
-          {} # result is not used by FE
-        end
       end
 
       namespace :elements do
@@ -406,18 +241,6 @@ module Chemotion
           end
 
           status 204
-        end
-      end
-
-      namespace :unshared do
-        desc "Create an unshared collection"
-        params do
-          requires :label, type: String, desc: "Collection label"
-        end
-
-        post do
-          Collection.create(user_id: current_user.id, label: params[:label])
-          {} # result is not used by FE
         end
       end
 

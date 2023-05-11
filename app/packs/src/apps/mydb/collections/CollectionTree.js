@@ -32,9 +32,6 @@ export default class CollectionTree extends React.Component {
       myCollections: collecState.myCollections,
       mySharedCollections: collecState.mySharedCollections,
       sharedCollections: collecState.sharedCollections,
-      remoteRoots: collecState.remoteRoots,
-      lockedRoots: collecState.lockedRoots,
-      syncInRoots: collecState.syncInRoots,
       ownCollectionVisible: true,
       sharedWithCollectionVisible: false,
       sharedToCollectionVisible: false,
@@ -57,11 +54,8 @@ export default class CollectionTree extends React.Component {
     CollectionStore.listen(this.onChange);
     InboxStore.listen(this.onChange);
     //CollectionActions.fetchGenericEls();
-    CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchCollectionsSharedWithMe();
-    CollectionActions.fetchRemoteCollectionRoots();
-    CollectionActions.fetchSyncInCollectionRoots();
     InboxActions.fetchInboxCount();
   }
 
@@ -98,12 +92,6 @@ export default class CollectionTree extends React.Component {
     InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
-  }
-
   removeOrphanRoots(roots) {
     let newRoots = []
     roots.forEach((root) => {
@@ -116,7 +104,6 @@ export default class CollectionTree extends React.Component {
   myCollections() {
     let myCollections = this.state.myCollections;
 
-    // myCollections = myCollections.filter(c => (c.is_shared === false && c.is_locked === false ));
     const subtrees = myCollections.map((root, index) => {
       return <CollectionSubtree root={root} key={index} />
     })

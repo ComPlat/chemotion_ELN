@@ -45,7 +45,6 @@ export default class MyCollections extends React.Component {
 
   onStoreChange(state) {
     let children = state.myCollections.length > 0 ? state.myCollections : [{}];
-    // children = children.filter(c => (c.is_shared === false));
     this.setState({
       tree: {
         label: 'My Collections',
@@ -128,7 +127,7 @@ export default class MyCollections extends React.Component {
             bsSize="xsmall"
             bsStyle="primary"
             disabled={node.isNew === true}
-            onClick={() => this.doSync(node, 'Share')}
+            onClick={() => this.doShare(node, 'Share')}
           >
             <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
@@ -149,11 +148,11 @@ export default class MyCollections extends React.Component {
   }
 
   renderSync(node) {
-    let syncOut = node.collection_acls;
+    let collectionAcls = node.collection_acls;
     let users = [];
 
-    if (syncOut) {
-      users = syncOut.map((collection, ind) => {
+    if (collectionAcls) {
+      users = collectionAcls.map((collection, ind) => {
         return (
           <div className="node">
             <span key={ind} className="collection-sync-info">
@@ -162,17 +161,15 @@ export default class MyCollections extends React.Component {
             </span>
             <ButtonGroup className="actions">
               <Button bsSize="xsmall" bsStyle="primary"
-                onClick={() => this.doSync(collection, 'EditSync')}>
+                onClick={() => this.doShare(collection, 'Edit Share')}>
                 <i className="fa fa-share-alt">edit</i>
               </Button>
               <Button bsSize="xsmall" bsStyle="danger"
-                onClick={() => CollectionActions.deleteSync({ id: collection.id, is_syncd: false })}
+                onClick={() => CollectionActions.deleteShare({ id: collection.id })}
               >
                 <i className="fa fa-share-alt" /> <i className="fa fa-trash-o"></i>
               </Button>
             </ButtonGroup>
-
-
           </div>
         )
       })
@@ -182,11 +179,11 @@ export default class MyCollections extends React.Component {
     )
   }
 
-  doSync(node, action) {
+  doShare(node, action) {
     let { modalProps, active } = this.state
     modalProps.title = action == "Share"
       ? "Share '" + node.label + "'"
-      : "Edit Synchronization"
+      : "Edit '" + node.label + "'"
     modalProps.show = true
     modalProps.action = action
     modalProps.collection = node
@@ -352,6 +349,7 @@ export default class MyCollections extends React.Component {
               sampleDetailLevel={mPsC.sample_detail_level} reactionDetailLevel={mPsC.reaction_detail_level}
               wellplateDetailLevel={mPsC.wellplate_detail_level} screenDetailLevel={mPsC.screen_detail_level}
               selectUsers={mPs.selectUsers}
+              label={mPsC.label}
               collAction={mPs.action} />
           </Modal.Body>
         </Modal>

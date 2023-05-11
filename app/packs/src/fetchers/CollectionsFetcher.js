@@ -26,14 +26,6 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static fetchLockedRoots() {
-    return BaseFetcher.withoutBodyData({
-      apiEndpoint: '/api/v1/collections/locked.json',
-      requestMethod: 'GET',
-      jsonTranformation: (json) => { return json }
-    });
-  }
-
   static fetchMyRoots() {
     let promise = fetch('/api/v1/collections/all', {
       credentials: 'same-origin'
@@ -51,35 +43,6 @@ export default class CollectionsFetcher {
 
   static fetchSharedWithMeRoots() {
     let promise = fetch('/api/v1/share_collections', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
-  static fetchRemoteRoots() {
-    let promise = fetch('/api/v1/collections/remote_roots.json', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-  static fetchSyncRemoteRoots() {
-    let promise = fetch('/api/v1/syncCollections/sync_remote_roots.json', {
       credentials: 'same-origin'
     })
       .then((response) => {
@@ -113,6 +76,7 @@ export default class CollectionsFetcher {
   }
 
   static createSharedCollections(params) {
+    let collectionId = params.id;
     return fetch('/api/v1/share_collections/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -121,17 +85,16 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        ui_state: { currentCollection: params.current_collection },
+        ui_state: { currentCollection: {...params.current_collection, id: collectionId} },
         user_ids: params.user_ids,
-        label: params.new_label,
         action: 'share'
       })
     }).then(response => response)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static editSync(params) {
-    let promise = fetch('/api/v1/syncCollections/' + params.id, {
+  static editShare(params) {
+    let promise = fetch('/api/v1/share_collections/' + params.id, {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
@@ -139,25 +102,21 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        collection_attributes: params.collection_attributes,
-        user_ids: params.user_ids,
+        collection_attributes: params.current_collection
       })
     })
 
     return promise;
   }
 
-  static deleteSync(params) {
-    let promise = fetch('/api/v1/syncCollections/' + params.id, {
+  static deleteShare(params) {
+    let promise = fetch('/api/v1/share_collections/' + params.id, {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        is_syncd: params.is_syncd
-      })
+      }
     })
     return promise;
   }
@@ -210,28 +169,6 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static createUnsharedCollection(params) {
-    let promise = fetch('/api/v1/collections/unshared/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        label: params.label
-      })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
-  }
-
   static moveOrAssignElementsCollection(params, action) {
     return fetch('/api/v1/share_collections/', {
       credentials: 'same-origin',
@@ -250,7 +187,7 @@ export default class CollectionsFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static expotSamples(type, id) {
+  static exportSamples(type, id) {
     const fileName = `${type.charAt(0).toUpperCase() + type.substring(1)}_${id}_Samples Excel.xlsx`;
     return fetch(`/api/v1/reports/excel_${type}?id=${id}`, {
       credentials: 'same-origin',

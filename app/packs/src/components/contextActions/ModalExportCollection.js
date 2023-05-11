@@ -12,14 +12,12 @@ export default class ModalExportCollection extends React.Component {
     this.gatherCheckboxes(collecState.unsharedRoots, checkboxes)
     this.gatherCheckboxes(collecState.sharedRoots, checkboxes)
     this.gatherCheckboxes(collecState.remoteRoots, checkboxes)
-    this.gatherCheckboxes(collecState.lockedRoots, checkboxes)
 
     this.state = {
       processing: false,
       unsharedRoots: collecState.unsharedRoots,
       sharedRoots: collecState.sharedRoots,
       remoteRoots: collecState.remoteRoots,
-      lockedRoots: collecState.lockedRoots,
       checkboxes: checkboxes
     }
 
@@ -222,7 +220,6 @@ export default class ModalExportCollection extends React.Component {
     const { full } = this.props;
     return (
       <div className="export-collections-modal">
-        {this.renderCollections('Global collections', 'lockedRoots')}
         {this.renderCollections('My collections', 'unsharedRoots')}
         {this.renderSharedCollections('My shared collections', 'sharedRoots')}
         {this.renderSharedCollections('Shared with me', 'remoteRoots')}
