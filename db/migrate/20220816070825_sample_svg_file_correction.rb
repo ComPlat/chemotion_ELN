@@ -1,13 +1,16 @@
+# frozen_string_literal: true
+
 class SampleSvgFileCorrection < ActiveRecord::Migration[5.2]
-  class ReactionsSample < ActiveRecord::Base
+  class ReactionsSample < ApplicationRecord
     self.table_name = 'reactions_samples'
     belongs_to :reaction, optional: true, class_name: 'Reaction'
     belongs_to :sample, optional: true, class_name: 'Sample'
   end
 
   def change
-    date = Time.new(2022, 6, 28)
-    Sample.where('created_at > :date or updated_at > :date', date: date).where("sample_svg_file like '%<svg%'").find_each do |sample|
+    date = Time.zone.local(2022, 6, 28)
+    Sample.where('created_at > :date or updated_at > :date',
+                 date: date).where("sample_svg_file like '%<svg%'").find_each do |sample|
       sample.attach_svg
       sample.update_columns(sample_svg_file: sample.sample_svg_file)
     end
@@ -16,7 +19,7 @@ class SampleSvgFileCorrection < ActiveRecord::Migration[5.2]
     molecules.find_each do |molecule|
       svg_file = molecule.send(:full_svg_path)
 
-      next unless File.file?(svg_file)
+      next unless svg_file.present? && File.file?(svg_file)
 
       svg = File.read(svg_file)
       molecule.attach_svg(svg)
@@ -28,7 +31,7 @@ class SampleSvgFileCorrection < ActiveRecord::Migration[5.2]
       next if sample.sample_svg_file.nil?
 
       svg_file = sample.send(:full_svg_path)
-      next unless File.file?(svg_file)
+      next unless svg_file.present? && File.file?(svg_file)
 
       svg = File.read(svg_file)
       sample.sample_svg_file = svg

@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+# rubocop: disable Metrics/ClassLength
+
 module Chemotion
   class SearchAPI < Grape::API
     include Grape::Kaminari
@@ -82,7 +86,7 @@ module Chemotion
         false
       end
 
-      def advanced_search(c_id = @c_id, dl = @dl)
+      def advanced_search(c_id = @c_id, dl = @dl) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Naming/MethodParameterName
         query = ''
         cond_val = []
         tables = []
@@ -96,7 +100,7 @@ module Chemotion
           field = filter['field']['column']
           words = filter['value'].split(/(\r)?\n/).map!(&:strip)
           words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
-          field = "xref -> 'cas' ->> 'value'" if field == 'xref' && filter['field']['opt'] == 'cas'
+          field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
           conditions = words.collect { "#{table}.#{field} #{filter['match']} ? " }.join(' OR ')
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
@@ -346,14 +350,13 @@ module Chemotion
         elsif search_method != 'advanced' && molecule_sort == true
           return scope.includes(:molecule)
                       .joins(:molecule)
-                      .order(
-                        "LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"
-                      ).order('molecules.sum_formular')
+                      .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
+                      .order('molecules.sum_formular')
         elsif search_by_method.start_with?("element_short_label_")
           klass = ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
           return Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
-        return scope
+        scope
       end
 
       def elements_by_scope(scope, collection_id = @c_id)
@@ -579,3 +582,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop:enable Metrics/ClassLength
