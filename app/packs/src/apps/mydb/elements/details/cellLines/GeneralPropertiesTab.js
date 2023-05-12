@@ -11,12 +11,12 @@ class GeneralPropertiesTab extends React.Component {
   constructor(props) {
     super(props);
     this.state = { openPanel: 'common-properties' };
-    this.changeAmount = this.changeAmount.bind(this);
   }
 
   render() {
     const cellLineItem = this.context.cellLineDetailsStore.cellLines(this.props.item.id);
-
+    const store = this.context.cellLineDetailsStore;
+    const cellLineId=this.props.item.id;
     return (
       <div>
         <PanelGroup
@@ -31,14 +31,14 @@ class GeneralPropertiesTab extends React.Component {
           >
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'common-properties' }); }}>Common Properties</Panel.Heading>
             <Panel.Body collapsible>
-              {this.renderAttribute('Cell line name', cellLineItem.cellLineName)}
-              {this.renderAttribute('Mutation', cellLineItem.mutation)}
-              {this.renderAttribute('Disease', cellLineItem.disease)}
-              {this.renderAttribute('Organism', cellLineItem.organism)}
-              {this.renderAttribute('Tissue', cellLineItem.tissue)}
-              {this.renderAttribute('Variant', cellLineItem.variant)}
-              {this.renderAttribute('Bio Savety Level', cellLineItem.biosafetyLevel)}
-              {this.renderAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium)}
+              {this.renderAttribute('Cell line name', cellLineItem.cellLineName,(e)=>{store.changeCellLineName(cellLineId, e.target.value)})}
+              {this.renderAttribute('Mutation', cellLineItem.mutation,(e)=>{store.changeMutation(cellLineId, e.target.value)})}
+              {this.renderAttribute('Disease', cellLineItem.disease,(e)=>{store.changeDisease(cellLineId, e.target.value)})}
+              {this.renderAttribute('Organism', cellLineItem.organism,(e)=>{store.changeOrganism(cellLineId, e.target.value)})}
+              {this.renderAttribute('Tissue', cellLineItem.tissue,(e)=>{store.changeTissue(cellLineId, e.target.value)})}
+              {this.renderAttribute('Variant', cellLineItem.variant,(e)=>{store.changeVariant(cellLineId, e.target.value)})}
+              {this.renderAttribute('Bio Savety Level', cellLineItem.biosafetyLevel,(e)=>{store.changeBioSafetyLevel(cellLineId, e.target.value)})}
+              {this.renderAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium,(e)=>{store.changeCryoMedium(cellLineId, e.target.value)})}
             </Panel.Body>
           </Panel>
 
@@ -48,22 +48,18 @@ class GeneralPropertiesTab extends React.Component {
           >
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
             <Panel.Body collapsible>
-              {this.renderAttribute('Amount', cellLineItem.amount, this.changeAmount)}
-              {this.renderAttribute('Passage', cellLineItem.passage)}
-              {this.renderAttribute('Contamination', cellLineItem.contamination)}
-              {this.renderAttribute('Source', cellLineItem.source)}
-              {this.renderAttribute('GrowthMedium', cellLineItem.growthMedium)}
-              {this.renderAttribute('Name of specific probe', cellLineItem.itemName)}
+              {this.renderAttribute('Amount', cellLineItem.amount,(e)=>{store.changeAmount(cellLineId, Number(e.target.value))})}
+              {this.renderAttribute('Passage', cellLineItem.passage,(e)=>{store.changePassage(cellLineId, Number(e.target.value))})}
+              {this.renderAttribute('Contamination', cellLineItem.contamination,(e)=>{store.changeContamination(cellLineId, e.target.value)})}
+              {this.renderAttribute('Source', cellLineItem.source,(e)=>{store.changeSource(cellLineId, e.target.value)})}
+              {this.renderAttribute('GrowthMedium', cellLineItem.growthMedium,(e)=>{store.changeGrowthMedium(cellLineId, e.target.value)})}
+              {this.renderAttribute('Name of specific probe', cellLineItem.itemName,(e)=>{store.changeItemName(cellLineId, e.target.value)})}
             </Panel.Body>
           </Panel>
         </PanelGroup>
 
       </div>
     );
-  }
-
-  changeAmount(e) {
-    this.context.cellLineDetailsStore.changeAmountOfCellLine(this.props.item.id, Number(e.target.value));
   }
 
   renderAttribute(attributeName, defaultValue, onChangeCallBack) {

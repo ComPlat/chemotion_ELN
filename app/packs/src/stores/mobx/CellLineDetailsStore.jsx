@@ -47,8 +47,47 @@ export const CellLineDetailsStore = types
     cellLineItem: types.map(CellLineItem)
   })
   .actions((self) => ({
-    changeAmountOfCellLine(id, newAmount) {
+    changeItemName(id, newItemName) {
+      self.cellLineItem.get(id).itemName = newItemName;
+    },
+    changeGrowthMedium(id, newGrowthMedium) {
+      self.cellLineItem.get(id).growthMedium = newGrowthMedium;
+    },
+    changeSource(id, newSource) {
+      self.cellLineItem.get(id).source = newSource;
+    },
+    changeAmount(id, newAmount) {
       self.cellLineItem.get(id).amount = newAmount;
+    },
+    changeContamination(id, newContamination) {
+      self.cellLineItem.get(id).contamination = newContamination;
+    },
+    changePassage(id, newPassage) {
+      self.cellLineItem.get(id).passage = newPassage;
+    },
+    changeCellLineName(id, newCellLineName) {
+      self.cellLineItem.get(id).cellLineName = newCellLineName;
+    },
+    changeMutation(id, newMutation) {
+      self.cellLineItem.get(id).mutation = newMutation;
+    },
+    changeDisease(id, newDisease) {
+      self.cellLineItem.get(id).disease = newDisease;
+    },
+    changeOrganism(id, newOrganism) {
+      self.cellLineItem.get(id).organism = newOrganism;
+    },
+    changeTissue(id, newTissue) {
+      self.cellLineItem.get(id).tissue = newTissue;
+    },
+    changeVariant(id, newVariant) {
+      self.cellLineItem.get(id).variant = newVariant;
+    },
+    changeBioSafetyLevel(id, newBioSafetyLevel) {
+      self.cellLineItem.get(id).bioSafetyLevel = newBioSafetyLevel;
+    },
+    changeCryoMedium(id, newCryoMedium) {
+      self.cellLineItem.get(id).cryopreservationMedium = newCryoMedium;
     },
     addEmptyContainer(id) {
       let container = Container.buildEmpty();

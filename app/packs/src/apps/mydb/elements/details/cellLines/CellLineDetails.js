@@ -62,10 +62,9 @@ class CellLineDetails extends React.Component {
   }
 
   handleSubmit(cellLineItem) {
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
-    cellLineItem.amount = mobXItem.amount;
-    CellLinesFetcher.cellLineId = 5;
-    // Here transformation/merging between the mobx store und elementStore
+    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);   
+    cellLineItem.adoptPropsFromMobXModel(mobXItem)
+   
     ElementActions.updateCellLine(cellLineItem);
   }
 
