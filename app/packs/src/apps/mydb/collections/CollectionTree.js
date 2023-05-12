@@ -8,13 +8,12 @@ import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import SampleTaskNavigationElement from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskNavigationElement';
 import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskInbox';
-import { filterMySharedCollection, filterSharedWithMeCollection } from './CollectionTreeStructure'
+import { filterMySharedCollection, filterSharedWithMeCollection } from './CollectionTreeStructure';
+import { AviatorNavigation } from 'src/utilities/routesUtils';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
@@ -289,34 +288,12 @@ export default class CollectionTree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
-    const { showCollectionManagement, currentCollection, isShared } = UIStore.getState();
 
     if (showCollectionManagement) {
       Aviator.navigate('/collection/management');
-    } else {
-      if (currentCollection == null || currentCollection.label == 'All') {
-        Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
-      } else {
-        Aviator.navigate(isShared
-          ? `/scollection/${currentCollection.id}/${this.urlForCurrentElement()}`
-          : `/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
-      }
+      return;
     }
-  }
-
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-    if (currentElement) {
-      if (currentElement.isNew) {
-        return `${currentElement.type}/new`;
-      }
-      else {
-        return `${currentElement.type}/${currentElement.id}`;
-      }
-    }
-    else {
-      return '';
-    }
+    AviatorNavigation({});
   }
 
   render() {
