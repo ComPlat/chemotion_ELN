@@ -30,10 +30,10 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { elementShowOrNew, UrlSilentNavigation } from 'src/utilities/routesUtils';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { SameEleTypId } from 'src/utilities/ElementUtils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -349,7 +349,7 @@ class ElementStore {
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
       case "NMR":
-        const { currentCollection, isShared } = UIStore.getState();
+        const { currentCollection } = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
 
         // update Device in case of sample was added by dnd and device was not saved
@@ -357,15 +357,9 @@ class ElementStore {
         ElementActions.saveDevice(device)
 
         if (deviceAnalysis) {
-          Aviator.navigate(isShared
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-          )
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`)
         } else {
-          Aviator.navigate(isShared
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-          )
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`)
         }
         break
     }
@@ -456,13 +450,10 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection, isShared } = UIStore.getState();
-    this.state.currentElement = analysis
+    const { currentCollection } = UIStore.getState();
+    this.state.currentElement = analysis;
 
-    Aviator.navigate(isShared
-      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-    )
+    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
   }
 
   handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {

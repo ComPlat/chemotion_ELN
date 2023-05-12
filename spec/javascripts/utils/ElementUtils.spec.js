@@ -6,7 +6,7 @@ import {
   searchAndReplace
 } from '../../../app/packs/src/utilities/markdownUtils';
 import {
-  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat
+  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat,
 } from '../../../app/packs/src/utilities/ElementUtils';
 import { contentToText } from '../../../app/packs/src/utilities/quillFormat';
 import { nmrData1H } from '../fixture/nmr1H';

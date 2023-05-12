@@ -1,15 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Aviator from 'aviator';
 import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
-import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { collectionShow, AviatorNavigation } from 'src/utilities/routesUtils';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -153,7 +150,6 @@ export default class CollectionSubtree extends React.Component {
       return;
     }
 
-    const { currentUser } = UserStore.getState();
     const { root } = this.state;
     let { visible } = this.state;
     const uiState = UIStore.getState();
@@ -162,35 +158,13 @@ export default class CollectionSubtree extends React.Component {
     // }
     this.setState({ visible });
     let collectionID = 'all';
-    if (root.label === 'All' && root.is_locked) {
-      Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`, { silent: true });
-      collectionShow({ params: { collectionID } });
-      return;
-    }
-
-    const shared =
-      (this.props.root.user_id == currentUser.id && this.props.root.collection_id) ? true : false;
+    // TODO clean collection_id
     let collectionId = root.collection_id ? root.collection_id : root.id;
     if (collectionId === undefined) return;
-    const url = (shared)
-      ? `/share_collections/${collectionId}/${this.urlForCurrentElement()}`
-      : `/collections/${collectionId}/${this.urlForCurrentElement()}`;
 
-    Aviator.navigate(url, { silent: true });
+    AviatorNavigation({ collection: root, silent: true });
     collectionID = this.state.root.collection_id || this.state.root.id;
-    const collShow = shared ? scollectionShow : collectionShow;
-    collShow({ params: { collectionID } });
-  }
-
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-    if (currentElement) {
-      if (currentElement.isNew) {
-        return `${currentElement.type}/new`;
-      }
-      return `${currentElement.type}/${currentElement.id}`;
-    }
-    return '';
+    collectionShow({ params: { collectionID } });
   }
 
   toggleExpansion(e) {
