@@ -253,34 +253,12 @@ export default class CollectionTree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
-    const { showCollectionManagement, currentCollection, isShared } = UIStore.getState();
 
     if (showCollectionManagement) {
       Aviator.navigate('/collection/management');
-    } else {
-      if (currentCollection == null || currentCollection.label == 'All') {
-        Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
-      } else {
-        Aviator.navigate(isShared
-          ? `/scollection/${currentCollection.id}/${this.urlForCurrentElement()}`
-          : `/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
-      }
+      return;
     }
-  }
-
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-    if (currentElement) {
-      if (currentElement.isNew) {
-        return `${currentElement.type}/new`;
-      }
-      else {
-        return `${currentElement.type}/${currentElement.id}`;
-      }
-    }
-    else {
-      return '';
-    }
+    AviatorNavigation({});
   }
 
   render() {
