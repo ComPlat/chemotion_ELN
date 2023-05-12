@@ -1,60 +1,65 @@
 import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
+import { Table } from 'react-bootstrap';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import PropTypes from 'prop-types';
+import Aviator from 'aviator';
+import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
 
-export default class CellLineItemEntry extends React.Component {
-  constructor(props) {
-    super(props);
+export default class CellLineItemEntry extends Component {
+  constructor() {
+    super();
+    this.showDetails = this.showDetails.bind(this);
   }
 
-  componentDidMount() {
-    UIStore.getState();
-    // ElementStore.listen(this.onChange);
-    // UIStore.listen(this.onChangeUI);
-    this.initState();
-  }
+  showDetails() {
+    const { currentCollection, isSync } = UIStore.getState();
+    const { cellLineItem } = this.props;
+    const { id, type } = cellLineItem;
 
-  componentWillUnmount() {
-    // ElementStore.unlisten(this.onChange);
-    // UIStore.unlisten(this.onChangeUI);
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+    const e = {
+      type,
+      params: {
+        collectionID: currentCollection.id,
+        new_cellLine: false,
+        cellLineId: id
+      }
+    };
+    e.params[`${type}ID`] = id;
+
+    elementShowOrNew(e);
   }
 
   render() {
+    const { cellLineItem } = this.props;
     return (
       <Table className="elements" bordered hover style={{ borderTop: 0 }}>
         <tbody>
           <tr>
             <td>
               <ElementCheckbox
-                element={this.props.cellLineItem}
-                key={this.props.cellLineItem.id}
-                checked={this.isElementChecked(this.props.cellLineItem)}
+                element={cellLineItem}
+                key={cellLineItem.id}
+                checked={cellLineItem.is_checked}
               />
               <br />
             </td>
-            <td onClick={(e) => this.showDetails()}>
-              Amount:
-              {' '}
-              {this.props.cellLineItem.amount}
-              {' '}
-              - Passage:
-              {this.props.cellLineItem.passage}
-              {' '}
-              -
-              Contamination:
-              {' '}
-              {this.props.cellLineItem.contamination}
-
-            </td>
+            <CellLineItemText
+              cellLineItem={cellLineItem}
+              showDetails={this.showDetails}
+            />
             <td>
               <ElementContainer
-                key={this.props.cellLineItem.id}
+                key={cellLineItem.id}
                 sourceType={DragDropItemTypes.CELL_LINE}
-                element={this.props.cellLineItem}
+                element={cellLineItem}
               />
             </td>
           </tr>
@@ -62,26 +67,15 @@ export default class CellLineItemEntry extends React.Component {
       </Table>
     );
   }
-
-  showDetails() {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { id, type } = this.props.cellLineItem;
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id, new_cellLine: false, cellLineId: id } };
-    e.params[`${type}ID`] = id;
-
-    elementShowOrNew(e);
-  }
-
-  initState() {
-    // this.onChange(ElementStore.getState());
-
-  }
-
-  isElementChecked(element) {
-    return false;
-  }
 }
+
+CellLineItemEntry.propTypes = {
+  cellLineItem: PropTypes.shape({
+    amount: PropTypes.number.isRequired,
+    passage: PropTypes.number.isRequired,
+    type: PropTypes.string.isRequired,
+    contamination: PropTypes.string.isRequired,
+    id: PropTypes.string.isRequired,
+    is_checked: PropTypes.bool,
+  }).isRequired
+};

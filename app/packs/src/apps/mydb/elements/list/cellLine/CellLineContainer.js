@@ -1,35 +1,31 @@
 import React, { Component } from 'react';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import CellLineEntry from 'src/apps/mydb/elements/list/cellLine/CellLineEntry';
+import PropTypes from 'prop-types';
 
-export default class CellLineContainer extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  componentDidMount() {
-    UIStore.getState();
-    // ElementStore.listen(this.onChange);
-    // UIStore.listen(this.onChangeUI);
-    this.initState();
-  }
-
-  componentWillUnmount() {
-    // ElementStore.unlisten(this.onChange);
-    // UIStore.unlisten(this.onChangeUI);
-  }
-
+// eslint-disable-next-line react/prefer-stateless-function
+export default class CellLineContainer extends Component {
   render() {
+    const { cellLineGroups } = this.props;
+    
     return (
       <div className="list-container">
-        {this.props.cellLineGroups.map(
-          (group) => <CellLineEntry cellLineGroup={group} />
+        {cellLineGroups.map(
+          (group) => (
+            <CellLineEntry
+              key={group.cellLineItems[0].id}
+              cellLineItems={group.cellLineItems}
+            />
+          )
         )}
       </div>
     );
   }
-
-  initState() {
-    // this.onChange(ElementStore.getState());
-  }
 }
+
+CellLineContainer.propTypes = {
+  cellLineGroups: PropTypes.shape({
+    // eslint-disable-next-line react/forbid-prop-types
+    cellLineItems: PropTypes.arrayOf(PropTypes.object),
+    map: PropTypes.func.isRequired
+  }).isRequired
+};

@@ -1,27 +1,18 @@
 import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CellLineItemEntry from 'src/apps/mydb/elements/list/cellLine/CellLineItemEntry';
+import PropTypes from 'prop-types';
 
-export default class CellLineEntry extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
+export default class CellLineEntry extends Component {
   componentDidMount() {
     UIStore.getState();
-    // ElementStore.listen(this.onChange);
-    // UIStore.listen(this.onChangeUI);
-    this.initState();
-  }
-
-  componentWillUnmount() {
-    // ElementStore.unlisten(this.onChange);
-    // UIStore.unlisten(this.onChangeUI);
   }
 
   render() {
-    if (this.props.cellLineGroup.cellLineItems.length == 0) { return (null); }
-    const firstCellLineItem = this.props.cellLineGroup.cellLineItems[0];
+    const { cellLineItems } = this.props;
+    if (cellLineItems.length === 0) { return (null); }
+
+    const firstCellLineItem = cellLineItems[0];
     return (
       <div className="list-container">
         <br />
@@ -37,15 +28,19 @@ export default class CellLineEntry extends React.Component {
         -
         {firstCellLineItem.disease}
 
-        {this.props.cellLineGroup.cellLineItems.map(
-          (cellLineItem) => <CellLineItemEntry cellLineItem={cellLineItem} />
+        {cellLineItems.map(
+          (cellLineItem) => <CellLineItemEntry key={cellLineItem.id} cellLineItem={cellLineItem} />
         )}
       </div>
-
     );
   }
-
-  initState() {
-    // this.onChange(ElementStore.getState());
-  }
 }
+
+CellLineEntry.propTypes = {
+  cellLineItems: PropTypes.arrayOf(PropTypes.shape({
+    cellLineId: PropTypes.number.isRequired,
+    cellLineName: PropTypes.string.isRequired,
+    organism: PropTypes.string.isRequired,
+    disease: PropTypes.string.isRequired
+  })).isRequired
+};
