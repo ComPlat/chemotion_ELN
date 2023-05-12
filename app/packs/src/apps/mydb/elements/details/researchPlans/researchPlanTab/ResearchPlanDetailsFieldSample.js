@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { UrlSilentNavigation } from 'src/utilities/routesUtils';
 import SampleName from 'src/components/common/SampleName';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
