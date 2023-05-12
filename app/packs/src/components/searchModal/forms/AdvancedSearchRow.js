@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, FormControl } from 'react-bootstrap'
 import Select from 'react-select';
 import TreeSelect from 'antd/lib/tree-select';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 import SelectFieldData from './SelectFieldData';
-import SelectMapperData from './SelectMapperData';
+import { mapperFields, unitMapperFields } from './SelectMapperData';
 import { statusOptions } from 'src/components/staticDropdownOptions/options';
 
-const AdvancedSearchRow = ({ idx, selection, onChange }) => {
-  const mapperOptions = SelectMapperData.fields;
+const AdvancedSearchRow = ({ idx, selection, onChange }) => {  
+  let mapperOptions = mapperFields;
+
+  if (['temperature', 'duration'].includes(selection.field.column)) {
+    mapperOptions = unitMapperFields;
+  }
+
   const fieldOptions = SelectFieldData.fields[selection.table];
   const logicalOperators = [
     { value: "AND", label: "AND" },
@@ -17,6 +22,19 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
   ];
 
   const { rxnos } = UserStore.getState();
+  const temperatureOptions = [
+    { value: '°C', label: '°C' },
+    { value: '°F', label: '°F' },
+    { value: 'K', label: 'K' }
+  ];
+  
+  const durationOptions = [
+    { value: 'Hour(s)', label: 'Hour(s)' },
+    { value: 'Minute(s)', label: 'Minute(s)' },
+    { value: 'Second(s)', label: 'Second(s)' },
+    { value: 'Week(s)', label: 'Week(s)' },
+    { value: 'Day(s)', label: 'Day(s)' },
+  ];
 
   const filterTreeNode = (input, child) => {
     return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;
@@ -24,7 +42,7 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
 
   let display = selection.link == '' ? 'none' : 'table';
 
-  let valueField = (
+  const defaultValueField = (
     <FormControl
       type="text"
       value={selection.value}
@@ -36,30 +54,93 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
     />
   );
 
-  if (selection.field != '' && selection.field.column == 'status') {
-    valueField = (
-      <span className="value-field-select">
-        <Select
-          options={statusOptions}
-          placeholder="Select status"
-          value={selection.value}
-          clearable={false}
-          onChange={onChange(idx, 'value')}
-        />
-      </span>
-    );
-  } else if (selection.field != '' && selection.field.column == 'rxno') {
-    valueField = (
-      <span className="value-field-select">
-        <TreeSelect
-          value={selection.value}
-          treeData={rxnos}
-          placeholder="Select type"
-          onChange={onChange(idx, 'value')}
-          filterTreeNode={filterTreeNode}
-        />
-      </span>
-    );
+  const valueField = () => {
+    if (selection.field == '') { return defaultValueField }
+
+    switch (selection.field.column) {
+      case 'status':
+        return (
+          <span className="value-field-select">
+            <Select
+              options={statusOptions}
+              placeholder="Select status"
+              value={selection.value}
+              clearable={false}
+              onChange={onChange(idx, 'value')}
+            />
+          </span>
+        );
+        break;
+      case 'rxno':
+        return (
+          <span className="value-field-select">
+            <TreeSelect
+              value={selection.value}
+              treeData={rxnos}
+              placeholder="Select type"
+              onChange={onChange(idx, 'value')}
+              filterTreeNode={filterTreeNode}
+            />
+          </span>
+        );
+        break;
+      case 'temperature':
+        return (
+          <>
+            <span className="value-field-select">
+              <Select
+                simpleValue
+                options={temperatureOptions}
+                placeholder="Select unit"
+                value={selection.unit}
+                clearable={false}
+                onChange={onChange(idx, 'unit')}
+              />
+            </span>
+            <span className="value-field-select">
+              <FormControl
+                type="text"
+                value={selection.value}
+                componentClass="textarea"
+                rows={1}
+                className="value-select-unit"
+                placeholder="Search value"
+                onChange={onChange(idx, 'value')}
+              />
+            </span>
+          </>
+        );
+        break;
+      case 'duration':
+        return (
+          <>
+            <span className="value-field-select">
+              <Select
+                simpleValue
+                options={durationOptions}
+                placeholder="Select unit"
+                value={selection.unit}
+                clearable={false}
+                onChange={onChange(idx, 'unit')}
+              />
+            </span>
+            <span className="value-field-select">
+              <FormControl
+                type="text"
+                value={selection.value}
+                componentClass="textarea"
+                rows={1}
+                className="value-select-unit"
+                placeholder="Search value"
+                onChange={onChange(idx, 'value')}
+              />
+            </span>
+          </>
+        );
+        break;
+      default:
+        return defaultValueField;
+    }
   }
 
   return (
@@ -91,7 +172,7 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
             value={selection.field}
             onChange={onChange(idx, 'field')} />
         </span>
-        {valueField}
+        {valueField()}
       </div>
     </>
   )
