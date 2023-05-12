@@ -8,6 +8,7 @@ import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, Literature
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
+import CellLine from 'src/models/cellLine/CellLine';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -283,6 +284,7 @@ DetailsTabLiteratures.propTypes = {
   element: PropTypes.oneOfType([
     PropTypes.instanceOf(ResearchPlan),
     PropTypes.instanceOf(Reaction),
+    PropTypes.instanceOf(CellLine),
     PropTypes.instanceOf(Sample)
   ]).isRequired,
   literatures: PropTypes.array

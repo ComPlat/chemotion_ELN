@@ -11,6 +11,7 @@ import {
 } from 'react-bootstrap';
 import GeneralPropertiesTab from 'src/apps/mydb/elements/details/cellLines/GeneralPropertiesTab';
 import CellLineDetailsContainers from 'src/apps/mydb/elements/details/cellLines/CellLineDetailsContainers';
+import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 
 class CellLineDetails extends React.Component {
   static contextType = StoreContext;
@@ -43,6 +44,9 @@ class CellLineDetails extends React.Component {
           <Tabs activeKey={this.state.activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralPropertiesTab item={item} /></Tab>
             <Tab eventKey="tab2" title="Analyses" key="tab2"><CellLineDetailsContainers item={item} /></Tab>
+            <Tab eventKey="tab3" title="References" key="tab2"><DetailsTabLiteratures element={item}
+            literatures={item.isNew === true ? item.literatures : null}
+            onElementChange={r => this.handleLiteratureChange(r)} /></Tab>
           </Tabs>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={(e) => { this.handleClose(this.props.cellLineItem); }}>
@@ -73,6 +77,10 @@ class CellLineDetails extends React.Component {
 
   onTabPositionChanged(visible) {
     this.setState({ visible });
+  }
+
+  handleLiteratureChange(r){
+
   }
 
   handleSegmentsChange(se) {
