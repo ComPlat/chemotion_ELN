@@ -1,9 +1,9 @@
-import Aviator from 'aviator';
 import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }
@@ -208,30 +208,8 @@ const SameEleTypId = (orig, next) => {
   return false;
 };
 
-const UrlSilentNavigation = (element) => {
-  const { currentCollection, isShared } = UIStore.getState();
-  if (element) {
-    let elementString = `${element.type}`;
-    if (!isNaN(element.id)) elementString += `/${element.id}`;
 
-    const collectionUrl = `${currentCollection.id}/${elementString}`;
-    Aviator.navigate(
-      isShared ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
-      { silent: true },
-    );
-  } else {
-    const cId = currentCollection.id;
-    Aviator.navigate(
-      isShared ? `/scollection/${cId}/` : `/collection/${cId}/`,
-      { silent: true },
-    );
-  }
-};
-
-const markdownChemicalFormular = (text) => {
-  text = text.replace(/(C|H|O|N|S)(\d+)/g, '$1<sub>$2</sub>');
-  return text;
-};
+const markdownChemicalFormular = (text) => text.replace(/(C|H|O|N|S)(\d+)/g, '$1<sub>$2</sub>');
 
 const commonFormatPattern = [
   {
@@ -467,7 +445,6 @@ export {
   cNmrCount,
   msCheckMsg,
   SameEleTypId,
-  UrlSilentNavigation,
   sampleAnalysesFormatPattern,
   commonFormatPattern,
   Alphabet,
