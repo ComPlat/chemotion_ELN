@@ -19,7 +19,8 @@ const AdvancedSearchForm = () => {
       column: 'name',
       label: 'Name',
     },
-    value: ''
+    value: '',
+    unit: ''
   }];
 
   const elnElements = ['samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
@@ -42,7 +43,7 @@ const AdvancedSearchForm = () => {
           link: 'OR', match: 'LIKE', table: selectedOptions[0].table,
           element_id: selectedOptions[0].element_id,
           element_table: selectedOptions[0].element_table,
-          field: '', value: ''
+          field: '', value: '', unit: ''
         }
       );
       setSelectedOptions((a) => [...a]);
@@ -141,7 +142,7 @@ const AdvancedSearchForm = () => {
     if (searchStore.searchResultVisible && filters.length > 0) {
       filters.map((val, i) => {
         let table = val.table.charAt(0).toUpperCase() + val.table.slice(1, -1).replace('_', ' ');
-        searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value].join(" "));
+        searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value, val.unit].join(" "));
       });
     }
     searchStore.changeSearchValues(searchValues);
@@ -184,9 +185,40 @@ const AdvancedSearchForm = () => {
     }
   }
 
+  const temperatureConditions = (idx) => {
+    if (selectedOptions[idx]['unit'] == '') {
+      selectedOptions[idx]['unit'] = '°C';
+    }
+    if (selectedOptions[idx]['match'] != '=') {
+      selectedOptions[idx]['match'] = '=';
+    }
+  }
+
+  const durationConditions = (idx) => {
+    if (selectedOptions[idx]['unit'] == '') {
+      selectedOptions[idx]['unit'] = 'Hour(s)';
+    }
+    if (selectedOptions[idx]['match'] != '=') {
+      selectedOptions[idx]['match'] = '=';
+    }
+  }
+
+  const checkValueForNumber = (value) => {
+    if (isNaN(Number(value))) {
+      searchStore.changeErrorMessage("Only numbers are allowed");
+    } else {
+      searchStore.changeErrorMessage('');
+    }
+  }
+
   const handleChangeSelection = (idx, formElement) => (e) => {
     let value = formElementValue(formElement, e, e.currentTarget);
+    const fieldColumn = selectedOptions[idx]['field'].column;
     selectedOptions[idx][formElement] = value;
+    if (value.column == 'temperature') { temperatureConditions(idx) }
+    if (value.column == 'duration') { durationConditions(idx) }
+    if (['temperature', 'duration'].includes(fieldColumn) && formElement == 'value') { checkValueForNumber(value) }
+    if (!['temperature', 'duration'].includes(fieldColumn) && formElement != 'unit' && !['temperature', 'duration'].includes(value.column)) { selectedOptions[idx]['unit'] = '' }
     setSelectedOptions((a) => [...a]);
   }
 

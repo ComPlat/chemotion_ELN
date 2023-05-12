@@ -69,6 +69,20 @@ export default {
       },
       {
         value: {
+          column: 'temperature',
+          label: 'Temperature'
+        },
+        label: 'Temperature'
+      },
+      {
+        value: {
+          column: 'duration',
+          label: 'Duration'
+        },
+        label: 'Duration'
+      },
+      {
+        value: {
           column: 'rxno',
           label: 'Type'
         },

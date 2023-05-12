@@ -34,9 +34,10 @@ module Chemotion
           optional :name, type: String
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
-            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE'], default: 'LIKE'
+            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<'], default: 'LIKE'
             optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements]
             optional :element_id, type: Integer
+            optional :unit, type: String, values: ['', '°C', '°F', 'K', 'Hour(s)', 'Minute(s)', 'Second(s)', 'Week(s)', 'Day(s)']
             requires :field, type: Hash
             requires :value, type: String
           end
@@ -124,6 +125,18 @@ module Chemotion
         false
       end
 
+      def duration_interval_by_unit(unit)
+        case unit
+        when 'Hour(s)' then 3600
+        when 'Minute(s)' then 60
+        when 'Second(s)' then 1
+        when 'Week(s)' then 604800
+        when 'Day(s)' then 86400
+        else
+          3600
+        end
+      end
+
       def filter_values_for_advanced_search(dl = @dl)
         query = ''
         cond_val = []
@@ -133,19 +146,22 @@ module Chemotion
         adv_params.each do |filter|
           filter['field']['table'] = filter['table']
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
-          element_field = ''
+          additional_condition = ''
+          first_condition = ''
           next unless whitelisted_table(**adv_field)
           next unless filter_with_detail_level(**adv_field)
 
           table = filter['table']
           condition_table = "#{table}."
           model_name = table.singularize.camelize.constantize
-          # tables.push(table: table, ext_key: filter['field']['ext_key'])
+
           field = filter['field']['column']
-          words = filter['value'].split(/(\r)?\n/).map!(&:strip)
-          words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
           field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
-          element_field = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
+          additional_condition = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
+          sanitze_words = filter['match'] == '=' ? false : (%w[temperature duration].include?(filter['field']['column']) ? false : true)
+
+          words = filter['value'].split(/(\r)?\n/).map!(&:strip)
+          words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitze_words
 
           case filter['field']['column']
           when 'body'
@@ -156,9 +172,21 @@ module Chemotion
           when 'content'
             joins << "INNER JOIN private_notes ON private_notes.noteable_type = '#{model_name}' AND private_notes.noteable_id = #{table}.id"
             condition_table = 'private_notes.'
+          when 'temperature'
+            field = "(#{table}.temperature ->> 'userText')::FLOAT"
+            first_condition = "(#{table}.temperature ->> 'userText')::TEXT != ''"
+            first_condition += " AND (#{table}.temperature ->> 'valueUnit')::TEXT != '' AND "
+            additional_condition = "AND (#{table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
+            words[0] = words.first.to_f
+            condition_table = ''
+          when 'duration'
+            field = "(EXTRACT(epoch FROM #{table}.duration::interval)/#{duration_interval_by_unit(filter['unit'])})::INT"
+            first_condition = "#{table}.duration IS NOT NULL AND #{table}.duration != '' AND "
+            words[0] = words.first.to_i
+            condition_table = ''
           end
 
-          conditions = words.collect { "#{condition_table}#{field} #{filter['match']} ? #{element_field}" }.join(' OR ')
+          conditions = words.collect { "#{first_condition}#{condition_table}#{field} #{filter['match']} ? #{additional_condition}" }.join(' OR ')
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
         end

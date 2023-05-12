@@ -18,21 +18,21 @@ const SearchResult = ({ handleClear }) => {
 
   useEffect(() => {
     if (typeof (profile) !== 'undefined' && profile &&
-      typeof (profile.data) !== 'undefined' && profile.data)  {
+      typeof (profile.data) !== 'undefined' && profile.data) {
       const visible = [];
 
       Object.entries(profile.data.layout).filter((value) => {
         // value[0] != 'research_plan' && 
         return value[1] > 0;
       })
-      .sort((a,b) => a[1] - b[1])
-      .map((value, i) => {
-        let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
-        let totalElements = tab === undefined ? 0 : tab.results.total_elements;
-        if (value[1] > 0) {
-          visible.push({ key: value[0], index: i, totalElements: totalElements });
-        }
-      });
+        .sort((a, b) => a[1] - b[1])
+        .map((value, i) => {
+          let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
+          let totalElements = tab === undefined ? 0 : tab.results.total_elements;
+          if (value[1] > 0) {
+            visible.push({ key: value[0], index: i, totalElements: totalElements });
+          }
+        });
       setVisibleTabs(visible);
       let activeTab = visible.find((v) => { return v.totalElements != 0 });
       activeTab = activeTab !== undefined ? activeTab.index : 0;
@@ -69,24 +69,24 @@ const SearchResult = ({ handleClear }) => {
 
   const SearchValuesList = () => {
     if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
-       return (
-         <div style={{ position: 'relative' }}>
-           <h4>Your Search</h4>
-           {
-             searchStore.searchValues.map((val, i) => {
-               return <div key={i}>{val}</div>
-             })
-           }
-           {
-             searchStore.searchResultsCount > 0 ? null : (
-               <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-             )
-           }
-         </div>
-       );
-     } else {
-       return null;
-     }
+      return (
+        <div style={{ position: 'relative' }}>
+          <h4>Your Search</h4>
+          {
+            searchStore.searchValues.map((val, i) => {
+              return <div key={i}>{val}</div>
+            })
+          }
+          {
+            searchStore.searchResultsCount > 0 ? null : (
+              <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+            )
+          }
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
 
   const ResultsCount = () => {
@@ -149,7 +149,7 @@ const SearchResult = ({ handleClear }) => {
       const navItem = searchResultNavItem(list, tabResult);
       const tabContent =
         <SearchResultTabContent key={`${list.key}-result-tab`}
-                                list={list} tabResult={tabResult}
+          list={list} tabResult={tabResult}
         />
 
       navItems.push(navItem);
@@ -164,7 +164,7 @@ const SearchResult = ({ handleClear }) => {
         onSelect={handleTabSelect}
       >
         <Row className="clearfix">
-        <Col sm={12}>
+          <Col sm={12}>
             <Navbar className="search-result-tab-navbar">
               <Nav bsStyle="tabs">
                 {navItems}
