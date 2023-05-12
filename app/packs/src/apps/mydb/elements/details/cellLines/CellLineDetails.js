@@ -3,7 +3,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
+import PropTypes from 'prop-types';
 
 import {
   Panel, ButtonToolbar, Button,
@@ -14,6 +14,7 @@ import CellLineDetailsContainers from 'src/apps/mydb/elements/details/cellLines/
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 
 class CellLineDetails extends React.Component {
+  // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
   constructor(props) {
@@ -23,36 +24,77 @@ class CellLineDetails extends React.Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
-  render() {
-    if (!this.props.cellLineItem) { return (null); }
-    this.context.cellLineDetailsStore.convertCellLineToModel(this.props.cellLineItem);
+  handleSubmit(cellLineItem) {
+    // eslint-disable-next-line react/destructuring-assignment
+    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
+    cellLineItem.adoptPropsFromMobXModel(mobXItem);
 
-    const item = this.props.cellLineItem;
+    ElementActions.updateCellLine(cellLineItem);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  handleClose(cellLineItem) {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('Unsaved data will be lost.Close sample?')) {
+      DetailActions.close(cellLineItem, true);
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  handleLiteratureChange() {
+
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  handleSegmentsChange() {
+
+  }
+
+  handleTabChange(eventKey) {
+    this.setState({ activeTab: eventKey });
+  }
+
+  onTabPositionChanged(visible) {
+    // eslint-disable-next-line react/no-unused-state
+    this.setState({ visible });
+  }
+
+  render() {
+    const { cellLineItem } = this.props;
+    if (!cellLineItem) { return (null); }
+    // eslint-disable-next-line react/destructuring-assignment
+    this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
+
+    const { activeTab } = this.state;
     return (
       <Panel
         className="eln-panel-detail"
       >
         <Panel.Heading>
-          {item.cellLineName}
+          {cellLineItem.cellLineName}
           {' '}
           -
           {' '}
-          {item.itemName}
+          {cellLineItem.itemName}
         </Panel.Heading>
         <Panel.Body>
 
-          <Tabs activeKey={this.state.activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
-            <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralPropertiesTab item={item} /></Tab>
-            <Tab eventKey="tab2" title="Analyses" key="tab2"><CellLineDetailsContainers item={item} /></Tab>
-            <Tab eventKey="tab3" title="References" key="tab2"><DetailsTabLiteratures element={item}
-            literatures={item.isNew === true ? item.literatures : null}
-            onElementChange={r => this.handleLiteratureChange(r)} /></Tab>
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
+            <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralPropertiesTab item={cellLineItem} /></Tab>
+            <Tab eventKey="tab2" title="Analyses" key="tab2"><CellLineDetailsContainers item={cellLineItem} /></Tab>
+            <Tab eventKey="tab3" title="References" key="tab3">
+              <DetailsTabLiteratures
+                element={cellLineItem}
+                literatures={cellLineItem.isNew === true ? cellLineItem.literatures : null}
+                onElementChange={(r) => this.handleLiteratureChange(r)}
+              />
+            </Tab>
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={(e) => { this.handleClose(this.props.cellLineItem); }}>
+            <Button bsStyle="primary" onClick={() => { this.handleClose(cellLineItem); }}>
               Close
             </Button>
-            <Button bsStyle="warning" onClick={(e) => { this.handleSubmit(this.props.cellLineItem); }}>
+            <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>
               Save
             </Button>
           </ButtonToolbar>
@@ -60,35 +102,18 @@ class CellLineDetails extends React.Component {
       </Panel>
     );
   }
-
-  handleSubmit(cellLineItem) {
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);   
-    cellLineItem.adoptPropsFromMobXModel(mobXItem)
-   
-    ElementActions.updateCellLine(cellLineItem);
-  }
-
-  handleClose(cellLineItem) {
-    if (confirm('Unsaved data will be lost.Close sample?')) {
-      DetailActions.close(cellLineItem, true);
-    }
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
-  handleLiteratureChange(r){
-
-  }
-
-  handleSegmentsChange(se) {
-
-  }
-
-  handleTabChange(eventKey) {
-    this.setState({ activeTab: eventKey });
-  }
 }
 
 export default observer(CellLineDetails);
+
+CellLineDetails.propTypes = {
+  cellLineItem: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    itemName: PropTypes.string.isRequired,
+    cellLineName: PropTypes.string.isRequired,
+    isNew: PropTypes.bool.isRequired,
+    // eslint-disable-next-line react/forbid-prop-types
+    literatures: PropTypes.arrayOf(PropTypes.object).isRequired,
+    disease: PropTypes.string.isRequired
+  })).isRequired
+};

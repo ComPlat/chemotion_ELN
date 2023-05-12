@@ -2,33 +2,44 @@ import React, { Component } from 'react';
 import CellLineAnalysisHeader from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisHeader';
 import { Panel } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
+import PropTypes from 'prop-types';
 
+// eslint-disable-next-line react/prefer-stateless-function
 export default class CellLineAnalysisEditRow extends Component {
-  constructor(props) {
-    super();
-  }
-
   render() {
+    const { container, parent, element } = this.props;
     return (
       <Panel
-        eventKey={this.props.container.id}
-        key={this.props.container.id}
+        eventKey={container.id}
+        key={container.id}
       >
         <Panel.Heading
-          onClick={(e) => this.props.parent.handleClickOnPanelHeader(this.props.container.id)}
+          onClick={() => parent.handleClickOnPanelHeader(container.id)}
         >
-          <CellLineAnalysisHeader element={this.props.element} container={this.props.container} parent={this.props.parent} />
+          <CellLineAnalysisHeader element={element} container={container} parent={parent} />
         </Panel.Heading>
         <Panel.Body collapsible>
           <ContainerComponent
             templateType="researchPlan"
             readOnly={false}
             disabled={false}
-            container={this.props.container}
-            onChange={() => this.props.parent.handleChange(this.props.container)}
+            container={container}
+            onChange={() => parent.handleChange(container)}
           />
         </Panel.Body>
       </Panel>
     );
   }
 }
+
+CellLineAnalysisEditRow.propTypes = {
+  container: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+  })).isRequired,
+  parent: PropTypes.shape({
+    handleClickOnPanelHeader: PropTypes.func.isRequired,
+    handleChange: PropTypes.func.isRequired
+  }).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  element: PropTypes.objectOf(PropTypes.object).isRequired
+};
