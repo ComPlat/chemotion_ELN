@@ -82,7 +82,7 @@ export default class CellLinesFetcher {
     c3.cellLineName = 'Cell line 123';
     c3.cellLineId = 1;
     c3.id = '3';
-    c3.organism = 'Human';
+    c3.organism = 'Mensch';
     c3.tissue = 'Lunge';
     c3.cellType = 'primary cells';
     c3.mutation = 'none';
@@ -115,7 +115,7 @@ export default class CellLinesFetcher {
     c4.variant = 'S1';
     c4.optimalGrowthTemperature = 36;
     c4.cryopreservationMedium = 'unknown';
-    c4.name = 'XXXX-Mouse';
+    c4.name = 'Mouse';
     c4.materialComment = '';
     c4.itemName = 'CellLine 002-001';
     // ----- Item
@@ -130,7 +130,7 @@ export default class CellLinesFetcher {
     c5.cellLineName = 'Cell line 456';
     c5.cellLineId = 2;
     c5.id = '5';
-    c5.organism = 'XXXX-Mouse';
+    c5.organism = 'Mouse';
     c5.tissue = 'colon';
     c5.cellType = 'primary cells';
     c5.mutation = 'none';

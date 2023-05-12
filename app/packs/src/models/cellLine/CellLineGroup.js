@@ -31,6 +31,16 @@ export default class CellLineGroup {
 
   matchingGroup(cellLineToCheck) {
     if (this.cellLineItems.length === 0) { return false; }
-    return this.cellLineItems[0].cellLineId === cellLineToCheck.cellLineId;
+
+    const firstItemInGroup = this.cellLineItems[0];
+
+    return firstItemInGroup.cellLineId === cellLineToCheck.cellLineId
+    && firstItemInGroup.mutation === cellLineToCheck.mutation
+    && firstItemInGroup.disease === cellLineToCheck.disease
+    && firstItemInGroup.organism === cellLineToCheck.organism
+    && firstItemInGroup.tissue === cellLineToCheck.tissue
+    && firstItemInGroup.variant === cellLineToCheck.variant
+    && firstItemInGroup.bioSafetyLevel === cellLineToCheck.bioSafetyLevel
+    && firstItemInGroup.cryopreservationMedium === cellLineToCheck.cryopreservationMedium;
   }
 }
