@@ -113,6 +113,13 @@ export default {
       },
       {
         value: {
+          column: 'readout_titles',
+          label: 'Readout Titles'
+        },
+        label: 'Readout Titles'
+      },
+      {
+        value: {
           column: 'content',
           label: 'Private Note'
         },

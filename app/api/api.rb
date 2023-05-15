@@ -125,7 +125,7 @@ class API < Grape::API
   WL_TABLES = {
     'samples' => %w[name short_label external_label xref content],
     'reactions' => %w[name short_label status conditions rxno content temperature duration],
-    'wellplates' => %w[name short_label content],
+    'wellplates' => %w[name short_label readout_titles content],
     'screens' => %w[name collaborator requirements conditions result content],
     'research_plans' => %w[name body content],
     'elements' => %w[name short_label],
