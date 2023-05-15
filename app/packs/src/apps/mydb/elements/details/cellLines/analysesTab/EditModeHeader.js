@@ -7,7 +7,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import { Checkbox, Button } from 'react-bootstrap';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 
-export default class CellLineAnalysisHeader extends React.Component {
+export default class EditModeHeader extends React.Component {
   handleUndoDeletionOfContainer(container, e) {
     const { parent } = this.props;
     e.stopPropagation();
@@ -158,7 +158,7 @@ export default class CellLineAnalysisHeader extends React.Component {
   }
 }
 
-CellLineAnalysisHeader.propTypes = {
+EditModeHeader.propTypes = {
   container: PropTypes.instanceOf(Container).isRequired,
   parent: PropTypes.shape({
     handleChange: PropTypes.func.isRequired

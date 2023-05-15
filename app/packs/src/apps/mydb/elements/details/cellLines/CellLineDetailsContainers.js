@@ -3,8 +3,8 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import { PanelGroup, Button } from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CellLineAnalysisOrderRow from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisOrderRow';
-import CellLineAnalysisEditRow from 'src/apps/mydb/elements/details/cellLines/CellLineDetailsEditRow';
+import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
+import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
 
 class CellLineDetailsContainers extends Component {
@@ -71,7 +71,7 @@ class CellLineDetailsContainers extends Component {
     const { mode } = this.state;
     const analysisRows = mode === 'edit'
       ? containers.map((container) => (
-        <CellLineAnalysisEditRow
+        <EditModeRow
           key={container.id}
           parent={this}
           element={currentElement}
@@ -79,7 +79,7 @@ class CellLineDetailsContainers extends Component {
         />
       ), this)
       : containers.map((container) => (
-        <CellLineAnalysisOrderRow
+        <OrderModeRow
           key={container.id}
           updateFunction={() => { this.handleChange(); }}
           container={container}

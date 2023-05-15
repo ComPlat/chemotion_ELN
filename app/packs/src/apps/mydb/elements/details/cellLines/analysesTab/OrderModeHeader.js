@@ -5,7 +5,7 @@ import Container from 'src/models/Container';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 
-export default class CellLineAnalysisOrderHeader extends React.Component {
+export default class OrderModeHeader extends React.Component {
   renderDeletedContainer() {
     const { container } = this.props;
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
@@ -97,6 +97,6 @@ export default class CellLineAnalysisOrderHeader extends React.Component {
   }
 }
 
-CellLineAnalysisOrderHeader.propTypes = {
+OrderModeHeader.propTypes = {
   container: PropTypes.instanceOf(Container).isRequired,
 };

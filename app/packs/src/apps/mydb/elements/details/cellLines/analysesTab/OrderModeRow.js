@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Panel } from 'react-bootstrap';
-import CellLineAnalysisOrderHeader from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisOrderHeader';
+import OrderModeHeader from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeHeader';
 import { DragSource, DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { compose } from 'redux';
@@ -47,7 +47,7 @@ const dropCollectHooks = (connect, monitor) => (
   }
 );
 
-class CellLineAnalysisOrderRow extends Component {
+class OrderModeRow extends Component {
   render() {
     const { connectDragSource, connectDropTarget, container } = this.props;
 
@@ -56,7 +56,7 @@ class CellLineAnalysisOrderRow extends Component {
         <div>
           <Panel>
             <Panel.Heading>
-              <CellLineAnalysisOrderHeader container={container} />
+              <OrderModeHeader container={container} />
             </Panel.Heading>
             <Panel.Body collapsible />
           </Panel>
@@ -69,9 +69,9 @@ class CellLineAnalysisOrderRow extends Component {
 export default compose(
   DragSource(DragDropItemTypes.CONTAINER, dragHooks, dragCollectHooks),
   DropTarget(DragDropItemTypes.CONTAINER, dropHooks, dropCollectHooks)
-)(CellLineAnalysisOrderRow);
+)(OrderModeRow);
 
-CellLineAnalysisOrderRow.propTypes = {
+OrderModeRow.propTypes = {
   container: PropTypes.objectOf(PropTypes.shape({
     id: PropTypes.string.isRequired
   })).isRequired,

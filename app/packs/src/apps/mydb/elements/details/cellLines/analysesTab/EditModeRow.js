@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import CellLineAnalysisHeader from 'src/apps/mydb/elements/details/cellLines/CellLineAnalysisHeader';
+import EditModeHeader from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeHeader';
 import { Panel } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PropTypes from 'prop-types';
 
 // eslint-disable-next-line react/prefer-stateless-function
-export default class CellLineAnalysisEditRow extends Component {
+export default class EditModeRow extends Component {
   render() {
     const { container, parent, element } = this.props;
     return (
@@ -16,7 +16,7 @@ export default class CellLineAnalysisEditRow extends Component {
         <Panel.Heading
           onClick={() => parent.handleClickOnPanelHeader(container.id)}
         >
-          <CellLineAnalysisHeader element={element} container={container} parent={parent} />
+          <EditModeHeader element={element} container={container} parent={parent} />
         </Panel.Heading>
         <Panel.Body collapsible>
           <ContainerComponent
@@ -32,7 +32,7 @@ export default class CellLineAnalysisEditRow extends Component {
   }
 }
 
-CellLineAnalysisEditRow.propTypes = {
+EditModeRow.propTypes = {
   container: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
   })).isRequired,
