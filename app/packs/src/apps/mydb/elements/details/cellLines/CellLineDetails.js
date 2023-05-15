@@ -28,8 +28,15 @@ class CellLineDetails extends React.Component {
     // eslint-disable-next-line react/destructuring-assignment
     const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
     cellLineItem.adoptPropsFromMobXModel(mobXItem);
-
-    ElementActions.updateCellLine(cellLineItem);
+    
+    
+    
+    if(cellLineItem.is_new){
+      DetailActions.close(cellLineItem, true);
+      ElementActions.updateCellLine(cellLineItem);
+    }else{
+      ElementActions.updateCellLine(cellLineItem);
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -59,6 +66,19 @@ class CellLineDetails extends React.Component {
     this.setState({ visible });
   }
 
+  renderHeaderContent(){
+    const { cellLineItem } = this.props;
+    const content='new Cell Line';
+    if(cellLineItem.cellLineName && cellLineItem.itemName){
+      const content= cellLineItem.cellLineName+' - '+cellLineItem.itemName
+    }
+return (
+  <div>
+  {content}
+  </div>
+    );
+  }
+
   render() {
     const { cellLineItem } = this.props;
     if (!cellLineItem) { return (null); }
@@ -70,13 +90,7 @@ class CellLineDetails extends React.Component {
       <Panel
         className="eln-panel-detail"
       >
-        <Panel.Heading>
-          {cellLineItem.cellLineName}
-          {' '}
-          -
-          {' '}
-          {cellLineItem.itemName}
-        </Panel.Heading>
+        <Panel.Heading>{this.renderHeaderContent()}</Panel.Heading>
         <Panel.Body>
 
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
@@ -103,6 +117,8 @@ class CellLineDetails extends React.Component {
     );
   }
 }
+
+
 
 export default observer(CellLineDetails);
 
