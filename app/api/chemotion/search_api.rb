@@ -189,6 +189,10 @@ module Chemotion
             first_condition = "#{table}.duration IS NOT NULL AND #{table}.duration != '' AND "
             words[0] = words.first.to_i
             condition_table = ''
+          when 'readout_titles'
+            joins << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
+            field = 'titles::TEXT'
+            condition_table = ''
           end
 
           conditions = words.collect { "#{first_condition}#{condition_table}#{field} #{filter['match']} ? #{additional_condition}" }.join(' OR ')
@@ -204,7 +208,7 @@ module Chemotion
                           .where([query] + cond_val)
                           .joins(joins.join(' '))
         scope = order_by_molecule(scope) if model_name == Sample
-        scope = scope.group("#{model_name.table_name}.id") if model_name == ResearchPlan
+        scope = scope.group("#{model_name.table_name}.id") if %w[ResearchPlan Wellplate].include?(model_name.to_s)
         scope
       end
 
