@@ -515,23 +515,12 @@ module Chemotion
                   elements_search(c_id)
                 end
 
-        if search_method == 'advanced' && molecule_sort == false
-          arg_value_str = adv_params.first['value'].split(/(\r)?\n|,/).map(&:strip)
-                                    .reject(&:empty?).join(',')
-          return scope.order(
-            Arel.sql(
-              "position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||
-              (#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')",
-            ),
-          )
-        elsif search_method == 'advanced' && molecule_sort == true
-          return scope.order('samples.updated_at DESC')
-        elsif search_method != 'advanced' && molecule_sort == true
-          return scope.includes(:molecule)
-                      .joins(:molecule)
-                      .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
-                      .order('molecules.sum_formular')
-        elsif search_by_method.start_with?("element_short_label_")
+        if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
+          scope.includes(:molecule)
+               .joins(:molecule)
+               .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
+               .order('molecules.sum_formular')
+        elsif search_by_method.start_with?('element_short_label_')
           klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
           return Labimotion::Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
