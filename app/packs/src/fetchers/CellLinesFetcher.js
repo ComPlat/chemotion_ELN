@@ -27,7 +27,9 @@ export default class CellLinesFetcher {
     if(index===-1){
       index=CellLinesFetcher.mockData.length;
     }
+    cellLineItem.id=(index+1).toString();
     CellLinesFetcher.mockData[index] = cellLineItem;
+    
     return CellLinesFetcher.fetchById(index + 1);
   }
 
@@ -42,7 +44,7 @@ export default class CellLinesFetcher {
     c1.cellType = 'primary cells';
     c1.mutation = 'none';
     c1.disease = 'lung cancer';
-    c1.biosafetyLevel = 'S1';
+    c1.bioSafetyLevel = 'S1';
     c1.variant = 'S1';
     c1.optimalGrowthTemperature = 36;
     c1.cryopreservationMedium = 'unknown';
@@ -66,7 +68,7 @@ export default class CellLinesFetcher {
     c2.cellType = 'primary cells';
     c2.mutation = 'none';
     c2.disease = 'lung cancer';
-    c2.biosafetyLevel = 'S1';
+    c2.bioSafetyLevel = 'S1';
     c2.variant = 'S1';
     c2.optimalGrowthTemperature = 36;
     c2.cryopreservationMedium = 'unknown';
@@ -90,7 +92,7 @@ export default class CellLinesFetcher {
     c3.cellType = 'primary cells';
     c3.mutation = 'none';
     c3.disease = 'lung cancer';
-    c3.biosafetyLevel = 'S1';
+    c3.bioSafetyLevel = 'S1';
     c3.variant = 'S1';
     c3.optimalGrowthTemperature = 36;
     c3.cryopreservationMedium = 'unknown';
@@ -114,7 +116,7 @@ export default class CellLinesFetcher {
     c4.cellType = 'primary cells';
     c4.mutation = 'none';
     c4.disease = 'colon cancer';
-    c4.biosafetyLevel = 'S1';
+    c4.bioSafetyLevel = 'S1';
     c4.variant = 'S1';
     c4.optimalGrowthTemperature = 36;
     c4.cryopreservationMedium = 'unknown';
@@ -138,7 +140,7 @@ export default class CellLinesFetcher {
     c5.cellType = 'primary cells';
     c5.mutation = 'none';
     c5.disease = 'colon cancer';
-    c5.biosafetyLevel = 'S1';
+    c5.bioSafetyLevel = 'S1';
     c5.variant = 'S1';
     c5.optimalGrowthTemperature = 36;
     c5.cryopreservationMedium = 'unknown';

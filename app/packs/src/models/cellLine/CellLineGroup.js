@@ -34,8 +34,7 @@ export default class CellLineGroup {
 
     const firstItemInGroup = this.cellLineItems[0];
 
-    return firstItemInGroup.cellLineId === cellLineToCheck.cellLineId
-    && firstItemInGroup.cellLineName === cellLineToCheck.cellLineName
+    return firstItemInGroup.cellLineName === cellLineToCheck.cellLineName
     && firstItemInGroup.mutation === cellLineToCheck.mutation
     && firstItemInGroup.disease === cellLineToCheck.disease
     && firstItemInGroup.organism === cellLineToCheck.organism

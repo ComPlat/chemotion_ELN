@@ -85,7 +85,7 @@ class GeneralProperties extends React.Component {
               {this.renderAttribute('Tissue *', cellLineItem.tissue, (e) => { store.changeTissue(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => { store.changeMutation(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => { store.changeVariant(cellLineId, e.target.value); })}
-              {this.renderAttribute('Bio Savety Level *', cellLineItem.biosafetyLevel, (e) => { store.changeBioSafetyLevel(cellLineId, e.target.value); })}
+              {this.renderAttribute('Bio Savety Level *', cellLineItem.bioSafetyLevel, (e) => { store.changeBioSafetyLevel(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium, (e) => { store.changeCryoMedium(cellLineId, e.target.value); })}
             </Panel.Body>
           </Panel>
