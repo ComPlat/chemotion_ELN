@@ -9,8 +9,8 @@ import {
   Panel, ButtonToolbar, Button,
   Tabs, Tab
 } from 'react-bootstrap';
-import GeneralPropertiesTab from 'src/apps/mydb/elements/details/cellLines/GeneralPropertiesTab';
-import CellLineDetailsContainers from 'src/apps/mydb/elements/details/cellLines/CellLineDetailsContainers';
+import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/GeneralProperties';
+import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 
 class CellLineDetails extends React.Component {
@@ -80,8 +80,8 @@ class CellLineDetails extends React.Component {
         <Panel.Body>
 
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
-            <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralPropertiesTab item={cellLineItem} /></Tab>
-            <Tab eventKey="tab2" title="Analyses" key="tab2"><CellLineDetailsContainers item={cellLineItem} /></Tab>
+            <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralProperties item={cellLineItem} /></Tab>
+            <Tab eventKey="tab2" title="Analyses" key="tab2"><AnalysesContainer item={cellLineItem} /></Tab>
             <Tab eventKey="tab3" title="References" key="tab3">
               <DetailsTabLiteratures
                 element={cellLineItem}

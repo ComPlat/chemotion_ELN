@@ -7,7 +7,7 @@ import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/O
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
 
-class CellLineDetailsContainers extends Component {
+class AnalysesContainer extends Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
@@ -68,7 +68,9 @@ class CellLineDetailsContainers extends Component {
   renderContainerPanel() {
     const { currentElement } = ElementStore.getState();
     const containers = currentElement.container.children[0].children;
+    
     const { mode } = this.state;
+
     const analysisRows = mode === 'edit'
       ? containers.map((container) => (
         <EditModeRow
@@ -118,9 +120,9 @@ class CellLineDetailsContainers extends Component {
     );
   }
 }
-export default observer(CellLineDetailsContainers);
+export default observer(AnalysesContainer);
 
-CellLineDetailsContainers.propTypes = {
+AnalysesContainer.propTypes = {
   item: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
   })).isRequired

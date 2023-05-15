@@ -6,7 +6,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 
-class GeneralPropertiesTab extends React.Component {
+class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
@@ -85,9 +85,9 @@ class GeneralPropertiesTab extends React.Component {
   }
 }
 
-export default observer(GeneralPropertiesTab);
+export default observer(GeneralProperties);
 
-GeneralPropertiesTab.propTypes = {
+GeneralProperties.propTypes = {
   item: PropTypes.objectOf(PropTypes.shape({
     id: PropTypes.string.isRequired
   })).isRequired
