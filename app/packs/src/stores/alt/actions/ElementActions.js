@@ -774,7 +774,6 @@ class ElementActions {
   }
 
   updateCellLine(params){
-    console.log("hallo")
       return (dispatch) => {
         CellLinesFetcher.update(params)
           .then((result) => {

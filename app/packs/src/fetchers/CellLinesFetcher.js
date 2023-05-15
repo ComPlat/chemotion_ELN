@@ -23,7 +23,10 @@ export default class CellLinesFetcher {
   }
 
   static update(cellLineItem) {
-    const index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
+    var index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
+    if(index===-1){
+      index=CellLinesFetcher.mockData.length;
+    }
     CellLinesFetcher.mockData[index] = cellLineItem;
     return CellLinesFetcher.fetchById(index + 1);
   }
