@@ -185,8 +185,8 @@ const AdvancedSearchForm = () => {
     }
   }
 
-  const temperatureConditions = (idx) => {
-    if (selectedOptions[idx]['unit'] == '') {
+  const temperatureConditions = (idx, column) => {
+    if (selectedOptions[idx]['unit'] == '' || column == 'temperature') {
       selectedOptions[idx]['unit'] = '°C';
     }
     if (selectedOptions[idx]['match'] != '=') {
@@ -194,8 +194,8 @@ const AdvancedSearchForm = () => {
     }
   }
 
-  const durationConditions = (idx) => {
-    if (selectedOptions[idx]['unit'] == '') {
+  const durationConditions = (idx, column) => {
+    if (selectedOptions[idx]['unit'] == '' || column == 'duration') {
       selectedOptions[idx]['unit'] = 'Hour(s)';
     }
     if (selectedOptions[idx]['match'] != '=') {
@@ -214,11 +214,12 @@ const AdvancedSearchForm = () => {
   const handleChangeSelection = (idx, formElement) => (e) => {
     let value = formElementValue(formElement, e, e.currentTarget);
     const fieldColumn = selectedOptions[idx]['field'].column;
+    const additionalFields = ['temperature', 'duration'];
     selectedOptions[idx][formElement] = value;
-    if (value.column == 'temperature') { temperatureConditions(idx) }
-    if (value.column == 'duration') { durationConditions(idx) }
-    if (['temperature', 'duration'].includes(fieldColumn) && formElement == 'value') { checkValueForNumber(value) }
-    if (!['temperature', 'duration'].includes(fieldColumn) && formElement != 'unit' && !['temperature', 'duration'].includes(value.column)) { selectedOptions[idx]['unit'] = '' }
+    if (value.column == 'temperature') { temperatureConditions(idx, value.column) }
+    if (value.column == 'duration') { durationConditions(idx, value.column) }
+    if (additionalFields.includes(fieldColumn) && formElement == 'value') { checkValueForNumber(value) }
+    if (!additionalFields.includes(fieldColumn) && formElement != 'unit' && !additionalFields.includes(value.column)) { selectedOptions[idx]['unit'] = '' }
     setSelectedOptions((a) => [...a]);
   }
 

@@ -127,14 +127,22 @@ module Chemotion
 
       def duration_interval_by_unit(unit)
         case unit
-        when 'Hour(s)' then 3600
+        # when 'Hour(s)' then 3600
         when 'Minute(s)' then 60
         when 'Second(s)' then 1
-        when 'Week(s)' then 604800
-        when 'Day(s)' then 86400
+        when 'Week(s)' then 604_800
+        when 'Day(s)' then 86_400
         else
           3600
         end
+      end
+
+      def sanitize_words(filter)
+        no_sanitizing_columns = %w[temperature duration]
+        sanitize = filter['match'] != '=' && no_sanitizing_columns.exclude?(filter['field']['column'])
+        words = filter['value'].split(/(\r)?\n/).map!(&:strip)
+        words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitize
+        words
       end
 
       def filter_values_for_advanced_search(dl = @dl)
@@ -158,10 +166,7 @@ module Chemotion
           field = filter['field']['column']
           field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
           additional_condition = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
-          sanitze_words = filter['match'] == '=' ? false : (%w[temperature duration].include?(filter['field']['column']) ? false : true)
-
-          words = filter['value'].split(/(\r)?\n/).map!(&:strip)
-          words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitze_words
+          words = sanitize_words(filter)
 
           case filter['field']['column']
           when 'body'
