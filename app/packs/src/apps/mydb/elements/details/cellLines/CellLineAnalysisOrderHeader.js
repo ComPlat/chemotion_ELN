@@ -6,16 +6,12 @@ import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 
 export default class CellLineAnalysisOrderHeader extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   renderDeletedContainer() {
     const { container } = this.props;
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
     const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
 
-    const status = container.extended_metadata.status && container.extended_metadata.status != '';
+    const status = container.extended_metadata.status && container.extended_metadata.status !== '';
     const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
     return (
@@ -68,6 +64,7 @@ export default class CellLineAnalysisOrderHeader extends React.Component {
     );
   }
 
+  // eslint-disable-next-line  class-methods-use-this
   renderImagePreview(container) {
     const previewImg = previewContainerImage(container);
     const fetchNeeded = false;
@@ -92,7 +89,8 @@ export default class CellLineAnalysisOrderHeader extends React.Component {
   }
 
   render() {
-    if (this.props.container.is_deleted) {
+    const { container } = this.props;
+    if (container.is_deleted) {
       return this.renderDeletedContainer();
     }
     return this.renderNotDeletedContainer();
@@ -100,5 +98,5 @@ export default class CellLineAnalysisOrderHeader extends React.Component {
 }
 
 CellLineAnalysisOrderHeader.propTypes = {
-  container: PropTypes.instanceOf(Container),
+  container: PropTypes.instanceOf(Container).isRequired,
 };

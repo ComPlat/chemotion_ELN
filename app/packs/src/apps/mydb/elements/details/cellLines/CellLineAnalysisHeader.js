@@ -8,8 +8,33 @@ import { Checkbox, Button } from 'react-bootstrap';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 
 export default class CellLineAnalysisHeader extends React.Component {
-  constructor(props) {
-    super(props);
+  handleUndoDeletionOfContainer(container, e) {
+    const { parent } = this.props;
+    e.stopPropagation();
+    // eslint-disable-next-line   no-param-reassign
+    container.is_deleted = false;
+    parent.handleChange(container);
+  }
+
+  handleDeleteContainer(container, e) {
+    const { parent } = this.props;
+    e.stopPropagation();
+
+    // eslint-disable-next-line no-restricted-globals, no-alert
+    if (confirm('Delete the analysis?')) {
+      // eslint-disable-next-line no-param-reassign
+      container.is_deleted = true;
+      parent.handleChange(container);
+    }
+  }
+
+  toggleContainerInReport(container, e) {
+    // To prevent showing the content of the restored analysis i will stop the event here
+    e.stopPropagation();
+    const { parent } = this.props;
+    // eslint-disable-next-line   no-param-reassign
+    container.extended_metadata.report = !container.extended_metadata.report;
+    parent.handleChange(container);
   }
 
   renderDeletedContainer() {
@@ -17,7 +42,7 @@ export default class CellLineAnalysisHeader extends React.Component {
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
     const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
 
-    const status = container.extended_metadata.status && container.extended_metadata.status != '';
+    const status = container.extended_metadata.status && container.extended_metadata.status !== '';
     const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
     return (
@@ -31,7 +56,6 @@ export default class CellLineAnalysisHeader extends React.Component {
           className="pull-right"
           bsSize="xsmall"
           bsStyle="danger"
-
           onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
         >
           <i className="fa fa-undo" />
@@ -40,24 +64,8 @@ export default class CellLineAnalysisHeader extends React.Component {
     );
   }
 
-  handleUndoDeletionOfContainer(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    container.is_deleted = false;
-    this.props.parent.handleChange(container);
-  }
-
-  handleDeleteContainer(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    if (confirm('Delete the analysis?')) {
-      container.is_deleted = true;
-      this.props.parent.handleChange(container);
-    }
-  }
-
   renderNotDeletedContainer() {
-    const { container } = this.props;
+    const { container, element } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
     const contentOneLine = {
       ops: content.ops.map((x) => {
@@ -80,7 +88,7 @@ export default class CellLineAnalysisHeader extends React.Component {
             <i className="fa fa-trash" />
           </Button>
           <PrintCodeButton
-            element={this.props.element}
+            element={element}
             analyses={[container]}
             ident={container.id}
           />
@@ -116,7 +124,9 @@ export default class CellLineAnalysisHeader extends React.Component {
     );
   }
 
-  renderImagePreview(container) {
+  // eslint-disable-next-line class-methods-use-this
+  renderImagePreview() {
+    const { container } = this.props;
     const previewImg = previewContainerImage(container);
     const fetchNeeded = false;
     const fetchId = 1;
@@ -139,15 +149,9 @@ export default class CellLineAnalysisHeader extends React.Component {
     );
   }
 
-  toggleContainerInReport(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    container.extended_metadata.report = !container.extended_metadata.report;
-    this.props.parent.handleChange(container);
-  }
-
   render() {
-    if (this.props.container.is_deleted) {
+    const { container } = this.props;
+    if (container.is_deleted) {
       return this.renderDeletedContainer();
     }
     return this.renderNotDeletedContainer();
@@ -155,7 +159,13 @@ export default class CellLineAnalysisHeader extends React.Component {
 }
 
 CellLineAnalysisHeader.propTypes = {
-  container: PropTypes.instanceOf(Container),
-  parent: PropTypes.object,
-  element: PropTypes.object
+  container: PropTypes.instanceOf(Container).isRequired,
+  parent: PropTypes.shape({
+    handleChange: PropTypes.func.isRequired
+  }).isRequired,
+  element: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    type: PropTypes.string.isRequired,
+    isNew: PropTypes.bool.isRequired,
+  }).isRequired
 };
