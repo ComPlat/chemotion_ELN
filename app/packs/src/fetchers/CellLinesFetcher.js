@@ -34,7 +34,7 @@ export default class CellLinesFetcher {
   }
 
   static {
-    const c1 = CellLine.buildEmpty(0);
+    const c1 = CellLine.buildEmpty(0,'FYA-C1');
     c1.cellLineName = 'Cell line 123';
     c1.cellLineId = 1;
     c1.id = '1';
@@ -59,7 +59,7 @@ export default class CellLinesFetcher {
     c1.itemComment = '';
     c1.itemName = 'CellLine 001-001';
 
-    const c2 = CellLine.buildEmpty(0);
+    const c2 = CellLine.buildEmpty(0,'FYA-C2');
     c2.cellLineName = 'Cell line 123';
     c2.cellLineId = 1;
     c2.id = '2';
@@ -83,7 +83,7 @@ export default class CellLinesFetcher {
     c2.itemComment = 'Cellline is contamined!!!';
     c2.itemName = 'CellLine 001-002';
 
-    const c3 = CellLine.buildEmpty(0);
+    const c3 = CellLine.buildEmpty(0,'FYA-C3');
     c3.cellLineName = 'Cell line 123';
     c3.cellLineId = 1;
     c3.id = '3';
@@ -107,7 +107,7 @@ export default class CellLinesFetcher {
     c3.itemComment = '';
     c3.itemName = 'CellLine 001-003';
 
-    const c4 = CellLine.buildEmpty(0);
+    const c4 = CellLine.buildEmpty(0,'FYA-C4');
     c4.cellLineName = 'Cell line 456';
     c4.cellLineId = 2;
     c4.id = '4';
@@ -131,7 +131,7 @@ export default class CellLinesFetcher {
     c4.growthMedium = 'unknown';
     c4.itemComment = '';
 
-    const c5 = CellLine.buildEmpty(0);
+    const c5 = CellLine.buildEmpty(0,'FYA-C5');
     c5.cellLineName = 'Cell line 456';
     c5.cellLineId = 2;
     c5.id = '5';

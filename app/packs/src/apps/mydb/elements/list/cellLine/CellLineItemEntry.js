@@ -48,13 +48,17 @@ export default class CellLineItemEntry extends Component {
                 element={cellLineItem}
                 key={cellLineItem.id}
                 checked={cellLineItem.is_checked}
-              />
-              <br />
+              />             
             </td>
+            <td>
+              {cellLineItem.short_label}
+              </td>
+              <td>
             <CellLineItemText
               cellLineItem={cellLineItem}
               showDetails={this.showDetails}
             />
+             </td>
             <td>
               <ElementContainer
                 key={cellLineItem.id}

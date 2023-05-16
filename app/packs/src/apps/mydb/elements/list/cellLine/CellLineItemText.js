@@ -5,6 +5,10 @@ import PropTypes from 'prop-types';
 export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem, showDetails } = this.props;
+    var contaminationTag=<div/>
+    if(cellLineItem.contamination){
+      contaminationTag=<div className="contaminated">!! {cellLineItem.contamination} !!</div>
+    }
     return (
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
@@ -19,7 +23,7 @@ export default class CellLineItemEntry extends Component {
         -
         Contamination:
         {' '}
-        {cellLineItem.contamination}
+        {contaminationTag}
 
       </td>
     );

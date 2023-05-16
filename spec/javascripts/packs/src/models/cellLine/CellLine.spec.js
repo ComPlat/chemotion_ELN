@@ -5,7 +5,7 @@ describe('CellLine', async () => {
   describe('createEmpty()', () => {
     context('when collection id is valid', () => {
       it('new empty cell line item created', () => {
-        const cellLine = CellLine.buildEmpty(0);
+        const cellLine = CellLine.buildEmpty(0,'');
         expect(cellLine.collectionId).toBe(0);
       });
     });

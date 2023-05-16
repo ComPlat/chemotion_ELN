@@ -37,6 +37,7 @@ import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 import _ from 'lodash';
 
@@ -421,7 +422,10 @@ class ElementActions {
 
   generateEmptyCellLine(collectionId){  
     var c = new CellLine();
-    return CellLine.buildEmpty(collectionId);
+    const { currentUser } = UserStore.getState();
+    // TO DO : backend user entity has yet no cellLines_count expose -> fake stuff here
+    // return CellLine.buildEmpty(collectionId,`${currentUser.initials}-${currentUser.cellLines_count + 1}` );
+    return CellLine.buildEmpty(collectionId,`${currentUser.initials}-${0}` );
   }
 
   splitAsSubsamples(ui_state) {
