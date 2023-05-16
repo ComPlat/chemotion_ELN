@@ -87,7 +87,6 @@ class CellLineDetails extends React.Component {
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
     const disabledButton = <Button bsStyle="warning" disabled onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
     const enabledButton = <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
-    console.log(validationInfo);
     if (disabled) {
       return (
         disabledButton);
@@ -98,14 +97,12 @@ class CellLineDetails extends React.Component {
   }
 
   render() {
-    const { cellLineDetailsStore } = this.context;
     const { cellLineItem } = this.props;
 
     if (!cellLineItem) { return (null); }
     // eslint-disable-next-line react/destructuring-assignment
     this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
-    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    console.log(JSON.stringify(mobXItem));
+
     const { activeTab } = this.state;
     return (
       <Panel
