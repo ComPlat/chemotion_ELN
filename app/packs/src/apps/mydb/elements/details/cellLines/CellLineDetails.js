@@ -28,21 +28,20 @@ class CellLineDetails extends React.Component {
     // eslint-disable-next-line react/destructuring-assignment
     const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
     cellLineItem.adoptPropsFromMobXModel(mobXItem);
-    
-    
-    
-    if(cellLineItem.is_new){
+
+    if (cellLineItem.is_new) {
       DetailActions.close(cellLineItem, true);
       ElementActions.updateCellLine(cellLineItem);
-    }else{
+    } else {
       ElementActions.updateCellLine(cellLineItem);
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
   handleClose(cellLineItem) {
+    const { cellLineDetailsStore } = this.context;
     // eslint-disable-next-line no-alert
     if (window.confirm('Unsaved data will be lost.Close sample?')) {
+      cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
       DetailActions.close(cellLineItem, true);
     }
   }
@@ -66,25 +65,47 @@ class CellLineDetails extends React.Component {
     this.setState({ visible });
   }
 
-  renderHeaderContent(){
+  renderHeaderContent() {
     const { cellLineItem } = this.props;
-    const content='new Cell Line';
-    if(cellLineItem.cellLineName && cellLineItem.itemName){
-      const content= cellLineItem.cellLineName+' - '+cellLineItem.itemName
+
+    let content = 'new Cell Line';
+    if (cellLineItem.cellLineName && cellLineItem.itemName) {
+      content = `${cellLineItem.cellLineName} - ${cellLineItem.itemName}`;
     }
-return (
-  <div>
-  {content}
-  </div>
+    return (
+      <div>
+        {content}
+      </div>
+    );
+  }
+
+  renderSubmitButton() {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
+    const disabled = validationInfo.length > 0;
+    const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
+    const disabledButton = <Button bsStyle="warning" disabled onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
+    const enabledButton = <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
+    console.log(validationInfo);
+    if (disabled) {
+      return (
+        disabledButton);
+    }
+    return (
+      enabledButton
     );
   }
 
   render() {
+    const { cellLineDetailsStore } = this.context;
     const { cellLineItem } = this.props;
+
     if (!cellLineItem) { return (null); }
     // eslint-disable-next-line react/destructuring-assignment
     this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
-
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    console.log(JSON.stringify(mobXItem));
     const { activeTab } = this.state;
     return (
       <Panel
@@ -92,7 +113,6 @@ return (
       >
         <Panel.Heading>{this.renderHeaderContent()}</Panel.Heading>
         <Panel.Body>
-
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralProperties item={cellLineItem} /></Tab>
             <Tab eventKey="tab2" title="Analyses" key="tab2"><AnalysesContainer item={cellLineItem} /></Tab>
@@ -105,20 +125,17 @@ return (
             </Tab>
           </Tabs>
           <ButtonToolbar>
+            {this.renderSubmitButton()}
             <Button bsStyle="primary" onClick={() => { this.handleClose(cellLineItem); }}>
               Close
             </Button>
-            <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>
-              Save
-            </Button>
+
           </ButtonToolbar>
         </Panel.Body>
       </Panel>
     );
   }
 }
-
-
 
 export default observer(CellLineDetails);
 
