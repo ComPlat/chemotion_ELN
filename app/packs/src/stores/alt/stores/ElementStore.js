@@ -545,7 +545,6 @@ class ElementStore {
 
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
-    const isShared = !!(currentCollection && currentCollection.is_shared);
     if (currentSearchSelection != null) {
       const { currentType } = UserStore.getState();
       this.handleRefreshElements(currentType);
@@ -557,7 +556,7 @@ class ElementStore {
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
-        if (!isShared && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+        if (layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
         const { currentUser, genericEls } = UserStore.getState();
