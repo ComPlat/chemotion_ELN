@@ -44,7 +44,9 @@ export default class MyCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.myCollections.length > 0 ? state.myCollections : [{}];
+    let myCollections = state.myCollections.filter(c => c.is_locked === false && c.ancestry === null);
+    let children = myCollections.length > 0 ? myCollections : [{}];
+
     this.setState({
       tree: {
         label: 'My Collections',

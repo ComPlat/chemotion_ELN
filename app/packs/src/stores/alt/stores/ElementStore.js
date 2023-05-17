@@ -143,7 +143,7 @@ class ElementStore {
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
-      handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+      handleFetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -617,7 +617,7 @@ class ElementStore {
     this.state.elements.screens = result;
   }
 
-  handlefetchResearchPlansByCollectionId(result) {
+  handleFetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
   }
 
