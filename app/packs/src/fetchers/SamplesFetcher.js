@@ -54,9 +54,9 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isShared = false, moleculeSort = false) {
+  static fetchByCollectionId(id, queryParams = {}, moleculeSort = false) {
     queryParams.moleculeSort = moleculeSort;
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isShared, 'samples', Sample);
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'samples', Sample);
   }
 
   static findByShortLabel(shortLabel) {

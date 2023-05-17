@@ -26,8 +26,8 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isShared = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isShared, 'research_plans', ResearchPlan);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'research_plans', ResearchPlan);
   }
 
   static create(researchPlan) {
