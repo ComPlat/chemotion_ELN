@@ -65,7 +65,7 @@ module Chemotion
             error!(resp_body, 503)
           end
           unless (@collection = Collection.find_by(
-            id: params[:id], user_id: current_user.id, is_shared: false
+            id: params[:id], user_id: current_user.id
           ))
             resp_body['error'] = 'Unauthorized Access to Collection'
             error!(resp_body, 401)
@@ -140,7 +140,7 @@ module Chemotion
           @user = Person.find_by(email: @auth_token[:iss])
           error!('Unauthorized', 401) unless @user
           @collection = Collection.find_by(
-            id: @auth_token[:collection], user_id: @user.id, is_shared: false
+            id: @auth_token[:collection], user_id: @user.id
           )
           error!('Unauthorized access to collection', 401) unless @collection
         end
@@ -175,8 +175,7 @@ module Chemotion
         end
         after_validation do
           error!('401 Unauthorized', 401) unless (@collec = Collection.find_by(
-            id: params[:collection_id], user_id: current_user.id,
-            is_shared: false
+            id: params[:collection_id], user_id: current_user.id
           ))
         end
         post do
@@ -221,8 +220,7 @@ module Chemotion
 
         after_validation do
           error!('401 Unauthorized', 401) unless (@collec = Collection.find_by(
-            id: params[:collection_id], user_id: current_user.id,
-            is_shared: false
+            id: params[:collection_id], user_id: current_user.id
           ))
         end
 
