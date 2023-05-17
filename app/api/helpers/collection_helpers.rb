@@ -17,37 +17,19 @@ module CollectionHelpers
     Collection.find_by(id: id.to_i, user_id: user_ids)
   end
 
-  def fetch_collection_w_current_user(id, is_shared = false)
-    collection = Collection.find_by(id: id.to_i, user_id: user_ids)
+  # return the collection if current_user is associated to it (owned) or if acl exists
+  # return nil if no association
+  def fetch_collection_w_current_user(collection_id, permission_level = nil)
+    collections = Collection.where(id: collection_id.to_i, user_id: user_ids)
 
-    if !collection.present?
-      collection = Collection.joins(:collection_acls).includes(:user).where(
-        'collection_acls.user_id in (?) and collection_acls.collection_id = ?', current_user.id, collection_id
-      ).first
+    if collections.empty?
+      collections = Collection.joins(:collection_acls).where(
+        'collection_acls.user_id in (?) and collection_acls.collection_id = ?', user_ids, collection_id
+      )
+      collections = collections.where('collection_acls.permission_level >= ?', permission_level) if permission_level
     end
 
-    collection
-  end
-
-  # desc: given an id of coll or sync coll return detail levels as array
-  def detail_level_for_collection(id, is_sync = false)
-    dl = (is_sync && SyncCollectionsUser || Collection).find_by(
-      id: id.to_i, user_id: user_ids
-    )&.slice(
-      :permission_level,
-      :sample_detail_level, :reaction_detail_level,
-      :wellplate_detail_level, :screen_detail_level,
-      :researchplan_detail_level, :element_detail_level
-    )&.symbolize_keys
-    {
-      permission_level: 0,
-      sample_detail_level: 0,
-      reaction_detail_level: 0,
-      wellplate_detail_level: 0,
-      screen_detail_level: 0,
-      researchplan_detail_level: 0,
-      element_detail_level: 0,
-    }.merge(dl || {})
+    collection.first
   end
 
   # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
@@ -66,19 +48,9 @@ module CollectionHelpers
 
     c&.id
   end
-
+  
   def fetch_collection_by_ui_state_params_and_pl(collection_id, permission_level = 2)
-    collection = Collection.find_by(id: collection_id, user_id: current_user.id)
-
-    if !collection.present?
-      collection = Collection.joins(:collection_acls).includes(:user).where(
-                     'collection_acls.user_id in (?) and collection_acls.collection_id = ? and collection_acls.permission_level >= ?',
-                     current_user.id,
-                     collection_id,
-                     permission_level
-                   ).first
-    end
-    collection
+    fetch_collection_w_current_user(collection_id, permission_level)
   end
 
   def fetch_source_collection_for_removal
@@ -91,23 +63,14 @@ module CollectionHelpers
     fetch_collection_by_ui_state_params_and_pl(current_collection['id'], 2)
   end
 
-  def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])
-    @c_id = fetch_collection_id_w_current_user(c_id)
-    @c = Collection.find_by(id: @c_id)
+  def set_var(c_id = params[:collection_id])
+    @c = fetch_collection_w_current_user(c_id)
+    @c_id = @c&.id
     cu_id = current_user&.id
-    @is_owned = cu_id && ((@c.user_id == cu_id && !@c.is_shared) || @c.shared_by_id == cu_id)
+    @is_owned = cu_id && (@c.user_id == cu_id)
 
-    @dl = {
-      permission_level: 10,
-      sample_detail_level: 10,
-      reaction_detail_level: 10,
-      wellplate_detail_level: 10,
-      screen_detail_level: 10,
-      researchplan_detail_level: 10,
-      element_detail_level: 10,
-    }
-
-    @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
+    @dl = CollectionAcl.PERMISSION_LEVELS_MAX
+    @dl = CollectionAcl.max_permissions_levels_from_collections(c_id, user_ids) unless @is_owned
     @pl = @dl[:permission_level]
     @dl_s = @dl[:sample_detail_level]
     @dl_r = @dl[:reaction_detail_level]

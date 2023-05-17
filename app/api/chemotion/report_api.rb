@@ -44,6 +44,7 @@ module Chemotion
       params do
         use :export_params
       end
+
       post :export_samples_from_selections do
         env['api.format'] = :binary
         t = time_now
@@ -55,7 +56,7 @@ module Chemotion
           force_molfile_selection
         end
         c_id = params[:uiState][:currentCollection]
-        c_id = CollectionAcl.find_by(collection_id: c_id)&.collection_id if params[:uiState][:isShared]
+
         %i[sample reaction wellplate].each do |table|
           next unless (p_t = params[:uiState][table])
 
@@ -111,8 +112,9 @@ module Chemotion
         filename = CGI.escape("reaction_smiles_#{time_now}.csv")
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         real_coll_id = fetch_collection_id_w_current_user(
-          params[:uiState][:currentCollection], params[:uiState][:isShared]
+          params[:uiState][:currentCollection]
         )
+        return unless real_coll_id
         return unless (p_t = params[:uiState][:reaction])
 
         results = reaction_smiles_hash(
