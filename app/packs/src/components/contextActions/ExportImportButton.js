@@ -172,12 +172,8 @@ const importCollectionFunction = (updateModalProps) => {
 };
 
 const editMetadataFunction = () => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/metadata`
-    : `/collection/${currentCollection.id}/metadata`;
-  Aviator.navigate(uri, { silent: true });
-
+  const { currentCollection } = UIStore.getState();
+  AviatorNavigation({ element: { type: 'metadata' }, silent: true });
   elementShowOrNew({
     type: 'metadata',
     params: { collectionID: currentCollection.id }
