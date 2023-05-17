@@ -231,6 +231,8 @@ export default class UnsortedBox extends React.Component {
           className="title"
           onClick={() => this.handleClick()}
           role="button"
+          tabIndex={0}
+          onKeyDown={() => {}}
         >
           <button
             type="button"

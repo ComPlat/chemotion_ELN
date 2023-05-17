@@ -4,7 +4,7 @@ module Chemotion
   class InboxAPI < Grape::API
     helpers ParamsHelpers
 
-    resource :inbox do # rubocop:disable Metrics/BlockLength
+    resource :inbox do
       params do
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
@@ -47,7 +47,7 @@ module Chemotion
                                         root: :inbox)
       end
 
-      resource :samples do # rubocop:disable Metrics/BlockLength
+      resource :samples do
         desc 'search samples from user by'
         params do
           requires :search_string, type: String, desc: 'Search String'

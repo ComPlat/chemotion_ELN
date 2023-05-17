@@ -44,8 +44,8 @@ export default class InboxModal extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { currentPage, itemsPerPage } = this.state;
-    if (prevState.currentPage !== this.state.currentPage
-        || prevState.itemsPerPage !== this.state.itemsPerPage) {
+    if (prevState.currentPage !== currentPage
+        || prevState.itemsPerPage !== itemsPerPage) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
   }

@@ -19,7 +19,7 @@ class InboxStore {
       inboxVisible: false,
       currentPage: 1,
       itemsPerPage: 20,
-      dataItemsPerPage: 60,
+      dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
     };
@@ -163,7 +163,10 @@ class InboxStore {
     if (payload?.fromUnsorted) {
       const { inbox } = this.state;
 
-      const updatedAttachments = inbox.unlinked_attachments.filter((attachment) => attachment.id !== payload?.result.id);
+      const updatedAttachments = inbox.unlinked_attachments.filter(
+        (attachment) => attachment.id !== payload?.result.id
+      );
+
       this.setState({
         inbox: {
           ...inbox,

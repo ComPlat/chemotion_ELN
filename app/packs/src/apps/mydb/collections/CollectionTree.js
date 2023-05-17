@@ -185,18 +185,16 @@ export default class CollectionTree extends React.Component {
   }
 
   inboxSubtrees() {
-    const { inbox } = this.state;
+    const { inbox, itemsPerPage } = this.state;
 
     let boxes = '';
     if (inbox.children) {
       inbox.children.sort((a, b) => {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
-      boxes = inbox.children.map((deviceBox) => {
-        return (
-          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} fromCollectionTree />
-        );
-      });
+      boxes = inbox.children.map((deviceBox) => (
+        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} fromCollectionTree />
+      ));
     }
 
     return (
@@ -212,9 +210,11 @@ export default class CollectionTree extends React.Component {
           }}
         >
           {boxes}
-          {inbox.children && inbox.children.length >= this.state.itemsPerPage
-            ? <div className="title" key="more" style={{ textAlign: 'center' }}><i className="fa fa-ellipsis-h" aria-hidden="true" /></div>
-            : ''}
+          {inbox.children && inbox.children.length >= itemsPerPage ? (
+            <div className="title" key="more" style={{ textAlign: 'center' }}>
+              <i className="fa fa-ellipsis-h" aria-hidden="true" />
+            </div>
+          ) : ''}
         </div>
         {inbox.unlinked_attachments ? (
           <UnsortedBox
@@ -340,7 +340,7 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    const { ownCollectionVisible, inboxSectionVisible } = this.state
+    const { ownCollectionVisible, inboxSectionVisible } = this.state;
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
     const inboxDisplay = inboxSectionVisible ? '' : 'none';

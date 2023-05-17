@@ -93,17 +93,15 @@ export default class DeviceBox extends React.Component {
       if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
     });
 
-    const datasets = device_box.children.map((dataset) => {
-      return (
-        <DatasetContainer
-          key={`dataset_${dataset.id}`}
-          sourceType={DragDropItemTypes.DATASET}
-          dataset={dataset}
-          cache={cache}
-          largerInbox={largerInbox}
-        />
-      );
-    });
+    const datasets = device_box.children.map((dataset) => (
+      <DatasetContainer
+        key={`dataset_${dataset.id}`}
+        sourceType={DragDropItemTypes.DATASET}
+        dataset={dataset}
+        cache={cache}
+        largerInbox={largerInbox}
+      />
+    ));
 
     const textStyle = {
       display: 'block',

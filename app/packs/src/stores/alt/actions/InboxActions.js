@@ -121,7 +121,10 @@ class InboxActions {
     return (dispatch) => {
       ContainerFetcher.deleteContainer(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({
+            result,
+            id: params.id,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

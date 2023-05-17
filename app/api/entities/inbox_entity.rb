@@ -2,7 +2,7 @@
 
 module Entities
   class InboxEntity < ApplicationEntity
-    DATASETS_PER_PAGE = 60
+    DATASETS_PER_PAGE = 35
     MAX_ATTACHMENTS = 50
 
     expose(
