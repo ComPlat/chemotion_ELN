@@ -25,11 +25,9 @@ export default class EmbeddedWellplate extends Component {
   }
 
   openWellplate() {
-    const { currentCollection, isShared } = UIStore.getState();
-    const wellplateID = this.props.wellplate.id;
-    const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
-    Aviator.navigate(uri, { silent: true });
-    wellplateShowOrNew({ params: { wellplateID } });
+    const { wellplate } = this.props;
+    AviatorNavigation({ element: wellplate, silent: true })
+    wellplateShowOrNew({ params: { wellplateID: wellplate.id } });
   }
 
   showImportConfirm() {
