@@ -14,7 +14,6 @@ module Chemotion
       params do
         optional :currentCollection, default: Hash.new, type: Hash do
           optional :id, type: Integer
-          optional :is_shared, type: Boolean, default: false
         end
         optional :options, type: Hash do
           optional :deleteSubsamples, type: Boolean, default: false
@@ -44,27 +43,16 @@ module Chemotion
         if params.fetch(:currentCollection, {}).fetch(:id, 0).zero?
           @collection = Collection.get_all_collection_for_user(current_user)
         else
-          pl =  case request.request_method
-          when 'POST' then -1
-                when 'DELETE' then 2
-                else 5
-                end
-          if params[:currentCollection][:is_shared]
-            @s_collection = CollectionAcl.where(
-              'collection_id = ? and user_id in (?) and permission_level > ?',
-              params[:currentCollection][:id],
-              user_ids,
-              pl
-            ).first
-            @collection = Collection.find(@s_collection.collection_id)
-          else
-            @collection = Collection.where(
-              'id = ? AND (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?))',
-              params[:currentCollection][:id],
-              user_ids,
-              pl
-            ).first
+          pl = case request.request_method
+               when 'POST' then -1
+               when 'DELETE' then 2
+               else 5
           end
+
+          @collection = fetch_collection_w_current_user(
+            params[:currentCollection][:id],
+            pl,
+          )
         end
         error!('401 Unauthorized', 401) unless @collection
       end
@@ -126,7 +114,6 @@ module Chemotion
         params do
           optional :currentCollection, default: Hash.new, type: Hash do
             optional :id, type: Integer
-            optional :is_shared, type: Boolean, default: false
           end
           optional :sample, type: Hash do
             use :ui_state_params
