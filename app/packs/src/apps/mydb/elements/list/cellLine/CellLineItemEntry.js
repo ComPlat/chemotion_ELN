@@ -8,6 +8,7 @@ import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 export default class CellLineItemEntry extends Component {
   constructor() {
@@ -37,6 +38,13 @@ export default class CellLineItemEntry extends Component {
     elementShowOrNew(e);
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  isElementChecked(element) {
+    const { checkedIds, uncheckedIds, checkedAll } = UIStore.getState().cell_line;
+    return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
+      || ArrayUtils.isValInArray(checkedIds || [], element.id);
+  }
+
   render() {
     const { cellLineItem } = this.props;
     return (
@@ -47,18 +55,18 @@ export default class CellLineItemEntry extends Component {
               <ElementCheckbox
                 element={cellLineItem}
                 key={cellLineItem.id}
-                checked={cellLineItem.is_checked}
-              />             
+                checked={this.isElementChecked(cellLineItem)}
+              />
             </td>
             <td>
               {cellLineItem.short_label}
-              </td>
-              <td>
-            <CellLineItemText
-              cellLineItem={cellLineItem}
-              showDetails={this.showDetails}
-            />
-             </td>
+            </td>
+            <td>
+              <CellLineItemText
+                cellLineItem={cellLineItem}
+                showDetails={this.showDetails}
+              />
+            </td>
             <td>
               <ElementContainer
                 key={cellLineItem.id}
@@ -77,6 +85,7 @@ CellLineItemEntry.propTypes = {
   cellLineItem: PropTypes.shape({
     amount: PropTypes.number.isRequired,
     passage: PropTypes.number.isRequired,
+    short_label: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
     contamination: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
