@@ -10,7 +10,7 @@ const filterSharedWithMeCollection = (sharedCollections) => {
     let label = `by ${collection.shared_by?.initials}`;
     let user = {};
     let uid = -1;
-    let sharedCollections = collection?.collection_acls?.filter(acl => (acl.user.id === currentUser.id ));
+    let sharedCollections = collection?.collection_acls?.filter(acl => (acl.user_id === currentUser.id ));
     sharedCollections?.forEach((acl) => {
       children.push(acl);
       user = acl.user;
