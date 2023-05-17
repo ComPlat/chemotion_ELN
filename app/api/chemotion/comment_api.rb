@@ -4,7 +4,7 @@ module Chemotion
   class CommentAPI < Grape::API
     helpers CommentHelpers
 
-    resource :comments do # rubocop:disable Metrics/BlockLength
+    resource :comments do
       desc 'Return comment by ID'
       params do
         requires :id, type: Integer, desc: 'Comment ID'
@@ -49,7 +49,7 @@ module Chemotion
         end
       end
 
-      resource :create do # rubocop:disable Metrics/BlockLength
+      resource :create do
         desc 'Create a comment'
         params do
           requires :content, type: String

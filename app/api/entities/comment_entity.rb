@@ -11,13 +11,5 @@ module Entities
     expose :resolver_name
     expose :created_at, :updated_at
     expose :commentable_id, :commentable_type
-
-    def created_at
-      object.created_at&.strftime('%d.%m.%Y, %H:%M')
-    end
-
-    def updated_at
-      object.updated_at&.strftime('%d.%m.%Y, %H:%M')
-    end
   end
 end

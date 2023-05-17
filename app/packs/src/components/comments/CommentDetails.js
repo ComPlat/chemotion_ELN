@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Table } from 'react-bootstrap';
 import { Confirm } from 'react-confirm-bootstrap';
+import moment from 'moment';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { formatSection, getAllComments, selectCurrentUser } from 'src/utilities/CommentHelper';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
@@ -47,7 +48,11 @@ export default class CommentDetails extends Component {
       commentsTbl = allComments.map((comment) => (
         <tr key={comment.id}>
           <td width="10%">{formatSection(comment.section, element.type)}</td>
-          <td width="10%">{comment.created_at}</td>
+          <td width="10%">
+            <span className="text-info">
+              {moment(comment.created_at).format('DD.MM.YYYY HH:mm')}
+            </span>
+          </td>
           <td width="34%">{comment.content}</td>
           <td width="15%">{comment.submitter}</td>
           <td width="15%">
