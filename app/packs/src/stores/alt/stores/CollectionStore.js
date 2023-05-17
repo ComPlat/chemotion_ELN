@@ -105,31 +105,6 @@ class CollectionStore {
     }
     return promise;
   }
-  static findBySId(collectionId) {
-    let roots = this.state.sharedCollections;
-    let foundCollection = roots.filter((root) => {
-      return root.id == collectionId;
-    }).pop();
-    let promise;
-    if (!foundCollection) {
-      promise = fetch('/api/v1/share_collections/' + collectionId, {
-        credentials: 'same-origin',
-        method: 'GET'
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
-      promise = new Promise((resolve) => {
-        resolve({ collection: foundCollection });
-      });
-    }
-    return promise;
-  }
-
 
   static findAllCollection() {
     let state = this.state;
