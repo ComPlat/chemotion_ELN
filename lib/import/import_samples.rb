@@ -179,9 +179,13 @@ class Import::ImportSamples
 
   # format row[field] for melting and boiling point
   def format_to_interval_syntax(row_field)
+    return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if row_field.nil?
+
     # Regex checks for a range of numbers that are separated by a dash, or a single number
     matches = row_field.scan(/^(-?\d+(?:[.,]\d+)?)(?:\s*-\s*(-?\d+(?:[.,]\d+)?))?$/).flatten.compact
-    numbers = matches.empty? ? [-Float::INFINITY, Float::INFINITY] : matches.filter_map(&:to_f)
+    return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if matches.empty?
+
+    numbers = matches.filter_map(&:to_f)
     lower_bound, upper_bound = numbers.size == 1 ? [numbers[0], Float::INFINITY] : numbers
     "[#{lower_bound}, #{upper_bound}]"
   end
@@ -200,7 +204,6 @@ class Import::ImportSamples
       db_column = map_column.nil? ? field : map_column[0].sub('s.', '')
       db_column.delete!('"')
       next unless included_fields.include?(db_column)
-
       comparison_values = %w[melting_point boiling_point]
       sample[db_column] = comparison_values.include?(db_column) ? format_to_interval_syntax(row[field]) : row[field]
       sample[db_column] = '' if %w[description solvent location external_label].include?(db_column) && row[field].nil?
