@@ -208,7 +208,9 @@ export default class CollectionTree extends React.Component {
   sharedWithMeSubtrees() {
     let { sharedCollections, sharedWithCollectionVisible } = this.state;
 
-    let collections = filterSharedWithMeCollection(sharedCollections);
+// TODO : remove this when we have a better way to handle this
+//    let collections = filterSharedWithMeCollection(sharedCollections);
+    let collections = sharedCollections;
     let sharedLabelledRoots = {};
     sharedLabelledRoots = collections.map(e => {
       return update(e, {
