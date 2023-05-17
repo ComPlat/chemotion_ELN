@@ -324,6 +324,7 @@ class UIStore {
 
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
+<<<<<<< HEAD
         if (state.currentSearchByID) {
           this.handleSelectCollectionForSearchById(layout, collection);
         } else {
@@ -353,6 +354,44 @@ class UIStore {
           }
           if (!isShared && layout.research_plan && layout.research_plan > 0) {
             ElementActions.fetchResearchPlansByCollectionId(
+=======
+        if (layout.sample && layout.sample > 0) {
+          ElementActions.fetchSamplesByCollectionId(
+            collection.id, Object.assign(params, { page: state.sample.page }),
+            isShared, ElementStore.getState().moleculeSort
+          );
+        }
+        if (layout.reaction && layout.reaction > 0) {
+          ElementActions.fetchReactionsByCollectionId(
+            collection.id, Object.assign(params, { page: state.reaction.page }),
+            isShared
+          );
+        }
+        if (layout.wellplate && layout.wellplate > 0) {
+          ElementActions.fetchWellplatesByCollectionId(
+            collection.id, Object.assign(params, { page: state.wellplate.page }),
+            isShared
+          );
+        }
+        if (layout.screen && layout.screen > 0) {
+          ElementActions.fetchScreensByCollectionId(
+            collection.id, Object.assign(params, { page: state.screen.page }),
+            isShared
+          );
+        }
+        if (layout.research_plan && layout.research_plan > 0) {
+          ElementActions.fetchResearchPlansByCollectionId(
+            collection.id,
+            Object.assign(params, { page: state.research_plan.page }),
+            isShared
+          );
+        }
+
+        Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
+          if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
+            const page = state[key] ? state[key].page : 1;
+            ElementActions.fetchGenericElsByCollectionId(
+>>>>>>> updated:
               collection.id,
               Object.assign(params, { page: state.research_plan.page }),
             );
