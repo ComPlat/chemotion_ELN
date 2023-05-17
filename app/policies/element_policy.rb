@@ -15,11 +15,11 @@ class ElementPolicy
   # 2. there exists a shared collection, containing the sample, which he owns and where the user has
   # the required permission_level
   def read?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections, user_scollections) >= 0
+    maximum_permission_level(user_collections, user_scollections) >= 0
   end
 
   def update?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 1
+    maximum_permission_level(user_collections,user_scollections) >= 1
   end
 
   def copy?
@@ -29,11 +29,11 @@ class ElementPolicy
   def share?
     return true unless record
 
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 2
+    maximum_permission_level(user_collections,user_scollections) >= 2
   end
 
   def destroy?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 3
+    maximum_permission_level(user_collections,user_scollections) >= 3
   end
 
   def scope
