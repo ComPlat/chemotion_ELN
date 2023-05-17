@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Label, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
+import { researchPlanShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -129,11 +127,9 @@ export default class EmbeddedResearchPlanDetails extends Component {
   }
 
   openResearchPlan() {
-    const { currentCollection, isShared } = UIStore.getState();
-    const researchPlanID = this.state.researchPlan.id;
-    const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
-    Aviator.navigate(uri, { silent: true });
-    researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
+    const { researchPlan } = this.state;
+    AviatorNavigation({ element: researchPlan, silent: true });
+    researchPlanShowOrNew({ params: { research_planID: researchPlan.id } });
   }
 
   // render functions

@@ -11,7 +11,7 @@ import ModalReactionExport from 'src/components/contextActions/ModalReactionExpo
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
-import { elementShowOrNew } from 'src/utilities/routesUtils.js'
+import { elementShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
   const showRadar = UIStore.getState().hasRadar? (
@@ -149,17 +149,13 @@ const importCollectionFunction = (updateModalProps) => {
 };
 
 const editMetadataFunction = () => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/metadata`
-      : `/collection/${currentCollection.id}/metadata`;
-    Aviator.navigate(uri, { silent: true} );
-
-    elementShowOrNew({
-      type: 'metadata',
-      params: { collectionID: currentCollection.id }
-    });
-}
+  const { currentCollection } = UIStore.getState();
+  AviatorNavigation({ element: { type: 'metadata' }, silent: true });
+  elementShowOrNew({
+    type: 'metadata',
+    params: { collectionID: currentCollection.id }
+  });
+};
 
 const exportCollectionToRadarFunction = (updateModalProps) => {
   const title = "Publish current collection via RADAR";

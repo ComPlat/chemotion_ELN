@@ -19,7 +19,7 @@ import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import SampleName from 'src/components/common/SampleName';
-import { sampleShowOrNew } from 'src/utilities/routesUtils';
+import { sampleShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
@@ -40,9 +40,8 @@ const buildFlattenSampleIds = (displayedMoleculeGroup) => {
 };
 
 const showDetails = (id) => {
-  const { currentCollection, isShared } = UIStore.getState();
-  const uri = `/${isShared ? 's' : ''}collection/${currentCollection.id}/sample/${id}`;
-  Aviator.navigate(uri, { silent: true });
+  const { currentCollection } = UIStore.getState();
+  AviatorNavigation({ element: { id, type: 'sample' }, silent: true });
   sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
 };
 

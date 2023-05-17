@@ -234,10 +234,12 @@ const elementShowOrNew = (e) => {
   return null;
 };
 
+
 const buildPathForElement = (element) => {
   if (!element) { return ''; }
   const { id, isNew, type } = element;
-  if (!type || !(isNew || id)) { return ''; }
+  if (!type) { return ''; }
+  if (!isNew && !id) { return `/${type}`; }
   return `/${type}/${isNew ? 'new' : id}`;
 };
 
