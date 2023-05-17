@@ -327,10 +327,11 @@ class UIStore {
             isShared
           );
         }
-        if (!isShared && layout.research_plan && layout.research_plan > 0) {
+        if (layout.research_plan && layout.research_plan > 0) {
           ElementActions.fetchResearchPlansByCollectionId(
             collection.id,
             Object.assign(params, { page: state.research_plan.page }),
+            isShared
           );
         }
 
