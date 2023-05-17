@@ -12,13 +12,14 @@ describe('buildPathForCollectionAndElement', () => {
   const allCollection = { id: '2', label: 'All', is_locked: true };
   const element = { id: '2', type: 'sample' };
   const newElement = { id: null, type: 'reaction', isNew: true };
+  const weirdElement = { type: 'metadata' };
   it('should return the path for the collection and element', () => {
     expect(buildPathForCollectionAndElement(collection, element)).toEqual('/collection/1/sample/2');
   });
   it('should return the path for collection none when no collection given', () => {
     expect(buildPathForCollectionAndElement(null, element)).toEqual('/collection/none/sample/2');
   });
-  it('should return the path for the ALL collection when no collection given', () => {
+  it('should return the path for the ALL collection when All-collection given', () => {
     expect(buildPathForCollectionAndElement(allCollection, element)).toEqual('/collection/all/sample/2');
   });
   it('should return the path for the collection and new element', () => {
@@ -26,5 +27,8 @@ describe('buildPathForCollectionAndElement', () => {
   });
   it('should return the path for the collection only when an empty element is given', () => {
     expect(buildPathForCollectionAndElement(collection, {})).toEqual('/collection/1');
+  });
+  it('should return the path for the collection and element when weird element with no idea is given', () => {
+    expect(buildPathForCollectionAndElement(collection, weirdElement)).toEqual('/collection/1/metadata');
   });
 });

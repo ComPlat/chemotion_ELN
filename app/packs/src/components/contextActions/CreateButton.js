@@ -4,9 +4,8 @@ import {
   SplitButton, Button, ButtonToolbar, FormControl,
   FormGroup, ControlLabel, Modal, MenuItem
 } from 'react-bootstrap';
-import Aviator from 'aviator';
 import { filter } from 'lodash';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { elementShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -221,15 +220,12 @@ export default class CreateButton extends React.Component {
   }
 
   createElementOfType(type) {
-    const { currentCollection, isShared } = UIStore.getState();
-    const uri = isShared
-      ? `/scollection/${currentCollection.id}/${type}/new`
-      : `/collection/${currentCollection.id}/${type}/new`;
-    Aviator.navigate(uri, { silent: true });
+    const { currentCollection } = UIStore.getState();
+    AviatorNavigation({ element: { type, isNew: true }, silent: true });
     const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = 'new'
+    e.params[`${type}ID`] = 'new';
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
-    if (genericEls.find(el => el.name == type)) {
+    if (genericEls.find((el) => el.name === type)) {
       e.klassType = 'GenericEl';
     }
     elementShowOrNew(e);
