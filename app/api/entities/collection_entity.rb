@@ -3,7 +3,8 @@
 module Entities
   class CollectionEntity < ApplicationEntity
     expose(
-      # :descendant_ids,
+      :descendant_ids,
+      :ancestry,
       :id,
       :is_locked,
       :is_remote,
@@ -39,9 +40,9 @@ module Entities
         (object.shared_by_id != current_user.id)
     end
 
-    # def descendant_ids
-    #   object&.descendant_ids
-    # end
+    def descendant_ids
+      object&.descendant_ids
+    end
 
     def shared_by
       # return unless object.is_shared

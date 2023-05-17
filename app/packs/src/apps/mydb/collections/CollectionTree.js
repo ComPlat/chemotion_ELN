@@ -101,8 +101,25 @@ export default class CollectionTree extends React.Component {
     return newRoots;
   }
 
+  lockedTrees() {
+    let collections = this.state.myCollections;
+    let lockedCollections = collections.filter(c => c.is_locked === true);
+    const subtrees = lockedCollections.map((root, index) => {
+      return <CollectionSubtree root={root} key={index} />
+    })
+
+    return (
+      <div>
+        <div style={{ display: '' }}>
+          {subtrees}
+        </div>
+      </div>
+    );
+  }
+
   myCollections() {
     let myCollections = this.state.myCollections;
+    myCollections = myCollections.filter(c => c.is_locked === false && c.ancestry === null);
 
     const subtrees = myCollections.map((root, index) => {
       return <CollectionSubtree root={root} key={index} />
@@ -323,6 +340,7 @@ export default class CollectionTree extends React.Component {
           </OverlayTrigger>
         </div>
         <div className="tree-wrapper" style={{ display: ownCollectionDisplay }}>
+          {this.lockedTrees()}
           {this.myCollections()}
         </div>
         <div className="tree-wrapper">
