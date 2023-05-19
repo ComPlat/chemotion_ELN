@@ -221,7 +221,6 @@ export default class LiteratureDetails extends Component {
         sample,
         reaction,
         id: currentCollection.id,
-        is_shared: currentCollection.is_shared
 
       };
       LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
@@ -281,7 +280,6 @@ export default class LiteratureDetails extends Component {
       sample,
       reaction,
       id: currentCollection.id,
-      is_shared: currentCollection.is_shared,
       ref: { ...literature, doi: sanitizeDoi(doi || '') }
     };
     LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
