@@ -37,7 +37,7 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_shared])
+          cid = fetch_collection_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_shared])&.id
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)

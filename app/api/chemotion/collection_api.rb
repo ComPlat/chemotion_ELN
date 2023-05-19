@@ -85,7 +85,6 @@ module Chemotion
           end
           optional :collection_id, type: Integer, desc: 'Destination collect id'
           optional :newCollection, type: String, desc: 'Label for a new collion'
-          optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
         put do
@@ -110,7 +109,9 @@ module Chemotion
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
-            collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            unless Collection.find(to_collection_id).owned_by?(current_user)
+              collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id])
+            end
           end
 
           klasses = ElementKlass.find_each do |klass|
@@ -124,7 +125,9 @@ module Chemotion
 
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
-            CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            unless Collection.find(to_collection_id).owned_by?(current_user)
+              CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id])
+            end
           end
 
           status 204
@@ -137,7 +140,6 @@ module Chemotion
           end
           optional :collection_id, type: Integer, desc: 'Destination collection id'
           optional :newCollection, type: String, desc: 'Label for a new collection'
-          optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
         post do

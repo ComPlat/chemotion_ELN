@@ -277,9 +277,8 @@ class UIStore {
     this.state[element.type].currentId = element.id;
   }
 
-  handleSelectCollection(collection, hasChanged = false, isShared) {
+  handleSelectCollection(collection, hasChanged = false) {
     const state = this.state;
-    isShared = isShared ? isShared : collection.is_shared ? true : false;
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
 
     if (!hasChanged) {
@@ -295,7 +294,6 @@ class UIStore {
     }
 
     if (hasChanged && !collection.noFetch) {
-      this.state.isShared = isShared;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
@@ -306,32 +304,27 @@ class UIStore {
         if (layout.sample && layout.sample > 0) {
           ElementActions.fetchSamplesByCollectionId(
             collection.id, Object.assign(params, { page: state.sample.page }),
-            isShared, ElementStore.getState().moleculeSort
+            ElementStore.getState().moleculeSort
           );
         }
         if (layout.reaction && layout.reaction > 0) {
           ElementActions.fetchReactionsByCollectionId(
             collection.id, Object.assign(params, { page: state.reaction.page }),
-            isShared
           );
         }
         if (layout.wellplate && layout.wellplate > 0) {
           ElementActions.fetchWellplatesByCollectionId(
-            collection.id, Object.assign(params, { page: state.wellplate.page }),
-            isShared
-          );
+            collection.id, Object.assign(params, { page: state.wellplate.page }),          );
         }
         if (layout.screen && layout.screen > 0) {
           ElementActions.fetchScreensByCollectionId(
             collection.id, Object.assign(params, { page: state.screen.page }),
-            isShared
           );
         }
         if (layout.research_plan && layout.research_plan > 0) {
           ElementActions.fetchResearchPlansByCollectionId(
             collection.id,
             Object.assign(params, { page: state.research_plan.page }),
-            isShared
           );
         }
 
@@ -341,7 +334,6 @@ class UIStore {
             ElementActions.fetchGenericElsByCollectionId(
               collection.id,
               Object.assign(params, { page, name: key }),
-              isShared,
               key
             );
           }
@@ -351,8 +343,7 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    const isShared = true
-    this.handleSelectCollection(collection, false, isShared)
+    this.handleSelectCollection(collection, false)
   }
 
   // FIXME this method is also defined in ElementStore
@@ -367,7 +358,6 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
-    this.state.isShared = collection.is_shared ? true : false;
   }
 
   handleClearSearchSelection() {
