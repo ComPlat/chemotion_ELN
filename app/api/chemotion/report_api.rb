@@ -111,8 +111,9 @@ module Chemotion
         content_type('text/csv')
         filename = CGI.escape("reaction_smiles_#{time_now}.csv")
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
-        real_coll_id = fetch_collection_id_w_current_user(
-          params[:uiState][:currentCollection]
+        real_coll_id = Collection.find_by(
+          id: params[:uiState][:currentCollection].to_i,
+          user_id: user_ids
         )
         return unless real_coll_id
         return unless (p_t = params[:uiState][:reaction])
