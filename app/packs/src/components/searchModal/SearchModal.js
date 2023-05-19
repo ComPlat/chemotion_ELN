@@ -9,13 +9,13 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import AdvancedSearchForm from './forms/AdvancedSearchForm';
 import KetcherRailsForm from './forms/KetcherRailsForm';
-import GenericSearchForm from './forms/GenericSearchForm';
+//import GenericSearchForm from './forms/GenericSearchForm';
 import NoFormSelected from './forms/NoFormSelected';
 
 const Components = {
   advanced: AdvancedSearchForm,
   ketcher: KetcherRailsForm,
-  generic: GenericSearchForm,
+  //generic: GenericSearchForm,
   empty: NoFormSelected
 }
 
@@ -27,7 +27,7 @@ const SearchModal = () => {
   let FormData = [
     {
       value: 'advanced',
-      label: 'Text Search',
+      label: 'Text search',
       id: 0,
     },
     {
@@ -37,12 +37,12 @@ const SearchModal = () => {
     }
   ]
 
-  genericElements.map((element) => {
-    const idx = profile.data && profile.data.layout && profile.data.layout[element.name];
-    if (idx >= 0) {
-      FormData.push({ value: `${element.id}-generic`, label: element.label, id: element.id })
-    }
-  });
+  // genericElements.map((element) => {
+  //   const idx = profile.data && profile.data.layout && profile.data.layout[element.name];
+  //   if (idx >= 0) {
+  //     FormData.push({ value: `${element.id}-generic`, label: element.label, id: element.id })
+  //   }
+  // });
 
   const FormComponent = (block) => {
     let value = block.value.includes('generic') ? 'generic' : block.value;
@@ -61,6 +61,7 @@ const SearchModal = () => {
     const formOptions = FormData.map((option) => option);
 
     return (
+      
       <FormGroup>
         <Select
           className="status-select"

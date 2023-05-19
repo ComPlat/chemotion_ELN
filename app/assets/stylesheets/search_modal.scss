@@ -67,6 +67,10 @@
   }
 }
 
+.search-icon {
+  float: left;
+}
+
 .form-container {
   display: block;
 }
@@ -118,9 +122,12 @@ i.fa.icon-right {
 }
 
 .advanced-search {
-  margin-bottom: 30px;
-  .Select-menu {
-    max-height: 100px;
+  margin-bottom: 50px;
+  height: 55vh;
+  overflow-y: auto;
+
+  .Select-menu, .css-4ljt47-MenuList {
+    max-height: 250px;
   }
   .btn-group {
     width: 100%;
@@ -140,5 +147,16 @@ i.fa.icon-right {
     color: #333;
     background-color: #5bc0de75;
     box-shadow: none;
+  }
+  .css-1okebmr-indicatorSeparator {
+    background-color: #fff;
+  }
+  .css-18ng2q5-group {
+    color: #5bc0de;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .css-syji7d-Group .css-yt9ioa-option, .css-syji7d-Group .css-1n7v3ny-option {
+    padding-left: 30px;
   }
 }
