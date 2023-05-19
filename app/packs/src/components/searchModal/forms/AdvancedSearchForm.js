@@ -40,7 +40,8 @@ const AdvancedSearchForm = () => {
     if (checkSelectedElements) {
       selectedOptions.push(
         {
-          link: 'OR', match: 'LIKE', table: selectedOptions[0].table,
+          link: 'OR', match: 'LIKE',
+          table: selectedOptions[0].table,
           element_id: selectedOptions[0].element_id,
           element_table: selectedOptions[0].element_table,
           field: '', value: '', unit: ''
@@ -178,6 +179,8 @@ const AdvancedSearchForm = () => {
         break;
       case 'field':
       case 'link':
+      case 'match':
+      case 'unit':
         return e.value;
         break;
       default:
