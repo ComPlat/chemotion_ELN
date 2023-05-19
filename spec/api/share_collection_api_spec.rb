@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-describe Chemotion::ShareTempCollectionAPI do
+describe Chemotion::ShareCollectionAPI do
   let(:json_options) do
     {
     only: %i[id label],
