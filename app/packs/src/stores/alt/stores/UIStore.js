@@ -330,6 +330,7 @@ class UIStore {
       const id = pendingCollection.id;
       this.state.currentCollection = CollectionStore.findCollectionById(collection.id);
 
+      this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
       const { profile } = UserStore.getState();
