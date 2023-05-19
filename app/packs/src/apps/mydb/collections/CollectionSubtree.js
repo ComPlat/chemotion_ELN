@@ -124,7 +124,8 @@ export default class CollectionSubtree extends React.Component {
   }
 
   takeOwnershipButton() {
-    const isTakeOwnershipAllowed = this.state.root.permission_level === 5;
+    const { root } = this.state;
+    const isTakeOwnershipAllowed = root.permission_level === 5;
     if (isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">

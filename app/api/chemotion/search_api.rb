@@ -36,7 +36,6 @@ module Chemotion
           end
         end
         requires :collection_id, type: String
-        optional :is_sync, type: Boolean
         optional :molecule_sort, type: Boolean, default: false
         optional :per_page, type: Integer, default: 7
         optional :is_public, type: Boolean, default: false

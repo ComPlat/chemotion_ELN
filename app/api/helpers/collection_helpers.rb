@@ -13,10 +13,6 @@ module CollectionHelpers
     current_user.acl_collection_by_id(id)
   end
 
-  def fetch_collection_id_w_current_user(id)
-    Collection.find_by(id: id.to_i, user_id: user_ids)
-  end
-
   # return the collection if current_user is associated to it (owned) or if acl exists
   # return nil if no association
   def fetch_collection_w_current_user(collection_id, permission_level = nil)
@@ -29,7 +25,33 @@ module CollectionHelpers
       collections = collections.where('collection_acls.permission_level >= ?', permission_level) if permission_level
     end
 
-    collection.first
+    collections.first
+  end
+
+  # desc: associate an element to a collection
+  # do not raise error if element is already associated to the collection
+  def add_element_to_a_collection(element, collection)
+    element.collections << collection
+  rescue ActiveRecord::RecordNotUnique
+  end
+
+  # desc: associate an element to 'All' collection of current_user
+  def add_element_to_all_collection_of_current_user(element)
+    all_collection = Collection.get_all_collection_for_user(current_user.id)
+    add_element_to_a_collection(element, all_collection)
+  end
+
+  # desc: associate an element to a collection and the 'All' collection of the collection owner
+  # or to the current_user All collection if no collection is provided
+  def add_element_to_collection_n_all(element, collection)
+    unless collection
+      add_element_to_all_collection_of_current_user(element)
+      return
+    end
+    add_element_to_a_collection(element, collection)
+    # get the All collection of the collection owner
+    all_collection = Collection.get_all_collection_for_user(collection.user_id)
+    add_element_to_a_collection(element, all_collection)
   end
 
   # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
@@ -48,7 +70,7 @@ module CollectionHelpers
 
     c&.id
   end
-  
+
   def fetch_collection_by_ui_state_params_and_pl(collection_id, permission_level = 2)
     fetch_collection_w_current_user(collection_id, permission_level)
   end

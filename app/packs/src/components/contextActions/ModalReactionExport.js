@@ -76,7 +76,7 @@ const exportSelections = (uiState, userState, e) => {
 }
 
 const filterUIState = (uiState) => {
-  const { currentCollection, sample, reaction, wellplate, isShared } = uiState;
+  const { currentCollection, sample, reaction, wellplate } = uiState;
   return {
     sample: {
       checkedIds: sample.checkedIds.toArray(),
@@ -94,6 +94,5 @@ const filterUIState = (uiState) => {
       checkedAll: wellplate.checkedAll,
     },
     currentCollection: currentCollection.id,
-    isShared: isShared,
-  }
+  };
 }

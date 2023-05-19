@@ -143,6 +143,18 @@ class Collection < ApplicationRecord
 
   def self.reject_shared(user_id, collection_id)
     Collection.where(id: collection_id, user_id: user_id, is_shared: true)
-              .each(&:destroy)
+              .find_each(&:destroy)
+  end
+
+  def owned_by?(user_ids_or_user)
+    if user_ids_or_user.is_a?(Array)
+      user_ids_or_user.include?(user_id)
+    elsif ids.is_a?(Integer)
+      user_ids_or_user == user_id
+    elsif ids.is_a?(User)
+      user_ids_or_user.id == user_id
+    else
+      false
+    end
   end
 end

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Label, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+import uuid from 'uuid';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { AviatorNavigation } from 'src/utilities/routesUtils';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -13,14 +15,10 @@ export default class ElementCollectionLabels extends React.Component {
     this.preventOnClick = this.preventOnClick.bind(this);
   }
 
-  handleOnClick(label, e, is_synchronized) {
+  handleOnClick(label, e) {
     e.stopPropagation();
-
-    let collectionUrl = is_synchronized ? "/scollection" : "/collection"
-    let url = collectionUrl + "/" + label.id + "/" +
-              this.state.element.type + "/" + this.state.element.id
-
-    Aviator.navigate(url);
+    const { element } = this.state;
+    AviatorNavigation({ collection: label, element });
   }
 
   preventOnClick(e) {
@@ -31,38 +29,29 @@ export default class ElementCollectionLabels extends React.Component {
     return label.is_shared ? "warning" : "info";
   }
 
-  formatLabels(labels, is_synchronized) {
-
-    return labels.map((label, index) => {
-      if (is_synchronized === true && label.isOwner === true) {
-        return (
-          <span className="collection-label" key={index}>
-            <Button disabled bsStyle="default" bsSize="xs">
-              {label.name}
-            </Button>
-            &nbsp;
-          </span>
-        );
-      }
-      return (
-        <span className="collection-label" key={index}>
-          <Button bsStyle="default" bsSize="xs" onClick={e => this.handleOnClick(label, e, is_synchronized)}>
-            {label.name}
-          </Button>
-          &nbsp;
-        </span>
-      );
-    });
+  formatLabels(labels, isSync = false) {
+    return labels.map((label) => (
+      <span className="collection-label" key={uuid.v4()}>
+        <Button
+          disabled={isSync === true && label.isOwner === true}
+          bsStyle="default" bsSize="xs"
+          onClick={(e) => this.handleOnClick(label, e)}
+        >
+          {label.name}
+        </Button>
+        &nbsp;
+      </span>
+    ));
   }
 
-  renderCollectionsLabels(collectionName, labels, is_synchronized = false) {
+  renderCollectionsLabels(collectionName, labels, isSync = false) {
     if (labels.length == 0) return <span />;
 
     return (
       <div>
         <h3 className="popover-title">{collectionName}</h3>
         <div className="popover-content">
-          {this.formatLabels(labels, is_synchronized)}
+          {this.formatLabels(labels, isSync)}
         </div>
       </div>
     );
