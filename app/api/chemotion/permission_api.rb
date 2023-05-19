@@ -60,7 +60,7 @@ module Chemotion
 
           deletion_allowed = true
           sharing_allowed = true
-          if params[:currentCollection][:is_shared]
+          unless collection.owned_by?(current_user)
             deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy? : true
             deletion_allowed &&= (if has_sel['reaction']
                                     ElementsPolicy.new(current_user,

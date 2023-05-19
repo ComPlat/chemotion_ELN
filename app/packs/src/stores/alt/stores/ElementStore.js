@@ -717,8 +717,7 @@ class ElementStore {
 
   handleSplitAsSubsamples(ui_state) {
     ElementActions.fetchSamplesByCollectionId(
-      ui_state.currentCollection.id, {},
-      ui_state.isShared, this.state.moleculeSort
+      ui_state.currentCollection.id, {}, this.state.moleculeSort
     );
   }
 
@@ -734,8 +733,7 @@ class ElementStore {
   handleSplitAsSubwellplates(ui_state) {
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchSamplesByCollectionId(
-      ui_state.currentCollection.id, {},
-      ui_state.isShared, this.state.moleculeSort
+      ui_state.currentCollection.id, {}, this.state.moleculeSort
     );
   }
 
@@ -1076,7 +1074,6 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        isShared: uiState.isShared,
         moleculeSort
       });
     } else if (currentSearchByID != null) {
@@ -1096,10 +1093,10 @@ class ElementStore {
         'fetchCellLinesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        ElementActions[fn](uiState.currentCollection.id, params, uiState.isShared, moleculeSort);
+        ElementActions[fn](uiState.currentCollection.id, params, moleculeSort);
       } else {
-        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isShared, type);
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isShared, moleculeSort);
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, moleculeSort);
       }
     }
 

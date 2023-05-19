@@ -14,7 +14,6 @@ module Chemotion
       desc 'Return serialized reactions'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -48,6 +47,8 @@ module Chemotion
                     Reaction.none
                   end
                 end.order('created_at DESC')
+        collection = fetch_collection_w_current_user(params[:collection_id]) # 1 = write
+        scope = collection ? collection.reactions.order('created_at DESC') : Reaction.none
 
         from = params[:from_date]
         to = params[:to_date]
@@ -240,7 +241,7 @@ module Chemotion
         attributes.delete(:container)
         attributes.delete(:segments)
 
-        collection = current_user.collections.where(id: collection_id).take
+        collection = fetch_collection_w_current_user(collection_id, 1) # 1 = write
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -274,26 +275,9 @@ module Chemotion
         reaction.container = update_datamodel(container_info)
         reaction.save!
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
 
-        is_shared_collection = false
-        if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: collection_id).take
-          if sync_collection.present?
-            is_shared_collection = true
-            sync_in_collection_receiver = Collection.find(sync_collection['collection_id'])
-            CollectionsReaction.create(reaction: reaction,
-                                       collection: sync_in_collection_receiver)
-            sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-            CollectionsReaction.create(reaction: reaction,
-                                       collection: sync_out_collection_sharer)
-          end
-        end
+        add_element_to_collection_n_all(reaction, collection)
 
-        unless is_shared_collection
-          CollectionsReaction.create(reaction: reaction,
-                                     collection: Collection.get_all_collection_for_user(current_user.id))
-        end
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction
           if attributes['origin'] && attributes['origin']['short_label'] && materials['products'].present?

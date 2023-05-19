@@ -23,7 +23,6 @@ export default class LiteratureMap {
       researchPlanRefs: Immutable.List(),
       selectedRefs: Immutable.List(),
       collection_id: null,
-      is_sync: false
     });
   }
 

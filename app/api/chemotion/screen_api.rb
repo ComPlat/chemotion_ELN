@@ -195,20 +195,10 @@ module Chemotion
         kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        collection = current_user.collections.where(id: params[:collection_id]).take
-        screen.collections << collection if collection.present?
-
-        is_shared_collection = false
-        unless collection.present?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-          if sync_collection.present?
-            is_shared_collection = true
-            screen.collections << Collection.find(sync_collection['collection_id'])
-            screen.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
-        end
-
-        screen.collections << Collection.get_all_collection_for_user(current_user.id) unless is_shared_collection
+        collection = (
+          params[:collection_id].present? && fetch_collection_w_current_user(params[:collection_id], 1) # 1 = write
+        ) || nil
+        add_element_to_collection_n_all(screen, collection)
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)

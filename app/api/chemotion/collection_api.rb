@@ -85,7 +85,6 @@ module Chemotion
           end
           optional :collection_id, type: Integer, desc: 'Destination collect id'
           optional :newCollection, type: String, desc: 'Label for a new collion'
-          optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
         put do
@@ -132,7 +131,6 @@ module Chemotion
           end
           optional :collection_id, type: Integer, desc: 'Destination collection id'
           optional :newCollection, type: String, desc: 'Label for a new collection'
-          optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
         post do

@@ -297,9 +297,9 @@ class UIStore {
     this.state[element.type].currentId = element.id;
   }
 
-  handleSelectCollection(collection, hasChanged = false, isShared) {
+  handleSelectCollection(collection, hasChanged = false) {
     const state = this.state;
-    isShared = isShared ? isShared : collection.is_shared ? true : false;
+    const isShared = collection.is_shared ? true : false;
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
 
     if (!hasChanged) {
@@ -324,66 +324,36 @@ class UIStore {
 
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-<<<<<<< HEAD
-        if (state.currentSearchByID) {
-          this.handleSelectCollectionForSearchById(layout, collection);
-        } else {
-          if (layout.sample && layout.sample > 0) {
-            ElementActions.fetchSamplesByCollectionId(
-              collection.id, Object.assign(params, { page: state.sample.page }),
-              isShared, ElementStore.getState().moleculeSort
-            );
-          }
-          if (layout.reaction && layout.reaction > 0) {
-            ElementActions.fetchReactionsByCollectionId(
-              collection.id, Object.assign(params, { page: state.reaction.page }),
-              isShared
-            );
-          }
-          if (layout.wellplate && layout.wellplate > 0) {
-            ElementActions.fetchWellplatesByCollectionId(
-              collection.id, Object.assign(params, { page: state.wellplate.page }),
-              isShared
-            );
-          }
-          if (layout.screen && layout.screen > 0) {
-            ElementActions.fetchScreensByCollectionId(
-              collection.id, Object.assign(params, { page: state.screen.page }),
-              isShared
-            );
-          }
-          if (!isShared && layout.research_plan && layout.research_plan > 0) {
-            ElementActions.fetchResearchPlansByCollectionId(
-=======
         if (layout.sample && layout.sample > 0) {
           ElementActions.fetchSamplesByCollectionId(
             collection.id, Object.assign(params, { page: state.sample.page }),
-            isShared, ElementStore.getState().moleculeSort
+            ElementStore.getState().moleculeSort
           );
         }
         if (layout.reaction && layout.reaction > 0) {
           ElementActions.fetchReactionsByCollectionId(
             collection.id, Object.assign(params, { page: state.reaction.page }),
-            isShared
           );
         }
         if (layout.wellplate && layout.wellplate > 0) {
           ElementActions.fetchWellplatesByCollectionId(
-            collection.id, Object.assign(params, { page: state.wellplate.page }),
-            isShared
-          );
+            collection.id, Object.assign(params, { page: state.wellplate.page }),          );
         }
         if (layout.screen && layout.screen > 0) {
           ElementActions.fetchScreensByCollectionId(
             collection.id, Object.assign(params, { page: state.screen.page }),
-            isShared
           );
         }
         if (layout.research_plan && layout.research_plan > 0) {
           ElementActions.fetchResearchPlansByCollectionId(
             collection.id,
             Object.assign(params, { page: state.research_plan.page }),
-            isShared
+          );
+        }
+        if (!isShared && layout.cell_line && layout.cell_line > 0) {
+          ElementActions.fetchCellLinesByCollectionId(
+            collection.id,
+            Object.assign(params, { page: state.cell_line.page }),
           );
         }
 
@@ -391,30 +361,12 @@ class UIStore {
           if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
             const page = state[key] ? state[key].page : 1;
             ElementActions.fetchGenericElsByCollectionId(
->>>>>>> updated:
               collection.id,
-              Object.assign(params, { page: state.research_plan.page }),
+              Object.assign(params, { page, name: key }),
+              key
             );
           }
-          if (!isShared && layout.cell_line && layout.cell_line > 0) {
-            ElementActions.fetchCellLinesByCollectionId(
-              collection.id,
-              Object.assign(params, { page: state.cell_line.page }),
-            );
-          }
-
-          Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].includes(l)).forEach((key) => {
-            if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
-              const page = state[key] ? state[key].page : 1;
-              ElementActions.fetchGenericElsByCollectionId(
-                collection.id,
-                Object.assign(params, { page, name: key }),
-                isShared,
-                key
-              );
-            }
-          });
-        }
+        });
       }
     }
   }
@@ -471,8 +423,7 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    const isShared = true
-    this.handleSelectCollection(collection, false, isShared)
+    this.handleSelectCollection(collection, false)
   }
 
   // FIXME this method is also defined in ElementStore
@@ -491,7 +442,6 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
-    this.state.isShared = collection.is_shared ? true : false;
   }
 
   handleClearSearchSelection() {
