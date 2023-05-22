@@ -9,7 +9,6 @@ module Chemotion
       namespace :all do
         desc "Return the 'All' collection of the current user"
         get do
-          # present Collection.get_all_collection_for_user(current_user.id), with: Entities::CollectionEntity, root: :collection
           collections = current_user.collections.with_collections_acls.includes(collection_acls: :user)
 
           present collections.distinct, with: Entities::CollectionEntity, root: :collections
@@ -61,22 +60,6 @@ module Chemotion
           metadata.metadata = params[:metadata]
           metadata.save!
           metadata
-        end
-      end
-
-      namespace :take_ownership do
-        desc "Take ownership of collection with specified id"
-        params do
-          requires :id, type: Integer, desc: "Collection id"
-        end
-        route_param :id do
-          before do
-            error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).take_ownership?
-          end
-
-          post do
-            Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id)).execute!
-          end
         end
       end
 
