@@ -10,11 +10,13 @@ const filterSharedWithMeCollection = (sharedCollections) => {
     let label = `by ${collection.shared_by?.initials}`;
     let user = {};
     let uid = -1;
+    let permission_level = -1;
     let sharedCollections = collection?.collection_acls?.filter(acl => (acl.user_id === currentUser.id ));
     sharedCollections?.forEach((acl) => {
       children.push(acl);
       user = acl.user;
       uid = acl.id;
+      permission_level = acl.permission_level;
     })
 
     const sameSharedTo = collections.find(c => (c.label == label));
@@ -35,32 +37,31 @@ const filterSharedWithMeCollection = (sharedCollections) => {
 
 const filterMySharedCollection = (myCollections) => {
   myCollections = myCollections.filter(c => ((c.collection_acls && c.collection_acls.length > 0) && c.is_locked === false));
-
   let collections = [];
+
   myCollections.forEach((collection) => {
-    let children = []
-    let label = ''
-    let user = {}
-    let uid = -1;
     collection.collection_acls.forEach((acl) => {
+      let children = [];
       children.push(acl);
-      label = `with ${acl.user.initials}`;
-      user = acl.user;
-      uid = acl.id;
+      let label = `with ${acl.user.initials}`;
+      let user = acl.user;
+      let uid = acl.id;
+
+      const sameSharedTo = collections.find(c => (c.label == label));
+      if (sameSharedTo) {
+        children.forEach(c => sameSharedTo.children.push(c))
+      } else {
+        let sharedCollection = {}
+        sharedCollection.id = collection.id;
+        sharedCollection.uid = uid;
+        sharedCollection.label = label;
+        sharedCollection.shared_to = user;
+        sharedCollection.children = children;
+        collections.push(sharedCollection);
+      }
     })
-    const sameSharedTo = collections.find(c => (c.label == label));
-    if (sameSharedTo) {
-      children.forEach(c => sameSharedTo.children.push(c))
-    } else {
-      let sharedCollection = {}
-      sharedCollection.id = collection.id;
-      sharedCollection.uid = uid;
-      sharedCollection.label = label;
-      sharedCollection.shared_to = user;
-      sharedCollection.children = children;
-      collections.push(sharedCollection);
-    }
   });
+
   return collections;
 }
 
