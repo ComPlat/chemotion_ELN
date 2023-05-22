@@ -97,6 +97,23 @@ module Chemotion
           collection_acl&.destroy
         end
       end
+
+      namespace :take_ownership do
+        desc 'Take ownership of collection with specified collection_acl id'
+        params do
+          requires :id, type: Integer, desc: 'CollectionAcl id'
+        end
+        route_param :id do
+          before do
+            error!('401 Unauthorized', 401) unless CollectionAclPolicy.new(current_user, CollectionAcl.find(params[:id])).take_ownership?
+          end
+
+          post do
+            Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id)).execute!
+            { success: true } # to prevent serializing the result of the usecase
+          end
+        end
+      end
     end
   end
 end

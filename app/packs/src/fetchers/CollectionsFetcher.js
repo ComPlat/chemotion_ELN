@@ -5,8 +5,7 @@ import { downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {
-    let sync = params.isSync ? "syncC" : "c"
-    let promise = fetch(`/api/v1/${sync}ollections/take_ownership/${params.id}`, {
+    let promise = fetch(`/api/v1/share_collections/take_ownership/${params.id}`, {
       credentials: 'same-origin',
       method: 'POST'
     })

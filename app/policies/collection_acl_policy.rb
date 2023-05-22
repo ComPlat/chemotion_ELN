@@ -1,4 +1,4 @@
-class SyncCollectionPolicy
+class CollectionAclPolicy
   attr_reader :user, :record
 
   def initialize(user, record)
