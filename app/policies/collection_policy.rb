@@ -6,10 +6,6 @@ class CollectionPolicy
     @record = record
   end
 
-  def take_ownership?
-    (record.user_id == @user.id && record.permission_level >= 5) || (record.user_id == @user.id && record.is_shared == false)
-  end
-
   def read_metadata?
     # TODO: implement metadata specific permissions
     take_ownership?

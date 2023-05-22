@@ -33,7 +33,7 @@ class CollectionStore {
 
   handleTakeOwnership() {
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchSharedCollectionRoots();
+    CollectionActions.fetchCollectionsSharedWithMe();
   }
 
   //handleFetchGenericEls(result) {
@@ -51,16 +51,14 @@ class CollectionStore {
 
   handleCreateSharedCollectionAcls() {
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchSharedCollectionRoots();
   }
 
   handleBulkUpdateCollections() {
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchSharedCollectionRoots();
   }
 
   handleUpdateSharedCollection() {
-    CollectionActions.fetchSharedCollectionRoots();
+    // CollectionActions.fetchSharedCollectionRoots();
   }
 
   handleRefreshMyCollection() {
