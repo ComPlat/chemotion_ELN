@@ -8,14 +8,13 @@ module Entities
       :id,
       :is_locked,
       :is_remote,
-      :is_shared,
-      :is_synchronized,
       :label,
       :permission_level,
       :reaction_detail_level,
       :sample_detail_level,
       :screen_detail_level,
       :shared_by_id,
+      :user_id,
       :wellplate_detail_level,
       :tabs_segment
     )
