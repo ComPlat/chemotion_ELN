@@ -37,32 +37,32 @@ const AdvancedSearchRow = ({ idx, selection, onChange }) => {
     { value: 'Day(s)', label: 'Day(s)' },
   ];
 
-  if (genericEls) {
-    genericEls.map((element) => {
-      let layers = element.properties_template.layers;
-      let elementTable = `${element.name}s`;
+  //if (genericEls) {
+  //  genericEls.map((element) => {
+  //    let layers = element.properties_template.layers;
+  //    let elementTable = `${element.name}s`;
+  //
+  //    genericFields[elementTable] = [];
+  //    genericFields[elementTable].push({ value: { column: 'name', label: 'Name' }, label: 'Name' });
+  //    genericFields[elementTable].push({ value: { column: 'short_label', label: 'Short Label' }, label: 'Short Label' })
+  //    Object.entries(layers)
+  //      .sort((a, b) => a.position - b.position)
+  //      .map((value, i) => {
+  //        let children = [];
+  //        let label = value[1].label || 'Component';
+  //        value[1].fields.map((val) => {
+  //          if (val.type === 'text') {
+  //            children.push({ label: val.label, value: { column: val.field, label: val.label } });
+  //          }
+  //        });
+  //        genericFields[elementTable].push({ label: label, options: children });
+  //      });
+  //  });
+  //}
 
-      genericFields[elementTable] = [];
-      genericFields[elementTable].push({ value: { column: 'name', label: 'Name' }, label: 'Name' });
-      genericFields[elementTable].push({ value: { column: 'short_label', label: 'Short Label' }, label: 'Short Label' })
-      Object.entries(layers)
-        .sort((a, b) => a.position - b.position)
-        .map((value, i) => {
-          let children = [];
-          let label = value[1].label || 'Component';
-          value[1].fields.map((val) => {
-            if (val.type === 'text') {
-              children.push({ label: val.label, value: { column: val.field, label: val.label } });
-            }
-          });
-          genericFields[elementTable].push({ label: label, options: children });
-        });
-    });
-  }
-
-  if (selection.element_id !== 0) {
-    fieldOptions = genericFields[selection.element_table];
-  }
+  //if (selection.element_id !== 0) {
+  //  fieldOptions = genericFields[selection.element_table];
+  //}
 
   const filterTreeNode = (input, child) => {
     return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;

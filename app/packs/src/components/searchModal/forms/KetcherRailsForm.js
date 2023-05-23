@@ -125,7 +125,7 @@ const KetcherRailsform = () => {
               src="/ketcher"
               title="Ketcher Rails"
               width="100%"
-              style={{border: 'none', minHeight: '58vh'}}
+              style={{ border: 'none', minHeight: '50.9vh' }}
             />
             <Grid style={{ margin: 0, paddingLeft: 0 }}>
               <Row style={{ marginTop: '20px' }}>
@@ -184,7 +184,7 @@ const KetcherRailsform = () => {
           </Panel.Title>
         </Panel.Heading>
         <Panel.Collapse>
-          <Panel.Body style={{minHeight: '120px'}}>
+          <Panel.Body style={{ minHeight: '120px' }}>
             <SearchResult
               handleClear={handleClear}
             />

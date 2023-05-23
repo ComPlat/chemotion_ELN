@@ -67,8 +67,36 @@
   }
 }
 
+.search-selection .btn-group {
+  float: right;
+}
+
+.search-selection .btn {
+  height: 35px;
+  color: #337ab7;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  margin-right: 12px;
+}
+
+.search-selection .btn:hover {
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.search-selection .btn.active, .search-selection .btn.active:hover, .search-selection .btn.active:focus {
+  background-color: #5bc0de75;
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+
 .search-icon {
   float: left;
+  margin-right: 5px;
+}
+.search-icon i {
+  font-size: 1.5em;
+  padding-top: 1px;
 }
 
 .form-container {
@@ -83,6 +111,10 @@
   border: none !important;
   box-shadow: none !important;
   margin-bottom: 0 !important;
+}
+
+.collapsible-search-result.panel.panel-default .btn-toolbar {
+  margin-bottom: 8px;
 }
 
 .collapsible-search-result.inactive {
@@ -106,6 +138,10 @@
   display: block;
 }
 
+.collapsible-search-result #tabList {
+  height: 42.8vh;
+}
+
 .no-selected-search {
   padding: 15px;
 }
@@ -122,8 +158,8 @@ i.fa.icon-right {
 }
 
 .advanced-search {
-  margin-bottom: 50px;
-  height: 55vh;
+  margin-bottom: 39px;
+  height: 49vh;
   overflow-y: auto;
 
   .Select-menu, .css-4ljt47-MenuList {
@@ -135,18 +171,40 @@ i.fa.icon-right {
     margin-bottom: 20px;
   }
   .btn-group .btn {
-    padding-left: 25px;
-    padding-right: 25px;
+    padding: 0 25px;
     border: 1px solid rgba(0, 0, 0, 0.4);
     border-bottom: none;
     border-radius: 0;
-    font-size: 15px;
     color: rgba(0, 0, 0, 0.5);
   }
+  .btn-group .btn:hover {
+    background-color: #fff;
+  }
+  .btn-group .btn:first-child {
+    border-top-left-radius: 4px;
+  }
+  .btn-group .btn:last-child {
+    border-top-right-radius: 4px;
+  }
   .btn-group .btn.active {
-    color: #333;
     background-color: #5bc0de75;
     box-shadow: none;
+  }
+  .btn-group i {
+    font-size: 2.2em;
+    color: #337ab7;
+  }
+  .btn-group .btn:hover i {
+    color: rgba(0, 0, 0, 0.6);
+  }
+  .btn-group i.icon-research_plan {
+    font-size: 1.6em;
+    padding: 6px 0 5px 0;
+    display: inline-block;
+  }
+  .btn-group i.icon_generic_nav {
+    font-size: 1.8em;
+    padding: 10px 0 8px 0;
   }
   .css-1okebmr-indicatorSeparator {
     background-color: #fff;

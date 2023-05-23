@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel } from 'react-bootstrap';
+import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -108,17 +108,32 @@ const AdvancedSearchForm = () => {
   const SelectSearchTable = () => {
     const layout = UserStore.getState().profile.data.layout;
 
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0
       // && elnElements.includes(value[0] + 's');
     })
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
+        let iconClass = `icon-${value[0]}`;
+        if (!elnElements.includes(value[0])) {
+          const genericElement = (genericElements && genericElements.find(el => el.name === value[0])) || {};
+          iconClass = `${genericElement.icon_name} icon_generic_nav`;
+        }
+        let tooltip = (
+          <Tooltip id="_tooltip_history" className="left_tooltip">
+            {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace('_', ' ')}
+          </Tooltip>
+        );
+
         return (
           <ToggleButton
             key={value[0]}
             value={`${value[0]}s`}>
-            {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace('_', ' ')}
+            <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
+              <i className={iconClass} />
+            </OverlayTrigger>
           </ToggleButton>
         );
       });
