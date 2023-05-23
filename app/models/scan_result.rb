@@ -26,7 +26,7 @@ class ScanResult < ApplicationRecord
   validates :measurement_value, :measurement_unit, :attachment, presence: true
 
   def -(other)
-    new(
+    self.class.new(
       measurement_value: measurement_value_in_mg - other.measurement_value_in_mg,
       measurement_unit: 'mg',
     )
