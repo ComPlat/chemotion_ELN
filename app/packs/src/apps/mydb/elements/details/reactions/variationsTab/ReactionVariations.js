@@ -73,8 +73,8 @@ function getMaterialValueUnit(material, unit) {
     const { equivalent = '' } = material ?? {};
     return { value: equivalent, unit: 'Equiv' };
   }
-  const { amount = '', unit: amountUnit = 'None' } = material.amount ?? {};
-  return { value: amount, unit: amountUnit };
+  const { value = '', unit: amountUnit = 'None' } = material.amount ?? {};
+  return { value, unit: amountUnit };
 }
 
 export default function ReactionVariations({ reaction, onEditVariations }) {
