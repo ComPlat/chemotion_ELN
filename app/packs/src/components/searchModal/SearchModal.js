@@ -1,28 +1,21 @@
-import React, { useState, Suspense, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, Modal, FormGroup } from 'react-bootstrap';
+import React, { Suspense, useContext } from 'react';
+import { Button, ButtonGroup, Modal } from 'react-bootstrap';
 import Draggable from "react-draggable";
-import Select from 'react-select';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import AdvancedSearchForm from './forms/AdvancedSearchForm';
 import KetcherRailsForm from './forms/KetcherRailsForm';
-//import GenericSearchForm from './forms/GenericSearchForm';
 import NoFormSelected from './forms/NoFormSelected';
 
 const Components = {
   advanced: AdvancedSearchForm,
   ketcher: KetcherRailsForm,
-  //generic: GenericSearchForm,
   empty: NoFormSelected
 }
 
 const SearchModal = () => {
   const searchStore = useContext(StoreContext).search;
-  const genericElements = UserStore.getState().genericEls || [];
-  const profile = UserStore.getState().profile || {};
 
   let FormData = [
     {
@@ -35,14 +28,7 @@ const SearchModal = () => {
       label: 'Structure search',
       id: 1,
     }
-  ]
-
-  // genericElements.map((element) => {
-  //   const idx = profile.data && profile.data.layout && profile.data.layout[element.name];
-  //   if (idx >= 0) {
-  //     FormData.push({ value: `${element.id}-generic`, label: element.label, id: element.id })
-  //   }
-  // });
+  ];
 
   const FormComponent = (block) => {
     let value = block.value.includes('generic') ? 'generic' : block.value;
@@ -56,25 +42,6 @@ const SearchModal = () => {
     });
   };
 
-  const SearchPulldown = (props) => {
-    const { onChange, selected } = props;
-    const formOptions = FormData.map((option) => option);
-
-    return (
-      
-      <FormGroup>
-        <Select
-          className="status-select"
-          name="search selection"
-          clearable={false}
-          value={selected}
-          options={formOptions}
-          onChange={onChange}
-        />
-      </FormGroup>
-    );
-  };
-
   const Spinner = () => {
     return (
       <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
@@ -82,6 +49,8 @@ const SearchModal = () => {
   }
 
   let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
+  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : '';
+  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : '';
 
   return (
     <Draggable handle=".handle">
@@ -93,17 +62,29 @@ const SearchModal = () => {
         dialogClassName="searching"
       >
         <Modal.Header className="handle" closeButton>
-          <div className="col-md-8 col-sm-6">
+          <div className="col-md-6 col-sm-6">
             <Modal.Title>
               <i className="fa fa-arrows move" />
               Please select your search criteria
             </Modal.Title>
           </div>
-          <div className="col-md-3 col-sm-5">
-            <SearchPulldown
-              onChange={(e) => searchStore.changeSearchModalSelectedForm(e)}
-              selected={searchStore.searchModalSelectedForm}
-            />
+          <div className="col-md-5 col-sm-5">
+            <ButtonGroup className="search-selection">
+              <Button onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[0])}
+                className={searchTypeTextClass}>
+                <span className="search-icon">
+                  <i className="fa fa-align-justify" />
+                </span>
+                Text search
+              </Button>
+              <Button onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[1])}
+                className={searchTypeStructureClass}>
+                <span className="search-icon">
+                  <img src="/images/wild_card/pubchem.svg" className="pubchem-logo" />
+                </span>
+                Structure search
+              </Button>
+            </ButtonGroup>
           </div>
           <div className="col-md-1 col-sm-1">
             <i

@@ -111,7 +111,7 @@ module Chemotion
       end
 
       def whitelisted_table(table:, column:, **_)
-        return true if table == 'elements'
+        # return true if table == 'elements'
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
