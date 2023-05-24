@@ -43,7 +43,7 @@ module Chemotion
               fileType: 'docx',
               key: token,
               title: @attachment.filename,
-              url: "http://#{request.host_with_port}/api/v1/public/download?token=#{token}",
+              url: "#{ENV.fetch('PUBLIC_URL')}/api/v1/public/download?token=#{token}",
               permissions: {
                 download: true,
                 edit: true,
@@ -52,7 +52,7 @@ module Chemotion
               },
             },
             editorConfig: {
-              callbackUrl: "http://#{request.host_with_port}/api/v1/public/callback",
+              callbackUrl: "#{ENV.fetch('PUBLIC_URL')}/api/v1/public/callback",
               mode: 'edit',
               lang: 'en',
               customization: {
