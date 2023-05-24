@@ -183,10 +183,9 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
     t.integer "screen_detail_level", default: 0
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
-    t.index ["user_id"], name: "index_collection_acls_on_user_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id", "collection_id"], name: "index_collection_acls_on_user_id_and_collection_id", unique: true
   end
 
   create_table "collections", id: :serial, force: :cascade do |t|
@@ -303,13 +302,13 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
     t.string "content"
     t.integer "created_by", null: false
     t.string "section"
-    t.string "status", default: "Pending"
-    t.string "submitter"
-    t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
