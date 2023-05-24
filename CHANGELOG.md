@@ -6,14 +6,15 @@
 > 2023-05-09
 
 * Features and Improvements:
-  * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239)
-  * Chemspectra: UI for Cyclic Voltametry and CDS layouts [#1272](https://github.com/ComPlat/chemotion_ELN/pull/1273)
+  * Shibboleth authentication [#1239](https://github.com/ComPlat/chemotion_ELN/pull/1239). [See docs](https://chemotion.net/docs/eln/install_configure/configuration#user-authentication)
+  * Chemspectra: UI for Cyclic Voltametry and CDS layouts [#1272](https://github.com/ComPlat/chemotion_ELN/pull/1273). [See docs](https://chemotion.net/docs/services/chemspectra)
 
 * Fixes
   * port fixes from v1.5.3 v1.5.4
  
 ## [v1.5.4]
 > 2023-05-09
+* Admin: it is possible to reprocess SVGs images of molecules and samples ([see docs](https://chemotion.net/docs/eln/troubleshooting#fixing-sample-or-molecule-svg-images))
 
 * Fixes
   * datacollector: find user by insensitive case name_abbreviation [#1302](https://github.com/ComPlat/chemotion_ELN/pull/1302)
