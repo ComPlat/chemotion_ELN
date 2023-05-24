@@ -159,16 +159,19 @@ i.fa.icon-right {
 
 .advanced-search {
   margin-bottom: 39px;
+  padding-left: 30px;
   height: 49vh;
   overflow-y: auto;
+  position: relative;
 
   .Select-menu, .css-4ljt47-MenuList {
     max-height: 250px;
   }
+  .toggle-elements {
+    width: calc(100% - 35px);
+  }
   .btn-group {
-    width: 100%;
     border-bottom: 1px solid rgba(0, 0, 0, 0.4);
-    margin-bottom: 20px;
   }
   .btn-group .btn {
     padding: 0 25px;
@@ -216,5 +219,30 @@ i.fa.icon-right {
   }
   .css-syji7d-Group .css-yt9ioa-option, .css-syji7d-Group .css-1n7v3ny-option {
     padding-left: 30px;
+  }
+  .vertical-buttons {
+    -webkit-transform: rotate(-90deg) translate(-100%, 0);
+    -moz-transform: rotate(-90deg) translate(-100%, 0);
+    -o-transform: rotate(-90deg) translate(-100%, 0);
+    transform: rotate(-90deg) translate(-100%, 0);
+    -webkit-transform-origin: -15px 13px;
+    -moz-transform-origin: -15px 13px;
+    -o-transform-origin: -15px 13px;
+    transform-origin: -15px 13px;
+    width: 43.8vh;
+    border-bottom: none;
+  }
+
+  .vertical-buttons .btn {
+    padding: 3px 25px;
+    width: 50%;
+    font-size: 1.2em;
+    border-bottom: 1px solid rgba(0,0,0, 0.4);
+    background-color: #ddd;
+  }
+  .vertical-buttons .btn.active {
+    background-color: #fff;
+    color: #347ab8;
+    border-bottom: none;
   }
 }

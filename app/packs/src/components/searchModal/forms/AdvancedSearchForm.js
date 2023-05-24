@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Button, ButtonGroup, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -144,7 +144,8 @@ const AdvancedSearchForm = () => {
         name="options"
         value={selectedOptions[0].element_table}
         onChange={handleChangeElement}
-        defaultValue={0}>
+        defaultValue={0}
+        className="toggle-elements">
         {buttons}
       </ToggleButtonGroup>
     );
@@ -240,6 +241,7 @@ const AdvancedSearchForm = () => {
     if (!additionalFields.includes(fieldColumn) && formElement != 'unit' && !additionalFields.includes(value.column)) { selectedOptions[idx]['unit'] = '' }
     setSelectedOptions((a) => [...a]);
   }
+  // onClick={() => searchStore.toggleSearchType()}
 
   return (
     <>
@@ -259,16 +261,18 @@ const AdvancedSearchForm = () => {
           <Panel.Body>
             <div className="advanced-search">
               {showErrorMessage(searchStore)}
-              <div>
-                <SelectSearchTable />
-                <AdvancedSearchRow
-                  idx={0}
-                  selection={selectedOptions[0]}
-                  key={"selection_0"}
-                  onChange={handleChangeSelection}
-                />
-                {renderDynamicRow()}
-              </div>
+              <SelectSearchTable />
+              <ButtonGroup className="vertical-buttons" bsSize="large">
+                <Button>Detail</Button>
+                <Button active>Advanced</Button>
+              </ButtonGroup>
+              <AdvancedSearchRow
+                idx={0}
+                selection={selectedOptions[0]}
+                key={"selection_0"}
+                onChange={handleChangeSelection}
+              />
+              {renderDynamicRow()}
             </div>
             <ButtonToolbar>
               <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
