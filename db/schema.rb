@@ -145,10 +145,9 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.integer "screen_detail_level", default: 0
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
-    t.index ["user_id"], name: "index_collection_acls_on_user_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id", "collection_id"], name: "index_collection_acls_on_user_id_and_collection_id", unique: true
   end
 
   create_table "collections", id: :serial, force: :cascade do |t|
@@ -1402,6 +1401,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
             )
             and sync_cols.user_id in (select user_ids(in_user_id))
         ) all_cols;
+
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
@@ -1427,6 +1427,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
+
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1504,6 +1505,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
+
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
@@ -1522,8 +1524,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
