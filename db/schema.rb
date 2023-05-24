@@ -79,8 +79,8 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.string "token", null: false
     t.integer "user_id"
     t.inet "ip"
-    t.string "fqdn"
     t.string "role"
+    t.string "fqdn"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["user_id"], name: "index_authentication_keys_on_user_id"
@@ -146,10 +146,9 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.integer "screen_detail_level", default: 0
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
-    t.index ["user_id"], name: "index_collection_acls_on_user_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id", "collection_id"], name: "index_collection_acls_on_user_id_and_collection_id", unique: true
   end
 
   create_table "collections", id: :serial, force: :cascade do |t|
@@ -180,8 +179,8 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
   create_table "collections_elements", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "element_id"
-    t.datetime "deleted_at"
     t.string "element_type"
+    t.datetime "deleted_at"
     t.index ["collection_id"], name: "index_collections_elements_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_elements_on_deleted_at"
     t.index ["element_id", "collection_id"], name: "index_collections_elements_on_element_id_and_collection_id", unique: true
@@ -241,13 +240,13 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.string "content"
     t.integer "created_by", null: false
     t.string "section"
-    t.string "status", default: "Pending"
-    t.string "submitter"
-    t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
@@ -411,15 +410,15 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.string "label"
     t.string "desc"
     t.string "icon_name"
+    t.boolean "is_active", default: true, null: false
+    t.string "klass_prefix", default: "E", null: false
+    t.boolean "is_generic", default: true, null: false
+    t.integer "place", default: 100, null: false
     t.jsonb "properties_template"
     t.integer "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
-    t.boolean "is_active", default: true, null: false
-    t.string "klass_prefix", default: "E", null: false
-    t.boolean "is_generic", default: true, null: false
-    t.integer "place", default: 100, null: false
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
@@ -469,12 +468,12 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
   create_table "elements", id: :serial, force: :cascade do |t|
     t.string "name"
     t.integer "element_klass_id"
+    t.string "short_label"
     t.jsonb "properties"
     t.integer "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
-    t.string "short_label"
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
@@ -801,16 +800,16 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.integer "searchable_id"
     t.string "searchable_type"
+    t.integer "searchable_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.integer "predictable_id"
     t.string "predictable_type"
+    t.integer "predictable_id"
     t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -1281,11 +1280,11 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.string "name_abbreviation", limit: 12
     t.string "type", default: "Person"
     t.string "reaction_name_prefix", limit: 3, default: "R"
-    t.hstore "layout", default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
+    t.hstore "layout", default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer "selected_device_id"
     t.integer "failed_attempts", default: 0, null: false
     t.string "unlock_token"
