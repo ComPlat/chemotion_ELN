@@ -9,6 +9,8 @@ module Usecases
       end
 
       def execute!
+        check_parameter
+
         @cell_line_sample = @current_user.cellline_samples.find(@params[:cell_line_sample_id])
         raise 'no cell line sample found ' unless @cell_line_sample
 
@@ -61,6 +63,31 @@ module Usecases
         @cell_line_sample.growth_medium = @params[:growth_medium] || @cell_line_sample.growth_medium
         @cell_line_sample.name = @params[:name] || @cell_line_sample.name
         @cell_line_sample.description = @params[:description] || @cell_line_sample.description
+      end
+
+      def check_parameter
+        raise 'organism not valid' unless !@params[:organism] || check_ontology(@params[:organism])
+        raise 'tissue not valid' unless !@params[:tissue] || check_ontology(@params[:tissue])
+        raise 'amount not valid' unless !@params[:amount] || check_scalar_value(@params[:amount])
+        raise 'passage not valid' unless !@params[:passage] || check_scalar_value(@params[:passage])
+        raise 'disease not valid' unless !@params[:disease] || check_string_value(@params[:disease])
+        raise 'material name not valid' unless !@params[:material_names] || check_names_value(@params[:material_names])
+      end
+
+      def check_ontology(field)
+        field.instance_of?(String) && !field.empty?
+      end
+
+      def check_scalar_value(value)
+        value.instance_of?(Integer) && value >= 0
+      end
+
+      def check_string_value(value)
+        value.instance_of?(String) && !value.empty?
+      end
+
+      def check_names_value(value)
+        value.instance_of?(String) && !value.empty?
       end
     end
   end
