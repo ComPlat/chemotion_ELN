@@ -13,19 +13,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static fetchGenericEls() {
-    const promise = fetch('/api/v1/collections/locked.json', {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json()).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
-  static fetchMyRoots() {
+  static fetchMyCollections() {
     let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin'
     })
