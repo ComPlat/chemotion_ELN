@@ -24,15 +24,6 @@ module Chemotion
                   ResearchPlan.none
                 end
 
-        unless scope.present?
-          scope = begin
-                    collection = fetch_by_collection_acl(params[:collection_id])
-                    collection.research_plans
-                  rescue ActiveRecord::RecordNotFound
-                    ResearchPlan.none
-                  end
-        end
-
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false

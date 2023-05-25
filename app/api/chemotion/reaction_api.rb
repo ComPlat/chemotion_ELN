@@ -6,6 +6,7 @@ module Chemotion
   class ReactionAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
+    helpers CollectionHelpers
     helpers ParamsHelpers
     helpers LiteratureHelpers
     helpers ProfileHelpers
@@ -26,7 +27,7 @@ module Chemotion
       end
 
       get do
-        collection = fetch_collection_w_current_user(params[:collection_id]) # 1 = write
+        collection = fetch_collection_w_current_user(params[:collection_id]) # 0 = read
         scope = collection ? collection.reactions.order('created_at DESC') : Reaction.none
 
         from = params[:from_date]
