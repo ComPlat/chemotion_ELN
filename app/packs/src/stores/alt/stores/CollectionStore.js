@@ -6,7 +6,6 @@ class CollectionStore {
   constructor() {
     this.state = {
       myCollections: [],
-      sharedCollections: [],
       visibleRootsIds: [],
       myCollectionTree: [],
       myLockedCollectionTree: [],
@@ -16,7 +15,6 @@ class CollectionStore {
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
       handleFetchMyCollections: CollectionActions.fetchMyCollections,
-      handleFetchCollectionsSharedWithMe: CollectionActions.fetchCollectionsSharedWithMe,
       // handleCreateSharedCollectionAcls: CollectionActions.createSharedCollectionAcls,
       handleBulkUpdateCollections: CollectionActions.bulkUpdateCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
@@ -33,7 +31,6 @@ class CollectionStore {
 
   handleTakeOwnership() {
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchCollectionsSharedWithMe();
   }
 
   handleFetchMyCollections(results) {
@@ -57,9 +54,6 @@ class CollectionStore {
     });
   }
 
-  handleFetchCollectionsSharedWithMe(results) {
-    this.setState({ sharedCollections: results.collections });
-  }
 
   handleCreateSharedCollectionAcls() {
     CollectionActions.fetchMyCollections();

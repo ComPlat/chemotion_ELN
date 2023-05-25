@@ -28,20 +28,6 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static fetchSharedWithMeRoots() {
-    let promise = fetch('/api/v1/share_collections', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
 
   static createSelectedSharedCollections(params) {
       return fetch('/api/v1/share_collections/', {

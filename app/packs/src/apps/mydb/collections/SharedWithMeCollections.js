@@ -20,7 +20,6 @@ export default class SharedWithMeCollections extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchCollectionsSharedWithMe();
   }
 
   componentWillUnmount() {
