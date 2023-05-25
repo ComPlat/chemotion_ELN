@@ -10,7 +10,7 @@ class CollectionStore {
       visibleRootsIds: [],
       myCollectionTree: [],
       myLockedCollectionTree: [],
-      SharedCollectionTree: [],
+      sharedCollectionTree: [],
     };
 
     this.bindListeners({
@@ -41,18 +41,19 @@ class CollectionStore {
       return;
     }
     const { collections, shared } = results;
-    const { myCollections, myLockedCollections } =
-      CollectionStore.filterLockedCollections(collections);
+    const { myCollections, myLockedCollections } = CollectionStore.filterLockedCollections(
+      collections
+    );
     const myCollectionTree = CollectionStore.buildNestedStructure(myCollections);
-    const sharedCollectionsTree = CollectionStore.buildNestedStructure(shared || []);
+    const sharedCollectionTree = CollectionStore.buildNestedStructure(shared || []);
     const myLockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
-    const collectionMap = CollectionStore.collectionsToMap(collections.concat(shared || []));
+//    const collectionMap = CollectionStore.collectionsToMap(collections.concat(shared || []));
     this.setState({
       myCollections: collections,
       myCollectionTree,
       myLockedCollectionTree,
-      sharedCollectionsTree,
-      collectionMap,
+      sharedCollectionTree,
+//      collectionMap,
     });
   }
 
@@ -102,19 +103,13 @@ class CollectionStore {
     return collectionMap;
   }
  
-
   static buildNestedStructure(collections) {
     const rootCollections = [];
     const collectionMap = CollectionStore.collectionsToMap(collections);
-    collections.forEach((collection) => {
-      collection.descendants = [];
-      collectionMap[collection.id] = collection;
-    });
     // Iterate over the collections and build the nested structure
     collections.forEach((collection) => {
       const { ancestry } = collection;
       const parentIds = (ancestry || '').split('/').filter((id) => id !== '');
-
       if (parentIds.length === 0) {
         rootCollections.push(collection);
       } else {
