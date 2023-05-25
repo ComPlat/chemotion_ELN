@@ -1,30 +1,21 @@
 module CollectionHelpers
   extend Grape::API::Helpers
 
-  # desc: return the id of the source collection only if
-  #  if current_user is associated to it (owned or shared)
-  #  or to the sync_collections_user
-  # return 0 if no association
-  def fetch_collection_of_current_user(id)
-    Collection.belongs_to_current_user(current_user.id, current_user.group_ids).find(id)
-  end
-
   def fetch_by_collection_acl(id)
     current_user.acl_collection_by_id(id)
   end
 
   # return the collection if current_user is associated to it (owned) or if acl exists
   # return nil if no association
+  def fetch_collections_w_current_user(collection_id, permission_level = nil)
+    collections = Collection.owned_by(user_ids).where(id: collection_id)
+    return collections if collections.present?
+
+    Collection.shared_with(user_ids, permission_level).where(id: collection_id)
+  end
+
   def fetch_collection_w_current_user(collection_id, permission_level = nil)
-    collections = Collection.where(id: collection_id.to_i, user_id: user_ids)
-
-    if collections.empty?
-      collections = Collection.joins(:collection_acls).where(
-        'collection_acls.user_id in (?) and collection_acls.collection_id = ?', user_ids, collection_id
-      )
-      collections = collections.where('collection_acls.permission_level >= ?', permission_level) if permission_level
-    end
-
+    collections = fetch_collections_w_current_user(collection_id, permission_level)
     collections.first
   end
 
