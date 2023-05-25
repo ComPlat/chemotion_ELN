@@ -66,65 +66,13 @@ class CollectionStore {
     CollectionActions.fetchMyCollections();
   }
 
-  // 'repository' methods; returns a promise
-  static findById(collectionId) {
-    let roots = this.state.roots;
-    let foundCollection = roots && roots.filter((root) => {
-      return root.id == collectionId;
-    }).pop();
 
-    let promise;
+  static findAllCollectionId() {
+    const { myCollections } = this.state;
 
-    // if not loaded already fetch collection from backend
-    if (!foundCollection) {
-      //TODO refactor endpoint
-      // TODO maybe move to CollectionsFetcher
-      promise = fetch('/api/v1/collections/' + collectionId, {
-        credentials: 'same-origin',
-        method: 'GET'
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
-      promise = new Promise((resolve) => {
-        resolve({ collection: foundCollection });
-      });
-    }
-    return promise;
-  }
+    const foundCollection = myCollections.filter((root) => (root.label === 'All' && root.is_locked === true)).pop();
 
-  static findAllCollection() {
-    let state = this.state;
-    let roots = state.myCollections;
-
-    let foundCollection = roots.filter((root) => {
-      return root.label == 'All';
-    }).pop();
-
-    let promise;
-
-    // if not loaded already fetch collection from backend
-    if (!foundCollection) {
-      promise = fetch('/api/v1/collections/all/', {
-        credentials: 'same-origin',
-        method: 'GET'
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
-      promise = new Promise((resolve) => {
-        resolve({ collection: foundCollection });
-      });
-    }
-    return promise;
+    return foundCollection?.id;
   }
 }
 
