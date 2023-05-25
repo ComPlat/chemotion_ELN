@@ -63,16 +63,16 @@ class Collection < ApplicationRecord
   scope :unshared, -> { where(is_shared: false) }
   # scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
   scope :shared, ->(user_id) { where('is_shared = ?', true) }
-  scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
-  scope :belongs_to_current_user, ->(user_id, with_group = false) do
-    if with_group.present?
-      where('user_id = ? OR (user_id IN (?) AND is_locked = false)', user_id, with_group)
-    else
-      where('user_id = ?', user_id)
-    end
-  end
+  scope :owned_by, ->(user_id) { where(user_id: user_id) }
 
   scope :with_collections_acls, -> { joins('left join collection_acls acls on acls.collection_id = collections.id') }
+  scope :shared_with, ->(user_id, with_permission = nil) do
+    if with_permission
+      joins(:collection_acls).where(collection_acls: { user_id: user_id, permission_level: with_permission })
+    else
+      joins(:collection_acls).where(collection_acls: { user_id: user_id })
+    end
+  end
 
   default_scope { ordered }
 

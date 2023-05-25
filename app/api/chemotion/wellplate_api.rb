@@ -64,7 +64,7 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            Collection.belongs_to_current_user(current_user.id, current_user.group_ids)
+            Collection.owned_by(user_ids)
               .find(params[:collection_id]).wellplates
           rescue ActiveRecord::RecordNotFound
             Wellplate.none
