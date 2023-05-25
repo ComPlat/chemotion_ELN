@@ -10,8 +10,8 @@ module Chemotion
         shared = Collection.shared_with(current_user.id).includes(:user)
 
         {
-          collections: Entities::CollectionEntity.represent(collections),
-          shared: Entities::CollectionEntity.represent(shared),
+          collections: Entities::CollectionOwnedEntity.represent(collections),
+          shared: Entities::CollectionSharedEntity.represent(shared),
         }
       end
 
