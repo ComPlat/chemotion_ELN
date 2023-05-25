@@ -11,11 +11,11 @@ import {
 import _ from 'lodash';
 import { iupacNameTooltip } from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 
-function MaterialHeader({ displayName, material }) {
+function MaterialHeader({ material }) {
   return (
     <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
       <div>
-        {displayName}
+        {material.external_label || material.short_label || material.id.toString()}
       </div>
     </OverlayTrigger>
   );
@@ -163,8 +163,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       groupId: 'Starting Materials',
       children: reaction.starting_materials.map(
         (material) => ({
-          headerName: material.id.toString().substring(0, 3),
-          field: `startingMaterials.${material.id}`,
+          field: `startingMaterials.${material.id}`, // must be unique
           headerComponent: MaterialHeader,
           headerComponentParams: { material },
         })
@@ -175,7 +174,6 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       groupId: 'Reactants',
       children: reaction.reactants.map(
         (material) => ({
-          headerName: material.id.toString().substring(0, 3),
           field: `reactants.${material.id}`,
           headerComponent: MaterialHeader,
           headerComponentParams: { material },
@@ -187,7 +185,6 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       groupId: 'Products',
       children: reaction.products.map(
         (material) => ({
-          headerName: material.id.toString().substring(0, 3),
           field: `products.${material.id}`,
           headerComponent: MaterialHeader,
           headerComponentParams: { material },
@@ -227,6 +224,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             editable: true,
             cellEditor: ValueUnitCellEditor,
             cellRenderer: ValueUnitCellRenderer,
+            wrapHeaderText: true,
+            autoHeaderHeight: true,
           }}
           onGridColumnsChanged={sizeColumnsToFit}
         />
