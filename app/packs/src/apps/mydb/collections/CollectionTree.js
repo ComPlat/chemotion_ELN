@@ -52,7 +52,6 @@ export default class CollectionTree extends React.Component {
     CollectionStore.listen(this.onChange);
     InboxStore.listen(this.onChange);
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchCollectionsSharedWithMe();
     InboxActions.fetchInboxCount();
   }
 
