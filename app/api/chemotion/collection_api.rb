@@ -73,12 +73,6 @@ module Chemotion
         )
       end
 
-      desc "reject a shared collections"
-      patch '/reject_shared' do
-        Collection.reject_shared(current_user.id, params[:id])
-        status(204)
-      end
-
       namespace :elements do
         desc 'Move elements by UI state to another collection'
         params do

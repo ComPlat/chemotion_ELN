@@ -85,16 +85,19 @@ module Chemotion
         collection_acl&.update!(params[:collection_attributes])
       end
 
-      desc "Delete a share collection"
+      desc "Delete access to a share collection,"
       params do
         requires :id, type: Integer, desc: "collection_acl id"
       end
       route_param :id do
         delete do
-          collection_acl = CollectionAcl.find(params[:id])
+          collection_acl = CollectionAcl.where(id: params[:id]).include(:collection).first
           error!('404 Share collection id not found', 404) unless collection_acl
-
-          collection_acl&.destroy
+          unless user_ids.include?(user_ids) || user_ids.include?(collection_acl.collection.user_id 
+            error!('401 Unauthorized delete share collection', 401)
+          end
+          collection_acl.destroy
+          status 204
         end
       end
 
