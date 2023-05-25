@@ -37,7 +37,6 @@ export default class CollectionTree extends React.Component {
   componentDidMount() {
     CollectionStore.listen(this.onChange);
     CollectionActions.fetchMyCollections();
-    CollectionActions.fetchCollectionsSharedWithMe();
   }
 
   componentWillUnmount() {
