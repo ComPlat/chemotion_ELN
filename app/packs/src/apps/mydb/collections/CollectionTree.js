@@ -17,16 +17,15 @@ export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
 
-    const collecState = CollectionStore.getState();
+    const { myCollectionTree, myLockedCollectionTree, sharedCollectionTree } = CollectionStore.getState();
 
     this.state = {
-      myCollections: collecState.myCollections,
-      mySharedCollections: collecState.mySharedCollections,
-      sharedCollections: collecState.sharedCollections,
+      myCollectionTree,
+      myLockedCollectionTree,
+      sharedCollectionTree,
       ownCollectionVisible: true,
       sharedWithCollectionVisible: false,
       sharedToCollectionVisible: false,
-      syncCollectionVisible: false,
       visible: false,
       root: {},
       selected: false,
@@ -65,11 +64,10 @@ export default class CollectionTree extends React.Component {
   }
 
   lockedTrees() {
-    let collections = this.state.myCollections;
-    let lockedCollections = collections.filter(c => c.is_locked === true);
-    const subtrees = lockedCollections.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} />
-    })
+    const { myLockedCollectionTree } = this.state;
+    const subtrees = myLockedCollectionTree.map((root) => (
+      <CollectionSubtree root={root} key={`lockedCollection-${root.id}`} />
+    ));
 
     return (
       <div>
@@ -81,13 +79,10 @@ export default class CollectionTree extends React.Component {
   }
 
   myCollections() {
-    let myCollections = this.state.myCollections;
-    myCollections = myCollections.filter(c => c.is_locked === false && c.ancestry === null);
-
-    // myCollections = myCollections.filter(c => (c.is_shared === false && c.is_locked === false ));
-    const subtrees = myCollections.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} />
-    })
+    const { myCollectionTree } = this.state;
+    const subtrees = myCollectionTree.map((root) => (
+      <CollectionSubtree root={root} key={`collection-${root.id}`} />
+    ));
 
     return (
       <div>
@@ -142,10 +137,11 @@ export default class CollectionTree extends React.Component {
   }
 
   sharedByMeSubtrees() {
-    let myCollections = this.state.myCollections;
+    const { myCollectionTree } = this.state;
 
     let { sharedToCollectionVisible } = this.state;
-    let collections = filterMySharedCollection(myCollections);
+// TODO
+    let collections = myCollectionTree
     let sharedLabelledRoots = {};
     sharedLabelledRoots = collections.map(e => {
       return update(e, {
@@ -171,12 +167,11 @@ export default class CollectionTree extends React.Component {
   }
 
   sharedWithMeSubtrees() {
-    let { sharedCollections, sharedWithCollectionVisible } = this.state;
+    let { sharedCollectionTree, sharedWithCollectionVisible } = this.state;
 
 // TODO : remove this when we have a better way to handle this
-   let collections = filterSharedWithMeCollection(sharedCollections);
     let sharedLabelledRoots = {};
-    sharedLabelledRoots = collections.map(e => {
+    sharedLabelledRoots = sharedCollectionTree.map(e => {
       return update(e, {
         label: {
           $set:
