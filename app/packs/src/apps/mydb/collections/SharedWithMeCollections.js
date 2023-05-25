@@ -3,7 +3,6 @@ import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, FormControl, OverlayTrigger, Popover } from 'react-bootstrap';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import { filterSharedWithMeCollection } from 'src/apps/mydb/collections/CollectionTreeStructure';
 
 export default class SharedWithMeCollections extends React.Component {
   constructor(props) {
@@ -29,8 +28,7 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.sharedCollections.length > 0 ? state.sharedCollections : [{}];
-    children = filterSharedWithMeCollection(children);
+    let children = state.sharedCollectionTree.length > 0 ? state.sharedCollectionTree : [{}];
 
     this.setState({
       tree: {
