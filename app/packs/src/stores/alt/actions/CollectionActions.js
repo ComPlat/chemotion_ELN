@@ -5,17 +5,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import Utils from 'src/utilities/Functions';
 
 class CollectionActions {
-  fetchGenericEls() {
-    return (dispatch) => {
-      UsersFetcher.fetchElementKlasses()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
   takeOwnership(params) {
     return (dispatch) => {
       CollectionsFetcher.takeOwnership(params)
@@ -29,7 +18,7 @@ class CollectionActions {
 
   fetchMyCollections() {
     return (dispatch) => {
-      CollectionsFetcher.fetchMyRoots()
+      CollectionsFetcher.fetchMyCollections()
         .then((roots) => {
           dispatch(roots);
         }).catch((errorMessage) => {
