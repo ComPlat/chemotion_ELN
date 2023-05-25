@@ -17,8 +17,7 @@ const collectionShow = (e) => {
     UserActions.fetchProfile();
   }
   const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const currentSearchByID = uiState.currentSearchByID;
+  const { currentSearchSelection } = uiState;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   if (collectionId === 'all') {
@@ -26,30 +25,26 @@ const collectionShow = (e) => {
   } else {
     collectionPromise = CollectionStore.findById(collectionId);
   }
-
   collectionPromise.then((result) => {
     const collection = result.collection;
 
     if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating(collection);
+      UIActions.selectCollectionWithoutUpdating({ id: collectionId });
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
-        collectionId: collection.id});
+        collectionId});
     } else {
       if (currentSearchByID) {
         UIActions.clearSearchById();
       }
-      UIActions.selectCollection(collection);
+      UIActions.selectCollection({ id: collectionId });
     }
 
-    // if (!e.params['sampleID'] && !e.params['reactionID'] &&
-        // !e.params['wellplateID'] && !e.params['screenID']) {
     UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
     elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
-    // }
   });
 };
 
