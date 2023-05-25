@@ -200,6 +200,10 @@ export default class Reaction extends Element {
     //         "<material_id>": {"value": "<number>", "unit": "<string>"},
     //         "<material_id>": {"value": "<number>", "unit": "<string>"}
     //     }
+    //   },
+    //   {
+    //     "id": "<number>",
+    //     ...
     //   }
     // ]
     const homogenizedVariations = cloneDeep(variations);
