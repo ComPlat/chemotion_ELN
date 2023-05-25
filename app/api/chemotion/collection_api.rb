@@ -23,7 +23,7 @@ module Chemotion
       end
       route_param :id, requirements: { id: /[0-9]*/ } do
         get do
-          present Collection.find(params[:id]), with: Entities::CollectionEntity, root: :collection
+          present fetch_collection_w_current_user(params[:id]), with: Entities::CollectionEntity, root: :collection
         rescue ActiveRecord::RecordNotFound
           Collection.none
         end
