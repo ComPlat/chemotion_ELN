@@ -8,8 +8,13 @@ module Chemotion
 
       desc "Return the all collections for the current user"
       get do
-        collections = current_user.collections.with_collections_acls.includes(collection_acls: :user)
-        present collections.distinct, with: Entities::CollectionEntity, root: :collections
+        collections = Collection.owned_by(current_user.id).includes(collection_acls: :user)
+        shared = Collection.shared_with(current_user.id).includes(:user)
+
+        {
+          collections: Entities::CollectionEntity.represent(collections),
+          shared: Entities::CollectionEntity.represent(shared),
+        }
       end
 
       desc "Return collection by id"
@@ -240,11 +245,11 @@ module Chemotion
 
           if collection_ids.empty?
             # no collection was given, export all collections for this user
-            collection_ids = Collection.belongs_to_current_user(current_user.id, current_user.group_ids).pluck(:id)
+            collection_ids = Collection.owned_by(user_ids).pluck(:id)
           else
             # check if the user is allowed to export these collections
             collection_ids.each do |collection_id|
-              collection = Collection.belongs_to_current_user(current_user.id, current_user.group_ids).find_by(id: collection_id)
+              collection = Collection.owned_by(user_ids).find_by(id: collection_id)
               unless collection
                 # case when collection purpose is to build the collection tree (empty and locked)
                 next if Collection.find_by(id: collection_id, is_locked: true, is_shared: true)

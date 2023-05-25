@@ -18,7 +18,7 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         scope = begin
-                  collection = fetch_collection_of_current_user(params[:collection_id])
+                  collection = Collection.owned_by(user_ids).find(params[:collection_id])
                   collection.research_plans
                 rescue ActiveRecord::RecordNotFound
                   ResearchPlan.none

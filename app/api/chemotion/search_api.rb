@@ -124,7 +124,7 @@ module Chemotion
       end
 
       def elements_search(c_id = @c_id, dl = @dl)
-        collection = Collection.belongs_to_current_user(current_user.id, current_user.group_ids).find(c_id)
+        collection = Collection.owned_by(user_ids).find(c_id)
         element_scope = Element.joins(:collections_elements).where('collections_elements.collection_id = ? and collections_elements.element_type = (?)', collection.id, params[:selection][:genericElName])
         element_scope = element_scope.where("name like (?)", "%#{params[:selection][:searchName]}%") if params[:selection][:searchName].present?
         element_scope = element_scope.where("short_label like (?)", "%#{params[:selection][:searchShowLabel]}%") if params[:selection][:searchShowLabel].present?
