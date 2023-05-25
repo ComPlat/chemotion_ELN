@@ -179,7 +179,7 @@ export default class CollectionSubtree extends React.Component {
     // Remove duplicate
     let newIds = Array.from(new Set(visibleRootsIds))
     // let newIds = Array.from(visibleRootsIds)
-    CollectionActions.updateCollectrionTree(visibleRootsIds)
+    CollectionActions.updateCollectionTree(visibleRootsIds)
   }
 
   synchronizedIcon() {
