@@ -83,15 +83,14 @@ export default class CollectionsFetcher {
   }
 
   static deleteShare(params) {
-    let promise = fetch('/api/v1/share_collections/' + params.id, {
+    return fetch('/api/v1/share_collections/' + params.id, {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
-    })
-    return promise;
+    });
   }
 
   static bulkUpdateCollections(params) {
@@ -111,20 +110,6 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static rejectShared(params) {
-    const promise = fetch('/api/v1/collections/reject_shared', {
-      credentials: 'same-origin',
-      method: 'PATCH',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        id: params.id
-      })
-    })
-    return promise;
-  }
 
   static updateSharedCollection(params) {
     let promise = fetch('/api/v1/collections/shared/' + params.id, {
