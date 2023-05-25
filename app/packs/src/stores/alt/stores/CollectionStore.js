@@ -7,7 +7,6 @@ class CollectionStore {
     this.state = {
       myCollections: [],
       sharedCollections: [],
-      genericEls: [],
       visibleRootsIds: [],
     };
 
@@ -16,7 +15,6 @@ class CollectionStore {
       handleTakeOwnership: CollectionActions.takeOwnership,
       handleFetchMyCollections: CollectionActions.fetchMyCollections,
       handleFetchCollectionsSharedWithMe: CollectionActions.fetchCollectionsSharedWithMe,
-      //handleFetchGenericEls: CollectionActions.fetchGenericEls,
       // handleCreateSharedCollectionAcls: CollectionActions.createSharedCollectionAcls,
       handleBulkUpdateCollections: CollectionActions.bulkUpdateCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
@@ -35,11 +33,6 @@ class CollectionStore {
     CollectionActions.fetchMyCollections();
     CollectionActions.fetchCollectionsSharedWithMe();
   }
-
-  //handleFetchGenericEls(result) {
-  //  console.log(result);
-  //  this.state.genericEls = result.genericEls;
-  //}
 
   handleFetchMyCollections(results) {
     this.setState({ myCollections: results.collections });
