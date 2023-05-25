@@ -16,35 +16,23 @@ const collectionShow = (e) => {
     UserActions.fetchProfile();
   }
   const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  if (collectionId === 'all') {
-    collectionPromise = CollectionStore.findAllCollection();
+  const { currentSearchSelection } = uiState;
+  const collectionId = e.params.collectionID === 'all' ? CollectionStore.findAllCollectionId() : e.params.collectionID;
+
+  if (currentSearchSelection) {
+    UIActions.selectCollectionWithoutUpdating({ id: collectionId });
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection: currentSearchSelection,
+      collectionId
+    });
   } else {
-    collectionPromise = CollectionStore.findById(collectionId);
+    UIActions.selectCollection({ id: collectionId });
   }
 
-  collectionPromise.then((result) => {
-    const collection = result.collection;
-
-    if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection({
-        selection: currentSearchSelection,
-        collectionId: collection.id});
-    } else {
-      UIActions.selectCollection(collection);
-    }
-
-    // if (!e.params['sampleID'] && !e.params['reactionID'] &&
-        // !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    // }
-  });
+  UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
+  UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
+  UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
+  UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
 };
 
 const collectionShowCollectionManagement = () => {
