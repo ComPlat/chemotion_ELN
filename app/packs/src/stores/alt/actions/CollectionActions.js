@@ -106,19 +106,10 @@ class CollectionActions {
         });
     };
   }
+
   deleteShare(params) {
     return (dispatch) => {
       CollectionsFetcher.deleteShare(params)
-        .then(() => {
-          dispatch();
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-  rejectShared(params) {
-    return (dispatch) => {
-      CollectionsFetcher.rejectShared(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
