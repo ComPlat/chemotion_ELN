@@ -115,7 +115,7 @@ class CollectionActions {
     };
   }
 
-  updateCollectrionTree(visibleRootsIds) {
+  updateCollectionTree(visibleRootsIds) {
     return visibleRootsIds
   }
 

@@ -25,6 +25,7 @@ export default class CollectionTree extends React.Component {
     super(props);
 
     const collecState = CollectionStore.getState();
+	  console.log(collecState);
     const inboxState = InboxStore.getState();
 
     this.state = {
