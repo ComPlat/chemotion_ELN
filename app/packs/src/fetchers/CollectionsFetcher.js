@@ -26,7 +26,7 @@ export default class CollectionsFetcher {
   }
 
   static fetchMyRoots() {
-    let promise = fetch('/api/v1/collections/all', {
+    let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin'
     })
       .then((response) => {

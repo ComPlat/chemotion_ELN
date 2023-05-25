@@ -6,13 +6,10 @@ module Chemotion
     helpers ParamsHelpers
     resource :collections do
 
-      namespace :all do
-        desc "Return the 'All' collection of the current user"
-        get do
-          collections = current_user.collections.with_collections_acls.includes(collection_acls: :user)
-
-          present collections.distinct, with: Entities::CollectionEntity, root: :collections
-        end
+      desc "Return the all collections for the current user"
+      get do
+        collections = current_user.collections.with_collections_acls.includes(collection_acls: :user)
+        present collections.distinct, with: Entities::CollectionEntity, root: :collections
       end
 
       desc "Return collection by id"
@@ -74,7 +71,7 @@ module Chemotion
       desc "reject a shared collections"
       patch '/reject_shared' do
         Collection.reject_shared(current_user.id, params[:id])
-        {} # result is not used by FE
+        status(204)
       end
 
       namespace :elements do
