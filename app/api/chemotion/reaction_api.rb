@@ -6,6 +6,7 @@ module Chemotion
   class ReactionAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
+    helpers CollectionHelpers
     helpers ParamsHelpers
     helpers LiteratureHelpers
     helpers ProfileHelpers
@@ -30,24 +31,7 @@ module Chemotion
       end
 
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.belongs_to_current_user(current_user.id, current_user.group_ids)
-                              .find(params[:collection_id])
-                              .reactions
-                              .distinct
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-                                .collection.reactions
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
-                end.order('created_at DESC')
-        collection = fetch_collection_w_current_user(params[:collection_id]) # 1 = write
+        collection = fetch_collection_w_current_user(params[:collection_id]) # 0 = read
         scope = collection ? collection.reactions.order('created_at DESC') : Reaction.none
 
         from = params[:from_date]
