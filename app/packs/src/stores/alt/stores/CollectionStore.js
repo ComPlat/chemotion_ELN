@@ -24,7 +24,6 @@ class CollectionStore {
         CollectionActions.editShare,
         CollectionActions.deleteShare
       ],
-      handleRejectSharedCollection: CollectionActions.rejectShared,
       handleUpdateCollectionTree: CollectionActions.updateCollectionTree
     })
   }
@@ -75,10 +74,6 @@ class CollectionStore {
     this.state.visibleRootsIds = visibleRootsIds
   }
 
-  handleRejectSharedCollection(results) {
-    CollectionActions.fetchMyCollections();
-  }
-  
   static filterLockedCollections(collections) {
     const myLockedCollections = collections.filter(collection => collection.is_locked);
     const myCollections = collections.filter(collection => !collection.is_locked);

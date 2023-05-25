@@ -61,11 +61,13 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   actions(node) {
+    const acls = node?.collection_acls || [];
+    const id = acls[0]?.id;
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         delete collection: <br /> {node.label} ?<br />
         <ButtonGroup>
-          <Button bsStyle="danger" bsSize="xsmall" onClick={() => CollectionActions.rejectShared({ id: node.id })}>
+          <Button bsStyle="danger" bsSize="xsmall" onClick={() => CollectionActions.deleteShare({ id })}>
           Yes
           </Button>
           <Button bsStyle="warning" bsSize="xsmall" onClick={this.handleClick} >
