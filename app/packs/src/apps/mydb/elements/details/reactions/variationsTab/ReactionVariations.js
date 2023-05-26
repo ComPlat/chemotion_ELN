@@ -32,7 +32,7 @@ function RowToolsCellRenderer({ data, copyRow, removeRow }) {
 
 const ValueUnitCellRenderer = (props) => {
   const { value = '', unit = 'None' } = props.value ?? {};
-  return `${Number(value) ? value : 'NaN'} [${unit}]`;
+  return `${Number(value) ? Number(value).toFixed(3) : 'NaN'} [${unit}]`;
 };
 
 const ValueUnitCellEditor = forwardRef((props, ref) => {
