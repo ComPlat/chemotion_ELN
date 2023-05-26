@@ -104,18 +104,37 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          import_result = Import::ImportSamples.new.from_file(
-            params[:file][:tempfile].path,
-            params[:currentCollectionId], current_user.id
-          ).process
-
-          if import_result[:status] == 'ok'
-            # the FE does not actually use the returned data, just the number of elements.
-            # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
-            import_result[:data] = import_result[:data].map(&:id)
+          puts  params[:file]
+          file_size = params[:file][:tempfile].size
+          if file_size < 25000
+            puts "importing"
+            import = Import::ImportSamples.new(
+              params[:file][:tempfile].path,
+              params[:currentCollectionId], current_user.id
+            )
+            import_result = import.process
+            puts import_result
+            if import_result[:status] == 'ok' || import_result[:status] == 'warning'
+              # the FE does not actually use the returned data, just the number of elements.
+              # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
+              import_result[:data] = import_result[:data].map(&:id)
+            end
+            import_result
+          else
+            file = params[:file]
+            puts params[:file][:tempfile].path
+            temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
+            # Create a new file in the tmp folder
+            tmp_file_path = File.join('tmp', temp_filename)
+            # Write the contents of the uploaded file to the temporary file
+            File.binwrite(tmp_file_path, file[:tempfile].read)
+            ImportSamplesJob.perform_later(
+              tmp_file_path,
+              params[:currentCollectionId],
+              current_user.id,
+            )
+            status 200
           end
-
-          import_result
         end
       end
 
