@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
@@ -13,7 +14,6 @@ export default class CollectionSubtree extends React.Component {
     super(props);
 
     this.state = {
-      isRemote: props.isRemote,
       label: props.root.label,
       selected: false,
       root: props.root,
@@ -47,13 +47,7 @@ export default class CollectionSubtree extends React.Component {
       const visible = this.isVisible(this.state.root, state)
       const { root } = this.state;
 
-      const selectedCol = (
-        state.currentCollection.id == root.id &&
-        state.currentCollection.is_synchronized == root.is_synchronized
-      ) || (
-          state.currentCollection.id == root.id &&
-          state.currentCollection.isRemote == root.isRemote
-        )
+      const selectedCol = state.currentCollection.id == root.id
 
       if (selectedCol) {
         this.setState({
@@ -100,7 +94,7 @@ export default class CollectionSubtree extends React.Component {
       return children.map((child, index) => {
         return (
           <li key={index}>
-            <CollectionSubtree root={child} isRemote={this.state.isRemote} />
+            <CollectionSubtree root={child} />
           </li>
         );
       });
@@ -181,11 +175,18 @@ export default class CollectionSubtree extends React.Component {
     CollectionActions.updateCollectionTree(visibleRootsIds)
   }
 
-  synchronizedIcon() {
+  sharedByIcon() {
     let collectionAcls = this.state.root.collection_acls;
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     if (collectionAcls === undefined) return;
+
     let sharedUsers = [];
-    collectionAcls.forEach(c => sharedUsers.push(c.user))
+    if (currentUser.id === this.state.root.user_id) {
+      collectionAcls.forEach(c => sharedUsers.push(c.user))
+    } else {
+      sharedUsers.push(this.state.root.user);
+    }
+
     return (
       sharedUsers && sharedUsers.length > 0
         ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>
@@ -217,7 +218,7 @@ export default class CollectionSubtree extends React.Component {
         <div id={`tree-id-${root.label}`} className={"title " + this.selectedCssClass()}
           onClick={this.handleClick}>
           {this.expandButton()}
-          {this.synchronizedIcon()}
+          {this.sharedByIcon()}
           {gated}
           {label}
         </div>
@@ -230,6 +231,5 @@ export default class CollectionSubtree extends React.Component {
 }
 
 CollectionSubtree.propTypes = {
-  isRemote: PropTypes.bool,
   root: PropTypes.object
 };
