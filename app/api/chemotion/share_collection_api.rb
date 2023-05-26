@@ -4,28 +4,6 @@ module Chemotion
     helpers ParamsHelpers
 
     resource :share_collections do
-      desc "Return the list of all collections shared with current user"
-      get do
-        collections = Collection.joins(:collection_acls).includes(:user).where('collection_acls.user_id = ?', current_user.id)
-        present collections, with: Entities::CollectionEntity, root: :collections
-      end
-
-      desc 'Return shared collection by id'
-      params do
-        requires :id, type: Integer, desc: 'Collection id'
-      end
-      route_param :id, requirements: { id: /[0-9]*/ } do
-        get do
-          begin
-            collection = current_user.acl_collection_by_id(params[:id])
-
-            present collection, with: Entities::CollectionEntity, root: 'collection'
-          rescue ActiveRecord::RecordNotFound
-            Collection.none
-          end
-        end
-      end
-
       desc 'Assign, move or share a collection'
       params do
         requires :ui_state, type: Hash, desc: 'Selected elements from the UI' do
@@ -39,7 +17,6 @@ module Chemotion
       end
 
       post do
-
         from_collection = case params[:action]
                           when 'move' then fetch_source_collection_for_removal
                           else fetch_source_collection_for_assign
@@ -80,9 +57,13 @@ module Chemotion
 
       put ':id' do
         collection_acl = CollectionAcl.find(params[:id])
-        error!('404 Share collection id not found', 404) unless collection_acl
-
-        collection_acl&.update!(params[:collection_attributes])
+        # Check if the user is allowed to update the collection
+        collection = fetch_collection_w_current_user(collection_acl.collection_id, 4)
+        error!('401 Unauthorized update collection', 401) unless collection
+        # Update the collection
+        collection_acl.update!(params[:collection_attributes])
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Share collection id not found', 404)
       end
 
       desc "Delete access to a share collection,"
@@ -91,12 +72,12 @@ module Chemotion
       end
       route_param :id do
         delete do
-          collection_acl = CollectionAcl.where(id: params[:id]).include(:collection).first
+          collection_acl = CollectionAcl.include(:collection).find_by(id: params[:id])
           error!('404 Share collection id not found', 404) unless collection_acl
-          unless user_ids.include?(user_ids) || user_ids.include?(collection_acl.collection.user_id 
+          unless user_ids.include?(user_ids) || user_ids.include?(collection_acl.collection.user_id)
             error!('401 Unauthorized delete share collection', 401)
           end
-          collection_acl.destroy
+          collection_acl.destroy!
           status 204
         end
       end
