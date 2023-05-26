@@ -174,15 +174,13 @@ export default class CollectionTree extends React.Component {
     const { myCollectionTree } = this.state;
 
     let { sharedToCollectionVisible } = this.state;
-// TODO
-    let collections = myCollectionTree
+    let collections =
+      myCollectionTree.filter(c => (c.collection_acls && c.collection_acls.length > 0));
+
     let sharedLabelledRoots = {};
     sharedLabelledRoots = collections.map(e => {
       return update(e, {
-        label: {
-          $set:
-            <span>{this.labelRoot('shared_to', e)}</span>
-        }
+        label: { $set: <span>{e.label}</span> }
       })
     })
 
@@ -196,8 +194,7 @@ export default class CollectionTree extends React.Component {
       </div>
     )
 
-    return this.subtrees(sharedLabelledRoots, subTreeLabels,
-      false, sharedToCollectionVisible, 'shared_to')
+    return this.subtrees(sharedLabelledRoots, subTreeLabels, sharedToCollectionVisible)
   }
 
   sharedWithMeSubtrees() {
@@ -207,10 +204,7 @@ export default class CollectionTree extends React.Component {
     let sharedLabelledRoots = {};
     sharedLabelledRoots = sharedCollectionTree.map(e => {
       return update(e, {
-        label: {
-          $set:
-            <span>{this.labelRoot('shared_by', e)}</span>
-        }
+        label: { $set: <span>{e.label}</span> }
       })
     })
 
@@ -228,8 +222,7 @@ export default class CollectionTree extends React.Component {
       </div>
     )
 
-    return this.subtrees(sharedLabelledRoots, subTreeLabels,
-      false, sharedWithCollectionVisible, 'shared_by')
+    return this.subtrees(sharedLabelledRoots, subTreeLabels, sharedWithCollectionVisible)
   }
 
 
@@ -251,11 +244,11 @@ export default class CollectionTree extends React.Component {
     return name.toLowerCase()
   }
 
-  subtrees(roots, label, isRemote, visible = true, sharedToOrBy) {
+  subtrees(roots, label, visible = true) {
 
     if (roots.length == undefined ) return <div />
     let subtrees = roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote} sharedToOrBy={sharedToOrBy} />
+      return <CollectionSubtree root={root} key={index} />
     })
 
     let subtreesVisible = visible ? "" : "none"
