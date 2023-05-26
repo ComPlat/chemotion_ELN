@@ -36,48 +36,62 @@ class NotificationStore {
   }
 
   handleNotificationImportSamplesFromFile(result) {
-    let num = result.data.length;
-    let status = result.status;
-    let sdf = result.sdf
-    let message = result.message;
-    this.handleRemoveByUid("import_samples_upload");
+    const num = result.data?.length ?? 0;
+    const { status } = result;
+    const { sdf } = result;
+    const { message } = result;
+    this.handleRemoveByUid('import_samples_upload');
     let notification = {
-      title: "Oops!",
-      message: message + "\n Please check the file and try again.",
-      level: "error",
-      position: "bl",
+      title: 'Oops!',
+      message: `${message}\n Please check the file and try again.`,
+      level: 'error',
+      position: 'bl',
       autoDismiss: 0
-    }
+    };
     if (sdf) {
-      if (status == "ok") {
+      if (status === 'ok') {
+        console.log('sdf ok');
         notification = {
-          title: "Success",
-          message: message,
-          level: "success",
-          position: "bl",
+          title: 'Success',
+          message,
+          level: 'success',
+          position: 'bl',
           autoDismiss: 10
-        }
-      } else if (status == "failed"){
-      } else if (status == "error"){
-      } else if (status == "invalid"){
+        };
+      } else if (status === 'invalid') {
+        console.log('sdf invalid');
         notification.message = message;
       }
-    } else {
-      if (status == "ok") {
-        notification = {
-          title: "Success",
-          message: "The "+num+" samples have been imported successfully",
-          level: "success",
-          position: "bl",
-          autoDismiss: 10
-        }
-      } else if (status == "failed"){
-      } else if (status == "error"){
-      } else if (status == "invalid"){
-        notification.message = message;
-      }
+    } else if (status === 'ok') {
+      notification = {
+        title: 'Success',
+        message: `The ${num} samples have been imported successfully`,
+        level: 'success',
+        position: 'bl',
+        autoDismiss: 10
+      };
+    } else if (status === 'invalid') {
+      console.log('invalid');
+      notification.message = message;
+    } else if (status === 'warning') {
+      notification = {
+        title: 'Status',
+        message: `The ${num} samples have been imported successfully but ${message}`,
+        level: 'success',
+        position: 'bl',
+        autoDismiss: 10
+      };
+    } else if (status === 204) {
+      console.log('204');
+      notification = {
+        title: 'Status',
+        message: 'Importing of samples has been added to the job queue',
+        level: 'success',
+        position: 'bl',
+        autoDismiss: 10
+      };
     }
-
+    console.log(result);
     this.handleAdd(notification);
   }
 
