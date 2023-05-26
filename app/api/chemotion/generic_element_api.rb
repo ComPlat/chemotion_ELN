@@ -148,7 +148,6 @@ module Chemotion
       desc 'Return serialized elements of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :el_type, type: String, desc: 'element klass name'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -157,16 +156,8 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        collection_id =
-          if params[:collection_id]
-            Collection
-              .owned_by(user_ids)
-              .find_by(id: params[:collection_id])&.id
-          elsif params[:sync_collection_id]
-            current_user
-              .all_sync_in_collections_users
-              .find_by(id: params[:sync_collection_id])&.collection&.id
-          end
+        collection_id = params[:collection_id] &&
+          Collection.fetch_collection_w_current_user(params[:collection_id])&.id
 
         scope =
           if collection_id
