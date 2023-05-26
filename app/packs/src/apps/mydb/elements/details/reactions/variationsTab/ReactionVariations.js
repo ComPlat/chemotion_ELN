@@ -64,14 +64,15 @@ const ValueUnitCellEditor = forwardRef((props, ref) => {
       value={editedValue}
       onChange={(event) => setEditedValue(event.target.value)}
       style={{ width: '100%' }}
+      disabled={unit === 'Equiv (Ref)'}
     />
   );
 });
 
 function getMaterialValueUnit(material, unit) {
   if (unit === 'Equiv') {
-    const { equivalent = '' } = material ?? {};
-    return { value: equivalent, unit: 'Equiv' };
+    const { equivalent = '', reference = false } = material ?? {};
+    return { value: equivalent, unit: reference ? 'Equiv (Ref)' : 'Equiv' };
   }
   const { value = '', unit: amountUnit = 'None' } = material.amount ?? {};
   return { value, unit: amountUnit };
