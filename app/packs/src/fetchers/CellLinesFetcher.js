@@ -22,6 +22,10 @@ export default class CellLinesFetcher {
       .then((result) => result.elements[Number(id) - 1]);
   }
 
+  static create(params){
+
+  }
+
   static update(cellLineItem) {
     var index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
     if(index===-1){

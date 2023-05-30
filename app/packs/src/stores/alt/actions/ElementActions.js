@@ -420,6 +420,17 @@ class ElementActions {
     };
   }
 
+  createCellLine(params){
+    return (dispatch) => {
+      CellLinesFetcher.create(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   generateEmptyCellLine(collectionId){  
     var c = new CellLine();
     const { currentUser } = UserStore.getState();

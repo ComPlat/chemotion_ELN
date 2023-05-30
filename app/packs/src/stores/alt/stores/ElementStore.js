@@ -147,6 +147,8 @@ class ElementStore {
       handleFetchGenericElById: ElementActions.fetchGenericElById,
       handleCreateGenericEl: ElementActions.createGenericEl,
 
+      handleCreateCellLine: ElementActions.createCellLine,
+
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
@@ -937,6 +939,11 @@ class ElementStore {
 
   handleFetchCellLineById(result){
     this.changeCurrentElement(result);
+  }
+
+  handleCreateCellLine(cellLine) {
+    this.handleRefreshElements('cell_line');
+    this.navigateToNewElement(cellLine);
   }
 
   handleCloseWarning() {
