@@ -39,7 +39,7 @@ class TabLayoutCell extends Component {
       width: '85px'
     };
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'];
     let cellIcon = `icon-${cell}`;
     let cellTitle = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
     let cellDescription = '';
