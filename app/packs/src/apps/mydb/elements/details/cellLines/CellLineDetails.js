@@ -31,7 +31,7 @@ class CellLineDetails extends React.Component {
 
     if (cellLineItem.is_new) {
       DetailActions.close(cellLineItem, true);
-      ElementActions.updateCellLine(cellLineItem);
+      ElementActions.createCellLine(cellLineItem);
     } else {
       ElementActions.updateCellLine(cellLineItem);
     }

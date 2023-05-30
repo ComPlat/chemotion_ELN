@@ -24,6 +24,7 @@ export default class CellLinesFetcher {
 
   static create(params){
 
+    return Promise.resolve(1)
   }
 
   static update(cellLineItem) {
