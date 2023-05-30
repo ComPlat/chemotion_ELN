@@ -6,7 +6,41 @@ describe Chemotion::CellLineAPI do
   include_context 'api request authorization context'
 
   describe 'GET /api/v1/cell_lines/' do
-    pending 'not yet implemented'
+    let(:cell_line) { create(:cellline_sample) }
+    let(:user) { create(:user) }
+    let(:collection) { create(:collection) }
+
+    context 'with cell line exists' do
+      before do
+        CollectionsCellline.create(
+          collection: collection,
+          cellline_sample: cell_line,
+        )
+        user.collections << collection
+        user.save
+
+        get "/api/v1/cell_lines/#{cell_line.id}"
+      end
+
+      it 'returns correct http status 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'returns correct cell line' do
+        expect(parsed_json_response['amount']).to be 999
+        expect(parsed_json_response['passage']).to be 10
+      end
+    end
+
+    context 'with cell does not line exists' do
+      before do
+        get '/api/v1/cell_lines/-1'
+      end
+
+      it 'returns correct http status 401' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
   end
 
   describe 'POST /api/v1/cell_lines/' do

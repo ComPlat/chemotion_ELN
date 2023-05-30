@@ -65,7 +65,7 @@ module Usecases
         @cell_line_sample.description = @params[:description] || @cell_line_sample.description
       end
 
-      def check_parameter
+      def check_parameter # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         raise 'organism not valid' unless !@params[:organism] || check_ontology(@params[:organism])
         raise 'tissue not valid' unless !@params[:tissue] || check_ontology(@params[:tissue])
         raise 'amount not valid' unless !@params[:amount] || check_scalar_value(@params[:amount])

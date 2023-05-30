@@ -4,17 +4,16 @@ module Chemotion
   class CellLineAPI < Grape::API
     rescue_from ActiveRecord::RecordNotFound do
       error!('Ressource not found', 401)
-    end   
+    end
     resource :cell_lines do
       desc 'Get a cell line by id'
       params do
         requires :id, type: Integer, desc: 'id of cell line sample to load'
       end
-
-      get do
-        material = CelllineMaterial.create
-        sample = CelllineSample.create(cellline_material: material, creator: current_user)
-        return present sample, with: Entities::CellLineSampleEntity
+      get ':id' do
+        use_case = Usecases::CellLines::Load.new(params, current_user)
+        cell_line_sample = use_case.execute!
+        return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 
       desc 'Create a new Cell line sample'
@@ -39,10 +38,9 @@ module Chemotion
         optional :description, type: String, desc: 'description of a cell line sample'
       end
       post do
-        
         error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
-        useCase = Usecases::CellLines::Create.new(params, current_user)
-        cell_line_sample = useCase.execute!
+        use_case = Usecases::CellLines::Create.new(params, current_user)
+        cell_line_sample = use_case.execute!
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
       desc 'Update a Cell line sample'
@@ -68,11 +66,10 @@ module Chemotion
         optional :description, type: String, desc: 'description of a cell line sample'
       end
       put do
-        useCase = Usecases::CellLines::Update.new(params, current_user)
-        cell_line_sample = useCase.execute!
+        use_case = Usecases::CellLines::Update.new(params, current_user)
+        cell_line_sample = use_case.execute!
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
     end
-    
   end
 end
