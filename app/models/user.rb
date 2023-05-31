@@ -70,6 +70,7 @@ class User < ApplicationRecord
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
+  has_many :vessels, through: :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
