@@ -37,6 +37,17 @@ module Chemotion
       def upload_chunk_error_message
         { ok: false, statusText: 'File key is not valid' }
       end
+
+      def upload_raw_error_message
+        { ok: false, statusText: 'File is not valid' }
+      end
+
+      def upload_device
+        if params.has_key? :device_id
+          return @device ||= Device.find_by(id: params[:device_id])
+        end
+        nil
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |_error|
@@ -60,21 +71,21 @@ module Chemotion
             if (element = @container.root.containable)
               can_read = ElementPolicy.new(current_user, element).read?
               can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif /sample_analyses/.match?(request.url)
             @sample = Sample.find(params[:sample_id])
             if (element = @sample)
               can_read = ElementPolicy.new(current_user, element).read?
               can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif @attachment
-            can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
+            can_dwnld = (current_user.is_a?(Admin) or (@attachment.container_id.nil? &&  @attachment.created_for == current_user.id))
             if !can_dwnld && (element = @attachment.container&.root&.containable)
               can_dwnld = (element.is_a?(User) && (element == current_user)) ||
-                          (ElementPolicy.new(current_user, element).read? &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?)
+                (ElementPolicy.new(current_user, element).read? &&
+                  ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?)
             end
           end
           error!('401 Unauthorized', 401) unless can_dwnld
@@ -100,7 +111,7 @@ module Chemotion
       post 'upload_dataset_attachments' do
         error_messages = []
         params.each do |_file_id, file|
-          next unless tempfile = file[:tempfile] # rubocop:disable Lint/AssignmentInCondition
+          next unless (tempfile = file[:tempfile]) # rubocop:disable Lint/AssignmentInCondition
 
           a = Attachment.new(
             bucket: file[:container_id],
@@ -124,6 +135,51 @@ module Chemotion
         true
       end
 
+      desc 'Upload raw attachments'
+      params do
+        requires :file, type: File, desc: 'file'
+        optional :filepath, type: String, desc: 'an optional file path'
+        requires :device_id, type: Integer, desc: 'Id of device obj'
+      end
+      post 'upload_raw_attachments' do
+        break upload_raw_error_message unless (tp = params[:file][:tempfile])
+        params[:filepath] = params[:file][:filename] unless params[:filepath]
+        current_collector = DataReceiverFile.new(params[:filepath], tp.path)
+        break upload_raw_error_message if upload_device.nil?
+        begin
+          break { ok: false } unless (att = current_collector.collect_from(upload_device))
+          break { ok: true, path: att.backup_file }
+        rescue
+          break { ok: false }
+        end
+      end
+
+      desc 'Upload raw data completed'
+      params do
+        requires :filename, type: String
+        requires :key, type: String
+        requires :checksum, type: String
+        requires :device_id, type: Integer, desc: 'Id of device obj'
+      end# frozen_string_literal: true
+
+
+      post 'upload_raw_chunk_complete' do
+        break upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
+
+        complete_file = Usecases::Attachments::UploadRawComplete.execute!(current_user, params)
+        begin
+          current_collector = DataReceiverFile.new(params[:filename], complete_file[:file_path])
+          break upload_raw_error_message if upload_device.nil?
+          break { ok: false } unless (att = current_collector.collect_from(upload_device))
+          break { ok: true, path: att.backup_file }
+        rescue
+          break { ok: false }
+        ensure
+          FileUtils.rm_f(complete_file[:file_path])
+        end
+
+      end
+
       desc 'Upload large file as chunks'
       params do
         requires :file, type: File, desc: 'file'
@@ -131,7 +187,7 @@ module Chemotion
         requires :key, type: String
       end
       post 'upload_chunk' do
-        return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
+        break upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
         Usecases::Attachments::UploadChunk.execute!(params)
       end
@@ -143,10 +199,10 @@ module Chemotion
         requires :checksum, type: String
       end
       post 'upload_chunk_complete' do
-        return upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
+        break upload_chunk_error_message unless AttachmentPolicy.can_upload_chunk?(params[:key])
 
         usecase = Usecases::Attachments::UploadChunkComplete.execute!(current_user, params)
-        return usecase if usecase.present?
+        break usecase if usecase.present?
 
         { ok: false, statusText: ['File upload has error. Please try again!'] }
       end
@@ -200,7 +256,7 @@ module Chemotion
       post 'upload_to_inbox' do
         attach_ary = []
         params.each do |_file_id, file|
-          next unless tempfile = file[:tempfile] # rubocop:disable Lint/AssignmentInCondition
+          next unless (tempfile = file[:tempfile]) # rubocop:disable Lint/AssignmentInCondition
 
           attach = Attachment.new(
             bucket: file[:container_id],
@@ -275,10 +331,10 @@ module Chemotion
       desc 'Download the zip attachment file by sample_id'
       get 'sample_analyses/:sample_id' do
         tts = @sample.analyses&.map do |a|
-                a.children&.map do |d|
-                  d.attachments&.map(&:filesize)
-                end
-              end&.flatten&.reduce(:+) || 0
+          a.children&.map do |d|
+            d.attachments&.map(&:filesize)
+          end
+        end&.flatten&.reduce(:+) || 0
         if tts > 300_000_000
           DownloadAnalysesJob.perform_later(@sample.id, current_user.id, false)
           nil

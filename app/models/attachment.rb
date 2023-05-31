@@ -83,6 +83,10 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     d
   end
 
+  def backup_file()
+    created_at.strftime("%Y_%m_%d") + "/" + filename.delete_prefix("/")
+  end
+
   def extname
     File.extname(filename.to_s)
   end

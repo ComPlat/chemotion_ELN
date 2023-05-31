@@ -21,6 +21,7 @@
 .ruby-gemset
 .ruby-version
 .coveralls.yml
+.idea
 
 .env
 

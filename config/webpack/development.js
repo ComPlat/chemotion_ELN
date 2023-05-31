@@ -1,8 +1,9 @@
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const { merge } = require('@rails/webpacker');
 const webpackConfig = require('./base');
+
 const developmentConfig = {
   devServer: {
     port: '3035',
@@ -37,4 +38,4 @@ const developmentConfig = {
   }
 };
 
-module.exports = merge(webpackConfig, developmentConfig)
+module.exports = merge(webpackConfig, developmentConfig);
