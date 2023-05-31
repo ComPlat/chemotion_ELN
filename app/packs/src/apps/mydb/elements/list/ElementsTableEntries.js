@@ -238,7 +238,7 @@ export default class ElementsTableEntries extends Component {
   showDetails(element) {
     const { id, type } = element;
     AviatorNavigation({ element, silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
+    const e = { type, params: { } };
     e.params[`${type}ID`] = id;
 
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
