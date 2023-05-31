@@ -401,10 +401,10 @@ export default class GenericElDetails extends Component {
   header(genericEl) {
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+
     const copyBtn = (genericEl.can_copy && !genericEl.isNew) ? (
-      <CopyElementModal element={genericEl} defCol={defCol} />
+      <CopyElementModal element={genericEl} defCol={currentCollection?.defCol()} />
     ) : null;
     const saveBtnDisplay = genericEl.changed ? '' : 'none';
     const datetp = formatTimeStampsOfElement(genericEl || {});
