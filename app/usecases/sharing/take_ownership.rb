@@ -12,12 +12,13 @@ module Usecases
 
         if !acl.nil?
           new_owner_id = @params[:current_user_id]
+          acl = CollectionAcl.find(@params[:id])
           col_id = acl.collection_id
           collection = Collection.find(col_id)
           previous_owner_id = collection.user_id
 
           # if user already owns the (unshared) collection, there is nothing to do here
-          return if collection.user_id == new_owner_id
+          return if acl.user_id == previous_owner_id
 
           cols = Collection.where([' id = ? or ancestry = ?  or ancestry like ? or ancestry like ? or ancestry like ? ',
                                    col_id, col_id.to_s, '%/' + col_id.to_s, col_id.to_s + '/%',
@@ -25,7 +26,7 @@ module Usecases
           cols.update_all(user_id: new_owner_id)
 
           acl.update(user_id: previous_owner_id, permission_level: 2)
-          collection.update(user_id: new_owner_id)
+          collection.update(user_id: previous_owner_id)
 
           user = User.find_by(id: new_owner_id)
           Message.create_msg_notification(
