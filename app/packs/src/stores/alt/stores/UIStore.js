@@ -5,6 +5,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 
 class UIStore {
@@ -294,7 +295,8 @@ class UIStore {
     }
 
     if (hasChanged && !collection.noFetch) {
-      this.state.currentCollection = collection;
+      const { collectionMap } = CollectionStore.getState();
+      this.state.currentCollection = collectionMap[collection.id];
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
 
