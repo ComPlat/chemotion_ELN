@@ -10,7 +10,5 @@ module Entities
       :label,
       :user_id,
     )
-
-    expose :collection_acls, using: Entities::CollectionAclEntity
   end
 end
