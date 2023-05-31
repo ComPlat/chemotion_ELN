@@ -19,6 +19,7 @@ class InboxStore {
       inboxVisible: false,
       currentPage: 1,
       itemsPerPage: 20,
+      currentContainerPage: 1,
       dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
@@ -79,6 +80,7 @@ class InboxStore {
     const { itemsPerPage } = this.state;
     this.state.inbox = result;
     this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
+    this.state.activeDeviceBoxId = null;
 
     this.sync();
     this.countAttachments();
@@ -88,26 +90,27 @@ class InboxStore {
     this.state.numberOfAttachments = result.inbox_count;
   }
 
-  handleFetchInboxContainer(result) {
+  handleFetchInboxContainer(payload) {
     const { inbox } = this.state;
     const updatedChildren = inbox.children.map((child) => {
-      if (child.id === result.id) {
+      if (child.id === payload.inbox.id) {
         return {
           ...child,
-          children_count: result.children_count,
-          children: result.children,
+          children_count: payload.inbox.children_count,
+          children: payload.inbox.children,
         };
       }
       return child;
     });
 
-    this.setState({
+    this.setState((prevState) => ({
       inbox: {
-        ...inbox,
-        inbox_count: result.inbox_count,
+        ...prevState.inbox,
+        inbox_count: payload.inbox.inbox_count,
         children: updatedChildren,
       },
-    });
+      currentContainerPage: payload.currentContainerPage,
+    }));
 
     this.sync();
     this.countAttachments();
@@ -175,9 +178,9 @@ class InboxStore {
       });
       this.countAttachments();
     } else {
-      const { activeDeviceBoxId, currentPage } = this.state;
+      const { activeDeviceBoxId, currentContainerPage } = this.state;
 
-      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentPage);
+      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentContainerPage);
     }
   }
 
@@ -187,7 +190,7 @@ class InboxStore {
   }
 
   handleDeleteContainer(result) {
-    const { inbox, activeDeviceBoxId, currentPage } = this.state;
+    const { inbox, activeDeviceBoxId, currentContainerPage } = this.state;
 
     const parentIndex = inbox.children.findIndex((inboxItem) => inboxItem.id === result.id);
 
@@ -196,7 +199,7 @@ class InboxStore {
       newInbox.children.splice(parentIndex, 1);
       this.setState({ inbox: newInbox });
     } else {
-      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentPage);
+      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentContainerPage);
     }
   }
 

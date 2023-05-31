@@ -27,11 +27,10 @@ class Container < ApplicationRecord
   has_many :attachments, as: :attachable
 
   # TODO: dependent destroy for attachments should be implemented when attachment get paranoidized instead of this DJ
-  after_create :sort_children_by_name
   before_destroy :delete_attachment
   before_destroy :destroy_datasetable
 
-  has_closure_tree
+  has_closure_tree order: 'name'
 
   scope :analyses_for_root, ->(root_id) {
     where(container_type: 'analysis').joins(
@@ -63,9 +62,5 @@ class Container < ApplicationRecord
     else
       attachments.each(&:destroy!)
     end
-  end
-
-  def sort_children_by_name
-    children.order(:name)
   end
 end

@@ -9,6 +9,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Attachment from 'src/models/Attachment';
 import Container from 'src/models/Container';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class UnsortedDataset extends React.Component {
   constructor(props) {
@@ -64,6 +65,7 @@ export default class UnsortedDataset extends React.Component {
     const { datasetContainer } = this.state;
     const { onModalHide } = this.props;
     const { currentPage, itemsPerPage } = InboxStore.getState();
+    LoadingActions.start();
     return AttachmentFetcher.uploadToInbox(datasetContainer.attachments
       .filter(f => f.is_new && !f.is_deleted))()
       .then(() => { onModalHide(); InboxActions.fetchInbox({ currentPage, itemsPerPage }); });

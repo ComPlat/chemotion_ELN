@@ -39,12 +39,14 @@ module Chemotion
       end
 
       get 'containers/id' do
-        container = Container.includes(:attachments).find params[:id]
+        if current_user.container.present?
+          container = current_user.container.children.find params[:id]
 
-        Entities::InboxEntity.represent(container,
-                                        root_container: false,
-                                        dataset_page: params[:dataset_page],
-                                        root: :inbox)
+          Entities::InboxEntity.represent(container,
+                                          root_container: false,
+                                          dataset_page: params[:dataset_page],
+                                          root: :inbox)
+        end
       end
 
       resource :samples do

@@ -57,11 +57,14 @@ class InboxActions {
     };
   }
 
-  fetchInboxContainer(containerId, currentPage) {
+  fetchInboxContainer(containerId, currentContainerPage) {
     return (dispatch) => {
-      InboxFetcher.fetchInboxByContainer(containerId, currentPage)
+      InboxFetcher.fetchInboxByContainer(containerId, currentContainerPage)
         .then((result) => {
-          dispatch(result.inbox);
+          dispatch({
+            inbox: result.inbox,
+            currentContainerPage,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

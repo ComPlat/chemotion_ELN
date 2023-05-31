@@ -41,7 +41,7 @@ module Entities
     end
 
     def children_count
-      object.children.count
+      object.children.size
     end
 
     def unlinked_attachments
@@ -54,12 +54,19 @@ module Entities
 
     def all_descendants_attachments
       @all_descendants_attachments ||= Attachment.where_container(object.child_ids)
-                                                 .limit(MAX_ATTACHMENTS)
+                                                 .where("id IN (
+                                                         SELECT id
+                                                         FROM attachments AS sub_attachments
+                                                         WHERE sub_attachments.attachable_id = attachments.attachable_id
+                                                         LIMIT 50
+                                                       )")
     end
 
     def inbox_count
       inbox_obj = options[:root_container] ? object : object.parent
-      inbox_obj.descendants.includes(:attachments).sum { |dataset| dataset.attachments.size } +
+      Container.where(id: inbox_obj.descendant_ids)
+               .joins(children: :attachments)
+               .count('attachments.id') +
         unlinked_attachments.size.to_i
     end
   end

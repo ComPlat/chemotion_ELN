@@ -13,18 +13,18 @@ export default class DeviceBox extends React.Component {
     super(props);
     this.state = {
       visible: false,
-      currentPage: 1,
-      itemsPerPage: InboxStore.getState().dataItemsPerPage,
+      currentDeviceBoxPage: 1,
+      dataItemsPerPage: InboxStore.getState().dataItemsPerPage,
     };
   }
 
   componentDidMount() {
     const { device_box, deviceBoxVisible } = this.props;
-    const { currentPage } = this.state;
+    const { currentDeviceBoxPage } = this.state;
     if (deviceBoxVisible) {
       if (Array.isArray(device_box.children) && !device_box.children.length) {
         LoadingActions.start();
-        InboxActions.fetchInboxContainer(device_box.id, currentPage);
+        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
       }
     }
     this.setState({ visible: deviceBoxVisible });
@@ -38,7 +38,7 @@ export default class DeviceBox extends React.Component {
   }
 
   handleDeviceBoxClick(deviceBox) {
-    const { visible, currentPage } = this.state;
+    const { visible, currentDeviceBoxPage } = this.state;
     const { fromCollectionTree } = this.props;
 
     InboxActions.setActiveDeviceBoxId(deviceBox.id);
@@ -50,23 +50,25 @@ export default class DeviceBox extends React.Component {
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
         LoadingActions.start();
-        InboxActions.fetchInboxContainer(deviceBox.id, currentPage);
+        InboxActions.fetchInboxContainer(deviceBox.id, currentDeviceBoxPage);
       }
     }
     this.setState({ visible: !visible });
   }
 
   handlePrevClick = (deviceBox) => {
-    const { currentPage } = this.state;
-    const updatedPage = currentPage - 1;
-    this.setState({ currentPage: updatedPage });
+    const { currentDeviceBoxPage } = this.state;
+    const updatedPage = currentDeviceBoxPage - 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
+    LoadingActions.start();
     InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
   };
 
   handleNextClick = (deviceBox) => {
-    const { currentPage } = this.state;
-    const updatedPage = currentPage + 1;
-    this.setState({ currentPage: updatedPage });
+    const { currentDeviceBoxPage } = this.state;
+    const updatedPage = currentDeviceBoxPage + 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
+    LoadingActions.start();
     InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
   };
 
@@ -81,13 +83,13 @@ export default class DeviceBox extends React.Component {
 
   render() {
     const { device_box, largerInbox, fromCollectionTree } = this.props;
-    const { visible, currentPage, itemsPerPage } = this.state;
+    const { visible, currentDeviceBoxPage, dataItemsPerPage } = this.state;
     const cache = InboxStore.getState().cache;
 
     // device_box.children_count gives the total number of children of each DeviceBox
     // while device_box.children contains only the paginated entries
 
-    const totalPages = Math.ceil(device_box.children_count / itemsPerPage);
+    const totalPages = Math.ceil(device_box.children_count / dataItemsPerPage);
 
     device_box.children.sort((a, b) => {
       if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
@@ -145,9 +147,9 @@ export default class DeviceBox extends React.Component {
           </button>
         </div>
         {
-          visible && !fromCollectionTree && device_box?.children_count > itemsPerPage ? (
+          visible && !fromCollectionTree && device_box?.children_count > dataItemsPerPage ? (
             <Pagination
-              currentPage={currentPage}
+              currentDataSetPage={currentDeviceBoxPage}
               totalPages={totalPages}
               handlePrevClick={() => this.handlePrevClick(device_box)}
               handleNextClick={() => this.handleNextClick(device_box)}

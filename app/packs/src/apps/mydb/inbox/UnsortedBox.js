@@ -26,8 +26,8 @@ export default class UnsortedBox extends React.Component {
         show: false,
         datasetContainer: null
       },
-      currentPage: 1,
-      itemsPerPage: inboxState.dataItemsPerPage,
+      currentUnsortedBoxPage: 1,
+      dataItemsPerPage: inboxState.dataItemsPerPage,
     };
     this.toggleSelectAllCheckbox = this.toggleSelectAllCheckbox.bind(this);
     this.deleteCheckedAttachment = this.deleteCheckedAttachment.bind(this);
@@ -85,13 +85,13 @@ export default class UnsortedBox extends React.Component {
 
   handlePrevClick = () => {
     this.setState((prevState) => ({
-      currentPage: prevState.currentPage - 1,
+      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage - 1,
     }));
   };
 
   handleNextClick = () => {
     this.setState((prevState) => ({
-      currentPage: prevState.currentPage + 1,
+      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage + 1,
     }));
   };
 
@@ -142,7 +142,7 @@ export default class UnsortedBox extends React.Component {
   render() {
     const { unsorted_box, largerInbox, fromCollectionTree } = this.props;
     const {
-      visible, modal, checkedAll, currentPage, itemsPerPage
+      visible, modal, checkedAll, currentUnsortedBoxPage, dataItemsPerPage
     } = this.state;
 
     const renderCheckAll = (
@@ -195,9 +195,9 @@ export default class UnsortedBox extends React.Component {
       </span>
     );
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const totalPages = Math.ceil(unsorted_box.length / itemsPerPage);
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const totalPages = Math.ceil(unsorted_box.length / dataItemsPerPage);
 
     const attachments = visible ? unsorted_box.slice(startIndex, endIndex).map((attachment) => (
       <AttachmentContainer
@@ -256,9 +256,9 @@ export default class UnsortedBox extends React.Component {
           {uploadButton}
         </div>
         {
-          visible && !fromCollectionTree && unsorted_box.length > itemsPerPage ? (
+          visible && !fromCollectionTree && unsorted_box.length > dataItemsPerPage ? (
             <Pagination
-              currentPage={currentPage}
+              currentDataSetPage={currentUnsortedBoxPage}
               totalPages={totalPages}
               handlePrevClick={this.handlePrevClick}
               handleNextClick={this.handleNextClick}

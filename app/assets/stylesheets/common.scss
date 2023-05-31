@@ -323,6 +323,18 @@
   margin-top: 5px;
 }
 
+.page-count {
+  margin-left: 20px;
+}
+
+.current-page {
+  background-color: #f0f0f0;
+  color: #000;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
 .profile-row {
   display: flex;
   align-items: center;
