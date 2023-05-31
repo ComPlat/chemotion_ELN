@@ -12,9 +12,8 @@ module Chemotion
         requires :id, type: Integer, desc: 'id of vessel to load'
       end
 
-      get do
-        template = VesselTemplate.create
-        vessel = Vessel.create(vessel_template: template, creator: current_user)
+      get ':id' do
+        vessel = Usecases::Vessels::Load.new(params, current_user).execute!
         return present vessel, with: Entities::VesselEntity
       end
 
