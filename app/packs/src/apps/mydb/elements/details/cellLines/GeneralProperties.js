@@ -87,7 +87,7 @@ class GeneralProperties extends React.Component {
               {this.renderOptionalAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium, (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => { cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('gender', cellLineItem.gender, (e) => { cellLineDetailsStore.changeGender(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Description', cellLineItem.materialComment, (e) => { cellLineDetailsStore.changeMaterialComment(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => { cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value); })}
             </Panel.Body>
           </Panel>
 
@@ -103,7 +103,7 @@ class GeneralProperties extends React.Component {
               {this.renderOptionalAttribute('Source', cellLineItem.source, (e) => { cellLineDetailsStore.changeSource(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('GrowthMedium', cellLineItem.growthMedium, (e) => { cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => { cellLineDetailsStore.changeItemName(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Description', cellLineItem.itemComment, (e) => { cellLineDetailsStore.changeItemComment(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => { cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value); })}
             </Panel.Body>
           </Panel>
         </PanelGroup>

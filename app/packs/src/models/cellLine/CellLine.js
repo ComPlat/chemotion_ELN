@@ -20,6 +20,31 @@ export default class CellLine extends Element {
     return this.itemName;
   }
 
+  static createFromRestResponse(collectionId,response){
+    const cellLine = CellLine.buildEmpty(collectionId,'XXXX');
+    cellLine.amount=response.amount;
+    cellLine.contamination=response.contamination;
+    cellLine.source=response.source;
+    cellLine.growthMedium=response.growth_medium;
+    cellLine.itemComment=response.description;
+    cellLine.itemName=response.name;
+    cellLine.id=response.id;
+
+    cellLine.cellLineName=response.cellline_material.names;
+    cellLine.mutation=response.cellline_material.mutation;
+    cellLine.disease=response.cellline_material.disease;
+    cellLine.organism=response.cellline_material.organism;
+    cellLine.tissue=response.cellline_material.tissue;
+    cellLine.variant=response.cellline_material.variant;
+    cellLine.type=response.cellline_material.cell_type
+    cellLine.bioSafetyLevel=response.cellline_material.biosafety_level;
+    cellLine.cryopreservationMedium=response.cellline_material.cryo_pres_medium;
+
+    
+
+    return cellLine;
+  }
+
   adoptPropsFromMobXModel(mobx) {
     this.amount = mobx.amount;
     this.passage = mobx.passage;
@@ -27,6 +52,7 @@ export default class CellLine extends Element {
     this.source = mobx.source;
     this.growthMedium = mobx.growthMedium;
     this.itemComment = mobx.itemComment;
+    this.materialComment = mobx.materialComment;
     this.itemName = mobx.itemName;
 
     this.cellLineName = mobx.cellLineName;

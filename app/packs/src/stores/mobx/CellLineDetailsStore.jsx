@@ -32,14 +32,14 @@ const CellLineItem = types
     optimalGrowthTemperature: 0,
     cryopreservationMedium: '',
     cellLineName: '',
-    materialComment: '',
+    materialDescription: '',
     amount: 0,
     passage: 0,
     contamination: '',
     shortLabel: '',
     source: '',
     growthMedium: '',
-    itemComment: '',
+    itemDescription: '',
     itemName: '',
     container: types.maybe(CellLineAnalysis)
   });
@@ -79,11 +79,11 @@ export const CellLineDetailsStore = types
     changeOrganism(id, newOrganism) {
       self.cellLineItem.get(id).organism = newOrganism;
     },
-    changeItemComment(id, newComment) {
-      self.cellLineItem.get(id).itemComment = newComment;
+    changeItemDescription(id, newDesc) {
+      self.cellLineItem.get(id).itemDescription = newDesc;
     },
-    changeMaterialComment(id, newComment) {
-      self.cellLineItem.get(id).materialComment = newComment;
+    changeMaterialDescription(id, newDesc) {
+      self.cellLineItem.get(id).materialDescription = newDesc;
     },
     changeTissue(id, newTissue) {
       self.cellLineItem.get(id).tissue = newTissue;
@@ -155,14 +155,14 @@ export const CellLineDetailsStore = types
         optimalGrowthTemperature: jsCellLineModel.optimalGrowthTemperature,
         cryopreservationMedium: jsCellLineModel.cryopreservationMedium,
         cellLineName: jsCellLineModel.cellLineName,
-        materialComment: jsCellLineModel.materialComment,
+        materialDescription: jsCellLineModel.materialDescription,
         gender: jsCellLineModel.gender,
         amount: jsCellLineModel.amount,
         passage: jsCellLineModel.passage,
         contamination: jsCellLineModel.contamination,
         source: jsCellLineModel.source,
         growthMedium: jsCellLineModel.growthMedium,
-        itemComment: jsCellLineModel.itemComment,
+        itemDescription: jsCellLineModel.itemDescription,
         itemName: jsCellLineModel.itemName,
         shortLabel: jsCellLineModel.short_label,
         container: rootAnalysis

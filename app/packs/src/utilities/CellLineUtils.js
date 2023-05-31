@@ -1,0 +1,26 @@
+const extractApiParameter = (cellLine) => {
+    return {
+        "organism":cellLine.organism,
+        "tissue":cellLine.tissue,
+        "amount":cellLine.amount,
+        "passage":cellLine.passage,
+        "disease":cellLine.disease,
+        "material_names":"["+cellLine.cellLineName+"]",
+        "collection_id":cellLine.collectionId,
+        "cell_type":cellLine.type,
+        "biosafety_level":cellLine.bioSafetyLevel,
+        "variant":cellLine.variant,
+        "optimal_growth_temp":cellLine.optimal_growth_temp,
+        "cryo_pres_medium":cellLine.cryopreservationMedium,
+        "gender":cellLine.gender,
+        "material_description":cellLine.materialDescription, 
+        "contamination":cellLine.contamination,
+        "source":cellLine.source,
+        "name":cellLine.itemName,
+        "description":cellLine.itemDescription,
+};
+}
+
+export {
+    extractApiParameter
+};

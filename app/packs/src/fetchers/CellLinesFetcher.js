@@ -1,5 +1,8 @@
 import CellLine from 'src/models/cellLine/CellLine';
+import {
+  extractApiParameter
 
+} from 'src/utilities/CellLineUtils';
 
 export default class CellLinesFetcher {
   static mockData = {};
@@ -23,13 +26,19 @@ export default class CellLinesFetcher {
       .then((result) => result.elements[Number(id) - 1]);
   }
 
-  static create(params) {
+  static create(cellLine) {
+    const params = extractApiParameter(cellLine);
     const promise = fetch('/api/v1/cell_lines', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
       method: 'POST',
       body: JSON.stringify(params)
     })
       .then((response) => response.json())
-      .then((json) => json)
+      .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -37,18 +46,18 @@ export default class CellLinesFetcher {
   }
 
   static update(cellLineItem) {
-    var index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
-    if(index===-1){
-      index=CellLinesFetcher.mockData.length;
+    let index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
+    if (index === -1) {
+      index = CellLinesFetcher.mockData.length;
     }
-    cellLineItem.id=(index+1).toString();
+    cellLineItem.id = (index + 1).toString();
     CellLinesFetcher.mockData[index] = cellLineItem;
-    
+
     return CellLinesFetcher.fetchById(index + 1);
   }
 
   static {
-    const c1 = CellLine.buildEmpty(0,'FYA-C1');
+    const c1 = CellLine.buildEmpty(0, 'FYA-C1');
     c1.cellLineName = 'Cell line 123';
     c1.cellLineId = 1;
     c1.id = '1';
@@ -63,17 +72,19 @@ export default class CellLinesFetcher {
     c1.optimalGrowthTemperature = 36;
     c1.cryopreservationMedium = 'unknown';
     c1.name = '10-15';
-    c1.materialComment = '';
+    c1.gender = 'male';
+    c1.materialDescription = 'Material 1';
     // ----- Item
     c1.amount = 1000;
     c1.passage = 10;
     c1.contamination = 'none';
     c1.source = 'IPB';
     c1.growthMedium = 'unknown';
-    c1.itemComment = '';
+    c1.itemDescription = '';
     c1.itemName = 'CellLine 001-001';
+    c1.short_label = 'FMA-001';
 
-    const c2 = CellLine.buildEmpty(0,'FYA-C2');
+    const c2 = CellLine.buildEmpty(0, 'FYA-C2');
     c2.cellLineName = 'Cell line 123';
     c2.cellLineId = 1;
     c2.id = '2';
@@ -81,26 +92,29 @@ export default class CellLinesFetcher {
     c2.tissue = 'Lunge';
     c2.cellType = 'primary cells';
     c2.mutation = 'none';
+    c2.gender = 'male';
     c2.disease = 'lung cancer';
     c2.bioSafetyLevel = 'S1';
     c2.variant = 'S1';
     c2.optimalGrowthTemperature = 36;
     c2.cryopreservationMedium = 'unknown';
     c2.name = '10-15';
-    c2.materialComment = '';
+    c2.materialDescription = 'Material 1';
     // ----- Item
     c2.amount = 20000;
     c2.passage = 11;
     c2.contamination = 'something';
     c2.source = 'IPB';
     c2.growthMedium = 'unknown';
-    c2.itemComment = 'Cellline is contamined!!!';
+    c2.itemDescription = 'Cellline is contamined!!!';
     c2.itemName = 'CellLine 001-002';
+    c2.short_label = 'FMA-002';
 
-    const c3 = CellLine.buildEmpty(0,'FYA-C3');
+    const c3 = CellLine.buildEmpty(0, 'FYA-C3');
     c3.cellLineName = 'Cell line 123';
     c3.cellLineId = 1;
     c3.id = '3';
+    c3.gender = 'male';
     c3.organism = 'Mensch';
     c3.tissue = 'Lunge';
     c3.cellType = 'primary cells';
@@ -111,22 +125,24 @@ export default class CellLinesFetcher {
     c3.optimalGrowthTemperature = 36;
     c3.cryopreservationMedium = 'unknown';
     c3.name = '10-15';
-    c3.materialComment = '';
+    c3.materialDescription = 'Material 1';
     // ----- Item
     c3.amount = 40000;
     c3.passage = 10;
     c3.contamination = 'none';
     c3.source = 'IPB';
     c3.growthMedium = 'unknown';
-    c3.itemComment = '';
+    c3.itemDescription = '';
     c3.itemName = 'CellLine 001-003';
+    c3.short_label = 'FMA-003';
 
-    const c4 = CellLine.buildEmpty(0,'FYA-C4');
+    const c4 = CellLine.buildEmpty(0, 'FYA-C4');
     c4.cellLineName = 'Cell line 456';
     c4.cellLineId = 2;
     c4.id = '4';
     c4.organism = 'Mouse';
     c4.tissue = 'colon';
+    c4.gender = 'male';
     c4.cellType = 'primary cells';
     c4.mutation = 'none';
     c4.disease = 'colon cancer';
@@ -135,7 +151,7 @@ export default class CellLinesFetcher {
     c4.optimalGrowthTemperature = 36;
     c4.cryopreservationMedium = 'unknown';
     c4.name = 'Mouse';
-    c4.materialComment = '';
+    c4.materialDescription = 'Material 2';
     c4.itemName = 'CellLine 002-001';
     // ----- Item
     c4.amount = 10000;
@@ -143,9 +159,10 @@ export default class CellLinesFetcher {
     c4.contamination = 'none';
     c4.source = 'IPB';
     c4.growthMedium = 'unknown';
-    c4.itemComment = '';
+    c4.itemDescription = '';
+    c4.short_label = 'FMA-004';
 
-    const c5 = CellLine.buildEmpty(0,'FYA-C5');
+    const c5 = CellLine.buildEmpty(0, 'FYA-C5');
     c5.cellLineName = 'Cell line 456';
     c5.cellLineId = 2;
     c5.id = '5';
@@ -153,21 +170,23 @@ export default class CellLinesFetcher {
     c5.tissue = 'colon';
     c5.cellType = 'primary cells';
     c5.mutation = 'none';
+    c5.gender = 'male';
     c5.disease = 'colon cancer';
     c5.bioSafetyLevel = 'S1';
     c5.variant = 'S1';
     c5.optimalGrowthTemperature = 36;
     c5.cryopreservationMedium = 'unknown';
     c5.name = '10-15';
-    c5.materialComment = '';
+    c5.materialDescription = 'Material 2';
     // ----- Item
     c5.amount = 10000;
     c5.passage = 10;
     c5.contamination = 'none';
     c5.source = 'IPB';
     c5.growthMedium = 'unknown';
-    c5.itemComment = '';
+    c5.itemDescription = '';
     c5.itemName = 'CellLine 002-002';
+    c5.short_label = 'FMA-005';
 
     CellLinesFetcher.mockData = [c1, c2, c3, c4, c5];
   }
