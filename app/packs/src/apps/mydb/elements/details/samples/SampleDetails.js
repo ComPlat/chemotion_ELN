@@ -1009,13 +1009,11 @@ export default class SampleDetails extends React.Component {
     const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab) ? '' : 'none';
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     const copyBtn = (sample.can_copy && !sample.isNew) ? (
       <CopyElementModal
         element={sample}
-        defCol={defCol}
+        defCol={currentCollection?.defCol()}
       />
     ) : null;
 
