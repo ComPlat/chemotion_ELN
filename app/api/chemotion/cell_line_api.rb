@@ -27,6 +27,7 @@ module Chemotion
         requires :collection_id, type: Integer, desc: 'Collection of the cell line sample'
         optional :cell_type, type: String, desc: 'type of cells'
         optional :biosafety_level, type: String, desc: 'biosafety_level of cells'
+        optional :growth_medium, type: String, desc: 'growth medium of cells'
         optional :variant, type: String, desc: 'variant of cells'
         optional :optimal_growth_temp, type: Float, desc: 'optimal_growth_temp of cells'
         optional :cryo_pres_medium, type: String, desc: 'cryo preservation medium of cells'
