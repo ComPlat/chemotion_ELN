@@ -1,5 +1,6 @@
 import CellLine from 'src/models/cellLine/CellLine';
 
+
 export default class CellLinesFetcher {
   static mockData = {};
 
@@ -22,9 +23,17 @@ export default class CellLinesFetcher {
       .then((result) => result.elements[Number(id) - 1]);
   }
 
-  static create(params){
-
-    return Promise.resolve(1)
+  static create(params) {
+    const promise = fetch('/api/v1/cell_lines', {
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 
   static update(cellLineItem) {

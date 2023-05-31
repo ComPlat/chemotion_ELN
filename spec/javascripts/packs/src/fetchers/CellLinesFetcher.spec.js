@@ -1,4 +1,6 @@
 import expect from "expect";
+import CellLine from 'src/models/CellLine';
+import CellLinesFetcher from "../../../../../app/packs/src/fetchers/CellLinesFetcher";
 
 describe('CellLinesFetcher', () => {
     describe('.fetchByCollectionId()', () => {
@@ -25,7 +27,11 @@ describe('CellLinesFetcher', () => {
         });  
 
         it('when params are not valid', async () => {
-           
+            // const params = {
+
+            // };
+            const cellLine = CellLine.buildEmpty(0, "shortLabel");
+           CellLinesFetcher.create(cellLine);
         });
     });
     describe('.create()', () => {
