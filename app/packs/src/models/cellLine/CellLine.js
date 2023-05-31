@@ -51,9 +51,11 @@ export default class CellLine extends Element {
     this.contamination = mobx.contamination;
     this.source = mobx.source;
     this.growthMedium = mobx.growthMedium;
-    this.itemComment = mobx.itemComment;
-    this.materialComment = mobx.materialComment;
+    this.itemDescription = mobx.itemDescription;
+    this.materialDescription = mobx.materialDescription;
     this.itemName = mobx.itemName;
+    this.gender = mobx.gender;
+    this.optimal_growth_temp = mobx.optimalGrowthTemperature;
 
     this.cellLineName = mobx.cellLineName;
     this.mutation = mobx.mutation;
