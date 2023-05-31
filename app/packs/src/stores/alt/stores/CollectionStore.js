@@ -10,6 +10,7 @@ class CollectionStore {
       myCollectionTree: [],
       myLockedCollectionTree: [],
       sharedCollectionTree: [],
+      collectionMap: {},
     };
 
     this.bindListeners({
@@ -43,13 +44,12 @@ class CollectionStore {
     const myCollectionTree = CollectionStore.buildNestedStructure(myCollections);
     const sharedCollectionTree = CollectionStore.buildNestedStructure(shared || []);
     const myLockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
-//    const collectionMap = CollectionStore.collectionsToMap(collections.concat(shared || []));
+    const collectionMap = CollectionStore.collectionsToMap(collections.concat(shared || []));
     this.setState({
-      myCollections: collections,
       myCollectionTree,
       myLockedCollectionTree,
       sharedCollectionTree,
-//      collectionMap,
+      collectionMap,
     });
   }
 
@@ -86,7 +86,9 @@ class CollectionStore {
     // add a descendants property to each collection
     const collectionMap = {};
     collections.forEach((collection) => {
-      collection.descendants = [];
+      if (collection.descendants === undefined) {
+        collection.descendants = [];
+      }
       collectionMap[collection.id] = collection;
     });
     return collectionMap;
