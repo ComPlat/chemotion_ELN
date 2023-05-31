@@ -64,9 +64,9 @@ export default class CollectionSubtree extends React.Component {
   }
 
   isVisible(node, uiState) {
-    if (node.descendants) {
+    if (node.children) {
       const currentCollectionId = parseInt(uiState.currentCollection.id);
-      if (node.descendants.find((descendant) => (currentCollectionId === descendant.id))) {
+      if (node.children.find((descendant) => (currentCollectionId === descendant.id))) {
         return true;
       }
     }
@@ -80,7 +80,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   children() {
-    return this.state.root.descendants || [];
+    return this.state.root.children || [];
   }
 
   hasChildren() {
@@ -167,7 +167,7 @@ export default class CollectionSubtree extends React.Component {
 
     let { visibleRootsIds } = CollectionStore.getState()
 
-    visibleRootsIds = root.descendants.map((descendant) => descendant.id)
+    visibleRootsIds = root.children.map((descendant) => descendant.id)
 
     // Remove duplicate
     let newIds = Array.from(new Set(visibleRootsIds))
