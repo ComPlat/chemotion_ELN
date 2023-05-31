@@ -201,14 +201,10 @@ module Chemotion
         route_param :host_name do
           get do
             if Rails.configuration.spectra.nmriumwrapper.blank?
-              { protocol: '', host: '', port: '' }
+              { nmrium_url: '' }
             else
               nmrium_url = Rails.configuration.spectra.nmriumwrapper.url
-              nmrium_uri = URI(nmrium_url)
-              protocol = nmrium_uri.scheme
-              host = nmrium_uri.host
-              port = nmrium_uri.port == 443 ? '' : nmrium_uri.port
-              { protocol: protocol, host: host, port: port }
+              { nmrium_url: nmrium_url }
             end
           end
         end
