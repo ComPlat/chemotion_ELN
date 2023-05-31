@@ -36,15 +36,14 @@ export default class ContextActions extends React.Component {
 
   isCreateDisabled() {
     const { currentCollection } = this.state.uiState;
-    return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked)
-      || (currentCollection.is_shared == false) || (currentCollection.is_shared && currentCollection.permission_level != PermissionConst.Write));
+    return !currentCollection?.canCreateElement();
   }
 
   isDisabled() {
     const { currentCollection } = this.state.uiState;
 
     if (currentCollection) {
-      if ((currentCollection.label == 'All' && currentCollection.is_locked)
+      if (currentCollection.allCollection()
         || (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements)) { return true; }
     }
 
