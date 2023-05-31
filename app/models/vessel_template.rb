@@ -10,7 +10,6 @@
 #  volume_amount    :string
 #  material_type    :string
 #  material_details :string
-#  description      :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  deleted_at       :datetime

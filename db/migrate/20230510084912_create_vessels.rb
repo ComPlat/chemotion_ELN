@@ -8,7 +8,6 @@ class CreateVessels < ActiveRecord::Migration[6.1]
       t.string :volume_amount
       t.string :material_type
       t.string :material_details
-      t.string :description
       t.timestamps
       t.datetime :deleted_at
     end
