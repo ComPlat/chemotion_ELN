@@ -13,7 +13,7 @@ module Usecases
         raise 'no vessel found' unless @vessel
 
         @template = @vessel.vessel_template
-        @vessel.vessel_template = find_vessel_template || create_new_template
+        @vessel.vessel_template = find_vessel_template || create_vessel_template
 
         update_vessel_properties
 
