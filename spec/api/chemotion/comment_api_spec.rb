@@ -12,18 +12,37 @@ describe Chemotion::CommentAPI do
   let!(:unauthorized_user) { create(:person) }
   let!(:authorized_user) { create(:person) }
   let!(:other_user) { create(:person) }
+  let(:group) do
+    create(:group, first_name: 'Group', users: [authorized_user, other_user], last_name: 'One Two',
+                   name_abbreviation: 'G1_2x')
+  end
 
   let!(:unshared_collection) do
     create(:collection, user_id: authorized_user.id, is_shared: false, is_locked: false, permission_level: 0,
-                        label: "AuthorizedUser's Unshared Collection")
+                        label: "authorized_user's unshared collection")
   end
   let!(:shared_collection) do
     create(:collection, user_id: other_user.id, shared_by_id: authorized_user.id, is_shared: true, is_locked: true,
                         permission_level: 0, label: 'shared by authorized_user')
   end
+  let(:shared_collection_to_group) do
+    create(:collection, user_id: group.id, is_shared: true, shared_by_id: authorized_user.id, is_locked: true,
+                        permission_level: 0, label: 'shared by authorized_user to group')
+  end
+  let(:sync_collection) do
+    create(:collection, user_id: authorized_user.id, is_shared: false, is_synchronized: true,
+                        label: 'synchronized by authorized_user')
+  end
+
+  let(:sync_collections_user) do
+    create(:sync_collections_user, collection_id: sync_collection.id, user_id: other_user.id, permission_level: 0,
+                                   shared_by_id: authorized_user.id, fake_ancestry: sync_collection.id.to_s)
+  end
 
   let!(:unshared_sample) { create(:sample, name: 'Unshared sample', collections: [unshared_collection]) }
   let!(:shared_sample) { create(:sample, collections: [unshared_collection, shared_collection]) }
+  let!(:shared_sample_for_group) { create(:sample, collections: [unshared_collection, shared_collection_to_group]) }
+  let!(:sync_sample) { create(:sample, collections: [unshared_collection, sync_collection]) }
 
   let!(:unshared_reaction) { create(:reaction, name: 'Unshared reaction', collections: [unshared_collection]) }
   let!(:shared_reaction) { create(:reaction, collections: [unshared_collection, shared_collection]) }
@@ -42,6 +61,16 @@ describe Chemotion::CommentAPI do
     create(:comment, content: 'test comment for shared_sample by other user', commentable_id: shared_sample.id,
                      commentable_type: 'Sample', section: Comment.sample_sections[:properties],
                      created_by: other_user.id)
+  end
+  let(:comment_of_shared_sample_for_group) do
+    create(:comment, content: 'test comment for shared_sample for group', commentable_id: shared_sample_for_group.id,
+                     commentable_type: 'Sample', section: Comment.sample_sections[:properties],
+                     created_by: authorized_user.id)
+  end
+  let(:comment_of_sync_sample) do
+    create(:comment, content: 'test comment for sync_sample', commentable_id: sync_sample.id,
+                     commentable_type: 'Sample', section: Comment.sample_sections[:properties],
+                     created_by: authorized_user.id)
   end
 
   let(:comment_of_unshared_reaction) do
@@ -80,6 +109,22 @@ describe Chemotion::CommentAPI do
       context 'when the comment element shared but not with the logged in user' do
         before do
           get "/api/v1/comments/#{comment_of_shared_sample.id}"
+        end
+
+        it_behaves_like 'an unauthorized response'
+      end
+
+      context 'when the comment is shared with another group' do
+        before do
+          get "/api/v1/comments/#{comment_of_shared_sample_for_group.id}"
+        end
+
+        it_behaves_like 'an unauthorized response'
+      end
+
+      context 'when the comment is from an unaccesible synchronized collection' do
+        before do
+          get "/api/v1/comments/#{comment_of_sync_sample.id}"
         end
 
         it_behaves_like 'an unauthorized response'
@@ -135,6 +180,20 @@ describe Chemotion::CommentAPI do
 
         comment_data = JSON.parse(response.body)['comment']&.symbolize_keys
         expect(comment_data[:id]).to eq(comment_of_unshared_sample.id)
+      end
+
+      it 'returns comment data when the element is shared with group' do
+        get "/api/v1/comments/#{comment_of_shared_sample_for_group.id}"
+
+        comment_data = JSON.parse(response.body)['comment']&.symbolize_keys
+        expect(comment_data[:id]).to eq(comment_of_shared_sample_for_group.id)
+      end
+
+      it 'returns comment data when the element is from synchronized collection' do
+        get "/api/v1/comments/#{comment_of_sync_sample.id}"
+
+        comment_data = JSON.parse(response.body)['comment']&.symbolize_keys
+        expect(comment_data[:id]).to eq(comment_of_sync_sample.id)
       end
     end
 
@@ -244,7 +303,7 @@ describe Chemotion::CommentAPI do
     end
   end
 
-  context 'when user has access to a shared collection owned by another user' do
+  context 'when user has access to a shared/synchronized collection owned by another user' do
     before do
       allow(WardenAuthentication).to receive(:new).and_return(warden_authentication_instance)
       allow(warden_authentication_instance).to receive(:current_user).and_return(other_user)
@@ -264,6 +323,13 @@ describe Chemotion::CommentAPI do
 
         comment_data = JSON.parse(response.body)['comment']&.symbolize_keys
         expect(comment_data[:id]).to eq(comment_of_shared_sample.id)
+      end
+
+      it 'returns comment data when the element is shared with group' do
+        get "/api/v1/comments/#{comment_of_shared_sample_for_group.id}"
+
+        comment_data = JSON.parse(response.body)['comment']&.symbolize_keys
+        expect(comment_data[:id]).to eq(comment_of_shared_sample_for_group.id)
       end
     end
 
