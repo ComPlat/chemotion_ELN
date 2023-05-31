@@ -250,16 +250,12 @@ export default class ReactionDetails extends Component {
   reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
     const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
-
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
 
     const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
       <CopyElementModal
         element={reaction}
-        defCol={defCol}
+        defCol={currentCollection?.defCol()}
       />
     ) : null;
 
