@@ -83,11 +83,11 @@ class CollectionStore {
 
   static collectionsToMap(collections) {
     // Create a map of collections using their ids as keys
-    // add a descendants property to each collection
+    // add a children property to each collection
     const collectionMap = {};
     collections.forEach((collection) => {
-      if (collection.descendants === undefined) {
-        collection.descendants = [];
+      if (collection.children === undefined) {
+        collection.children = [];
       }
       collectionMap[collection.id] = collection;
     });
@@ -118,7 +118,7 @@ class CollectionStore {
         }
 
         if (parentCollection) {
-          parentCollection.descendants.push(collection);
+          parentCollection.children.push(collection);
         } else {
           rootCollections.push(collection);
         }
@@ -133,8 +133,8 @@ class CollectionStore {
     collections.sort((a, b) => a.position - b.position);
 
     collections.forEach((collection) => {
-      if (collection.descendants.length > 0) {
-        CollectionStore.sortCollections(collection.descendants);
+      if (collection.children.length > 0) {
+        CollectionStore.sortCollections(collection.children);
       }
     });
   }
