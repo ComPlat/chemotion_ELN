@@ -12,7 +12,5 @@ module Entities
       :wellplate_detail_level,
       :tabs_segment
     )
-
-    expose :collection_acls, using: Entities::CollectionAclEntity
   end
 end

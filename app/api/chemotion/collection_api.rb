@@ -13,7 +13,7 @@ module Chemotion
 
         {
           collections: Entities::CollectionOwnedEntity.represent(collections),
-          shared: Entities::CollectionSharedEntity.represent(shared),
+          shared: Entities::CollectionSharedEntity.represent(shared, shared_with: user_ids),
         }
       end
 

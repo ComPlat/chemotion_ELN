@@ -95,6 +95,8 @@ class CollectionAcl < ApplicationRecord
   belongs_to :user
   belongs_to :collection
 
+  scope :shared_with, ->(user_id) { where(user_id: user_id) }
+
   validates :permission_level, presence: true,
                                numericality: {
                                  only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 5
@@ -123,12 +125,6 @@ class CollectionAcl < ApplicationRecord
                                    numericality: {
                                      only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 10
                                    }
-
-  has_many :samples, through: :collection
-  has_many :reactions, through: :collection
-  has_many :wellplates, through: :collection
-  has_many :screens, through: :collection
-  has_many :research_plans, through: :collection
 
   def self.permission_levels_keys
     PERMISSION_LEVELS_KEYS
