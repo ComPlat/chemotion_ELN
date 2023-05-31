@@ -1,6 +1,7 @@
 import alt from 'src/stores/alt/alt';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-
+import Collection from 'src/models/Collection';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 class CollectionStore {
   constructor() {
@@ -38,13 +39,16 @@ class CollectionStore {
       return;
     }
     const { collections, shared } = results;
+    const collectionObjects = CollectionStore.collectionsToObjects(collections);
+    const sharedObjects = CollectionStore.collectionsToObjects(shared || []);
     const { myCollections, myLockedCollections } = CollectionStore.filterLockedCollections(
-      collections
+      collectionObjects
     );
+
     const myCollectionTree = CollectionStore.buildNestedStructure(myCollections);
-    const sharedCollectionTree = CollectionStore.buildNestedStructure(shared || []);
+    const sharedCollectionTree = CollectionStore.buildNestedStructure(sharedObjects || []);
     const myLockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
-    const collectionMap = CollectionStore.collectionsToMap(collections.concat(shared || []));
+    const collectionMap = CollectionStore.collectionsToMap(collectionObjects.concat(sharedObjects || []));
     this.setState({
       myCollectionTree,
       myLockedCollectionTree,
@@ -72,6 +76,14 @@ class CollectionStore {
 
   handleUpdateCollectionTree(visibleRootsIds) {
     this.state.visibleRootsIds = visibleRootsIds
+  }
+
+  static collectionsToObjects(collections) {
+    const { currentUser } = UserStore.getState();
+    return collections.map(collection => {
+      collection.currentUser = currentUser;
+      return new Collection(collection);
+    });
   }
 
   static filterLockedCollections(collections) {
