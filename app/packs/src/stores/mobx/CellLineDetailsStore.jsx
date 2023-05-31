@@ -23,6 +23,7 @@ const CellLineItem = types
     id: '',
     organism: '',
     tissue: '',
+    gender: '',
     cellType: '',
     mutation: '',
     disease: '',
@@ -35,6 +36,7 @@ const CellLineItem = types
     amount: 0,
     passage: 0,
     contamination: '',
+    shortLabel: '',
     source: '',
     growthMedium: '',
     itemComment: '',
@@ -77,8 +79,17 @@ export const CellLineDetailsStore = types
     changeOrganism(id, newOrganism) {
       self.cellLineItem.get(id).organism = newOrganism;
     },
+    changeItemComment(id, newComment) {
+      self.cellLineItem.get(id).itemComment = newComment;
+    },
+    changeMaterialComment(id, newComment) {
+      self.cellLineItem.get(id).materialComment = newComment;
+    },
     changeTissue(id, newTissue) {
       self.cellLineItem.get(id).tissue = newTissue;
+    },
+    changeOptimalGrowthTemp(id, newTemp) {
+      self.cellLineItem.get(id).optimalGrowthTemperature = newTemp;
     },
     changeVariant(id, newVariant) {
       self.cellLineItem.get(id).variant = newVariant;
@@ -88,6 +99,9 @@ export const CellLineDetailsStore = types
     },
     changeCryoMedium(id, newCryoMedium) {
       self.cellLineItem.get(id).cryopreservationMedium = newCryoMedium;
+    },
+    changeGender(id, newGender) {
+      self.cellLineItem.get(id).gender = newGender;
     },
     removeCellLineFromStore(id) {
       self.cellLineItem.delete(id);
@@ -142,6 +156,7 @@ export const CellLineDetailsStore = types
         cryopreservationMedium: jsCellLineModel.cryopreservationMedium,
         cellLineName: jsCellLineModel.cellLineName,
         materialComment: jsCellLineModel.materialComment,
+        gender: jsCellLineModel.gender,
         amount: jsCellLineModel.amount,
         passage: jsCellLineModel.passage,
         contamination: jsCellLineModel.contamination,
@@ -149,6 +164,7 @@ export const CellLineDetailsStore = types
         growthMedium: jsCellLineModel.growthMedium,
         itemComment: jsCellLineModel.itemComment,
         itemName: jsCellLineModel.itemName,
+        shortLabel: jsCellLineModel.short_label,
         container: rootAnalysis
       }));
     }

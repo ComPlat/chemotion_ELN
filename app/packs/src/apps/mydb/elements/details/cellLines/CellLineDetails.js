@@ -81,7 +81,6 @@ class CellLineDetails extends React.Component {
 
   renderSubmitButton() {
     const { cellLineItem } = this.props;
-    console.log(cellLineItem);
     const { cellLineDetailsStore } = this.context;
     const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
     const disabled = validationInfo.length > 0;
