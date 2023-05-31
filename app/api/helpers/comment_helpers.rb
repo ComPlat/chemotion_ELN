@@ -7,8 +7,8 @@ module CommentHelpers
     sync_collections = collections.synchronized
     shared_collections = collections.where(is_shared: true)
     sync_collection_users = SyncCollectionsUser.includes(:user)
-                                               .where('shared_by_id IN (?) AND collection_id IN (?)',
-                                                      sync_collections.pluck(:user_id), sync_collections.ids)
+                                               .where(shared_by_id: sync_collections.pluck(:user_id),
+                                                      collection_id: sync_collections.ids)
     user_ids = []
     sync_collection_users&.each do |sync_collection_user|
       user_ids = get_user_ids(sync_collection_user, user_ids)

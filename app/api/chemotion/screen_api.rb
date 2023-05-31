@@ -8,7 +8,7 @@ module Chemotion
     helpers CollectionHelpers
     helpers ProfileHelpers
 
-    resource :screens do # rubocop:disable Metrics/BlockLength
+    resource :screens do
       desc "Return serialized screens"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
@@ -21,7 +21,7 @@ module Chemotion
       before do
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
-      get do # rubocop:disable Metrics/BlockLength
+      get do
         scope = if params[:collection_id]
                   begin
                     Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
@@ -173,7 +173,7 @@ module Chemotion
         optional :segments, type: Array, desc: 'Segments'
         optional :component_graph_data, type: JSON
       end
-      post do # rubocop:disable Metrics/BlockLength
+      post do
         attributes = {
           name: params[:name],
           collaborator: params[:collaborator],

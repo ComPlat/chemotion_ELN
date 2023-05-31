@@ -7,7 +7,7 @@ module Chemotion
     helpers CollectionHelpers
     helpers ContainerHelpers
 
-    namespace :research_plans do # rubocop:disable Metrics/BlockLength
+    namespace :research_plans do
       desc 'Return serialized research plans of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
@@ -103,7 +103,7 @@ module Chemotion
         present research_plan, with: Entities::ResearchPlanEntity, root: :research_plan
       end
 
-      namespace :table_schemas do # rubocop:disable Metrics/BlockLength
+      namespace :table_schemas do
         desc 'Return serialized table schemas of current user'
         get do
           { table_schemas: ResearchPlanTableSchema.where(creator: current_user) }

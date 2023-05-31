@@ -47,7 +47,6 @@ export default function HeaderCommentSection(props) {
             >
               <Button
                 bsSize="xsmall"
-                // bsStyle="primary"
                 onClick={CommentActions.toggleCommentSection}
                 style={{ marginLeft: 5 }}
               >
