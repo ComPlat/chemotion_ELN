@@ -9,27 +9,24 @@ export default class CellLinesFetcher {
   static mockData = {};
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    
    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
-   
-    
-
-    return new Promise((resolve, reject) => {
-      const result = {};
-
-   result.elements = CellLinesFetcher.mockData;
-      result.page = 1;
-      result.pages = 1;
-      result.perPage = 15;
-      result.totalElements = CellLinesFetcher.mockData.length;
-      result;
-      resolve(result);
-    });
   }
 
   static fetchById(id) {
-    return CellLinesFetcher.fetchByCollectionId(0)
-      .then((result) => result.elements[Number(id) - 1]);
+   const promise = fetch('/api/v1/cell_lines/'+id, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'GET'
+    })
+      .then((response) => response.json())
+      .then((json) => CellLine.createFromRestResponse(0, json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 
   static create(cellLine) {
