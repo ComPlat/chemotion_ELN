@@ -6,7 +6,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 class CollectionStore {
   constructor() {
     this.state = {
-      myCollections: [],
       visibleRootsIds: [],
       myCollectionTree: [],
       myLockedCollectionTree: [],
@@ -48,7 +47,9 @@ class CollectionStore {
     const myCollectionTree = CollectionStore.buildNestedStructure(myCollections);
     const sharedCollectionTree = CollectionStore.buildNestedStructure(sharedObjects || []);
     const myLockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
-    const collectionMap = CollectionStore.collectionsToMap(collectionObjects.concat(sharedObjects || []));
+    const collectionMap = CollectionStore.collectionsToMap(
+      [...collectionObjects, ...sharedObjects]
+    );
     this.setState({
       myCollectionTree,
       myLockedCollectionTree,
@@ -100,6 +101,7 @@ class CollectionStore {
     collections.forEach((collection) => {
       if (collection.children === undefined) {
         collection.children = [];
+	collection.depth = 0;
       }
       collectionMap[collection.id] = collection;
     });
@@ -113,6 +115,7 @@ class CollectionStore {
     collections.forEach((collection) => {
       const { ancestry } = collection;
       const parentIds = (ancestry || '').split('/').filter((id) => id !== '');
+      collection.depth = parentIds.length;
       if (parentIds.length === 0) {
         rootCollections.push(collection);
       } else {
@@ -152,11 +155,24 @@ class CollectionStore {
   }
 
   static findAllCollectionId() {
-    const { myCollections } = this.state;
+    const { myLockedCollectionTree } = this.state;
+    return myLockedCollectionTree.find((collection) => (collection.label === 'All'))?.id;
+  }
 
-    const foundCollection = myCollections.filter((root) => (root.label === 'All' && root.is_locked === true)).pop();
+  static findCollectionById(id) {
+    const { collectionMap } = this.state;
+    return collectionMap[id];
+  }
 
-    return foundCollection?.id;
+  static flattenCollectionTree(collectionTree) {
+    const flattened = [];
+    collectionTree.forEach((collection) => {
+      flattened.push(collection);
+      if (collection.children.length > 0) {
+        flattened.push(...CollectionStore.flattenCollectionTree(collection.children));
+      }
+    });
+    return flattened;
   }
 }
 
