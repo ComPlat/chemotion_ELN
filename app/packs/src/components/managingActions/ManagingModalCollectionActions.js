@@ -11,7 +11,7 @@ export default class ManagingModalCollectionActions extends React.Component {
     const options = this.collectionOptions();
     this.state = {
       newLabel: null,
-      options: options,
+      options,
       selected: null,
     }
     this.onSelectChange = this.onSelectChange.bind(this);
@@ -25,52 +25,55 @@ export default class ManagingModalCollectionActions extends React.Component {
     });
   }
 
-  writableColls(colls) {
-    return colls.map(coll => {
-      return coll.permission_level >= 1 ? coll : null;
-    }).filter(r => r != null);
+  selectedIsCurrentCollection() {
+    const { selected } = this.state;
+    const { currentCollection } = UIStore.getState();
+
+    return selected === currentCollection?.id;
   }
 
-  collectionEntries() {
-    const collStore = CollectionStore.getState();
-    const ui_state = UIStore.getState();
-
-    let collections = collStore.myCollections;
-    collections.splice(collections.findIndex(c => c.id === ui_state.currentCollection.id),1);
-
-    if (collections.length > 0) { collections[0] = Object.assign(collections[0], { first: true }); }
-
-    const cAll = [...collections];
-    let cAllTree = [];
-    this.makeTree(cAllTree, cAll, 0);
-    return cAllTree;
+  collectionIsToBeCreated() {
+    const { newLabel } = this.state;
+    return newLabel && newLabel.length > 0;
   }
 
-  makeTree(tree, collections, depth) {
-    collections.forEach((collection, index) => {
-      tree.push({
-        id: collection.id,
-        label: collection.label,
-        depth: depth,
-        first: collection.first,
-        is_shared: collection.is_shared
-      });
-      if (collection.children && collection.children.length > 0) {
-        this.makeTree(tree, collection.children, depth + 1)
-      }
-    });
+  collectionIsSelected() {
+    const { selected } = this.state;
+    return !!selected;
+  }
+
+  validSubmit() {
+    return (this.collectionIsSelected() && !this.selectedIsCurrentCollection())
+      || this.collectionIsToBeCreated();
   }
 
   collectionOptions() {
-    const cAllTree = this.collectionEntries();
-    if (cAllTree.length === 0) return [];
-    const options = cAllTree.map(leaf => {
-      const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
-      const className = leaf.first ? "separator" : "";
+    const {
+      myLockedCollectionTree, myCollectionTree, sharedCollectionTree
+    } = CollectionStore.getState();
+
+    const flattenLocked = CollectionStore.flattenCollectionTree(myLockedCollectionTree);
+    const flattenCollectionTree = CollectionStore.flattenCollectionTree(myCollectionTree);
+    const flattenSharedCollectionTree = CollectionStore.flattenCollectionTree(sharedCollectionTree);
+
+    if (flattenCollectionTree.length > 0) {
+      flattenCollectionTree[0].first = true;
+    }
+    if (flattenSharedCollectionTree.length > 0) {
+      flattenSharedCollectionTree[0].first = true;
+    }
+
+    const options = [
+      ...flattenLocked,
+      ...flattenCollectionTree,
+      ...flattenSharedCollectionTree
+    ].map((leaf) => {
+      const indent = '\u00A0'.repeat(leaf.depth * 3 + 1);
+      const className = leaf.first ? 'separator' : '';
       return {
-        value: `${leaf.id}-${leaf.is_shared ? "is_shared" : ""}`,
+        value: leaf.id,
         label: indent + leaf.label,
-        className: className
+        className,
       };
     });
     return options;
@@ -78,25 +81,27 @@ export default class ManagingModalCollectionActions extends React.Component {
 
   handleSubmit() {
     const { selected, newLabel, selectedUsers } = this.state;
-    const collection_id = selected && parseInt(selected.split("-")[0]);
-    const is_shared = selected && selected.split("-")[1] == "is_shared";
     const ui_state = UIStore.getState();
-
     this.props.action({
-      ui_state, collection_id, is_shared, newLabel, user_ids: selectedUsers
+      ui_state,
+      collection_id: selected,
+      newLabel,
+      user_ids: selectedUsers
     });
     this.props.onHide();
   }
 
   submitButton() {
-    const { newLabel, selected } = this.state
+    const { newLabel } = this.state;
     const l = newLabel && newLabel.length
     return l && l > 0 ? (
       <Button bsStyle="warning" onClick={this.handleSubmit}>
-        Create collection &lsquo;{newLabel}&rsquo; and Submit
+        Create collection &lsquo;
+        {newLabel}
+        &rsquo; and Submit
       </Button>
     ) : (
-      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
+      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!this.validSubmit()}>
         Submit
       </Button>
     );
@@ -130,6 +135,7 @@ export default class ManagingModalCollectionActions extends React.Component {
           />
         </FormGroup>
         {this.submitButton()}
+        {(this.selectedIsCurrentCollection() && !this.collectionIsToBeCreated()) ? 'You cannot submit to the current collection' : ''}
       </div>
     )
   }
