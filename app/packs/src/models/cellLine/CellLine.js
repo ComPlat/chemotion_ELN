@@ -30,7 +30,7 @@ export default class CellLine extends Element {
     cellLine.itemName=response.name;
     cellLine.id=response.id;
 
-    cellLine.cellLineName=response.cellline_material.names;
+    cellLine.cellLineName=response.cellline_material.names[0];
     cellLine.mutation=response.cellline_material.mutation;
     cellLine.disease=response.cellline_material.disease;
     cellLine.organism=response.cellline_material.organism;
