@@ -142,11 +142,12 @@ class Collection < ApplicationRecord
   end
 
   def owned_by?(user_ids_or_user)
-    if user_ids_or_user.is_a?(Array)
+    case user_ids_or_user
+    when Array
       user_ids_or_user.include?(user_id)
-    elsif ids.is_a?(Integer)
+    when Integer
       user_ids_or_user == user_id
-    elsif ids.is_a?(User)
+    when User
       user_ids_or_user.id == user_id
     else
       false
