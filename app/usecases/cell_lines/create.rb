@@ -64,6 +64,7 @@ module Usecases
           growth_medium: @params[:growth_medium],
           name: @params[:name],
           description: @params[:description],
+          short_label: @params[:short_label],
         )
       end
 

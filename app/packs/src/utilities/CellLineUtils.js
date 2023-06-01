@@ -19,6 +19,7 @@ const extractApiParameter = (cellLine) => {
         "source":cellLine.source,
         "name":cellLine.itemName,
         "description":cellLine.itemDescription,
+        "short_label":cellLine.short_label,
 };
 }
 

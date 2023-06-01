@@ -28,6 +28,7 @@ class CreateCelllineModels < ActiveRecord::Migration[6.1]
       t.bigint :user_id
       t.timestamp :deleted_at
       t.timestamps
+      t.string :short_label
     end
 
     create_table :collections_celllines do |t|
