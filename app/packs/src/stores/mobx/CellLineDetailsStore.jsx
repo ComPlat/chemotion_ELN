@@ -144,7 +144,7 @@ export const CellLineDetailsStore = types
       self.cellLineItem.set(jsCellLineModel.id, CellLineItem.create({
 
         cellLineId: jsCellLineModel.cellLineId,
-        id: jsCellLineModel.id,
+        id: jsCellLineModel.id.toString(),
         organism: jsCellLineModel.organism,
         tissue: jsCellLineModel.tissue,
         cellType: jsCellLineModel.cellType,

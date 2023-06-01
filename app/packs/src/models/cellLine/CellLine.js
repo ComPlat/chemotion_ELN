@@ -30,6 +30,7 @@ export default class CellLine extends Element {
     cellLine.growthMedium=response.growth_medium;
     cellLine.itemComment=response.description;
     cellLine.itemName=response.name;
+    cellLine.passage=response.passage;
     cellLine.id=response.id;
 
     cellLine.cellLineName=response.cellline_material.names[0];
