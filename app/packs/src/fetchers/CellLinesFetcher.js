@@ -1,4 +1,5 @@
 import CellLine from 'src/models/cellLine/CellLine';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 import {
   extractApiParameter
 
@@ -8,10 +9,15 @@ export default class CellLinesFetcher {
   static mockData = {};
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
+    
+   return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
+   
+    
+
     return new Promise((resolve, reject) => {
       const result = {};
 
-      result.elements = CellLinesFetcher.mockData;
+   result.elements = CellLinesFetcher.mockData;
       result.page = 1;
       result.pages = 1;
       result.perPage = 15;

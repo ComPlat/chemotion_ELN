@@ -2,10 +2,65 @@
 
 module Chemotion
   class CellLineAPI < Grape::API
+    include Grape::Kaminari
+    helpers ParamsHelpers
+
     rescue_from ActiveRecord::RecordNotFound do
       error!('Ressource not found', 401)
     end
     resource :cell_lines do
+      desc 'return cell lines of a collection'
+      params do
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
+        optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
+      end
+      paginate per_page: 5, offset: 0
+      before do
+        params[:per_page].to_i > 50 && (params[:per_page] = 50)
+      end
+      get do
+        scope = if params[:collection_id]
+          begin
+            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
+              find(params[:collection_id]).cellline_samples
+          rescue ActiveRecord::RecordNotFound
+            CelllineSample.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.cell_lines
+          rescue ActiveRecord::RecordNotFound
+            CelllineSample.none
+          end
+        else
+          # All collection of current_user
+          CelllineSample.none.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+        end.order("created_at DESC")
+     
+        from = params[:from_date]
+        to = params[:to_date]
+        by_created_at = params[:filter_created_at] || false
+         
+        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+
+       
+        reset_pagination_page(scope)   
+        cell_line_samples = paginate(scope).map do |cell_line_sample|
+          Entities::CellLineSampleEntity.represent(
+            cell_line_sample,
+            displayed_in_list: true,
+            #detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: cell_line_sample).detail_levels
+          )
+        end 
+        { cell_lines: cell_line_samples }
+      end
+
       desc 'Get a cell line by id'
       params do
         requires :id, type: Integer, desc: 'id of cell line sample to load'

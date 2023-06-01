@@ -7,6 +7,7 @@ module Entities
         expose :source
         expose :growth_medium
         expose :name
+        expose :short_label
         expose :description
         expose :cellline_material 
     end

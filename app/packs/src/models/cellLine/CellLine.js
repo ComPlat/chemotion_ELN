@@ -2,6 +2,8 @@ import Element from 'src/models/Element';
 import Container from 'src/models/Container.js';
 
 export default class CellLine extends Element {
+ 
+
   static buildEmpty(collection_id,shortLabelIn) {
     if (collection_id === undefined || !Number.isInteger(Number(collection_id))) {
       throw new Error(`collection id is not valid: ${collection_id}`);
@@ -21,7 +23,7 @@ export default class CellLine extends Element {
   }
 
   static createFromRestResponse(collectionId,response){
-    const cellLine = CellLine.buildEmpty(collectionId,'XXXX');
+    const cellLine = CellLine.buildEmpty(collectionId,response.short_label);
     cellLine.amount=response.amount;
     cellLine.contamination=response.contamination;
     cellLine.source=response.source;
