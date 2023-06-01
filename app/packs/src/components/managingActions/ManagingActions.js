@@ -201,7 +201,7 @@ export default class ManagingActions extends React.Component {
     const {
       currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
     } = this.state;
-    const { is_locked, is_shared, sharer, label } = currentCollection;
+    const { is_locked, is_shared, label } = currentCollection;
     const isAll = is_locked && label === 'All';
     const noSel = !hasSel
 
