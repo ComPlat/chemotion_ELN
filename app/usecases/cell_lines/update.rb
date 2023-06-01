@@ -25,7 +25,7 @@ module Usecases
 
       def find_material # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         CelllineMaterial.find_by(
-          names: @params[:material_names] || @material.names,
+          names: @params[:material_names].split(';') || @material.names,
           cell_type: @params[:cell_type] || @material.cell_type,
           organism: @params[:organism] || @material.organism,
           tissue: @params[:tissue] || @material.tissue,
@@ -41,7 +41,7 @@ module Usecases
 
       def create_new_material # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
         CelllineMaterial.create(
-          names: @params[:material_names] || @material.names,
+          names: @params[:material_names].split(';') || @material.names,
           cell_type: @params[:cell_type] || @material.cell_type,
           organism: @params[:organism] || @material.organism,
           tissue: @params[:tissue] || @material.tissue,

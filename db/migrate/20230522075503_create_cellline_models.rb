@@ -1,7 +1,7 @@
 class CreateCelllineModels < ActiveRecord::Migration[6.1]
   def change
     create_table :cellline_materials do |t|
-      t.string :names
+      t.string :names, array: true, default: []
       t.string :cell_type
       t.jsonb :organism
       t.jsonb :tissue

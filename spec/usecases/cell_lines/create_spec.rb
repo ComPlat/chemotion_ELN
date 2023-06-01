@@ -18,7 +18,7 @@ RSpec.describe Usecases::CellLines::Create do
       growth_medium: 'water',
       name: 'probe-123',
       description: 'none',
-      material_names: '[name-001,name-002]',
+      material_names: 'name-001;name-002',
       cell_type: 'primary cells',
       organism: 'mouse',
       tissue: 'leg',
@@ -148,7 +148,7 @@ RSpec.describe Usecases::CellLines::Create do
 
       it 'new cell line material was not saved' do # rubocop:disable RSpec/MultipleExpectations
         expect(loaded_cell_line_material).not_to be_nil
-        expect(loaded_cell_line_material.names).to eq('[name-001,name-002]')
+        expect(loaded_cell_line_material.names).to eq(%w[name-001 name-002])
         expect(loaded_cell_line_material.cell_type).to eq('primary cells')
         expect(loaded_cell_line_material.organism).to eq('mouse')
         expect(loaded_cell_line_material.tissue).to eq('leg')
@@ -183,7 +183,7 @@ RSpec.describe Usecases::CellLines::Create do
 
       it 'new cell line material was saved' do # rubocop:disable RSpec/MultipleExpectations
         expect(loaded_cell_line_material).not_to be_nil
-        expect(loaded_cell_line_material.names).to eq('[name-001,name-002]')
+        expect(loaded_cell_line_material.names).to eq(%w[name-001 name-002])
         expect(loaded_cell_line_material.cell_type).to eq('primary cells')
         expect(loaded_cell_line_material.organism).to eq('mouse')
         expect(loaded_cell_line_material.tissue).to eq('leg')

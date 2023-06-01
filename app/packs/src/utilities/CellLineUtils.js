@@ -6,7 +6,7 @@ const extractApiParameter = (cellLine) => {
         "passage":cellLine.passage,
         "disease":cellLine.disease,
         "growth_medium":cellLine.growthMedium,
-        "material_names":"["+cellLine.cellLineName+"]",
+        "material_names":cellLine.cellLineName,
         "collection_id":cellLine.collectionId,
         "cell_type":cellLine.type,
         "biosafety_level":cellLine.bioSafetyLevel,

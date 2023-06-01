@@ -23,7 +23,7 @@ module Usecases
 
       def find_cellline_material
         CelllineMaterial.find_by(
-          names: @params[:material_names],
+          names: @params[:material_names].split(';'),
           cell_type: @params[:cell_type],
           organism: @params[:organism],
           tissue: @params[:tissue],
@@ -39,7 +39,7 @@ module Usecases
 
       def create_cellline_material
         CelllineMaterial.create(
-          names: @params[:material_names],
+          names: @params[:material_names].split(';'),
           cell_type: @params[:cell_type],
           organism: @params[:organism],
           tissue: @params[:tissue],

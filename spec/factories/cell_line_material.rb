@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :cellline_material do
-    names { '[name-001,name-002]' }
+    names { %w[name-001 name-002] }
     cell_type { 'primary cells' }
     organism { 'mouse' }
     tissue { 'leg' }
