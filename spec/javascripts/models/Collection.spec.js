@@ -60,14 +60,14 @@ describe('Collection', () => {
       expect(collection.defCol()).toEqual(null);
     });
   });
-  describe('hasSharedWrite', () => {
+  describe('hasAclWrite', () => {
     it('should return true if the collection is shared with the current user and has write permission', () => {
       const collection = CollectionFactory.build('sharedWithWrite');
-      expect(collection.hasSharedWrite()).toEqual(true);
+      expect(collection.hasAclWrite()).toEqual(true);
     });
     it('should return false if the collection is shared with the current user but has read permission', () => {
       const collection = CollectionFactory.build('sharedWithRead');
-      expect(collection.hasSharedWrite()).toEqual(false);
+      expect(collection.hasAclWrite()).toEqual(false);
     });
   });
   describe('canCreateElement', () => {
