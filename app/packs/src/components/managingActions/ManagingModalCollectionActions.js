@@ -3,17 +3,20 @@ import PropTypes from 'prop-types';
 import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import Select from 'react-select'
+import Select from 'react-select';
+
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
-    const options = this.collectionOptions();
+    const options = CollectionStore.formatedCollectionOptions(
+      { includeAll: false, onlyOwned: true }
+    );
     this.state = {
       newLabel: null,
       options,
       selected: null,
-    }
+    };
     this.onSelectChange = this.onSelectChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -45,38 +48,6 @@ export default class ManagingModalCollectionActions extends React.Component {
   validSubmit() {
     return (this.collectionIsSelected() && !this.selectedIsCurrentCollection())
       || this.collectionIsToBeCreated();
-  }
-
-  collectionOptions() {
-    const {
-      myLockedCollectionTree, myCollectionTree, sharedCollectionTree
-    } = CollectionStore.getState();
-
-    const flattenLocked = CollectionStore.flattenCollectionTree(myLockedCollectionTree);
-    const flattenCollectionTree = CollectionStore.flattenCollectionTree(myCollectionTree);
-    const flattenSharedCollectionTree = CollectionStore.flattenCollectionTree(sharedCollectionTree);
-
-    if (flattenCollectionTree.length > 0) {
-      flattenCollectionTree[0].first = true;
-    }
-    if (flattenSharedCollectionTree.length > 0) {
-      flattenSharedCollectionTree[0].first = true;
-    }
-
-    const options = [
-      ...flattenLocked,
-      ...flattenCollectionTree,
-      ...flattenSharedCollectionTree
-    ].map((leaf) => {
-      const indent = '\u00A0'.repeat(leaf.depth * 3 + 1);
-      const className = leaf.first ? 'separator' : '';
-      return {
-        value: leaf.id,
-        label: indent + leaf.label,
-        className,
-      };
-    });
-    return options;
   }
 
   handleSubmit() {
