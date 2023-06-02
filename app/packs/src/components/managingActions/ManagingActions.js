@@ -62,10 +62,11 @@ const upState = (state) => {
 export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
+
     const { currentUser, genericEls } = UserStore.getState();
     this.state = {
       currentUser,
-      currentCollection: { id: 0 },
+      currentCollection: null,
       sharing_allowed: false,
       deletion_allowed: false,
       remove_allowed: false,
@@ -142,9 +143,9 @@ export default class ManagingActions extends React.Component {
     if (typeof currentCollection === 'undefined' || currentCollection == null) {
       return false;
     }
-    const { id, is_shared } = currentCollection;
-    return this.state.currentCollection.id !== id ||
-      this.state.currentCollection.is_shared !== is_shared;
+    const { id } = currentCollection;
+    if (!this.state.currentCollection) { return false; }
+    return this.state.currentCollection.id !== id;
   }
 
   checkUIState(state) {
@@ -201,9 +202,8 @@ export default class ManagingActions extends React.Component {
     const {
       currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
     } = this.state;
-    const { is_locked, is_shared, label } = currentCollection;
-    const isAll = is_locked && label === 'All';
-    const noSel = !hasSel
+    const isAll = currentCollection?.allCollection();
+    const noSel = !hasSel;
 
     const moveDisabled = noSel || isAll;
     const assignDisabled = noSel;

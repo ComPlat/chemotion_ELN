@@ -406,10 +406,6 @@ class UIStore {
     this.state.productOnly = productOnly;
     this.handleSelectCollection(this.state.currentCollection, true);
   }
-
-  static currentCollectionIsAll() {
-    return this.state.currentCollection && this.state.currentCollection.allCollection()
-  }
 }
 
 export default alt.createStore(UIStore, 'UIStore');
