@@ -20,6 +20,7 @@ describe Entities::CollectionEntity do
           :ancestry,
           :user_id,
           :is_locked,
+          :position,
         )
       end
     end
