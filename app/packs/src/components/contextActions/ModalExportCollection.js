@@ -15,10 +15,10 @@ export default class ModalExportCollection extends React.Component {
     super(props);
 
     const {
-      myLockedCollectionTree, myCollectionTree, sharedCollectionTree
+      lockedCollectionTree, myCollectionTree, sharedCollectionTree
     } = CollectionStore.getState();
 
-    const flattenLocked = CollectionStore.flattenCollectionTree(myLockedCollectionTree);
+    const flattenLocked = CollectionStore.flattenCollectionTree(lockedCollectionTree);
     const flattenCollectionTree = CollectionStore.flattenCollectionTree(myCollectionTree);
     const flattenSharedTree = CollectionStore.flattenCollectionTree(sharedCollectionTree)
       .filter((collection) => collection.canExport());

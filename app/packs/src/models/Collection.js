@@ -10,8 +10,13 @@ export default class Collection {
     if (!this.children) {
       this.children = [];
     }
+    if (!this.first) {
+      // used to add a separator css class
+      this.first = false;
+    }
     this.depth = 0;
     if (this.ancestry) {
+      // used for indentation when displaying a collection tree
       this.depth = this.ancestry.split('/').length;
     }
   }
@@ -57,22 +62,25 @@ export default class Collection {
 
   // check if the collection is shared with the current user
   // and permission level is at least write
-  hasAclWrite() {
+  hasPermissionLevel(permissionLevel) {
     return !!this.acl.find((acl) => (
-      acl.permission_level >= PermissionConst.Write
+      acl.permission_level >= permissionLevel
     ));
   }
 
+  hasAclWrite() {
+    return this.hasPermissionLevel(PermissionConst.Write);
+  }
+
   hasAclExport() {
-    return !!this.acl.find((acl) => (
-      acl.permission_level >= PermissionConst.Export
-    ));
+    return this.hasPermissionLevel(PermissionConst.Export);
   }
 
   // can create elements in the collection
   canCreateElement() {
     return this.ownedByMeAndNotAll() || this.hasAclWrite();
   }
+
   canExport() {
     return this.ownedByMe() || this.hasAclWrite();
   }
