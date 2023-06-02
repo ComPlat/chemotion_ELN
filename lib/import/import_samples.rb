@@ -71,6 +71,11 @@ module Import
             @unprocessable << { row: row_data }
           end
         end
+        if processed.empty?
+          no_success
+        else
+          @unprocessable.empty? ? success : warning
+        end
       end
     end
 
@@ -132,136 +137,5 @@ module Import
         return error_process(e.message)
       end
     end
-<<<<<<< HEAD
-    return molfile_coord, molecule, go_to_next
-  end
-
-  def molecule_not_exist(molecule)
-    @unprocessable << { row: row, index: i } if molecule.nil?
-    molecule.nil?
-  end
-
-  # format row[field] for melting and boiling point
-  def format_to_interval_syntax(row_field)
-    return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if row_field.nil?
-
-    # Regex checks for a range of numbers that are separated by a dash, or a single number
-    matches = row_field.scan(/^(-?\d+(?:[.,]\d+)?)(?:\s*-\s*(-?\d+(?:[.,]\d+)?))?$/).flatten.compact
-    return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if matches.empty?
-
-    numbers = matches.filter_map(&:to_f)
-    lower_bound, upper_bound = numbers.size == 1 ? [numbers[0], Float::INFINITY] : numbers
-    "[#{lower_bound}, #{upper_bound}]"
-  end
-
-  def sample_save(row, molfile, molecule)
-    sample = Sample.new(created_by: current_user_id)
-    sample.molfile = molfile
-    sample.molecule = molecule
-    # Populate new sample
-    stereo = {}
-    header.each_with_index do |field, index|
-      if field.to_s.strip =~ /^stereo_(abs|rel)$/
-        stereo[$1] = row[field]
-      end
-      map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == '"' + field + '"' }
-      db_column = map_column.nil? ? field : map_column[0].sub('s.', '')
-      db_column.delete!('"')
-      next unless included_fields.include?(db_column)
-      comparison_values = %w[melting_point boiling_point]
-      sample[db_column] = comparison_values.include?(db_column) ? format_to_interval_syntax(row[field]) : row[field]
-      sample[db_column] = '' if %w[description solvent location external_label].include?(db_column) && row[field].nil?
-      sample[db_column] = row[field] == 'Yes' if %w[decoupled].include?(db_column)
-    end
-
-    if row['solvent'].is_a? String
-      solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(row['solvent']) }
-      sample['solvent'] = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }] if solvent.present?
-    end
-
-    sample['xref']['cas'] = row['cas'] if row['cas'].present?
-    sample.validate_stereo(stereo)
-    sample.collections << Collection.find(collection_id)
-    sample.collections << Collection.get_all_collection_for_user(current_user_id)
-    sample.save!
-    processed.push(sample)
-  end
-
-  def excluded_fields
-    [
-      'id',
-      # 'name',
-      # 'target_amount_value',
-      # 'target_amount_unit',
-      'created_at',
-      'updated_at',
-      # 'description',
-      'molecule_id',
-      'molfile',
-      # 'purity',
-      # 'solvent',
-      'impurities',
-      # 'location',
-      'is_top_secret',
-      'ancestry',
-      # 'external_label',
-      'created_by',
-      'short_label',
-      # 'real_amount_value',
-      # 'real_amount_unit',
-      # 'imported_readout',
-      'deleted_at',
-      'sample_svg_file',
-      'user_id',
-      'identifier',
-      # 'density',
-      # 'melting_point',
-      # 'boiling_point',
-      'fingerprint_id',
-      'xref',
-      # 'molarity_value',
-      # 'molarity_unit',
-      'molecule_name_id',
-    ]
-  end
-
-  def included_fields
-    Sample.attribute_names - excluded_fields
-  end
-
-  def error_process_file
-    { status: "invalid",
-      message: "Can not process this type of file.",
-      data: [] }
-  end
-
-  def error_required_fields
-    { status: "invalid",
-      message: "Column headers should have: molfile or Canonical Smiles.",
-      data: [] }
-  end
-
-  def error_insert_rows
-    { status: "invalid",
-      message: "Error while parsing the file.",
-      data: [] }
-  end
-
-  def warning
-    { status: "warning",
-      message: "No data saved, because following rows cannot be processed: #{unprocessable_rows}.",
-      data: unprocessable }
-  end
-
-  def unprocessable_rows
-    unprocessable.map { |u| u[:index] + 2 }.join(', ')
-  end
-
-  def success
-    { status: "ok",
-      message: "",
-      data: processed }
-=======
->>>>>>> 75ce1759d (initial implementation of import sample delayed job)
   end
 end

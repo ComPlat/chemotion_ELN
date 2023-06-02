@@ -6,34 +6,35 @@ class ImportSamplesJob < ApplicationJob
 
   queue_as :import_samples
 
-#   after_perform do |job|
-#     begin
-#       Message.create_msg_notification(
-#         channel_subject: Channel::COLLECTION_ZIP,
-#         message_from: @user_id,
-#         data_args: { col_labels: '', operation: 'import', expires_at: nil },
-#         autoDismiss: 5
-#       ) if @success
-#     rescue StandardError => e
-#       Delayed::Worker.logger.error e
-#     end
-#   end
+  after_perform do
+    begin
+      puts 'afterJob'
+      puts @user_id
+      puts @result
+      create_message = Message.create_msg_notification(
+        channel_subject: Channel::IMPORT_SAMPLES_NOTIFICATION,
+        message_from: @user_id,
+        message_to: [@user_id],
+        data_args: { message: '@result[:message]' },
+        level: 'info',
+        autoDismiss: 5,
+      )
+      create_message
+    rescue StandardError => e
+      Delayed::Worker.logger.error e
+    end
+  end
 
   def perform(file_path, collection_id, user_id)
     @user_id = user_id
-    @success = true
     begin
       import = Import::ImportSamples.new(file_path, collection_id, user_id)
       import.process(delayed_job: true)
+      # debug return of import.process
+      # @result = { message: 'message' }
     rescue => e
       puts e
       Delayed::Worker.logger.error e
-      # Message.create_msg_notification(
-      #   channel_subject: Channel::COLLECTION_ZIP_FAIL,
-      #   message_from: @user_id,
-      #   data_args: { col_labels: '', operation: 'import' },
-      #   autoDismiss: 5,
-      # )
       @success = false
     ensure
       # Clean up the temporary file after processing
