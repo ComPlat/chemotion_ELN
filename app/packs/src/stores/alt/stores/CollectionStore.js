@@ -99,10 +99,6 @@ class CollectionStore {
     // add a children property to each collection
     const collectionMap = {};
     collections.forEach((collection) => {
-      if (collection.children === undefined) {
-        collection.children = [];
-	collection.depth = 0;
-      }
       collectionMap[collection.id] = collection;
     });
     return collectionMap;
@@ -115,7 +111,6 @@ class CollectionStore {
     collections.forEach((collection) => {
       const { ancestry } = collection;
       const parentIds = (ancestry || '').split('/').filter((id) => id !== '');
-      collection.depth = parentIds.length;
       if (parentIds.length === 0) {
         rootCollections.push(collection);
       } else {

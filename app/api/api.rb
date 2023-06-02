@@ -134,7 +134,13 @@ class API < Grape::API
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
+<<<<<<< HEAD
   mount Chemotion::ShareCollectionAPI
+=======
+  mount Chemotion::TempCollectionAPI
+  mount Chemotion::ShareCollectionAPI
+  mount Chemotion::SyncCollectionAPI
+>>>>>>> update temp collection endpoints
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI

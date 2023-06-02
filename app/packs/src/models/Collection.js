@@ -7,6 +7,13 @@ export default class Collection {
     if (!this.id) {
       this.id = Collection.buildID();
     }
+    if (!this.children) {
+      this.children = [];
+    }
+    this.depth = 0;
+    if (this.ancestry) {
+      this.depth = this.ancestry.split('/').length;
+    }
   }
 
   static buildID() {
@@ -22,10 +29,12 @@ export default class Collection {
   }
 
   allCollection() {
-    return this.label == 'All' && this.is_locked;
+    return this.label === 'All' && this.is_locked;
   }
 
   sharedWithMe() {
+    // we do not check on acls but assume that if the collection is present,
+    // it is either shared or owned by the current user
     return this.user_id !== this.currentUser.id;
   }
 
@@ -58,5 +67,4 @@ export default class Collection {
   canCreateElement() {
     return this.ownedByMeAndNotAll() || this.hasSharedWrite();
   }
-
 }
