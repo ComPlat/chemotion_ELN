@@ -1,15 +1,16 @@
 /* eslint-env node, mocha */
 
 import expect from 'expect';
+import CollectionFactory from '../factories/CollectionFactory';
 
 import {
   buildPathForCollectionAndElement,
 } from '../../../app/packs/src/utilities/routesUtils';
 
 describe('buildPathForCollectionAndElement', () => {
-  // TODO: use Factories to create the collections and elements
-  const collection = { id: '1' };
-  const allCollection = { id: '2', label: 'All', is_locked: true };
+  // TODO: use Factories to create the elements
+  const collection = CollectionFactory.build('dummy', { id: 1 });
+  const allCollection = CollectionFactory.build('All');
   const element = { id: '2', type: 'sample' };
   const newElement = { id: null, type: 'reaction', isNew: true };
   const weirdElement = { type: 'metadata' };
