@@ -50,7 +50,7 @@ export default class CellLineItemEntry extends Component {
     return (
       <Table className="elements" bordered hover style={{ borderTop: 0 }}>
         <tbody>
-          <tr>
+          <tr className="cell-line-group-white-background">
             <td>
               <ElementCheckbox
                 element={cellLineItem}

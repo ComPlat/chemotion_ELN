@@ -2,6 +2,39 @@
     border-color: red !important
 }
 
+.cell-line-group-gray-background{
+    background: rgb(245, 245, 245)
+}
+.cell-line-group-white-background{
+    background:white
+}
+
+
+
 .contaminated {
     color: red !important
+}
+
+.floating{
+    float:left;
+}
+
+.property-block{
+    width:20%;
+}
+
+.cell-line-group-header-name{
+    font-size: large;
+    margin-left: 20px;
+    font-weight: bold;    
+}
+.cell-line-group-header-property{
+    margin-left: 35px;
+
+    .property-key{
+        width: 200px;
+    }
+    .property-key-minus{
+        width: 20px;
+    }
 }
