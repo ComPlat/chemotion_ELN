@@ -295,8 +295,7 @@ class UIStore {
     }
 
     if (hasChanged && !collection.noFetch) {
-      const { collectionMap } = CollectionStore.getState();
-      this.state.currentCollection = collectionMap[collection.id];
+      this.state.currentCollection = CollectionStore.findCollectionById(collection.id);
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
 
