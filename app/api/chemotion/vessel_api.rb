@@ -56,6 +56,15 @@ module Chemotion
         vessel = use_case.execute!
         return present vessel, with: Entities::VesselEntity
       end
+
+      desc 'Delete vessel by id'
+      params do
+        requires :id, type: Integer, desc: "Vessel id"
+      end
+
+      delete do
+        Vessel.find(@params[:id]).destroy # usecase required?
+      end
     end
   end
 end
