@@ -14,7 +14,8 @@ import ModalImportCollection from 'src/components/contextActions/ModalImportColl
 import { elementShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
-  const showRadar = UIStore.getState().hasRadar? (
+  const { currentCollection, hasRadar } = UIStore.getState();
+  const showRadar = hasRadar ? (
     <>
       <MenuItem divider />
       <MenuItem onSelect={() => editMetadataFunction()}
@@ -27,7 +28,7 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
       Publish current collection via RADAR
     </MenuItem>
     </>
-  ): <span />;
+  ) : <span />;
 
   return (
     <Dropdown id='export-dropdown'>
@@ -44,7 +45,7 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
           Export reactions from selection
         </MenuItem>
         <MenuItem divider />
-        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
+        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled || !currentCollection?.canCreateElement()}
           title='Import from spreadsheet or sdf'>
           Import samples to collection
         </MenuItem>
