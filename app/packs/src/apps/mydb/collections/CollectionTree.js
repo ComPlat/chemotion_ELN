@@ -23,12 +23,12 @@ export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
 
-    const { myCollectionTree, myLockedCollectionTree, sharedCollectionTree } = CollectionStore.getState();
+    const { myCollectionTree, lockedCollectionTree, sharedCollectionTree } = CollectionStore.getState();
     const inboxState = InboxStore.getState();
 
     this.state = {
       myCollectionTree,
-      myLockedCollectionTree,
+      lockedCollectionTree,
       sharedCollectionTree,
       ownCollectionVisible: true,
       sharedWithCollectionVisible: false,
@@ -82,8 +82,8 @@ export default class CollectionTree extends React.Component {
   }
 
   lockedTrees() {
-    const { myLockedCollectionTree } = this.state;
-    const subtrees = myLockedCollectionTree.map((root) => (
+    const { lockedCollectionTree } = this.state;
+    const subtrees = lockedCollectionTree.map((root) => (
       <CollectionSubtree root={root} key={`lockedCollection-${root.id}`} />
     ));
 

@@ -203,10 +203,11 @@ export default class ManagingActions extends React.Component {
       currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
     } = this.state;
     const isAll = currentCollection?.allCollection();
+    const isShared = currentCollection?.sharedWithMe();
     const noSel = !hasSel;
 
-    const moveDisabled = noSel || isAll;
-    const assignDisabled = noSel;
+    const moveDisabled = noSel || isAll || isShared;
+    const assignDisabled = noSel || isShared;
     const removeDisabled = noSel || isAll || !deletion_allowed; //!remove_allowed
     const deleteDisabled = noSel || !deletion_allowed;
     const shareDisabled = noSel || !sharing_allowed;

@@ -8,7 +8,7 @@ class CollectionStore {
     this.state = {
       visibleRootsIds: [],
       myCollectionTree: [],
-      myLockedCollectionTree: [],
+      lockedCollectionTree: [],
       sharedCollectionTree: [],
       collectionMap: {},
     };
@@ -27,6 +27,13 @@ class CollectionStore {
       ],
       handleUpdateCollectionTree: CollectionActions.updateCollectionTree
     })
+    this.exportPublicMethods({
+      findAllCollectionId: this.findAllCollectionId,
+      findCollectionById: this.findCollectionById,
+      flattenCollectionOptions: this.flattenCollectionOptions,
+      formatedCollectionOptions: this.formatedCollectionOptions,
+    });
+
   }
 
   handleTakeOwnership() {
@@ -46,13 +53,13 @@ class CollectionStore {
 
     const myCollectionTree = CollectionStore.buildNestedStructure(myCollections);
     const sharedCollectionTree = CollectionStore.buildNestedStructure(sharedObjects || []);
-    const myLockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
+    const lockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
     const collectionMap = CollectionStore.collectionsToMap(
       [...collectionObjects, ...sharedObjects]
     );
     this.setState({
       myCollectionTree,
-      myLockedCollectionTree,
+      lockedCollectionTree,
       sharedCollectionTree,
       collectionMap,
     });
@@ -79,6 +86,92 @@ class CollectionStore {
     this.state.visibleRootsIds = visibleRootsIds
   }
 
+  findAllCollectionId() {
+    const { lockedCollectionTree } = this.state;
+    return lockedCollectionTree.find((collection) => (collection.label === 'All'))?.id;
+  }
+
+  findCollectionById(id) {
+    const { collectionMap } = this.state;
+    return collectionMap[id];
+  }
+
+  flattenCollectionOptions(args = {}) {
+    const { 
+      includeAll = true, // include the All collection
+      onlyOwned = false, // only include collections owned by the current user
+      permissionLevel = 0, // only include collections with perm level higher than the one specified
+      removeExcludedOptions = false, // filter out excluded options instead
+      // of adding disabled property
+    } = args;
+    const {
+      lockedCollectionTree, myCollectionTree, sharedCollectionTree
+    } = this.state;
+
+    // Flatten the collection trees
+    const flattenLockedTree = CollectionStore.flattenCollectionTree(lockedCollectionTree);
+    const flattenCollectionTree = CollectionStore.flattenCollectionTree(myCollectionTree);
+    const flattenSharedCollectionTree = CollectionStore.flattenCollectionTree(sharedCollectionTree);
+
+    let filteredSharedCollectionList = [];
+    // filter out the All collection
+    if (!includeAll) {
+      if (removeExcludedOptions) {
+        flattenLockedTree.shift();
+      } else {
+        flattenLockedTree.forEach((collection) => {
+          collection.disabled = collection.allCollection();
+        });
+      }
+    }
+    // filter out the collections with permission level lower than the one specified
+    if (permissionLevel > 0) {
+      if (removeExcludedOptions) {
+        filteredSharedCollectionList = flattenSharedCollectionTree.filter(
+          (collection) => collection.hasPermissionLevel(permissionLevel)
+        );
+      } else {
+        flattenSharedCollectionTree.forEach((collection) => {
+          collection.disabled = !collection.hasPermissionLevel(permissionLevel);
+        });
+        filteredSharedCollectionList = flattenSharedCollectionTree;
+      }
+    }
+
+    if (onlyOwned) { filteredSharedCollectionList = []; }
+
+    // Add a first property to the first element of each collection list
+    if (flattenCollectionTree.length > 0) {
+      flattenCollectionTree[0].first = true;
+    }
+    if (filteredSharedCollectionList.length > 0) {
+      filteredSharedCollectionList[0].first = true;
+    }
+
+    // Return the flattened collection tree list
+    return [
+      ...flattenLockedTree,
+      ...flattenCollectionTree,
+      ...filteredSharedCollectionList,
+    ];
+  }
+
+  // TODO: move the formatting to a more suitable place
+  formatedCollectionOptions(args = {}) {
+    return this.flattenCollectionOptions(args).map((collection) => {
+      const indent = '\u00A0'.repeat(collection.depth * 3 + 1);
+
+      const className = collection.first ? 'separator' : '';
+
+      return {
+        value: collection.id,
+        label: indent + collection.label,
+        className,
+        disabled: collection.disabled,
+      };
+    });
+  }
+
   static collectionsToObjects(collections) {
     const { currentUser } = UserStore.getState();
     return collections.map(collection => {
@@ -93,7 +186,6 @@ class CollectionStore {
     return { myCollections, myLockedCollections };
   }
 
-
   static collectionsToMap(collections) {
     // Create a map of collections using their ids as keys
     // add a children property to each collection
@@ -103,7 +195,7 @@ class CollectionStore {
     });
     return collectionMap;
   }
- 
+
   static buildNestedStructure(collections) {
     const rootCollections = [];
     const collectionMap = CollectionStore.collectionsToMap(collections);
@@ -147,16 +239,6 @@ class CollectionStore {
         CollectionStore.sortCollections(collection.children);
       }
     });
-  }
-
-  static findAllCollectionId() {
-    const { myLockedCollectionTree } = this.state;
-    return myLockedCollectionTree.find((collection) => (collection.label === 'All'))?.id;
-  }
-
-  static findCollectionById(id) {
-    const { collectionMap } = this.state;
-    return collectionMap[id];
   }
 
   static flattenCollectionTree(collectionTree) {
