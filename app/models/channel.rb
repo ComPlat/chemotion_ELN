@@ -36,6 +36,7 @@ class Channel < ApplicationRecord
   DOWNLOAD_ANALYSES_ZIP = 'Download Analyses'
   DOWNLOAD_ANALYSES_ZIP_FAIL = 'Download Analyses Failure'
   CALENDAR_ENTRY = 'Calender Entry Notification'
+  IMPORT_SAMPLES_NOTIFICATION = 'Import Samples Completed'
 
   class << self
     def build_message(**args)

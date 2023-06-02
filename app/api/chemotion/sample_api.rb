@@ -67,6 +67,7 @@ module Chemotion
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
         end
         post do
+          # Create a temp file in the tmp folder and sdf delayed job, and pass it to sdf delayed job
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(sdf?|mol)/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file][:tempfile].path,
