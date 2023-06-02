@@ -1,6 +1,6 @@
-import { factory } from "factory-bot";
-import Container from "src/models/Container";
-import AttachmentFactory from "factories/AttachmentFactory";
+import { factory } from 'factory-bot';
+import Container from 'src/models/Container';
+import AttachmentFactory from 'factories/AttachmentFactory';
 
 export default class ContainerFactory {
   static instance = undefined;
@@ -16,8 +16,6 @@ export default class ContainerFactory {
   constructor() {
     this.factory = factory;
 
-    
-
     this.factory.define("ContainerFactory.four_container_linear_hierarchy_two_attachments", Container, async () => {
       const container_000 = Container.buildEmpty();
       const container_001 = Container.buildEmpty();
@@ -31,7 +29,7 @@ export default class ContainerFactory {
       container_002.children.push(container_003);
       container_001.attachments.push(attachment_000);
       container_003.attachments.push(attachment_001);
-      
+
       return container_000;
     });
 

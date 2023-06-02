@@ -1,7 +1,7 @@
-import { factory } from "factory-bot";
-import ResearchPlan from "src/models/ResearchPlan";
-import Container from "src/models/Container";
-import AttachmentFactory from "factories/AttachmentFactory";
+import { factory } from 'factory-bot';
+import ResearchPlan from 'src/models/ResearchPlan';
+import Container from 'src/models/Container';
+import AttachmentFactory from 'factories/AttachmentFactory';
 
 export default class ResearchPlanFactory {
   static instance = undefined;
@@ -16,13 +16,13 @@ export default class ResearchPlanFactory {
 
   constructor() {
     this.factory = factory;
-   
+
     this.factory.define("ResearchPlanFactory.empty", ResearchPlan, {
       collection_id: 0,
-      type: "research_plan",
-      name: "New Research Plan",
+      type: 'research_plan',
+      name: 'New Research Plan',
       body: [],
-      mode: "edit",
+      mode: 'edit',
       container: Container.init(),
       changed: true,
       can_update: true,
@@ -32,27 +32,26 @@ export default class ResearchPlanFactory {
       segments: [],
     });
 
-
-    this.factory.extend("ResearchPlanFactory.empty", "ResearchPlanFactory.with_not_image_body_field",{
+    this.factory.extend('ResearchPlanFactory.empty', 'ResearchPlanFactory.with_not_image_body_field', {
       body: [{
-        id: "entry-002",
-        type: "no-image",
+        id: 'entry-002',
+        type: 'no-image',
         value: {}
       }],
       changed: false,
-      attachments : [ AttachmentFactory.build("AttachmentFactory.new")]
+      attachments : [ AttachmentFactory.build('AttachmentFactory.new')]
 
     });
-    this.factory.extend("ResearchPlanFactory.empty", "ResearchPlanFactory.with attachment_not_in_body",{
+    this.factory.extend('ResearchPlanFactory.empty', 'ResearchPlanFactory.with attachment_not_in_body',{
       body: [],
       changed: false,
-      attachments : [ AttachmentFactory.build("AttachmentFactory.new")]
+      attachments : [ AttachmentFactory.build('AttachmentFactory.new')]
 
     });
-   
-    this.factory.define("ResearchPlanFactory.with_image_body_field", ResearchPlan, async () => {
-      const attachment = await AttachmentFactory.build("AttachmentFactory.new");
-      const researchPlan = await ResearchPlanFactory.build("ResearchPlanFactory.empty");
+
+    this.factory.define('ResearchPlanFactory.with_image_body_field', ResearchPlan, async () => {
+      const attachment = await AttachmentFactory.build('AttachmentFactory.new');
+      const researchPlan = await ResearchPlanFactory.build('ResearchPlanFactory.empty');
       researchPlan.attachments.push(attachment);
       researchPlan.changed = false;
       researchPlan.body = [{
