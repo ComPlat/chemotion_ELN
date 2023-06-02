@@ -17,5 +17,5 @@
 class VesselTemplate < ApplicationRecord
   acts_as_paranoid
 
-  has_many :vessels
+  has_many :vessels, dependent: :destroy
 end
