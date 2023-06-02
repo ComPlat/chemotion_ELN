@@ -13,8 +13,9 @@ import ModalExportRadarCollection from 'src/components/contextActions/ModalExpor
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js';
 
-function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
-  const showRadar = UIStore.getState().hasRadar ? (
+const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
+  const { currentCollection, hasRadar } = UIStore.getState();
+  const showRadar = hasRadar ? (
     <>
       <MenuItem divider />
       <MenuItem
