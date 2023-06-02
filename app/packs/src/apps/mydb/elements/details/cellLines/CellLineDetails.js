@@ -70,8 +70,12 @@ class CellLineDetails extends React.Component {
 
     let content = 'new Cell Line';
     if (cellLineItem.cellLineName) {
-      content = `${cellLineItem.cellLineName} - ${cellLineItem.itemName}`;
+      content = `${cellLineItem.cellLineName}`;
     }
+    if (cellLineItem.itemName) {
+      content = content+ ` - ${cellLineItem.itemName}`;
+    }
+    
     return (
       <div>
         {content}
