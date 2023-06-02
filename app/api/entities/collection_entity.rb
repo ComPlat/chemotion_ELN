@@ -9,6 +9,7 @@ module Entities
       :is_shared,
       :label,
       :user_id,
+      :position,
     )
   end
 end
