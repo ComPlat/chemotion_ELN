@@ -86,7 +86,8 @@ class GeneralProperties extends React.Component {
               {this.renderAttribute('Bio Savety Level *', cellLineItem.bioSafetyLevel, (e) => { cellLineDetailsStore.changeBioSafetyLevel(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium, (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => { cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId,Number( e.target.value)); })}
-              {this.renderOptionalAttribute('gender', cellLineItem.gender, (e) => { cellLineDetailsStore.changeGender(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => { cellLineDetailsStore.changeGender(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => { cellLineDetailsStore.changeCellType(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => { cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value); })}
             </Panel.Body>
           </Panel>

@@ -39,7 +39,7 @@ export default class CellLine extends Element {
     cellLine.organism=response.cellline_material.organism;
     cellLine.tissue=response.cellline_material.tissue;
     cellLine.variant=response.cellline_material.variant;
-    cellLine.type=response.cellline_material.cell_type
+    cellLine.cellType=response.cellline_material.cell_type
     cellLine.bioSafetyLevel=response.cellline_material.biosafety_level;
     cellLine.cryopreservationMedium=response.cellline_material.cryo_pres_medium;
 
@@ -67,6 +67,7 @@ export default class CellLine extends Element {
     this.tissue = mobx.tissue;
     this.variant = mobx.variant;
     this.bioSafetyLevel = mobx.bioSafetyLevel;
+    this.cellType = mobx.cellType;
     this.cryopreservationMedium = mobx.cryopreservationMedium;
   }
 }

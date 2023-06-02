@@ -24,9 +24,7 @@ export default class CellLineEntry extends Component {
           {this.renderProperty("Variant",firstCellLineItem.variant)}
           {this.renderProperty("Bio safety level",firstCellLineItem.bioSafetyLevel)}
           {this.renderProperty("Cryopreservation medium",firstCellLineItem.cryopreservationMedium)}
-
-          
-       
+          {this.renderProperty("gender",firstCellLineItem.gender)}
         {cellLineItems.map(
           (cellLineItem) => <CellLineItemEntry key={cellLineItem.id} cellLineItem={cellLineItem} />
         )}

@@ -103,6 +103,9 @@ export const CellLineDetailsStore = types
     changeGender(id, newGender) {
       self.cellLineItem.get(id).gender = newGender;
     },
+    changeCellType(id, newType) {
+      self.cellLineItem.get(id).cellType = newType;
+    },
     removeCellLineFromStore(id) {
       self.cellLineItem.delete(id);
     },
