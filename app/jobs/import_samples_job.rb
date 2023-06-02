@@ -15,7 +15,7 @@ class ImportSamplesJob < ApplicationJob
         channel_subject: Channel::IMPORT_SAMPLES_NOTIFICATION,
         message_from: @user_id,
         message_to: [@user_id],
-        data_args: { message: '@result[:message]' },
+        data_args: { message: @result[:message] },
         level: 'info',
         autoDismiss: 5,
       )
@@ -29,11 +29,8 @@ class ImportSamplesJob < ApplicationJob
     @user_id = user_id
     begin
       import = Import::ImportSamples.new(file_path, collection_id, user_id)
-      import.process(delayed_job: true)
-      # debug return of import.process
-      # @result = { message: 'message' }
+      @result = import.process(delayed_job: true)
     rescue => e
-      puts e
       Delayed::Worker.logger.error e
       @success = false
     ensure
