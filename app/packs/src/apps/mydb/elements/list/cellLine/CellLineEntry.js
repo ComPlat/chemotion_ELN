@@ -18,7 +18,7 @@ export default class CellLineEntry extends Component {
         <br />
         ID:
         {' '}
-        {firstCellLineItem.cellLineId}
+        {firstCellLineItem.id}
         {' '}
         -
         {firstCellLineItem.cellLineName}
@@ -38,7 +38,7 @@ export default class CellLineEntry extends Component {
 
 CellLineEntry.propTypes = {
   cellLineItems: PropTypes.arrayOf(PropTypes.shape({
-    cellLineId: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
     cellLineName: PropTypes.string.isRequired,
     organism: PropTypes.string.isRequired,
     disease: PropTypes.string.isRequired

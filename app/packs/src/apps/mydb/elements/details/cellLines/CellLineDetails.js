@@ -28,7 +28,7 @@ class CellLineDetails extends React.Component {
     // eslint-disable-next-line react/destructuring-assignment
     const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
     cellLineItem.adoptPropsFromMobXModel(mobXItem);
-    console.log(cellLineItem);
+
     if (cellLineItem.is_new) {
       DetailActions.close(cellLineItem, true);
       ElementActions.createCellLine(cellLineItem);
@@ -69,7 +69,7 @@ class CellLineDetails extends React.Component {
     const { cellLineItem } = this.props;
 
     let content = 'new Cell Line';
-    if (cellLineItem.cellLineName && cellLineItem.itemName) {
+    if (cellLineItem.cellLineName) {
       content = `${cellLineItem.cellLineName} - ${cellLineItem.itemName}`;
     }
     return (

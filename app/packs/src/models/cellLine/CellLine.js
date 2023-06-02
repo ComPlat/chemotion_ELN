@@ -19,7 +19,7 @@ export default class CellLine extends Element {
   }
 
   title() {
-    return this.itemName;
+    return this.short_label;
   }
 
   static createFromRestResponse(collectionId,response){
@@ -31,7 +31,7 @@ export default class CellLine extends Element {
     cellLine.itemComment=response.description;
     cellLine.itemName=response.name;
     cellLine.passage=response.passage;
-    cellLine.id=response.id;
+    cellLine.id=String(response.id);
 
     cellLine.cellLineName=response.cellline_material.names[0];
     cellLine.mutation=response.cellline_material.mutation;

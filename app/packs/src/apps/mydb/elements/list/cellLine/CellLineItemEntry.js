@@ -61,12 +61,12 @@ export default class CellLineItemEntry extends Component {
             <td>
               {cellLineItem.short_label}
             </td>
-            <td>
+
               <CellLineItemText
                 cellLineItem={cellLineItem}
                 showDetails={this.showDetails}
               />
-            </td>
+              
             <td>
               <ElementContainer
                 key={cellLineItem.id}
