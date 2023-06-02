@@ -60,6 +60,7 @@ module Import
 
     def process_batch
       batch_size = 100
+      result = nil
       (2..xlsx.last_row).each_slice(batch_size) do |batch|
         batch.each do |row_data|
           begin
@@ -72,11 +73,12 @@ module Import
           end
         end
         if processed.empty?
-          no_success
+          result = no_success
         else
-          @unprocessable.empty? ? success : warning
+          result = @unprocessable.empty? ? success : warning
         end
       end
+      result
     end
 
     def write_to_db

@@ -181,7 +181,7 @@ module ImportSamplesMethods
   def warning(error = nil)
     { status: 'warning',
       error: error,
-      message: "following rows cannot be imported: #{unprocessable_rows}.",
+      message: "following rows could not be imported: #{unprocessable_rows}.",
       unprocessed_data: unprocessable,
       data: processed }
   end
@@ -199,7 +199,7 @@ module ImportSamplesMethods
 
   def success
     { status: 'ok',
-      message: '',
+      message: 'samples have been imported successfully',
       data: processed }
   end
 end
