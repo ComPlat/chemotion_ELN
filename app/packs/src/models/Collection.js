@@ -57,14 +57,23 @@ export default class Collection {
 
   // check if the collection is shared with the current user
   // and permission level is at least write
-  hasSharedWrite() {
+  hasAclWrite() {
     return !!this.acl.find((acl) => (
       acl.permission_level >= PermissionConst.Write
     ));
   }
 
+  hasAclExport() {
+    return !!this.acl.find((acl) => (
+      acl.permission_level >= PermissionConst.Export
+    ));
+  }
+
   // can create elements in the collection
   canCreateElement() {
-    return this.ownedByMeAndNotAll() || this.hasSharedWrite();
+    return this.ownedByMeAndNotAll() || this.hasAclWrite();
+  }
+  canExport() {
+    return this.ownedByMe() || this.hasAclWrite();
   }
 }
