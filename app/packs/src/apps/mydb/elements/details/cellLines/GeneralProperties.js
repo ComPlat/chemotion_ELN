@@ -33,7 +33,7 @@ class GeneralProperties extends React.Component {
     let styleClass = '';
     if (!optional) {
       if (numeric) {
-        const integerPositiveInput = Number.isInteger(defaultValue) && defaultValue >= 0;
+        const integerPositiveInput = Number.isInteger(defaultValue) && defaultValue > 0;
         styleClass = integerPositiveInput ? '' : 'invalid-input';
       } else {
         const noInput = defaultValue.trim() === '';
