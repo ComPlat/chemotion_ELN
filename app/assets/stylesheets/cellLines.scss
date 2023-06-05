@@ -14,6 +14,33 @@
 .contaminated {
     color: red !important
 }
+.cell-line-group-bottom-border {
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-color: #bdbdbd;
+}
+
+.cell-line-group-detailed-info-button-active{
+    margin: 5px;
+    
+    background-color: #5bc0de !important;
+    .fa-info-circle{
+        color: #ffffff !important;
+    }
+}
+.cell-line-group-detailed-info-button-inactive{
+    margin: 5px;
+    background-color: #348da8 !important;
+    
+    border-color: rgb(44, 44, 44) !important;
+    .fa-info-circle{
+        color: #ffffff !important;
+    }
+}
+
+.cell-line-group-arrow{
+    font-size: 1.5em !important
+}
 
 .floating{
     float:left;
