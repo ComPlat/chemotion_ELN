@@ -2,6 +2,8 @@ import alt from 'src/stores/alt/alt';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import Collection from 'src/models/Collection';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 class CollectionStore {
   constructor() {
@@ -57,14 +59,19 @@ class CollectionStore {
     const collectionMap = CollectionStore.collectionsToMap(
       [...collectionObjects, ...sharedObjects]
     );
+
+
     this.setState({
       myCollectionTree,
       lockedCollectionTree,
       sharedCollectionTree,
       collectionMap,
     });
+    const { pendingCollectionId } = UIStore.getState();
+    if (pendingCollectionId) {
+      UIActions.selectCollection.defer({ id: pendingCollectionId });
+    }
   }
-
 
   handleCreateSharedCollectionAcls() {
     CollectionActions.fetchMyCollections();
@@ -93,6 +100,9 @@ class CollectionStore {
 
   findCollectionById(id) {
     const { collectionMap } = this.state;
+    if (id === 'all') {
+      return collectionMap[this.findAllCollectionId()];
+    }
     return collectionMap[id];
   }
 
