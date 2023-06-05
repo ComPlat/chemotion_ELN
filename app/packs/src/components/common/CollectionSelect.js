@@ -14,7 +14,9 @@ export default class CollectionSelect extends React.Component {
       options: CollectionStore.formatedCollectionOptions(
         {
           includeAll: false, // disable the "All" collection option
-          permissionLevel: 1, // only enable shared collections that can be edited
+          onlyOwned: true, // only include collections owned by the current user
+          // TODO: check why creating an element to a shared collection with PL >=1 is not working
+          // permissionLevel: 1, // only enable shared collections that can be edited
         }
       ) || [],
       value: props.value,
