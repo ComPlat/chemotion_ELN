@@ -48,35 +48,37 @@ export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem } = this.props;
     return (
-      <Table className="elements" bordered hover style={{ borderTop: 0 }}>
-        <tbody>
-          <tr className="cell-line-group-white-background">
-            <td>
-              <ElementCheckbox
-                element={cellLineItem}
-                key={cellLineItem.id}
-                checked={this.isElementChecked(cellLineItem)}
-              />
-            </td>
-            <td>
-              {cellLineItem.short_label}
-            </td>
+      <div className="cell-line-group-entry">
+        <Table className="elements" bordered hover style={{ borderTop: 0 }}>
+          <tbody>
+            <tr className="cell-line-group-white-background">
+              <td className="select-checkBox">
+                <ElementCheckbox
+                  element={cellLineItem}
+                  key={cellLineItem.id}
+                  checked={this.isElementChecked(cellLineItem)}
+                />
+              </td>
+              <td className="short_label">
+                {cellLineItem.short_label}
+              </td>
 
               <CellLineItemText
                 cellLineItem={cellLineItem}
                 showDetails={this.showDetails}
               />
-              
-            <td>
-              <ElementContainer
-                key={cellLineItem.id}
-                sourceType={DragDropItemTypes.CELL_LINE}
-                element={cellLineItem}
-              />
-            </td>
-          </tr>
-        </tbody>
-      </Table>
+
+              <td>
+                <ElementContainer
+                  key={cellLineItem.id}
+                  sourceType={DragDropItemTypes.CELL_LINE}
+                  element={cellLineItem}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+      </div>
     );
   }
 }

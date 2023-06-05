@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 export default class CellLineContainer extends Component {
   render() {
     const { cellLineGroups } = this.props;
-    
+
     return (
       <div className="list-container">
         {cellLineGroups.map(

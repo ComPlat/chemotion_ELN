@@ -9,10 +9,37 @@
     background:white
 }
 
-
-
 .contaminated {
     color: red !important
+}
+
+
+.cell-line-group-entry{
+    .elements{
+        margin-bottom: 1px;
+    }
+    .select-checkBox{
+        width:30px;
+    }
+    .short_label{
+        width:70px;
+    }
+    .item-text{
+        width:95%;
+    }
+    .item-property-name{
+        width:100px;
+    }
+    .item-name-header{
+        font-weight: bold;
+    }
+    .item-properties{
+        font-size: 90%;
+    }
+    .item-colon{
+        width:15px;
+    }
+    
 }
 .cell-line-group-bottom-border {
     border-bottom-width: 1px;
@@ -39,7 +66,8 @@
 }
 
 .cell-line-group-arrow{
-    font-size: 1.5em !important
+    font-size: 1.5em !important;
+    margin-left: 3px;
 }
 
 .floating{
@@ -52,7 +80,7 @@
 
 .cell-line-group-header-name{
     font-size: large;
-    margin-left: 20px;
+    margin-left: 30px;
     font-weight: bold;    
 }
 .cell-line-group-header-property{
