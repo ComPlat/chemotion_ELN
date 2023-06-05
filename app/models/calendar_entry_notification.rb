@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: calendar_entry_notifications
@@ -18,8 +20,8 @@ class CalendarEntryNotification < ApplicationRecord
   belongs_to :calendar_entry
   belongs_to :user
 
-  enum status: %w[
-    created
-    updated
-  ]
+  enum status: {
+    created: 0,
+    updated: 1,
+  }
 end

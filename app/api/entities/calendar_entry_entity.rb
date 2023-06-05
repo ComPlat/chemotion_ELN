@@ -51,7 +51,7 @@ module Entities
     def element_klass_icon
       if eventable_type == 'Element'
         element_klass&.icon_name
-      elsif !eventable_type.nil?
+      elsif eventable_type.present?
         "icon-#{eventable_type.downcase}"
       end
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: calendar_entries
@@ -21,7 +23,7 @@
 #
 class CalendarEntry < ApplicationRecord
   belongs_to :eventable, polymorphic: true, optional: true
-  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  belongs_to :creator, foreign_key: :created_by, class_name: 'User', inverse_of: :calendar_entries
 
   has_many :calendar_entry_notifications, dependent: :destroy
 
@@ -33,7 +35,9 @@ class CalendarEntry < ApplicationRecord
 
   validates :title, :start_time, :end_time, presence: true
 
-  scope :for_range, ->(start_time, end_time) { where('end_time > :start_time AND start_time < :end_time', start_time: start_time, end_time: end_time) }
+  scope :for_range, lambda { |start_time, end_time|
+    where('end_time > :start_time AND start_time < :end_time', start_time: start_time, end_time: end_time)
+  }
   scope :for_event, ->(id, type) { where(eventable_id: id, eventable_type: type) if id && type }
   scope :for_user, ->(user_id) { where(created_by: user_id) if user_id }
 
@@ -46,22 +50,12 @@ class CalendarEntry < ApplicationRecord
   def ical_for(user)
     calendar = Icalendar::Calendar.new
 
-    html_content = [
-      description.gsub('\n', '<br>'),
-      "Link: <a href=#{link_to_element_for(user)}>Show details</a>",
-    ].compact.join('<br>')
-
-    plain_text_content = [
-      description,
-      "Link: #{link_to_element_for(user)}",
-    ].compact.join('\n')
-
     calendar.event do |event|
       event.dtstart = start_time.strftime('%Y%m%dT%H%M%SZ')
       event.dtend = end_time.strftime('%Y%m%dT%H%M%SZ')
       event.summary = title
-      event.description = plain_text_content
-      event.x_alt_desc = Icalendar::Values::Text.new(html_content, 'FMTTYPE' => 'text/html')
+      event.description = plain_text_content_for(user)
+      event.x_alt_desc = Icalendar::Values::Text.new(html_content_for(user), 'FMTTYPE' => 'text/html')
     end
 
     calendar.publish
@@ -76,7 +70,6 @@ class CalendarEntry < ApplicationRecord
              else
                "http://#{ENV['HOST'] || 'localhost:3000'}"
              end
-
 
     "#{domain}/mydb/#{is_synchronized ? 's' : ''}collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
   end
@@ -97,7 +90,7 @@ class CalendarEntry < ApplicationRecord
         },
         eventable_type: eventable_type,
         eventable_id: eventable_id,
-        url: link_to_element_for(user)
+        url: link_to_element_for(user),
       )
     end
   end
@@ -110,10 +103,28 @@ class CalendarEntry < ApplicationRecord
 
   def collection_for(user)
     collections = eventable_type.constantize.find(eventable_id)&.collections
-    collections&.find_by(user_id: user.id) || SyncCollectionsUser.includes(:collection).find_by(user_id: user.id, collections: { id: collections.ids })
+    sync_collections = SyncCollectionsUser.includes(:collection)
+                                          .find_by(user_id: user.id, collections: { id: collections.ids })
+    collections&.find_by(user_id: user.id) || sync_collections
   end
 
   def range
     "#{I18n.l(start_time, format: :eln_timestamp)} - #{I18n.l(end_time, format: :eln_timestamp)}"
+  end
+
+  private
+
+  def html_content_for(user)
+    [
+      description.gsub('\n', '<br>'),
+      "Link: <a href=#{link_to_element_for(user)}>Show details</a>",
+    ].compact.join('<br>')
+  end
+
+  def plain_text_content_for(user)
+    [
+      description,
+      "Link: #{link_to_element_for(user)}",
+    ].compact.join("\n")
   end
 end

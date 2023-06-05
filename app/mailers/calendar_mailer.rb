@@ -1,7 +1,7 @@
-# Mailer to email an ELNer about its data export being ready for download
-class CalendarMailer < ActionMailer::Base
-  default from: ENV['DEVISE_SENDER'] || 'eln'
+# frozen_string_literal: true
 
+# Mailer to email an ELNer about a created/update calendar entry
+class CalendarMailer < ApplicationMailer
   def send_mail(entry, user, type)
     @entry = entry
     @user = user
