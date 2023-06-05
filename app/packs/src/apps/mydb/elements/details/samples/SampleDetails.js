@@ -569,7 +569,7 @@ export default class SampleDetails extends React.Component {
         </OverlayTrigger>
         {sample.isNew
           ? null
-          : <OpenCalendarButton isPanelHeader={true} eventable_id={sample.id} eventable_type={"Sample"} />}
+          : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
         <PrintCodeButton element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />

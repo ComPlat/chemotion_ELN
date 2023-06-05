@@ -339,7 +339,7 @@ export default class ReactionDetails extends Component {
         </div>
         {reaction.isNew
           ? null
-          : <OpenCalendarButton isPanelHeader={true} eventable_id={reaction.id} eventable_type={"Reaction"} />}
+          : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
         <PrintCodeButton element={reaction} />
       </div>
     );

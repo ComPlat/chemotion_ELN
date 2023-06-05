@@ -213,7 +213,7 @@ export default class ScreenDetails extends Component {
         </OverlayTrigger>
         {screen.isNew
           ? null
-          : <OpenCalendarButton isPanelHeader={true} eventable_id={screen.id} eventable_type={"Screen"} />}
+          : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
         <PrintCodeButton element={screen} />
       </div>
     );

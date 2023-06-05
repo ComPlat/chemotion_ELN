@@ -1,11 +1,12 @@
+/* eslint-disable class-methods-use-this */
 import alt from 'src/stores/alt/alt';
 import CalendarEntryFetcher from 'src/fetchers/CalendarEntryFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
-export const GET_ENTRIES_LOADING = "getEntriesLoading";
-export const UPDATE_ENTRY_LOADING = "updateEntryLoading";
-export const DELETE_ENTRY_LOADING = "deleteEntryLoading";
+export const GET_ENTRIES_LOADING = 'getEntriesLoading';
+export const UPDATE_ENTRY_LOADING = 'updateEntryLoading';
+export const DELETE_ENTRY_LOADING = 'deleteEntryLoading';
 
 function transformEntryForApi(entry) {
   return {
@@ -16,10 +17,10 @@ function transformEntryForApi(entry) {
     start_time: entry.start.toISOString(),
     end_time: entry.end.toISOString(),
     created_by: entry.created_by,
-    eventable_type: entry.eventable_type,
-    eventable_id: entry.eventable_id,
-    notify_user_ids: entry.notifyUsers?.map(e => e.value),
-  }
+    eventable_type: entry.eventableType,
+    eventable_id: entry.eventableId,
+    notify_user_ids: entry.notifyUsers?.map((e) => e.value),
+  };
 }
 
 function transformEntryFromApi(entry) {
@@ -31,8 +32,8 @@ function transformEntryFromApi(entry) {
     start: new Date(entry.start_time),
     end: new Date(entry.end_time),
     created_by: entry.created_by,
-    eventable_type: entry.eventable_type,
-    eventable_id: entry.eventable_id,
+    eventableType: entry.eventable_type,
+    eventableId: entry.eventable_id,
     user_email: entry.user_email,
     user_name_abbreviation: entry.user_name_abbreviation,
     element_klass_icon: entry.element_klass_icon,
@@ -41,7 +42,7 @@ function transformEntryFromApi(entry) {
     accessible: entry.accessible,
     element_short_label: entry.element_short_label,
     notified_users: entry.notified_users,
-  }
+  };
 }
 
 class CalendarActions {
@@ -62,8 +63,8 @@ class CalendarActions {
     this.getEntries({
       start: obj.start,
       end: obj.end,
-      eventable_type: obj.eventable_type,
-      eventable_id: obj.eventable_id,
+      eventableType: obj.eventableType,
+      eventableId: obj.eventableId,
       with_shared_collections: obj.showSharedCollectionEntries
     });
     return obj;
@@ -71,36 +72,37 @@ class CalendarActions {
 
   getEventableUsers(collectionId) {
     return (dispatch) => {
-      CalendarEntryFetcher.getEventableUsers(collectionId).then(users => {
+      CalendarEntryFetcher.getEventableUsers(collectionId).then((users) => {
         dispatch(users);
-      }).catch(err => {
+      }).catch((err) => {
         dispatch(err);
       });
     };
   }
 
   clearEventableUsers() {
-    return (dispatch) => {dispatch(null)};
+    return (dispatch) => { dispatch(null); };
   }
 
   getEntries(params) {
     this.startLoading(GET_ENTRIES_LOADING);
-    let requestParams = {};
+    const requestParams = {};
     requestParams.start_time = params.start.toISOString();
     requestParams.end_time = params.end.toISOString();
     requestParams.created_by = UserStore.getState().currentUser?.id;
-    requestParams.eventable_type = params.eventable_type;
-    requestParams.eventable_id = params.eventable_id;
+    requestParams.eventable_type = params.eventableType;
+    requestParams.eventable_id = params.eventableId;
     requestParams.with_shared_collections = params.with_shared_collections;
 
     return (dispatch) => {
-      CalendarEntryFetcher.getEntries(requestParams).then(apiEntries => {
-        let entries = [];
-        for(let i=0; i<apiEntries.length; i++) {
+      CalendarEntryFetcher.getEntries(requestParams).then((apiEntries) => {
+        const entries = [];
+        for (let i = 0; i < apiEntries.length; i += 1) {
           entries.push(transformEntryFromApi(apiEntries[i]));
         }
+
         dispatch(entries);
-      }).catch(err => {
+      }).catch((err) => {
         dispatch(err);
       });
     };
@@ -109,9 +111,9 @@ class CalendarActions {
   createEntry(entry) {
     this.startLoading(UPDATE_ENTRY_LOADING);
     return (dispatch) => {
-      CalendarEntryFetcher.create(transformEntryForApi(entry)).then(entry => {
-        dispatch(transformEntryFromApi(entry));
-      }).catch(err => {
+      CalendarEntryFetcher.create(transformEntryForApi(entry)).then((response) => {
+        dispatch(transformEntryFromApi(response));
+      }).catch((err) => {
         dispatch(err);
       });
     };
@@ -120,9 +122,9 @@ class CalendarActions {
   updateEntry(entry) {
     this.startLoading(UPDATE_ENTRY_LOADING);
     return (dispatch) => {
-      CalendarEntryFetcher.update(transformEntryForApi(entry)).then(entry => {
-        dispatch(transformEntryFromApi(entry));
-      }).catch(err => {
+      CalendarEntryFetcher.update(transformEntryForApi(entry)).then((response) => {
+        dispatch(transformEntryFromApi(response));
+      }).catch((err) => {
         dispatch(err);
       });
     };
@@ -131,25 +133,25 @@ class CalendarActions {
   deleteEntry(id) {
     this.startLoading(DELETE_ENTRY_LOADING);
     return (dispatch) => {
-      CalendarEntryFetcher.deleteById(id).then(entry => {
-        dispatch(transformEntryFromApi(entry));
-      }).catch(err => {
+      CalendarEntryFetcher.deleteById(id).then((response) => {
+        dispatch(transformEntryFromApi(response));
+      }).catch((err) => {
         dispatch(err);
       });
     };
   }
 
-  navigateToElement(eventable_type, eventable_id) {
-    eventable_type = eventable_type.toLowerCase();
+  navigateToElement(eventableType, eventableId) {
+    const type = eventableType.toLowerCase();
 
-    const e = { type: eventable_type, params: {} };
-    e.params[`${eventable_type}ID`] = eventable_id;
+    const e = { type, params: {} };
+    e.params[`${type}ID`] = eventableId;
 
-    if (eventable_type == "element") {
+    if (type === 'element') {
       e.klassType = 'GenericEl';
     }
 
-    elementShowOrNew(e)
+    elementShowOrNew(e);
   }
 }
 

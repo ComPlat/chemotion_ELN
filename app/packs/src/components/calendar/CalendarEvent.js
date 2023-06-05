@@ -1,8 +1,9 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-var currentView = "";
+let currentView = '';
 
-export function setCurentViewForEventRenderer(view) {
+export function setCurrentViewForEventRenderer(view) {
   currentView = view;
 }
 
@@ -11,47 +12,52 @@ function capitalize(s) {
 }
 
 export function getEventableIcon(entry) {
-  if(entry.element_klass_icon)
-    return entry.element_klass_icon;
+  if (entry.element_klass_icon) return entry.element_klass_icon;
   return null;
 }
 
+export default function CalendarEvent(props) {
+  const { event } = props;
+  const shortTitle = currentView === 'month';
 
-export default class CalendarEvent extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-
-  render() {
-    const { event } = this.props;
-
-    const shortTitle = currentView === "month";
-
-
-    return <div>
-      <div style={{ marginBottom: !shortTitle ? 6 : 0, marginTop: !shortTitle ? 6 : 0  }}>
+  return (
+    <div>
+      <div style={{ marginBottom: !shortTitle ? 6 : 0, marginTop: !shortTitle ? 6 : 0 }}>
         {event.title}
       </div>
-      { !shortTitle ? (<div>
-            <div style={{fontStyle: "italic", marginBottom: !shortTitle ? 6 : 0}}>
-              {event.element_klass_name ? <span >
-                  <span className={getEventableIcon(event)}> {event.element_klass_name}</span>
-                  <span>
-                    {event.kind ? (" - " + capitalize(event.kind )): null}
-                  </span>
-                </span> : 
-                <span>
-                  {event.kind ? capitalize(event.kind ): null}
+      { !shortTitle ? (
+        <div>
+          <div style={{ fontStyle: 'italic', marginBottom: !shortTitle ? 6 : 0 }}>
+            {event.element_klass_name ? (
+              <span>
+                <span className={getEventableIcon(event)}>
+                  &nbsp;
+                  {event.element_klass_name}
                 </span>
-              }
-            </div>
-            <div>
-              { event.element_short_label }
-            </div>
-          </div>) : null
-      }
-
+                <span>
+                  {event.kind ? ` - ${capitalize(event.kind)}` : null}
+                </span>
+              </span>
+            ) : (
+              <span>
+                {event.kind ? capitalize(event.kind) : null}
+              </span>
+            )}
+          </div>
+          <div>
+            {event.element_short_label}
+          </div>
+        </div>
+      ) : null }
     </div>
-  }
+  );
 }
+
+CalendarEvent.propTypes = {
+  event: PropTypes.shape({
+    title: PropTypes.string,
+    kind: PropTypes.string,
+    element_klass_name: PropTypes.string,
+    element_short_label: PropTypes.string,
+  }).isRequired,
+};

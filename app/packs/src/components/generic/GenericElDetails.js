@@ -435,7 +435,7 @@ export default class GenericElDetails extends Component {
         </OverlayTrigger>
         {genericEl.isNew
           ? null
-          : <OpenCalendarButton isPanelHeader={true} eventable_id={genericEl.id} eventable_type={"Element"} />}
+          : <OpenCalendarButton isPanelHeader eventableId={genericEl.id} eventableType="Element" />}
       </div>
     );
   }

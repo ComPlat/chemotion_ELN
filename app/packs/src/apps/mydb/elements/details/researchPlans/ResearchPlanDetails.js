@@ -473,7 +473,7 @@ export default class ResearchPlanDetails extends Component {
         </OverlayTrigger>
         {researchPlan.isNew
           ? null
-          : <OpenCalendarButton isPanelHeader={true} eventable_id={researchPlan.id} eventable_type={"ResearchPlan"} />}
+          : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
       </Panel.Heading>
     );
   }

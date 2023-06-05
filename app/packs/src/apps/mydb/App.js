@@ -15,7 +15,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Calendar from 'src/components/calendar/Calendar';
 
-
 class App extends Component {
   constructor(_props) {
     super();

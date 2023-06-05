@@ -15,9 +15,7 @@ import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
 import SearchFilter from 'src/components/navigation/search/SearchFilter.js'
 import PropTypes from 'prop-types';
-
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton'
-
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
 

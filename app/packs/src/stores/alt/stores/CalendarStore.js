@@ -5,18 +5,16 @@ import CalendarActions, {
   DELETE_ENTRY_LOADING,
 } from 'src/stores/alt/actions/CalendarActions';
 
-
 export const CalendarTypes = {
   default: [
-    "reservation", "duration" , "handover", "reminder", "report" , "meeting", "maintenance", "availability"
+    'reservation', 'duration', 'handover', 'reminder', 'report', 'meeting', 'maintenance', 'availability'
   ],
-  Reaction: ["reminder", "report"],
-  Sample: ["handover", "reminder", "report"],
-  ResearchPlan: ["handover", "reminder", "report"],
-  Screen: ["reminder", "report"],
+  Reaction: ['reminder', 'report'],
+  Sample: ['handover', 'reminder', 'report'],
+  ResearchPlan: ['handover', 'reminder', 'report'],
+  Screen: ['reminder', 'report'],
   // Element all types like default
-}
-
+};
 
 class CalendarStore {
   constructor() {
@@ -41,11 +39,11 @@ class CalendarStore {
       deleteEntry: CalendarActions.deleteEntry,
       handleLoading: CalendarActions.startLoading,
       setViewParams: CalendarActions.setViewParams
-    })
+    });
   }
-  
+
   getEntries(event) {
-    if(typeof(event) == "string") {
+    if (typeof event === 'string') {
       this.setState({
         [GET_ENTRIES_LOADING]: false,
         entries: [],
@@ -55,11 +53,11 @@ class CalendarStore {
       this.setState({
         [GET_ENTRIES_LOADING]: false,
         entries: event,
-        error: ""
+        error: ''
       });
     }
   }
-  
+
   getEventableUsers(users) {
     this.setState({
       collectionUsers: users,
@@ -73,70 +71,69 @@ class CalendarStore {
   }
 
   setViewParams(obj) {
-    this.setState(obj)   
+    this.setState(obj);
   }
+
   handleLoading(key) {
-    this.setState({ [key]: true })   
+    this.setState({ [key]: true });
   }
 
   handleShow() {
-    this.setState({ show: true })   
+    this.setState({ show: true });
   }
-  
+
   handleHide() {
-    this.setState({show: false})
+    this.setState({ show: false });
   }
 
   deleteEntry(event) {
-    if(typeof(event) == "string") {
+    if (typeof event === 'string') {
       this.setState({
         [DELETE_ENTRY_LOADING]: false,
         error: event
       });
     } else {
-      let { entries } = this.state;
-      for(let i=0; i < entries.length; i++) {
-        if(entries[i].id == event.id) {
+      const { entries } = this.state;
+      for (let i = 0; i < entries.length; i += 1) {
+        if (entries[i].id === event.id) {
           entries.splice(i, 1);
           break;
         }
       }
       this.setState({
         [DELETE_ENTRY_LOADING]: false,
-        entries: entries,
-        error: ""
+        entries,
+        error: ''
       });
     }
-  } 
+  }
 
   updateEntry(event) {
-    if(typeof(event) == "string") {
+    if (typeof event === 'string') {
       this.setState({
         [UPDATE_ENTRY_LOADING]: false,
         error: event
       });
     } else {
-
-      let { entries } = this.state;
+      const { entries } = this.state;
       let isUpdate = false;
-      for(let i=0; i < entries.length; i++) {
-        if(entries[i].id == event.id) {
+      for (let i = 0; i < entries.length; i += 1) {
+        if (entries[i].id === event.id) {
           entries[i] = event;
           isUpdate = true;
           break;
         }
       }
-      if(!isUpdate) {
+      if (!isUpdate) {
         entries.push(event);
       }
 
       this.setState({
         [UPDATE_ENTRY_LOADING]: false,
-        entries: entries,
-        error: ""
+        entries,
+        error: ''
       });
     }
-    
   }
 }
 

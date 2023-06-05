@@ -17,7 +17,7 @@
   min-height: 25px !important;
 }
 
-  
+
 .rbc-time-content {
   cursor: copy;
 }
@@ -26,6 +26,10 @@
   // margin: 15px;
   // width: auto;
   margin: 8px;
+}
+
+.navItemCalendar a  {
+  padding: 0 !important;
 }
 
 .showMyEntriesFilter {
@@ -60,7 +64,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
+
     color: #31708f;
     background-color: #d9edf7;
     height: 48px;
@@ -110,6 +114,10 @@
   .react-datetime-picker__inputGroup  {
     align-items: baseline;
     display: flex;
+  }
+
+  .react-datetime-picker input[type=number] {
+    -moz-appearance: textfield;
   }
 
   .calendarElementModalBox {
