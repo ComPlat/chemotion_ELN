@@ -5,6 +5,7 @@ import {
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
+import Select from 'react-select';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -55,6 +56,29 @@ class GeneralProperties extends React.Component {
     );
   }
 
+  renderBiosafetyLevel(item) {
+    const { cellLineDetailsStore } = this.context;
+    const options = [
+      { value: 'S0', label: 'Biosafety level 0' },
+      { value: 'S1', label: 'Biosafety level 1' },
+      { value: 'S2', label: 'Biosafety level 2' },
+      { value: 'S3', label: 'Biosafety level 3' }
+    ];
+    return (
+      <div>
+        <Col componentClass={ControlLabel} sm={3}>Biosavety level</Col>
+        <Col sm={9}>
+          <Select
+            options={options}
+            clearable={false}
+            value={item.bioSafetyLevel}
+            onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
+          />
+        </Col>
+      </div>
+    );
+  }
+
   render() {
     const { item } = this.props;
     const { cellLineDetailsStore } = this.context;
@@ -77,15 +101,20 @@ class GeneralProperties extends React.Component {
           >
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'common-properties' }); }}>Common Properties</Panel.Heading>
             <Panel.Body collapsible>
+
               {this.renderAttribute('Cell line name *', cellLineItem.cellLineName, (e) => { cellLineDetailsStore.changeCellLineName(cellLineId, e.target.value); })}
               {this.renderAttribute('Disease *', cellLineItem.disease, (e) => { cellLineDetailsStore.changeDisease(cellLineId, e.target.value); })}
               {this.renderAttribute('Organism *', cellLineItem.organism, (e) => { cellLineDetailsStore.changeOrganism(cellLineId, e.target.value); })}
               {this.renderAttribute('Tissue *', cellLineItem.tissue, (e) => { cellLineDetailsStore.changeTissue(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => { cellLineDetailsStore.changeMutation(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => { cellLineDetailsStore.changeVariant(cellLineId, e.target.value); })}
-              {this.renderAttribute('Bio Savety Level *', cellLineItem.bioSafetyLevel, (e) => { cellLineDetailsStore.changeBioSafetyLevel(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Cryopreservation medium', cellLineItem.cryopreservationMedium, (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => { cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId,Number( e.target.value)); })}
+              {this.renderBiosafetyLevel(cellLineItem)}
+              {this.renderOptionalAttribute(
+                'Cryopreservation medium',
+                cellLineItem.cryopreservationMedium,
+                (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); }
+              )}
+              {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => { cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value)); })}
               {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => { cellLineDetailsStore.changeGender(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => { cellLineDetailsStore.changeCellType(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => { cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value); })}
@@ -98,6 +127,7 @@ class GeneralProperties extends React.Component {
           >
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
             <Panel.Body collapsible>
+
               {this.renderAttribute('Amount *', cellLineItem.amount, (e) => { cellLineDetailsStore.changeAmount(cellLineId, Number(e.target.value)); }, false, true)}
               {this.renderAttribute('Passage *', cellLineItem.passage, (e) => { cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value)); }, false, true)}
               {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}
