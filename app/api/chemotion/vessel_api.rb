@@ -2,11 +2,66 @@
 
 module Chemotion
   class VesselAPI < Grape::API
+    include Grape::Kaminari
+    helpers ParamsHelpers
+
     rescue_from ActiveRecord::RecordNotFound do
       error!('Resource not found', 401)
     end
 
     resource :vessel do
+
+      desc 'return list of vessels in a collection'
+      params do
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
+        optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
+      end
+      paginate per_page: 5, offset: 0
+      before do
+        params[:per_page].to_i > 50 && (params[:per_page] = 50)
+      end
+      get do
+        scope = if params[:collection_id]
+          begin
+            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
+            find(params[:collection_id]).vessels
+        rescue ActiveRecord::RecordNotFound
+          Vessel.none
+        end
+      elsif params[:sync_collection_id]
+        begin
+          current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.vessels
+          rescue ActiveRecord::RecordNotFound
+            Vessel.none
+          end
+        else
+          # All collection of current_user
+          Vessel.none.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+        end.order("created_at DESC")
+
+        from = params[:from_date]
+        to = params[:to_date]
+        by_created_at = params[:filter_created_at] || false
+
+        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+
+
+        reset_pagination_page(scope)   
+        vessels = paginate(scope).map do |vessel|
+          Entities::VesselEntity.represent(
+            vessel,
+            displayed_in_list: true,
+          )
+        end 
+        { vessels: vessels }
+      end
+
       desc 'Get a vessel by id'
       params do
         requires :id, type: Integer, desc: 'id of vessel to load'
