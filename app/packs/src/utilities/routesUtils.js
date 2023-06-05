@@ -8,6 +8,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions'
 
+
 const collectionShow = (e) => {
   UIActions.showElements.defer();
   UserActions.fetchCurrentUser();
@@ -17,22 +18,27 @@ const collectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const { currentSearchSelection } = uiState;
-  const collectionId = e.params.collectionID === 'all' ? CollectionStore.findAllCollectionId() : e.params.collectionID;
+  const id = e.params?.collectionID;
 
   if (currentSearchSelection) {
-    UIActions.selectCollectionWithoutUpdating({ id: collectionId });
+    UIActions.selectCollectionWithoutUpdating({ id });
     ElementActions.fetchBasedOnSearchSelectionAndCollection({
       selection: currentSearchSelection,
-      collectionId
+      collectionId: id
     });
   } else {
-    UIActions.selectCollection({ id: collectionId });
+    UIActions.selectCollection.defer({ id });
   }
 
-  UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-  UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-  UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-  UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+  [
+    'sample',
+    'reaction',
+    'wellplate',
+    'screen',
+    'research_plan'
+  ].forEach((type) => {
+    UIActions.uncheckAllElements.defer({ type, range: 'all' });
+  });
 };
 
 const collectionShowCollectionManagement = () => {
