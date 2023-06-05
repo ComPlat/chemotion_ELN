@@ -25,9 +25,7 @@ module Entities
     delegate :eventable_type, :eventable_id, :creator, to: :object
 
     def notified_users
-      object.calendar_entry_notifications.includes(:user).order(created_at: :desc).map do |notification|
-        "#{notification.user.name} - #{notification.created_at.strftime('%d.%m.%y %H:%M')} - #{notification.status}"
-      end.join("\r\n")
+      object.instance_variable_get(:@notified_users) || object.notified_users
     end
 
     def element_name
@@ -77,13 +75,17 @@ module Entities
     def element
       return if eventable_type.nil?
 
-      @element ||= object.element || object.eventable_type.constantize.find(object.eventable_id)
+      @element ||= object.instance_variable_get(:@element) || eventable_type.constantize.find(object.eventable_id)
     end
 
     def element_klass
       return if eventable_type != 'Element'
 
-      @element_klass ||= element&.element_klass
+      @element_klass ||= object.instance_variable_get(:@element_klass) || element&.element_klass
+    end
+
+    def accessible
+      instance_variable_defined?(:@accessible) ? object.instance_variable_get(:@accessible) : true
     end
   end
 end

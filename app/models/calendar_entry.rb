@@ -24,18 +24,24 @@ class CalendarEntry < ApplicationRecord
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
 
   has_many :calendar_entry_notifications, dependent: :destroy
-  has_many :notified_users, through: :calendar_entry_notifications
 
-  attribute :element_klass, type: ElementKlass
-  attribute :element, type: Object
-  attribute :accessible, type: :boolean, default: true
-  attribute :notify_user_ids, type: :integer, array: true, default: []
+  # used to include ordered collection
+  has_many :ordered_calendar_entry_notifications, -> { order(created_at: :desc) },
+           class_name: 'CalendarEntryNotification',
+           inverse_of: :calendar_entry,
+           dependent: :destroy
 
   validates :title, :start_time, :end_time, presence: true
 
   scope :for_range, ->(start_time, end_time) { where('end_time > :start_time AND start_time < :end_time', start_time: start_time, end_time: end_time) }
   scope :for_event, ->(id, type) { where(eventable_id: id, eventable_type: type) if id && type }
   scope :for_user, ->(user_id) { where(created_by: user_id) if user_id }
+
+  def notified_users
+    ordered_calendar_entry_notifications.map do |notification|
+      "#{notification.user.name} - #{notification.created_at.strftime('%d.%m.%y %H:%M')} - #{notification.status}"
+    end.join("\n")
+  end
 
   def ical_for(user)
     calendar = Icalendar::Calendar.new
