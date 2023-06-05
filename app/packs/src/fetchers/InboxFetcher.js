@@ -13,7 +13,7 @@ export default class InboxFetcher {
   }
 
   static fetchInboxByContainer(containerId, currentContainerPage) {
-    const promise = fetch(`/api/v1/inbox/containers/id?id=${containerId}&dataset_page=${currentContainerPage || 1}`, {
+    const promise = fetch(`/api/v1/inbox/containers/${containerId}?dataset_page=${currentContainerPage || 1}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())

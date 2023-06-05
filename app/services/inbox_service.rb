@@ -15,7 +15,7 @@ class InboxService
           attachable_type: 'Container',
           attachable_id: nil,
           created_for: @container&.containable&.id,
-          ),
+        ),
         inbox_count: Container.where(id: @container.descendant_ids)
                               .joins(children: :attachments)
                               .count('attachments.id'),

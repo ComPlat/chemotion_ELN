@@ -35,12 +35,13 @@ module Chemotion
 
       desc 'Return files by subcontainer ID'
       params do
-        requires :id, type: Integer, desc: 'subcontainer ID'
+        requires :container_id, type: Integer, desc: 'subcontainer ID'
+        optional :dataset_page, type: Integer, desc: 'Pagination number'
       end
 
-      get 'containers/id' do
+      get 'containers/:container_id' do
         if current_user.container.present?
-          container = current_user.container.children.find params[:id]
+          container = current_user.container.children.find params[:container_id]
 
           Entities::InboxEntity.represent(container,
                                           root_container: false,
