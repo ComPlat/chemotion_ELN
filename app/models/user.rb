@@ -448,6 +448,10 @@ class User < ApplicationRecord
     update_columns(name_abbreviation: nil) if count.zero?
     update_columns(providers: nil)
   end
+
+  def user_ids
+    [id]
+  end
 end
 
 class Person < User
@@ -481,6 +485,13 @@ class Group < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins,  through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
+
+  private
+
+  def user_ids
+    # Override method to return an array of user IDs in the group
+    users.ids
+  end
 end
 
 # rubocop: enable Metrics/ClassLength

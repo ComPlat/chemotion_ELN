@@ -86,7 +86,7 @@ module Chemotion
           comment = Comment.new(attributes)
           comment.save!
 
-          create_message_notification(@collections.where(is_synchronized: true), current_user)
+          create_message_notification(@collections, current_user)
 
           present comment, with: Entities::CommentEntity, root: 'comment'
         end
