@@ -14,6 +14,8 @@ import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
+import getMaterialData from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+
 const TemperatureUnit = ['°C', '°F', 'K'];
 
 const TemperatureDefault = {
@@ -189,16 +191,16 @@ export default class Reaction extends Element {
     //         "duration": {"value": "<number>", "unit": "<string>"}
     //     },
     //     "startingMaterials": {
-    //         "<material_id>": {"value": "<number>", "unit": "<string>"},
-    //         "<material_id>": {"value": "<number>", "unit": "<string>"}
+    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}},
+    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}}
     //     },
     //     "reactants": {
-    //         "<material_id>": {"value": "<number>", "unit": "<string>"},
-    //         "<material_id>": {"value": "<number>", "unit": "<string>"}
+    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}},
+    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}}
     //     },
     //     "products": {
-    //         "<material_id>": {"value": "<number>", "unit": "<string>"},
-    //         "<material_id>": {"value": "<number>", "unit": "<string>"}
+    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}},
+    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}}
     //     }
     //   },
     //   {
@@ -227,21 +229,21 @@ export default class Reaction extends Element {
           case 'startingMaterials':
             this.starting_materials.forEach((material) => {
               if (!(material.id in row[materialType])) {
-                row[materialType][material.id] = { value: material.equivalent || '', unit: 'Equiv' };
+                row[materialType][material.id] = getMaterialData(material, 'Equiv');
               }
             });
             break;
           case 'reactants':
             this.reactants.forEach((material) => {
               if (!(material.id in row[materialType])) {
-                row[materialType][material.id] = { value: material.equivalent || '', unit: 'Equiv' };
+                row[materialType][material.id] = getMaterialData(material, 'Equiv');
               }
             });
             break;
           default:
             this.products.forEach((material) => {
               if (!(material.id in row[materialType])) {
-                row[materialType][material.id] = { value: material.equivalent || '', unit: 'Equiv' };
+                row[materialType][material.id] = getMaterialData(material, 'Equiv');
               }
             });
         }

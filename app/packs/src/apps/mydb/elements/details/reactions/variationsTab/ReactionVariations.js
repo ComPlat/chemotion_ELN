@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, forwardRef, useState, useEffect, useImperativeHandle, useCallback
+  useRef, forwardRef, useState, useEffect, useImperativeHandle
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -10,6 +10,7 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import { iupacNameTooltip } from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
+import getMaterialData from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
 
 function MaterialHeader({ material }) {
   return (
@@ -30,13 +31,20 @@ function RowToolsCellRenderer({ data, copyRow, removeRow }) {
   );
 }
 
-const ValueUnitCellRenderer = (props) => {
-  const { value = '', unit = 'None' } = props.value ?? {};
-  return `${Number(value) ? Number(value).toFixed(3) : 'NaN'} [${unit}]`;
+const CellRenderer = (props) => {
+  const { value = '', unit = 'None', aux = {} } = props.value ?? {};
+  let cellContent = `${Number(value) ? Number(value).toFixed(3) : 'NaN'} [${unit}]`;
+  if (aux.coefficient) {
+    cellContent += `; Coeff: ${aux.coefficient}`;
+  }
+  if (aux.isReference) {
+    cellContent += '; Ref';
+  }
+  return cellContent;
 };
 
-const ValueUnitCellEditor = forwardRef((props, ref) => {
-  const { value = '', unit = 'None' } = props.value ?? {};
+const CellEditor = forwardRef((props, ref) => {
+  const { value = '', unit = 'None', aux = {} } = props.value ?? {};
   const [editedValue, setEditedValue] = useState(value);
   const refInput = useRef(null);
 
@@ -48,7 +56,7 @@ const ValueUnitCellEditor = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     getValue() {
       // final value to send to the grid, on completion of editing
-      return { value: editedValue, unit };
+      return { value: editedValue, unit, aux };
     },
 
     isCancelAfterEnd() {
@@ -64,19 +72,11 @@ const ValueUnitCellEditor = forwardRef((props, ref) => {
       value={editedValue}
       onChange={(event) => setEditedValue(event.target.value)}
       style={{ width: '100%' }}
-      disabled={unit === 'Equiv (Ref)'}
+      disabled={aux.isReference}
     />
   );
 });
 
-function getMaterialValueUnit(material, unit) {
-  if (unit === 'Equiv') {
-    const { equivalent = '', reference = false } = material ?? {};
-    return { value: equivalent, unit: reference ? 'Equiv (Ref)' : 'Equiv' };
-  }
-  const { value = '', unit: amountUnit = 'None' } = material.amount ?? {};
-  return { value, unit: amountUnit };
-}
 
 export default function ReactionVariations({ reaction, onEditVariations }) {
   const gridRef = useRef();
@@ -99,11 +99,11 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         }
       },
       startingMaterials: reaction.starting_materials.reduce((a, v) => (
-        { ...a, [v.id]: getMaterialValueUnit(v, materialUnit) }), {}),
+        { ...a, [v.id]: getMaterialData(v, materialUnit) }), {}),
       reactants: reaction.reactants.reduce((a, v) => (
-        { ...a, [v.id]: getMaterialValueUnit(v, materialUnit) }), {}),
+        { ...a, [v.id]: getMaterialData(v, materialUnit) }), {}),
       products: reaction.products.reduce((a, v) => (
-        { ...a, [v.id]: getMaterialValueUnit(v, 'Amount') }), {})
+        { ...a, [v.id]: getMaterialData(v, 'Amount') }), {})
     };
     onEditVariations(
       [...reaction.variations, newRow]
@@ -132,17 +132,12 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     });
   }
 
-  const sizeColumnsToFit = useCallback(() => {
-    gridRef.current.api.sizeColumnsToFit();
-  }, []);
-
   const columnDefs = [
     {
       field: '',
       cellRenderer: RowToolsCellRenderer,
       cellRendererParams: { copyRow, removeRow },
       editable: false,
-      suppressSizeToFit: true,
     },
 
     {
@@ -223,12 +218,13 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           columnDefs={columnDefs}
           defaultColDef={{
             editable: true,
-            cellEditor: ValueUnitCellEditor,
-            cellRenderer: ValueUnitCellRenderer,
+            cellEditor: CellEditor,
+            cellRenderer: CellRenderer,
             wrapHeaderText: true,
             autoHeaderHeight: true,
+            wrapText: true,
+            autoHeight: true,
           }}
-          onGridColumnsChanged={sizeColumnsToFit}
         />
       </div>
     </div>
