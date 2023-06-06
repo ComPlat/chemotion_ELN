@@ -7,6 +7,7 @@ import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { ReactSearchAutocomplete } from 'react-search-autocomplete'
+import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -16,12 +17,16 @@ class GeneralProperties extends React.Component {
     super(props);
     this.state = {
       openPanel: 'common-properties',
-      name_suggestions:[
-        {id: 0,name: 'AAABBB'},
-        {id: 1,name: 'AABBC'}
-      ]
+      name_suggestions:[]
 
     };
+  }
+
+  componentDidMount(){
+    CellLinesFetcher.getAllCellLineNames()
+    .then(data=>{
+      this.setState({name_suggestions:data})
+    })
   }
 
   renderOptionalAttribute(attributeName, defaultValue, onChangeCallBack) {
@@ -98,6 +103,10 @@ class GeneralProperties extends React.Component {
       cellLineDetailsStore.changeCellLineName(cellLineId, item.name); 
     }
 
+    const handleOnSearch = (string, results) => {
+      cellLineDetailsStore.changeCellLineName(cellLineId, string); 
+    }
+
     const formatResult = (item) => {
       return (
         <>          
@@ -132,6 +141,7 @@ class GeneralProperties extends React.Component {
                   className="cell-line-name-autocomplete"
                   showIcon={false}
                   items={this.state.name_suggestions}
+                  onSearch={handleOnSearch}
                   onSelect={handleOnSelect}
                   onFocus={(e) => {}}
                   showNoResults={false}

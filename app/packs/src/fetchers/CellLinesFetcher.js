@@ -48,6 +48,17 @@ export default class CellLinesFetcher {
     return promise;
   }
 
+  static getAllCellLineNames(){
+    return fetch('/api/v1/cell_lines/names/all', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'GET'
+    }) .then((response) => response.json())
+  }
+
   static update(cellLineItem) {
     let index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
     if (index === -1) {

@@ -127,6 +127,13 @@ module Chemotion
         cell_line_sample = use_case.execute!
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
+
+      resource :names do
+        desc 'Returns all accessable cell line material names and their id'        
+        get 'all' do
+          return present CelllineMaterial.all , with: Entities::CellLineMaterialNameEntity
+        end
+      end
     end
   end
 end
