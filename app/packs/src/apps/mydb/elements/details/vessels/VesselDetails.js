@@ -51,7 +51,7 @@ export default class VesselDetails extends Component {
 
     return(
     <div>
-      <span><i className="icon-vessel" />{vessel.vessel_name}</span>
+      <span><i className="icon-vessel" /></span>
       <ConfirmClose el={vessel} />
       <Button
         bsStyle="warning"
