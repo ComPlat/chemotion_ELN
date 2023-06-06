@@ -12,6 +12,31 @@
 .contaminated {
     color: red !important
 }
+.cell-line-name{
+    .cell-line-name-autocomplete{
+        height:36px;
+        z-index: 999;
+        .wrapper{
+            z-index: 999;
+            height:36px;
+            border-radius: 4px;
+        }
+
+        li{
+            z-index: 999;
+           background-color:white;
+           color:rgb(58, 58, 58);           
+        }
+        .selected{
+            background-color:rgb(148, 148, 148);
+        }
+        ul{
+            margin-top: -13px;
+        }
+
+       
+    }
+}
 
 
 .cell-line-group-entry{
