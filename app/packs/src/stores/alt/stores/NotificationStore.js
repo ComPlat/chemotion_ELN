@@ -73,6 +73,11 @@ class NotificationStore {
     } else if (status === 'invalid') {
       console.log('invalid');
       notification.message = message;
+    } else if (status === 'in progress') {
+      console.log('invalid or in progress');
+      notification.message = message;
+      notification.title = 'Status';
+      notification.level = 'success';
     } else if (status === 'warning') {
       notification = {
         title: 'Status',
