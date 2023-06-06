@@ -14,4 +14,7 @@ export default class Vessel extends Element {
     return vessel;
   }
 
+  title() {
+    return 'Vessel'
+  }
 }
