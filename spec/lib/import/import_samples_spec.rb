@@ -3,7 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe 'Import::ImportSamples' do
-  let(:importer) { Import::ImportSamples.new }
+  let(:user_id) { create(:user).id }
+  let(:collection_id) { create(:collection).id }
+  let(:file_path) { 'spec/fixtures/import/sample_import_template.xlsx' }
+  let(:importer) { Import::ImportSamples.new(user_id, collection_id, file_path) }
 
   describe '.format_to_interval_syntax' do
     let(:processed_row) { importer.send(:format_to_interval_syntax, unprocessed_row) }
