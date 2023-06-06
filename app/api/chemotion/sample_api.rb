@@ -102,16 +102,13 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          puts  params[:file]
           file_size = params[:file][:tempfile].size
           if file_size < 25000
-            puts "importing"
             import = Import::ImportSamples.new(
               params[:file][:tempfile].path,
               params[:currentCollectionId], current_user.id
             )
             import_result = import.process
-            puts import_result
             if import_result[:status] == 'ok' || import_result[:status] == 'warning'
               # the FE does not actually use the returned data, just the number of elements.
               # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
@@ -120,7 +117,6 @@ module Chemotion
             import_result
           else
             file = params[:file]
-            puts params[:file][:tempfile].path
             temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
             # Create a new file in the tmp folder
             tmp_file_path = File.join('tmp', temp_filename)
@@ -131,7 +127,7 @@ module Chemotion
               params[:currentCollectionId],
               current_user.id,
             )
-            status 200
+            { status: 'in progress', message: 'Importing samples in background' }
           end
         end
       end

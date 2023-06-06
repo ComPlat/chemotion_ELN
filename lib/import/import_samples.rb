@@ -58,64 +58,60 @@ module Import
       end
     end
 
-    def process_batch
-      batch_size = 100
-      result = nil
-      (2..xlsx.last_row).each_slice(batch_size) do |batch|
-        batch.each do |row_data|
-          begin
-            process_row(row_data)
-            write_to_db
-            rows.clear
-          rescue => e
-            puts "Error processing row: #{row_data}. Error: #{e.message}"
-            @unprocessable << { row: row_data }
-          end
-        end
-        if processed.empty?
-          result = no_success
-        else
-          result = @unprocessable.empty? ? success : warning
-        end
-      end
-      result
-    end
+    # def process_batch
+    #   batch_size = 100
+    #   result = nil
+    #   (2..xlsx.last_row).each_slice(batch_size) do |batch|
+    #     batch.each do |row_data|
+    #       process_row(row_data)
+    #       write_to_db
+    #       rows.clear
+    #     rescue StandardError => e
+    #       Rails.logger.debug { "Error processing row: #{row_data}. Error: #{e.message}" }
+    #       @unprocessable << { row: row_data }
+    #     end
+    #     result = if processed.empty?
+    #                no_success
+    #              else
+    #                @unprocessable.empty? ? success : warning
+    #              end
+    #   end
+    #   result
+    # end
 
     def write_to_db
       unprocessable_count = 0
       begin
         ActiveRecord::Base.transaction do
           rows.map.with_index do |row, i|
-            begin
-              if row['decoupled'] == 'Yes' && !has_structure(row)
-                molecule = Molecule.find_or_create_dummy
-              else
+            if row['decoupled'] == 'Yes' && !has_structure(row)
+              molecule = Molecule.find_or_create_dummy
+            else
               # If molfile and smiles (Canonical smiles) is both present
               #  Double check the rows
-                if has_molfile(row) && has_smiles(row)
-                  molfile, go_to_next = get_data_from_molfile_and_smiles(row)
-                  next if go_to_next
-                end
-
-                if has_molfile(row)
-                  molfile, molecule = get_data_from_molfile(row)
-                elsif has_smiles(row)
-                  molfile, molecule, go_to_next = get_data_from_smiles(row)
-                  next if go_to_next
-                end
-                if molecule_not_exist(molecule)
-                  unprocessable_count += 1
-                  next
-                end
+              if has_molfile(row) && has_smiles(row)
+                molfile, go_to_next = get_data_from_molfile_and_smiles(row)
+                next if go_to_next
               end
-              sample_save(row, molfile, molecule)
-            rescue
-              unprocessable_count += 1
-              @unprocessable << { row: row, index: i }
+
+              if has_molfile(row)
+                molfile, molecule = get_data_from_molfile(row)
+              elsif has_smiles(row)
+                molfile, molecule, go_to_next = get_data_from_smiles(row)
+                next if go_to_next
+              end
+              if molecule_not_exist(molecule)
+                unprocessable_count += 1
+                next
+              end
             end
+            sample_save(row, molfile, molecule)
+          rescue StandardError
+            unprocessable_count += 1
+            @unprocessable << { row: row, index: i }
           end
         end
-      rescue => e
+      rescue StandardError => _e
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
     end
@@ -134,9 +130,9 @@ module Import
       end
 
       begin
-        delayed_job ? process_batch : process_all_rows
+        process_all_rows
       rescue StandardError => e
-        return error_process(e.message)
+        error_process(e.message)
       end
     end
   end
