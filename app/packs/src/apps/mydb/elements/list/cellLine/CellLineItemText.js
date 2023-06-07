@@ -26,13 +26,13 @@ export default class CellLineItemEntry extends Component {
       >
         <div>
           <div className="item-name-header">{cellLineItem.itemName}</div>
-          <div className="item-properties">
+          <div className="item-properties floating">
             <div className="item-property-name floating">Amount</div>
-            <div className="item-colon floating">:</div>
-            <div>{cellLineItem.amount}</div>
+            <div className="item-colon floating">-</div>
+            <div className="floating item-property-value">{cellLineItem.amount}</div>
             <div className="item-property-name floating">Passage</div>
-            <div className="item-colon floating">:</div>
-            <div>{cellLineItem.passage}</div>
+            <div className="item-colon floating">-</div>
+            <div className="floating item-property-value">{cellLineItem.passage}</div>
           </div>
           <div>{contaminationTag}</div>
         </div>

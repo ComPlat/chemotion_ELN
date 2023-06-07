@@ -55,19 +55,41 @@
 
 .cell-line-group-entry{
     .elements{
-        margin-bottom: 1px;
+        margin-bottom: 0px;
+        border-left-width: 0px;
+        border-right-width: 0px;
+        border-bottom-width: 0px;
+        border-top-width: 0px;
     }
     .select-checkBox{
+        border-left-width: 0px;
+        border-right-width: 0px;
+        border-bottom-width: 0px;
         width:30px;
     }
     .short_label{
+        border-left-width: 0px;
+        border-right-width: 0px;
+        border-bottom-width: 0px;
         width:70px;
     }
+    .arrow{
+        border-left-width: 0px;
+        border-right-width: 0px;
+        border-bottom-width: 0px;
+    }
     .item-text{
+        border-left-width: 0px;
+        border-right-width: 0px;
+        border-bottom-width: 0px;
         width:95%;
     }
     .item-property-name{
-        width:100px;
+        margin-left:20px;
+        width:60px;
+    }
+    .item-property-value{
+        width:80px;
     }
     .item-name-header{
         font-weight: bold;
@@ -77,6 +99,9 @@
     }
     .item-colon{
         width:15px;
+    }
+    td{
+        border-width: 0px;
     }
     
 }

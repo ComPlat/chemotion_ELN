@@ -49,7 +49,7 @@ export default class CellLineItemEntry extends Component {
     const { cellLineItem } = this.props;
     return (
       <div className="cell-line-group-entry">
-        <Table className="elements" bordered hover style={{ borderTop: 0 }}>
+        <Table className="elements" hover>
           <tbody>
             <tr className="cell-line-group-white-background">
               <td className="select-checkBox">
@@ -68,7 +68,7 @@ export default class CellLineItemEntry extends Component {
                 showDetails={this.showDetails}
               />
 
-              <td>
+              <td className="arrow">
                 <ElementContainer
                   key={cellLineItem.id}
                   sourceType={DragDropItemTypes.CELL_LINE}
