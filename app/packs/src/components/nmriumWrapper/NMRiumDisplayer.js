@@ -73,14 +73,13 @@ export default class NMRiumDisplayer extends React.Component {
 
   loadNMRDisplayerHostInfo() {
     UIFetcher.fetchNMRDisplayerHost().then((response) => {
-      const { protocol, host, port } = response;
-      let nmriumOrigin = `${protocol}://${host}`;
-      let nmriumWrapperHost = `${protocol}://${host}`;
-      if (port) {
-        nmriumOrigin = `${nmriumOrigin}:${port}`;
-        nmriumWrapperHost = `${nmriumWrapperHost}:${port}`;
+      const { nmrium_url } = response;
+      if (nmrium_url) {
+        const url = new URL(nmrium_url);
+        const nmriumOrigin = url.origin;
+        const nmriumWrapperHost = nmrium_url;
+        this.setState({ nmriumWrapperHost, nmriumOrigin });
       }
-      this.setState({ nmriumWrapperHost, nmriumOrigin });
     });
   }
 
@@ -95,15 +94,18 @@ export default class NMRiumDisplayer extends React.Component {
       const eventDataType = eventData.type;
 
       if (eventDataType === 'nmr-wrapper:data-change') {
-        
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
-          const nmriumData = eventData.data.data;
+          const nmriumData = (eventData.data?.state || eventData.data) || null;
+          
+          if (!nmriumData) {
+            return;
+          }
+          
           const { version } = nmriumData;
           if (version > 3) {
             this.setState({ nmriumData: nmriumData.data });
-          }
-          else {
+          } else {
             this.setState({ nmriumData });
           }
         }
