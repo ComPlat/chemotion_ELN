@@ -27,3 +27,5 @@ RSpec.describe Usecases::Vessels::Create do
       it 'new vessel template was saved' do
       end
     end
+  end
+end

@@ -3,9 +3,9 @@
 require 'rails_helper'
 
 describe Chemotion::VesselAPI do
-  include_context 'api request authorisation context'
+  include_context 'api request authorization context'
 
-  describe 'GET /api/v1/vessels/' do
+  describe 'GET /api/v1/vessel/' do
     let(:vessel) { create(:vessel) }
     let(:user) { create(:user) }
     let(:collection) { create(:collection) }
@@ -16,7 +16,7 @@ describe Chemotion::VesselAPI do
         user.collections << collection
         user.save
 
-        get "/api/v1/vessels/#{vessel.id}"
+        get "/api/v1/vessel/#{vessel.id}"
       end
       
       it 'return correct status (http 200)' do
@@ -31,11 +31,11 @@ describe Chemotion::VesselAPI do
 
     context 'vessel does not exist' do
       before do
-        get "/api/v1/vessels/-1"
+        get "/api/v1/vessel/-1"
       end
 
       it 'returns correct status (http 401)' do
-        expect(response)to have_http_status :unauthorized
+        expect(response).to have_http_status :unauthorized
       end
     end
   end
