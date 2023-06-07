@@ -118,16 +118,20 @@ export const CellLineDetailsStore = types
       return container;
     },
     setMaterialProperties(id,properties){
-      self.cellLineItem.get(id).bioSafetyLevel = properties.biosafety_level;
-      self.cellLineItem.get(id).cellType = properties.cell_type;
-      self.cellLineItem.get(id).cryopreservationMedium = properties.cryo_pres_medium;
-      self.cellLineItem.get(id).materialDescription = properties.description;
-      self.cellLineItem.get(id).disease = properties.disease;
-      self.cellLineItem.get(id).gender = properties.gender;
+      const item =self.cellLineItem.get(id);
+      if (item === undefined){throw new Error('no cellline with id found: '+id); }
+      
+      item.bioSafetyLevel = properties.biosafety_level;
+      item.cellType = properties.cell_type;
+      item.cryopreservationMedium = properties.cryo_pres_medium;
+      item.materialDescription = properties.description;
+      item.disease = properties.disease;
+      item.gender = properties.gender;
       this.changeOptimalGrowthTemp(id, properties.optimal_growth_temp)
-      self.cellLineItem.get(id).organism = properties.organism;
-      self.cellLineItem.get(id).tissue = properties.tissue;
-      self.cellLineItem.get(id).variant = properties.variant;
+      item.organism = properties.organism;
+      item.tissue = properties.tissue;
+      item.variant = properties.variant;
+
 
     },
     convertJsModelToMobxModel(container) {
