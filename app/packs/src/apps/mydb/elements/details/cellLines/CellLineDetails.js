@@ -9,7 +9,7 @@ import {
   Panel, ButtonToolbar, Button,
   Tabs, Tab
 } from 'react-bootstrap';
-import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/GeneralProperties';
+import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 

@@ -13,6 +13,11 @@
     color: red !important
 }
 .cell-line-name{
+    .invalid{
+        .wrapper{
+            border-color: red !important;
+        }
+    }
     .cell-line-name-autocomplete{
         height:36px;
         z-index: 999;
@@ -21,7 +26,6 @@
             height:36px;
             border-radius: 4px;
         }
-
         li{
             z-index: 999;
            background-color:white;
@@ -33,8 +37,6 @@
         ul{
             margin-top: -13px;
         }
-
-       
     }
 }
 

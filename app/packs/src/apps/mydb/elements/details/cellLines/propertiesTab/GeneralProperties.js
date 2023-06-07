@@ -6,8 +6,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
-import { ReactSearchAutocomplete } from 'react-search-autocomplete'
-import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
+import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -17,16 +16,7 @@ class GeneralProperties extends React.Component {
     super(props);
     this.state = {
       openPanel: 'common-properties',
-      name_suggestions:[]
-
     };
-  }
-
-  componentDidMount(){
-    CellLinesFetcher.getAllCellLineNames()
-    .then(data=>{
-      this.setState({name_suggestions:data})
-    })
   }
 
   renderOptionalAttribute(attributeName, defaultValue, onChangeCallBack) {
@@ -97,29 +87,9 @@ class GeneralProperties extends React.Component {
     const cellLineId = item.id;
     const { openPanel } = this.state;
 
-    const items = [{id: 0,name: 'AAABBB'},{id: 1,name: 'AABBC'}];
-
-    const handleOnSelect = (item) => {      
-      cellLineDetailsStore.changeCellLineName(cellLineId, item.name); 
-    }
-
-    const handleOnSearch = (string, results) => {
-      cellLineDetailsStore.changeCellLineName(cellLineId, string); 
-    }
-
-    const formatResult = (item) => {
-      return (
-        <>          
-          <span style={{ display: 'block', textAlign: 'left' }}>{item.name}</span>
-        </>
-      )
-    }
-
     return (
       <div>
-        <div>
-       
-        </div>
+        <div />
         <PanelGroup
           class="cell-line-properties"
           id={`cellLinePropertyPanelGroupOf:${cellLineItem.id}`}
@@ -134,25 +104,8 @@ class GeneralProperties extends React.Component {
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'common-properties' }); }}>Common Properties</Panel.Heading>
             <Panel.Body collapsible>
 
-            <div className="cell-line-name">
-              <Col componentClass={ControlLabel} sm={3}>Cell line name *</Col>
-              <Col sm={9}>
-              <ReactSearchAutocomplete
-                  className="cell-line-name-autocomplete"
-                  showIcon={false}
-                  items={this.state.name_suggestions}
-                  onSearch={handleOnSearch}
-                  onSelect={handleOnSelect}
-                  onFocus={(e) => {}}
-                  showNoResults={false}
-                  formatResult={formatResult}
-                  inputSearchString={cellLineItem.cellLineName}
-                  fuseOptions={{ threshold: 0.1 }}
-                />
-              </Col>
-      </div>
+              <CellLineName id={cellLineId} name={cellLineItem.cellLineName} />
 
-              
               {this.renderAttribute('Disease *', cellLineItem.disease, (e) => { cellLineDetailsStore.changeDisease(cellLineId, e.target.value); })}
               {this.renderAttribute('Organism *', cellLineItem.organism, (e) => { cellLineDetailsStore.changeOrganism(cellLineId, e.target.value); })}
               {this.renderAttribute('Tissue *', cellLineItem.tissue, (e) => { cellLineDetailsStore.changeTissue(cellLineId, e.target.value); })}
