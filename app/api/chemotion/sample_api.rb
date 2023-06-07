@@ -106,7 +106,7 @@ module Chemotion
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
           file_size = params[:file][:tempfile].size
-          if file_size < 25000
+          if file_size < 25_000
             import = Import::ImportSamples.new(
               params[:file][:tempfile].path,
               params[:currentCollectionId], current_user.id
@@ -114,7 +114,8 @@ module Chemotion
             import_result = import.process
             if import_result[:status] == 'ok' || import_result[:status] == 'warning'
               # the FE does not actually use the returned data, just the number of elements.
-              # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
+              # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js
+              # handleNotificationImportSamplesFromFile **
               import_result[:data] = import_result[:data].map(&:id)
             end
             import_result
@@ -578,5 +579,6 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
 # rubocop:enable Metrics/ClassLength

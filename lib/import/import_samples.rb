@@ -136,11 +136,11 @@ module Import
     end
 
     def handle_sample_solvent_columnt(sample, row)
-      if row['solvent'].is_a? String
-        solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(row['solvent']) }
-        solvent_column = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
-        sample['solvent'] = solvent_column if solvent.present?
-      end
+      return unless row['solvent'].is_a? String
+
+      solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(row['solvent']) }
+      solvent_column = [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
+      sample['solvent'] = solvent_column if solvent.present?
     end
 
     def validate_sample_and_save(sample, stereo, row)
