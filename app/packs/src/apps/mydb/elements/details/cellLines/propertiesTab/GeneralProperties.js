@@ -51,6 +51,7 @@ class GeneralProperties extends React.Component {
             type="text"
             defaultValue={defaultValue}
             onChange={onChangeCallBack}
+            value={defaultValue}
           />
         </Col>
       </div>
