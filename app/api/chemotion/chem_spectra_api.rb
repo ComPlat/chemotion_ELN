@@ -200,12 +200,8 @@ module Chemotion
         desc 'Return url of nmrium wrapper'
         route_param :host_name do
           get do
-            if Rails.configuration.spectra.nmriumwrapper.blank?
-              { nmrium_url: '' }
-            else
-              nmrium_url = Rails.configuration.spectra.nmriumwrapper.url
-              { nmrium_url: nmrium_url }
-            end
+            nmrium_url = Rails.configuration.spectra.nmriumwrapper.url
+            { nmrium_url: nmrium_url }
           end
         end
       end

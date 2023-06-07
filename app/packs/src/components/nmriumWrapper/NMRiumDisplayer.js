@@ -96,16 +96,7 @@ export default class NMRiumDisplayer extends React.Component {
       if (eventDataType === 'nmr-wrapper:data-change') {
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
-          let nmriumData = null;
-          if (eventData.data) {
-            const { state } = eventData.data;
-            if (state) {
-              nmriumData = state;
-            }
-            else {
-              nmriumData = eventData.data;
-            }
-          }
+          const nmriumData = (eventData.data?.state || eventData.data) || null;
           
           if (!nmriumData) {
             return;
