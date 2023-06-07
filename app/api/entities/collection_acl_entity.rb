@@ -14,6 +14,6 @@ module Entities
     expose :wellplate_detail_level, documentation: { type: 'string', desc: 'Wellplate Detail Level' }
     expose :screen_detail_level, documentation: { type: 'string', desc: 'Screen Detail Level' }
 
-    expose :user, using: Entities::UserSimpleEntity, documentation: { type: 'Entities::UserEntity', desc: 'User Info' }
+    expose :user, using: Entities::UserSimpleEntity, documentation: { type: 'Entities::UserSimpleEntity', desc: 'User Info' }
   end
 end
