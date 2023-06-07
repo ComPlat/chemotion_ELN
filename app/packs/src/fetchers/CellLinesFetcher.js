@@ -58,6 +58,16 @@ export default class CellLinesFetcher {
       method: 'GET'
     }) .then((response) => response.json())
   }
+  static getCellLineMaterialById(id){
+    return fetch('/api/v1/cell_lines/material/'+id, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'GET'
+    }) .then((response) => response.json())
+  }
 
   static update(cellLineItem) {
     let index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);

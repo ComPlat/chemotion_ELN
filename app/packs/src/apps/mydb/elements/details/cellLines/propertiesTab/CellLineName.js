@@ -52,6 +52,8 @@ export default class CellLineName extends React.Component {
             }}
             onSelect={(item) => {
               cellLineDetailsStore.changeCellLineName(id, item.name);
+              CellLinesFetcher.getCellLineMaterialById(item.id)
+              .then((result) => { cellLineDetailsStore.setMaterialProperties(id,result)})
             }}
             showNoResults={false}
             formatResult={(item) => (CellLineName.renderNameSuggestion(item.name))}

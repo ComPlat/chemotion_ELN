@@ -134,6 +134,14 @@ module Chemotion
           return present CelllineMaterial.all , with: Entities::CellLineMaterialNameEntity
         end
       end
+      resource :material do
+        params do
+          requires :id, type: Integer, desc: 'id of cell line material to load'
+        end
+        get ':id' do
+          return CelllineMaterial.find(params[:id])
+        end
+      end
     end
   end
 end
