@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
-import { Panel, OverlayTrigger, Tooltip, Button, ButtonToolbar } from 'react-bootstrap';
+import { Panel, OverlayTrigger, Tooltip, Button, ButtonToolbar, Tabs, Tab } from 'react-bootstrap';
 import Vessel from 'src/models/Vessel';
 // import CopyElementModal from 'src/components/common/CopyElementModal'
 import Immutable from 'immutable'
@@ -15,8 +15,11 @@ export default class VesselDetails extends Component {
     this.state = {
       vessel: props.vessel,
       visible: Immutable.List(),
+      activeTab: "tab1"
     }
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
+    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   handleSubmit(closeView = true) {
@@ -99,10 +102,32 @@ export default class VesselDetails extends Component {
       >
         <Panel.Heading>{this.vesselHeader()}</Panel.Heading>
         <Panel.Body>
-          Placeholder for Vessel Details
+          <Tabs activeKey={ this.state.activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
+            <Tab eventKey="tab1" title="tab1" key={"tab1"}>Tab 1</Tab>
+            <Tab eventKey="tab2" title="tab2" key={"tab2"}>Tab 2</Tab>
+          </Tabs>
+          <ButtonToolbar>
+            <Button bsStyle="primary">
+            Save
+            </Button>
+            <Button bsStyle="warning">
+            Close
+            </Button>                              
+          </ButtonToolbar>
         </Panel.Body>
       </Panel>
     )
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+  handleSegmentsChange(se) {
+    
+  }
+
+  handleTabChange(eventKey) {
+    this.setState({activeTab:eventKey})
   }
 }
 
