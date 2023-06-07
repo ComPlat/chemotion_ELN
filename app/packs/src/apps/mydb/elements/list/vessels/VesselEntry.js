@@ -28,8 +28,7 @@ export default class VesselEntry extends React.Component {
             <br />
             {firstVesselItem.vessel_template_name}
             {' (ID: '}{firstVesselItem.vessel_template_id}{')'}
-            {this.props.vesselGroup.vesselItems.map(
-              vesselItem => <VesselItemEntry vesselItem={vesselItem}/>)}
+            {this.props.vesselGroup.vesselItems.map((vesselItem) => <VesselItemEntry vesselItem={vesselItem}/>)}
           </div>
         );
     }

@@ -61,7 +61,7 @@ export default class VesselItemEntry extends React.Component {
         ? `/scollection/${currentCollection.id}/${type}/${id}`
         : `/collection/${currentCollection.id}/${type}/${id}`;
       Aviator.navigate(uri, { silent: true });
-      const e = { type, params: { collectionID: currentCollection.id , new_vessel: true} };
+      const e = { type, params: { collectionID: currentCollection.id , new_vessel: true, vesselId: id } };
       e.params[`${type}ID`] = id;
 
       elementShowOrNew(e)
