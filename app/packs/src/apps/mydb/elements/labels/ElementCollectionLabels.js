@@ -67,8 +67,7 @@ export default class ElementCollectionLabels extends React.Component {
   render() {
     const { element } = this.state;
 
-    if (!element.tag || !element.tag.taggable_data ||
-        !element.tag.taggable_data.collection_labels)
+    if (!element.tag || !element.tag.taggable_data || !element.tag.taggable_data.collection_ids)
       return (<span />);
 
     let placement = 'left';
