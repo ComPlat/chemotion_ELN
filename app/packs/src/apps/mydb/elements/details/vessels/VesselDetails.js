@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types'
 import { Panel, OverlayTrigger, Tooltip, Button, ButtonToolbar, Tabs, Tab } from 'react-bootstrap';
 import Vessel from 'src/models/Vessel';
@@ -8,8 +8,13 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 // import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels'
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
+import GenericPropertiesTab from 'src/apps/mydb/elements/details/vessels/GenericPropertiesTab'
 
-export default class VesselDetails extends Component {
+class VesselDetails extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -92,9 +97,13 @@ export default class VesselDetails extends Component {
     </div>);
   }
 
-  render(){
+  render() {
     const vessel = this.state.vessel || {};
     const { visible } = this.state;
+    if (!this.props.vesselItem) { return (null); }
+    this.context.vesselDetailsStore.convertVesselToModel(this.props.vesselItem);
+    const item = this.props.vesselItem;
+
     return(
       <Panel
         className="eln-panel-detail"
@@ -102,8 +111,10 @@ export default class VesselDetails extends Component {
       >
         <Panel.Heading>{this.vesselHeader()}</Panel.Heading>
         <Panel.Body>
-          <Tabs activeKey={ this.state.activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
-            <Tab eventKey="tab1" title="tab1" key={"tab1"}>Tab 1</Tab>
+          <Tabs activeKey={ this.state.activeTab} onSelect={event => this.handleTabChange(event)} id="vesselDetailsTab">
+            <Tab eventKey="tab1" title="General Properties" key={"tab1"}>
+              <GenericPropertiesTab item={item} />
+            </Tab>
             <Tab eventKey="tab2" title="tab2" key={"tab2"}>Tab 2</Tab>
           </Tabs>
           <ButtonToolbar>
@@ -127,11 +138,8 @@ export default class VesselDetails extends Component {
   }
 
   handleTabChange(eventKey) {
-    this.setState({activeTab:eventKey})
+    this.setState({ activeTab:eventKey })
   }
 }
 
-VesselDetails.propTypes = {
-  vessel: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
-}
+export default observer(VesselDetails);
