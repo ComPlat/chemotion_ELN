@@ -9,6 +9,7 @@ const extractApiParameter = (cellLine) => {
         "material_names":cellLine.cellLineName,
         "collection_id":cellLine.collectionId,
         "cell_type":cellLine.cellType,
+        "mutation":cellLine.mutation,
         "biosafety_level":cellLine.bioSafetyLevel,
         "variant":cellLine.variant,
         "optimal_growth_temp":cellLine.optimal_growth_temp,

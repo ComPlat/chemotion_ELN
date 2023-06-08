@@ -91,6 +91,7 @@ module Chemotion
         optional :contamination, type: String, desc: 'contamination of a cell line sample'
         optional :source, type: String, desc: 'source of a cell line sample'
         optional :name, type: String, desc: 'name of a cell line sample'
+        optional :mutation, type: String, desc: 'mutation of a cell line '
         optional :description, type: String, desc: 'description of a cell line sample'
         optional :short_label, type: String, desc: 'short label of a cell line sample'
       end

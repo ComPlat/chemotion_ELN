@@ -41,7 +41,7 @@ export default class CellLineEntry extends Component {
         key={firstCellLineItem.cellLineName}
         className="cell-line-group-header-name"
       >
-        {firstCellLineItem.cellLineName}
+        {firstCellLineItem.cellLineName} - {firstCellLineItem.source}
       </div>];
   }
 

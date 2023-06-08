@@ -24,16 +24,7 @@ module Usecases
       def find_cellline_material
         CelllineMaterial.find_by(
           name: @params[:material_names],
-          cell_type: @params[:cell_type],
-          organism: @params[:organism],
-          tissue: @params[:tissue],
-          disease: @params[:disease],
-          biosafety_level: @params[:biosafety_level],
-          variant: @params[:variant],
-          optimal_growth_temp: @params[:optimal_growth_temp],
-          cryo_pres_medium: @params[:cryo_pres_medium],
-          gender: @params[:gender],
-          description: @params[:material_description],
+          source: @params[:source]
         )
       end
 
@@ -43,7 +34,10 @@ module Usecases
           cell_type: @params[:cell_type],
           organism: @params[:organism],
           tissue: @params[:tissue],
+          mutation: @params[:mutation],
+          source: @params[:source],
           disease: @params[:disease],
+          growth_medium: @params[:growth_medium],
           biosafety_level: @params[:biosafety_level],
           variant: @params[:variant],
           optimal_growth_temp: @params[:optimal_growth_temp],
@@ -60,8 +54,6 @@ module Usecases
           amount: @params[:amount],
           passage: @params[:passage],
           contamination: @params[:contamination],
-          source: @params[:source],
-          growth_medium: @params[:growth_medium],
           name: @params[:name],
           description: @params[:description],
           short_label: @params[:short_label],

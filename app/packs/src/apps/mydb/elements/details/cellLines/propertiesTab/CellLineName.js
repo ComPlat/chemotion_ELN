@@ -25,9 +25,9 @@ export default class CellLineName extends React.Component {
       });
   }
 
-  static renderNameSuggestion(name) {
+  static renderNameSuggestion(name,src) {
     return (
-      <span style={{ display: 'block', textAlign: 'left' }}>{name}</span>
+      <span style={{ display: 'block', textAlign: 'left' }}>{name} ({src})</span>
     );
   }
 
@@ -56,7 +56,7 @@ export default class CellLineName extends React.Component {
               .then((result) => { cellLineDetailsStore.setMaterialProperties(id,result)})
             }}
             showNoResults={false}
-            formatResult={(item) => (CellLineName.renderNameSuggestion(item.name))}
+            formatResult={(item) => (CellLineName.renderNameSuggestion(item.name,item.source))}
             inputSearchString={name}
             fuseOptions={{ threshold: 0.1 }}
           />

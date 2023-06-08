@@ -132,8 +132,8 @@ export const CellLineDetailsStore = types
       item.tissue = properties.tissue;
       item.variant = properties.variant;
       item.mutation = properties.mutation;
-
-
+      item.source = properties.source;
+      item.growthMedium = properties.growth_medium;
     },
     convertJsModelToMobxModel(container) {
       return CellLineAnalysis.create({
@@ -171,9 +171,10 @@ export const CellLineDetailsStore = types
         cellType: jsCellLineModel.cellType,
         mutation: jsCellLineModel.mutation,
         disease: jsCellLineModel.disease,
+        itemDescription:jsCellLineModel.itemComment,
         bioSafetyLevel: jsCellLineModel.bioSafetyLevel,
         variant: jsCellLineModel.variant,
-        optimalGrowthTemperature: jsCellLineModel.optimalGrowthTemperature,
+        optimalGrowthTemperature: jsCellLineModel.optimal_growth_temp,
         cryopreservationMedium: jsCellLineModel.cryopreservationMedium,
         cellLineName: jsCellLineModel.cellLineName,
         materialDescription: jsCellLineModel.materialDescription,
@@ -183,7 +184,6 @@ export const CellLineDetailsStore = types
         contamination: jsCellLineModel.contamination,
         source: jsCellLineModel.source,
         growthMedium: jsCellLineModel.growthMedium,
-        itemDescription: jsCellLineModel.itemDescription,
         itemName: jsCellLineModel.itemName,
         shortLabel: jsCellLineModel.short_label,
         container: rootAnalysis

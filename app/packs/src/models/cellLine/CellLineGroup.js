@@ -35,12 +35,6 @@ export default class CellLineGroup {
     const firstItemInGroup = this.cellLineItems[0];
 
     return firstItemInGroup.cellLineName === cellLineToCheck.cellLineName
-    && firstItemInGroup.mutation === cellLineToCheck.mutation
-    && firstItemInGroup.disease === cellLineToCheck.disease
-    && firstItemInGroup.organism === cellLineToCheck.organism
-    && firstItemInGroup.tissue === cellLineToCheck.tissue
-    && firstItemInGroup.variant === cellLineToCheck.variant
-    && firstItemInGroup.bioSafetyLevel === cellLineToCheck.bioSafetyLevel
-    && firstItemInGroup.cryopreservationMedium === cellLineToCheck.cryopreservationMedium;
+    && firstItemInGroup.source === cellLineToCheck.source;
   }
 }

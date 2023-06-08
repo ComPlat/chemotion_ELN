@@ -106,10 +106,12 @@ class GeneralProperties extends React.Component {
             <Panel.Body collapsible>
 
               <CellLineName id={cellLineId} name={cellLineItem.cellLineName} />
+              {this.renderAttribute('Source *', cellLineItem.source, (e) => { cellLineDetailsStore.changeSource(cellLineId, e.target.value); })}
 
-              {this.renderAttribute('Disease *', cellLineItem.disease, (e) => { cellLineDetailsStore.changeDisease(cellLineId, e.target.value); })}
-              {this.renderAttribute('Organism *', cellLineItem.organism, (e) => { cellLineDetailsStore.changeOrganism(cellLineId, e.target.value); })}
-              {this.renderAttribute('Tissue *', cellLineItem.tissue, (e) => { cellLineDetailsStore.changeTissue(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Disease', cellLineItem.disease, (e) => { cellLineDetailsStore.changeDisease(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Organism', cellLineItem.organism, (e) => { cellLineDetailsStore.changeOrganism(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Tissue', cellLineItem.tissue, (e) => { cellLineDetailsStore.changeTissue(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('GrowthMedium', cellLineItem.growthMedium, (e) => { cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => { cellLineDetailsStore.changeMutation(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => { cellLineDetailsStore.changeVariant(cellLineId, e.target.value); })}
               {this.renderBiosafetyLevel(cellLineItem)}
@@ -134,9 +136,7 @@ class GeneralProperties extends React.Component {
 
               {this.renderAttribute('Amount *', cellLineItem.amount, (e) => { cellLineDetailsStore.changeAmount(cellLineId, Number(e.target.value)); }, false, true)}
               {this.renderAttribute('Passage *', cellLineItem.passage, (e) => { cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value)); }, false, true)}
-              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Source', cellLineItem.source, (e) => { cellLineDetailsStore.changeSource(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('GrowthMedium', cellLineItem.growthMedium, (e) => { cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}              
               {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => { cellLineDetailsStore.changeItemName(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => { cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value); })}
             </Panel.Body>

@@ -2,12 +2,15 @@ class CreateCelllineModels < ActiveRecord::Migration[6.1]
   def change
     create_table :cellline_materials do |t|
       t.string :name
+      t.string :source
       t.string :cell_type
       t.jsonb :organism
       t.jsonb :tissue
       t.jsonb :disease
+      t.string :growth_medium
       t.string :biosafety_level
       t.string :variant
+      t.string :mutation
       t.float :optimal_growth_temp
       t.string :cryo_pres_medium
       t.string :gender
@@ -19,10 +22,9 @@ class CreateCelllineModels < ActiveRecord::Migration[6.1]
     create_table :cellline_samples do |t|
       t.bigint :cellline_material_id
       t.integer :amount
+      t.string :unit
       t.integer :passage
       t.string :contamination
-      t.string :source
-      t.string :growth_medium
       t.string :name
       t.string :description
       t.bigint :user_id
