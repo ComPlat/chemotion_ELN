@@ -38,6 +38,7 @@ module Usecases
           disease: @params[:disease] || @material.disease,
           biosafety_level: @params[:biosafety_level] || @material.biosafety_level,
           variant: @params[:variant] || @material.variant,
+          mutation: @params[:mutation] || @material.mutation,
           optimal_growth_temp: @params[:optimal_growth_temp] || @material.optimal_growth_temp,
           cryo_pres_medium: @params[:cryo_pres_medium] || @material.cryo_pres_medium,
           gender: @params[:gender] || @material.gender,
