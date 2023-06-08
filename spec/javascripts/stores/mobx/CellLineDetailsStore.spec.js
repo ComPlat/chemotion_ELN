@@ -77,6 +77,7 @@ describe('CellLineDetailsStore', async () => {
                 expect(storeSample.growthMedium).toBe('DMEM (High Glucose) + 10% FBS');
                 expect(storeSample.itemDescription).toBe('Test data for cell line sample');
                 expect(storeSample.shortLabel).toBe('SHA-001');
+                expect(storeSample.itemName).toBe('Probe DX3-751');
             });
         });
     });

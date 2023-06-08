@@ -55,6 +55,7 @@ export default class CellLineFactory {
       cellLine.growthMedium = 'DMEM (High Glucose) + 10% FBS';
       cellLine.itemDescription = 'Test data for cell line sample';
       cellLine.short_label = 'SHA-001';
+      cellLine.itemName = 'Probe DX3-751'
       return cellLine;
     });
   }
