@@ -140,14 +140,25 @@
     }
 }
 
-.cell-line-group-arrow{
-    font-size: 1.5em !important;
+.cell-line-group-arrow{   
     margin-left: 3px;
+    font-size: 15px; 
+    color: rgb(51, 122, 183);
+    line-height: 10px;
+    margin-right:5px;
+    margin-top:5px;
 }
+
 
 .floating{
     float:left;
 }
+
+.floating-right{
+    float:right;
+}
+
+
 
 .property-block{
     width:20%;

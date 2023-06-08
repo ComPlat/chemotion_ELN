@@ -34,20 +34,26 @@ export default class CellLineEntry extends Component {
   }
 
   renderNameHeader(firstCellLineItem) {
-    const { showEntries } = this.state;
-    const itemEntriesArrow = showEntries ? (
-      <i
-        className="cell-line-group-arrow floating fa fa-angle-double-up"
-      />
-    ) : <i className="cell-line-group-arrow floating fa fa-angle-double-down" />;
-    return [this.renderDetailedInfoButton(),
-      itemEntriesArrow,
+    return [
+      this.renderArrow(),
+      this.renderDetailedInfoButton(),
       <div
         key={firstCellLineItem.cellLineName}
         className="cell-line-group-header-name"
       >
         {firstCellLineItem.cellLineName}
       </div>];
+  }
+
+  renderArrow() {
+    const { showEntries } = this.state;
+    const arrowType = showEntries ? 'glyphicon-chevron-right' : 'glyphicon-chevron-down';
+    return (
+      <div className="cell-line-group-arrow floating-right">
+        <i className={`glyphicon ${arrowType}`} />
+      </div>
+
+    );
   }
 
   renderBasicInfos(firstCellLineItem) {
