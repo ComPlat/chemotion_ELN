@@ -33,21 +33,29 @@
     .cell-line-name-autocomplete{
         height:36px;
         z-index: 999;
+
         .wrapper{
             z-index: 999;
             height:36px;
             border-radius: 4px;
+            
         }
         li{
             z-index: 999;
            background-color:white;
-           color:rgb(58, 58, 58);           
+           color:rgb(58, 58, 58);
         }
         .selected{
-            background-color:rgb(148, 148, 148);
+            background-color:rgb(204, 204, 204);
         }
         ul{
             margin-top: -13px;
+            font-size: 10px;
+            background-color:rgb(211, 211, 211) !important;
+            padding-bottom: 0px !important;
+            border-width: 1px !important;
+            border-style:solid;
+            border-color: #6d6d6d !important;
         }
     }
 }
