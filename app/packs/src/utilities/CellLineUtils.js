@@ -1,5 +1,6 @@
 const extractApiParameter = (cellLine) => {
     return {
+        "cell_line_sample_id":cellLine.id,
         "organism":cellLine.organism,
         "tissue":cellLine.tissue,
         "amount":cellLine.amount,

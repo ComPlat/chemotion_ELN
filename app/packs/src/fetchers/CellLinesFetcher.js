@@ -70,14 +70,23 @@ export default class CellLinesFetcher {
   }
 
   static update(cellLineItem) {
-    let index = CellLinesFetcher.mockData.findIndex((cellLine) => cellLineItem.id === cellLine.id);
-    if (index === -1) {
-      index = CellLinesFetcher.mockData.length;
-    }
-    cellLineItem.id = (index + 1).toString();
-    CellLinesFetcher.mockData[index] = cellLineItem;
-
-    return CellLinesFetcher.fetchById(index + 1);
+    const params = extractApiParameter(cellLineItem);
+    params
+    const promise = fetch('/api/v1/cell_lines', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'PUT',
+      body: JSON.stringify(params)
+    })
+      .then((response) => response.json())
+      .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 
   static {
