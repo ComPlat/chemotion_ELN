@@ -31,8 +31,12 @@ class VesselDetails extends React.Component {
   handleSubmit(vesselItem) {
     const mobXItem = this.context.vesselDetailsStore.vessels(this.props.vesselItem.id);
     vesselItem.adoptPropsFromMobxModel(mobXItem)
-    
-    ElementActions.updateVessel(vesselItem);
+    if (vesselItem.is_new){
+      DetailActions.close(vesselItem, true);
+      ElementActions.updateVessel(vesselItem);
+    } else {
+      ElementActions.updateVessel(vesselItem);
+    }
   }
 
   handleClose(vesselItem) {

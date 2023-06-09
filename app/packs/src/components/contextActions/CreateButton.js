@@ -20,7 +20,8 @@ const elementList = () => {
     { name: 'reaction', label: 'Reaction' },
     { name: 'wellplate', label: 'Wellplate' },
     { name: 'screen', label: 'Screen' },
-    { name: 'research_plan', label: 'Research Plan' }
+    { name: 'research_plan', label: 'Research Plan' },
+    { name: 'vessel', label: 'Vessel' }
   ];
   let genericEls = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};

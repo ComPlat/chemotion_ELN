@@ -25,6 +25,9 @@ export default class VesselsFetcher {
 
   static update(vesselItem){
     const index = VesselsFetcher.mockData.findIndex((vessel) => vesselItem.id === vessel.id);
+    if(index===-1){
+      index=VesselsFetcher.mockData.length;
+    }
     VesselsFetcher.mockData[index] = vesselItem;
     return VesselsFetcher.fetchById(index + 1);
   }
