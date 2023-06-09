@@ -9,7 +9,7 @@ const VesselItem = types.model({
   volumeAmount: '250',
   materialType: 'glass',
   materialDetails: '',
-  vesselId: -1,
+  id: '',
   vesselName: 'specific vessel name',
   vesselDescription: 'description',
 })
@@ -18,7 +18,7 @@ export const VesselDetailsStore = types.model({
   vesselItem: types.map(VesselItem)
 }).actions((self)=> ({
   convertVesselToModel(jsVesselModel) {
-    if (self.vesselItem.has(jsVesselModel.vesselId)) {
+    if (self.vesselItem.has(jsVesselModel.id)) {
       return;
     }
     self.vesselItem.set(jsVesselModel.id, VesselItem.create({
@@ -30,7 +30,7 @@ export const VesselDetailsStore = types.model({
       volumeAmount: jsVesselModel.volumeAmount,
       materialType: jsVesselModel.materialType,
       materialDetails: jsVesselModel.materialDetails,
-      vesselId: jsVesselModel.vesselId,
+      id: jsVesselModel.id,
       vesselName: jsVesselModel.vesselName,
       vesselDescription: jsVesselModel.vesselDescription,
     }))
