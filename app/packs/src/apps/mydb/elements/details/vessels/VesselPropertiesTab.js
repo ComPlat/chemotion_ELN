@@ -16,7 +16,7 @@ class VesselPropertiesTab extends React.Component {
   render() {
     const vesselId = this.props.item.id;
     const { vesselDetailsStore } = this.context;
-    const vesselItem = vesselDetailsStore.vessels(item.id)
+    const vesselItem = vesselDetailsStore.vessels(vesselId)
 
     return (
       <div>
