@@ -31,6 +31,16 @@ export default class VesselGroup {
 
   matchingGroup(vesselToCheck) {
     if (this.vesselItems.length === 0) { return false; }
-    return this.vesselItems[0].vesselTemplateId === vesselToCheck.vesselTemplateId;
+    
+    const firstItemInGroup = this.vesselItems[0];
+
+    return firstItemInGroup.vesselTemplateId === vesselToCheck.vesselTemplateId
+    && firstItemInGroup.vesselTemplateName === vesselToCheck.vesselTemplateName
+    && firstItemInGroup.vesselTemplateDetails === vesselToCheck.vesselTemplateDetails
+    && firstItemInGroup.vesselType === vesselToCheck.vesselType
+    && firstItemInGroup.volumeUnit === vesselToCheck.volumeUnit
+    && firstItemInGroup.volumeAmount === vesselToCheck.volumeAmount
+    && firstItemInGroup.materialType === vesselToCheck.materialType
+    && firstItemInGroup.materialDetails === vesselToCheck.materialDetails;
   }
 }

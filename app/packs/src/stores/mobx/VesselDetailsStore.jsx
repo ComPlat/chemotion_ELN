@@ -17,10 +17,31 @@ const VesselItem = types.model({
 export const VesselDetailsStore = types.model({
   vesselItem: types.map(VesselItem)
 }).actions((self)=> ({
-  changeNameOfVessel(id, newVesselName) {
+  changeTemplateName(id, newVesselTemplateName) {
+    self.vesselItem.get(id).vesselTemplateName = newVesselTemplateName;
+  },
+  changeTemplateDetails(id, newVesselTemplateDetails) {
+    self.vesselItem.get(id).vesselTemplateDetails = newVesselTemplateDetails;
+  },
+  changeType(id, newVesselType) {
+    self.vesselItem.get(id).vesselType = newVesselType;
+  },
+  changeVolumeUnit(id, newVolumeUnit) {
+    self.vesselItem.get(id).volumeUnit = newVolumeUnit;
+  },
+  changeVolumeAmount(id, newVolumeAmount) {
+    self.vesselItem.get(id).volumeAmount = newVolumeAmount;
+  },
+  changeMaterialType(id, newMaterialType) {
+    self.vesselItem.get(id).materialType = newMaterialType;
+  },
+  changeMaterialDetails(id, newMaterialDetails) {
+    self.vesselItem.get(id).materialDetails = newMaterialDetails;
+  },
+  changeName(id, newVesselName) {
     self.vesselItem.get(id).vesselName = newVesselName;
   },
-  changeDescriptionOfVessel(id, newVesselDescription) {
+  changeDescription(id, newVesselDescription) {
     self.vesselItem.get(id).vesselDescription = newVesselDescription;
   },
   convertVesselToModel(jsVesselModel) {

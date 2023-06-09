@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Button, Popover, Col, Checkbox, Panel, Form, ButtonGroup, OverlayTrigger, FormGroup, FormControl, ControlLabel, InputGroup
+ Col, Panel, FormControl, ControlLabel, PanelGroup
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
@@ -10,81 +10,65 @@ class VesselPropertiesTab extends React.Component {
 
   constructor(props) {
     super(props);
-  }
-
-  componentDidMount() {
-
+    this.state = { openPanel: 'common-properties' };
   }
   
   render() {
     const vesselItem = this.context.vesselDetailsStore.vessels(this.props.item.id);
+    const store = this.context.vesselDetailsStore;
+    const vesselId = this.props.item.id;
     return (
-      <FormGroup>
-        {/* Vessel Template */}
-        
-        <Col componentClass={ControlLabel} sm={3}>Vessel Template ID</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselTemplateId} disabled />
-        </Col>
+      <div>
+        <PanelGroup
+          activeKey={this.state.openPanel}
+          accordion
+        >
+          <Panel
+          eventKey="common-properties"
+          key="common-properties"
+          >
+            <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'common-properties' }) }}>Common Properties</Panel.Heading>
+            <Panel.Body collapsible>
+              {this.renderAttribute('Vessel Template Name', vesselItem.vesselTemplateName, (e)=>{store.changeTemplateName(vesselId, e.target.value)})}
+              {this.renderAttribute('Vessel Template Details', vesselItem.vesselTemplateDetails, (e)=>{store.changeTemplateDetails(vesselId, e.target.value)})}
+              {this.renderAttribute('Vessel Type', vesselItem.vesselType, (e)=>{store.changeType(vesselId, e.target.value)})}
+              {this.renderAttribute('Volume Amount', vesselItem.volumeAmount, (e)=>{store.changeVolumeAmount(vesselId, e.target.value)})}
+              {this.renderAttribute('Volume Unit', vesselItem.volumeUnit, (e)=>{store.changeVolumeUnit(vesselId, e.target.value)})}
+              {this.renderAttribute('Material', vesselItem.materialType, (e)=>{store.changeMaterialType(vesselId, e.target.value)})}
+              {this.renderAttribute('Material Details', vesselItem.materialDetails, (e)=>{store.changeMaterialDetails(vesselId, e.target.value)})}
+            </Panel.Body>
+          </Panel>
 
-        <Col componentClass={ControlLabel} sm={3}>Vessel Template Name</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselTemplateName} disabled />
-        </Col>
-
-        <Col componentClass={ControlLabel} sm={3}>Vessel Template Details</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselTemplateDetails} disabled />
-        </Col>
-
-        <Col componentClass={ControlLabel} sm={3}>Vessel Type</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselType} disabled />
-        </Col>
-
-        <Col componentClass={ControlLabel} sm={3}>Volume</Col>
-        <Col sm={6}>
-          <FormControl type="text" name="XXX" value={vesselItem.volumeAmount} disabled />
-        </Col>
-        <Col sm={3}>
-          <FormControl type="text" name="XXX" value={vesselItem.volumeUnit} disabled />
-        </Col>
-
-        <Col componentClass={ControlLabel} sm={3}>Material</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.materialType} disabled />
-        </Col>
-
-        {/* Vessel Details */}
-
-        <Col componentClass={ControlLabel} sm={3}>Vessel ID</Col>
-        <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselId} disabled />
-        </Col>
-
-        <Col componentClass={ControlLabel} sm={3}>Vessel Name</Col>
-        <Col sm={9}>
-          <FormControl
-            type="text"
-            name="XXX"
-            value={vesselItem.vesselName}
-            onChange={(e) => 
-            this.context.vesselDetailsStore.changeNameOfVessel(this.props.item.id, Number(e.target.value))}
-          />
-        </Col>
-        
-        <Col componentClass={ControlLabel} sm={3}>Vessel Description</Col>
-        <Col sm={9}>
-          <FormControl
-            type="text"
-            name="XXX"
-            value={vesselItem.vesselDescription}
-            onChange={(e) => 
-              this.context.vesselDetailsStore.changeDescriptionOfVessel(this.props.item.id, Number(e.target.value))}
-          />
-        </Col>
-      </FormGroup>
+          <Panel
+            eventKey="specific-properties"
+            key="specific-properties"
+          >
+            <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }) }}>Specific Properties</Panel.Heading>
+            <Panel.Body collapsible>
+            {this.renderAttribute('Name', vesselItem.vesselName, (e)=>{store.changeName(vesselId, e.target.value)})}
+            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{store.changeName(vesselId, e.target.value)})}
+            </Panel.Body>
+          </Panel>
+      </PanelGroup>
+      </div>
+      
     )
+  }
+
+  renderAttribute(attributeName, defaultValue, onChangeCallBack) {
+    return (
+      <div>
+        <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
+        <Col sm={9}>
+          <FormControl
+            type="text"
+            name="XXX"
+            defaultValue={defaultValue}
+            onChange={onChangeCallBack}
+          />
+        </Col>
+      </div>
+    );
   }
 }
 

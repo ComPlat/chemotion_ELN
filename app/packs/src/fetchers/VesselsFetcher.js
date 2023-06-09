@@ -1,6 +1,9 @@
 import Vessel from 'src/models/Vessel';
 
 export default class VesselsFetcher {
+  static vesselName = 'Name';
+  static vesselDescription = 'Description';
+
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return new Promise((resolve,reject) =>   {
       const result={};
@@ -16,8 +19,8 @@ export default class VesselsFetcher {
         v1.materialType = 'glass';
         v1.materialDetails = 'transparent';
         // Vessel Name & Description
-        v1.vesselName = '';
-        v1.vesselDescription = '';
+        v1.vesselName = VesselsFetcher.vesselName;
+        v1.vesselDescription = VesselsFetcher.vesselDescription;
 
         var v2 = Vessel.buildEmpty(0)
         v2.vesselTemplateName = "Vessel Template 1";
@@ -94,5 +97,11 @@ export default class VesselsFetcher {
     .then((result) => {
       return result.elements[Number(id)-1]
     });
+  }
+
+  static update(vesselItem){
+    VesselsFetcher.vesselName=vesselItem.vesselName
+    VesselsFetcher.vesselDescription=vesselItem.vesselDescription
+    return VesselsFetcher.fetchById(1);
   }
 }

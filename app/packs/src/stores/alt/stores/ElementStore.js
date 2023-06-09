@@ -258,6 +258,7 @@ class ElementStore {
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan,
         ElementActions.updateGenericEl,
+        ElementActions.updateVessel,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,

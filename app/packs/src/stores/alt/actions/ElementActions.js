@@ -822,6 +822,18 @@ class ElementActions {
     };
   }
 
+  // -- Vessels --
+
+  updateVessel(params){
+    console.log('update')
+    return(dispatch) => {
+      VesselsFetcher.update(params)
+      .then((result) => {dispatch(result);}).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   // -- DataCite/Radar metadata --
 
   fetchMetadata(collection_id) {
