@@ -2,16 +2,16 @@ import { types } from 'mobx-state-tree';
 
 const VesselItem = types.model({
   vesselTemplateId: 1,
-  vesselTemplateName: 'Name',
-  vesselTemplateDetails: 'ground glass joint',
-  vesselType: 'round bottom flask',
-  volumeUnit: 'ml',
-  volumeAmount: '250',
-  materialType: 'glass',
+  vesselTemplateName: '',
+  vesselTemplateDetails: '',
+  vesselType: '',
+  volumeUnit: '',
+  volumeAmount: '',
+  materialType: '',
   materialDetails: '',
   id: '',
-  vesselName: 'specific vessel name',
-  vesselDescription: 'description',
+  vesselName: '',
+  vesselDescription: '',
 })
 
 export const VesselDetailsStore = types.model({

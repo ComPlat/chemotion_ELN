@@ -91,6 +91,12 @@ const routes = {
     },
     '/:research_planID': 'showOrNew'
   },
+  '/vessel': {
+    target: {
+      showOrNew: routesUtils.vesselShowOrNew
+    },
+    '/:vesselID': 'showOrNew'
+  },
   '/fwdRxnPrediction': {
     target: {
       showFwdRxnPrediction: routesUtils.predictionShowFwdRxn

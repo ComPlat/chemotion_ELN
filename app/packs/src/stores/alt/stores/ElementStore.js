@@ -177,6 +177,7 @@ class ElementStore {
         ElementActions.tryFetchWellplateById,
         ElementActions.tryFetchGenericElById
       ],
+      handleFetchVesselById: ElementActions.tryFetchVesselElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -932,6 +933,10 @@ class ElementStore {
       // this.state.currentElement = result
       this.navigateToNewElement(result)
     }
+  }
+
+  handleFetchVesselById(result){
+    this.changeCurrentElement(result);
   }
 
   handleCloseWarning() {

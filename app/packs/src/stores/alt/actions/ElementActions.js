@@ -409,7 +409,19 @@ class ElementActions {
     return Sample.buildEmpty(collection_id)
   }
 
-  generateEmptyVessel(collection_id) {
+  tryFetchVesselElById(vesselId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchById(vesselId)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    }
+  }
+
+  generateEmptyVessel(collection_id){
+    var v = new Vessel();
     return Vessel.buildEmpty(collection_id)
   }
 

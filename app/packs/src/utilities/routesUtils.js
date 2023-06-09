@@ -112,11 +112,10 @@ const sampleShowOrNew = (e) => {
 };
 
 const vesselShowOrNew = (e) => {
-  const { new_vessel, collectionID } = e.params;
-  if(new_vessel){
-    ElementActions.generateEmptyVessel(collectionID);
-  } else {
-
+  if(e.params.new_vessel){
+    ElementActions.generateEmptyVessel(e.params.collectionID);
+  }else{
+    ElementActions.tryFetchVesselElById.defer(e.params.vesselId);
   }
 }
 
@@ -299,5 +298,6 @@ export {
   metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  vesselShowOrNew
 };
