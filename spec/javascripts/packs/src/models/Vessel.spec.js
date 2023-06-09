@@ -6,7 +6,7 @@ describe('Vessel', async () => {
   describe('createEmpty()', () =>{
     context('when collection is valid', () =>{
       it('new empty vessel item created', () => {
-        const vessel=Vessel.buildEmpty(0);              
+        const vessel=Vessel.buildEmpty(0, '');              
         expect(vessel.collection_id).toBe(0)
      });        
  });  

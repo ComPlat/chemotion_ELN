@@ -1,19 +1,20 @@
 import Element from 'src/models/Element';
 
 export default class Vessel extends Element {
-  static buildEmpty(collection_id){
+  static buildEmpty(collection_id, shortlabel){
     if (collection_id === undefined || !Number.isInteger(Number(collection_id))) {
         throw new Error(`collection id is not valid: ${collection_id}`);
     }
     const vessel = new Vessel({
       collectionId:Number(collection_id),
-      type: 'vessel'
+      type: 'vessel',
+      short_label: shortlabel
     });
     return vessel;
   }
 
   title() {
-    return this.vesselName;
+    return this.short_label;
   }
 
   adoptPropsFromMobxModel(mobx) {

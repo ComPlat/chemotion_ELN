@@ -37,6 +37,7 @@ import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 import _ from 'lodash';
 
@@ -422,7 +423,8 @@ class ElementActions {
 
   generateEmptyVessel(collection_id){
     var v = new Vessel();
-    return Vessel.buildEmpty(collection_id)
+    const { currentUser } = UserStore.getState();
+    return Vessel.buildEmpty(collection_id, `${currentUser.initials}-${0}` );
   }
 
   splitAsSubsamples(ui_state) {
