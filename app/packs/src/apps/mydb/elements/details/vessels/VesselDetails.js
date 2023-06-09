@@ -10,7 +10,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
-import GenericPropertiesTab from 'src/apps/mydb/elements/details/vessels/GenericPropertiesTab'
+import VesselPropertiesTab from 'src/apps/mydb/elements/details/vessels/VesselPropertiesTab'
 
 class VesselDetails extends React.Component {
   static contextType = StoreContext;
@@ -113,7 +113,7 @@ class VesselDetails extends React.Component {
         <Panel.Body>
           <Tabs activeKey={ this.state.activeTab} onSelect={event => this.handleTabChange(event)} id="vesselDetailsTab">
             <Tab eventKey="tab1" title="General Properties" key={"tab1"}>
-              <GenericPropertiesTab item={item} />
+              <VesselPropertiesTab item={item} />
             </Tab>
             <Tab eventKey="tab2" title="tab2" key={"tab2"}>Tab 2</Tab>
           </Tabs>
