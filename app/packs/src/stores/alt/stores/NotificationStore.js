@@ -37,9 +37,7 @@ class NotificationStore {
 
   handleNotificationImportSamplesFromFile(result) {
     const num = result.data?.length ?? 0;
-    const { status } = result;
-    const { sdf } = result;
-    const { message } = result;
+    const { status, sdf, message } = result;
     this.handleRemoveByUid('import_samples_upload');
     let notification = {
       title: 'Oops!',
@@ -50,7 +48,6 @@ class NotificationStore {
     };
     if (sdf) {
       if (status === 'ok') {
-        console.log('sdf ok');
         notification = {
           title: 'Success',
           message,
@@ -59,7 +56,6 @@ class NotificationStore {
           autoDismiss: 10
         };
       } else if (status === 'invalid') {
-        console.log('sdf invalid');
         notification.message = message;
       }
     } else if (status === 'ok') {
@@ -71,10 +67,8 @@ class NotificationStore {
         autoDismiss: 10
       };
     } else if (status === 'invalid') {
-      console.log('invalid');
       notification.message = message;
     } else if (status === 'in progress') {
-      console.log('invalid or in progress');
       notification.message = message;
       notification.title = 'Status';
       notification.level = 'success';
@@ -86,17 +80,7 @@ class NotificationStore {
         position: 'bl',
         autoDismiss: 10
       };
-    } else if (status === 204) {
-      console.log('204');
-      notification = {
-        title: 'Status',
-        message: 'Importing of samples has been added to the job queue',
-        level: 'success',
-        position: 'bl',
-        autoDismiss: 10
-      };
     }
-    console.log(result);
     this.handleAdd(notification);
   }
 
