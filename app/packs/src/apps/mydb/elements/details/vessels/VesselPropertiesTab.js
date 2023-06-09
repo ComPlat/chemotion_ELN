@@ -64,12 +64,24 @@ class VesselPropertiesTab extends React.Component {
 
         <Col componentClass={ControlLabel} sm={3}>Vessel Name</Col>
         <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselName} disabled />
+          <FormControl
+            type="text"
+            name="XXX"
+            value={vesselItem.vesselName}
+            onChange={(e) => 
+            this.context.vesselDetailsStore.changeNameOfVessel(this.props.item.id, Number(e.target.value))}
+          />
         </Col>
         
         <Col componentClass={ControlLabel} sm={3}>Vessel Description</Col>
         <Col sm={9}>
-          <FormControl type="text" name="XXX" value={vesselItem.vesselDescription} disabled />
+          <FormControl
+            type="text"
+            name="XXX"
+            value={vesselItem.vesselDescription}
+            onChange={(e) => 
+              this.context.vesselDetailsStore.changeDescriptionOfVessel(this.props.item.id, Number(e.target.value))}
+          />
         </Col>
       </FormGroup>
     )

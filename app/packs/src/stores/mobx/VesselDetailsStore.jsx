@@ -17,6 +17,12 @@ const VesselItem = types.model({
 export const VesselDetailsStore = types.model({
   vesselItem: types.map(VesselItem)
 }).actions((self)=> ({
+  changeNameOfVessel(id, newVesselName) {
+    self.vesselItem.get(id).vesselName = newVesselName;
+  },
+  changeDescriptionOfVessel(id, newVesselDescription) {
+    self.vesselItem.get(id).vesselDescription = newVesselDescription;
+  },
   convertVesselToModel(jsVesselModel) {
     if (self.vesselItem.has(jsVesselModel.id)) {
       return;
