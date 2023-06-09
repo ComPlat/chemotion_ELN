@@ -106,10 +106,11 @@ module Chemotion
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
           file_size = params[:file][:tempfile].size
+          file = params[:file]
           if file_size < 25_000
             import = Import::ImportSamples.new(
               params[:file][:tempfile].path,
-              params[:currentCollectionId], current_user.id
+              params[:currentCollectionId], current_user.id, file['filename']
             )
             import_result = import.process
             if import_result[:status] == 'ok' || import_result[:status] == 'warning'
@@ -120,7 +121,6 @@ module Chemotion
             end
             import_result
           else
-            file = params[:file]
             temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
             # Create a new file in the tmp folder
             tmp_file_path = File.join('tmp', temp_filename)
@@ -130,6 +130,7 @@ module Chemotion
               tmp_file_path,
               params[:currentCollectionId],
               current_user.id,
+              file['filename'],
             )
             { status: 'in progress', message: 'Importing samples in background' }
           end

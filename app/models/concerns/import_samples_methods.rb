@@ -92,7 +92,7 @@ module ImportSamplesMethods
   def warning(error = nil)
     { status: 'warning',
       error: error,
-      message: "following rows in file: #{File.basename(@file_path).split('-').last} " \
+      message: "following rows in file: #{@file_name} " \
                "could not be imported: #{unprocessable_rows}.",
       unprocessed_data: unprocessable,
       data: processed }
@@ -101,7 +101,7 @@ module ImportSamplesMethods
   def no_success(error)
     { status: 'invalid',
       error: error,
-      message: "No samples could be imported for file #{File.basename(@file_path).split('-').last} " \
+      message: "No samples could be imported for file #{@file_name} " \
                "because of the following error #{error}.",
       unprocessed_data: unprocessable }
   end
@@ -112,7 +112,7 @@ module ImportSamplesMethods
 
   def success
     { status: 'ok',
-      message: "samples in file: #{File.basename(@file_path).split('-').last} have been imported successfully",
+      message: "samples in file: #{@file_name} have been imported successfully",
       data: processed }
   end
 end

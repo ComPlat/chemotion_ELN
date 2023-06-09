@@ -5,17 +5,18 @@ require 'roo'
 module Import
   class ImportSamples
     attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :unprocessable,
-                :processed, :file_path, :collection_id, :current_user_id
+                :processed, :file_path, :collection_id, :current_user_id, :file_name
 
     include ImportSamplesMethods
 
-    def initialize(file_path, collection_id, user_id)
+    def initialize(file_path, collection_id, user_id, file_name)
       @rows = []
       @unprocessable = []
       @processed = []
       @file_path = file_path
       @collection_id = collection_id
       @current_user_id = user_id
+      @file_name = file_name
     end
 
     def read_file
