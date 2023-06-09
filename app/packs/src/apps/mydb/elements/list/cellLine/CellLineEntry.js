@@ -57,13 +57,14 @@ export default class CellLineEntry extends Component {
   }
 
   renderBasicInfos(firstCellLineItem) {
-    return [this.renderProperty('Organism', firstCellLineItem.organism),
-      this.renderProperty('Disease', firstCellLineItem.disease)];
+    return null;
   }
 
   renderDetailedInfos(firstCellLineItem) {
     const { detailedInformation } = this.state;
     return !detailedInformation ? [] : [
+      this.renderProperty('Organism', firstCellLineItem.organism),
+      this.renderProperty('Disease', firstCellLineItem.disease),
       this.renderProperty('Tissue', firstCellLineItem.tissue),
       this.renderProperty('Mutation', firstCellLineItem.mutation),
       this.renderProperty('Variant', firstCellLineItem.variant),
@@ -109,8 +110,7 @@ export default class CellLineEntry extends Component {
       <div className="cell-line-group-header-property">
         <div className="property-key floating">{propertyName}</div>
         <div className="property-key-minus floating" floating>-</div>
-        <div>
-          {' '}
+        <div className="property-value">
           {propertyValue}
         </div>
       </div>
