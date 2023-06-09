@@ -200,10 +200,8 @@ export const CellLineDetailsStore = types
     checkInputValidity(id) {
       const result = [];
       const item = self.cellLineItem.get(id);
-      if (item.cellLineName.trim() === '') { result.push('cellLineName'); }
-      if (item.disease.trim() === '') { result.push('disease'); }
-      if (item.organism.trim() === '') { result.push('organism'); }
-      if (item.tissue.trim() === '') { result.push('tissue'); }
+      if (item.cellLineName.trim() === '') { result.push('cellLineName');}
+      if (item.source.trim() === '') { result.push('source'); }
       if (!Number.isInteger(item.amount) || item.amount === 0) { result.push('amount'); }
       if (!Number.isInteger(item.passage) || item.passage === 0) { result.push('passage'); }
       return result;
