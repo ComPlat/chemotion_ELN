@@ -161,15 +161,10 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'post',
       body: data
-    }).then((response) => {
-      if (response.status === 204) {
-        return response;
-      }
-      return response.json();
-    }).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
+    }).then((response) => response.json())
+      .then((json) => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     return promise;
   }
 

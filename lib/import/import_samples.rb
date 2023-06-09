@@ -72,27 +72,6 @@ module Import
       end
     end
 
-    # def process_batch
-    #   batch_size = 100
-    #   result = nil
-    #   (2..xlsx.last_row).each_slice(batch_size) do |batch|
-    #     batch.each do |row_data|
-    #       process_row(row_data)
-    #       write_to_db
-    #       rows.clear
-    #     rescue StandardError => e
-    #       Rails.logger.debug { "Error processing row: #{row_data}. Error: #{e.message}" }
-    #       @unprocessable << { row: row_data }
-    #     end
-    #     result = if processed.empty?
-    #                no_success
-    #              else
-    #                @unprocessable.empty? ? success : warning
-    #              end
-    #   end
-    #   result
-    # end
-
     def excluded_fields
       [
         'id',
@@ -135,7 +114,7 @@ module Import
       Sample.attribute_names - excluded_fields
     end
 
-    def handle_sample_solvent_columnt(sample, row)
+    def handle_sample_solvent_column(sample, row)
       return unless row['solvent'].is_a? String
 
       solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(row['solvent']) }
@@ -144,7 +123,7 @@ module Import
     end
 
     def validate_sample_and_save(sample, stereo, row)
-      handle_sample_solvent_columnt(sample, row)
+      handle_sample_solvent_column(sample, row)
       sample.validate_stereo(stereo)
       sample.collections << Collection.find(collection_id)
       sample.collections << Collection.get_all_collection_for_user(current_user_id)
