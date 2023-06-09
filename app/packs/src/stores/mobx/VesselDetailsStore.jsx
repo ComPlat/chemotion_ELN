@@ -44,6 +44,9 @@ export const VesselDetailsStore = types.model({
   changeDescription(id, newVesselDescription) {
     self.vesselItem.get(id).vesselDescription = newVesselDescription;
   },
+  removeVesselFromStore(id) {
+    self.vesselItem.delete(id);
+  },
   convertVesselToModel(jsVesselModel) {
     if (self.vesselItem.has(jsVesselModel.id)) {
       return;
