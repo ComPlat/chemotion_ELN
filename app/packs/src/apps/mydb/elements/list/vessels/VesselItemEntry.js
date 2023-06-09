@@ -27,25 +27,26 @@ export default class VesselItemEntry extends React.Component {
     }
 
     render(){
+      const { vesselItem } = this.props;
         return (
           <Table className="elements" bordered hover style={{ borderTop: 0 }}>
           <tbody>
             <tr>
               <td>
               <ElementCheckbox
-                  element={this.props.vesselItem}
-                  key={this.props.vesselItem.id}
-                  checked={this.isElementChecked(this.props.vesselItem)}
+                  element={vesselItem}
+                  key={vesselItem.id}
+                  checked={this.isElementChecked(vesselItem)}
               /><br />
               </td>
               <td onClick={e => this.showDetails()}>
-                Vessel id: {this.props.vesselItem.id}
+                {vesselItem.short_label}
               </td>
               <td>
               <ElementContainer
-                      key={this.props.vesselItem.id}
+                      key={vesselItem.id}
                       sourceType={DragDropItemTypes.VESSEL}
-                      element={this.props.vesselItem}
+                      element={vesselItem}
                     />
               </td>
             </tr>
