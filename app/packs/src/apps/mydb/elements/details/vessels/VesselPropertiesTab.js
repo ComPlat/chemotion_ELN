@@ -14,9 +14,10 @@ class VesselPropertiesTab extends React.Component {
   }
   
   render() {
-    const vesselItem = this.context.vesselDetailsStore.vessels(this.props.item.id);
-    const store = this.context.vesselDetailsStore;
     const vesselId = this.props.item.id;
+    const { vesselDetailsStore } = this.context;
+    const vesselItem = vesselDetailsStore.vessels(item.id)
+
     return (
       <div>
         <PanelGroup
@@ -29,13 +30,13 @@ class VesselPropertiesTab extends React.Component {
           >
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'common-properties' }) }}>Common Properties</Panel.Heading>
             <Panel.Body collapsible>
-              {this.renderAttribute('Vessel Template Name', vesselItem.vesselTemplateName, (e)=>{store.changeTemplateName(vesselId, e.target.value)})}
-              {this.renderAttribute('Vessel Template Details', vesselItem.vesselTemplateDetails, (e)=>{store.changeTemplateDetails(vesselId, e.target.value)})}
-              {this.renderAttribute('Vessel Type', vesselItem.vesselType, (e)=>{store.changeType(vesselId, e.target.value)})}
-              {this.renderAttribute('Volume Amount', vesselItem.volumeAmount, (e)=>{store.changeVolumeAmount(vesselId, e.target.value)})}
-              {this.renderAttribute('Volume Unit', vesselItem.volumeUnit, (e)=>{store.changeVolumeUnit(vesselId, e.target.value)})}
-              {this.renderAttribute('Material', vesselItem.materialType, (e)=>{store.changeMaterialType(vesselId, e.target.value)})}
-              {this.renderAttribute('Material Details', vesselItem.materialDetails, (e)=>{store.changeMaterialDetails(vesselId, e.target.value)})}
+              {this.renderAttribute('Vessel Template Name', vesselItem.vesselTemplateName, (e)=>{vesselDetailsStore.changeTemplateName(vesselId, e.target.value)})}
+              {this.renderAttribute('Vessel Template Details', vesselItem.vesselTemplateDetails, (e)=>{vesselDetailsStore.changeTemplateDetails(vesselId, e.target.value)})}
+              {this.renderAttribute('Vessel Type', vesselItem.vesselType, (e)=>{vesselDetailsStore.changeType(vesselId, e.target.value)})}
+              {this.renderAttribute('Volume Amount', vesselItem.volumeAmount, (e)=>{vesselDetailsStore.changeVolumeAmount(vesselId, e.target.value)})}
+              {this.renderAttribute('Volume Unit', vesselItem.volumeUnit, (e)=>{vesselDetailsStore.changeVolumeUnit(vesselId, e.target.value)})}
+              {this.renderAttribute('Material', vesselItem.materialType, (e)=>{vesselDetailsStore.changeMaterialType(vesselId, e.target.value)})}
+              {this.renderAttribute('Material Details', vesselItem.materialDetails, (e)=>{vesselDetailsStore.changeMaterialDetails(vesselId, e.target.value)})}
             </Panel.Body>
           </Panel>
 
@@ -45,8 +46,8 @@ class VesselPropertiesTab extends React.Component {
           >
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }) }}>Specific Properties</Panel.Heading>
             <Panel.Body collapsible>
-            {this.renderAttribute('Name', vesselItem.vesselName, (e)=>{store.changeName(vesselId, e.target.value)})}
-            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{store.changeName(vesselId, e.target.value)})}
+            {this.renderAttribute('Name', vesselItem.vesselName, (e)=>{vesselDetailsStore.changeName(vesselId, e.target.value)})}
+            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{vesselDetailsStore.changeName(vesselId, e.target.value)})}
             </Panel.Body>
           </Panel>
       </PanelGroup>
