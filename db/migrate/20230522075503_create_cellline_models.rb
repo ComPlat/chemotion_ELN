@@ -21,6 +21,7 @@ class CreateCelllineModels < ActiveRecord::Migration[6.1]
 
     create_table :cellline_samples do |t|
       t.bigint :cellline_material_id
+      t.bigint :cellline_sample_id
       t.integer :amount
       t.string :unit
       t.integer :passage

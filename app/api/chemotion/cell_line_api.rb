@@ -73,11 +73,11 @@ module Chemotion
 
       desc 'Create a new Cell line sample'
       params do
-        requires :organism, type: String, desc: 'name of the donor organism of the cell'
-        requires :tissue, type: String, desc: 'tissue from which the cell originates'
+        optional :organism, type: String, desc: 'name of the donor organism of the cell'
+        optional :tissue, type: String, desc: 'tissue from which the cell originates'
         requires :amount, type: Integer, desc: 'amount of cells'
         requires :passage, type: Integer, desc: 'passage of cells'
-        requires :disease, type: String, desc: 'deasease of cells'
+        optional :disease, type: String, desc: 'deasease of cells'
         requires :material_names, type: String, desc: 'names of cell line e.g. name1;name2'
         requires :collection_id, type: Integer, desc: 'Collection of the cell line sample'
         optional :cell_type, type: String, desc: 'type of cells'
@@ -89,7 +89,7 @@ module Chemotion
         optional :gender, type: String, desc: 'gender of donor organism'
         optional :material_description, type: String, desc: 'description of cell line concept'
         optional :contamination, type: String, desc: 'contamination of a cell line sample'
-        optional :source, type: String, desc: 'source of a cell line sample'
+        requires :source, type: String, desc: 'source of a cell line sample'
         optional :name, type: String, desc: 'name of a cell line sample'
         optional :mutation, type: String, desc: 'mutation of a cell line '
         optional :description, type: String, desc: 'description of a cell line sample'

@@ -61,11 +61,8 @@ module Usecases
       end
 
       def check_parameter
-        raise 'organism not valid' unless check_ontology(@params[:organism])
-        raise 'tissue not valid' unless check_ontology(@params[:tissue])
         raise 'amount not valid' unless check_scalar_value(@params[:amount])
         raise 'passage not valid' unless check_scalar_value(@params[:passage])
-        raise 'disease not valid' unless check_string_value(@params[:disease])
         raise 'material name not valid' unless check_names_value(@params[:material_names])
       end
 
