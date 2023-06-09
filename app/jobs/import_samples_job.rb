@@ -19,10 +19,10 @@ class ImportSamplesJob < ApplicationJob
     Delayed::Worker.logger.error e
   end
 
-  def perform(file_path, collection_id, user_id)
+  def perform(file_path, collection_id, user_id, file_name)
     @user_id = user_id
     begin
-      import = Import::ImportSamples.new(file_path, collection_id, user_id)
+      import = Import::ImportSamples.new(file_path, collection_id, user_id, file_name)
       @result = import.process
     rescue StandardError => e
       Delayed::Worker.logger.error e
