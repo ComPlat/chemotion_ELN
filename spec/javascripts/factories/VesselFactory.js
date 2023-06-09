@@ -21,15 +21,15 @@ export default class VesselFactory {
 
     this.factory.define('with_name', Vessel, async () => {
       const vessel = Vessel.buildEmpty(0);
-      vessel.vessel_template_name = 'Vessel 1';
-      vessel.vessel_template_id = 1;
+      vessel.vesselTemplateName = 'Vessel 1';
+      vessel.vesselTemplateId = 1;
       return vessel;
     });
 
     this.factory.define('with_other_name', Vessel, async () => {
       const vessel = Vessel.buildEmpty(0);
-      vessel.vessel_template_name = 'Vessel 2';
-      vessel.vessel_template_id = 2;
+      vessel.vesselTemplateName = 'Vessel 2';
+      vessel.vesselTemplateId = 2;
       return vessel;
     });
   }

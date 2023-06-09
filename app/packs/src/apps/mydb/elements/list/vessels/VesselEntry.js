@@ -26,8 +26,8 @@ export default class VesselEntry extends React.Component {
       return (
           <div className="list-container">
             <br />
-            {firstVesselItem.vessel_template_name}
-            {' (ID: '}{firstVesselItem.vessel_template_id}{')'}
+            {firstVesselItem.vesselTemplateName}
+            {' (ID: '}{firstVesselItem.vesselTemplateId}{')'}
             {this.props.vesselGroup.vesselItems.map((vesselItem) => <VesselItemEntry vesselItem={vesselItem}/>)}
           </div>
         );

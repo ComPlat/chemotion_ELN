@@ -31,6 +31,6 @@ export default class VesselGroup {
 
   matchingGroup(vesselToCheck) {
     if (this.vesselItems.length === 0) { return false; }
-    return this.vesselItems[0].vessel_template_id === vesselToCheck.vessel_template_id;
+    return this.vesselItems[0].vesselTemplateId === vesselToCheck.vesselTemplateId;
   }
 }
