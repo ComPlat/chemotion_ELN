@@ -30,7 +30,15 @@ class TabLayoutCell extends Component {
       isCollectionTab
     } = this.props;
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const styleObj = {
+      fontSize: 12,
+      color: '#000000',
+      textAlign: 'center',
+      wordWrap: 'break-word',
+      width: '85px'
+    };
+
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel'];
     let cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
