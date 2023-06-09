@@ -76,22 +76,10 @@ export default class CellLineEntry extends Component {
 
   renderDetailedInfoButton() {
     const { detailedInformation } = this.state;
-    return detailedInformation
-      ? (
+    const buttonActive = detailedInformation?"cell-line-group-detailed-info-button-inactive":"cell-line-group-detailed-info-button-active";
+    return (
         <Button
-          className="cell-line-group-detailed-info-button-inactive button-right"
-          bsSize="xsmall"
-          onClick={(e) => {
-            e.stopPropagation();
-            this.setState({ detailedInformation: !detailedInformation });
-          }}
-        >
-          <i className="fa fa-info-circle" aria-hidden="true" />
-        </Button>
-      )
-      : (
-        <Button
-          className="cell-line-group-detailed-info-button-active button-right"
+          className={"button-right "+buttonActive}
           bsSize="xsmall"
           onClick={(e) => {
             e.stopPropagation();
@@ -101,6 +89,7 @@ export default class CellLineEntry extends Component {
           <i className="fa fa-info-circle" aria-hidden="true" />
         </Button>
       );
+     
   }
 
   // eslint-disable-next-line class-methods-use-this
