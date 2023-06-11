@@ -122,26 +122,21 @@ export default class CollectionSubtree extends React.Component {
 
   takeOwnershipButton() {
     const root = this.state.root;
-    const acls = root.collection_acls;
+    const acls = root.acl;
     if (acls === undefined) return;
 
-    const currentUser = this.state.currentUser;
-    const takeOwnershipAcl = acls.filter((acl) => (
-      acl.permission_level === 5 && acl.user_id === currentUser.id
-    ));
-
-    if (takeOwnershipAcl.length > 0) {
+    if (root.canTakeOwnership()) {
       return (
         <div className="take-ownership-btn">
-          <i className="fa fa-exchange" onClick={() => this.handleTakeOwnership(takeOwnershipAcl[0])} />
+          <i className="fa fa-exchange" onClick={() => this.handleTakeOwnership(root)} />
         </div>
       )
     }
     return (<div />);
   }
 
-  handleTakeOwnership(acl) {
-    CollectionActions.takeOwnership({ id: acl.id });
+  handleTakeOwnership(collection) {
+    CollectionActions.takeOwnership({ id: collection.id });
   }
 
   handleClick(e) {

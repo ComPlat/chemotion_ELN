@@ -8,8 +8,8 @@ module Usecases
       end
 
       def execute!
-        acl = CollectionAcl.find(@params[:id])
         new_owner_id = @params[:current_user_id]
+        acl = CollectionAcl.find_by(collection_id: @params[:id], user_id: new_owner_id)
         col_id = acl.collection_id
         collection = Collection.find(col_id)
         previous_owner_id = collection.user_id
