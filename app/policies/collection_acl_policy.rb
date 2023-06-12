@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CollectionAclPolicy
   attr_reader :user, :record
 
@@ -7,6 +9,9 @@ class CollectionAclPolicy
   end
 
   def take_ownership?
-    (record.user_id == @user.id && record.permission_level >= 5)
+    collection_acl = CollectionAcl.find_by(user_id: @user.id, collection_id: @record.id)
+    return false if collection_acl.nil?
+
+    collection_acl.permission_level >= 5
   end
 end
