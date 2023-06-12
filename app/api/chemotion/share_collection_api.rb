@@ -72,7 +72,7 @@ module Chemotion
       end
       route_param :id do
         delete do
-          collection_acl = CollectionAcl.include(:collection).find_by(id: params[:id])
+          collection_acl = CollectionAcl.includes(:collection).find_by(id: params[:id])
           error!('404 Share collection id not found', 404) unless collection_acl
           unless user_ids.include?(user_ids) || user_ids.include?(collection_acl.collection.user_id)
             error!('401 Unauthorized delete share collection', 401)
@@ -83,13 +83,13 @@ module Chemotion
       end
 
       namespace :take_ownership do
-        desc 'Take ownership of collection with specified collection_acl id'
+        desc 'Take ownership of collection with specified collection id'
         params do
-          requires :id, type: Integer, desc: 'CollectionAcl id'
+          requires :id, type: Integer, desc: 'Collection id'
         end
         route_param :id do
           before do
-            error!('401 Unauthorized', 401) unless CollectionAclPolicy.new(current_user, CollectionAcl.find(params[:id])).take_ownership?
+            error!('401 Unauthorized', 401) unless CollectionAclPolicy.new(current_user, Collection.find(params[:id])).take_ownership?
           end
 
           post do
