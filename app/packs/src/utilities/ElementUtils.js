@@ -4,6 +4,7 @@ import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownCon
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from '../stores/alt/stores/UserStore';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }
@@ -459,6 +460,12 @@ const instrumentText = (analysis) => {
   return ` Instrument: ${ttlIns.length}/${analysis.children.length}`;
 };
 
+const getElementSegments = (elementName, tabs) => {
+  let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+  let names = segmentKlasses.filter(s => s.element_klass.name == elementName).map(s => s.label);
+  return _.uniq(tabs.concat(names));
+}
+
 export {
   rfValueFormat,
   hNmrCheckMsg,
@@ -478,4 +485,5 @@ export {
   atomCountCInNMRDescription,
   emwInStr,
   instrumentText,
+  getElementSegments
 };

@@ -8,6 +8,7 @@ import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContai
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import { filterTabLayout, getArrayFromLayout } from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import { getElementSegments } from '../../../utilities/ElementUtils';
 
 const elements = [
   { name: 'sample', label: 'Sample' },
@@ -87,18 +88,13 @@ export default class CollectionTabs extends React.Component {
     elements.forEach((element, index) => {
       layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
       let availableTabs = (layout && Object.keys(layout)) || {};
-      let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
       if (!_.isEmpty(node.tabs_segment[element.name])) {
-        const nodeTabs = node.tabs_segment[element.name];
-        let names = segmentKlasses.filter(s => s.element_klass.name == element.name).map(s => s.label);
-        availableTabs = _.uniq(availableTabs.concat(names));
-        const { visible, hidden } = getArrayFromLayout(nodeTabs, availableTabs);
-
-        layout = { visible, hidden };
-      } else {
-        const { visible, hidden } = getArrayFromLayout(layout, availableTabs);
-        layout = { visible, hidden };
+        layout = node.tabs_segment[element.name];
       }
+      availableTabs = getElementSegments(element.name, availableTabs);
+      const { visible, hidden } = getArrayFromLayout(layout, availableTabs);
+      layout = { visible, hidden };
+
       layouts[index] = layout;
     });
 

@@ -12,6 +12,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from '../../../../stores/alt/actions/CollectionActions';
+import { getElementSegments } from '../../../../utilities/ElementUtils';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;
