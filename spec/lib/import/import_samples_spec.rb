@@ -6,7 +6,8 @@ RSpec.describe 'Import::ImportSamples' do
   let(:user_id) { create(:user).id }
   let(:collection_id) { create(:collection).id }
   let(:file_path) { 'spec/fixtures/import/sample_import_template.xlsx' }
-  let(:importer) { Import::ImportSamples.new(user_id, collection_id, file_path) }
+  let(:file_name) { File.basename(file_path) }
+  let(:importer) { Import::ImportSamples.new(user_id, collection_id, file_path, file_name) }
 
   describe '.format_to_interval_syntax' do
     let(:processed_row) { importer.send(:format_to_interval_syntax, unprocessed_row) }
