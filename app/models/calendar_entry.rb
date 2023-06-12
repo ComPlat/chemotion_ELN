@@ -66,13 +66,7 @@ class CalendarEntry < ApplicationRecord
   def link_to_element_for(user)
     collection = collection_for(user)
     is_synchronized = collection.is_a?(SyncCollectionsUser)
-    domain = if Rails.env.production?
-               "https://#{ENV['HOST'] || ENV['SMTP_DOMAIN']}"
-             else
-               "http://#{ENV['HOST'] || 'localhost:3000'}"
-             end
-
-    "#{domain}/mydb/#{is_synchronized ? 's' : ''}collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
+    "#{Rails.application.config.root_url}/mydb/#{is_synchronized ? 's' : ''}collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
   end
 
   def create_messages(user_ids, type)
