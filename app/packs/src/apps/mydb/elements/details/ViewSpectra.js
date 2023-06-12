@@ -18,7 +18,11 @@ const rmRefreshed = (analysis) => {
   return coreAnalysis;
 };
 
-const layoutsWillShowMulti = [FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY, FN.LIST_LAYOUT.SEC];
+const layoutsWillShowMulti = [
+  FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY,
+  FN.LIST_LAYOUT.SEC,
+  FN.LIST_LAYOUT.AIF
+];
 
 class ViewSpectra extends React.Component {
   constructor(props) {
@@ -137,7 +141,7 @@ class ViewSpectra extends React.Component {
     if (spcs && spcs.length > 0) {
       const spc = spcs[0];
       const { jcamp } = spc;
-      if (layoutsWillShowMulti.indexOf(jcamp.layout) >= 0) {
+      if (layoutsWillShowMulti.includes(jcamp.layout)) {
         return true;
       }
     }
@@ -155,7 +159,7 @@ class ViewSpectra extends React.Component {
         const spc = spcMetas.filter(x => x.idx === idx)[0];
         if (spc) {
           const { jcamp } = spc;
-          if (layoutsWillShowMulti.indexOf(jcamp.layout) < 0) {
+          if (!layoutsWillShowMulti.includes(jcamp.layout)) {
             return spc;
           }
           listMuliSpcs.push(spc);
@@ -166,8 +170,7 @@ class ViewSpectra extends React.Component {
         }
       }
       return { listMuliSpcs: listMuliSpcs, listEntityFiles: listEntityFiles };
-    }
-    else {
+    } else {
       const sm = spcMetas.filter(x => x.idx === spcIdx)[0];
       return sm || spcMetas[0] || { jcamp: null, predictions: null };
     }
@@ -236,7 +239,7 @@ class ViewSpectra extends React.Component {
     const mBody = body || FN.peaksBody({
       peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration: selectedIntegration
     });
-    
+
     const { label, value, name } = selectedShift.ref;
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
@@ -279,7 +282,7 @@ class ViewSpectra extends React.Component {
     const macs = ms.map((m) => {
       const { peaks, mpyType, xExtent } = m;
       const { xL, xU } = xExtent;
-      const it = is.filter(i => i.xL === xL && i.xU === xU)[0] || { area: 0 };
+      const it = is.filter((i) => i.xL === xL && i.xU === xU)[0] || { area: 0 };
       const area = (it.area * refFactor) / refArea;
       const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
       const xs = m.peaks.map(p => p.x).sort((a, b) => a - b);
@@ -401,7 +404,6 @@ class ViewSpectra extends React.Component {
     const selectedIntegration = integrations[curveIdx];
     const { multiplicities } = multiplicity;
     const selectedMutiplicity = multiplicities[curveIdx];
-    
 
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
@@ -539,7 +541,8 @@ class ViewSpectra extends React.Component {
         { name: 'write multiplicity, save & close', value: this.writeCloseMpyOp },
       ];
     }
-    if (et.layout === 'CYCLIC VOLTAMMETRY') {
+
+    if (layoutsWillShowMulti.includes(et.layout)) {
       return [
         { name: 'save', value: this.saveOp },
         { name: 'save & close', value: this.saveCloseOp },
@@ -620,8 +623,8 @@ class ViewSpectra extends React.Component {
     let entityFileNames = false;
     if (!isExist) {
       if (!listMuliSpcs || listMuliSpcs.length === 0) return this.renderInvalid();
-      listMuliSpcs = listMuliSpcs.filter((x => x !== undefined));
-      listEntityFiles = listEntityFiles.filter((x => x !== undefined));
+      listMuliSpcs = listMuliSpcs.filter(((x) => x !== undefined));
+      listEntityFiles = listEntityFiles.filter(((x) => x !== undefined));
       multiEntities = listMuliSpcs.map((spc) => {
         const {
           entity
@@ -629,7 +632,7 @@ class ViewSpectra extends React.Component {
         currEntity = entity;
         return entity;
       });
-      entityFileNames = listEntityFiles.map(x => x.label);
+      entityFileNames = listEntityFiles.map((x) => x.label);
     }
 
     const others = this.buildOthers();
@@ -645,20 +648,20 @@ class ViewSpectra extends React.Component {
     return (
       <Modal.Body>
         {
-          !isExist && multiEntities.length == 0
+          !isExist && multiEntities.length === 0
             ? this.renderInvalid()
             : <SpectraEditor
-              entity={currEntity}
-              multiEntities={multiEntities}
-              entityFileNames={entityFileNames}
-              others={others}
-              operations={operations}
-              forecast={forecast}
-              molSvg={sample.svgPath}
-              descriptions={descriptions}
-              canChangeDescription
-              onDescriptionChanged={this.onSpectraDescriptionChanged}
-              userManualLink={{cv: 'https://chemotion.net/docs/chemspectra/cv'}}
+                entity={currEntity}
+                multiEntities={multiEntities}
+                entityFileNames={entityFileNames}
+                others={others}
+                operations={operations}
+                forecast={forecast}
+                molSvg={sample.svgPath}
+                descriptions={descriptions}
+                canChangeDescription
+                onDescriptionChanged={this.onSpectraDescriptionChanged}
+                userManualLink={{ cv: 'https://chemotion.net/docs/chemspectra/cv' }}
             />
         }
       </Modal.Body>
@@ -670,34 +673,33 @@ class ViewSpectra extends React.Component {
     const si = this.getSpcInfo();
     if (!si) return null;
     const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
-    const options = spcInfos.filter(x => x.idDt === si.idDt)
-      .map(x => ({ value: x.idx, label: x.label }));
+    const options = spcInfos.filter((x) => x.idDt === si.idDt)
+      .map((x) => ({ value: x.idx, label: x.label }));
     // const onSelectChange = e => SpectraActions.SelectIdx(e.value);
     const isShowMultiSelect = this.isShowMultipleSelectFile(idx);
-    const onSelectChange = value => {
+    const onSelectChange = (value) => {
       if (Array.isArray(value)) {
         const reversedValue = value.reverse();
         SpectraActions.SelectIdx(reversedValue[0], reversedValue);
-      }
-      else {
+      } else {
         SpectraActions.SelectIdx(value, []);
       }
-    }
+    };
     const dses = this.getDSList();
-    const dsOptions = dses.map(x => ({ value: x.id, label: x.name }));
+    const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
 
     return (
       <div className="spectra-editor-title">
         <span className="txt-spectra-editor-title">
           {modalTitle}
         </span>
-        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }} >
+        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }}>
           <Select
             options={dsOptions}
             value={si.idDt}
             clearable={false}
             style={{ width: 200 }}
-            onChange={e => this.onDSSelectChange(e)}
+            onChange={(e) => this.onDSSelectChange(e)}
           />
           <TreeSelect
             treeData={options}
@@ -705,7 +707,8 @@ class ViewSpectra extends React.Component {
             treeCheckable={isShowMultiSelect}
             style={{ width: 500 }}
             maxTagCount={1}
-            onChange={onSelectChange} />
+            onChange={onSelectChange}
+          />
         </div>
         <Button
           bsStyle="danger"
@@ -723,7 +726,7 @@ class ViewSpectra extends React.Component {
 
   onSpectraDescriptionChanged(value) {
     const { spcInfos, spcIdx } = this.state;
-    const sis = spcInfos.filter(x => x.idx === spcIdx);
+    const sis = spcInfos.filter((x) => x.idx === spcIdx);
     const si = sis.length > 0 ? sis[0] : spcInfos[0];
     const { sample } = this.props;
     sample.analysesContainers().forEach((ae) => {
@@ -738,7 +741,9 @@ class ViewSpectra extends React.Component {
   render() {
     const { showModal } = this.state;
 
-    const { jcamp, predictions, idx, listMuliSpcs, listEntityFiles } = this.getContent();
+    const {
+      jcamp, predictions, idx, listMuliSpcs, listEntityFiles
+    } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
     // WORKAROUND: react-stickydiv duplicates elements.
     const specElements = Array.from(document.getElementsByClassName(dialogClassName));
