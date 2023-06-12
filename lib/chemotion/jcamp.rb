@@ -72,6 +72,10 @@ module Chemotion
         end
         tmp_jcamp = arr_jcamp.first
         tmp_img = arr_img.first
+        # check if we have a combined image of multiple spectra
+        if arr_img.count > arr_jcamp.count
+          tmp_img = arr_img.last
+        end
         [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium]
       end
     end
