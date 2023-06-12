@@ -76,6 +76,10 @@ export default class Collection {
     return this.hasPermissionLevel(PermissionConst.Export);
   }
 
+  hasAclPassOwnerShip() {
+    return this.hasPermissionLevel(PermissionConst.PassOwnerShip);
+  }
+
   // can create elements in the collection
   canCreateElement() {
     return this.ownedByMeAndNotAll() || this.hasAclWrite();
@@ -83,5 +87,9 @@ export default class Collection {
 
   canExport() {
     return this.ownedByMe() || this.hasAclWrite();
+  }
+
+  canTakeOwnership() {
+    return this.sharedWithMe() && this.hasAclPassOwnerShip();
   }
 }
