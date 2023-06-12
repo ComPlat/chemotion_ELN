@@ -32,5 +32,10 @@ FactoryBot.define do
     trait :element do
       eventable { Element.create(element_klass: ElementKlass.create, creator: create(:person)) }
     end
+
+    trait :start_after_end do
+      start_time { 2.days.from_now }
+      end_time { Time.current }
+    end
   end
 end

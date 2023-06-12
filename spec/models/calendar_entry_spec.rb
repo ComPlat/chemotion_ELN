@@ -17,6 +17,12 @@ RSpec.describe 'CalendarEntry' do
         expect(factory.valid?).to be true
       end
     end
+
+    it 'swaps the start and end time if the start time is after the end time' do
+      factory = build(:calendar_entry, :start_after_end)
+      expect(factory.valid?).to be true
+      expect(factory.start_time).to be < factory.end_time
+    end
   end
 
   describe 'deletion' do
@@ -30,10 +36,14 @@ RSpec.describe 'CalendarEntry' do
     FactoryBot.factories[:calendar_entry].definition.defined_traits.map(&:name).each do |trait_name|
       it "is possible to delete a #{trait_name} calendar entry without deleting the associated #{trait_name}" do
         factory = create(:calendar_entry, trait_name)
+        no_eventable = factory.eventable
         factory.destroy
         eventable = factory.eventable
 
         expect { factory.reload }.to raise_error(ActiveRecord::RecordNotFound)
+
+        next unless no_eventable
+
         expect(eventable.reload).to eq eventable
       end
     end

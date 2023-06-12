@@ -34,6 +34,7 @@ class CalendarEntry < ApplicationRecord
            dependent: :destroy
 
   validates :title, :start_time, :end_time, presence: true
+  after_validation :check_time_range, on: %i[create update]
 
   scope :for_range, lambda { |start_time, end_time|
     where('end_time > :start_time AND start_time < :end_time', start_time: start_time, end_time: end_time)
@@ -126,5 +127,13 @@ class CalendarEntry < ApplicationRecord
       description,
       "Link: #{link_to_element_for(user)}",
     ].compact.join("\n")
+  end
+
+  def check_time_range
+    return if start_time < end_time
+
+    former_start_time = start_time
+    self.start_time = end_time
+    self.end_time = former_start_time
   end
 end
