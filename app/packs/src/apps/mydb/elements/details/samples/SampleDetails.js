@@ -1066,7 +1066,6 @@ export default class SampleDetails extends React.Component {
             key={`ChemicalTab${sample.id.toString()}`}
           />
         </ListGroupItem>
-        <EditUserLabels element={sample} />
       </Tab>
     );
   }

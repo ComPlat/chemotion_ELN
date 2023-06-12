@@ -75,7 +75,7 @@ export default class ChemicalTab extends React.Component {
       return;
     }
     const chemicalData = chemical._chemical_data || null;
-    const cas = sample.xref && sample.xref.cas ? sample.xref.cas.value : '';
+    const cas = sample.xref?.cas ?? '';
     const params = {
       chemical_data: chemicalData,
       cas,
@@ -180,7 +180,7 @@ export default class ChemicalTab extends React.Component {
     if (queryOption === 'Common Name') {
       searchStr = sample.molecule_name_hash.label;
     } else {
-      const sampleCas = sample.xref.cas ? sample.xref.cas.value : '';
+      const sampleCas = sample.xref?.cas ?? '';
       searchStr = sampleCas;
     }
 
@@ -550,7 +550,7 @@ export default class ChemicalTab extends React.Component {
       vendorProduct = 'merckProductInfo';
       this.setState({ loadingSaveSafetySheets: true });
     }
-    const cas = sample.xref && sample.xref.cas ? sample.xref.cas.value : '';
+    const cas = sample.xref?.cas ?? '';
     // update chemical data before saving it in the database
     this.handleFieldChanged(vendorProduct, productInfo);
     const params = {
