@@ -18,6 +18,12 @@ const rmRefreshed = (analysis) => {
   return coreAnalysis;
 };
 
+const layoutsWillShowMulti = [
+  FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY,
+  FN.LIST_LAYOUT.SEC,
+  FN.LIST_LAYOUT.AIF
+];
+
 class ViewSpectra extends React.Component {
   constructor(props) {
     super(props);
@@ -135,7 +141,7 @@ class ViewSpectra extends React.Component {
     if (spcs && spcs.length > 0) {
       const spc = spcs[0];
       const { jcamp } = spc;
-      if (jcamp.layout === 'CYCLIC VOLTAMMETRY') {
+      if (layoutsWillShowMulti.includes(jcamp.layout)) {
         return true;
       }
     }
@@ -153,7 +159,7 @@ class ViewSpectra extends React.Component {
         const spc = spcMetas.filter(x => x.idx === idx)[0];
         if (spc) {
           const { jcamp } = spc;
-          if (jcamp.layout !== 'CYCLIC VOLTAMMETRY') {
+          if (!layoutsWillShowMulti.includes(jcamp.layout)) {
             return spc;
           }
           listMuliSpcs.push(spc);
@@ -164,8 +170,7 @@ class ViewSpectra extends React.Component {
         }
       }
       return { listMuliSpcs: listMuliSpcs, listEntityFiles: listEntityFiles };
-    }
-    else {
+    } else {
       const sm = spcMetas.filter(x => x.idx === spcIdx)[0];
       return sm || spcMetas[0] || { jcamp: null, predictions: null };
     }
@@ -200,10 +205,21 @@ class ViewSpectra extends React.Component {
 
   formatPks({
     peaks, shift, layout, isAscend, decimal, body,
-    isIntensity, integration
+    isIntensity, integration, curveSt
   }) {
     const layoutOpsObj = SpectraOps[layout];
     if (!layoutOpsObj) {
+      return [];
+    }
+
+    const { curveIdx } = curveSt;
+    const { shifts } = shift;
+    const selectedShift = shifts[curveIdx];
+
+    const { integrations } = integration;
+    const selectedIntegration = integrations[curveIdx];
+
+    if (!selectedShift || !selectedIntegration) {
       return [];
     }
 
@@ -221,10 +237,10 @@ class ViewSpectra extends React.Component {
       : (features.editPeak || features.autoPeak);
     const boundary = { maxY, minY };
     const mBody = body || FN.peaksBody({
-      peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration
+      peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration: selectedIntegration
     });
-    
-    const { label, value, name } = shift.ref;
+
+    const { label, value, name } = selectedShift.ref;
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
       ...layoutOpsObj.head(freqStr, solvent),
@@ -235,8 +251,19 @@ class ViewSpectra extends React.Component {
 
   formatMpy({
     shift, isAscend, decimal,
-    integration, multiplicity, layout,
+    integration, multiplicity, layout, curveSt
   }) {
+    const { curveIdx } = curveSt;
+    const { shifts } = shift;
+    const selectedShift = shifts[curveIdx];
+    const { integrations } = integration;
+    const selectedIntegration = integrations[curveIdx];
+    const { multiplicities } = multiplicity;
+    const selectedMutiplicity = multiplicities[curveIdx];
+    // if (!selectedShift || !selectedIntegration) {
+    //   return []
+    // }
+
     // obsv freq
     const { jcamp } = this.getContent();
     const { entity } = FN.buildData(jcamp);
@@ -247,15 +274,15 @@ class ViewSpectra extends React.Component {
     const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
     // multiplicity
-    const { refArea, refFactor } = integration;
-    const shiftVal = multiplicity.shift;
-    const ms = multiplicity.stack;
-    const is = integration.stack;
+    const { refArea, refFactor } = selectedIntegration;
+    const shiftVal = selectedMutiplicity.shift;
+    const ms = selectedMutiplicity.stack;
+    const is = selectedIntegration.stack;
 
     const macs = ms.map((m) => {
       const { peaks, mpyType, xExtent } = m;
       const { xL, xU } = xExtent;
-      const it = is.filter(i => i.xL === xL && i.xU === xU)[0] || { area: 0 };
+      const it = is.filter((i) => i.xL === xL && i.xU === xU)[0] || { area: 0 };
       const area = (it.area * refFactor) / refArea;
       const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
       const xs = m.peaks.map(p => p.x).sort((a, b) => a - b);
@@ -292,7 +319,7 @@ class ViewSpectra extends React.Component {
         ];
     }));
     couplings = couplings.slice(0, couplings.length - 1);
-    const { label, value, name } = shift.ref;
+    const { label, value, name } = selectedShift.ref;
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
       { attributes: { script: 'super' }, insert: layout.slice(0, -1) },
@@ -313,7 +340,7 @@ class ViewSpectra extends React.Component {
     let ops = [];
     if (['1H', '13C', '19F'].indexOf(layout) >= 0 && isMpy) {
       ops = this.formatMpy({
-        multiplicity, integration, shift, isAscend, decimal, layout,
+        multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
     } else {
       ops = this.formatPks({
@@ -324,7 +351,8 @@ class ViewSpectra extends React.Component {
         decimal,
         body,
         isIntensity,
-        integration
+        integration,
+        curveSt
       });
     }
 
@@ -370,15 +398,22 @@ class ViewSpectra extends React.Component {
     const waveLengthStr = JSON.stringify(waveLength);
     const cyclicvolta = JSON.stringify(cyclicvoltaSt);
 
+    const { shifts } = shift;
+    const selectedShift = shifts[curveIdx];
+    const { integrations } = integration;
+    const selectedIntegration = integrations[curveIdx];
+    const { multiplicities } = multiplicity;
+    const selectedMutiplicity = multiplicities[curveIdx];
+
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
       si,
       peaksStr,
-      shift,
+      selectedShift,
       scan,
       thres,
-      JSON.stringify(integration),
-      JSON.stringify(multiplicity),
+      JSON.stringify(selectedIntegration),
+      JSON.stringify(selectedMutiplicity),
       predict,
       handleSubmit,
       keepPred,
@@ -427,11 +462,14 @@ class ViewSpectra extends React.Component {
     this.closeOp();
   }
 
-  getPeaksByLayou(peaks, layout, multiplicity) {
+  getPeaksByLayout(peaks, layout, multiplicity, curveIdx = 0) {
     if (['IR'].indexOf(layout) >= 0) return peaks;
     if (['13C'].indexOf(layout) >= 0) return FN.CarbonFeatures(peaks, multiplicity);
 
-    const { stack, shift } = multiplicity;
+    const { multiplicities } = multiplicity;
+    const selectedMultiplicity = multiplicities[curveIdx];
+
+    const { stack, shift } = selectedMultiplicity;
     const nmrMpyCenters = stack.map((stk) => {
       const { mpyType, peaks } = stk;
       return {
@@ -445,7 +483,7 @@ class ViewSpectra extends React.Component {
 
   predictOp({
     peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity,
-    layout,
+    layout, curveSt,
   }) {
     const { handleSubmit } = this.props;
     const si = this.getSpcInfo();
@@ -453,18 +491,28 @@ class ViewSpectra extends React.Component {
     const fPeaks = FN.rmRef(peaks, shift);
     const peaksStr = FN.toPeakStr(fPeaks);
     const predict = JSON.stringify(rmRefreshed(analysis));
-    const targetPeaks = this.getPeaksByLayou(peaks, layout, multiplicity);
+
+    const { curveIdx } = curveSt;
+
+    const targetPeaks = this.getPeaksByLayout(peaks, layout, multiplicity, curveIdx);
+
+    const { multiplicities } = multiplicity;
+    const selectedMultiplicity = multiplicities[curveIdx];
+    const { shifts } = shift;
+    const selectedShift = shifts[curveIdx];
+    const { integrations } = integration;
+    const selectedIntegration = integrations[curveIdx];
 
     // LoadingActions.start.defer();
     SpectraActions.InferRunning.defer();
     SpectraActions.InferSpectrum.defer(
       si,
       peaksStr,
-      shift,
+      selectedShift,
       scan,
       thres,
-      JSON.stringify(integration),
-      JSON.stringify(multiplicity),
+      JSON.stringify(selectedIntegration),
+      JSON.stringify(selectedMultiplicity),
       predict,
       targetPeaks,
       layout,
@@ -493,7 +541,8 @@ class ViewSpectra extends React.Component {
         { name: 'write multiplicity, save & close', value: this.writeCloseMpyOp },
       ];
     }
-    if (et.layout === 'CYCLIC VOLTAMMETRY') {
+
+    if (layoutsWillShowMulti.includes(et.layout)) {
       return [
         { name: 'save', value: this.saveOp },
         { name: 'save & close', value: this.saveCloseOp },
@@ -574,8 +623,8 @@ class ViewSpectra extends React.Component {
     let entityFileNames = false;
     if (!isExist) {
       if (!listMuliSpcs || listMuliSpcs.length === 0) return this.renderInvalid();
-      listMuliSpcs = listMuliSpcs.filter((x => x !== undefined));
-      listEntityFiles = listEntityFiles.filter((x => x !== undefined));
+      listMuliSpcs = listMuliSpcs.filter(((x) => x !== undefined));
+      listEntityFiles = listEntityFiles.filter(((x) => x !== undefined));
       multiEntities = listMuliSpcs.map((spc) => {
         const {
           entity
@@ -583,7 +632,7 @@ class ViewSpectra extends React.Component {
         currEntity = entity;
         return entity;
       });
-      entityFileNames = listEntityFiles.map(x => x.label);
+      entityFileNames = listEntityFiles.map((x) => x.label);
     }
 
     const others = this.buildOthers();
@@ -599,20 +648,20 @@ class ViewSpectra extends React.Component {
     return (
       <Modal.Body>
         {
-          !isExist && multiEntities.length == 0
+          !isExist && multiEntities.length === 0
             ? this.renderInvalid()
             : <SpectraEditor
-              entity={currEntity}
-              multiEntities={multiEntities}
-              entityFileNames={entityFileNames}
-              others={others}
-              operations={operations}
-              forecast={forecast}
-              molSvg={sample.svgPath}
-              descriptions={descriptions}
-              canChangeDescription
-              onDescriptionChanged={this.onSpectraDescriptionChanged}
-              userManualLink={{cv: 'https://chemotion.net/docs/chemspectra/cv'}}
+                entity={currEntity}
+                multiEntities={multiEntities}
+                entityFileNames={entityFileNames}
+                others={others}
+                operations={operations}
+                forecast={forecast}
+                molSvg={sample.svgPath}
+                descriptions={descriptions}
+                canChangeDescription
+                onDescriptionChanged={this.onSpectraDescriptionChanged}
+                userManualLink={{ cv: 'https://chemotion.net/docs/chemspectra/cv' }}
             />
         }
       </Modal.Body>
@@ -624,34 +673,33 @@ class ViewSpectra extends React.Component {
     const si = this.getSpcInfo();
     if (!si) return null;
     const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
-    const options = spcInfos.filter(x => x.idDt === si.idDt)
-      .map(x => ({ value: x.idx, label: x.label }));
+    const options = spcInfos.filter((x) => x.idDt === si.idDt)
+      .map((x) => ({ value: x.idx, label: x.label }));
     // const onSelectChange = e => SpectraActions.SelectIdx(e.value);
     const isShowMultiSelect = this.isShowMultipleSelectFile(idx);
-    const onSelectChange = value => {
+    const onSelectChange = (value) => {
       if (Array.isArray(value)) {
         const reversedValue = value.reverse();
         SpectraActions.SelectIdx(reversedValue[0], reversedValue);
-      }
-      else {
+      } else {
         SpectraActions.SelectIdx(value, []);
       }
-    }
+    };
     const dses = this.getDSList();
-    const dsOptions = dses.map(x => ({ value: x.id, label: x.name }));
+    const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
 
     return (
       <div className="spectra-editor-title">
         <span className="txt-spectra-editor-title">
           {modalTitle}
         </span>
-        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }} >
+        <div style={{ display: 'inline-flex', margin: '0 0 0 100px' }}>
           <Select
             options={dsOptions}
             value={si.idDt}
             clearable={false}
             style={{ width: 200 }}
-            onChange={e => this.onDSSelectChange(e)}
+            onChange={(e) => this.onDSSelectChange(e)}
           />
           <TreeSelect
             treeData={options}
@@ -659,7 +707,8 @@ class ViewSpectra extends React.Component {
             treeCheckable={isShowMultiSelect}
             style={{ width: 500 }}
             maxTagCount={1}
-            onChange={onSelectChange} />
+            onChange={onSelectChange}
+          />
         </div>
         <Button
           bsStyle="danger"
@@ -677,7 +726,7 @@ class ViewSpectra extends React.Component {
 
   onSpectraDescriptionChanged(value) {
     const { spcInfos, spcIdx } = this.state;
-    const sis = spcInfos.filter(x => x.idx === spcIdx);
+    const sis = spcInfos.filter((x) => x.idx === spcIdx);
     const si = sis.length > 0 ? sis[0] : spcInfos[0];
     const { sample } = this.props;
     sample.analysesContainers().forEach((ae) => {
@@ -692,7 +741,9 @@ class ViewSpectra extends React.Component {
   render() {
     const { showModal } = this.state;
 
-    const { jcamp, predictions, idx, listMuliSpcs, listEntityFiles } = this.getContent();
+    const {
+      jcamp, predictions, idx, listMuliSpcs, listEntityFiles
+    } = this.getContent();
     const dialogClassName = 'spectra-editor-dialog';
     // WORKAROUND: react-stickydiv duplicates elements.
     const specElements = Array.from(document.getElementsByClassName(dialogClassName));

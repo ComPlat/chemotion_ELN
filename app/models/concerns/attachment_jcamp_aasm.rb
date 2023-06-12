@@ -376,12 +376,21 @@ module AttachmentJcampProcess
       tmp_img_to_deleted.push(img_att)
 
       curr_tmp_csv = arr_csv[idx]
-      _ = generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
-      tmp_to_be_deleted.push(curr_tmp_csv)
+      if !curr_tmp_csv.nil?
+        generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
+        tmp_to_be_deleted.push(curr_tmp_csv)
+      end
 
       jcamp_att = curr_jcamp_att if idx == 0
     end
-    set_done
+
+    if arr_img.count > arr_jcamp.count
+      curr_tmp_img = arr_img.last
+      img_att = generate_img_att(curr_tmp_img, 'combined')
+      tmp_to_be_deleted.push(curr_tmp_img)
+      tmp_img_to_deleted.push(img_att)
+    end
+
     delete_tmps(tmp_to_be_deleted)
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
