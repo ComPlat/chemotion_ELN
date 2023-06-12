@@ -13,7 +13,7 @@ describe ImportSamplesJob, active_job: true do
     let(:collection_id) { create(:collection).id }
     let(:user_id) { create(:user).id }
     let(:import_samples_instance) { instance_double(Import::ImportSamples) }
-    let(:import_job) { described_class.perform_later(tmp_file_path, collection_id, user_id) }
+    let(:import_job) { described_class.perform_later(tmp_file_path, collection_id, user_id, file_name) }
 
     before do
       allow(Import::ImportSamples).to receive(:new).and_return(import_samples_instance)
@@ -31,8 +31,8 @@ describe ImportSamplesJob, active_job: true do
 
       it 'receives perform_later with expected arguments' do
         allow(import_job).to receive(:perform)
-        import_job.perform(tmp_file_path, collection_id, user_id)
-        expect(import_job).to have_received(:perform).with(tmp_file_path, collection_id, user_id)
+        import_job.perform(tmp_file_path, collection_id, user_id, file_name)
+        expect(import_job).to have_received(:perform).with(tmp_file_path, collection_id, user_id, file_name)
       end
 
       it 'performs the import job and triggers after job of creates a message' do
@@ -42,7 +42,7 @@ describe ImportSamplesJob, active_job: true do
 
           expect(import_samples_instance).to have_received(:process)
           expect(Message).to have_received(:create_msg_notification)
-          expect { described_class.perform_now(tmp_file_path, collection_id, user_id) }.not_to raise_error
+          expect { described_class.perform_now(tmp_file_path, collection_id, user_id, file_name) }.not_to raise_error
         end
       end
     end
@@ -52,14 +52,14 @@ describe ImportSamplesJob, active_job: true do
         allow(Delayed::Worker.logger).to receive(:error)
         allow(import_samples_instance).to receive(:process).and_raise(StandardError)
         perform_enqueued_jobs do
-          described_class.perform_now(tmp_file_path, collection_id, user_id)
+          described_class.perform_now(tmp_file_path, collection_id, user_id, file_name)
           expect(Delayed::Worker.logger).to have_received(:error).at_least(:once)
         end
       end
     end
 
     context 'when perform_now is executed without being enqueued' do
-      let(:perform_now) { described_class.new.perform(tmp_file_path, collection_id, user_id) }
+      let(:perform_now) { described_class.new.perform(tmp_file_path, collection_id, user_id, file_name) }
 
       it 'no samples have been imported' do
         expect(perform_now[:data]).to eq []
