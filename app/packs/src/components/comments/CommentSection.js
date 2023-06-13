@@ -30,14 +30,14 @@ export default class CommentSection extends Component {
   }
 
   render() {
-    const { section } = this.props;
+    const { section, element } = this.props;
     const { showCommentSection } = this.state;
     const currentUser = selectCurrentUser(UserStore.getState());
 
     if (showCommentSection && MatrixCheck(currentUser.matrix, commentActivation)) {
       return (
         <div>
-          <CommentButton section={section} />
+          <CommentButton section={section} element={element} />
           <CommentList section={section} />
         </div>
       );
@@ -48,6 +48,7 @@ export default class CommentSection extends Component {
 
 CommentSection.propTypes = {
   section: PropTypes.string,
+  element: PropTypes.object.isRequired,
 };
 
 CommentSection.defaultProps = {

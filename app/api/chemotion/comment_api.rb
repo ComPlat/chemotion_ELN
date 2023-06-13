@@ -66,8 +66,8 @@ module Chemotion
         end
 
         before do
-          commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
-          @collections = Collection.where(id: commentable.collections.ids)
+          @commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
+          @collections = Collection.where(id: @commentable.collections.ids)
 
           allowed_user_ids = authorized_users(@collections)
 
@@ -86,7 +86,7 @@ module Chemotion
           comment = Comment.new(attributes)
           comment.save!
 
-          create_message_notification(@collections, current_user)
+          create_message_notification(@collections, current_user, @commentable)
 
           present comment, with: Entities::CommentEntity, root: 'comment'
         end
@@ -118,10 +118,15 @@ module Chemotion
           @comment.update!(attributes)
 
           if @comment.saved_change_to_status? && @comment.created_by != current_user.id
+            commentable_type = @comment.commentable_type
+            commentable = commentable_type.classify.constantize.find @comment.commentable_id
+
             Message.create_msg_notification(
               channel_subject: Channel::COMMENT_RESOLVED,
               message_from: current_user.id, message_to: [@comment.created_by],
-              data_args: { resolved_by: current_user.name },
+              data_args: { resolved_by: current_user.name,
+                           element_type: commentable_type,
+                           element_name: element_name(commentable) },
               level: 'info'
             )
           end

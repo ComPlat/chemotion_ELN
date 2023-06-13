@@ -231,6 +231,7 @@ export default class WellplateDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right" />
+        <HeaderCommentSection element={wellplate} />
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: saveBtnDisplay }}>
@@ -243,7 +244,6 @@ export default class WellplateDetails extends Component {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={wellplate} />
-        <HeaderCommentSection element={wellplate} />
       </div>
     );
   }
@@ -288,7 +288,7 @@ export default class WellplateDetails extends Component {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
           {
-            !wellplate.isNew && <CommentSection section="wellplate_designer" />
+            !wellplate.isNew && <CommentSection section="wellplate_designer" element={wellplate} />
           }
           <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
             <Wellplate
@@ -306,7 +306,7 @@ export default class WellplateDetails extends Component {
       list: (
         <Tab eventKey="list" title="List" key={`list_${wellplate.id}`}>
           {
-            !wellplate.isNew && <CommentSection section="wellplate_list" />
+            !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
           <Well style={{ overflow: 'scroll', height: '100%', 'max-height': 'calc(100vh - 375px)' }}>
             <WellplateList
@@ -320,7 +320,7 @@ export default class WellplateDetails extends Component {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${wellplate.id}`}>
           {
-            !wellplate.isNew && <CommentSection section="wellplate_properties" />
+            !wellplate.isNew && <CommentSection section="wellplate_properties" element={wellplate} />
           }
           <WellplateProperties
             {...properties}
@@ -334,7 +334,7 @@ export default class WellplateDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${wellplate.id}`}>
           {
-            !wellplate.isNew && <CommentSection section="wellplate_analyses" />
+            !wellplate.isNew && <CommentSection section="wellplate_analyses" element={wellplate} />
           }
           <ListGroupItem style={{ paddingBottom: 20 }}>
             <WellplateDetailsContainers

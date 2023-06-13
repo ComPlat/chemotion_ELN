@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Table } from 'react-bootstrap';
+import moment from 'moment';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
 import { getSectionComments } from 'src/utilities/CommentHelper';
 
@@ -15,7 +16,7 @@ export default function CommentList(props) {
   if (sectionComments?.length > 0) {
     commentsTbl = sectionComments.map((comment) => (
       <tr key={comment.id}>
-        <td style={{ width: '15%' }}>{comment.created_at}</td>
+        <td style={{ width: '15%' }}>{moment(comment.created_at).format('DD.MM.YYYY HH:mm')}</td>
         <td style={{ width: '40%' }}>{comment.content}</td>
         <td style={{ width: '15%' }}>{comment.submitter}</td>
       </tr>

@@ -338,12 +338,12 @@ export default class ReactionDetails extends Component {
         <div style={{ display: "inline-block", marginLeft: "10px" }}>
           {colLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
+          <HeaderCommentSection element={reaction} />
         </div>
         {reaction.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
         <PrintCodeButton element={reaction} />
-        <HeaderCommentSection element={reaction} />
       </div>
     );
   }
@@ -400,7 +400,7 @@ export default class ReactionDetails extends Component {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_scheme" />
+            !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
           <ReactionDetailsScheme
             reaction={reaction}
@@ -412,7 +412,7 @@ export default class ReactionDetails extends Component {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_properties" />
+            !reaction.isNew && <CommentSection section="reaction_properties" element={reaction} />
           }
           <ReactionDetailsProperties
             reaction={reaction}
@@ -425,7 +425,7 @@ export default class ReactionDetails extends Component {
       references: (
         <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_references" />
+            !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
           }
           <ReactionDetailsLiteratures
             element={reaction}
@@ -437,7 +437,7 @@ export default class ReactionDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_analyses" />
+            !reaction.isNew && <CommentSection section="reaction_analyses" element={reaction} />
           }
           {this.productData(reaction)}
         </Tab>
@@ -445,7 +445,7 @@ export default class ReactionDetails extends Component {
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_green_chemistry" />
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
           }
           <GreenChemistry
             reaction={reaction}

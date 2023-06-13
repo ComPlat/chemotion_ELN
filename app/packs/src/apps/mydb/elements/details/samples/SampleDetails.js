@@ -550,6 +550,7 @@ export default class SampleDetails extends React.Component {
         {colLabel}
         <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
         <PubchemLabels element={sample} />
+        <HeaderCommentSection element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
@@ -608,7 +609,6 @@ export default class SampleDetails extends React.Component {
           {decoupleCb}
         </div>
         <ShowUserLabels element={sample} />
-        <HeaderCommentSection element={sample} />
       </div>
     );
   }
@@ -1035,7 +1035,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Properties" key={'Props' + sample.id.toString()}>
         {
-          !sample.isNew && <CommentSection section="sample_properties" />
+          !sample.isNew && <CommentSection section="sample_properties" element={sample} />
         }
         <ListGroupItem>
           <SampleForm
@@ -1089,7 +1089,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab eventKey={ind} title="Analyses" key={`Container${sample.id.toString()}`}>
         {
-          !sample.isNew && <CommentSection section="sample_analyses" />
+          !sample.isNew && <CommentSection section="sample_analyses" element={sample} />
         }
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <SampleDetailsContainers
@@ -1114,7 +1114,7 @@ export default class SampleDetails extends React.Component {
         key={`References_${sample.id}`}
       >
         {
-          !sample.isNew && <CommentSection section="sample_references" />
+          !sample.isNew && <CommentSection section="sample_references" element={sample} />
         }
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <SampleDetailsLiteratures
@@ -1134,7 +1134,7 @@ export default class SampleDetails extends React.Component {
         key={`Results${sample.id.toString()}`}
       >
         {
-          !sample.isNew && <CommentSection section="sample_results" />
+          !sample.isNew && <CommentSection section="sample_results" element={sample} />
         }
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <FormGroup controlId="importedReadoutInput">
@@ -1217,7 +1217,7 @@ export default class SampleDetails extends React.Component {
         key={`QC_${sample.id}_${ind}`}
       >
         {
-          !sample.isNew && <CommentSection section="sample_qc_curation" />
+          !sample.isNew && <CommentSection section="sample_qc_curation" element={sample} />
         }
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <QcMain

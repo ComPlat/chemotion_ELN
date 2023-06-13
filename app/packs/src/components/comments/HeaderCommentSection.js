@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
@@ -11,17 +11,44 @@ import {
   commentActivation
 } from 'src/utilities/CommentHelper';
 
-export default function HeaderCommentSection(props) {
-  const { element } = props;
-  const headerSection = `${element.type}_header`;
-  const currentUser = selectCurrentUser(UserStore.getState());
-  const { showCommentSection, comments } = CommentStore.getState();
-  const sectionComments = getSectionComments(comments, headerSection);
+class HeaderCommentSection extends Component {
+  constructor(props) {
+    super(props);
 
-  if (MatrixCheck(currentUser.matrix, commentActivation)) {
-    return (
-      element?.isNew
-        ? <span /> : (
+    const currentUser = selectCurrentUser(UserStore.getState());
+    const commentState = CommentStore.getState();
+
+    this.state = {
+      currentUser,
+      comments: commentState.comments,
+      showCommentSection: commentState.showCommentSection,
+    };
+
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    CommentStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    CommentStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState({ ...state });
+  }
+
+  render() {
+    const { element } = this.props;
+    const { comments, currentUser, showCommentSection, } = this.state;
+    const headerSection = `${element.type}_header`;
+
+    const sectionComments = getSectionComments(comments, headerSection);
+
+    if (MatrixCheck(currentUser.matrix, commentActivation)) {
+      return (
+        element?.isNew ? <span /> : (
           <span style={{ marginLeft: '10px' }}>
             <OverlayTrigger
               key="ot_comments"
@@ -30,9 +57,10 @@ export default function HeaderCommentSection(props) {
             >
               <Button
                 bsSize="xsmall"
-                bsStyle={sectionComments?.length > 0 ? 'success' : 'default'}
+                bsStyle={sectionComments.length > 0 ? 'success' : 'default'}
                 onClick={() => {
                   CommentActions.setCommentSection(headerSection);
+                  CommentActions.fetchComments(element);
                   CommentActions.toggleCommentModal(true);
                 }}
               >
@@ -57,11 +85,15 @@ export default function HeaderCommentSection(props) {
             </OverlayTrigger>
           </span>
         )
-    );
+      );
+    }
+
+    return null;
   }
-  return null;
 }
 
 HeaderCommentSection.propTypes = {
   element: PropTypes.object.isRequired,
 };
+
+export default HeaderCommentSection;
