@@ -13,6 +13,7 @@ import ProgressModal from 'src/components/common/ProgressModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import Calendar from 'src/components/calendar/Calendar';
 
 class App extends Component {
   constructor(_props) {
@@ -113,6 +114,7 @@ class App extends Component {
           <ProgressModal />
         </Row>
         <InboxModal showCollectionTree={showCollectionTree} />
+        <Calendar />
       </Grid>
     );
   }

@@ -1,7 +1,7 @@
-# Mailer to email an ELNer about its data export being ready for download
-class CollectionMailer < ActionMailer::Base
-  default from: ENV['DEVISE_SENDER'] || 'eln'
+# frozen_string_literal: true
 
+# Mailer to email an ELNer about its data export being ready for download
+class CollectionMailer < ApplicationMailer
   def mail_export_completed(user_id, labels, link, expires_at)
     init_export_params(user_id, labels, link, expires_at)
     mail(to: @user.email, subject: "[ELN] Collection export:  #{@col_labels}") do |format|

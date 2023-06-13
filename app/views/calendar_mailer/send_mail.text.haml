@@ -1,0 +1,5 @@
+= "#{@entry.creator.name} #{@type} calendar entry #{@entry.kind.capitalize}: #{@entry.range} #{@entry.title}"
+- if @entry.description
+  = "#{@entry.description}"
+
+= @entry.link_to_element_for(@user)

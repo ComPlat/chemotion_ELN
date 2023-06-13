@@ -25,6 +25,7 @@ import ResearchplanFlowDisplay from 'src/apps/mydb/elements/details/screens/Rese
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -210,6 +211,9 @@ export default class ScreenDetails extends Component {
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>
+        {screen.isNew
+          ? null
+          : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
         <PrintCodeButton element={screen} />
       </div>
     );

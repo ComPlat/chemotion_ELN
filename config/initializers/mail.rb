@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# a setting in this initializer prevents testing mail deliveries
+return if Rails.env.test?
+
 Rails.application.configure do
   uri = URI.parse(config.root_url)
   scheme = uri.scheme
