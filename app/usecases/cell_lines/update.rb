@@ -20,41 +20,40 @@ module Usecases
         @cell_line_sample
       end
 
-      def find_material # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+      def find_material
         CelllineMaterial.find_by(
           name: @params[:material_names],
-          source: @params[:source] 
+          source: @params[:source],
         )
       end
 
-      def create_new_material # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+      def create_new_material
         CelllineMaterial.create(
-          name: @params[:material_names] || @material.names,
-          source: @params[:source] || @material.source,
-          growth_medium: @params[:growth_medium] || @material.growth_medium,
-          cell_type: @params[:cell_type] || @material.cell_type,
-          organism: @params[:organism] || @material.organism,
-          tissue: @params[:tissue] || @material.tissue,
-          disease: @params[:disease] || @material.disease,
-          biosafety_level: @params[:biosafety_level] || @material.biosafety_level,
-          variant: @params[:variant] || @material.variant,
-          mutation: @params[:mutation] || @material.mutation,
-          optimal_growth_temp: @params[:optimal_growth_temp] || @material.optimal_growth_temp,
-          cryo_pres_medium: @params[:cryo_pres_medium] || @material.cryo_pres_medium,
-          gender: @params[:gender] || @material.gender,
-          description: @params[:material_description] || @material.description,
+          name: @params[:material_names],
+          growth_medium: @params[:growth_medium],
+          cell_type: @params[:cell_type],
+          organism: @params[:organism],
+          tissue: @params[:tissue],
+          disease: @params[:disease],
+          biosafety_level: @params[:biosafety_level],
+          variant: @params[:variant],
+          mutation: @params[:mutation],
+          optimal_growth_temp: @params[:optimal_growth_temp],
+          cryo_pres_medium: @params[:cryo_pres_medium],
+          gender: @params[:gender],
+          description: @params[:material_description],
         )
       end
 
-      def update_sample_properties # rubocop:disable Metrics/CyclomaticComplexity
+      def update_sample_properties
         @cell_line_sample.amount = @params[:amount] || @cell_line_sample.amount
         @cell_line_sample.passage = @params[:passage] || @cell_line_sample.passage
-        @cell_line_sample.contamination = @params[:contamination] || @cell_line_sample.contamination       
+        @cell_line_sample.contamination = @params[:contamination] || @cell_line_sample.contamination
         @cell_line_sample.name = @params[:name] || @cell_line_sample.name
         @cell_line_sample.description = @params[:description] || @cell_line_sample.description
       end
 
-      def update_material_properties(material) # rubocop:disable Metrics/CyclomaticComplexity
+      def update_material_properties(material) # rubocop:disable Metrics/AbcSize
         material.growth_medium = @params[:growth_medium]
         material.cell_type = @params[:cell_type]
         material.organism = @params[:organism]
@@ -66,7 +65,7 @@ module Usecases
         material.cryo_pres_medium = @params[:cryo_pres_medium]
         material.gender = @params[:gender]
         material.description = @params[:material_description]
-        
+
         material.save
       end
 
