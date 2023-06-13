@@ -1,4 +1,6 @@
-class SharingNotificationMailer < ActionMailer::Base
+# frozen_string_literal: true
+
+class SharingNotificationMailer < ApplicationMailer
   default from: "tba"
 
   def send_mail(user, data)

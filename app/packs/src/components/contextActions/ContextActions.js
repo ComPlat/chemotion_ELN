@@ -54,7 +54,7 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div style={{ display: 'inline', float: 'left' }}>
+      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
         <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}

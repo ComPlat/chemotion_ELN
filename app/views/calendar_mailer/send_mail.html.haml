@@ -1,0 +1,5 @@
+%p= "#{@entry.creator.name} #{@type} calendar entry #{@entry.kind.capitalize}: #{@entry.range} #{@entry.title}"
+- if @entry.description
+  %p= @entry.description.gsub(/\n/, '<br/>').html_safe
+%p
+%a{ href: "#{@entry.link_to_element_for(@user)}"} Show details
