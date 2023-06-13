@@ -29,4 +29,18 @@ RSpec.describe Chemotion::AdminAPI do
       expect(response.status).to eq 200
     end
   end
+
+  describe 'GET /api/v1/admin/listLocalCollector/all' do
+    before do
+      get '/api/v1/admin/listLocalCollector/all'
+    end
+
+    it 'returns the right http status' do
+      expect(response.status).to eq 200
+    end
+
+    it 'returns a response with an array of collectors' do
+      expect(parsed_json_response['listLocalCollector']).to be_a Array
+    end
+  end
 end
