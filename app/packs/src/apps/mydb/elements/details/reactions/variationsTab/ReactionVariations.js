@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import { iupacNameTooltip } from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
-import getMaterialData from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+import { getMaterialData } from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
 
 function MaterialHeader({ material }) {
   return (
@@ -39,6 +39,9 @@ const CellRenderer = (props) => {
   }
   if (aux.isReference) {
     cellContent += '; Ref';
+  }
+  if (aux.yield) {
+    cellContent += `; Yield: ${aux.yield}`;
   }
   return cellContent;
 };
@@ -76,7 +79,6 @@ const CellEditor = forwardRef((props, ref) => {
     />
   );
 });
-
 
 export default function ReactionVariations({ reaction, onEditVariations }) {
   const gridRef = useRef();

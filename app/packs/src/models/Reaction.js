@@ -14,7 +14,7 @@ import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
-import getMaterialData from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+import { getMaterialData, getMolFromGram } from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -181,6 +181,52 @@ export default class Reaction extends Element {
     });
   }
 
+  removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
+    variations.forEach((row) => {
+      ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
+        Object.keys(row[materialType]).forEach((materialName) => {
+          if (!currentMaterials[materialType].map((material) => material.id.toString()).includes(materialName)) {
+            delete row[materialType][materialName];
+          }
+        });
+      });
+    });
+    return variations;
+  }
+
+  addMissingMaterialsToVariations(variations, currentMaterials) {
+    variations.forEach((row) => {
+      ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
+        currentMaterials[materialType].forEach((material) => {
+          if (!(material.id in row[materialType])) {
+            row[materialType][material.id] = getMaterialData(material, 'Equiv');
+          }
+        });
+      });
+    });
+    return variations;
+  }
+
+  computeYield(variations) {
+    variations.forEach((row) => {
+      const potentialReferenceMaterials = { ...row.startingMaterials, ...row.reactants };
+      const referenceMaterial = Object.values(potentialReferenceMaterials).find((material) => {
+        if (material.aux) {
+          return material.aux.isReference;
+        }
+        return false;
+      });
+
+      Object.entries(row.products).forEach(([productName, productProperties]) => {
+        const stoichiometryCoefficient = (productProperties.aux.coefficient || 1.0) / (referenceMaterial.aux.coefficient || 1.0);
+        const equivalent = getMolFromGram(productProperties) / getMolFromGram(referenceMaterial) / stoichiometryCoefficient;
+        const percentYield = this.hasPolymers() ? (equivalent * 100).toFixed(0) : ((equivalent <= 1 ? equivalent : 1) * 100).toFixed(0);
+        row.products[productName].aux.yield = percentYield;
+      });
+    });
+    return variations;
+  }
+
   homogenizeVariations(variations) {
     // variations data structure:
     // [
@@ -208,47 +254,16 @@ export default class Reaction extends Element {
     //     ...
     //   }
     // ]
-    const homogenizedVariations = cloneDeep(variations);
 
-    const materialNames = {
-      startingMaterials: this.starting_materials.map((material) => material.id.toString()),
-      reactants: this.reactants.map((material) => material.id.toString()),
-      products: this.products.map((material) => material.id.toString())
+    const currentMaterials = {
+      startingMaterials: this.starting_materials,
+      reactants: this.reactants,
+      products: this.products
     };
 
-    homogenizedVariations.forEach((row) => {
-      ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
-        // remove obsolete materials
-        Object.keys(row[materialType]).forEach((materialName) => {
-          if (!materialNames[materialType].includes(materialName)) {
-            delete row[materialType][materialName];
-          }
-        });
-        // add missing materials
-        switch (materialType) {
-          case 'startingMaterials':
-            this.starting_materials.forEach((material) => {
-              if (!(material.id in row[materialType])) {
-                row[materialType][material.id] = getMaterialData(material, 'Equiv');
-              }
-            });
-            break;
-          case 'reactants':
-            this.reactants.forEach((material) => {
-              if (!(material.id in row[materialType])) {
-                row[materialType][material.id] = getMaterialData(material, 'Equiv');
-              }
-            });
-            break;
-          default:
-            this.products.forEach((material) => {
-              if (!(material.id in row[materialType])) {
-                row[materialType][material.id] = getMaterialData(material, 'Equiv');
-              }
-            });
-        }
-      });
-    });
+    let homogenizedVariations = this.removeObsoleteMaterialsFromVariations(cloneDeep(variations), currentMaterials);
+    homogenizedVariations = this.addMissingMaterialsToVariations(homogenizedVariations, currentMaterials);
+    homogenizedVariations = this.computeYield(homogenizedVariations);
 
     return homogenizedVariations;
   }
