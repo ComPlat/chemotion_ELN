@@ -6,13 +6,15 @@ require 'json'
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
-    def initialize(att, current_user_id)
+    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil) # rubocop:disable Style/OptionalBooleanParameter
       @att = att
       @current_user_id = current_user_id
-
+      @gt = gate
+      @origin = origin
       @data = nil
       @instances = {}
       @attachments = []
+      @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
       @images = {}
       @svg_files = []
@@ -82,15 +84,16 @@ module Import
 
     def import
       ActiveRecord::Base.transaction do
-        import_collections
+        gate_collection if @gt == true
+        import_collections if @gt == false
         import_samples
         import_residues
         import_reactions
         import_reactions_samples
-        import_wellplates
-        import_wells
-        import_screens
-        import_research_plans
+        import_wellplates if @gt == false
+        import_wells if @gt == false
+        import_screens if @gt == false
+        import_research_plans if @gt == false
         import_containers
         import_attachments
         import_literals
@@ -154,6 +157,15 @@ module Import
         # add collection to @instances map
         update_instances!(uuid, collection)
       end
+    end
+
+    def gate_collection
+      collection = Collection.find(@col_id)
+      @uuid = nil
+      @data.fetch('Collection', {}).each do |uuid, _fields|
+        @uuid = uuid
+      end
+      update_instances!(@uuid, collection)
     end
 
     def fetch_bound(value)
@@ -252,6 +264,19 @@ module Import
         end
 
         sample.sample_svg_file = s_svg_file[:svg_file] unless s_svg_file.nil?
+
+        # keep orig eln info
+        if @gt == true
+          et = sample.tag
+          eln_info = {
+            id: fields['id'],
+            short_label: fields['short_label'],
+            origin: @origin,
+          }
+          et.update!(
+            taggable_data: (et.taggable_data || {}).merge(eln_info: eln_info),
+          )
+        end
 
         # add sample to the @instances map
         update_instances!(uuid, sample)
@@ -476,10 +501,12 @@ module Import
                                                 'updated_at',
                                               ))
         end
-
         # in any case, add container to the @instances map
         update_instances!(uuid, container)
       end
+    rescue StandardError => e
+      Rails.logger.debug(e.backtrace)
+      raise
     end
 
     def import_attachments
@@ -510,6 +537,8 @@ module Import
         update_instances!(uuid, attachment)
         # attachment.regenerate_thumbnail
       end
+    rescue StandardError => e
+      Rails.logger.debug(e.backtrace)
     end
 
     def import_literals

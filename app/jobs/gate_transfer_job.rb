@@ -3,7 +3,9 @@
 # Job to update molecule info for molecules with no CID
 # associated CID (molecule tag) and iupac names (molecule_names) are updated if
 # inchikey found in PC db
+#
 class GateTransferJob < ApplicationJob
+  queue_as :gate_transfer
   # queue_as :gate_transfer
   # job_options retry: false
   SAMPLE = 'Sample'
@@ -13,7 +15,7 @@ class GateTransferJob < ApplicationJob
   STATE_TRANSFERRED = 'transferred'
   STATE_FAILED_TRANSFER = 'unable to transfer'
 
-  def perform(id, url, req_headers)
+  def perform(id, url, req_headers) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     # ping remote
     @url = url
     @req_headers = req_headers
@@ -63,7 +65,7 @@ class GateTransferJob < ApplicationJob
     true
   end
 
-  def transfer_data(**element)
+  def transfer_data(**element) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     sample_ids = [element[:id]] if element[:type] == GateTransferJob::SAMPLE
     reaction_ids = [element[:id]] if element[:type] == GateTransferJob::REACTION
     exp = Export::ExportJson.new(
@@ -120,9 +122,15 @@ class GateTransferJob < ApplicationJob
       TXT
 
       element[:state] = GateTransferJob::STATE_TRANSFER
-      element[:msg] = 'resp is not successful'
+      element[:msg] = 'response is not successful'
     end
   rescue StandardError => e
+    Delayed::Worker.logger.error <<~TXT
+      --------- gate transfer FAIL error message.BEGIN ------------
+      message:  #{e.message}
+      --------- gate transfer FAIL error message.END ---------------
+    TXT
+
     element[:state] = GateTransferJob::STATE_FAILED_TRANSFER
     element[:msg] = e.message
     @no_error = false
