@@ -14,7 +14,7 @@ RSpec.describe Chemotion::AdminAPI do
     end
 
     it 'returns the right http status' do
-      expect(response.status).to eq 200
+      expect(response).to have_http_status :ok
     end
 
     it 'returns a response with jobs' do
@@ -26,7 +26,7 @@ RSpec.describe Chemotion::AdminAPI do
     it 'returns the right http status' do
       failed_job = Delayed::Job.create(failed_at: DateTime.now, handler: 'Do something')
       put '/api/v1/admin/jobs/restart', params: { id: failed_job.id }
-      expect(response.status).to eq 200
+      expect(response).to have_http_status :ok
     end
   end
 
@@ -36,7 +36,7 @@ RSpec.describe Chemotion::AdminAPI do
     end
 
     it 'returns the right http status' do
-      expect(response.status).to eq 200
+      expect(response).to have_http_status(:ok)
     end
 
     it 'returns a response with an array of collectors' do
