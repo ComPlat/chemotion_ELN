@@ -15,6 +15,7 @@ import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
 import SearchFilter from 'src/components/navigation/search/SearchFilter.js'
 import PropTypes from 'prop-types';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
 
@@ -142,6 +143,7 @@ export default class Navigation extends React.Component {
           <NavigationModal {...modalProps} />
         </Nav>
         <UserAuth />
+        <OpenCalendarButton />
         <div style={{ clear: "both" }} />
         <SearchFilter searchFunc={this.advancedSearch}
           show={showAdvancedSearch} />
