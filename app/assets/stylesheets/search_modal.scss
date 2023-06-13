@@ -159,7 +159,7 @@ i.fa.icon-right {
 
 .advanced-search {
   margin-bottom: 39px;
-  padding-left: 30px;
+  padding-left: 32px;
   height: 49vh;
   overflow-y: auto;
   position: relative;
@@ -168,7 +168,7 @@ i.fa.icon-right {
     max-height: 250px;
   }
   .toggle-elements {
-    width: calc(100% - 35px);
+    width: calc(100% - 5px);
   }
   .btn-group {
     border-bottom: 1px solid rgba(0, 0, 0, 0.4);
@@ -225,10 +225,10 @@ i.fa.icon-right {
     -moz-transform: rotate(-90deg) translate(-100%, 0);
     -o-transform: rotate(-90deg) translate(-100%, 0);
     transform: rotate(-90deg) translate(-100%, 0);
-    -webkit-transform-origin: -15px 13px;
-    -moz-transform-origin: -15px 13px;
-    -o-transform-origin: -15px 13px;
-    transform-origin: -15px 13px;
+    -webkit-transform-origin: -17px 15px;
+    -moz-transform-origin: -17px 15px;
+    -o-transform-origin: -17px 15px;
+    transform-origin: -17px 15px;
     width: 43.8vh;
     border-bottom: none;
   }
@@ -244,5 +244,15 @@ i.fa.icon-right {
     background-color: #fff;
     color: #347ab8;
     border-bottom: none;
+  }
+  .detail-search {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: visible !important;
+    margin-left: 15px;
+  }
+  .detail-search .form-group {
+    width: 24%;
+    margin-right: 1%;
   }
 }

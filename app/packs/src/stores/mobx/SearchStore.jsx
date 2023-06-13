@@ -18,11 +18,34 @@ const advancedSearch = {
   label: 'Text Search'
 }
 
+const defaultSearchValues = [{
+  link: '',
+  match: '=',
+  table: 'samples',
+  element_id: 0,
+  field: {
+    column: 'name',
+    label: 'Name',
+  },
+  value: '',
+  unit: ''
+}];
+
+const searchElementValues = {
+  table: 'samples',
+  element_id: 0,
+  element_table: 'samples'
+}
+
 export const SearchStore = types
   .model({
     search_modal_visible: types.optional(types.boolean, false),
     search_modal_minimized: types.optional(types.boolean, false),
     search_modal_selected_form: types.optional(types.frozen({}), advancedSearch),
+    search_type: types.optional(types.string, "advanced"),
+    search_element: types.optional(types.frozen({}), searchElementValues),
+    advanced_search_values: types.optional(types.array(types.frozen({})), defaultSearchValues),
+    detail_search_values: types.optional(types.array(types.frozen({})), []),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
     search_result_panel_visible: types.optional(types.boolean, false),
@@ -80,6 +103,30 @@ export const SearchStore = types
       self.clearSearchResults();
       self.showMinimizedSearchModal();
     },
+    changeSearchType(type) {
+      self.resetAdvancedSearchValue();
+      self.detail_search_values = [];
+      self.search_type = type;
+    },
+    changeSearchElement(elementValues) {
+      self.resetAdvancedSearchValue();
+      self.detail_search_values = [];
+      self.search_element = elementValues;
+    },
+    addAdvancedSearchValue(id, values) {
+      self.advanced_search_values[id] = values;
+    },
+    resetAdvancedSearchValue() {
+      self.advanced_search_values = defaultSearchValues;
+    },
+    addDetailSearchValue(key, values) {
+      let index = self.detail_search_values.findIndex((x) => { return Object.keys(x).indexOf(key) != -1 })
+      if (index != -1) {
+        self.detail_search_values[index] = { [key]: values };
+      } else {
+        self.detail_search_values.push({ [key]: values });
+      }
+    },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
         id: `${key}-${result.page || 1}`,
@@ -122,6 +169,8 @@ export const SearchStore = types
       self.search_values.clear();
       self.changeErrorMessage('');
       self.clearTabCurrentPage();
+      self.resetAdvancedSearchValue();
+      self.detail_search_values = [];
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
@@ -162,5 +211,9 @@ export const SearchStore = types
     get searchResultVisible() { return self.search_results_visible },
     get searchVisible() { return self.search_visible },
     get searchFilters() { return values(self.search_filters) },
-    get searchValues() { return values(self.search_values) }
+    get searchValues() { return values(self.search_values) },
+    get searchType() { return self.search_type },
+    get searchElement() { return self.search_element },
+    get advancedSearchValues() { return values(self.advanced_search_values) },
+    get detailSearchValues() { return values(self.detail_search_values) },
   }));
