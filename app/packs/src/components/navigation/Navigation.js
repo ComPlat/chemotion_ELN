@@ -131,8 +131,6 @@ export default class Navigation extends React.Component {
         <UserAuth />
         <OpenCalendarButton />
         <div style={{ clear: "both" }} />
-        <SearchFilter searchFunc={this.advancedSearch}
-          show={showAdvancedSearch} />
       </Navbar>
       : <Navbar fluid className='navbar-custom'>
         {this.navHeader()}
