@@ -24,7 +24,7 @@ module Chemotion
       namespace :listLocalCollector do
         desc 'List all local collectors'
         get 'all' do
-          Rails.configuration.datacollectors&.localcollectors || []
+          { listLocalCollector: Rails.configuration.datacollectors&.localcollectors || [] }
         end
       end
 
