@@ -55,6 +55,7 @@ describe Chemotion::CellLineAPI do
           disease: 'disease',
           material_names: '[sd]',
           biosafety_level: 'S1',
+          source: 'IPB',
           collection_id: collection.id,
         }
       end
@@ -67,7 +68,7 @@ describe Chemotion::CellLineAPI do
         expect(response).to have_http_status :created
       end
 
-      it 'returns correct represantation of saved cell line sample' do # rubocop:disable RSpec/MultipleExpectations
+      it 'returns correct representation of saved cell line sample' do # rubocop:disable RSpec/MultipleExpectations
         expect(parsed_json_response['amount']).to be 100
         expect(parsed_json_response['passage']).to be 200
         expect(parsed_json_response['contamination']).to be_nil
@@ -75,7 +76,7 @@ describe Chemotion::CellLineAPI do
         expect(parsed_json_response['growth_medium']).to be_nil
         expect(parsed_json_response['name']).to be_nil
         expect(parsed_json_response['description']).to be_nil
-        expect(parsed_json_response['cellline_material']['names']).to eq '[sd]'
+        expect(parsed_json_response['cellline_material']['name']).to eq '[sd]'
         expect(parsed_json_response['cellline_material']['cell_type']).to be_nil
         expect(parsed_json_response['cellline_material']['organism']).to eq 'something'
         expect(parsed_json_response['cellline_material']['tissue']).to eq 'another'
