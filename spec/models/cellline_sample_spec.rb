@@ -1,15 +1,13 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-RSpec.describe CelllineSample, type: :model do
-  it 'is possible to create a valid collection' do
-   user = create(:user)
-   collection=create(:collection)
+RSpec.describe CelllineSample do
+  let(:sample) { create((:cellline_sample)) }
 
-   material = CelllineMaterial.create()
-   sample = CelllineSample.create(cellline_material: material,creator:user)
-   
-   
-
-   collectionSamples = CollectionsCellline.create(collection: collection, cellline_sample: sample)   
+  context 'when empty cell line sample crated' do
+    it 'root container exists' do
+      expect(sample.container).not_to be_nil
+    end
   end
 end
