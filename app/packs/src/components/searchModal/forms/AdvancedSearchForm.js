@@ -1,61 +1,54 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Button, ButtonGroup, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import React, { useEffect, useContext } from 'react';
+import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
+import DetailSearch from './DetailSearch';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const AdvancedSearchForm = () => {
-  const defaultSelections = [{
-    link: '',
-    match: '=',
-    table: 'samples',
-    element_id: 0,
-    element_table: 'samples',
-    field: {
-      column: 'name',
-      label: 'Name',
-    },
-    value: '',
-    unit: ''
-  }];
-
   const elnElements = ['samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
   const genericElements = UserStore.getState().genericEls || [];
-  const [selectedOptions, setSelectedOptions] = useState(defaultSelections);
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
 
   useEffect(() => {
-    const length = selectedOptions.length - 1;
-    const lastInputRow = selectedOptions[length];
-
+    let advancedValues = searchStore.advancedSearchValues;
+    const length = advancedValues.length - 1;
+    const lastInputRow = searchStore.advancedSearchValues[length];
+    
     const checkSelectedElements =
       (lastInputRow.field && lastInputRow.value && lastInputRow.link) ||
       (length == 0 && lastInputRow.field && lastInputRow.value);
-
+    
     if (checkSelectedElements) {
-      selectedOptions.push(
-        {
-          link: 'OR', match: 'LIKE',
-          table: selectedOptions[0].table,
-          element_id: selectedOptions[0].element_id,
-          element_table: selectedOptions[0].element_table,
-          field: '', value: '', unit: ''
-        }
-      );
-      setSelectedOptions((a) => [...a]);
+      let searchValues = {
+        link: 'OR', match: 'LIKE',
+        table: advancedValues[0].table,
+        element_id: advancedValues[0].element_id,
+        field: '', value: '', unit: ''
+      };
+      searchStore.addAdvancedSearchValue(length + 1, searchValues);
     }
-  }, [selectedOptions, setSelectedOptions]);
+  }, [searchStore.advancedSearchValues]);
 
-  const filterSelectedOptions = () => {
-    const filteredOptions = selectedOptions.filter((f, id) => {
-      return (f.field && f.link && f.value) ||
-        (id == 0 && f.field && f.value)
-    });
+  const filterSearchValues = () => {
+    let filteredOptions = [];
+    if (searchStore.detail_search_values.length >= 1) {
+      searchStore.detailSearchValues.map((f, i) => {
+        let values = { ...Object.values(f)[0] };
+        if (i == 0) { values['link'] = ''; }
+        filteredOptions.push(values);
+      });
+    } else {
+      filteredOptions = searchStore.advancedSearchValues.filter((f, id) => {
+        return (f.field && f.link && f.value) ||
+          (id == 0 && f.field && f.value)
+      });
+    }
     searchStore.changeSearchFilter(filteredOptions);
     const storedFilter = searchStore.searchFilters;
     return storedFilter.length == 0 ? [] : storedFilter[0].filters;
@@ -65,7 +58,7 @@ const AdvancedSearchForm = () => {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const filters = filterSelectedOptions();
+    const filters = filterSearchValues();
     searchStore.changeErrorMessage("Please fill out all needed fields");
 
     if (filters.length > 0) {
@@ -91,18 +84,21 @@ const AdvancedSearchForm = () => {
 
   const handleClear = () => {
     searchStore.clearSearchResults();
-    setSelectedOptions(defaultSelections);
   }
 
   const handleChangeElement = (element) => {
     const table = elnElements.includes(element) ? element : 'elements';
     const genericElement = (!elnElements.includes(element) && genericElements.find(el => el.name + 's' === element)) || {};
 
-    defaultSelections[0].table = table;
-    defaultSelections[0].element_id = (genericElement.id || 0);
-    defaultSelections[0].element_table = element
-    setSelectedOptions(defaultSelections);
-    setSelectedOptions((a) => [...a]);
+    searchStore.changeSearchElement({
+      table: table,
+      element_id: (genericElement.id || 0),
+      element_table: element
+    });
+    let searchValues = { ...searchStore.advancedSearchValues[0] };
+    searchValues.table = table;
+    searchValues.element_id = (genericElement.id || 0);
+    searchStore.addAdvancedSearchValue(0, searchValues);
   }
 
   const SelectSearchTable = () => {
@@ -142,7 +138,8 @@ const AdvancedSearchForm = () => {
       <ToggleButtonGroup
         type="radio"
         name="options"
-        value={selectedOptions[0].element_table}
+        key="element-options"
+        value={searchStore.searchElement.element_table}
         onChange={handleChangeElement}
         defaultValue={0}
         className="toggle-elements">
@@ -168,80 +165,19 @@ const AdvancedSearchForm = () => {
   const renderDynamicRow = () => {
     let dynamicRow = (<span />);
 
-    if (selectedOptions.length > 1) {
-      let addedSelections = selectedOptions.filter((val, idx) => idx > 0);
+    if (searchStore.advancedSearchValues.length > 1) {
+      let addedSelections = searchStore.advancedSearchValues.filter((val, idx) => idx > 0);
 
-      dynamicRow = addedSelections.map((selection, idx) => {
+      dynamicRow = addedSelections.map((_, idx) => {
         let id = idx + 1;
         return (
-          <AdvancedSearchRow
-            idx={id}
-            selection={selection}
-            key={`selection_${id}`}
-            onChange={handleChangeSelection}
-          />
+          <AdvancedSearchRow idx={id} key={`selection_${id}`} />
         );
       });
     }
 
     return dynamicRow;
   };
-
-  const formElementValue = (formElement, e) => {
-    switch (formElement) {
-      case 'value':
-        const value = typeof e.target !== 'undefined' ? e.target.value : (typeof e.value !== 'undefined' ? e.value : e);
-        return value;
-        break;
-      case 'field':
-      case 'link':
-      case 'match':
-      case 'unit':
-        return e.value;
-        break;
-      default:
-        return e;
-    }
-  }
-
-  const temperatureConditions = (idx, column) => {
-    if (selectedOptions[idx]['unit'] == '' || column == 'temperature') {
-      selectedOptions[idx]['unit'] = '°C';
-    }
-    if (selectedOptions[idx]['match'] != '=') {
-      selectedOptions[idx]['match'] = '=';
-    }
-  }
-
-  const durationConditions = (idx, column) => {
-    if (selectedOptions[idx]['unit'] == '' || column == 'duration') {
-      selectedOptions[idx]['unit'] = 'Hour(s)';
-    }
-    if (selectedOptions[idx]['match'] != '=') {
-      selectedOptions[idx]['match'] = '=';
-    }
-  }
-
-  const checkValueForNumber = (value) => {
-    if (isNaN(Number(value))) {
-      searchStore.changeErrorMessage("Only numbers are allowed");
-    } else {
-      searchStore.changeErrorMessage('');
-    }
-  }
-
-  const handleChangeSelection = (idx, formElement) => (e) => {
-    let value = formElementValue(formElement, e, e.currentTarget);
-    const fieldColumn = selectedOptions[idx]['field'].column;
-    const additionalFields = ['temperature', 'duration'];
-    selectedOptions[idx][formElement] = value;
-    if (value.column == 'temperature') { temperatureConditions(idx, value.column) }
-    if (value.column == 'duration') { durationConditions(idx, value.column) }
-    if (additionalFields.includes(fieldColumn) && formElement == 'value') { checkValueForNumber(value) }
-    if (!additionalFields.includes(fieldColumn) && formElement != 'unit' && !additionalFields.includes(value.column)) { selectedOptions[idx]['unit'] = '' }
-    setSelectedOptions((a) => [...a]);
-  }
-  // onClick={() => searchStore.toggleSearchType()}
 
   return (
     <>
@@ -262,17 +198,37 @@ const AdvancedSearchForm = () => {
             <div className="advanced-search">
               {showErrorMessage(searchStore)}
               <SelectSearchTable />
-              <ButtonGroup className="vertical-buttons" bsSize="large">
-                <Button>Detail</Button>
-                <Button active>Advanced</Button>
-              </ButtonGroup>
-              <AdvancedSearchRow
-                idx={0}
-                selection={selectedOptions[0]}
-                key={"selection_0"}
-                onChange={handleChangeSelection}
-              />
-              {renderDynamicRow()}
+              <ToggleButtonGroup
+                type="radio"
+                name="types"
+                key="toggleTypes"
+                value={searchStore.searchType}
+                onChange={(e) => searchStore.changeSearchType(e)}
+                defaultValue="advanced"
+                className="vertical-buttons">
+                <ToggleButton
+                  key="detail"
+                  value="detail">
+                  Detail
+                </ToggleButton>
+                <ToggleButton
+                  key="advanced"
+                  value="advanced">
+                  Advanced
+                </ToggleButton>
+              </ToggleButtonGroup>
+              {
+                searchStore.searchType == 'advanced' ? (
+                  <>
+                    <AdvancedSearchRow idx={0} key={"selection_0"} />
+                    {renderDynamicRow()}
+                  </>
+                ) : (
+                  <DetailSearch
+                    key={searchStore.searchElement.element_table}
+                  />
+                )
+              }
             </div>
             <ButtonToolbar>
               <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
