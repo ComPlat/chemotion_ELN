@@ -94,36 +94,6 @@ RSpec.describe Usecases::CellLines::Create do
           expect { cell_line_sample }.to raise_error(RuntimeError, 'material name not valid')
         end
       end
-
-      context 'when organism is not a string' do
-        before do
-          params[:organism] = [1]
-        end
-
-        it 'error message delivered' do
-          expect { cell_line_sample }.to raise_error(RuntimeError, 'organism not valid')
-        end
-      end
-
-      context 'when organism is empty' do
-        before do
-          params[:organism] = ['']
-        end
-
-        it 'error message delivered' do
-          expect { cell_line_sample }.to raise_error(RuntimeError, 'organism not valid')
-        end
-      end
-
-      context 'when organism is not present' do
-        before do
-          params.delete(:organism)
-        end
-
-        it 'error message delivered' do
-          expect { cell_line_sample }.to raise_error(RuntimeError, 'organism not valid')
-        end
-      end
     end
 
     context 'when cell line material does already exist' do
@@ -131,6 +101,7 @@ RSpec.describe Usecases::CellLines::Create do
       let(:loaded_cell_line_material) { CelllineMaterial.find(loaded_cell_line_sample.cellline_material_id) }
 
       before do
+        params[:material_names] = 'name-001'
         create(:cellline_material)
         params[:variant] = 'v0'
       end
@@ -140,15 +111,13 @@ RSpec.describe Usecases::CellLines::Create do
         expect(loaded_cell_line_sample.amount).to be 100
         expect(loaded_cell_line_sample.passage).to be 42
         expect(loaded_cell_line_sample.contamination).to eq('something')
-        expect(loaded_cell_line_sample.source).to eq('IPB')
-        expect(loaded_cell_line_sample.growth_medium).to eq('water')
         expect(loaded_cell_line_sample.name).to eq('probe-123')
         expect(loaded_cell_line_sample.description).to eq('none')
       end
 
       it 'new cell line material was not saved' do # rubocop:disable RSpec/MultipleExpectations
         expect(loaded_cell_line_material).not_to be_nil
-        expect(loaded_cell_line_material.names).to eq(%w[name-001 name-002])
+        expect(loaded_cell_line_material.name).to eq('name-001')
         expect(loaded_cell_line_material.cell_type).to eq('primary cells')
         expect(loaded_cell_line_material.organism).to eq('mouse')
         expect(loaded_cell_line_material.tissue).to eq('leg')
@@ -175,15 +144,14 @@ RSpec.describe Usecases::CellLines::Create do
         expect(loaded_cell_line_sample.amount).to be 100
         expect(loaded_cell_line_sample.passage).to be 42
         expect(loaded_cell_line_sample.contamination).to eq('something')
-        expect(loaded_cell_line_sample.source).to eq('IPB')
-        expect(loaded_cell_line_sample.growth_medium).to eq('water')
         expect(loaded_cell_line_sample.name).to eq('probe-123')
         expect(loaded_cell_line_sample.description).to eq('none')
       end
 
       it 'new cell line material was saved' do # rubocop:disable RSpec/MultipleExpectations
         expect(loaded_cell_line_material).not_to be_nil
-        expect(loaded_cell_line_material.names).to eq(%w[name-001 name-002])
+        expect(loaded_cell_line_material.growth_medium).to eq('water')
+        expect(loaded_cell_line_material.name).to eq('name-001;name-002')
         expect(loaded_cell_line_material.cell_type).to eq('primary cells')
         expect(loaded_cell_line_material.organism).to eq('mouse')
         expect(loaded_cell_line_material.tissue).to eq('leg')
