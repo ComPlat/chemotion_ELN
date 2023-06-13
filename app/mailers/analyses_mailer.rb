@@ -1,7 +1,7 @@
-# Mailer to email an ELNer about its data export being ready for download
-class AnalysesMailer < ActionMailer::Base
-  default from: ENV['DEVISE_SENDER'] || 'eln'
+# frozen_string_literal: true
 
+# Mailer to email an ELNer about its data export being ready for download
+class AnalysesMailer < ApplicationMailer
   def mail_export_completed(user_id, short_label, link, expires_at)
     init_export_params(user_id, short_label, link, expires_at)
     mail(to: @user.email, subject: "[ELN] Analyses download of sample: #{short_label}") do |format|
