@@ -8,6 +8,7 @@ import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
+import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -87,10 +88,9 @@ class GeneralProperties extends React.Component {
   }
 
   renderAmount(item) {
-    console.log("rendere neu "+item.unit);
     const { cellLineDetailsStore } = this.context;
-    const styleClassAmount = item.amount<=0?'invalid-input':'';
-    const styleClassUnit = item.unit===""?'invalid-input':'';
+
+    const styleClassUnit = item.unit === '' ? 'invalid-input' : '';
 
     const options = [
       { value: 'g', label: 'g' },
@@ -101,21 +101,13 @@ class GeneralProperties extends React.Component {
         <Row>
           <Col componentClass={ControlLabel} sm={3}>Amount *</Col>
           <Col sm={6}>
-            <FormControl
-              className={styleClassAmount}
-              type="number"
-              defaultValue={item.amount}
-              onChange={(e) => {
-                cellLineDetailsStore.changeAmount(item.id, Number(e.target.value));
-              }}
-              value={item.amount}
-            />
+            <Amount cellLineId={item.id} />
           </Col>
           <Col sm={3}>
             <Creatable
               className={styleClassUnit}
-              onChange={(e) => {cellLineDetailsStore.changeUnit(item.id, e.value); }}
-              onInputChange={(e,action) => { if(action.action==="input-change"){cellLineDetailsStore.changeUnit(item.id, e);}}}
+              onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
+              onInputChange={(e, action) => { if (action.action === 'input-change') { cellLineDetailsStore.changeUnit(item.id, e); } }}
               options={options}
               placeholder="choose/enter unit"
               defaultInputValue={item.unit}
