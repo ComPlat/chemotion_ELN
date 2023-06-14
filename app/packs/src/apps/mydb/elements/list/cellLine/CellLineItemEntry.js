@@ -48,10 +48,10 @@ export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem } = this.props;
     return (
-      <div className="cell-line-group-entry">
+      <div className="group-entry">
         <Table className="elements" hover>
           <tbody>
-            <tr className="cell-line-group-white-background">
+            <tr className="white-background">
               <td className="select-checkBox">
                 <ElementCheckbox
                   element={cellLineItem}

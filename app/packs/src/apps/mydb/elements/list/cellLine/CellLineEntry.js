@@ -25,8 +25,8 @@ export default class CellLineEntry extends Component {
   getBorderStyle() {
     const { showEntries } = this.state;
     return showEntries
-      ? 'list-container cell-line-group-gray-background'
-      : 'list-container cell-line-group-gray-background cell-line-group-bottom-border';
+      ? 'list-container title-panel'
+      : 'list-container title-panel cell-line-group-bottom-border';
   }
 
   renderItemEntries(cellLineItems) {
@@ -80,7 +80,7 @@ export default class CellLineEntry extends Component {
 
   renderDetailedInfoButton() {
     const { detailedInformation } = this.state;
-    const buttonActive = detailedInformation?"cell-line-group-detailed-info-button-inactive":"cell-line-group-detailed-info-button-active";
+    const buttonActive = detailedInformation?"detailed-info-on":"detailed-info-off";
     return (
         <Button
           className={"button-right "+buttonActive}
@@ -98,7 +98,7 @@ export default class CellLineEntry extends Component {
     const { cellLineItems } = this.props;  
     return (
         <Button
-          className={"button-right "}
+          className={"button-right quick-sample"}
           bsSize="xsmall"
           onClick={(event) => {
             event.stopPropagation();
@@ -144,7 +144,7 @@ export default class CellLineEntry extends Component {
     const { showEntries } = this.state;
     if (cellLineItems.length === 0) { return (null); }
     return (
-      <div>
+      <div className="cell-line-group">
         <div
           className={this.getBorderStyle()}
           onClick={() => { this.setState({ showEntries: !showEntries }); }}
