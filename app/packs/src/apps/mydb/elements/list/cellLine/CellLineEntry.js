@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CellLineItemEntry from 'src/apps/mydb/elements/list/cellLine/CellLineItemEntry';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -45,7 +44,10 @@ export default class CellLineEntry extends Component {
         key={firstCellLineItem.cellLineName}
         className="cell-line-group-header-name"
       >
-        {firstCellLineItem.cellLineName} - {firstCellLineItem.source}
+        {firstCellLineItem.cellLineName}
+        {' '}
+        -
+        {firstCellLineItem.source}
       </div>];
   }
 
@@ -58,10 +60,6 @@ export default class CellLineEntry extends Component {
       </div>
 
     );
-  }
-
-  renderBasicInfos(firstCellLineItem) {
-    return null;
   }
 
   renderDetailedInfos(firstCellLineItem) {
@@ -80,10 +78,11 @@ export default class CellLineEntry extends Component {
 
   renderDetailedInfoButton() {
     const { detailedInformation } = this.state;
-    const buttonActive = detailedInformation?"detailed-info-on":"detailed-info-off";
+    const buttonActive = detailedInformation ? 'detailed-info-on' : 'detailed-info-off';
     return (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
         <Button
-          className={"button-right "+buttonActive}
+          className={`button-right ${buttonActive}`}
           bsSize="xsmall"
           onClick={(e) => {
             e.stopPropagation();
@@ -92,37 +91,42 @@ export default class CellLineEntry extends Component {
         >
           <i className="fa fa-info-circle" aria-hidden="true" />
         </Button>
-      );
+      </OverlayTrigger>
+    );
   }
-  renderCreateSubSampleButton(){
-    const { cellLineItems } = this.props;  
+
+  renderCreateSubSampleButton() {
+    const { cellLineItems } = this.props;
     return (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
         <Button
-          className={"button-right quick-sample"}
+          className="button-right quick-sample"
           bsSize="xsmall"
           onClick={(event) => {
             event.stopPropagation();
 
             const { currentCollection, isSync } = UIStore.getState();
-            const ui_state=UIStore.getState();
             const uri = isSync
               ? `/scollection/${currentCollection.id}/cell_line/new`
               : `/collection/${currentCollection.id}/cell_line/new`;
             Aviator.navigate(uri, { silent: true });
 
-            const e = { 
-              type:"cell_line", params: 
-              { collectionID: currentCollection.id,
-                cell_lineID: "new",
-                cell_line_template:cellLineItems[0]
+            const creationEvent = {
+              type: 'cell_line',
+              params:
+              {
+                collectionID: currentCollection.id,
+                cell_lineID: 'new',
+                cell_line_template: cellLineItems[0]
               }
             };
-            elementShowOrNew(e);
+            elementShowOrNew(creationEvent);
           }}
         >
           <i className="fa fa-plus" aria-hidden="true" />
         </Button>
-      );
+      </OverlayTrigger>
+    );
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -150,7 +154,6 @@ export default class CellLineEntry extends Component {
           onClick={() => { this.setState({ showEntries: !showEntries }); }}
         >
           {this.renderNameHeader(cellLineItems[0])}
-          {this.renderBasicInfos(cellLineItems[0])}
           {this.renderDetailedInfos(cellLineItems[0])}
         </div>
         {this.renderItemEntries(cellLineItems)}
