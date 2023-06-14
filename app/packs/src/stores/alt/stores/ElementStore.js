@@ -633,9 +633,7 @@ class ElementStore {
     this.state.elements.research_plans = result;
   }
 
-  handlefetchVesselsByCollectionId(result) {
-    this.state.elements.vessels = result;
-  }
+  
 
   // -- Samples --
 
@@ -936,10 +934,6 @@ class ElementStore {
     }
   }
 
-  handleFetchVesselById(result){
-    this.changeCurrentElement(result);
-  }
-
   handleCloseWarning() {
     this.state.elementWarning = false
   }
@@ -986,6 +980,16 @@ class ElementStore {
 
   handleFetchLiteraturesByReactionId(result) {
     this.state.currentElement.literatures = result.literatures;
+  }
+
+  // -- Vessels --
+
+  handlefetchVesselsByCollectionId(result) {
+    this.state.elements.vessels = result;
+  }
+
+  handleFetchVesselById(result){
+    this.changeCurrentElement(result);
   }
 
   // -- Generic --

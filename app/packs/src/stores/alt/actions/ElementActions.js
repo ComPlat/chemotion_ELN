@@ -302,16 +302,7 @@ class ElementActions {
     };
   }
 
-  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
-    return (dispatch) => {
-      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };  
-  }
+  
 
   // -- Samples --
 
@@ -410,22 +401,7 @@ class ElementActions {
     return Sample.buildEmpty(collection_id)
   }
 
-  tryFetchVesselElById(vesselId) {
-    return (dispatch) => {
-      VesselsFetcher.fetchById(vesselId)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    }
-  }
-
-  generateEmptyVessel(collection_id){
-    var v = new Vessel();
-    const { currentUser } = UserStore.getState();
-    return Vessel.buildEmpty(collection_id, `${currentUser.initials}-${0}` );
-  }
+  
 
   splitAsSubsamples(ui_state) {
     return (dispatch) => {
@@ -834,6 +810,34 @@ class ElementActions {
         console.log(errorMessage);
       });
     };
+  }
+
+  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };  
+  }
+
+  tryFetchVesselElById(vesselId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchById(vesselId)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    }
+  }
+
+  generateEmptyVessel(collection_id){
+    var v = new Vessel();
+    const { currentUser } = UserStore.getState();
+    return Vessel.buildEmpty(collection_id, `${currentUser.initials}-${0}` );
   }
 
   // -- DataCite/Radar metadata --
