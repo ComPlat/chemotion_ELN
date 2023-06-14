@@ -31,8 +31,8 @@ class VesselPropertiesTab extends React.Component {
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'common-properties' }) }}>Common Properties</Panel.Heading>
             <Panel.Body collapsible>
               {this.renderAttribute('Vessel Template Name', vesselItem.vesselTemplateName, (e)=>{vesselDetailsStore.changeTemplateName(vesselId, e.target.value)})}
-              {this.renderAttribute('Vessel Template Details', vesselItem.vesselTemplateDetails, (e)=>{vesselDetailsStore.changeTemplateDetails(vesselId, e.target.value)})}
               {this.renderAttribute('Vessel Type', vesselItem.vesselType, (e)=>{vesselDetailsStore.changeType(vesselId, e.target.value)})}
+              {this.renderAttribute('Vessel Details', vesselItem.vesselDetails, (e)=>{vesselDetailsStore.changeDetails(vesselId, e.target.value)})}
               {this.renderAttribute('Volume Amount', vesselItem.volumeAmount, (e)=>{vesselDetailsStore.changeVolumeAmount(vesselId, e.target.value)})}
               {this.renderAttribute('Volume Unit', vesselItem.volumeUnit, (e)=>{vesselDetailsStore.changeVolumeUnit(vesselId, e.target.value)})}
               {this.renderAttribute('Material', vesselItem.materialType, (e)=>{vesselDetailsStore.changeMaterialType(vesselId, e.target.value)})}
@@ -47,7 +47,7 @@ class VesselPropertiesTab extends React.Component {
             <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }) }}>Specific Properties</Panel.Heading>
             <Panel.Body collapsible>
             {this.renderAttribute('Name', vesselItem.vesselName, (e)=>{vesselDetailsStore.changeName(vesselId, e.target.value)})}
-            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{vesselDetailsStore.changeName(vesselId, e.target.value)})}
+            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{vesselDetailsStore.changeDescription(vesselId, e.target.value)})}
             </Panel.Body>
           </Panel>
       </PanelGroup>

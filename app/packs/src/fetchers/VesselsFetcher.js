@@ -38,7 +38,7 @@ export default class VesselsFetcher {
     v1.vesselTemplateId = 1;
     v1.id='1';
     // Template Info
-    v1.vesselTemplateDetails = 'multi-neck';
+    v1.vesselDetails = 'multi-neck';
     v1.vesselType = 'round bottom flask';
     v1.volumeUnit = 'ml';
     v1.volumeAmount = '250';
@@ -53,7 +53,7 @@ export default class VesselsFetcher {
     v2.vesselTemplateId = 1;
     v2.id='2';
     // Template Info
-    v2.vesselTemplateDetails = 'multi-neck';
+    v2.vesselDetails = 'multi-neck';
     v2.vesselType = 'round bottom flask';
     v2.volumeUnit = 'ml';
     v2.volumeAmount = '250';
@@ -68,7 +68,7 @@ export default class VesselsFetcher {
     v3.vesselTemplateId = 1;
     v3.id='3';
     // Template Info
-    v3.vesselTemplateDetails = 'multi-neck';
+    v3.vesselDetails = 'multi-neck';
     v3.vesselType = 'round bottom flask';
     v3.volumeUnit = 'ml';
     v3.volumeAmount = '250';
@@ -83,7 +83,7 @@ export default class VesselsFetcher {
     v4.vesselTemplateId = 2;
     v4.id='4';
     // Template Info
-    v4.vesselTemplateDetails = 'single-neck';
+    v4.vesselDetails = 'single-neck';
     v4.vesselType = 'conical flask';
     v4.volumeUnit = 'ml';
     v4.volumeAmount = '500';
@@ -98,7 +98,7 @@ export default class VesselsFetcher {
     v5.vesselTemplateId = 2;
     v5.id='5';
     // Template Info
-    v5.vesselTemplateDetails = 'single-neck';
+    v5.vesselDetails = 'single-neck';
     v5.vesselType = 'conical flask';
     v5.volumeUnit = 'ml';
     v5.volumeAmount = '500';

@@ -3,7 +3,7 @@ import { types } from 'mobx-state-tree';
 const VesselItem = types.model({
   vesselTemplateId: 1,
   vesselTemplateName: '',
-  vesselTemplateDetails: '',
+  vesselDetails: '',
   vesselType: '',
   volumeUnit: '',
   volumeAmount: '',
@@ -20,8 +20,8 @@ export const VesselDetailsStore = types.model({
   changeTemplateName(id, newVesselTemplateName) {
     self.vesselItem.get(id).vesselTemplateName = newVesselTemplateName;
   },
-  changeTemplateDetails(id, newVesselTemplateDetails) {
-    self.vesselItem.get(id).vesselTemplateDetails = newVesselTemplateDetails;
+  changeDetails(id, newVesselDetails) {
+    self.vesselItem.get(id).vesselDetails = newVesselDetails;
   },
   changeType(id, newVesselType) {
     self.vesselItem.get(id).vesselType = newVesselType;
@@ -54,7 +54,7 @@ export const VesselDetailsStore = types.model({
     self.vesselItem.set(jsVesselModel.id, VesselItem.create({
       vesselTemplateId: jsVesselModel.vesselTemplateId,
       vesselTemplateName: jsVesselModel.vesselTemplateName,
-      vesselTemplateDetails: jsVesselModel.vesselTemplateDetails,
+      vesselDetails: jsVesselModel.vesselDetails,
       vesselType: jsVesselModel.vesselType,
       volumeUnit: jsVesselModel.volumeUnit,
       volumeAmount: jsVesselModel.volumeAmount,

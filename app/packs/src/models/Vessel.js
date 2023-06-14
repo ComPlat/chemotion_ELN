@@ -19,7 +19,7 @@ export default class Vessel extends Element {
 
   adoptPropsFromMobxModel(mobx) {
     this.vesselTemplateName = mobx.vesselTemplateName;
-    this.vesselTemplateDetails = mobx.vesselTemplateDetails;
+    this.vesselDetails = mobx.vesselDetails;
     this.vesselType = mobx.vesselType;
     this.volumeUnit = mobx.volumeUnit;
     this.volumeAmount = mobx.volumeAmount;

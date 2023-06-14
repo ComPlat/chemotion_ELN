@@ -34,13 +34,11 @@ export default class VesselGroup {
     
     const firstItemInGroup = this.vesselItems[0];
 
-    return firstItemInGroup.vesselTemplateId === vesselToCheck.vesselTemplateId
-    && firstItemInGroup.vesselTemplateName === vesselToCheck.vesselTemplateName
-    && firstItemInGroup.vesselTemplateDetails === vesselToCheck.vesselTemplateDetails
+    return firstItemInGroup.vesselTemplateName === vesselToCheck.vesselTemplateName
+    && firstItemInGroup.vesselDetails === vesselToCheck.vesselDetails
     && firstItemInGroup.vesselType === vesselToCheck.vesselType
     && firstItemInGroup.volumeUnit === vesselToCheck.volumeUnit
     && firstItemInGroup.volumeAmount === vesselToCheck.volumeAmount
-    && firstItemInGroup.materialType === vesselToCheck.materialType
-    && firstItemInGroup.materialDetails === vesselToCheck.materialDetails;
+    && firstItemInGroup.materialType === vesselToCheck.materialType;
   }
 }
