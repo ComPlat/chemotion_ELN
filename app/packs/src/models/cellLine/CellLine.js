@@ -46,11 +46,27 @@ export default class CellLine extends Element {
     cellLine.bioSafetyLevel=response.cellline_material.biosafety_level;
     cellLine.cryopreservationMedium=response.cellline_material.cryo_pres_medium;
     cellLine.is_new=false;
-    
 
     return cellLine;
   }
 
+  copyMaterialFrom(cellLineItem){
+    this.organism=cellLineItem.organism;
+    this.tissue=cellLineItem.tissue;
+    this.disease=cellLineItem.disease;
+    this.growthMedium=cellLineItem.growthMedium;
+    this.cellLineName=cellLineItem.cellLineName;
+    this.cellType=cellLineItem.cellType;
+    this.mutation=cellLineItem.mutation;
+    this.bioSafetyLevel=cellLineItem.bioSafetyLevel;
+    this.variant=cellLineItem.variant;
+    this.optimal_growth_temp=cellLineItem.optimal_growth_temp;
+    this.cryopreservationMedium=cellLineItem.cryopreservationMedium;
+    this.gender=cellLineItem.gender;
+    this.materialDescription=cellLineItem.materialDescription;
+    this.source=cellLineItem.source;
+  }
+  
   adoptPropsFromMobXModel(mobx) {
     this.amount = mobx.amount;
     this.passage = mobx.passage;

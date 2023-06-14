@@ -95,6 +95,7 @@ export default class CellLineEntry extends Component {
       );
   }
   renderCreateSubSampleButton(){
+    const { cellLineItems } = this.props;  
     return (
         <Button
           className={"button-right "}
@@ -112,7 +113,8 @@ export default class CellLineEntry extends Component {
             const e = { 
               type:"cell_line", params: 
               { collectionID: currentCollection.id,
-                cell_lineID: "new"
+                cell_lineID: "new",
+                cell_line_template:cellLineItems[0]
               }
             };
             elementShowOrNew(e);

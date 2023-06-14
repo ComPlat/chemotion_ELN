@@ -108,7 +108,7 @@ const sampleShowOrNew = (e) => {
 
 const cellLineShowOrNew = (e) => { 
   if(e.params.new_cellLine||e.params.new_cellLine===undefined){
-     ElementActions.generateEmptyCellLine(e.params.collectionID);
+     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
   }else{
      ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
   }

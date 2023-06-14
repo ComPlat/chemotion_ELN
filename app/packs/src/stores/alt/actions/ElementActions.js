@@ -431,12 +431,16 @@ class ElementActions {
     };
   }
 
-  generateEmptyCellLine(collectionId){  
+  generateEmptyCellLine(collectionId,template){
     var c = new CellLine();
     const { currentUser } = UserStore.getState();
     // TO DO : backend user entity has yet no cellLines_count expose -> fake stuff here
     // return CellLine.buildEmpty(collectionId,`${currentUser.initials}-${currentUser.cellLines_count + 1}` );
-    return CellLine.buildEmpty(collectionId,`${currentUser.initials}-${0}` );
+    const cellLineSample= CellLine.buildEmpty(collectionId,`${currentUser.initials}-${0}`);
+    if(template){
+      cellLineSample.copyMaterialFrom(template);
+    }
+    return cellLineSample;
   }
 
   splitAsSubsamples(ui_state) {
