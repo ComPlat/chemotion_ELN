@@ -7,6 +7,7 @@ module Entities
         expose :name
         expose :short_label
         expose :description
+        expose :unit
         expose :cellline_material
     end
 end

@@ -24,7 +24,7 @@ module Usecases
       def find_cellline_material
         CelllineMaterial.find_by(
           name: @params[:material_names],
-          source: @params[:source]
+          source: @params[:source],
         )
       end
 
@@ -52,6 +52,7 @@ module Usecases
           cellline_material: material,
           creator: @current_user,
           amount: @params[:amount],
+          unit: @params[:unit],
           passage: @params[:passage],
           contamination: @params[:contamination],
           name: @params[:name],

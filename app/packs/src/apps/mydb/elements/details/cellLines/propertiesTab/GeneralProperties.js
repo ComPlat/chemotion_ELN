@@ -1,8 +1,9 @@
 import React from 'react';
 import {
-  Col, PanelGroup, Panel, FormControl, ControlLabel
+  Col, Row, PanelGroup, Panel, FormControl, ControlLabel
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import CreatableSelect from 'react-select3/creatable';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
@@ -44,16 +45,18 @@ class GeneralProperties extends React.Component {
 
     return (
       <div>
-        <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
-        <Col sm={9}>
-          <FormControl
-            className={styleClass}
-            type="text"
-            defaultValue={defaultValue}
-            onChange={onChangeCallBack}
-            value={defaultValue}
-          />
-        </Col>
+        <Row>
+          <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
+          <Col sm={9}>
+            <FormControl
+              className={styleClass}
+              type="text"
+              defaultValue={defaultValue}
+              onChange={onChangeCallBack}
+              value={defaultValue}
+            />
+          </Col>
+        </Row>
       </div>
     );
   }
@@ -68,15 +71,53 @@ class GeneralProperties extends React.Component {
     ];
     return (
       <div>
-        <Col componentClass={ControlLabel} sm={3}>Biosavety level</Col>
-        <Col sm={9}>
-          <Select
-            options={options}
-            clearable={false}
-            value={item.bioSafetyLevel}
-            onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
-          />
-        </Col>
+        <Row>
+          <Col componentClass={ControlLabel} sm={3}>Biosavety level</Col>
+          <Col sm={9}>
+            <Select
+              options={options}
+              clearable={false}
+              value={item.bioSafetyLevel}
+              onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
+            />
+          </Col>
+        </Row>
+      </div>
+    );
+  }
+
+  renderAmount(item) {
+    const { cellLineDetailsStore } = this.context;
+    const styleClass = '';
+    const options = [
+      { value: 'g', label: 'g' },
+      { value: 'units/cm²', label: 'units/cm²' },
+    ];
+    return (
+      <div>
+        <Row>
+          <Col componentClass={ControlLabel} sm={3}>Amount *</Col>
+          <Col sm={6}>
+            <FormControl
+              className={styleClass}
+              type="text"
+              defaultValue={item.amount}
+              onChange={(e) => {
+                cellLineDetailsStore.changeAmount(item.id, Number(e.target.value));
+              }}
+              value={item.amount}
+            />
+          </Col>
+          <Col sm={3}>
+            <CreatableSelect
+              onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
+              options={options}
+              placeholder="choose/enter unit"
+              defaultInputValue={item.unit}
+            />
+
+          </Col>
+        </Row>
       </div>
     );
   }
@@ -133,10 +174,9 @@ class GeneralProperties extends React.Component {
           >
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
             <Panel.Body collapsible>
-
-              {this.renderAttribute('Amount *', cellLineItem.amount, (e) => { cellLineDetailsStore.changeAmount(cellLineId, Number(e.target.value)); }, false, true)}
+              {this.renderAmount(item)}
               {this.renderAttribute('Passage *', cellLineItem.passage, (e) => { cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value)); }, false, true)}
-              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}              
+              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => { cellLineDetailsStore.changeItemName(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => { cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value); })}
             </Panel.Body>

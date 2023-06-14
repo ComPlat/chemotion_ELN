@@ -46,11 +46,12 @@ module Usecases
       end
 
       def update_sample_properties
-        @cell_line_sample.amount = @params[:amount] || @cell_line_sample.amount
-        @cell_line_sample.passage = @params[:passage] || @cell_line_sample.passage
-        @cell_line_sample.contamination = @params[:contamination] || @cell_line_sample.contamination
-        @cell_line_sample.name = @params[:name] || @cell_line_sample.name
-        @cell_line_sample.description = @params[:description] || @cell_line_sample.description
+        @cell_line_sample.amount = @params[:amount]
+        @cell_line_sample.passage = @params[:passage]
+        @cell_line_sample.contamination = @params[:contamination]
+        @cell_line_sample.name = @params[:name]
+        @cell_line_sample.unit = @params[:unit]
+        @cell_line_sample.description = @params[:description]
       end
 
       def update_material_properties(material) # rubocop:disable Metrics/AbcSize

@@ -37,6 +37,7 @@ const CellLineItem = types
     passage: 0,
     contamination: '',
     shortLabel: '',
+    unit: '',
     source: '',
     growthMedium: '',
     itemDescription: '',
@@ -60,6 +61,10 @@ export const CellLineDetailsStore = types
     },
     changeAmount(id, newAmount) {
       self.cellLineItem.get(id).amount = newAmount;
+    },
+    changeUnit(id, newUnit) {
+      console.log(`Changed unit to ${newUnit}`);
+      self.cellLineItem.get(id).unit = newUnit;
     },
     changeContamination(id, newContamination) {
       self.cellLineItem.get(id).contamination = newContamination;
@@ -117,17 +122,17 @@ export const CellLineDetailsStore = types
         .children.push(self.convertJsModelToMobxModel(container));
       return container;
     },
-    setMaterialProperties(id,properties){
-      const item =self.cellLineItem.get(id);
-      if (item === undefined){throw new Error('no cellline with id found: '+id); }
+    setMaterialProperties(id, properties) {
+      const item = self.cellLineItem.get(id);
+      if (item === undefined) { throw new Error(`no cellline with id found: ${id}`); }
 
       item.bioSafetyLevel = properties.biosafety_level;
       item.cellType = properties.cell_type;
       item.cryopreservationMedium = properties.cryo_pres_medium;
-      item.materialDescription = properties.description;      
+      item.materialDescription = properties.description;
       item.disease = properties.disease;
-      item.gender = properties.gender;     
-      this.changeOptimalGrowthTemp(id, properties.optimal_growth_temp)
+      item.gender = properties.gender;
+      this.changeOptimalGrowthTemp(id, properties.optimal_growth_temp);
       item.organism = properties.organism;
       item.tissue = properties.tissue;
       item.variant = properties.variant;
@@ -163,7 +168,6 @@ export const CellLineDetailsStore = types
       });
 
       self.cellLineItem.set(jsCellLineModel.id, CellLineItem.create({
-
         cellLineId: jsCellLineModel.cellLineId,
         id: jsCellLineModel.id.toString(),
         organism: jsCellLineModel.organism,
@@ -171,7 +175,7 @@ export const CellLineDetailsStore = types
         cellType: jsCellLineModel.cellType,
         mutation: jsCellLineModel.mutation,
         disease: jsCellLineModel.disease,
-        itemDescription:jsCellLineModel.itemComment,
+        itemDescription: jsCellLineModel.itemComment,
         bioSafetyLevel: jsCellLineModel.bioSafetyLevel,
         variant: jsCellLineModel.variant,
         optimalGrowthTemperature: jsCellLineModel.optimal_growth_temp,
@@ -180,6 +184,7 @@ export const CellLineDetailsStore = types
         materialDescription: jsCellLineModel.materialDescription,
         gender: jsCellLineModel.gender,
         amount: jsCellLineModel.amount,
+        unit: jsCellLineModel.unit,
         passage: jsCellLineModel.passage,
         contamination: jsCellLineModel.contamination,
         source: jsCellLineModel.source,
@@ -200,7 +205,7 @@ export const CellLineDetailsStore = types
     checkInputValidity(id) {
       const result = [];
       const item = self.cellLineItem.get(id);
-      if (item.cellLineName.trim() === '') { result.push('cellLineName');}
+      if (item.cellLineName.trim() === '') { result.push('cellLineName'); }
       if (item.source.trim() === '') { result.push('source'); }
       if (!Number.isInteger(item.amount) || item.amount === 0) { result.push('amount'); }
       if (!Number.isInteger(item.passage) || item.passage === 0) { result.push('passage'); }
