@@ -2,6 +2,7 @@
 
 require 'roo'
 
+# rubocop:disable Metrics/ClassLength
 module Import
   class ImportSamples
     attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :unprocessable,
@@ -341,3 +342,4 @@ module Import
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
