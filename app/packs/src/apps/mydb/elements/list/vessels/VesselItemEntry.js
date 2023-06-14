@@ -5,7 +5,7 @@ import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
-
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 
 export default class VesselItemEntry extends React.Component {
@@ -24,6 +24,12 @@ export default class VesselItemEntry extends React.Component {
     componentWillUnmount() {
       //ElementStore.unlisten(this.onChange);
       //UIStore.unlisten(this.onChangeUI);
+    }
+
+    isElementChecked(element) {
+      const { checkedIds, uncheckedIds, checkedAll } = UIStore.getState().vessel;
+      return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
+      || ArrayUtils.isValInArray(checkedIds || [], element.id);
     }
 
     render(){
@@ -72,7 +78,5 @@ export default class VesselItemEntry extends React.Component {
        // this.onChange(ElementStore.getState());
 
     }
-    isElementChecked(element) {
-      return true
-    }
+    
 }
