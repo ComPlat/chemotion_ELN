@@ -1,6 +1,5 @@
 import React from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import CellLine from 'src/models/cellLine/CellLine';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import {
@@ -36,7 +35,7 @@ class Amount extends React.Component {
   }
 
   getStyleClass(cellLineItem) {
-    return cellLineItem.amount <= 0 || cellLineItem.amount >= CellLine.MAX_AMOUNT ? 'invalid-input' : '';
+    return cellLineItem.isAmountValid() ? '' : 'invalid-input';
   }
 }
 

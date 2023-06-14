@@ -2,7 +2,6 @@ import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 
 export default class CellLine extends Element {
-  static MAX_AMOUNT = 1000000000000000000;
 
   static buildEmpty(collectionId, shortLabelIn) {
     if (collectionId === undefined || !Number.isInteger(Number(collectionId))) {

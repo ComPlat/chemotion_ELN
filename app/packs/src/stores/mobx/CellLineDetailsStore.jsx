@@ -2,6 +2,8 @@ import { types } from 'mobx-state-tree';
 import Container from 'src/models/Container';
 import CellLine from 'src/models/cellLine/CellLine';
 
+const MAX_AMOUNT = 1000000000000000000;
+
 const CellLineAnalysis = types
   .model({
     id: '',
@@ -44,7 +46,11 @@ const CellLineItem = types
     itemDescription: '',
     itemName: '',
     container: types.maybe(CellLineAnalysis)
-  });
+  }) .views((self) => ({
+    isAmountValid() {
+      return Number.isInteger(self.amount) && self.amount > 0 && self.amount < MAX_AMOUNT
+    }
+  }));
 
 export const CellLineDetailsStore = types
   .model({
@@ -209,7 +215,7 @@ export const CellLineDetailsStore = types
       if (item.cellLineName.trim() === '') { result.push('cellLineName'); }
       if (item.source.trim() === '') { result.push('source'); }
       if (item.unit.trim() === '') { result.push('unit'); }
-      if (!Number.isInteger(item.amount) || item.amount === 0 || item.amount>=CellLine.MAX_AMOUNT) { result.push('amount'); }
+      if (!item.isAmountValid()) { result.push('amount'); }
       if (!Number.isInteger(item.passage) || item.passage === 0) { result.push('passage'); }
       return result;
     }
