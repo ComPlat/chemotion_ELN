@@ -2,7 +2,6 @@
 
 class ImportSamplesJob < ApplicationJob
   include ActiveJob::Status
-  include ImportSamplesMethods
 
   queue_as :import_samples
 
