@@ -1,6 +1,18 @@
 .invalid-input {
-    border-color: red !important
+    border-color: red !important;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 4px;
+    .css-1pahdxg-control{
+        border-style: none;
+    }
+    .css-1pahdxg-control{
+        box-shadow: 0 0 0 0px #2684FF;
+        border-style: none;
+    }
 }
+
+
 .cell-line-group{
     .group-entry{
         .elements{

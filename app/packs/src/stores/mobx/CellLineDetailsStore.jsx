@@ -207,6 +207,7 @@ export const CellLineDetailsStore = types
       const item = self.cellLineItem.get(id);
       if (item.cellLineName.trim() === '') { result.push('cellLineName'); }
       if (item.source.trim() === '') { result.push('source'); }
+      if (item.unit.trim() === '') { result.push('unit'); }
       if (!Number.isInteger(item.amount) || item.amount === 0) { result.push('amount'); }
       if (!Number.isInteger(item.passage) || item.passage === 0) { result.push('passage'); }
       return result;

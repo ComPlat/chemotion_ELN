@@ -3,7 +3,7 @@ import {
   Col, Row, PanelGroup, Panel, FormControl, ControlLabel
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import CreatableSelect from 'react-select3/creatable';
+import Creatable from 'react-select3/creatable';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
@@ -87,8 +87,11 @@ class GeneralProperties extends React.Component {
   }
 
   renderAmount(item) {
+    console.log("rendere neu "+item.unit);
     const { cellLineDetailsStore } = this.context;
-    const styleClass = '';
+    const styleClassAmount = item.amount<=0?'invalid-input':'';
+    const styleClassUnit = item.unit===""?'invalid-input':'';
+
     const options = [
       { value: 'g', label: 'g' },
       { value: 'units/cm²', label: 'units/cm²' },
@@ -99,8 +102,8 @@ class GeneralProperties extends React.Component {
           <Col componentClass={ControlLabel} sm={3}>Amount *</Col>
           <Col sm={6}>
             <FormControl
-              className={styleClass}
-              type="text"
+              className={styleClassAmount}
+              type="number"
               defaultValue={item.amount}
               onChange={(e) => {
                 cellLineDetailsStore.changeAmount(item.id, Number(e.target.value));
@@ -109,8 +112,10 @@ class GeneralProperties extends React.Component {
             />
           </Col>
           <Col sm={3}>
-            <CreatableSelect
-              onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
+            <Creatable
+              className={styleClassUnit}
+              onChange={(e) => {cellLineDetailsStore.changeUnit(item.id, e.value); }}
+              onInputChange={(e,action) => { if(action.action==="input-change"){cellLineDetailsStore.changeUnit(item.id, e);}}}
               options={options}
               placeholder="choose/enter unit"
               defaultInputValue={item.unit}
@@ -174,7 +179,7 @@ class GeneralProperties extends React.Component {
           >
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
             <Panel.Body collapsible>
-              {this.renderAmount(item)}
+              {this.renderAmount(cellLineItem)}
               {this.renderAttribute('Passage *', cellLineItem.passage, (e) => { cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value)); }, false, true)}
               {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}
               {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => { cellLineDetailsStore.changeItemName(cellLineId, e.target.value); })}
