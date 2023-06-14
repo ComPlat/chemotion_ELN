@@ -11,7 +11,7 @@ import ArrayUtils from 'src/utilities/ArrayUtils';
 export default class VesselItemEntry extends React.Component {
     constructor(props) {
       super(props);
-
+      this.showDetails = this.showDetails.bind(this);
     }
 
     componentDidMount() {
