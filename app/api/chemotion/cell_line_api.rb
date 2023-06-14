@@ -23,41 +23,41 @@ module Chemotion
       end
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).cellline_samples
-          rescue ActiveRecord::RecordNotFound
-            CelllineSample.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.cell_lines
-          rescue ActiveRecord::RecordNotFound
-            CelllineSample.none
-          end
-        else
-          # All collection of current_user
-          CelllineSample.none.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
-     
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).cellline_samples
+                  rescue ActiveRecord::RecordNotFound
+                    CelllineSample.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.cell_lines
+                  rescue ActiveRecord::RecordNotFound
+                    CelllineSample.none
+                  end
+                else
+                  # All collection of current_user
+                  CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
+                end.order('created_at DESC')
+
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
-         
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
-       
-        reset_pagination_page(scope)   
+        scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
+
+        reset_pagination_page(scope)
         cell_line_samples = paginate(scope).map do |cell_line_sample|
           Entities::CellLineSampleEntity.represent(
             cell_line_sample,
             displayed_in_list: true,
-            #detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: cell_line_sample).detail_levels
+            # detail_levels: ElementDetailLevelCalculator.
+            # new(user: current_user, element: cell_line_sample).detail_levels
           )
-        end 
+        end
         { cell_lines: cell_line_samples }
       end
 
@@ -91,7 +91,7 @@ module Chemotion
         optional :contamination, type: String, desc: 'contamination of a cell line sample'
         requires :source, type: String, desc: 'source of a cell line sample'
         optional :name, type: String, desc: 'name of a cell line sample'
-        optional :mutation, type: String, desc: 'mutation of a cell line '
+        optional :mutation, type: String, desc: 'mutation of a cell line'
         optional :description, type: String, desc: 'description of a cell line sample'
         optional :short_label, type: String, desc: 'short label of a cell line sample'
       end
@@ -105,6 +105,7 @@ module Chemotion
       params do
         requires :cell_line_sample_id, type: String, desc: 'id of the cell line to update'
         optional :organism, type: String, desc: 'name of the donor organism of the cell'
+        optional :mutation, type: String, desc: 'mutation of a cell line'
         optional :tissue, type: String, desc: 'tissue from which the cell originates'
         optional :amount, type: Integer, desc: 'amount of cells'
         optional :passage, type: Integer, desc: 'passage of cells'
@@ -130,9 +131,9 @@ module Chemotion
       end
 
       resource :names do
-        desc 'Returns all accessable cell line material names and their id'        
+        desc 'Returns all accessable cell line material names and their id'
         get 'all' do
-          return present CelllineMaterial.all , with: Entities::CellLineMaterialNameEntity
+          return present CelllineMaterial.all, with: Entities::CellLineMaterialNameEntity
         end
       end
       resource :material do

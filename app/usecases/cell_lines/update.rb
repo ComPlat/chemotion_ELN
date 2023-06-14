@@ -59,6 +59,7 @@ module Usecases
         material.organism = @params[:organism]
         material.tissue = @params[:tissue]
         material.disease = @params[:disease]
+        material.mutation = @params[:mutation]
         material.biosafety_level = @params[:biosafety_level]
         material.variant = @params[:variant]
         material.optimal_growth_temp = @params[:optimal_growth_temp]
