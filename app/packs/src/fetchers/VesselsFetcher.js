@@ -23,6 +23,10 @@ export default class VesselsFetcher {
     });
   }
 
+  static create(params){
+    
+  }
+
   static update(vesselItem){
     const index = VesselsFetcher.mockData.findIndex((vessel) => vesselItem.id === vessel.id);
     if(index===-1){

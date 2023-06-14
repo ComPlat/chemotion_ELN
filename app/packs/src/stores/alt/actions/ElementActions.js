@@ -802,6 +802,16 @@ class ElementActions {
 
   // -- Vessels --
 
+  createVessel(params){
+    console.log('create')
+    return(dispatch) => {
+      VesselsFetcher.create(params)
+      .then((result) => {dispatch(result);}).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+  
   updateVessel(params){
     console.log('update')
     return(dispatch) => {

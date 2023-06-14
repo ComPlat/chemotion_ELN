@@ -207,6 +207,8 @@ class ElementStore {
       handleCreatePrivateNote: ElementActions.createPrivateNote,
       handleUpdatePrivateNote: ElementActions.updatePrivateNote,
 
+      handleCreateVessel: ElementActions.createVessel,
+
       // FIXME ElementStore listens to UIActions?
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -990,6 +992,11 @@ class ElementStore {
 
   handleFetchVesselById(result){
     this.changeCurrentElement(result);
+  }
+
+  handleCreateVessel(vessel) {
+    this.handleRefreshElements('vessel');
+    this.navigateToNewElement(vessel);
   }
 
   // -- Generic --
