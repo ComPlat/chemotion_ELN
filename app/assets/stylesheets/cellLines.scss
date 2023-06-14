@@ -12,6 +12,28 @@
     }
 }
 
+.scientific-input-fixed{
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 6px;
+    font-weight: bold;
+    font-size: 115%;
+
+}
+
+.scientific-input{
+    width:100px;
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}
+
 
 .cell-line-group{
     .group-entry{
