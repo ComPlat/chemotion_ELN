@@ -101,7 +101,7 @@ class GeneralProperties extends React.Component {
         <Row>
           <Col componentClass={ControlLabel} sm={3}>Amount *</Col>
           <Col sm={6}>
-            <Amount cellLineId={item.id} />
+            <Amount cellLineId={item.id} initialValue={item.amount} />
           </Col>
           <Col sm={3}>
             <Creatable

@@ -15,25 +15,25 @@ export default class CellLineFactory {
     this.factory = factory;
 
     this.factory.define('new', CellLine, async () => {
-      const cellLine = CellLine.buildEmpty(0,'');
+      const cellLine = CellLine.buildEmpty(0, '');
       return cellLine;
     });
 
     this.factory.define('with_name', CellLine, async () => {
-      const cellLine = CellLine.buildEmpty(0,'');
+      const cellLine = CellLine.buildEmpty(0, '');
       cellLine.cellLineName = 'Cell line 123';
       cellLine.cellLineId = 1;
       return cellLine;
     });
 
     this.factory.define('with_other_name', CellLine, async () => {
-      const cellLine = CellLine.buildEmpty(0,'');
+      const cellLine = CellLine.buildEmpty(0, '');
       cellLine.cellLineName = 'Cell line 456';
       cellLine.cellLineId = 2;
       return cellLine;
     });
     this.factory.define('heLa', CellLine, async () => {
-      const cellLine = CellLine.buildEmpty(0,'');
+      const cellLine = CellLine.buildEmpty(0, '');
       cellLine.cellLineName = 'HeLa';
       cellLine.cellLineId = 2;
       cellLine.id = 1;
@@ -44,7 +44,7 @@ export default class CellLineFactory {
       cellLine.disease = 'cervical cancer';
       cellLine.bioSafetyLevel = 'S1';
       cellLine.variant = '';
-      cellLine.optimalGrowthTemperature = 36;
+      cellLine.optimal_growth_temp = 36;
       cellLine.cryopreservationMedium = 'DMSO Serum free media, contains 8.7% DMSO in MEM supplemented with methyl cellulose';
       cellLine.materialDescription = 'Test data for cell line material';
       cellLine.gender = 'female';
@@ -53,9 +53,9 @@ export default class CellLineFactory {
       cellLine.contamination = 'Myococci';
       cellLine.source = 'The Random Company';
       cellLine.growthMedium = 'DMEM (High Glucose) + 10% FBS';
-      cellLine.itemDescription = 'Test data for cell line sample';
+      cellLine.itemComment = 'Test data for cell line sample';
       cellLine.short_label = 'SHA-001';
-      cellLine.itemName = 'Probe DX3-751'
+      cellLine.itemName = 'Probe DX3-751';
       return cellLine;
     });
   }
