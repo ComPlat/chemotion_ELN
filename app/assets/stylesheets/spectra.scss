@@ -2,6 +2,16 @@
   z-index: 1998;
 }
 
+.modal-open {
+  .spectra-editor-dialog {
+    transform: none !important;
+    top: auto;
+    left: 1vw;
+    width: 98vw;
+    text-align: center;
+  }
+}
+
 .spectra-editor {
   text-align: right;
 }
@@ -17,9 +27,10 @@
   }
 }
 
+
 #ChemSpectra,
 #ChemSpectraEditor,
-.spectra-editor-dialog {
+.spectra-editor-dialog .modal-dialog {
   display: block;
   padding-left: 0px;
   top: 45% !important;
