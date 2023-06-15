@@ -12,28 +12,26 @@
     }
 }
 
-.scientific-input-fixed{
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-top: 6px;
-    font-weight: bold;
-    font-size: 115%;
-
-}
-
-.scientific-input{
-    width:100px;
-
-    input[type=number] {
-        -moz-appearance: textfield;
-    }
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
+.amount{
+    width: 90%;
+    input{
+        height:38px;
     }
 }
 
+.scientific-button{
+    button{
+        margin-top: 2px;
+        margin-left: 3px;
+        width: 8%;
+        height: 32px;
+    }
+}
+.amount-unit{
+    .css-2b097c-container{
+        
+    }
+}
 
 .cell-line-group{
     .group-entry{

@@ -103,7 +103,7 @@ class GeneralProperties extends React.Component {
           <Col sm={6}>
             <Amount cellLineId={item.id} initialValue={item.amount} />
           </Col>
-          <Col sm={3}>
+          <Col sm={3} className="amount-unit">
             <Creatable
               className={styleClassUnit}
               onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
@@ -112,7 +112,6 @@ class GeneralProperties extends React.Component {
               placeholder="choose/enter unit"
               defaultInputValue={item.unit}
             />
-
           </Col>
         </Row>
       </div>
