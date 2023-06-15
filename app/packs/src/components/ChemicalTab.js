@@ -420,7 +420,7 @@ export default class ChemicalTab extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   clipboardTooltip(value) {
-    const info = `copy product link (${value})`;
+    const info = `product link (${value})`;
     return (
       <Tooltip id="productLink_button">{info}</Tooltip>
     );
@@ -448,8 +448,10 @@ export default class ChemicalTab extends React.Component {
     }
     return (
       <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
-        <Button active className="clipboardBtn" data-clipboard-text={value} bsSize="xs">
-          <i className="fa fa-clipboard" />
+        <Button active bsSize="xs">
+          <a href={value} target="_blank" rel="noreferrer">
+            <i className="fa fa-external-link" />
+          </a>
         </Button>
       </OverlayTrigger>
     );
