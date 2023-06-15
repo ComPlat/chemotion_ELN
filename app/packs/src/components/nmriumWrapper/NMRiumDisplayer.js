@@ -338,7 +338,7 @@ export default class NMRiumDisplayer extends React.Component {
     const { values } = firstSpectrumPeaks;
     const peaks = values;
     const layout = firstSpectrum.nucleus;
-    const shift = { enable: false, peak: false, ref: { label: false, name: '---', value: 0 } };
+    const shift = { shifts: [{ enable: false, peak: false, ref: { label: false, name: '---', value: 0 } }] };
     const decimal = 2;
     const peaksBody = FN.peaksBody({
       peaks, layout, decimal, shift
