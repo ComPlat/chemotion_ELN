@@ -86,8 +86,9 @@ class CellLineDetails extends React.Component {
   renderSubmitButton() {
     const { cellLineItem } = this.props;
     const { cellLineDetailsStore } = this.context;
+    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
     const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
-    const disabled = validationInfo.length > 0;
+    const disabled = validationInfo.length > 0 || !mobXItem.changed;
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
     const disabledButton = <Button bsStyle="warning" disabled onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
     const enabledButton = <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;

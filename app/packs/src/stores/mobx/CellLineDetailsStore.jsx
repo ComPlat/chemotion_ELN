@@ -45,6 +45,7 @@ const CellLineItem = types
     growthMedium: '',
     itemDescription: '',
     itemName: '',
+    changed:false,
     container: types.maybe(CellLineAnalysis)
   }) .views((self) => ({
     isAmountValid() {
@@ -58,64 +59,83 @@ export const CellLineDetailsStore = types
   })
   .actions((self) => ({
     changeItemName(id, newItemName) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).itemName = newItemName;
     },
     changeGrowthMedium(id, newGrowthMedium) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).growthMedium = newGrowthMedium;
     },
     changeSource(id, newSource) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).source = newSource;
     },
     changeAmount(id, newAmount) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).amount = newAmount;
     },
     changeUnit(id, newUnit) {
-      console.log(`Changed unit to ${newUnit}`);
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).unit = newUnit;
     },
     changeContamination(id, newContamination) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).contamination = newContamination;
     },
     changePassage(id, newPassage) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).passage = newPassage;
     },
     changeCellLineName(id, newCellLineName) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).cellLineName = newCellLineName;
     },
     changeMutation(id, newMutation) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).mutation = newMutation;
     },
     changeDisease(id, newDisease) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).disease = newDisease;
     },
     changeOrganism(id, newOrganism) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).organism = newOrganism;
     },
     changeItemDescription(id, newDesc) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).itemDescription = newDesc;
     },
     changeMaterialDescription(id, newDesc) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).materialDescription = newDesc;
     },
     changeTissue(id, newTissue) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).tissue = newTissue;
     },
     changeOptimalGrowthTemp(id, newTemp) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).optimalGrowthTemperature = newTemp;
     },
     changeVariant(id, newVariant) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).variant = newVariant;
     },
     changeBioSafetyLevel(id, newBioSafetyLevel) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).bioSafetyLevel = newBioSafetyLevel;
     },
     changeCryoMedium(id, newCryoMedium) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).cryopreservationMedium = newCryoMedium;
     },
     changeGender(id, newGender) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).gender = newGender;
     },
     changeCellType(id, newType) {
+      self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).cellType = newType;
     },
     removeCellLineFromStore(id) {
