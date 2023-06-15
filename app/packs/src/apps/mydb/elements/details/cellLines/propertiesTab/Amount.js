@@ -68,7 +68,7 @@ class Amount extends React.Component {
             this.setState({ currentValue: formattedValue });
           }}
         >
-          <i className="fa fa-plus" aria-hidden="true" />
+          <i className="fa fa-calculator" aria-hidden="true" />
         </Button>
       </OverlayTrigger>
     );
@@ -85,10 +85,10 @@ class Amount extends React.Component {
 
     return (
       <div>
-        <div className="floating">
+        <div className="floating amount">
           {this.renderDecimalRepresentation()}
         </div>
-        <div>
+        <div className="scientific-button">
           {scienceViewButton}
         </div>
       </div>
