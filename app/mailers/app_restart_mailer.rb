@@ -1,6 +1,6 @@
-class AppRestartMailer < ActionMailer::Base
-  default from: ENV['DEVISE_SENDER'] || 'eln'
+# frozen_string_literal: true
 
+class AppRestartMailer < ApplicationMailer
   def text_content
     "The application was restarted.\n#{revision}"
   end

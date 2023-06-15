@@ -67,7 +67,7 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/ChemicalTab';
-
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const MWPrecision = 6;
 
@@ -539,7 +539,7 @@ export default class SampleDetails extends React.Component {
             <i className="icon-sample" />{sample.title()}
           </span>
         </OverlayTrigger>
-        <ShowUserLabels element={sample}/>
+        <ShowUserLabels element={sample} />
         <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
         {colLabel}
         <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
@@ -595,6 +595,9 @@ export default class SampleDetails extends React.Component {
             </Button>
           </OverlayTrigger>
           <PrintCodeButton element={sample} />
+          {sample.isNew
+            ? null
+            : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
           {inventorySample}
           {decoupleCb}
         </div>
