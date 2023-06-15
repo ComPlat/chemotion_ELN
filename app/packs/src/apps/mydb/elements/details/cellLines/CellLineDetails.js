@@ -38,9 +38,11 @@ class CellLineDetails extends React.Component {
   }
 
   handleClose(cellLineItem) {
-    const { cellLineDetailsStore } = this.context;
+    
+    const {cellLineDetailsStore } = this.context;
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
     // eslint-disable-next-line no-alert
-    if (window.confirm('Unsaved data will be lost.Close sample?')) {
+    if (!mobXItem.changed || window.confirm('Unsaved data will be lost.Close sample?')) {
       cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
       DetailActions.close(cellLineItem, true);
     }
@@ -94,7 +96,8 @@ class CellLineDetails extends React.Component {
     const enabledButton = <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
     if (disabled) {
       return (
-        disabledButton);
+        disabledButton
+        );
     }
     return (
       enabledButton
