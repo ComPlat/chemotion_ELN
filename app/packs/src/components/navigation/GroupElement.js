@@ -65,24 +65,27 @@ export default class GroupElement extends React.Component {
   }
 
   renderDeleteButton(type, groupRec, userRec) {
-    let msg = 'remove yourself from the group';
+    let msg = 'Remove yourself from the group';
     if (type === 'user') {
       if (userRec.id === this.state.currentUser.id) {
-        msg = 'remove yourself from the group';
+        msg = 'Remove yourself from the group';
       } else {
-        msg = `remove user: ${userRec.name}`;
+        msg = `Remove user: ${userRec.name}`;
       }
     } else {
-      msg = `remove group: ${groupRec.name}`;
+      msg = `Remove group: ${groupRec.name}`;
     }
 
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
-        {msg} ?<br />
+        {msg}
+        ?
+        <br />
         <div className="btn-toolbar">
           <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(type, groupRec, userRec)}>
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
+          </Button>
+          <span>&nbsp;&nbsp;</span>
           <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
             No
           </Button>
@@ -107,19 +110,20 @@ export default class GroupElement extends React.Component {
 
   renderAdminButtons(group) {
     const { selectedUsers, showRowAdd } = this.state;
-    if (group.admins && group.admins.length > 0 && group.admins[0].id === this.state.currentUser.id) {
+    if (group.admins && group.admins.some(admin => admin.id === this.state.currentUser.id)) {
       return (
         <td>
           <OverlayTrigger placement='top' overlay={<Tooltip>View users</Tooltip>}>
             <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} />
-          </OverlayTrigger>
+          </OverlayTrigger>{' '}
           <OverlayTrigger placement='top' overlay={<Tooltip>Add user</Tooltip>}>
             <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" onClick={this.toggleRowAdd} />
-          </OverlayTrigger>
+          </OverlayTrigger>{' '}
           <OverlayTrigger placement='top' overlay={<Tooltip>Remove group</Tooltip>}>
             {this.renderDeleteButton('group', group)}
           </OverlayTrigger>
           <span className={'collapse' + (showRowAdd ? 'in' : '')}>
+            {' '}
             <Select.AsyncCreatable
               multi
               isLoading
@@ -132,7 +136,7 @@ export default class GroupElement extends React.Component {
               promptTextCreator={this.promptTextCreator}
               loadOptions={this.loadUserByName}
               onChange={this.handleSelectUser}
-            />
+            />{' '}
             <Button bsSize="xsmall" type="button" bsStyle="warning" onClick={() => this.addUser(group)}>Save to group</Button>
           </span>
         </td>
@@ -144,8 +148,15 @@ export default class GroupElement extends React.Component {
   }
 
   renderUserButtons(groupRec, userRec = null) {
-    if ((groupRec.admins && groupRec.admins.length > 0 && groupRec.admins[0].id === this.state.currentUser.id) || userRec.id === this.state.currentUser.id) {
-      return this.renderDeleteButton('user', groupRec, userRec);
+    if (
+      (groupRec.admins && groupRec.admins.some(admin => admin.id === this.state.currentUser.id))
+      || (userRec.id === this.state.currentUser.id)
+    ) {
+      return (
+        <OverlayTrigger placement='top' overlay={<Tooltip>Remove</Tooltip>}>
+          {this.renderDeleteButton('user', groupRec, userRec)}
+        </OverlayTrigger>
+      );
     }
     return (<div />);
   }
@@ -193,7 +204,7 @@ export default class GroupElement extends React.Component {
         <tr key={`row_${groupElement.id}`} style={{ fontWeight: 'bold' }}>
           <td>{groupElement.name}</td>
           <td>{groupElement.initials}</td>
-          <td>{groupElement.admins && groupElement.admins.length > 0 && groupElement.admins[0].name}</td>
+          <td>{groupElement.admins && groupElement.admins.length > 0 && groupElement.admins.map(admin => admin.name).join(', ')}</td>
           {this.renderAdminButtons(groupElement)}
         </tr>
         <tr className={'collapse' + (showInfo ? 'in' : '')}>
