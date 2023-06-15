@@ -1,7 +1,6 @@
 import React from 'react';
 import { Label, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 import uuid from 'uuid';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { AviatorNavigation } from 'src/utilities/routesUtils';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import SharedByIcon from 'src/components/common/SharedByIcon';
@@ -10,9 +9,7 @@ export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
     super(props);
 
-    let { currentUser } = UserStore.getState();
     this.state = {
-      currentUser: currentUser,
       element: props.element
     };
 
@@ -30,15 +27,11 @@ export default class ElementCollectionLabels extends React.Component {
     e.stopPropagation();
   }
 
-  labelStyle(label) {
-    return label.is_shared ? "warning" : "info";
-  }
-
   formatLabels(collections) {
     return collections.map((collection) => (
       <span className="collection-label" key={uuid.v4()}>
         <Button
-          // disabled={isSync === true && label.isOwner === true}
+          disabled={(collection.acl?.length > 0) && collection.ownedByMe()}
           bsStyle="default" bsSize="xs"
           onClick={(e) => this.handleOnClick(collection, e)}
         >
@@ -73,14 +66,14 @@ export default class ElementCollectionLabels extends React.Component {
     let placement = 'left';
     if (this.props.placement) placement = this.props.placement;
 
-    let collection_ids = element.tag.taggable_data.collection_ids;
+    let collection_ids = element.tag.taggable_data?.collection_ids;
     let collections = [];
     collection_ids.forEach(id => collections.push(CollectionStore.findCollectionById(id)));
 
     let shared_labels = [];
     let labels = [];
     collections.map((collection) => {
-      if (collection.user_id == this.state.currentUser.id) {
+      if (collection.ownedByMe()) {
         labels.push(collection);
       } else {
         shared_labels.push(collection);

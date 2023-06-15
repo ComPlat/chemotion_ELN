@@ -2,16 +2,14 @@ import React from 'react';
 import {
   OverlayTrigger
 } from 'react-bootstrap';
-import UserInfos from '../../apps/mydb/collections/UserInfos';
-import UserStore from '../../stores/alt/stores/UserStore';
+import UserInfos from 'src/apps/mydb/collections/UserInfos';
 
 const SharedByIcon = ({ collection }) => {
-  let collectionAcls = collection?.collection_acls;
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  let collectionAcls = collection?.acl;
   if (collectionAcls === undefined) return;
 
   let sharedUsers = [];
-  if (currentUser.id === collection.user_id) {
+  if (collection.ownedByMe()) {
     collectionAcls.forEach(c => sharedUsers.push(c.user))
   } else {
     sharedUsers.push(collection.user);
