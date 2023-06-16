@@ -845,8 +845,7 @@ class ElementActions {
 
   generateEmptyVessel(collection_id){
     var v = new Vessel();
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    return Vessel.buildEmpty(collection_id, `${currentUser.initials}-${0}` );
+    return Vessel.buildEmpty(collection_id, `${'DP'}-${0}` ); // TO FIX
   }
 
   // -- DataCite/Radar metadata --

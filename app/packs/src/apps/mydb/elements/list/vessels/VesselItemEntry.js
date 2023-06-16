@@ -46,7 +46,7 @@ export default class VesselItemEntry extends React.Component {
               /><br />
               </td>
               <td onClick={e => this.showDetails()}>
-                {vesselItem.short_label}
+                {vesselItem.vesselName}
               </td>
               <td>
               <ElementContainer
