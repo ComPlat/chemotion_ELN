@@ -5,7 +5,6 @@ import {
   FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup, Collapse, Modal
 } from 'react-bootstrap';
-import Spinner from 'react-svg-spinner';
 import Select from 'react-select';
 import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
@@ -650,9 +649,12 @@ export default class ChemicalTab extends React.Component {
       >
         {loadingSaveSafetySheets === true && sdsInfo.merck_link !== undefined
           ? (
-            <Spinner animation="border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </Spinner>
+            <div>
+              <i className="fa fa-spinner fa-pulse fa-fw" />
+              <span className="visually-hidden">
+                loading...
+              </span>
+            </div>
           )
           : <i className="fa fa-save" />}
       </Button>
@@ -820,9 +822,13 @@ export default class ChemicalTab extends React.Component {
             >
               {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
                 ? (
-                  <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </Spinner>
+                  <div>
+                    <i className="fa fa-spinner fa-pulse fa-fw" />
+                    <span className="visually-hidden">
+                      loading...
+                    </span>
+                  </div>
+
                 ) : 'fetch Chemical Properties'}
             </Button>
           </OverlayTrigger>
@@ -1005,9 +1011,13 @@ export default class ChemicalTab extends React.Component {
       >
         {loadingQuerySafetySheets === false ? 'Search for SDS'
           : (
-            <Spinner animation="border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </Spinner>
+            <div>
+              <i className="fa fa-spinner fa-pulse fa-fw" />
+              <span className="visually-hidden">
+                loading...
+              </span>
+            </div>
+
           )}
       </Button>
     );
