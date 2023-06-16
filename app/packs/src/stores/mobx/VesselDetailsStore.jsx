@@ -60,7 +60,7 @@ export const VesselDetailsStore = types.model({
       volumeAmount: jsVesselModel.volumeAmount,
       materialType: jsVesselModel.materialType,
       materialDetails: jsVesselModel.materialDetails,
-      id: jsVesselModel.id,
+      id: jsVesselModel.id.toString(),
       vesselName: jsVesselModel.vesselName,
       vesselDescription: jsVesselModel.vesselDescription,
     }))

@@ -33,7 +33,7 @@ class VesselDetails extends React.Component {
     vesselItem.adoptPropsFromMobxModel(mobXItem)
     if (vesselItem.is_new){
       DetailActions.close(vesselItem, true);
-      ElementActions.updateVessel(vesselItem);
+      ElementActions.createVessel(vesselItem);
     } else {
       ElementActions.updateVessel(vesselItem);
     }

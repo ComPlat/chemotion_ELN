@@ -1,30 +1,48 @@
 import Vessel from 'src/models/Vessel';
+import { extractApiParameter } from '../utilities/VesselUtils';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class VesselsFetcher {
   static mockData = {};
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return new Promise((resolve,reject) =>   {
-      const result={};
-      result.elements=VesselsFetcher.mockData;
-      result.page=1;
-      result.pages=1;
-      result.perPage=15;
-      result.totalElements=VesselsFetcher.mockData.length;
-      result;
-      resolve(result);
-    });
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'vessels', Vessel);
   }
 
   static fetchById(id) {
-    return VesselsFetcher.fetchByCollectionId(0)
-    .then((result) => {
-      return result.elements[Number(id)-1]
-    });
+    const promise = fetch('/api/v1/vessels/'+id, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'GET',
+    })
+      .then((response) => response.json())
+      .then((json) => Vessel.createFromRestResponse(0, json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 
-  static create(params){
-    
+  static create(vessel){
+    const params = extractApiParameter(vessel);
+    const promise = fetch('/api/v1/vessels', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
+      .then((response) => response.json())
+      .then((json) => Vessel.createFromRestResponse(params.collection_id, json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 
   static update(vesselItem){

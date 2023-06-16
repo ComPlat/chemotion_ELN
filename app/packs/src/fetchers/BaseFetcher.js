@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import Vessel from 'src/models/Vessel';
 
 export default class BaseFetcher {
   /**
@@ -89,7 +90,11 @@ export default class BaseFetcher {
       credentials: 'same-origin'
     }).then((response) => (
       response.json().then((json) => ({
-        elements: json[type].map((r) => (new ElKlass(r))),
+        elements: json[type].map((r) => {
+          if (type === 'vessels'){
+            return Vessel.createFromRestResponse(id,r)
+          }
+          return (new ElKlass(r))}),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),

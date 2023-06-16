@@ -9,7 +9,7 @@ module Chemotion
       error!('Resource not found', 401)
     end
 
-    resource :vessel do
+    resource :vessels do
 
       desc 'return list of vessels in a collection'
       params do

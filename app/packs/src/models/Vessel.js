@@ -17,6 +17,23 @@ export default class Vessel extends Element {
     return this.short_label;
   }
 
+  static createFromRestResponse(collection_id, response){
+    const vessel = Vessel.buildEmpty(collection_id, response.short_label);
+    vessel.id = String(response.id);
+    vessel.vesselName=response.name;
+    vessel.vesselDescription=response.description;
+
+    vessel.vesselTemplateName=response.vessel_template.name;
+    vessel.vesselType=response.vessel_template.vessel_type;
+    vessel.vesselDetails=response.vessel_template.details;
+    vessel.volumeAmount=response.vessel_template.volume_amount;
+    vessel.volumeUnit=response.vessel_template.volume_unit;
+    vessel.materialType=response.vessel_template.material_type;
+    vessel.materialDetails=response.vessel_template.material_details;
+
+    return vessel;
+  }
+
   adoptPropsFromMobxModel(mobx) {
     this.vesselTemplateName = mobx.vesselTemplateName;
     this.vesselDetails = mobx.vesselDetails;
