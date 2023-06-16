@@ -24,10 +24,12 @@ export default class VesselEntry extends React.Component {
       if (this.props.vesselGroup.vesselItems.length == 0) { return (null); }
       const firstVesselItem = this.props.vesselGroup.vesselItems[0];
       return (
-          <div className="list-container">
+          <div>
             <br />
-            {firstVesselItem.vesselTemplateName}
-            {' (ID: '}{firstVesselItem.vesselTemplateId}{')'}
+            {firstVesselItem.vesselTemplateName}<br/>
+            {' Type: '}{firstVesselItem.vesselType}<br/>
+            {' Material: '}{firstVesselItem.materialType}<br/>
+            {' Volume: '}{firstVesselItem.volumeAmount}{' '}{firstVesselItem.volumeUnit}<br/>
             {this.props.vesselGroup.vesselItems.map((vesselItem) => <VesselItemEntry vesselItem={vesselItem}/>)}
           </div>
         );
