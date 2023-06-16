@@ -35,6 +35,7 @@ class CellLineDetails extends React.Component {
     } else {
       ElementActions.updateCellLine(cellLineItem);
     }
+    mobXItem.setChanged(false);
   }
 
   handleClose(cellLineItem) {

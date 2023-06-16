@@ -45,11 +45,15 @@ const CellLineItem = types
     growthMedium: '',
     itemDescription: '',
     itemName: '',
-    changed:false,
+    changed: false,
     container: types.maybe(CellLineAnalysis)
-  }) .views((self) => ({
+  }).views((self) => ({
     isAmountValid() {
-      return Number.isInteger(self.amount) && self.amount > 0 && self.amount < MAX_AMOUNT
+      return Number.isInteger(self.amount) && self.amount > 0 && self.amount < MAX_AMOUNT;
+    }
+  })).actions((self) => ({
+    setChanged(newChanged) {
+      self.changed = newChanged;
     }
   }));
 
