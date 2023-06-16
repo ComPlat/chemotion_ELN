@@ -434,6 +434,7 @@ class ElementActions {
   generateEmptyCellLine(collectionId,template){
     var c = new CellLine();
     const { currentUser } = UserStore.getState();
+    if (!currentUser) {return }
     // TO DO : backend user entity has yet no cellLines_count expose -> fake stuff here
     // return CellLine.buildEmpty(collectionId,`${currentUser.initials}-${currentUser.cellLines_count + 1}` );
     const cellLineSample= CellLine.buildEmpty(collectionId,`${currentUser.initials}-${0}`);

@@ -4,6 +4,7 @@ module Chemotion
   class CellLineAPI < Grape::API
     include Grape::Kaminari
     helpers ParamsHelpers
+    helpers ContainerHelpers
 
     rescue_from ActiveRecord::RecordNotFound do
       error!('Ressource not found', 401)
@@ -95,11 +96,13 @@ module Chemotion
         optional :mutation, type: String, desc: 'mutation of a cell line'
         optional :description, type: String, desc: 'description of a cell line sample'
         optional :short_label, type: String, desc: 'short label of a cell line sample'
+        requires :container, type: Hash, desc: 'root Container of element'
       end
       post do
         error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
+        cell_line_sample.container = update_datamodel(params[:container])
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
       desc 'Update a Cell line sample'
@@ -125,10 +128,12 @@ module Chemotion
         optional :source, type: String, desc: 'source of a cell line sample'
         optional :name, type: String, desc: 'name of a cell line sample'
         optional :description, type: String, desc: 'description of a cell line sample'
+        requires :container, type: Hash, desc: 'root Container of element'
       end
       put do
         use_case = Usecases::CellLines::Update.new(params, current_user)
         cell_line_sample = use_case.execute!
+        cell_line_sample.container = update_datamodel(params[:container])
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 

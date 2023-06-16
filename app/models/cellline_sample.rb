@@ -2,7 +2,6 @@
 
 class CelllineSample < ApplicationRecord
   has_one :container, as: :containable
-  after_create :create_root_container
 
   acts_as_paranoid
   belongs_to :cell_line_sample, optional: true
