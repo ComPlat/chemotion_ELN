@@ -73,7 +73,7 @@ class GeneralProperties extends React.Component {
     return (
       <div>
         <Row>
-          <Col componentClass={ControlLabel} sm={3}>Biosavety level</Col>
+          <Col componentClass={ControlLabel} sm={3}>Biosafety level</Col>
           <Col sm={9}>
             <Select
               options={options}
