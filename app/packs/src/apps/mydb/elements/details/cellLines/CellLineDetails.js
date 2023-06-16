@@ -164,14 +164,8 @@ class CellLineDetails extends React.Component {
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
     const disabledButton = <Button bsStyle="warning" disabled onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
     const enabledButton = <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
-    if (disabled) {
-      return (
-        disabledButton
-      );
-    }
-    return (
-      enabledButton
-    );
+
+    return disabled ? disabledButton : enabledButton;
   }
 
   render() {
