@@ -65,28 +65,25 @@ export default class GroupElement extends React.Component {
   }
 
   renderDeleteButton(type, groupRec, userRec) {
-    let msg = 'Leave this group';
+    let msg = 'Leave this group?';
     if (type === 'user') {
       if (userRec.id === this.state.currentUser.id) {
-        msg = 'Leave this group';
+        msg = 'Leave this group?';
       } else {
-        msg = `Remove user: ${userRec.name}`;
+        msg = `Remove user: ${userRec.name}?`;
       }
     } else {
-      msg = `Remove group: ${groupRec.name}`;
+      msg = `Remove group: ${groupRec.name}?`;
     }
 
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         {msg}
-        ?
-        <br />
-        <div className="btn-toolbar">
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
           <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(type, groupRec, userRec)}>
             Yes
           </Button>
-          <span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick}>
             No
           </Button>
         </div>
@@ -113,32 +110,33 @@ export default class GroupElement extends React.Component {
     if (group.admins && group.admins.some(admin => admin.id === this.state.currentUser.id)) {
       return (
         <td>
-          <OverlayTrigger placement='top' overlay={<Tooltip>View users</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} />
-          </OverlayTrigger>{' '}
-          <OverlayTrigger placement='top' overlay={<Tooltip>Add user</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" onClick={this.toggleRowAdd} />
-          </OverlayTrigger>{' '}
-          <OverlayTrigger placement='top' overlay={<Tooltip>Remove group</Tooltip>}>
-            {this.renderDeleteButton('group', group)}
-          </OverlayTrigger>
-          <span className={'collapse' + (showRowAdd ? 'in' : '')}>
-            {' '}
-            <Select.AsyncCreatable
-              multi
-              isLoading
-              backspaceRemoves
-              value={selectedUsers}
-              valueKey="value"
-              labelKey="label"
-              matchProp="name"
-              placeholder="Select users"
-              promptTextCreator={this.promptTextCreator}
-              loadOptions={this.loadUserByName}
-              onChange={this.handleSelectUser}
-            />{' '}
-            <Button bsSize="xsmall" type="button" bsStyle="warning" onClick={() => this.addUser(group)}>Save to group</Button>
-          </span>
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <OverlayTrigger placement='top' overlay={<Tooltip>View users</Tooltip>}>
+              <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} />
+            </OverlayTrigger>
+            <OverlayTrigger placement='top' overlay={<Tooltip>Add user</Tooltip>}>
+              <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" onClick={this.toggleRowAdd} />
+            </OverlayTrigger>
+            <OverlayTrigger placement='top' overlay={<Tooltip>Remove group</Tooltip>}>
+              {this.renderDeleteButton('group', group)}
+            </OverlayTrigger>
+            <span className={'collapse' + (showRowAdd ? 'in' : '')}>
+              <Select.AsyncCreatable
+                multi
+                isLoading
+                backspaceRemoves
+                value={selectedUsers}
+                valueKey="value"
+                labelKey="label"
+                matchProp="name"
+                placeholder="Select users"
+                promptTextCreator={this.promptTextCreator}
+                loadOptions={this.loadUserByName}
+                onChange={this.handleSelectUser}
+              />
+              <Button bsSize="xsmall" type="button" bsStyle="warning" onClick={() => this.addUser(group)}>Save to group</Button>
+            </span>
+          </div>
         </td>
       );
     }
