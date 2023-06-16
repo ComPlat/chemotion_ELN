@@ -4,11 +4,11 @@ require 'schmooze'
 require 'meta_schmooze'
 
 module Chemotion
-  class QuillToHtml < MetaSchmooze
+  class QuillToPlainText < MetaSchmooze
     def initialize(schmooze_methods: {}, schmooze_dependencies: {}, root: Rails.root.to_s, env: {}, var: {})
       @root = root
       @env = env
-      @schmooze_dependencies = schmooze_dependencies.merge(delta: 'quill-delta-to-html')
+      @schmooze_dependencies = schmooze_dependencies.merge(delta: 'quill-delta-to-plaintext')
       @schmooze_methods = schmooze_methods.merge(
         convert: lambda_convert = lambda { |delta_ops = []|
           delta_ops = JSON.parse delta_ops if delta_ops.is_a?(String)
@@ -20,7 +20,7 @@ module Chemotion
                       else
                         '[]'
                       end
-          return "function(){  var converter = new delta(#{delta_ops}, {});  return converter.convert(); } "
+          return "function(){   return delta(#{delta_ops}); } "
         },
       )
       compose_schmooze_class
