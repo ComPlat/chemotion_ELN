@@ -45,13 +45,23 @@ export default class VesselsFetcher {
     return promise;
   }
 
-  static update(vesselItem){
-    const index = VesselsFetcher.mockData.findIndex((vessel) => vesselItem.id === vessel.id);
-    if(index===-1){
-      index=VesselsFetcher.mockData.length;
-    }
-    VesselsFetcher.mockData[index] = vesselItem;
-    return VesselsFetcher.fetchById(index + 1);
+  static update(vessel){
+    const params = extractApiParameter(vessel);
+    const promise = fetch('/api/v1/vessels', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'PUT',
+      body: JSON.stringify(params)
+    })
+      .then((response) => response.json())
+      .then((json) => Vessel.createFromRestResponse(params.collection_id, json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
   }
 
   static {

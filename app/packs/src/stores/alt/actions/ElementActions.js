@@ -812,7 +812,6 @@ class ElementActions {
   }
   
   updateVessel(params){
-    console.log('update')
     return(dispatch) => {
       VesselsFetcher.update(params)
       .then((result) => {dispatch(result);}).catch((errorMessage) => {

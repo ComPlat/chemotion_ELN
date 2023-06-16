@@ -1,6 +1,7 @@
 const extractApiParameter = (vessel) => {
   return {
     "collection_id":vessel.collectionId,
+    "vessel_id":vessel.id,
     "name":vessel.vesselName,
     "description":vessel.vesselDescription,
     "template_name":vessel.vesselTemplateName,

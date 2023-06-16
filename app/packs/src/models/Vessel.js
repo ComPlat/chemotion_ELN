@@ -31,6 +31,8 @@ export default class Vessel extends Element {
     vessel.materialType=response.vessel_template.material_type;
     vessel.materialDetails=response.vessel_template.material_details;
 
+    vessel.is_new = false;
+    
     return vessel;
   }
 
