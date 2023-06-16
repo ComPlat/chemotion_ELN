@@ -40,6 +40,7 @@ class CellLineDetails extends React.Component {
   handleClose(cellLineItem) {
     const { cellLineDetailsStore } = this.context;
     const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    console.log();
     // eslint-disable-next-line no-alert
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost.Close sample?')) {
       cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
@@ -80,7 +81,9 @@ class CellLineDetails extends React.Component {
     return (
       <div>
         {content}
+        {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
+
       </div>
     );
   }
@@ -95,6 +98,21 @@ class CellLineDetails extends React.Component {
         onClick={toggleFullScreen}
       >
         <i className="fa fa-expand" />
+      </Button>
+    );
+  }
+
+  renderCloseHeaderButton() {
+    const { cellLineItem } = this.props;
+
+    return (
+      <Button
+        bsStyle="danger"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={() => { this.handleClose(cellLineItem); }}
+      >
+        <i className="fa fa-times" />
       </Button>
     );
   }
