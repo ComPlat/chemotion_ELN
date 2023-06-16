@@ -85,7 +85,7 @@ class CellLineDetails extends React.Component {
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
         {this.renderSaveButton()}
-        {this.renderSaveAndCloseButton()}
+        {this.renderSaveButton(true)}
       </div>
     );
   }
@@ -104,6 +104,42 @@ class CellLineDetails extends React.Component {
     );
   }
 
+  renderSaveButton(closeAfterClick = false) {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
+    const disabled = validationInfo.length > 0 || !mobXItem.changed;
+    if (disabled) { return null; }
+
+    const action = closeAfterClick
+      ? () => { this.handleSubmit(cellLineItem); DetailActions.close(cellLineItem, true); }
+      : () => { this.handleSubmit(cellLineItem); };
+
+    const icons = closeAfterClick
+      ? (
+        <div>
+          <i className="fa fa-floppy-o" />
+          <i className="fa fa-times" />
+        </div>
+      )
+      : <i className="fa fa-floppy-o" />;
+
+    const button = disabled
+      ? (
+        <Button disabled bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
+          {icons}
+        </Button>
+      )
+      : (
+        <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
+          {icons}
+        </Button>
+      );
+
+    return (button);
+  }
+
   renderCloseHeaderButton() {
     const { cellLineItem } = this.props;
 
@@ -114,46 +150,6 @@ class CellLineDetails extends React.Component {
         className="button-right"
         onClick={() => { this.handleClose(cellLineItem); }}
       >
-        <i className="fa fa-times" />
-      </Button>
-    );
-  }
-
-  renderSaveButton() {
-    const { cellLineItem } = this.props;
-    const { cellLineDetailsStore } = this.context;
-    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    if (!mobXItem.changed) { return null; }
-    return (
-      <Button
-        bsStyle="warning"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={() => this.handleSubmit(cellLineItem)}
-      >
-        <i className="fa fa-floppy-o" />
-      </Button>
-    );
-  }
-
-  renderSaveAndCloseButton() {
-    const { cellLineItem } = this.props;
-    const { cellLineDetailsStore } = this.context;
-    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    if (!mobXItem.changed) { return null; }
-    return (
-      <Button
-        bsStyle="warning"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={
-      () => {
-        this.handleSubmit(cellLineItem);
-        DetailActions.close(cellLineItem, true);
-      }
-    }
-      >
-        <i className="fa fa-floppy-o" />
         <i className="fa fa-times" />
       </Button>
     );
