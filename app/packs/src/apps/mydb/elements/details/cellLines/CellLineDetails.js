@@ -83,7 +83,8 @@ class CellLineDetails extends React.Component {
         {content}
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
-
+        {this.renderSaveButton()}
+        {this.renderSaveAndCloseButton()}
       </div>
     );
   }
@@ -112,6 +113,46 @@ class CellLineDetails extends React.Component {
         className="button-right"
         onClick={() => { this.handleClose(cellLineItem); }}
       >
+        <i className="fa fa-times" />
+      </Button>
+    );
+  }
+
+  renderSaveButton() {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    if (!mobXItem.changed) { return null; }
+    return (
+      <Button
+        bsStyle="warning"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={() => this.handleSubmit(cellLineItem)}
+      >
+        <i className="fa fa-floppy-o" />
+      </Button>
+    );
+  }
+
+  renderSaveAndCloseButton() {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    if (!mobXItem.changed) { return null; }
+    return (
+      <Button
+        bsStyle="warning"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={
+      () => {
+        this.handleSubmit(cellLineItem);
+        DetailActions.close(cellLineItem, true);
+      }
+    }
+      >
+        <i className="fa fa-floppy-o" />
         <i className="fa fa-times" />
       </Button>
     );
@@ -162,10 +203,10 @@ class CellLineDetails extends React.Component {
             </Tab>
           </Tabs>
           <ButtonToolbar>
-            {this.renderSubmitButton()}
             <Button bsStyle="primary" onClick={() => { this.handleClose(cellLineItem); }}>
               Close
             </Button>
+            {this.renderSubmitButton()}
 
           </ButtonToolbar>
         </Panel.Body>
