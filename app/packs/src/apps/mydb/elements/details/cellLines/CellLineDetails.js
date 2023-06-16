@@ -38,8 +38,7 @@ class CellLineDetails extends React.Component {
   }
 
   handleClose(cellLineItem) {
-    
-    const {cellLineDetailsStore } = this.context;
+    const { cellLineDetailsStore } = this.context;
     const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
     // eslint-disable-next-line no-alert
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost.Close sample?')) {
@@ -75,20 +74,35 @@ class CellLineDetails extends React.Component {
       content = `${cellLineItem.cellLineName}`;
     }
     if (cellLineItem.itemName) {
-      content = content+ ` - ${cellLineItem.itemName}`;
+      content += ` - ${cellLineItem.itemName}`;
     }
-    
+
     return (
       <div>
         {content}
+        {this.renderEnlargenButton()}
       </div>
+    );
+  }
+
+  renderEnlargenButton() {
+    const { toggleFullScreen } = this.props;
+    return (
+      <Button
+        bsStyle="info"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={toggleFullScreen}
+      >
+        <i className="fa fa-expand" />
+      </Button>
     );
   }
 
   renderSubmitButton() {
     const { cellLineItem } = this.props;
     const { cellLineDetailsStore } = this.context;
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
     const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
     const disabled = validationInfo.length > 0 || !mobXItem.changed;
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
@@ -97,7 +111,7 @@ class CellLineDetails extends React.Component {
     if (disabled) {
       return (
         disabledButton
-        );
+      );
     }
     return (
       enabledButton
@@ -153,5 +167,6 @@ CellLineDetails.propTypes = {
     // eslint-disable-next-line react/forbid-prop-types
     literatures: PropTypes.arrayOf(PropTypes.object).isRequired,
     disease: PropTypes.string.isRequired
-  })).isRequired
+  })).isRequired,
+  toggleFullScreen: PropTypes.func.isRequired
 };

@@ -220,7 +220,7 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
-        return <CellLineDetails cellLineItem={el} />;
+        return <CellLineDetails cellLineItem={el}  toggleFullScreen={this.toggleFullScreen}/>;
       default:
         return (
           <div style={{ textAlign: 'center' }}>
