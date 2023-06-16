@@ -65,10 +65,10 @@ export default class GroupElement extends React.Component {
   }
 
   renderDeleteButton(type, groupRec, userRec) {
-    let msg = 'Remove yourself from the group';
+    let msg = 'Leave this group';
     if (type === 'user') {
       if (userRec.id === this.state.currentUser.id) {
-        msg = 'Remove yourself from the group';
+        msg = 'Leave this group';
       } else {
         msg = `Remove user: ${userRec.name}`;
       }
