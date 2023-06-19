@@ -12,36 +12,50 @@ const VesselItem = types.model({
   id: '',
   vesselName: '',
   vesselDescription: '',
-})
+  changed: false,
+}).actions((self) => ({
+  setChanged(newChanged) {
+    self.changed = newChanged;
+  }
+}));
 
 export const VesselDetailsStore = types.model({
   vesselItem: types.map(VesselItem)
 }).actions((self)=> ({
   changeTemplateName(id, newVesselTemplateName) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).vesselTemplateName = newVesselTemplateName;
   },
   changeDetails(id, newVesselDetails) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).vesselDetails = newVesselDetails;
   },
   changeType(id, newVesselType) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).vesselType = newVesselType;
   },
   changeVolumeUnit(id, newVolumeUnit) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).volumeUnit = newVolumeUnit;
   },
   changeVolumeAmount(id, newVolumeAmount) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).volumeAmount = newVolumeAmount;
   },
   changeMaterialType(id, newMaterialType) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).materialType = newMaterialType;
   },
   changeMaterialDetails(id, newMaterialDetails) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).materialDetails = newMaterialDetails;
   },
   changeName(id, newVesselName) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).vesselName = newVesselName;
   },
   changeDescription(id, newVesselDescription) {
+    self.vesselItem.get(id).changed = true;
     self.vesselItem.get(id).vesselDescription = newVesselDescription;
   },
   removeVesselFromStore(id) {
