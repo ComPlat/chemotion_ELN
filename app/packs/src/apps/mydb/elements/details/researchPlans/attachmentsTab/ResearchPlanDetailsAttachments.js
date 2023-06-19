@@ -6,6 +6,8 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Utils from 'src/utilities/Functions';
@@ -22,6 +24,8 @@ import {
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 
 const editorTooltip = (exts) => (
@@ -35,6 +39,9 @@ const downloadTooltip = <Tooltip id="download_tooltip">Download original attachm
 const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annotated attachment</Tooltip>;
 
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
+const sendThirdPartyAppTip = <Tooltip id="inchi_tooltip">send to third party app</Tooltip>;
+const chooseThirdPartyAppTip = <Tooltip id="inchi_tooltip">choose third party app</Tooltip>;
+
 
 export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
@@ -49,14 +56,24 @@ export default class ResearchPlanDetailsAttachments extends Component {
       extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
+      thirdPartyAppNames: [],
+      thirdPartyAppIPList: {},
+      selectedThirdPartyApp: {},
+      updateDropDownThirdPartyApps: false,
+      currentUser: '',
+      attachmentToken: '',
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
+    this.thirdPartyAppSelect = this.thirdPartyAppSelect.bind(this);
   }
 
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
+    this.getThirdPartyAppName();
+    this.getCurrentUser();
+    this.initThirdPartyAppIPList();
   }
 
   componentDidUpdate(prevProps) {
@@ -146,15 +163,157 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderRemoveAttachmentButton(attachment) {
     return (
-      <Button
+      <div style={{ float: 'right' }}>
+        <Button
         bsSize="xsmall"
         bsStyle="danger"
-        className="button-right"
+        className="button-righ"
         onClick={() => this.props.onDelete(attachment)}
         disabled={this.props.readOnly}
       >
-        <i className="fa fa-trash-o" aria-hidden="true" />
-      </Button>
+          <i className="fa fa-trash-o" aria-hidden="true" />
+        </Button>
+      </div>
+    );
+  }
+
+  getThirdPartyAppName() {
+    ThirdPartyAppFetcher.fetchThirdPartyAppNames()
+      .then((result) => {
+        this.setState({
+          thirdPartyAppNames: result
+        })
+      });
+  }
+
+  initThirdPartyAppIPList() {
+    const { attachments } = this.props;
+    this.setState({
+      thirdPartyAppIPList: {}
+    });
+  }
+
+  renderThirdPartyAppList(attachment) {
+
+    return (
+      <div style={{ float: 'right' }}>
+        <select id="dropdown" className="button" value={this.state.selectedThirdPartyApp[attachment.id] || ''} onChange={event => this.thirdPartyAppSelect(event, attachment)}>
+          <option value="">--Third Party Apps--</option>
+          {this.state.thirdPartyAppNames.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+
+  }
+
+  thirdPartyAppSelect(event, attachment) {
+
+    const { attachments } = this.props;
+    const userID = this.state.currentUser.user.id;
+    const attID = attachment.id;
+    let selectedThirdPartyApp = this.state.selectedThirdPartyApp;
+
+    selectedThirdPartyApp[attID] = event.target.value;
+
+    const len = attachments.length;
+    let arrIdx = [];
+    for (let i = 0; i < len; i++) {
+      const id = attachments[i].id;
+      const obj = { i, id }
+      arrIdx.push(obj);
+    }
+
+    const currentAttachment = arrIdx.find(entry => entry.id === attachment.id);
+    const index = currentAttachment.i;
+
+    Promise.all([ThirdPartyAppFetcher.fetchThirdPartyAppIp(event.target.value)
+      .then((result) => {
+
+        const ipObj = this.state.thirdPartyAppIPList;
+        const obj = result;
+        ipObj[attID] = { obj };
+        return ipObj;
+      })
+    ]).then(([iPList]) => {
+
+      this.setState({
+        selectedThirdPartyApp: selectedThirdPartyApp,
+        thirdPartyAppIPList: iPList
+      });
+    })
+
+  }
+
+  getCurrentUser() {
+    UsersFetcher.fetchCurrentUser()
+      .then((result) => {
+        this.setState({
+          currentUser: result
+        })
+      });
+  }
+
+  getAttachmentToken(attachment) {
+    const userID = this.state.currentUser.user.id;
+    const attID = attachment.id;
+    return ThirdPartyAppFetcher.fetchAttachmentToken(attID, userID)
+      .then((result) => {
+        this.setState({
+          attachmentToken: result
+        });
+      });
+  }
+
+  thirdPartyAppCall(attachment) {
+
+    const { attachments } = this.props;
+
+    const len = attachments.length;
+    let arrIdx = [];
+    for (let i = 0; i < len; i++) {
+      const id = attachments[i].id;
+      const obj = { i, id }
+      arrIdx.push(obj);
+    }
+
+    const currentAttachment = arrIdx.find(entry => entry.id === attachment.id);
+    const index = currentAttachment.i;
+
+    this.getAttachmentToken(attachment)
+      .then(() => {
+        const ip = this.state.thirdPartyAppIPList[attachment.id];
+
+        if (!ip || !this.state.attachmentToken) {
+          NotificationActions.removeByUid('createUserLabel');
+          const notification = {
+            title: 'No third party app selected',
+            message: 'No third party app selected',
+            level: 'error',
+            dismissible: 'button',
+            autoDismiss: 5,
+            position: 'tr',
+            uid: 'chooseThirdPartyApp'
+          };
+          NotificationActions.add(notification);
+        } else {
+          const url = `${ip.obj}?token=${this.state.attachmentToken}`;
+          window.open(url, '_blank');
+        }
+
+      });
+  }
+
+  renderSendToThirdPartyApp(attachment) {
+    return (
+      <div style={{ float: 'right' }}>
+        <Button bsSize="xsmall" bsStyle="primary" className="button" onClick={() => this.thirdPartyAppCall(attachment)} disabled={this.props.readOnly}>
+          Send&nbsp;<i className="fa" />
+        </Button>
+      </div>
     );
   }
 
@@ -214,7 +373,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
               <Button
                 bsSize="xsmall"
                 bsStyle="danger"
-                className="button-right"
+                className="button"
                 onClick={() => this.props.onUndoDelete(attachment)}
               >
                 <i className="fa fa-undo" aria-hidden="true" />
@@ -248,8 +407,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
               </div>
             </div>
           </Col>
-          <Col md={8}>{attachment.filename}</Col>
-          <Col md={3}>
+          <Col md={4}>
+            {attachment.filename}
+          </Col>
+          <Col md={7}>
+            <OverlayTrigger placement="bottom" overlay={sendThirdPartyAppTip} >
+              {this.renderSendToThirdPartyApp(attachment)}
+            </OverlayTrigger>
+
+            <OverlayTrigger placement="bottom" overlay={chooseThirdPartyAppTip} >
+              {this.renderThirdPartyAppList(attachment)}
+            </OverlayTrigger>
+
             {this.renderRemoveAttachmentButton(attachment)}
             {this.renderDownloadOriginalButton(attachment, downloadTooltip)}
             {this.renderEditAttachmentButton(
@@ -405,7 +574,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
               <Button
                 bsSize="xsmall"
                 bsStyle="success"
-                className="button-right"
+                className="button"
                 disabled={importDisabled}
                 ref={(ref) => {
                   this.importButtonRefs[attachment.id] = ref;
