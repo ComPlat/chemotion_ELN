@@ -45,7 +45,7 @@ module Chemotion
     end
 
     resource :attachments do # rubocop:disable Metrics/BlockLength
-      before do # rubocop:disable Metrics/BlockLength
+      before do # rubocop:disable Metrics/BlockLength       
         @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
