@@ -29,6 +29,7 @@ module Chemotion
           has_converter: converter_config.present?,
           has_radar: radar_config.present?,
           collector_address: collector_address.presence,
+          third_party_apps: ThirdPartyApp.all
         }
       end
     end
