@@ -184,14 +184,21 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json();
     }).then((json) => {
-      for (let i = 0; i < json.error_messages.length; i++) {
+      if (Array.isArray(json.error_messages)) {
+        for (let i = 0; i < json.error_messages.length; i++) {
+          NotificationActions.add({
+            message: json.error_messages[i],
+            level: 'error',
+            autoDismiss: 10
+          });
+        }
+      } else {
         NotificationActions.add({
-          message: json.error_messages[i],
-          level: 'error',
+          message: json.error_messages || json.message,
+          level: json.message ? 'success' : 'error',
           autoDismiss: 10
         });
-      };
-
+      }
       return json;
     }).catch((errorMessage) => {
       console.log(errorMessage);
