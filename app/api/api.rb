@@ -60,6 +60,7 @@ class API < Grape::API
     def public_request?
       request.path.start_with?(
         '/api/v1/public/',
+        '/api/v1/public_third_party_app/',
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
@@ -193,7 +194,7 @@ class API < Grape::API
   mount Chemotion::MeasurementsAPI
   mount Chemotion::AttachableAPI
   mount Chemotion::SampleTaskAPI
-  mount Chemotion::ChemicalAPI
+  mount Chemotion::ThirdPartyAppAPI
   mount Chemotion::CalendarEntryAPI
   mount Chemotion::CommentAPI
   mount Chemotion::CellLineAPI

@@ -13,6 +13,7 @@ import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
+import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -65,6 +66,8 @@ class AdminHome extends React.Component {
       return this.renderDelayedJobs();
     } else if (pageIndex === 14) {
       return this.renderChemSpectraLayouts();
+    } else if (pageIndex === 15) {
+      return this.renderThirdPartyApp();
     }
     return (<div />);
   }
@@ -90,9 +93,19 @@ class AdminHome extends React.Component {
             {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
             <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
+            <NavItem eventKey={15}>Third Party Apps </NavItem>
           </Nav>
         </Col>
       </div>
+    );
+  }
+
+  renderThirdPartyApp() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <ThirdPartyApp />
+      </Col>
     );
   }
 

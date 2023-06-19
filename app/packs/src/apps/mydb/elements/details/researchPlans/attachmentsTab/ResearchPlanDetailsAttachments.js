@@ -3,12 +3,14 @@
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { Button } from 'react-bootstrap';
 import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
@@ -20,7 +22,9 @@ import {
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  attachmentThumbnail
+  attachmentThumbnail,
+  thirdPartyAppBtn,
+  thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
@@ -28,7 +32,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-
+    const { thirdPartyApps } = UIStore.getState() || [];
     this.state = {
       attachmentEditor: false,
       extension: null,
@@ -38,10 +42,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
       filterText: '',
       sortBy: 'name',
       sortDirection: 'asc',
+      TPAoptions: thirdPartyApps.map((app) => app?.name),
+      TPADefaultOptions: {},
+      thirdPartyApps,
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
-
     this.handleEdit = this.handleEdit.bind(this);
     this.onImport = this.onImport.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
@@ -50,6 +56,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
     this.showImportConfirm = this.showImportConfirm.bind(this);
     this.hideImportConfirm = this.hideImportConfirm.bind(this);
+    this.TPASelect = this.TPASelect.bind(this);
   }
 
   componentDidMount() {
@@ -229,6 +236,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
+  TPASelect(attachment, selection) {
+    const { TPADefaultOptions } = this.state;
+    TPADefaultOptions[attachment.id] = selection
+    this.setState({ TPADefaultOptions });
+  }
+
+  thirdPartyAppCall(attachment, app) {
+	  console.log(app)
+    ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, app.name)
+      .then((result) => window.open(result, '_blank'));
+  };	  
+
   render() {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
@@ -244,7 +263,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {attachments.length > 0
-        && sortingAndFilteringUI(
+        && sortingAndFilteringUI( 
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
@@ -294,6 +313,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {downloadButton(attachment)}
+                    {thirdPartyAppButton(
+                      attachment,
+                      this.state.thirdPartyApps,
+                      this.thirdPartyAppCall,
+                    )}
                     {editButton(
                       attachment,
                       extension,
