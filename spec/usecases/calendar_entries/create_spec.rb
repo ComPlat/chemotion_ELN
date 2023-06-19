@@ -5,7 +5,7 @@ require 'spec_helper'
 RSpec.describe Usecases::CalendarEntries::Create do
   describe '#perform!' do
     let(:user) { create(:person) }
-    let(:calendar_entry) { build(:calendar_entry, creator: user) }
+    let(:calendar_entry) { build(:calendar_entry, %i[sample reaction].sample, creator: user) }
 
     context 'when using valid parameters' do
       let(:params) do
@@ -48,19 +48,14 @@ RSpec.describe Usecases::CalendarEntries::Create do
     context 'when using notify_user_ids' do
       let(:another_user) { create(:person) }
       let(:params) do
-        {
-          title: 'Title',
-          start_time: Time.current.beginning_of_day,
-          end_time: Time.current.beginning_of_day + 2.hours,
-          description: 'Description',
-          kind: 'reminder',
-          eventable_id: nil,
-          eventable_type: nil,
-          notify_user_ids: [another_user.id],
-        }
+        calendar_entry.slice(:title, :start_time, :end_time, :description, :kind, :eventable_id,
+                             :eventable_type).merge({
+                                                      kind: 'reminder',
+                                                      notify_user_ids: [another_user.id],
+                                                    })
       end
 
-      it 'raises validation error' do
+      it 'adds a notification' do
         expect { described_class.new(user: user, params: params).perform! }.to change {
           CalendarEntryNotification.where(status: :created).count
         }.by(1)

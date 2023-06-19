@@ -115,7 +115,7 @@ describe Chemotion::ReportTemplateAPI do
   end
 
   context 'with Admin user logged in' do
-    let(:admin) { create(:admin, type: Admin) }
+    let(:admin) { create(:admin) }
     let!(:report_template1) { create(:report_template) }
 
     before do

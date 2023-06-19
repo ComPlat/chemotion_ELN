@@ -5,7 +5,7 @@ require 'spec_helper'
 RSpec.describe Usecases::CalendarEntries::Update do
   describe '#perform!' do
     let(:user) { create(:person) }
-    let(:calendar_entry) { create(:calendar_entry, creator: user, title: 'Old Title') }
+    let(:calendar_entry) { create(:calendar_entry, %i[sample reaction].sample, creator: user, title: 'Old Title') }
 
     context 'when using valid parameters' do
       let(:params) do
@@ -63,7 +63,7 @@ RSpec.describe Usecases::CalendarEntries::Update do
         }
       end
 
-      it 'raises validation error' do
+      it 'adds a notification' do
         expect { described_class.new(user: user, params: params).perform! }.to change {
           CalendarEntryNotification.where(status: :updated).count
         }.by(1)

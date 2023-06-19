@@ -1,11 +1,9 @@
 FactoryBot.define do
-  factory :group do
-    sequence(:email) { |n| "group#{n}@foo.bar" }
+  factory :group, class: 'Group', parent: :user do
+    type { 'Group' }
     first_name { 'gro' }
     last_name { 'up' }
-    sequence(:name_abbreviation) { "G#{SecureRandom.alphanumeric(3)}" }
-    password { 'testtest' }
-    password_confirmation { 'testtest' }
+
     counters do
       {
         samples: 0,

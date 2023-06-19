@@ -8,6 +8,7 @@ RSpec.describe SendCalendarEntryNotificationJob do
     let(:user2) { create(:person) }
     let(:sample_calendar_entry) { create(:calendar_entry, :sample) }
     let(:sample) { sample_calendar_entry.eventable }
+    let(:args) { [sample_calendar_entry.id, [user1.id, user2.id], :created] }
 
     it 'sends emails and creates notifications to given users' do
       collection1 = create(:collection, user_id: user1.id)
@@ -26,11 +27,8 @@ RSpec.describe SendCalendarEntryNotificationJob do
         },
       ).find_or_create_by(subject: Channel::CALENDAR_ENTRY)
 
-      expect([ActionMailer::Base.deliveries.count, Message.count]).to eq [0, 0]
-
-      described_class.perform_now(sample_calendar_entry.id, [user1.id, user2.id], :created)
-
-      expect([ActionMailer::Base.deliveries.count, Message.count]).to eq [2, 2]
+      expect { described_class.perform_now(*args) }.to change { ActionMailer::Base.deliveries.count }.by(2)
+      expect { described_class.perform_now(*args) }.to change(Message, :count).by(2)
     end
   end
 end
