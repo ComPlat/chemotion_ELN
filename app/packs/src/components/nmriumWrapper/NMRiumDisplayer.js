@@ -237,6 +237,7 @@ export default class NMRiumDisplayer extends React.Component {
     const cb = () => (
       this.saveOp()
     );
+    LoadingActions.start.defer()
     handleSampleChanged(sample, cb);
   }
 
