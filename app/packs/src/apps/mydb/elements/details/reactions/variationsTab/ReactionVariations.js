@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, forwardRef, useState, useEffect, useImperativeHandle
+  useRef, forwardRef, useState, useEffect, useImperativeHandle, useCallback
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -25,8 +25,8 @@ function MaterialHeader({ material }) {
 function RowToolsCellRenderer({ data, copyRow, removeRow }) {
   return (
     <ButtonGroup>
-      <Button onClick={() => copyRow(data)}><i className="fa fa-copy"></i></Button>
-      <Button onClick={() => removeRow(data)}><i className="fa fa-trash"></i></Button>
+      <Button onClick={() => copyRow(data)}><i className="fa fa-copy" /></Button>
+      <Button onClick={() => removeRow(data)}><i className="fa fa-trash" /></Button>
     </ButtonGroup>
   );
 }
@@ -131,8 +131,17 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   }
 
   function removeRow(data) {
-    onEditVariations(reaction.variations.filter((row) => row !== data));
+    onEditVariations(reaction.variations.filter((row) => row.id !== data.id));
   }
+
+  const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
+    const { field } = colDef;
+    const updatedRow = { ...oldRow };
+    _.set(updatedRow, field, newValue);
+    onEditVariations(
+      reaction.variations.map((row) => (row.id === oldRow.id ? updatedRow : row))
+    );
+  }, []);
 
   function toggleColumnGroupVisibility(columnGroupsToDisplay) {
     togglableColumnGroups.forEach((column) => {
@@ -235,6 +244,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           ref={gridRef}
           rowData={reaction.variations}
           columnDefs={columnDefs}
+          readOnlyEdit
+          onCellEditRequest={updateRow}
           defaultColDef={{
             editable: true,
             cellEditor: CellEditor,
