@@ -6,7 +6,7 @@ const MAX_AMOUNT = 1000000000000000000;
 
 const CellLineAnalysis = types
   .model({
-    id: '',
+    id: 0,
     children: types.array(types.late(() => CellLineAnalysis)),
     name: '',
     container_type: '',
@@ -45,8 +45,7 @@ const CellLineItem = types
     growthMedium: '',
     itemDescription: '',
     itemName: '',
-    changed: false,
-    container: types.maybe(CellLineAnalysis)
+    changed: false
   }).views((self) => ({
     isAmountValid() {
       return Number.isInteger(self.amount) && self.amount > 0 && self.amount < MAX_AMOUNT;
@@ -147,10 +146,6 @@ export const CellLineDetailsStore = types
     },
     addEmptyContainer(id) {
       const container = Container.buildEmpty();
-      container.container_type = 'analysis';
-      self.cellLineItem.get(id).container.children
-        .filter((element) => ~element.container_type.indexOf('analyses'))[0]
-        .children.push(self.convertJsModelToMobxModel(container));
       return container;
     },
     setMaterialProperties(id, properties) {
@@ -184,20 +179,6 @@ export const CellLineDetailsStore = types
         return;
       }
 
-      const innerAnalysis = CellLineAnalysis.create({
-        id: jsCellLineModel.container.children[0].id,
-        children: [],
-        name: jsCellLineModel.container.children[0].name,
-        container_type: jsCellLineModel.container.children[0].container_type
-      });
-
-      const rootAnalysis = CellLineAnalysis.create({
-        id: jsCellLineModel.container.id,
-        children: [innerAnalysis],
-        name: jsCellLineModel.container.name,
-        container_type: jsCellLineModel.container.container_type
-      });
-
       self.cellLineItem.set(jsCellLineModel.id, CellLineItem.create({
         cellLineId: jsCellLineModel.cellLineId,
         id: jsCellLineModel.id.toString(),
@@ -222,7 +203,6 @@ export const CellLineDetailsStore = types
         growthMedium: jsCellLineModel.growthMedium,
         itemName: jsCellLineModel.itemName,
         shortLabel: jsCellLineModel.short_label,
-        container: rootAnalysis
       }));
     }
   }))

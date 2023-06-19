@@ -47,6 +47,8 @@ export default class CellLine extends Element {
     cellLine.cryopreservationMedium = response.cellline_material.cryo_pres_medium;
     cellLine.is_new = false;
 
+    cellLine.container=response.container;
+
     return cellLine;
   }
 

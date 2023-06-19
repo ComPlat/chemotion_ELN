@@ -9,5 +9,6 @@ module Entities
         expose :description
         expose :unit
         expose :cellline_material
+        expose :container, using: 'Entities::ContainerEntity'
     end
 end
