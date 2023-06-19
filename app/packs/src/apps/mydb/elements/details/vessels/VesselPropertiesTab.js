@@ -59,8 +59,8 @@ class VesselPropertiesTab extends React.Component {
   renderAttribute(attributeName, defaultValue, onChangeCallBack) {
     return (
       <div>
-        <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
-        <Col sm={9}>
+        <Col componentClass={ControlLabel} sm="auto">{attributeName}</Col>
+        <Col sm="auto">
           <FormControl
             type="text"
             name="XXX"
