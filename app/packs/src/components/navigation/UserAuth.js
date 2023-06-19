@@ -356,7 +356,7 @@ export default class UserAuth extends Component {
                   <thead>
                     <tr style={{ backgroundColor: '#ddd' }}>
                       <th width="20%">Name</th>
-                      <th width="10%">Kürzel</th>
+                      <th width="10%">Abbreviaton</th>
                       <th width="20%">Admin by</th>
                       <th width="50%">&nbsp;</th>
                     </tr>
@@ -376,7 +376,7 @@ export default class UserAuth extends Component {
                   <thead>
                     <tr style={{ backgroundColor: '#ddd' }}>
                       <th width="40%">Name</th>
-                      <th width="10%">Kürzel</th>
+                      <th width="10%">Abbreviation</th>
                       <th width="50%">&nbsp;</th>
                     </tr>
                   </thead>
