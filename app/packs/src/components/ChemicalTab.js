@@ -825,7 +825,7 @@ export default class ChemicalTab extends React.Component {
                   <div>
                     <i className="fa fa-spinner fa-pulse fa-fw" />
                     <span className="visually-hidden">
-                      loading...
+                      Loading...
                     </span>
                   </div>
 
@@ -1014,7 +1014,7 @@ export default class ChemicalTab extends React.Component {
             <div>
               <i className="fa fa-spinner fa-pulse fa-fw" />
               <span className="visually-hidden">
-                loading...
+                Loading...
               </span>
             </div>
 
