@@ -38,7 +38,7 @@ export default class VesselItemEntry extends React.Component {
           <Table className="elements" bordered hover style={{ borderTop: 0 }}>
           <tbody>
             <tr>
-              <td>
+              <td width="30px">
               <ElementCheckbox
                   element={vesselItem}
                   key={vesselItem.id}
@@ -48,7 +48,7 @@ export default class VesselItemEntry extends React.Component {
               <td onClick={e => this.showDetails()}>
                 {vesselItem.vesselName}
               </td>
-              <td>
+              <td width = "40px">
               <ElementContainer
                       key={vesselItem.id}
                       sourceType={DragDropItemTypes.VESSEL}
