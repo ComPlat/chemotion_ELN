@@ -2,6 +2,9 @@
 
 FactoryBot.define do
   factory :user do
+    initialize_with { type.present? ? type.constantize.new : User.new }
+
+    type { nil }
     sequence(:email) { |n| "foobar#{n}@bar.de" }
     first_name { 'first_name' }
     last_name { 'last_name' }
