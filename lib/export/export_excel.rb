@@ -112,7 +112,7 @@ module Export
       output = output.join("\n")
       output
     end
-    
+
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample in own collection
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
@@ -125,6 +125,8 @@ module Export
             regex = /[\[\]()]/
             string = sample[column].gsub(regex, '')
             string.split(',').join(' - ')
+          elsif column == 'solvent'
+            extract_label_from_solvent_column(sample[column]) || ''
           else
             sample[column]
           end
