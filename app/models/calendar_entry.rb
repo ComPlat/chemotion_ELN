@@ -65,6 +65,8 @@ class CalendarEntry < ApplicationRecord
 
   def link_to_element_for(user)
     collection = collection_for(user)
+    return unless collection
+
     is_synchronized = collection.is_a?(SyncCollectionsUser)
     url = Rails.application.config.root_url
     "#{url}/mydb/#{is_synchronized ? 's' : ''}collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
