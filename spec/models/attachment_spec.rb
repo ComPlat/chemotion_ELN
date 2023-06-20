@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/NestedGroups
+
 require 'rails_helper'
 
-RSpec.describe Attachment, type: :model do
+RSpec.describe Attachment do
   let(:attachment) { create(:attachment) }
 
   describe '#extname' do
@@ -48,13 +50,13 @@ RSpec.describe Attachment, type: :model do
   end
 
   describe '#for_research_plan?' do
-    subject { attachment.for_research_plan? }
+    subject(:reseachplan) { attachment.for_research_plan? }
 
     context 'when not attached to research_plan' do
       let(:attachment) { create(:attachment, :attached_to_container) }
 
       it 'returns false' do
-        expect(subject).to be(false)
+        expect(reseachplan).to be(false)
       end
     end
 
@@ -62,7 +64,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_research_plan) }
 
       it 'returns true' do
-        expect(subject).to be(true)
+        expect(reseachplan).to be(true)
       end
     end
   end
@@ -185,7 +187,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, file_data: old_file_content) }
 
       let(:new_file_path) { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
-      let(:new_file_content) { IO.binread(new_file_path) }
+      let(:new_file_content) { File.binread(new_file_path) }
 
       it 'overwrites the attachment file with the new file' do
         attachment.file_path = new_file_path
@@ -612,7 +614,7 @@ RSpec.describe Attachment, type: :model do
       let(:tempfile) { nil }
 
       it 'does not create a new attachment' do
-        expect { attachment.generate_att(nil, false) }.not_to change(Attachment, :count)
+        expect { attachment.generate_att(nil, false) }.not_to change(described_class, :count)
       end
 
       it 'returns nil' do
@@ -724,9 +726,9 @@ RSpec.describe Attachment, type: :model do
   describe '#generate_csv_att' do
     it 'calls #generate_att with ext = csv and all other parameters verbatim' do
       csv_temp = Tempfile.new(['jcamp', '.csv'])
-      csv_data = Array.new(10) {
-        Array.new(5) {|i| i.to_s }
-      }
+      csv_data = Array.new(10) do
+        Array.new(5, &:to_s)
+      end
       CSV.open(csv_temp, 'wb') do |csv|
         csv_data.each do |row|
           csv << row
@@ -740,8 +742,8 @@ RSpec.describe Attachment, type: :model do
         analysis_id: 2,
       }
 
-      expected_csv_data = Array.new(10) { |line|
-        Array.new(5) { |i|
+      expected_csv_data = Array.new(10) do |line|
+        Array.new(5) do |i|
           if line == 2 && i == 1
             params[:sample_id].to_s
           elsif line == 3 && i == 1
@@ -753,8 +755,8 @@ RSpec.describe Attachment, type: :model do
           else
             i.to_s
           end
-        }
-      }
+        end
+      end
 
       att = attachment.generate_csv_att(csv_temp, 'foo', false, params)
       generated_csv = att.read_file
@@ -889,4 +891,32 @@ RSpec.describe Attachment, type: :model do
       end
     end
   end
+
+  describe '#annotated_file_location' do
+    context 'when type is txt' do
+      let(:attachment) { create(:attachment) }
+
+      it 'no attachment_data should be present' do
+        expect(attachment.annotated_file_location).to eq ''
+      end
+    end
+
+    context 'when type is png but without annotation' do
+      let(:attachment) { create(:attachment, :with_png_image) }
+
+      it 'no attachment_data should be present' do
+        expect(attachment.annotated_file_location).to eq ''
+      end
+    end
+
+    context 'when type is png with annotation' do
+      let(:attachment) { create(:attachment, :with_annotation) }
+
+      it 'attachment_data should be present' do
+        expect(attachment.annotated_file_location).to eq attachment.attachment.url
+      end
+    end
+  end
 end
+
+# rubocop:enable RSpec/NestedGroups

@@ -288,7 +288,6 @@ describe Chemotion::AttachmentAPI do
     let(:file_name) { response.header['Content-Disposition'].split('=').last.tr('"', '') }
     let(:file_path) { Rails.root.join("public/zip/#{file_name}") }
     let(:download_file) do
-      binding
       FileUtils.rm_f(file_path)
       response.stream.each do |e|
         File.write(file_path, e.force_encoding('UTF-8'))
@@ -349,17 +348,9 @@ describe Chemotion::AttachmentAPI do
 
       context 'when attachment is image and annotated' do
         let(:sample2) { create(:sample_with_annotated_image_in_analysis) }
-        let(:attachment) { sample2.container.children[0].children[0].attachments.first }
         let(:execute) { get "/api/v1/attachments/zip/#{sample2.container.children[0].children[0].id}" }
-        let(:update_annotation) do
-          updater = Usecases::Attachments::Annotation::AnnotationUpdater.new(ThumbnailerMock.new)
-          updater.update_annotation(
-            Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg').read, attachment.id
-          )
-        end
 
         before do
-          update_annotation
           execute
           download_file
         end

@@ -72,17 +72,19 @@ FactoryBot.define do
 
     target_amount_value { 100 }
     target_amount_unit { 'mg' }
+
     callback(:before_create) do |sample|
       user =  sample.creator || FactoryBot.create(:user)
       sample.creator = user
       sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
       sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
       sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
-      attachment = FactoryBot.create(:attachment, :with_png_image,
-        attachable_id: sample.container.children[0].children[0],
+
+      attachment = FactoryBot.create(:attachment, :with_annotation,
+        attachable_id: sample.container.children[0].children[0].id,
         created_for: user.id,
-        attachable_type: 'Container')
-        sample.container.children[0].children[0].attachments<<attachment;
+        attachable_type: 'Container'
+      )
     end
   end
 end
