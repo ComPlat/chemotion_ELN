@@ -1,0 +1,211 @@
+table.table-borderless {
+    border: none;
+    td {
+        border: none;
+    }
+    .chemical-table-cells {
+        border: none !important;
+    }
+}
+
+.properties-modal-dev {
+    .properties-modal {
+        width: 500px;
+        height: 640px;
+        margin: 30px;
+        white-space: pre-line;
+    }
+}
+
+.safety-phrases {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 15px; 
+    margin-bottom: 15px;
+}
+
+
+.fa.fa-check-circle {
+    padding-left: 10px;
+    color: green;
+}
+
+.choose-vendor {
+    width: 100%;
+}
+
+.choose-vendor .control-label {
+    padding-right: 100px;
+}
+
+.render-childs {
+    margin-top: 15px;
+
+    .child-elements {
+        width: 100%;
+        display: flex !important;     
+        .link-wrapper {
+            padding-top: 5px;
+            padding-right: 5px;
+            width: 36%;
+            a {
+                cursor: pointer;
+            }
+        }
+
+        .button-toolbar-wrapper {
+            width: 13%;
+            padding-top: 5px;
+        }
+
+        .chemical-properties {
+            width: 32%;
+        }
+
+        .safety-phrases {
+            margin-top: 0px;
+            width: 18%;
+        }
+    }
+}
+
+.safety-tab {
+    margin-top: 15px;
+
+    .parent-element-safety {
+        display: flex;
+        justify-content: space-between;
+        .choose-vendor {
+            width: 24%;
+        }
+        .query-option {
+            width: 24%;
+        } 
+        .safety-sheet-language {
+            width: 24%;
+        } 
+        .query-safety-sheet-button {
+            margin-top: 25.5px;
+            margin-right: 0px;
+            width: 25%;
+        }
+    }
+}
+
+.button-container {
+    position: relative;
+  
+    .overlay-trigger-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+}
+
+.inventory-tab {
+    margin-top: 15px;
+    .inventory-information {
+        display: flex;
+        justify-content: space-between;
+    }
+      
+    .inventory-information-status {
+    width: 22%;
+    }
+    
+    .inventory-text-input {
+    width: 19%;
+    }
+
+    .text-input-group {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+    
+    .text-input-person {
+    width: 29%;
+    }
+    
+    .text-input-date {
+    margin-top: -17px;
+    width: 40%;
+    }
+    
+    .text-input-required-by {
+    width: 29%;
+    }
+}
+
+.location-tab {
+    margin-top: 15px;
+    .location-input-group {
+      display: flex;
+      justify-content: space-between;
+  
+      > div {
+        width: 17%;
+  
+        &:nth-child(4),
+        &:nth-child(5) {
+          width: 23.5%;
+        }
+      }
+    }
+  
+    .disposal-info {
+      margin-top: 20px;
+    }
+  
+    .important-notes {
+      margin-top: 10px;
+    }
+
+    .location-input {
+        padding-top: 15px;
+    }
+}
+
+.render-chemical-properties {
+
+    .fetch-properties-button {
+        width: 200px;
+        margin-right: 0px;
+    }
+
+    .show-properties-modal {
+        margin-left: -23px !important;
+    }
+}
+
+.fa fa-check-circle {
+    padding-left: 10px;
+    color: green;
+}
+
+.safety-sheets-form {
+    margin-top: 15px;
+    width: 100%;
+}
+
+.safety-sheets-paragraph {
+    padding-top: 10px;
+}
+
+.render-safety-phrases {
+    padding-top: 10px;
+    width: 100%;
+}
+
+#chemical-status {
+    width: 100%;
+}
+
+#submit-sds-btn {
+    width: 100%;
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
