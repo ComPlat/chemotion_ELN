@@ -1,6 +1,8 @@
 import React from 'react';
 import Draggable from 'react-draggable';
-import { Badge, Button, Panel, Glyphicon } from 'react-bootstrap';
+import {
+  Badge, Button, Panel, Glyphicon, Pagination
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -17,9 +19,14 @@ export default class InboxModal extends React.Component {
 
     this.state = {
       inbox: inboxState.inbox,
-      inboxVisible: false,
+      inboxVisible: inboxState.inboxVisible,
       numberOfAttachments: inboxState.numberOfAttachments,
-      visible: inboxState.inboxModalVisible
+      visible: inboxState.inboxModalVisible,
+
+      currentPage: inboxState.currentPage,
+      itemsPerPage: inboxState.itemsPerPage,
+      totalPages: inboxState.totalPages,
+      activeDeviceBoxId: inboxState.activeDeviceBoxId,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -35,23 +42,43 @@ export default class InboxModal extends React.Component {
     InboxStore.unlisten(this.onChange);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    const { currentPage, itemsPerPage } = this.state;
+    if (prevState.currentPage !== currentPage
+        || prevState.itemsPerPage !== itemsPerPage) {
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    }
+  }
+
   onChange(state) {
     this.setState(state);
     this.setState({ visible: state.inboxModalVisible });
   }
 
   onClickInbox() {
-    const { inboxVisible, inbox } = this.state;
-    this.setState({ inboxVisible: !inboxVisible });
+    const {
+      inboxVisible, inbox, currentPage, itemsPerPage
+    } = this.state;
+    InboxActions.setInboxVisible({ inboxVisible: !inboxVisible });
     if (!inbox.children) {
       LoadingActions.start();
-      InboxActions.fetchInbox();
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    }
+  }
+
+  handlePageChange(pageNumber) {
+    const { totalPages } = this.state;
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      this.setState({
+        currentPage: pageNumber
+      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
     }
   }
 
   refreshInbox() {
+    const { currentPage, itemsPerPage } = this.state;
     LoadingActions.start();
-    InboxActions.fetchInbox();
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   lockedSubtrees() {
@@ -60,8 +87,48 @@ export default class InboxModal extends React.Component {
     return this.subtrees(roots, null, false);
   }
 
+  renderPagination = () => {
+    const { currentPage, totalPages } = this.state;
+
+    if (totalPages <= 1) {
+      return;
+    }
+
+    const pageNumbers = [];
+    const minPage = Math.max(currentPage - 4, 1);
+    const maxPage = Math.min(minPage + 4, totalPages);
+
+    for (let i = minPage; i <= maxPage; i += 1) {
+      pageNumbers.push(
+        <Pagination.Item
+          key={i}
+          active={i === currentPage}
+          onClick={() => this.handlePageChange(i)}
+        >
+          {i}
+        </Pagination.Item>
+      );
+    }
+
+    if (totalPages > maxPage) {
+      pageNumbers.push(<Pagination.Ellipsis key="Ell" />);
+    }
+
+    return (
+      <div className="list-pagination">
+        <Pagination>
+          <Pagination.First disabled={currentPage === 1} key="First" onClick={() => this.handlePageChange(1)} />
+          <Pagination.Prev disabled={currentPage === 1} key="Prev" onClick={() => this.handlePageChange(currentPage - 1)} />
+          {pageNumbers}
+          <Pagination.Next disabled={currentPage === totalPages} key="Next" onClick={() => this.handlePageChange(currentPage + 1)} />
+          <Pagination.Last disabled={currentPage === totalPages} key="Last" onClick={() => this.handlePageChange(totalPages)} />
+        </Pagination>
+      </div>
+    );
+  };
+
   inboxSubtrees() {
-    const { inbox } = this.state;
+    const { inbox, activeDeviceBoxId } = this.state;
 
     let boxes = '';
     if (inbox.children) {
@@ -69,25 +136,34 @@ export default class InboxModal extends React.Component {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
       boxes = inbox.children.map(deviceBox => (
-        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} largerInbox />
+        <DeviceBox
+          key={`box_${deviceBox.id}`}
+          device_box={deviceBox}
+          largerInbox
+          deviceBoxVisible={deviceBox.id === activeDeviceBoxId}
+        />
       ));
     }
 
     return (
       <div className="tree-view">
         {boxes}
-        {inbox.unlinked_attachments
-          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} largerInbox />
-          : ''
-        }
+        {this.renderPagination()}
+        {inbox.unlinked_attachments ? (
+          <UnsortedBox
+            key="unsorted_box"
+            unsorted_box={inbox.unlinked_attachments}
+            unsortedVisible={activeDeviceBoxId === -1}
+            largerInbox
+          />
+        ) : ''}
       </div>
     );
   }
 
   render() {
     const { showCollectionTree } = this.props;
-    const { visible, inboxVisible } = this.state;
-
+    const { visible, inboxVisible, numberOfAttachments } = this.state;
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -113,7 +189,13 @@ export default class InboxModal extends React.Component {
                   <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
                 </button>
                 {
-                  this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
+                  numberOfAttachments > 0 ? (
+                    <Badge>
+                      {' '}
+                      {numberOfAttachments}
+                      {' '}
+                    </Badge>
+                  ) : ''
                 }
                 <Button
                   bsStyle="danger"

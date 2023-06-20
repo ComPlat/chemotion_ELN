@@ -2,17 +2,51 @@
 
 module Chemotion
   class InboxAPI < Grape::API
+    helpers ParamsHelpers
+
     resource :inbox do
       params do
         requires :cnt_only, type: Boolean, desc: 'return count number only'
       end
+
+      paginate per_page: 20, offset: 0, max_per_page: 50
+
       get do
         current_user.container = Container.create(name: 'inbox', container_type: 'root') unless current_user.container
 
         if params[:cnt_only]
-          present current_user.container, with: Entities::InboxEntity, root: :inbox, only: [:inbox_count]
+          present current_user.container, with: Entities::InboxEntity,
+                                          root_container: true,
+                                          root: :inbox,
+                                          only: [:inbox_count]
         else
-          present current_user.container, with: Entities::InboxEntity, root: :inbox
+          scope = current_user.container.children.order(created_at: :desc)
+
+          reset_pagination_page(scope)
+
+          device_boxes = paginate(scope).map do |device_box|
+            Entities::InboxEntity.represent(device_box, root_container: true)
+          end
+
+          inbox_service = InboxService.new(current_user.container)
+          present inbox_service.to_hash(device_boxes)
+        end
+      end
+
+      desc 'Return files by subcontainer ID'
+      params do
+        requires :container_id, type: Integer, desc: 'subcontainer ID'
+        optional :dataset_page, type: Integer, desc: 'Pagination number'
+      end
+
+      get 'containers/:container_id' do
+        if current_user.container.present?
+          container = current_user.container.children.find params[:container_id]
+
+          Entities::InboxEntity.represent(container,
+                                          root_container: false,
+                                          dataset_page: params[:dataset_page],
+                                          root: :inbox)
         end
       end
 

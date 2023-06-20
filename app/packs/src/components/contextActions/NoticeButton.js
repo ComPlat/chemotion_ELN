@@ -9,6 +9,7 @@ import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
 
 const changeUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
 
@@ -47,6 +48,8 @@ const handleNotification = (nots, act, needCallback = true) => {
       };
       NotificationActions.add(notification);
 
+      const { currentPage, itemsPerPage } = InboxStore.getState();
+
       switch (n.content.action) {
         case 'CollectionActions.fetchRemoteCollectionRoots':
           CollectionActions.fetchRemoteCollectionRoots();
@@ -55,7 +58,7 @@ const handleNotification = (nots, act, needCallback = true) => {
           CollectionActions.fetchSyncInCollectionRoots();
           break;
         case 'InboxActions.fetchInbox':
-          InboxActions.fetchInbox();
+          InboxActions.fetchInbox({ currentPage, itemsPerPage });
           break;
         case 'ReportActions.updateProcessQueue':
           ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);

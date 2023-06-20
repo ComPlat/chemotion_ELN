@@ -72,7 +72,7 @@ export default class ContextActions extends React.Component {
         <ButtonGroup style={{ marginLeft: '10px' }}>
           <InboxButton />
         </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
+        <ButtonGroup style={{ marginLeft: '20px' }}>
           <NoticeButton />
         </ButtonGroup>
       </div>

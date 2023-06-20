@@ -212,11 +212,11 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   def set_key; end
 
   def type_image?
-    attachment['mime_type'].to_s.start_with?('image')
+    attachment.present? && attachment['mime_type'].to_s.start_with?('image')
   end
 
   def type_image_tiff?
-    attachment['mime_type'].to_s == 'image/tiff'
+    attachment.present? && attachment['mime_type'].to_s == 'image/tiff'
   end
 
   def annotated?

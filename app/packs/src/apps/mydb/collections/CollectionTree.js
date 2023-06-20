@@ -38,7 +38,8 @@ export default class CollectionTree extends React.Component {
       syncCollectionVisible: false,
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
-      inboxVisible: false
+      itemsPerPage: inboxState.itemsPerPage,
+      inboxSectionVisible: false,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -62,22 +63,38 @@ export default class CollectionTree extends React.Component {
     InboxStore.unlisten(this.onChange);
   }
 
+  handleSectionToggle = (visible) => {
+    this.setState((prevState) => ({
+      [visible]: !prevState[visible],
+      inboxSectionVisible: false
+    }));
+  };
+
   onChange(state) {
     this.setState(state);
   }
 
   onClickInbox() {
-    const { inboxVisible, inbox } = this.state;
-    this.setState({ inboxVisible: !inboxVisible });
+    const {
+      inboxSectionVisible, inbox, currentPage, itemsPerPage
+    } = this.state;
+    this.setState({
+      inboxSectionVisible: !inboxSectionVisible,
+      ownCollectionVisible: false,
+      sharedToCollectionVisible: false,
+      sharedWithCollectionVisible: false,
+      syncCollectionVisible: false,
+    });
     if (!inbox.children) {
       LoadingActions.start();
-      InboxActions.fetchInbox();
+      InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
   }
 
   refreshInbox() {
+    const { currentPage, itemsPerPage } = this.state;
     LoadingActions.start();
-    InboxActions.fetchInbox();
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   lockedSubtrees() {
@@ -117,8 +134,11 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div className="title" style={{ backgroundColor: 'white' }}
-          onClick={() => this.setState({ sharedToCollectionVisible: !sharedToCollectionVisible })}>
+        <div
+          className="title"
+          style={{ backgroundColor: 'white' }}
+          onClick={() => this.handleSectionToggle('sharedToCollectionVisible')}
+        >
           <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
           My shared collections
         </div>
@@ -147,8 +167,12 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div id="shared-home-link" className="title" style={{ backgroundColor: 'white' }}
-          onClick={() => this.setState({ sharedWithCollectionVisible: !sharedWithCollectionVisible })}>
+        <div
+          id="shared-home-link"
+          className="title"
+          style={{ backgroundColor: 'white' }}
+          onClick={() => this.handleSectionToggle('sharedWithCollectionVisible')}
+        >
           <i className="fa fa-share-alt share-icon" />
           &nbsp;&nbsp;
           Shared with me &nbsp;
@@ -160,29 +184,45 @@ export default class CollectionTree extends React.Component {
       false, sharedWithCollectionVisible)
   }
 
-
   inboxSubtrees() {
-    const { inbox } = this.state;
+    const { inbox, itemsPerPage } = this.state;
 
     let boxes = '';
     if (inbox.children) {
       inbox.children.sort((a, b) => {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
-      boxes = inbox.children.map((deviceBox) => {
-        return (
-          <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} />
-        );
-      });
+      boxes = inbox.children.map((deviceBox) => (
+        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} fromCollectionTree />
+      ));
     }
 
     return (
       <div className="tree-view">
-        {boxes}
-        {inbox.unlinked_attachments
-          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
-          : ''
-        }
+        <div
+          role="button"
+          onClick={InboxActions.showInboxModal}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              InboxActions.showInboxModal();
+            }
+          }}
+        >
+          {boxes}
+          {inbox.children && inbox.children.length >= itemsPerPage ? (
+            <div className="title" key="more" style={{ textAlign: 'center' }}>
+              <i className="fa fa-ellipsis-h" aria-hidden="true" />
+            </div>
+          ) : ''}
+        </div>
+        {inbox.unlinked_attachments ? (
+          <UnsortedBox
+            key="unsorted_box"
+            unsorted_box={inbox.unlinked_attachments}
+            fromCollectionTree
+          />
+        ) : ''}
       </div>
     );
   }
@@ -206,8 +246,12 @@ export default class CollectionTree extends React.Component {
 
     let subTreeLabels = (
       <div className="tree-view">
-        <div id="synchron-home-link" className="title" style={{ backgroundColor: 'white' }}
-          onClick={() => this.setState({ syncCollectionVisible: !syncCollectionVisible })}>
+        <div
+          id="synchron-home-link"
+          className="title"
+          style={{ backgroundColor: 'white' }}
+          onClick={() => this.handleSectionToggle('syncCollectionVisible')}
+        >
           <i className="fa fa-share-alt" />&nbsp;&nbsp;
           Synchronized with me &nbsp;
         </div>
@@ -296,18 +340,21 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    let { ownCollectionVisible, inboxVisible, inbox } = this.state
+    const { ownCollectionVisible, inboxSectionVisible } = this.state;
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
-    const inboxDisplay = inboxVisible ? '' : 'none';
+    const inboxDisplay = inboxSectionVisible ? '' : 'none';
 
     return (
       <div>
         <div className="tree-view">
           {this.collectionManagementButton()}
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
-            <div className="title" style={{ backgroundColor: 'white' }}
-              onClick={() => this.setState({ ownCollectionVisible: !ownCollectionVisible })}>
+            <div
+              className="title"
+              style={{ backgroundColor: 'white' }}
+              onClick={() => this.handleSectionToggle('ownCollectionVisible')}
+            >
               <i className="fa fa-list" /> &nbsp;&nbsp; Collections
             </div>
           </OverlayTrigger>

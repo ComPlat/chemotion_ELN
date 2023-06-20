@@ -65,7 +65,13 @@ class AttachmentContainer extends Component {
 
 
   render() {
-    const { connectDragSource, sourceType, attachment, largerInbox } = this.props;
+    const {
+      connectDragSource,
+      sourceType,
+      attachment,
+      largerInbox,
+      fromUnsorted,
+    } = this.props;
     if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
@@ -94,7 +100,7 @@ class AttachmentContainer extends Component {
               <Button
                 bsStyle="danger"
                 bsSize="xsmall"
-                onClick={() => InboxActions.deleteAttachment(attachment)}
+                onClick={() => InboxActions.deleteAttachment(attachment, fromUnsorted)}
               >
                 Yes
               </Button>
@@ -174,9 +180,11 @@ AttachmentContainer.propTypes = {
   isDragging: PropTypes.bool.isRequired,
   largerInbox: PropTypes.bool,
   sourceType: PropTypes.string,
+  fromUnsorted: PropTypes.bool,
 };
 
 AttachmentContainer.defaultProps = {
   largerInbox: false,
-  sourceType: ''
+  sourceType: '',
+  fromUnsorted: false
 };

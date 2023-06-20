@@ -2,42 +2,108 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import DatasetContainer from 'src/apps/mydb/inbox/DatasetContainer';
+import Pagination from 'src/apps/mydb/inbox/Pagination';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class DeviceBox extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      visible: false
+      visible: false,
+      currentDeviceBoxPage: 1,
+      dataItemsPerPage: InboxStore.getState().dataItemsPerPage,
     };
   }
 
+  componentDidMount() {
+    const { device_box, deviceBoxVisible } = this.props;
+    const { currentDeviceBoxPage } = this.state;
+    if (deviceBoxVisible) {
+      if (Array.isArray(device_box.children) && !device_box.children.length) {
+        LoadingActions.start();
+        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
+      }
+    }
+    this.setState({ visible: deviceBoxVisible });
+  }
+
+  componentDidUpdate(prevProps) {
+    const { deviceBoxVisible } = this.props;
+    if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
+      this.setState({ visible: deviceBoxVisible });
+    }
+  }
+
+  handleDeviceBoxClick(deviceBox) {
+    const { visible, currentDeviceBoxPage } = this.state;
+    const { fromCollectionTree } = this.props;
+
+    InboxActions.setActiveDeviceBoxId(deviceBox.id);
+
+    if (fromCollectionTree) {
+      return;
+    }
+
+    if (!visible) {
+      if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
+        LoadingActions.start();
+        InboxActions.fetchInboxContainer(deviceBox.id, currentDeviceBoxPage);
+      }
+    }
+    this.setState({ visible: !visible });
+  }
+
+  handlePrevClick = (deviceBox) => {
+    const { currentDeviceBoxPage } = this.state;
+    const updatedPage = currentDeviceBoxPage - 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
+    LoadingActions.start();
+    InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
+  };
+
+  handleNextClick = (deviceBox) => {
+    const { currentDeviceBoxPage } = this.state;
+    const updatedPage = currentDeviceBoxPage + 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
+    LoadingActions.start();
+    InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
+  };
+
   deleteDeviceBox(deviceBox) {
+    const { fromCollectionTree } = this.props;
+    if (fromCollectionTree) {
+      return;
+    }
+
     InboxActions.deleteContainer(deviceBox);
   }
 
   render() {
-    const { device_box, largerInbox } = this.props;
-    const { visible } = this.state;
+    const { device_box, largerInbox, fromCollectionTree } = this.props;
+    const { visible, currentDeviceBoxPage, dataItemsPerPage } = this.state;
     const cache = InboxStore.getState().cache;
+
+    // device_box.children_count gives the total number of children of each DeviceBox
+    // while device_box.children contains only the paginated entries
+
+    const totalPages = Math.ceil(device_box.children_count / dataItemsPerPage);
 
     device_box.children.sort((a, b) => {
       if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
     });
 
-    const datasets = device_box.children.map((dataset) => {
-      return (
-        <DatasetContainer
-          key={`dataset_${dataset.id}`}
-          sourceType={DragDropItemTypes.DATASET}
-          dataset={dataset}
-          cache={cache}
-          largerInbox={largerInbox}
-        />
-      );
-    });
+    const datasets = device_box.children.map((dataset) => (
+      <DatasetContainer
+        key={`dataset_${dataset.id}`}
+        sourceType={DragDropItemTypes.DATASET}
+        dataset={dataset}
+        cache={cache}
+        largerInbox={largerInbox}
+      />
+    ));
 
     const textStyle = {
       display: 'block',
@@ -50,21 +116,27 @@ export default class DeviceBox extends React.Component {
 
     return (
       <div className="tree-view">
-        <div className="title" style={textStyle}>
-          {datasets.length === 0
-            ? (
-              <i
-                className="fa fa-trash-o"
-                onClick={() => this.deleteDeviceBox(device_box)}
-                style={{ cursor: 'pointer' }}
-              >&nbsp;&nbsp;
-              </i>
-            ) : null
+        <div
+          className="title"
+          style={textStyle}
+          onClick={() => this.handleDeviceBoxClick(device_box)}
+        >
+          {
+            device_box?.children_count === 0
+              ? (
+                <i
+                  className="fa fa-trash-o"
+                  onClick={() => this.deleteDeviceBox(device_box)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  &nbsp;&nbsp;
+                </i>
+              ) : null
           }
           <button
             type="button"
             className="btn-inbox"
-            onClick={() => this.setState({ visible: !visible })}
+            onClick={!fromCollectionTree ? () => this.setState({ visible: !visible }) : null}
           >
             <i
               className={`fa fa-folder${visible ? '-open' : ''}`}
@@ -74,7 +146,17 @@ export default class DeviceBox extends React.Component {
             {device_box.name}
           </button>
         </div>
-        <div>{visible ? datasets : null}</div>
+        {
+          visible && !fromCollectionTree && device_box?.children_count > dataItemsPerPage ? (
+            <Pagination
+              currentDataSetPage={currentDeviceBoxPage}
+              totalPages={totalPages}
+              handlePrevClick={() => this.handlePrevClick(device_box)}
+              handleNextClick={() => this.handleNextClick(device_box)}
+            />
+          ) : null
+        }
+        <div>{visible && !fromCollectionTree ? datasets : null}</div>
       </div>
     );
   }
@@ -82,9 +164,13 @@ export default class DeviceBox extends React.Component {
 
 DeviceBox.propTypes = {
   device_box: PropTypes.object.isRequired,
-  largerInbox: PropTypes.bool
+  largerInbox: PropTypes.bool,
+  fromCollectionTree: PropTypes.bool,
+  deviceBoxVisible: PropTypes.bool,
 };
 
 DeviceBox.defaultProps = {
-  largerInbox: false
+  largerInbox: false,
+  fromCollectionTree: false,
+  deviceBoxVisible: false,
 };

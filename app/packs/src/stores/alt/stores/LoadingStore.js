@@ -37,6 +37,7 @@ class LoadingStore {
           ElementActions.importWellplateSpreadsheet,
           ElementActions.storeMetadata,
           InboxActions.fetchInbox,
+          InboxActions.fetchInboxContainer,
           PredictionActions.infer,
         ],
       handleStartLoadingWithProgress: LoadingActions.startLoadingWithProgress,
