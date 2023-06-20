@@ -2,6 +2,17 @@
 # Chemotion_ELN Changelog
 
 
+## [v1.6.1]
+> 2023-06-19
+
+* Fixes
+  * scan result calculation [PR1325](https://github.com/ComPlat/chemotion_ELN/pull/1325)
+  * Load the correct url of nmrium wrapper [#1339](https://github.com/ComPlat/chemotion_ELN/pull/1339)
+  * Zooming in chemspectra on firefox [#1346](https://github.com/ComPlat/chemotion_ELN/pull/1346)
+  * AdminUI: Datacollector setting [#1344](https://github.com/ComPlat/chemotion_ELN/pull/1344)
+  * nmrium: display preview image after saving [#1356](https://github.com/ComPlat/chemotion_ELN/pull/1356)
+
+
 ## [v1.6.0] 
 > 2023-05-09
 
