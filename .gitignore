@@ -98,6 +98,10 @@
 
 /public/json/*
 !/public/json/schema.json
+!/public/json/precautionaryPhrases.json
+!/public/json/hazardPhrases.json
+!/public/json/pictograms.json
+
 
 /public/zip/*
 !/public/zip/.keep

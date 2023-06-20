@@ -66,6 +66,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
+import ChemicalTab from 'src/components/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const MWPrecision = 6;
@@ -120,6 +121,7 @@ export default class SampleDetails extends React.Component {
       visible: Immutable.List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
+      saveInventoryAction: false
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -299,6 +301,15 @@ export default class SampleDetails extends React.Component {
       this.handleSampleChanged(sample);
     } else {
       this.handleSampleChanged(sample, this.decoupleMolecule);
+    }
+  }
+
+  handleInventorySample(e) {
+    const { sample } = this.state;
+    sample.inventory_sample = e.target.checked;
+    this.handleSampleChanged(sample);
+    if (!e.target.checked) {
+      this.setState({ activeTab: 'properties' });
     }
   }
 
@@ -509,6 +520,11 @@ export default class SampleDetails extends React.Component {
     const colLabel = sample.isNew ? null : (
       <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
+    const inventorySample = (
+      <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
+        Inventory
+      </Checkbox>
+    );
 
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
@@ -517,71 +533,74 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     return (
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-sample" />{sample.title()}</span>
+          <span>
+            <i className="icon-sample" />{sample.title()}
+          </span>
         </OverlayTrigger>
-        <ConfirmClose el={sample} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit(true)}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-            <i className="fa fa-times" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-          </Button>
-        </OverlayTrigger>
-        {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
-          >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        {sample.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-        <PrintCodeButton element={sample} />
+        <ShowUserLabels element={sample} />
+        <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+        {colLabel}
+        <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+        <PubchemLabels element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
-        {decoupleCb}
-        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
-          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-          {colLabel}
-          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <PubchemLabels element={sample} />
+        <div style={{ marginLeft: 'auto' }}>
+          <ConfirmClose el={sample} />
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit(true)}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+              <i className="fa fa-times" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit()}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+            </Button>
+          </OverlayTrigger>
+          {copyBtn}
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+          >
+            <Button
+              bsStyle="info"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.props.toggleFullScreen()}
+            >
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          <PrintCodeButton element={sample} />
+          {sample.isNew
+            ? null
+            : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+          {inventorySample}
+          {decoupleCb}
         </div>
-        <ShowUserLabels element={sample} />
       </div>
     );
   }
@@ -602,7 +621,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px' };
+    const style = { height: '200px', marginBottom: '100px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
       const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
@@ -623,6 +642,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
+          { sample.isNew ? null : <h6>{this.moleculeCas()}</h6> }
           {lcssSign}
         </Col>
         <Col md={8}>
@@ -851,8 +871,10 @@ export default class SampleDetails extends React.Component {
       private_notes,
       ...customKeys
     } = cloneDeep(xref || {});
+    const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
 
-    if (Object.keys(customKeys).length === 0) return null;
+    if (Object.keys(customKeys).length === 0
+      || check.some((key) => Object.keys(customKeys).includes(key))) return null;
     return (
       Object.keys(customKeys).map(key => (
         <tr key={`field_${key}`}>
@@ -979,7 +1001,6 @@ export default class SampleDetails extends React.Component {
         {this.moleculeInchi(sample)}
         {this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
-        {this.moleculeCas()}
       </ListGroupItem>
     );
   }
@@ -1017,6 +1038,37 @@ export default class SampleDetails extends React.Component {
         <EditUserLabels element={sample} />
         {this.elementalPropertiesItem(sample)}
         {this.chemicalIdentifiersItem(sample)}
+      </Tab>
+    );
+  }
+
+  handleSubmitInventory() {
+    this.setState({ saveInventoryAction: true });
+  }
+
+  saveSampleOrInventory(closeView) {
+    const { activeTab, sample } = this.state;
+    if (activeTab === 'inventory' && sample.inventory_sample) {
+      this.handleSubmitInventory();
+    } else {
+      this.handleSubmit(closeView);
+    }
+  }
+
+  sampleInventoryTab(ind) {
+    const sample = this.state.sample || {};
+    const { saveInventoryAction } = this.state;
+
+    return (
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+        <ListGroupItem>
+          <ChemicalTab
+            sample={sample}
+            parent={this}
+            saveInventory={saveInventoryAction}
+            key={`ChemicalTab${sample.id.toString()}`}
+          />
+        </ListGroupItem>
       </Tab>
     );
   }
@@ -1186,7 +1238,7 @@ export default class SampleDetails extends React.Component {
       <Button
         id="submit-sample-btn"
         bsStyle="warning"
-        onClick={() => this.handleSubmit(closeView)}
+        onClick={() => this.saveSampleOrInventory(closeView)}
         disabled={!this.sampleIsValid() || isDisabled}
       >
         {submitLabel}
@@ -1315,14 +1367,18 @@ export default class SampleDetails extends React.Component {
       tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
     }
 
+    if (sample.inventory_sample) {
+      tabContentsMap.inventory = this.sampleInventoryTab('inventory');
+    }
+
     const tabTitlesMap = {
       literature: 'References',
       qc_curation: 'QC curation',
       computed_props: 'computed props',
       nmr_sim: 'NMR Simulation',
-      measurements: 'Measurements'
+      measurements: 'Measurements',
+      inventory: 'Inventory'
     };
-
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
     const stb = [];
@@ -1383,6 +1439,7 @@ export default class SampleDetails extends React.Component {
               availableTabs={Object.keys(tabContentsMap)}
               tabTitles={tabTitlesMap}
               onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={sample.inventory_sample}
             />
             {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
