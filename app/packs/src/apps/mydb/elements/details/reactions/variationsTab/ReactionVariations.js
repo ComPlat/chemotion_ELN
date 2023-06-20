@@ -217,7 +217,9 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   return (
     <div>
       <Form inline>
-        <Button onClick={() => addRow()}>Add row</Button>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip>Add row with data from current reaction scheme.</Tooltip>}>
+          <Button onClick={() => addRow()}>Add row</Button>
+        </OverlayTrigger>
         {' '}
         <FormGroup>
           <ControlLabel>Material Unit</ControlLabel>
