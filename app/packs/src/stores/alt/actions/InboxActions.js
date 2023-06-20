@@ -19,6 +19,10 @@ class InboxActions {
     return null
   }
 
+  showInboxModal() {
+    return null;
+  }
+
   checkedAll(params) {
     return params;
   }
@@ -31,9 +35,9 @@ class InboxActions {
     return params;
   }
 
-  fetchInbox() {
+  fetchInbox(queryParams = {}) {
     return (dispatch) => {
-      InboxFetcher.fetchInbox(false)
+      InboxFetcher.fetchInbox(false, queryParams)
         .then((result) => {
           dispatch(result.inbox);
         }).catch((errorMessage) => {
@@ -53,6 +57,20 @@ class InboxActions {
     };
   }
 
+  fetchInboxContainer(containerId, currentContainerPage) {
+    return (dispatch) => {
+      InboxFetcher.fetchInboxByContainer(containerId, currentContainerPage)
+        .then((result) => {
+          dispatch({
+            inbox: result.inbox,
+            currentContainerPage,
+          });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   removeAttachmentFromList(attachment) {
     return attachment;
   }
@@ -65,11 +83,26 @@ class InboxActions {
     return dataset;
   }
 
-  deleteAttachment(params) {
+  setInboxPagination(pagination) {
+    return pagination;
+  }
+
+  setInboxVisible(inboxVisible) {
+    return inboxVisible;
+  }
+
+  setActiveDeviceBoxId(deviceBoxId) {
+    return deviceBoxId;
+  }
+
+  deleteAttachment(params, fromUnsorted = false) {
     return (dispatch) => {
       AttachmentFetcher.deleteAttachment(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({
+            result,
+            fromUnsorted,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -91,7 +124,10 @@ class InboxActions {
     return (dispatch) => {
       ContainerFetcher.deleteContainer(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({
+            result,
+            id: params.id,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
