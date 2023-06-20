@@ -112,7 +112,7 @@ export default class Reaction extends Element {
       type: 'reaction',
       can_update: true,
       can_copy: false,
-      variations: {}
+      variations: []
     })
 
     reaction.short_label = this.buildReactionShortLabel()
