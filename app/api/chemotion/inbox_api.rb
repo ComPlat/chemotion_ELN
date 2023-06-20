@@ -20,7 +20,7 @@ module Chemotion
                                           root: :inbox,
                                           only: [:inbox_count]
         else
-          scope = current_user.container.children.order(:name)
+          scope = current_user.container.children.order(created_at: :desc)
 
           reset_pagination_page(scope)
 
