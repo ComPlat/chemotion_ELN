@@ -78,7 +78,7 @@ FactoryBot.define do
       sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
       sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
       sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
-      attachment = FactoryBot.create(:attachment, :with_annotation,
+      attachment = FactoryBot.create(:attachment, :with_png_image,
         attachable_id: sample.container.children[0].children[0],
         created_for: user.id,
         attachable_type: 'Container')
