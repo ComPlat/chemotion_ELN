@@ -308,13 +308,12 @@ RSpec.describe Attachment do
     end
   end
 
-  # TODO: fix with_annotation factory: currently this test deletes the attached file
   describe 'annotated?' do
     let(:annotated_attachment) { create(:attachment, :with_annotation) }
     let(:unannotated_attachment) { create(:attachment) }
 
-    xit 'returns true if the attachment is annotated, or false if not' do
-      expect(puts(annotated_attachment.attachment_attacher.derivatives) && annotated_attachment.annotated?).to be true
+    it 'returns true if the attachment is annotated, or false if not' do
+      expect(annotated_attachment.annotated?).to be true
       expect(unannotated_attachment.annotated?).to be false
     end
   end
@@ -853,7 +852,7 @@ RSpec.describe Attachment do
       it 'returns the result of #auto_infer_n_clear_json' do
         expect(attachment).to receive(:auto_infer_n_clear_json).with('MS', false)
 
-        attachment.update_prediction(params = { foo: :bar }, spc_type = 'MS', is_regen = false)
+        attachment.update_prediction({ foo: :bar }, 'MS', false)
       end
     end
 
@@ -865,7 +864,7 @@ RSpec.describe Attachment do
       it 'calls #write_infer_to_file with the value of params["predict"]' do
         expect(attachment).to receive(:write_infer_to_file).with('foobar')
 
-        attachment.update_prediction(params = { 'predict' => 'foobar' }, spc_type = 'foo', is_regen = false)
+        attachment.update_prediction({ 'predict' => 'foobar' }, 'foo', false)
       end
     end
   end
