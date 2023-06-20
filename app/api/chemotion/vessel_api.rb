@@ -58,8 +58,12 @@ module Chemotion
             vessel,
             displayed_in_list: true,
           )
-        end 
-        { vessels: vessels }
+        end
+
+        return {
+          vessels: vessels,
+          vessels_count: scope.count
+        }
       end
 
       desc 'Get a vessel by id'
