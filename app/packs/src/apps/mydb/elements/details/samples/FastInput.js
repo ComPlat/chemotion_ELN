@@ -89,34 +89,36 @@ function FastInput(props) {
   };
 
   return (
-    <OverlayTrigger
-      placement="top"
-      delayShow={500}
-      overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
-    >
-      <FormGroup bsSize="xsmall" className="fast-input">
-        <InputGroup className="mb-3">
-          <FormControl
-            id="_fast_create_btn_split"
-            type="text"
-            pullRight
-            ref={refInput}
-            onChange={updateValue}
-            value={value}
-            onKeyPress={(e) => searchString(e)}
-            style={formStyle}
-            placeholder="fast create by CAS/Smiles ..."
-          />
-          <Button
-            bsSize="xsmall"
-            style={buttonStyle}
-            onClick={(e) => searchString(e)}
-          >
-            <Glyphicon glyph="glyphicon glyphicon-search" />
-          </Button>
-        </InputGroup>
-      </FormGroup>
-    </OverlayTrigger>
+    <div style={{ marginLeft: 'auto' }}>
+      <OverlayTrigger
+        placement="top"
+        delayShow={500}
+        overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
+      >
+        <FormGroup bsSize="xsmall" className="fast-input">
+          <InputGroup className="mb-3">
+            <FormControl
+              id="_fast_create_btn_split"
+              type="text"
+              pullRight
+              ref={refInput}
+              onChange={updateValue}
+              value={value}
+              onKeyPress={(e) => searchString(e)}
+              style={formStyle}
+              placeholder="fast create by CAS/Smiles ..."
+            />
+            <Button
+              bsSize="xsmall"
+              style={buttonStyle}
+              onClick={(e) => searchString(e)}
+            >
+              <Glyphicon glyph="glyphicon glyphicon-search" />
+            </Button>
+          </InputGroup>
+        </FormGroup>
+      </OverlayTrigger>
+    </div>
   );
 }
 

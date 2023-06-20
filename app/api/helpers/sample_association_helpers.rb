@@ -13,7 +13,7 @@ module SampleAssociationHelpers
       collections = Collection.where(id: cols).where.not(id: subsample.collections.pluck(:id))
       subsample.collections << collections unless collections.empty?
     when 1
-      subsample = parent_sample.create_subsample(current_user, cols, true)
+      subsample = parent_sample.create_subsample(current_user, cols, true, 'sample')
     when 2
       subsample = parent_sample.dup
       subsample.parent = nil

@@ -88,8 +88,7 @@ module Usecases
       def create_sub_sample(sample, fixed_label)
         parent_sample = Sample.find(sample.parent_id)
 
-        subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true)
-
+        subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
         subsample.short_label = fixed_label if fixed_label
 
         subsample.target_amount_value = sample.target_amount_value

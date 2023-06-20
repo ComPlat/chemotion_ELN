@@ -72,7 +72,7 @@ export default class SampleDetailsSolvents extends React.Component {
     const {
       sample, isOver, canDrop
     } = this.props;
-    const minPadding = { padding: '1px 2px 2px 0px' };
+    const minPadding = { padding: '4px 4px 4px 4px' };
     const style = {
       padding: '2px 5px',
     };
