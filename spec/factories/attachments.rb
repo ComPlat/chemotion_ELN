@@ -58,10 +58,11 @@ FactoryBot.define do
     trait :with_annotation do
       filename { 'upload.jpg' }
       file_path { Rails.root.join('spec/fixtures/upload.jpg') }
-      
+
       after(:create) do |attachment|
-        attachment.attachment_data["derivatives"]["annotation"]["annotated_file_location"]=attachment.attachment.id
-        attachment.update_columns(attachment_data: attachment.attachment_data)
+        attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] = attachment.attachment.id
+
+        attachment.update_columns(attachment_data: attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
     end
 

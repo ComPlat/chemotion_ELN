@@ -235,9 +235,11 @@ class Attachment < ApplicationRecord
 
   def annotated_file_location
     return '' unless annotated?
+
     File.join(
       attachment.storage.directory,
-      attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location'))
+      attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location'),
+    )
   end
 
   private
