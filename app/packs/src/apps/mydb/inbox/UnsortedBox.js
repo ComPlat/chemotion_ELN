@@ -220,7 +220,14 @@ export default class UnsortedBox extends React.Component {
     );
 
     const uploadButton = (
-      <Button style={{ position: 'absolute', right: 0 }} bsSize="xsmall" onClick={() => this.handleUploadButton()}>
+      <Button
+        style={{ position: 'absolute', right: 0 }}
+        bsSize="xsmall"
+        onClick={(e) => {
+          e.stopPropagation();
+          this.handleUploadButton();
+        }}
+      >
         <i className="fa fa-upload" aria-hidden="true" />
       </Button>
     );
