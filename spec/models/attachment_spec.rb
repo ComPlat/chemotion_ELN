@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # rubocop:disable RSpec/NestedGroups
+# rubocop:disable RSpec/MessageSpies
 
 require 'rails_helper'
 
@@ -607,7 +608,7 @@ RSpec.describe Attachment do
   describe '#generate_att' do
     let(:attachment) { build(:attachment) }
     let(:ext) { 'jpg' }
-    let(:new_attachment) { attachment.generate_att(tempfile, addon = 'foo', to_edit = false, ext) }
+    let(:new_attachment) { attachment.generate_att(tempfile, 'foo', false, ext) }
 
     context 'without tempfile' do
       let(:tempfile) { nil }
@@ -648,7 +649,7 @@ RSpec.describe Attachment do
 
       context 'with spectra file and to_edit = true' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
-        let(:new_attachment) { attachment.generate_att(tempfile, addon = nil, to_edit = true) }
+        let(:new_attachment) { attachment.generate_att(tempfile, nil, true) }
 
         it 'sets the new attachment\'s aasm_state to edited' do
           expect(new_attachment.edited?).to be true
@@ -919,3 +920,4 @@ RSpec.describe Attachment do
 end
 
 # rubocop:enable RSpec/NestedGroups
+# rubocop:enable RSpec/MessageSpies
