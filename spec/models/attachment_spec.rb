@@ -70,13 +70,13 @@ RSpec.describe Attachment do
   end
 
   describe '#for_container?' do
-    subject { attachment.for_container? }
+    subject(:for_container) { attachment.for_container? }
 
     context 'when not attached to container' do
       let(:attachment) { create(:attachment, :attached_to_research_plan) }
 
       it 'returns false' do
-        expect(subject).to be(false)
+        expect(for_container).to be(false)
       end
     end
 
@@ -84,7 +84,7 @@ RSpec.describe Attachment do
       let(:attachment) { create(:attachment, :attached_to_container) }
 
       it 'returns true' do
-        expect(subject).to be(true)
+        expect(for_container).to be(true)
       end
     end
   end
@@ -186,7 +186,7 @@ RSpec.describe Attachment do
       let(:old_file_content) { 'Foo Bar' }
       let(:attachment) { create(:attachment, file_data: old_file_content) }
 
-      let(:new_file_path) { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
+      let(:new_file_path) { Rails.root.join('spec/fixtures/upload.txt') }
       let(:new_file_content) { File.binread(new_file_path) }
 
       it 'overwrites the attachment file with the new file' do
@@ -329,7 +329,7 @@ RSpec.describe Attachment do
       # Thumbnails are only generated when a file is attached, having file_data does not suffice
 
       context 'when the file is not thumbnailable' do
-        let(:attachment) { create(:attachment, file_path: Rails.root.join('spec', 'fixtures', 'upload.txt')) }
+        let(:attachment) { create(:attachment, file_path: Rails.root.join('spec/fixtures/upload.txt')) }
 
         it 'saves the file' do
           expect(attachment.read_file).not_to be_nil
