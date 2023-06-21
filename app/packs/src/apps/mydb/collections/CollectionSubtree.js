@@ -17,7 +17,6 @@ export default class CollectionSubtree extends React.Component {
       selected: false,
       root: props.root,
       visible: false,
-      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {}
     }
 
     this.onChange = this.onChange.bind(this)
