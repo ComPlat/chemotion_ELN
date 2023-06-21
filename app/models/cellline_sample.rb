@@ -2,6 +2,8 @@
 
 class CelllineSample < ApplicationRecord
   has_one :container, as: :containable
+  has_many :collections_celllines, inverse_of: :cellline_sample, dependent: :destroy
+  has_many :collections, through: :collections_celllines
 
   acts_as_paranoid
   belongs_to :cell_line_sample, optional: true
