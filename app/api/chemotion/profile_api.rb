@@ -91,7 +91,7 @@ module Chemotion
         data = current_user.profile.data || {}
         available_ements = API::ELEMENTS + ElementKlass.where(is_active: true).pluck(:name)
 
-        data['layout'] = { 'sample' => 1, 'reaction' => 2, 'wellplate' => 3, 'screen' => 4, 'research_plan' => 5 } if data['layout'].nil?
+        data['layout'] = { 'sample' => 1, 'reaction' => 2, 'wellplate' => 3, 'screen' => 4, 'research_plan' => 5, 'vessel' => 6 } if data['layout'].nil?
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h

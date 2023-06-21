@@ -70,6 +70,7 @@ class User < ApplicationRecord
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
+  has_many :vessels, through: :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
@@ -269,7 +270,8 @@ class User < ApplicationRecord
           'reaction' => 2,
           'wellplate' => 3,
           'screen' => 4,
-          'research_plan' => 5
+          'research_plan' => 5,
+          'vessel' => 6
         }) if (data['layout'].nil?)
         self.profile.update_columns(data: data)
       end

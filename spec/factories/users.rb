@@ -32,7 +32,8 @@ FactoryBot.define do
           'reaction' => 2,
           'wellplate' => 3,
           'screen' => 4,
-          'research_plan' => 5
+          'research_plan' => 5,
+          'vessel' => 6
         }
         profile.update_columns(data: data)
       end
