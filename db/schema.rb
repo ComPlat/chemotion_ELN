@@ -134,23 +134,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
-  create_table "collection_acls", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "collection_id", null: false
-    t.string "label"
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 0
-    t.integer "reaction_detail_level", default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level", default: 0
-    t.integer "researchplan_detail_level", default: 10
-    t.integer "element_detail_level", default: 10
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
-    t.index ["user_id"], name: "index_collection_acls_on_user_id"
-  end
-
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ancestry"
@@ -170,7 +153,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.boolean "is_synchronized", default: false, null: false
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
-    t.jsonb "tabs_segment", default: {}
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -240,13 +222,13 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "content"
     t.integer "created_by", null: false
     t.string "section"
-    t.string "status", default: "Pending"
-    t.string "submitter"
-    t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
@@ -295,7 +277,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "updated_at", null: false
     t.integer "parent_id"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
-    t.index ["name"], name: "index_containers_on_name"
   end
 
   create_table "dataset_klasses", id: :serial, force: :cascade do |t|
@@ -840,10 +821,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "rxno"
     t.string "conditions"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
-    t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
     t.index ["role"], name: "index_reactions_on_role"
-    t.index ["rxno"], name: "index_reactions_on_rxno", order: :desc
   end
 
   create_table "reactions_samples", id: :serial, force: :cascade do |t|
@@ -1294,9 +1273,9 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "updated_at", null: false
     t.string "additive"
     t.datetime "deleted_at"
-    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
+    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
@@ -1403,7 +1382,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
             )
             and sync_cols.user_id in (select user_ids(in_user_id))
         ) all_cols;
-
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
@@ -1429,7 +1407,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
-
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1507,7 +1484,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
-
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
@@ -1526,8 +1502,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
