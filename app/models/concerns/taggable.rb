@@ -50,13 +50,7 @@ module Taggable
   def collection_id
     klass = "collections_#{self.class.name.underscore.pluralize}"
     return unless respond_to?(klass)
-    cols = []
-    send(klass).each do |cc|
-      next unless c = cc.collection
-      next if c.label == 'All' && c.is_locked
-      cols.push(c.id)
-    end
-    cols
+    send(klass).pluck(:id)
   end
 
   def grouped_analyses
