@@ -29,6 +29,7 @@ module Types
     field :stereo, GraphQL::Types::JSON, description: 'Stereo'
     field :metrics, String, description: 'Metrics'
     field :decoupled, Boolean, description: 'Sample is decoupled?'
+    field :inventory_sample, Boolean, description: 'Sample belongs to chemical inventory'
     field :molecular_mass, Float, description: 'Molecular mass of sample'
     field :sum_formula, String, description: 'Sum formula'
     field :solvent, GraphQL::Types::JSON, description: 'Solvent'

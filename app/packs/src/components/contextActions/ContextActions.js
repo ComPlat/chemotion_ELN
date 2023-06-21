@@ -53,7 +53,7 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div style={{ display: 'inline', float: 'left' }}>
+      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
         <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}
@@ -71,7 +71,7 @@ export default class ContextActions extends React.Component {
         <ButtonGroup style={{ marginLeft: '10px' }}>
           <InboxButton />
         </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
+        <ButtonGroup style={{ marginLeft: '20px' }}>
           <NoticeButton />
         </ButtonGroup>
       </div>

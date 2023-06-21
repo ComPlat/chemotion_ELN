@@ -416,6 +416,9 @@ GEM
     httpclient (2.8.3)
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
+    icalendar (2.8.0)
+      ice_cube (~> 0.16)
+    ice_cube (0.16.4)
     image_processing (1.12.2)
       mini_magick (>= 4.9.5, < 5)
       ruby-vips (>= 2.0.17, < 3)
@@ -906,6 +909,7 @@ DEPENDENCIES
   haml-rails
   hashie-forbidden_attributes
   httparty
+  icalendar
   image_processing (~> 1.8)
   inchi-gem (= 1.06.1)!
   jquery-rails

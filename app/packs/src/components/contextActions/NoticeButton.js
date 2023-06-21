@@ -8,6 +8,8 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import CalendarActions from 'src/stores/alt/actions/CalendarActions';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
 
 const changeUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
 
@@ -46,6 +48,8 @@ const handleNotification = (nots, act, needCallback = true) => {
       };
       NotificationActions.add(notification);
 
+      const { currentPage, itemsPerPage } = InboxStore.getState();
+
       switch (n.content.action) {
         case 'CollectionActions.fetchMyCollections':
           CollectionActions.fetchMyCollections();
@@ -54,7 +58,7 @@ const handleNotification = (nots, act, needCallback = true) => {
           CollectionActions.fetchMyCollections();
           break;
         case 'InboxActions.fetchInbox':
-          InboxActions.fetchInbox();
+          InboxActions.fetchInbox({ currentPage, itemsPerPage });
           break;
         case 'ReportActions.updateProcessQueue':
           ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);
@@ -67,6 +71,9 @@ const handleNotification = (nots, act, needCallback = true) => {
           break;
         case 'ElementActions.fetchResearchPlanById':
           ElementActions.fetchResearchPlanById(parseInt(n.content.research_plan_id, 10));
+          break;
+        case 'CalendarActions.navigateToElement':
+          CalendarActions.navigateToElement(n.content.eventable_type, n.content.eventable_id);
           break;
         default:
         //
