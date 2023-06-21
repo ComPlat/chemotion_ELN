@@ -1,5 +1,8 @@
 import CellLine from 'src/models/cellLine/CellLine';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+
 import {
   extractApiParameter
 
@@ -9,11 +12,11 @@ export default class CellLinesFetcher {
   static mockData = {};
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-   return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
   }
 
   static fetchById(id) {
-   const promise = fetch('/api/v1/cell_lines/'+id, {
+    const promise = fetch(`/api/v1/cell_lines/${id}`, {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
@@ -30,25 +33,43 @@ export default class CellLinesFetcher {
   }
 
   static create(cellLine) {
+    const files = AttachmentFetcher.getFileListfrom(cellLine.container);
+
     const params = extractApiParameter(cellLine);
-    const promise = fetch('/api/v1/cell_lines', {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST',
-      body: JSON.stringify(params)
-    })
+
+    const promise = CellLinesFetcher.uploadAttachments(files)
+      .then(() => fetch('/api/v1/cell_lines', {
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify(params)
+      }))
+
       .then((response) => response.json())
+      .then((json) => { GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample'); return json; })
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+
     return promise;
   }
 
-  static getAllCellLineNames(){
+  static uploadAttachments(files) {
+    if (files.length > 0) {
+      const tasks = [];
+      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => {
+        Promise.resolve(1);
+      });
+    }
+    return Promise.resolve(1);
+  }
+
+  static getAllCellLineNames() {
     return fetch('/api/v1/cell_lines/names/all', {
       credentials: 'same-origin',
       headers: {
@@ -56,22 +77,22 @@ export default class CellLinesFetcher {
         'Content-Type': 'application/json'
       },
       method: 'GET'
-    }) .then((response) => response.json())
+    }).then((response) => response.json());
   }
-  static getCellLineMaterialById(id){
-    return fetch('/api/v1/cell_lines/material/'+id, {
+
+  static getCellLineMaterialById(id) {
+    return fetch(`/api/v1/cell_lines/material/${id}`, {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       method: 'GET'
-    }) .then((response) => response.json())
+    }).then((response) => response.json());
   }
 
   static update(cellLineItem) {
     const params = extractApiParameter(cellLineItem);
-    params
     const promise = fetch('/api/v1/cell_lines', {
       credentials: 'same-origin',
       headers: {
