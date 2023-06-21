@@ -33,11 +33,9 @@ export default class CellLinesFetcher {
   }
 
   static create(cellLine) {
-    const files = AttachmentFetcher.getFileListfrom(cellLine.container);
-
     const params = extractApiParameter(cellLine);
 
-    const promise = CellLinesFetcher.uploadAttachments(files)
+    const promise = CellLinesFetcher.uploadAttachments(cellLine)
       .then(() => fetch('/api/v1/cell_lines', {
         credentials: 'same-origin',
         headers: {
@@ -58,7 +56,9 @@ export default class CellLinesFetcher {
     return promise;
   }
 
-  static uploadAttachments(files) {
+  static uploadAttachments(cellLine) {
+    const files = AttachmentFetcher.getFileListfrom(cellLine.container);
+
     if (files.length > 0) {
       const tasks = [];
       files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
@@ -93,15 +93,18 @@ export default class CellLinesFetcher {
 
   static update(cellLineItem) {
     const params = extractApiParameter(cellLineItem);
-    const promise = fetch('/api/v1/cell_lines', {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'PUT',
-      body: JSON.stringify(params)
-    })
+    const promise = CellLinesFetcher.uploadAttachments(cellLineItem)
+      .then(() => {
+        fetch('/api/v1/cell_lines', {
+          credentials: 'same-origin',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          method: 'PUT',
+          body: JSON.stringify(params)
+        });
+      })
       .then((response) => response.json())
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .catch((errorMessage) => {

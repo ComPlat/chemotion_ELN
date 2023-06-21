@@ -39,5 +39,7 @@ class CreateCelllineModels < ActiveRecord::Migration[6.1]
       t.integer "cellline_sample_id"
       t.datetime "deleted_at"
     end
+
+    add_column :collections, :celllinesample_detail_level, :int
   end
 end

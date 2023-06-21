@@ -86,6 +86,8 @@ class ElementPermissionProxy
       10
     when Element
       10
+    when CelllineSample
+      10
     end
   end
 
