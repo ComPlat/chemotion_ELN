@@ -328,8 +328,9 @@ export default class ChemicalTab extends React.Component {
     const updateSampleProperty = (propertyName, propertyValue) => {
       if (propertyValue) {
         const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
-        const lowerBound = rangeValues[0];
-        const upperBound = rangeValues.length === 2 ? rangeValues[1] : Number.POSITIVE_INFINITY;
+        // replace hyphen with minus sign and parse
+        const lowerBound = parseFloat(rangeValues[0].replace('−', '-')) || Number.NEGATIVE_INFINITY;
+        const upperBound = rangeValues.length === 2 ? parseFloat(rangeValues[1].replace('−', '-')) : Number.POSITIVE_INFINITY;
         sample.updateRange(propertyName, lowerBound, upperBound);
       }
     };
@@ -651,9 +652,6 @@ export default class ChemicalTab extends React.Component {
           ? (
             <div>
               <i className="fa fa-spinner fa-pulse fa-fw" />
-              <span className="visually-hidden">
-                Loading...
-              </span>
             </div>
           )
           : <i className="fa fa-save" />}
@@ -685,13 +683,17 @@ export default class ChemicalTab extends React.Component {
 
   queryOption() {
     const { queryOption } = this.state;
+    const { sample } = this.props;
+    const cas = sample.xref?.cas ?? '';
     const queryOptions = [
       { label: 'Common Name', value: 'Common Name' },
       { label: 'CAS', value: 'CAS' }
     ];
+    const conditionalOverlay = 'Assign a cas number using the cas field in labels section for better search results using cas number';
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="sds-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
+      <OverlayTrigger placement="top" overlay={cas && cas !== '' ? <div /> : <Tooltip id="sds-query-message">{conditionalOverlay}</Tooltip>}>
+
         <FormGroup>
           <ControlLabel>Query SDS using</ControlLabel>
           <Select
