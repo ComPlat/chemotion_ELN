@@ -492,7 +492,8 @@ export default class NoticeButton extends React.Component {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '.04px'
+            marginBottom: '.04px',
+            marginLeft: '-10px'
           }}
         >
           <i
