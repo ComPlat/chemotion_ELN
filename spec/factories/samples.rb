@@ -47,4 +47,44 @@ FactoryBot.define do
       sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
     end
   end
+
+  factory :sample_with_image_in_analysis, class: Sample do
+    sequence(:name) { |i| "Sample #{i}" }
+
+    target_amount_value { 100 }
+    target_amount_unit { 'mg' }
+    callback(:before_create) do |sample|
+      user =  sample.creator || FactoryBot.create(:user)
+      sample.creator = user
+      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
+      sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
+      sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+      attachment = FactoryBot.create(:attachment, :with_image,
+        attachable_id: sample.container.children[0].children[0],
+        created_for: user.id,
+        attachable_type: 'Container')
+        sample.container.children[0].children[0].attachments<<attachment;
+    end
+  end
+
+  factory :sample_with_annotated_image_in_analysis, class: Sample do
+    sequence(:name) { |i| "Sample #{i}" }
+
+    target_amount_value { 100 }
+    target_amount_unit { 'mg' }
+
+    callback(:before_create) do |sample|
+      user =  sample.creator || FactoryBot.create(:user)
+      sample.creator = user
+      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
+      sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
+      sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+
+      attachment = FactoryBot.create(:attachment, :with_annotation,
+        attachable_id: sample.container.children[0].children[0].id,
+        created_for: user.id,
+        attachable_type: 'Container'
+      )
+    end
+  end
 end

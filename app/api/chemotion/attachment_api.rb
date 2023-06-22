@@ -44,8 +44,8 @@ module Chemotion
       error!(message, 404)
     end
 
-    resource :attachments do # rubocop:disable Metrics/BlockLength
-      before do # rubocop:disable Metrics/BlockLength
+    resource :attachments do
+      before do
         @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
@@ -163,7 +163,9 @@ module Chemotion
 
         env['api.format'] = :binary
         store = @attachment.attachment.storage.directory
-        file_location = store.join(@attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] ||'not available')
+        file_location = store.join(
+          @attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] || 'not available',
+        )
 
         uploaded_file = if file_location.present? && File.file?(file_location)
                           extension_of_annotation = File.extname(@attachment.filename)
@@ -238,20 +240,30 @@ module Chemotion
       end
 
       desc 'Download the zip attachment file'
-      get 'zip/:container_id' do # rubocop:disable Metrics/BlockLength
+      get 'zip/:container_id' do
         env['api.format'] = :binary
         content_type('application/zip, application/octet-stream')
         filename = CGI.escape("#{@container.parent&.name&.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         zip = Zip::OutputStream.write_buffer do |zip| # rubocop:disable Lint/ShadowingOuterLocalVariable
+          file_text = ''
           @container.attachments.each do |att|
             zip.put_next_entry att.filename
             zip.write att.read_file
-          end
-          file_text = ''
-          @container.attachments.each do |att|
             file_text += "#{att.filename} #{att.checksum}\n"
+            next unless att.annotated?
+
+            begin
+              annotated_file_name = "#{File.basename(att.filename, '.*')}_annotated#{File.extname(att.filename)}"
+              zip.put_next_entry annotated_file_name
+              file = File.open(att.annotated_file_location)
+              zip.write file.read
+              file_text += "#{annotated_file_name} #{file.size}\n"
+            ensure
+              file.close
+            end
           end
+
           hyperlinks_text = ''
           JSON.parse(@container.extended_metadata.fetch('hyperlinks', '[]')).each do |link|
             hyperlinks_text += "#{link} \n"

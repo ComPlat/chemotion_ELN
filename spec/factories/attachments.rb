@@ -55,22 +55,14 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.tif') }
     end
 
-    # TODO: fix this trait - cant be used atm
     trait :with_annotation do
       filename { 'upload.jpg' }
-      FileUtils.cp(Rails.root.join('spec/fixtures/upload.jpg'), '/tmp/tmp.jpg')
-      FileUtils.cp(Rails.root.join('spec/fixtures/upload.svg'), '/tmp/tmp.svg')
-      attachment_data do
-        {
-          'id' => '/tmp/tmp.svg',
-          'storage' => 'store',
-          'derivatives' => {
-            'annotation' => {
-              'id' => File.join('/tmp/tmp.svg'),
-              'storage' => 'store',
-            },
-          },
-        }
+      file_path { Rails.root.join('spec/fixtures/upload.jpg') }
+
+      after(:create) do |attachment|
+        attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] = attachment.attachment.id
+
+        attachment.update_columns(attachment_data: attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
     end
 
