@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Table } from 'react-bootstrap';
-import { Confirm } from 'react-confirm-bootstrap';
 import moment from 'moment';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { formatSection, getAllComments, selectCurrentUser } from 'src/utilities/CommentHelper';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
+import DeleteComment from 'src/components/common/DeleteComment';
 
 export default class CommentDetails extends Component {
   constructor(props) {
@@ -81,22 +81,10 @@ export default class CommentDetails extends Component {
               {
                 commentByCurrentUser(comment, currentUser)
                   ? (
-                    <Confirm
-                      onConfirm={() => deleteComment(comment)}
-                      body="Are you sure you want to delete this?"
-                      confirmText="Confirm Delete"
-                      title="Deleting Comment"
-                      showCancelButton
-                    >
-                      <Button
-                        id="deleteCommentBtn"
-                        bsStyle="danger"
-                        bsSize="xsmall"
-                        onClick={() => deleteComment(comment)}
-                      >
-                        <i className="fa fa-trash-o" />
-                      </Button>
-                    </Confirm>
+                    <DeleteComment
+                      comment={comment}
+                      onDelete={() => deleteComment(comment)}
+                    />
                   ) : null
               }
             </ButtonToolbar>

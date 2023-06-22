@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table } from 'react-bootstrap';
-import { Confirm } from 'react-confirm-bootstrap';
+import {
+  Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table
+} from 'react-bootstrap';
 import Draggable from 'react-draggable';
 import moment from 'moment';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
@@ -11,6 +12,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
 import CommentDetails from 'src/components/comments/CommentDetails';
+import DeleteComment from 'src/components/common/DeleteComment';
 import {
   formatSection,
   getAllComments,
@@ -197,24 +199,11 @@ export default class CommentModal extends Component {
               {
                 this.commentByCurrentUser(comment, currentUser)
                   ? (
-                    <Confirm
-                      onConfirm={() => this.deleteComment(comment)}
-                      body="Are you sure you want to delete this?"
-                      confirmText="Confirm Delete"
-                      title="Deleting Comment"
-                      showCancelButton
-                    >
-                      <Button
-                        id="deleteCommentBtn"
-                        bsStyle="danger"
-                        bsSize="xsmall"
-                        onClick={() => this.deleteComment(comment)}
-                      >
-                        <i className="fa fa-trash-o" />
-                      </Button>
-                    </Confirm>
-                  )
-                  : null
+                    <DeleteComment
+                      comment={comment}
+                      onDelete={() => this.deleteComment(comment)}
+                    />
+                  ) : null
               }
             </ButtonToolbar>
           </td>

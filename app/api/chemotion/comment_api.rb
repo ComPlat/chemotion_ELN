@@ -34,14 +34,12 @@ module Chemotion
         end
 
         put do
-          after_validation do
-            @comment = Comment.find(params[:id])
-            error!('404 Comment with given id not found', 404) if @comment.nil?
-            unless @comment.created_by == current_user.id || params[:status].eql?('Resolved')
-              error!('401 Unauthorized', 401)
-            end
-            error!('422 Unprocessable Entity', 422) if @comment.resolved?
+          @comment = Comment.find(params[:id])
+          error!('404 Comment with given id not found', 404) if @comment.nil?
+          unless @comment.created_by == current_user.id || params[:status].eql?('Resolved')
+            error!('401 Unauthorized', 401)
           end
+          error!('422 Unprocessable Entity', 422) if @comment.resolved?
 
           attributes = declared(params, include_missing: false)
           if params[:status].eql?('Resolved')
@@ -72,11 +70,9 @@ module Chemotion
         end
 
         delete do
-          after_validation do
-            @comment = Comment.find(params[:id])
-            error!('404 Comment with given id not found', 404) if @comment.nil?
-            error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id
-          end
+          @comment = Comment.find(params[:id])
+          error!('404 Comment with given id not found', 404) if @comment.nil?
+          error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id
 
           @comment.destroy
         end
@@ -98,14 +94,12 @@ module Chemotion
       end
 
       post do
-        after_validation do
-          @commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
-          @collections = Collection.where(id: @commentable.collections.ids)
+        @commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
+        @collections = Collection.where(id: @commentable.collections.ids)
 
-          allowed_user_ids = authorized_users(@collections)
+        allowed_user_ids = authorized_users(@collections)
 
-          error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
-        end
+        error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
 
         attributes = {
           content: params[:content],
