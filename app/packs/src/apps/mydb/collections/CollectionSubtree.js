@@ -2,12 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
 import { collectionShow, AviatorNavigation } from 'src/utilities/routesUtils';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import SharedByIcon from 'src/components/common/SharedByIcon';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -18,7 +17,6 @@ export default class CollectionSubtree extends React.Component {
       selected: false,
       root: props.root,
       visible: false,
-      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {}
     }
 
     this.onChange = this.onChange.bind(this)
@@ -178,28 +176,6 @@ export default class CollectionSubtree extends React.Component {
     CollectionActions.updateCollectionTree(visibleRootsIds)
   }
 
-  sharedByIcon() {
-    let collectionAcls = this.state.root.collection_acls;
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    if (collectionAcls === undefined) return;
-
-    let sharedUsers = [];
-    if (currentUser.id === this.state.root.user_id) {
-      collectionAcls.forEach(c => sharedUsers.push(c.user))
-    } else {
-      sharedUsers.push(this.state.root.user);
-    }
-
-    return (
-      sharedUsers && sharedUsers.length > 0
-        ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>
-            <i className="fa fa-share-alt" style={{ float: "right" }}></i>
-          </OverlayTrigger>
-        : null
-    )
-  }
-
-
   render() {
     const { fakeRoot } = this.props;
     const { label, root } = this.state;
@@ -221,7 +197,7 @@ export default class CollectionSubtree extends React.Component {
         <div id={`tree-id-${root.label}`} className={"title " + this.selectedCssClass()}
           onClick={this.handleClick}>
           {this.expandButton()}
-          {this.sharedByIcon()}
+          <SharedByIcon collection={root} />
           {gated}
           {label}
         </div>

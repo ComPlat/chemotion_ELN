@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 # desc: Helper methods for GrapeAPI::ReportAPI
+
+# rubocop: disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module ReportHelpers
   extend Grape::API::Helpers
 
@@ -66,10 +68,10 @@ module ReportHelpers
     JSON.parse(result) if result
   end
 
-  def reaction_smiles_sql(c_id, ids, checkedAll = false, u_ids = user_ids)
+  def reaction_smiles_sql(c_id, ids, checked_all = false, u_ids = user_ids)
     r_ids = [ids].flatten.join(',')
     u_ids = [u_ids].flatten.join(',')
-    if checkedAll && c_id
+    if checked_all && c_id
       all_ids = Collection.find_by(id: c_id)&.reactions&.pluck(:id) || []
       order = 'r_id asc'
       selection = (all_ids - ids).join(',')
@@ -78,6 +80,7 @@ module ReportHelpers
       selection = r_ids
     end
     return '' if selection.empty?
+
     <<~SQL
       select json_object_agg(r_id, smiles_json) as result from (
       select r_id, json_object_agg(stype, smiles_arr) as smiles_json from (
@@ -100,10 +103,9 @@ module ReportHelpers
           from (
             select s.id as s_id, s.molecule_id
             , s.is_top_secret -- as ts
-            -- , min(co.id) as co_id, min(scu.id) as scu_id
-            , bool_and(co.is_shared) as shared_sync
-            , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-            , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+            -- , min(co.id) as co_id, min(acl.id) as acl_id
+            , max(GREATEST(co.permission_level, acl.permission_level)) as pl
+            , max(GREATEST(co.sample_detail_level, acl.sample_detail_level)) dl_s
             from samples s
             inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
             left join collections co on (
@@ -112,11 +114,11 @@ module ReportHelpers
             left join collections sco on (
               sco.id = c_s.collection_id and sco.user_id not in (#{u_ids})
             )
-            left join sync_collections_users scu on (
-              sco.id = scu.collection_id and scu.user_id in (#{u_ids})
+            left join collection_acls acl on (
+              sco.id = acl.collection_id and acl.user_id in (#{u_ids})
             )
             where s.deleted_at isnull and c_s.deleted_at isnull
-              and (co.id is not null or scu.id is not null)
+              and (co.id is not null or acl.id is not null)
             group by s_id
           ) as s
         -- reactions_samples
@@ -176,9 +178,10 @@ module ReportHelpers
     + (v['2'] || []).join('.') + ' , ' + (v['3'] || []).join('.')
   end
 
-  def build_sql(table, columns, c_id, ids, checkedAll = false)
+  def build_sql(table, columns, c_id, ids, checked_all = false)
     return unless %i[sample reaction wellplate].include?(table)
-    send("build_sql_#{table}_sample", columns, c_id, ids, checkedAll)
+
+    send("build_sql_#{table}_sample", columns, c_id, ids, checked_all)
   end
 
   # desc: sql to view sample info (#columns)
@@ -186,19 +189,20 @@ module ReportHelpers
   # use to generate sql view given user id(s) wellplate ids and selected columns
   # to be used in excel report.
   # each sample row has info:
-  # - about being owned-by, shared-to, or sync-to user
+  # - about being owned-by, shared-to check in collection_acls
   # - max permission_level sample
   #   from collections sync_colls assigned to user
   # - selected columns from samples, molecules table
   #
-  def build_sql_sample_sample(columns, c_id, ids, checkedAll = false)
+  def build_sql_sample_sample(columns, c_id, ids, checked_all = false)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && s_ids.empty?
+    return if !checked_all && s_ids.empty?
 
-    if checkedAll
+    if checked_all
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
       selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
@@ -209,7 +213,7 @@ module ReportHelpers
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, acl_id, pl, dl_s
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
@@ -218,17 +222,16 @@ module ReportHelpers
           s.id as s_id
           , s.is_top_secret as ts
           , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+          , min(acl.id) as acl_id
+          , max(GREATEST(co.permission_level, acl.permission_level)) as pl
+          , max(GREATEST(co.sample_detail_level, acl.sample_detail_level)) dl_s
         from samples s
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+        left join collection_acls acl on (co.id = acl.collection_id and acl.user_id in (#{u_ids}))
         where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
+          and (co.id is not null or acl.id is not null)
         group by s_id
       ) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
@@ -239,15 +242,17 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
+  def build_sql_sample_analyses(columns, c_id, ids, checked_all = false)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && s_ids.empty?
+    return if !checked_all && s_ids.empty?
+
     t = 's' # table samples
     cont_type = 'Sample' # containable_type
-    if checkedAll
+    if checked_all
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
       selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
@@ -258,7 +263,7 @@ module ReportHelpers
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, acl_id, pl, dl_s
       , #{columns}
       , (select array_to_json(array_agg(row_to_json(analysis)))
         from (
@@ -296,17 +301,16 @@ module ReportHelpers
           s.id as s_id
           , s.is_top_secret as ts
           , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+          , min(acl.id) as acl_id
+          , max(GREATEST(co.permission_level, acl.permission_level)) as pl
+          , max(GREATEST(co.sample_detail_level, acl.sample_detail_level)) dl_s
         from samples s
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+        left join collection_acls acl on (sco.id = acl.collection_id and acl.user_id in (#{u_ids}))
         where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
+          and (co.id is not null or acl.id is not null)
         group by s_id
       ) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
@@ -331,14 +335,15 @@ module ReportHelpers
   # shared_sync == true => sample in at least 1 shared collection, no own coll
   # shared_sync == null => sample in at least 1 sync_coll, no shared, no own
   # 'co.id is not null or scu.id is not null' : validate associations with user
-  def build_sql_wellplate_sample(columns, c_id, ids, checkedAll = false)
+  def build_sql_wellplate_sample(columns, c_id, ids, checked_all = false)
     wp_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && wp_ids.empty?
+    return if !checked_all && wp_ids.empty?
 
-    if checkedAll
+    if checked_all
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'wp_id asc'
       selection = wp_ids.empty? && '' || "w.wellplate_id not in (#{wp_ids}) and"
@@ -349,7 +354,7 @@ module ReportHelpers
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, acl_id, pl, dl_s
       , dl_wp
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
@@ -359,11 +364,10 @@ module ReportHelpers
           s.id as s_id
           , s.is_top_secret as ts
           , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
-          , max(GREATEST(co.wellplate_detail_level,scu.wellplate_detail_level)) dl_wp
+          , min(acl.id) as acl_id
+          , max(GREATEST(co.permission_level, acl.permission_level)) as pl
+          , max(GREATEST(co.sample_detail_level, acl.sample_detail_level)) dl_s
+          , max(GREATEST(co.wellplate_detail_level, acl.wellplate_detail_level)) dl_wp
           , (array_agg(w.wellplate_id)) [1] as wp_id
           , (array_agg(w.position_x)) [1] as "wx"
           , (array_agg(w.position_y)) [1] as "wy"
@@ -372,9 +376,9 @@ module ReportHelpers
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
-        where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
+        left join collection_acls acl on (sco.id = acl.collection_id and acl.user_id in (#{u_ids}))
+        where #{selection} s.deleted_at is null and c_s.deleted_at is null
+          and (co.id is not null or acl.id is not null)
         group by s_id
       ) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
@@ -387,14 +391,15 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_reaction_sample(columns, c_id, ids, checkedAll = false)
+  def build_sql_reaction_sample(columns, c_id, ids, checked_all = false)
     r_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && r_ids.empty?
+    return if !checked_all && r_ids.empty?
 
-    if checkedAll
+    if checked_all
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'r_id asc'
       selection = r_ids.empty? && '' || "r_s.reaction_id not in (#{r_ids}) and"
@@ -405,7 +410,7 @@ module ReportHelpers
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, acl_id, pl, dl_s
       , dl_r
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
@@ -422,20 +427,19 @@ module ReportHelpers
           s.id as s_id
           , s.is_top_secret as ts
           , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
-          , max(GREATEST(co.reaction_detail_level,scu.reaction_detail_level)) dl_r
+          , min(acl.id) as acl_id
+          , max(GREATEST(co.permission_level, acl.permission_level)) as pl
+          , max(GREATEST(co.sample_detail_level, acl.sample_detail_level)) dl_s
+          , max(GREATEST(co.reaction_detail_level, acl.reaction_detail_level)) dl_r
           , (array_agg(r_s.reaction_id)) [1] as r_id
         from samples s
         inner join reactions_samples r_s on s.id = r_s.sample_id
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
-        where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
+        left join collection_acls acl on (sco.id = acl.collection_id and acl.user_id in (#{u_ids}))
+        where #{selection} s.deleted_at isnull and c_s.deleted_at is null
+          and (co.id is not null or acl.id is not null)
         group by s_id
       ) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
@@ -484,20 +488,20 @@ module ReportHelpers
         updated_at: ['s.updated_at', nil, 0],
         # deleted_at: ['wp.deleted_at', nil, 10],
         molecule_name: ['mn."name"', '"molecule name"', 1],
-        molarity_value: ['s."molarity_value"', '"molarity_value"', 0]
+        molarity_value: ['s."molarity_value"', '"molarity_value"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
         short_label: ['s.short_label', '"short label"', 0],
-        #molecule_name: ['mn."name"', '"molecule name"', 1]
+        # molecule_name: ['mn."name"', '"molecule name"', 1]
       },
       molecule: {
         cano_smiles: ['m.cano_smiles', '"canonical smiles"', 10],
         sum_formular: ['m.sum_formular', '"sum formula"', 10],
         inchistring: ['m.inchistring', 'inchistring', 10],
         molecular_weight: ['m.molecular_weight', '"MW"', 0],
-        inchikey: ['m.inchikey', '"InChI"', 10]
+        inchikey: ['m.inchikey', '"InChI"', 10],
       },
       wellplate: {
         name: ['wp."name"', '"wellplate name"', 10],
@@ -515,7 +519,7 @@ module ReportHelpers
         # created_at: ['w.created_at', nil, 10],
         # updated_at: ['w.updated_at', nil, 10],
         readouts: ['w.readouts', '"well readouts"', 10],
-        additive: ['w.additive', nil, 10]
+        additive: ['w.additive', nil, 10],
         # deleted_at: ['w.deleted_at', nil, 10],
       },
       reaction: {
@@ -541,24 +545,24 @@ module ReportHelpers
         # created_by: ['r.created', ni, 10l]
         # reactions_sample:
         equivalent: ['r_s.equivalent', '"r eq"', 10],
-        reference: ['r_s.reference', '"r ref"', 10]
+        reference: ['r_s.reference', '"r ref"', 10],
       },
       analysis: {
         name: ['anac."name"', '"name"', 10],
         description: ['anac.description', '"description"', 10],
         kind: ['anac.extended_metadata->\'kind\'', '"kind"', 10],
         content: ['anac.extended_metadata->\'content\'', '"content"', 10],
-        status: ['anac.extended_metadata->\'status\'', '"status"', 10]
+        status: ['anac.extended_metadata->\'status\'', '"status"', 10],
       },
       dataset: {
         name: ['datc."name"', '"dataset name"', 10],
         description: ['datc.description', '"dataset description"', 10],
-        instrument: ['datc.extended_metadata->\'instrument\'', '"instrument"', 10]
+        instrument: ['datc.extended_metadata->\'instrument\'', '"instrument"', 10],
       },
       attachment: {
         filename: ['att.filename', '"filename"', 10],
         checksum: ['att.checksum', '"checksum"', 10],
-      }
+      },
     }.freeze
 
   # desc: concatenate columns to be queried
@@ -573,7 +577,7 @@ module ReportHelpers
         elsif col == 'cas'
           selection << "s.xref->>'cas' as cas"
         elsif (s = attrs[table][col.to_sym])
-          selection << (s[1] && s[0] + ' as ' + s[1] || s[0])
+          selection << ((s[1] && "#{s[0]} as #{s[1]}") || s[0])
         end
       end
     end
@@ -589,7 +593,7 @@ module ReportHelpers
     when :wellplate
       columns.slice(:sample, :molecule, :wellplate)
     when :sample_analyses
-    # FIXME: slice analyses + process properly
+      # FIXME: slice analyses + process properly
       columns.slice(:analyses).merge(sample_id: params[:columns][:sample])
     # TODO: reaction analyses data
     # when :reaction_analyses
@@ -632,7 +636,7 @@ module ReportHelpers
       position_x
       position_y
       readouts
-    ]
+    ],
   }.freeze
 
   DEFAULT_COLUMNS_REACTION = {
@@ -662,13 +666,16 @@ module ReportHelpers
       sum_formular
       inchistring
       molecular_weight
-    ]
+    ],
   }.freeze
 
   def default_columns_reaction
     DEFAULT_COLUMNS_REACTION
   end
+
   def default_columns_wellplate
     DEFAULT_COLUMNS_WELLPLATE
   end
 end
+
+# rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity

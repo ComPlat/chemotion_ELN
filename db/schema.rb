@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_06_13_063121) do
+ActiveRecord::Schema.define(version: 2023_06_15_072940) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1524,8 +1524,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
