@@ -2,11 +2,30 @@ import CellLine from 'src/models/cellLine/CellLine';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 import {
   extractApiParameter
 
 } from 'src/utilities/CellLineUtils';
+
+const successfullyCreatedParameter = {
+  title: 'Element created',
+  message: 'Cell line sample successfully added',
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+};
+
+const errorMessageParameter = {
+  title: 'Error',
+  message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
+  level: 'error',
+  dismissible: 'button',
+  autoDismiss: 30,
+  position: 'tr'
+};
 
 export default class CellLinesFetcher {
   static mockData = {};
@@ -49,8 +68,13 @@ export default class CellLinesFetcher {
       .then((response) => response.json())
       .then((json) => { GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample'); return json; })
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
+      .then((cellLineItem) => {
+        NotificationActions.add(successfullyCreatedParameter);
+        return cellLineItem;
+      })
       .catch((errorMessage) => {
         console.log(errorMessage);
+        NotificationActions.add(errorMessageParameter);
       });
 
     return promise;
