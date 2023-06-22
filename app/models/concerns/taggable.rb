@@ -28,7 +28,7 @@ module Taggable
     data['element'] = args[:element_tag] if args[:element_tag]
     data['pubchem_cid'] = pubchem_tag if args[:pubchem_tag]
     data['analyses'] = analyses_tag if args[:analyses_tag]
-    data['collection_labels'] = collection_tag if args[:collection_tag]
+    data['collection_ids'] = collection_id if args[:collection_tag]
     tag.taggable_data = remove_blank_value(data)
   end
 
@@ -49,41 +49,11 @@ module Taggable
     inchikey? && tag.taggable_data&.fetch('pubchem_cid', nil)
   end
 
-  def collection_id(c)
-    if c.is_synchronized
-      SyncCollectionsUser.where(collection_id: c.id).first.id
-    else
-      c.id
-    end
-  end
-
-  # Populate Collections tag
-  def collection_tag
-    klass = Labimotion::Utils.col_by_element(self.class.name).underscore.pluralize
-    klass = 'collections_celllines' if klass == 'collections_cellline_samples'
+  # Populate Collection ids as tag
+  def collection_id
+    klass = "collections_#{self.class.name.underscore.pluralize}"
     return unless respond_to?(klass)
-
-    cols = []
-    send(klass).each do |cc|
-      next unless c = cc.collection
-      next if c.label == 'All' && c.is_locked
-
-      cols.push({
-                  name: c.label, is_shared: c.is_shared, user_id: c.user_id,
-                  id: c.id, shared_by_id: c.shared_by_id,
-                  is_synchronized: false
-                })
-      next unless c.is_synchronized
-
-      c.sync_collections_users&.each do |syn|
-        cols.push({
-                    name: c.label, is_shared: c.is_shared, user_id: syn.user_id,
-                    id: syn.id, shared_by_id: syn.shared_by_id,
-                    is_synchronized: c.is_synchronized
-                  })
-      end
-    end
-    cols
+    send(klass).pluck(:id)
   end
 
   def grouped_analyses
