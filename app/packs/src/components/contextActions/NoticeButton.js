@@ -12,6 +12,7 @@ import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import formatDate from 'src/utilities/timezoneHelper';
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
@@ -20,40 +21,6 @@ const changeUrl = (url, urlTitle) => (url ? (
 ) : (
   <span />
 ));
-
-const formatDate = (dateString) => {
-  const [datePart, timePart] = dateString.split(', ');
-  const [day, month, year] = datePart.split('.');
-  const [hours, minutes, seconds] = timePart.split(':');
-
-  // format date to js readable date
-  const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-
-  const creationDateObj = new Date(formattedDate);
-
-  // local timezone offset
-  const timeZoneOffset = creationDateObj.getTimezoneOffset();
-  const offsetHours = Math.floor(Math.abs(timeZoneOffset / 60));
-  const offsetMinutes = Math.abs(timeZoneOffset) % 60;
-
-  // apply time offset
-  creationDateObj.setHours(
-    creationDateObj.getHours()
-    + (timeZoneOffset < 0 ? offsetHours : -offsetHours)
-  );
-  creationDateObj.setMinutes(
-    creationDateObj.getMinutes()
-    + (timeZoneOffset < 0 ? offsetMinutes : -offsetMinutes)
-  );
-
-  // format date style to Intl.DateTimeFormat
-  const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  });
-
-  return dateFormatter.format(creationDateObj);
-};
 
 const handleNotification = (nots, act, needCallback = true) => {
   nots.forEach((n) => {
@@ -158,13 +125,7 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
     url: '/about',
     urlTitle: "Check what's new here",
   };
-  const infoTimeString = new Date().toLocaleDateString('de-DE', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const infoTimeString = formatDate(new Date().toString());
   const not = {
     id: -1,
     sender_name: 'System Administrator',
@@ -507,7 +468,7 @@ export default class NoticeButton extends React.Component {
               className="badge badge-pill"
               style={{
                 top: '25px',
-                left: '25px',
+                left: '20px',
                 fontSize: '8px',
                 position: 'absolute'
               }}
