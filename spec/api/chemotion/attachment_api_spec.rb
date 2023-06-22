@@ -282,7 +282,90 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/zip/{container_id}' do
-    pending 'not yet implemented'
+    let(:container_id) { sample.container.children[0].children[0].id }
+    let(:sample) { create(:sample_with_image_in_analysis) }
+    let(:execute) { get "/api/v1/attachments/zip/#{container_id}" }
+    let(:file_name) { response.header['Content-Disposition'].split('=').last.tr('"', '') }
+    let(:file_path) { Rails.root.join("public/zip/#{file_name}") }
+    let(:download_file) do
+      FileUtils.rm_f(file_path)
+      response.stream.each do |e|
+        File.write(file_path, e.force_encoding('UTF-8'))
+      end
+      response.stream.close
+    end
+
+    before do |example|
+      if example.metadata[:enable_download_access].present?
+        allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+        allow_any_instance_of(ElementPermissionProxy).to receive(:read_dataset?).and_return(true)
+      end
+    end
+
+    context 'when attachment is not available' do
+      before do
+        execute
+      end
+
+      it 'returns error' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when attachment is available', :enable_download_access do
+      context 'when attachment is image and not annotated' do
+        before do
+          execute
+          download_file
+        end
+
+        it 'returns correct statuscode' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'zip file contains 2 files' do
+          Zip::File.open(file_path) do |entry|
+            expect(entry.entries.length).to be 2
+          end
+        end
+
+        it 'image has correct size' do
+          Zip::File.open(file_path) do |entry|
+            entry.entries.each do |inner_entry|
+              expect(inner_entry.compressed_size).to be 163_143 if inner_entry.name == 'upload.jpg'
+            end
+          end
+        end
+
+        it 'description has correct size' do
+          Zip::File.open(file_path) do |entry|
+            entry.entries.each do |inner_entry|
+              expect(inner_entry.compressed_size).to be 110 if inner_entry.name == 'dataset_description.txt'
+            end
+          end
+        end
+      end
+
+      context 'when attachment is image and annotated' do
+        let(:sample2) { create(:sample_with_annotated_image_in_analysis) }
+        let(:execute) { get "/api/v1/attachments/zip/#{sample2.container.children[0].children[0].id}" }
+
+        before do
+          execute
+          download_file
+        end
+
+        it 'returns correct statuscode' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'zip file contains 3 files' do
+          Zip::File.open(file_path) do |entry|
+            expect(entry.entries.length).to be 3
+          end
+        end
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/sample_analyses/{sample_id}' do
@@ -581,6 +664,12 @@ describe Chemotion::AttachmentAPI do
         end
       end
     end
+  end
+end
+
+class ThumbnailerMock
+  def create_thumbnail(tmp_path)
+    tmp_path
   end
 end
 # rubocop:enable Rspec/NestedGroups
