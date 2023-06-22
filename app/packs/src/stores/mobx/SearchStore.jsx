@@ -127,6 +127,13 @@ export const SearchStore = types
         self.detail_search_values.push({ [key]: values });
       }
     },
+    removeDetailSearchValue(key) {
+      let index = self.detail_search_values.findIndex((x) => { return Object.keys(x).indexOf(key) != -1 })
+      if (index != -1) {
+        self.detail_search_values.splice(index, 1);
+      }
+      console.log(self.detail_search_values);
+    },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
         id: `${key}-${result.page || 1}`,

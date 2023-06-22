@@ -34,10 +34,10 @@ module Chemotion
           optional :name, type: String
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
-            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<'], default: 'LIKE'
-            optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements]
+            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '@>'], default: 'LIKE'
+            optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements segments]
             optional :element_id, type: Integer
-            optional :unit, type: String, values: ['', '°C', '°F', 'K', 'Hour(s)', 'Minute(s)', 'Second(s)', 'Week(s)', 'Day(s)']
+            optional :unit, type: String
             requires :field, type: Hash
             requires :value, type: String
           end
@@ -111,7 +111,7 @@ module Chemotion
       end
 
       def whitelisted_table(table:, column:, **_)
-        # return true if table == 'elements'
+        return true if %w[element segments].include?(table)
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
@@ -129,7 +129,6 @@ module Chemotion
 
       def duration_interval_by_unit(unit)
         case unit
-        # when 'Hour(s)' then 3600
         when 'Minute(s)' then 60
         when 'Second(s)' then 1
         when 'Week(s)' then 604_800
@@ -139,7 +138,15 @@ module Chemotion
         end
       end
 
+      def sanitize_float_fields(filter)
+        fields = %w[boiling_point melting_point density molarity_value target_amount_value]
+        fields.include?(filter['field']['column'])
+      end
+
       def sanitize_words(filter)
+        return [filter['value']] if filter['value'] == 'true'
+        return [filter['value'].to_f] if sanitize_float_fields(filter)
+
         no_sanitizing_columns = %w[temperature duration]
         sanitize = filter['match'] != '=' && no_sanitizing_columns.exclude?(filter['field']['column'])
         words = filter['value'].split(/(\r)?\n/).map!(&:strip)
@@ -153,8 +160,9 @@ module Chemotion
         model_name = ''
         joins = []
 
-        adv_params.each do |filter|
+        adv_params.each_with_index do |filter, i|
           filter['field']['table'] = filter['table']
+          filter['field']['column'] = filter['field']['column'] || filter['field']['field']
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
           additional_condition = ''
           first_condition = ''
@@ -167,8 +175,10 @@ module Chemotion
 
           field = filter['field']['column']
           field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
+          field = "stereo ->> '#{filter['field']['opt']}'" if field.include?('stereo')
           additional_condition = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
           words = sanitize_words(filter)
+          filter_match = filter['value'] == 'true' ? '=' : filter['match']
 
           case filter['field']['column']
           when 'body'
@@ -191,13 +201,28 @@ module Chemotion
             first_condition = "#{table}.duration IS NOT NULL AND #{table}.duration != '' AND "
             words[0] = words.first.to_i
             condition_table = ''
+          when 'target_amount_value'
+            additional_condition = "AND #{table}.target_amount_unit = '#{filter['unit']}'"
           when 'readout_titles'
             joins << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
             field = 'titles::TEXT'
             condition_table = ''
+          when 'purification' || 'dangerous_products'
+            field = "(#{table}.purification)::TEXT"
+            condition_table = ''
           end
 
-          conditions = words.collect { "#{first_condition}#{condition_table}#{field} #{filter['match']} ? #{additional_condition}" }.join(' OR ')
+          if table == 'elements' && %w[name short_label].exclude?(field)
+            key = filter['field']['key']
+            prop = "prop_#{key}_#{i}"
+            joins << "CROSS JOIN jsonb_array_elements(elements.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
+            field = "(#{prop} ->> 'value')::TEXT"
+            additional_condition = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
+            condition_table = ''
+          end
+
+          conditions =
+            words.collect { "#{first_condition}#{condition_table}#{field} #{filter_match} ? #{additional_condition}" }.join(' OR ')
           query = "#{query} #{filter['link']} (#{conditions}) "
           cond_val += words
         end

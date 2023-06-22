@@ -123,8 +123,15 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w[name short_label external_label xref content],
-    'reactions' => %w[name short_label status conditions rxno content temperature duration],
+    'samples' => %w[
+      name short_label external_label xref content is_top_secret decoupled
+      stereo boiling_point melting_point density molarity_value target_amount_value
+      description location
+    ],
+    'reactions' => %w[
+      name short_label status conditions rxno content temperature duration
+      role purification tlc_solvents tlc_description rf_value
+    ],
     'wellplates' => %w[name short_label readout_titles content],
     'screens' => %w[name collaborator requirements conditions result content],
     'research_plans' => %w[name body content],

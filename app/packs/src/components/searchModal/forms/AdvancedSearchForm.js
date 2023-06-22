@@ -40,9 +40,11 @@ const AdvancedSearchForm = () => {
     if (searchStore.detail_search_values.length >= 1) {
       searchStore.detailSearchValues.map((f, i) => {
         let values = { ...Object.values(f)[0] };
-        if (i == 0) { values['link'] = ''; }
         filteredOptions.push(values);
       });
+      if (filteredOptions[0]) {
+        filteredOptions[0].link = '';
+      }
     } else {
       filteredOptions = searchStore.advancedSearchValues.filter((f, id) => {
         return (f.field && f.link && f.value) ||

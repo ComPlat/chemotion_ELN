@@ -48,10 +48,21 @@ export default {
       },
       {
         value: {
+          column: 'xref',
+          opt: 'cas',
+          label: 'CAS',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'CAS'
+      },
+      {
+        value: {
           column: 'stereo',
           opt: 'abs',
           label: 'Stereo Abs',
           type: 'select',
+          option_layers: "stereoAbsOptions",
           advanced: false,
         },
         label: 'Stereo Abs'
@@ -62,6 +73,7 @@ export default {
           opt: 'rel',
           label: 'Stereo Rel',
           type: 'select',
+          option_layers: "stereoRelOptions",
           advanced: false,
         },
         label: 'Stereo Rel'
@@ -70,7 +82,8 @@ export default {
         value: {
           column: 'boiling_point',
           label: 'Boiling point',
-          type: 'select',
+          type: 'textWithAddOn',
+          addon: '°C',
           advanced: false,
         },
         label: 'Boiling point'
@@ -79,17 +92,18 @@ export default {
         value: {
           column: 'melting_point',
           label: 'Melting point',
-          type: 'select',
+          type: 'textWithAddOn',
+          addon: '°C',
           advanced: false,
         },
         label: 'Melting point'
       },
       {
         value: {
-          column: 'real_amount_value',
-          opt: 'real_amount_unit',
+          column: 'target_amount_value',
           label: 'Amount',
           type: 'system-defined',
+          option_layers: 'mass',
           advanced: false,
         },
         label: 'Amount'
@@ -98,20 +112,48 @@ export default {
         value: {
           column: 'density',
           label: 'Density',
-          type: 'text',
+          type: 'textWithAddOn',
+          addon: 'g/ml',
           advanced: false,
         },
         label: 'Density'
       },
       {
         value: {
-          column: 'xref',
-          opt: 'cas',
-          label: 'CAS',
-          type: 'text',
-          advanced: true,
+          column: 'molarity_value',
+          label: 'Molarity',
+          type: 'textWithAddOn',
+          addon: 'M',
+          advanced: false,
         },
-        label: 'CAS'
+        label: 'Molarity'
+      },
+      {
+        value: {
+          column: 'purity',
+          label: 'Purity / Concentration',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Purity / Concentration'
+      },
+      {
+        value: {
+          column: 'description',
+          label: 'Description',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Description'
+      },
+      {
+        value: {
+          column: 'location',
+          label: 'Location',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Location'
       },
       {
         value: {
@@ -147,6 +189,7 @@ export default {
           column: 'status',
           label: 'Status',
           type: 'select',
+          option_layers: 'statusOptions',
           advanced: true,
         },
         label: 'Status'
@@ -165,6 +208,7 @@ export default {
           column: 'temperature',
           label: 'Temperature',
           type: 'system-defined',
+          option_layers: 'temperature',
           advanced: true,
         },
         label: 'Temperature'
@@ -174,6 +218,7 @@ export default {
           column: 'duration',
           label: 'Duration',
           type: 'system-defined',
+          option_layers: 'duration',
           advanced: true,
         },
         label: 'Duration'
@@ -182,10 +227,67 @@ export default {
         value: {
           column: 'rxno',
           label: 'Type',
-          type: 'select',
+          type: 'rxnos',
           advanced: true,
         },
         label: 'Type'
+      },
+      {
+        value: {
+          column: 'role',
+          label: 'Role',
+          type: 'select',
+          option_layers: 'rolesOptions',
+          advanced: false,
+        },
+        label: 'Role'
+      },
+      {
+        value: {
+          column: 'purification',
+          label: 'Purification',
+          type: 'select',
+          option_layers: 'purificationOptions',
+          advanced: false,
+        },
+        label: 'Purification'
+      },
+      {
+        value: {
+          column: 'dangerous_products',
+          label: 'Dangerous Products',
+          type: 'select',
+          option_layers: 'dangerousProductsOptions',
+          advanced: false,
+        },
+        label: 'Dangerous Products'
+      },
+      {
+        value: {
+          column: 'tlc_solvents',
+          label: 'TLC Solvents (parts)',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'TLC Solvents (parts)'
+      },
+      {
+        value: {
+          column: 'rf_value',
+          label: 'Rf-Value',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Rf-Value'
+      },
+      {
+        value: {
+          column: 'tlc_description',
+          label: 'TLC-Description',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'TLC-Description'
       },
       {
         value: {

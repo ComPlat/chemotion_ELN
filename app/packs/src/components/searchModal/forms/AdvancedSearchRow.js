@@ -7,13 +7,14 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import SelectFieldData from './SelectFieldData';
 import { mapperFields, unitMapperFields } from './SelectMapperData';
-import { statusOptions } from 'src/components/staticDropdownOptions/options';
+import { statusOptions, temperatureOptions, durationOptions } from 'src/components/staticDropdownOptions/options';
 
 const AdvancedSearchRow = ({ idx }) => {
   const searchStore = useContext(StoreContext).search;
   let selection = searchStore.advancedSearchValues[idx];
+  let searchElement = searchStore.searchElement;
   let mapperOptions = mapperFields;
-  let fieldOptions = SelectFieldData.fields[searchStore.searchElement.table];
+  let fieldOptions = SelectFieldData.fields[searchElement.table];
   fieldOptions = fieldOptions.filter(f => {
     return f.value.advanced === true && f.value.advanced !== undefined
   });
@@ -28,19 +29,6 @@ const AdvancedSearchRow = ({ idx }) => {
   ];
 
   const { rxnos, genericEls } = UserStore.getState();
-  const temperatureOptions = [
-    { value: '°C', label: '°C' },
-    { value: '°F', label: '°F' },
-    { value: 'K', label: 'K' }
-  ];
-  
-  const durationOptions = [
-    { value: 'Hour(s)', label: 'Hour(s)' },
-    { value: 'Minute(s)', label: 'Minute(s)' },
-    { value: 'Second(s)', label: 'Second(s)' },
-    { value: 'Week(s)', label: 'Week(s)' },
-    { value: 'Day(s)', label: 'Day(s)' },
-  ];
 
   const formElementValue = (formElement, e) => {
     switch (formElement) {
@@ -88,6 +76,8 @@ const AdvancedSearchRow = ({ idx }) => {
     let value = formElementValue(formElement, e, e.currentTarget);
     let searchValues = { ...searchStore.advancedSearchValues[idx] };
     searchValues[formElement] = value;
+    searchValues['table'] = searchElement.table;
+    searchValues['element_id'] = searchElement.element_id
 
     const fieldColumn = searchValues.field.column;
     const additionalFields = ['temperature', 'duration'];

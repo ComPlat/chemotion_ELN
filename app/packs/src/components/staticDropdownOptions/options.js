@@ -603,3 +603,45 @@ export const conditionsOptions = [{
   label: 'pH > value',
   value: 'pH &gt; value' /* &gt; renders > in HTML */
 }];
+
+export const temperatureOptions = [
+  { value: '°C', label: '°C' },
+  { value: '°F', label: '°F' },
+  { value: 'K', label: 'K' }
+];
+  
+export const durationOptions = [
+  { value: 'Hour(s)', label: 'Hour(s)' },
+  { value: 'Minute(s)', label: 'Minute(s)' },
+  { value: 'Second(s)', label: 'Second(s)' },
+  { value: 'Week(s)', label: 'Week(s)' },
+  { value: 'Day(s)', label: 'Day(s)' },
+];
+
+export const stereoAbsOptions = [
+  { label: 'any', value: 'any' },
+  { label: 'rac', value: 'rac' },
+  { label: 'meso', value: 'meso' },
+  { label: 'delta', value: 'delta' },
+  { label: 'lambda', value: 'lambda' },
+  { label: '(S)', value: '(S)' },
+  { label: '(R)', value: '(R)' },
+  { label: '(Sp)', value: '(Sp)' },
+  { label: '(Rp)', value: '(Rp)' },
+  { label: '(Sa)', value: '(Sa)' },
+  { label: '(Ra)', value: '(Ra)' },
+];
+
+export const stereoRelOptions = [
+  { label: 'any', value: 'any' },
+  { label: 'syn', value: 'syn' },
+  { label: 'anti', value: 'anti' },
+  { label: 'p-geminal', value: 'p-geminal' },
+  { label: 'p-ortho', value: 'p-ortho' },
+  { label: 'p-meta', value: 'p-meta' },
+  { label: 'p-para', value: 'p-para' },
+  { label: 'cis', value: 'cis' },
+  { label: 'trans', value: 'trans' },
+  { label: 'fac', value: 'fac' },
+  { label: 'mer', value: 'mer' },
+];

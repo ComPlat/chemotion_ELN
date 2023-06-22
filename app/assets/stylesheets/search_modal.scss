@@ -251,8 +251,51 @@ i.fa.icon-right {
     overflow: visible !important;
     margin-left: 15px;
   }
-  .detail-search .form-group {
+  .detail-search .form-group, .detail-search .checkbox, .detail-search .ant-select {
     width: 24%;
     margin-right: 1%;
+  }
+  .detail-search .ant-select {
+    width: 100%;
+  }
+  .detail-search .checkbox, .detail-search .radio + .radio, .detail-search .checkbox + .checkbox {
+    padding-top: 17px;
+    margin-top: 10px;
+  }
+  .detail-search-headline {
+    flex-basis: 100%;
+    font-weight: 700;
+    font-size: 1.15em;
+    color: rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+    padding-bottom: 3px;
+    margin-bottom: 15px;
+  }
+  .detail-search .css-yk16xz-control {
+    height: 34px;
+  }
+  .detail-search .css-yk16xz-control, .detail-search .css-1pahdxg-control {
+    min-height: 34px;
+    height: 34px;
+  }
+  .detail-search .css-1wa3eu0-placeholder, .detail-search .css-1uccc91-singleValue {
+    top: 42%;
+  }
+  .detail-search ul.ant-select-tree li .ant-select-tree-node-content-wrapper, .detail-search .react-select-4-option-0 {
+    display: block;
+    height: 17px;
+  }
+  .detail-search .css-26l3qy-menu {
+    z-index: 10000;
+  }
+  .detail-search hr.generic-spacer {
+    border-top: 1px solid rgba(0, 0, 0, 0.5);
+    margin-top: 0;
+    margin-bottom: 15px;
+    flex-basis: 100%;
+  }
+  .detail-search .grey-field {
+    background-color: #555;
+    border: 1px solid #ccc;
   }
 }
