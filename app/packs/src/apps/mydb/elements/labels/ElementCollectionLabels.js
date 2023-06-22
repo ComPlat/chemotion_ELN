@@ -4,8 +4,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 import uuid from 'uuid';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { AviatorNavigation } from 'src/utilities/routesUtils';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import SharedByIcon from 'src/components/common/SharedByIcon';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -28,33 +29,31 @@ export default class ElementCollectionLabels extends React.Component {
     e.stopPropagation();
   }
 
-  labelStyle(label) {
-    return label.is_shared ? 'warning' : 'info';
-  }
-
-  formatLabels(labels, isSync = false) {
-    return labels.map((label) => (
+  formatLabels(collections) {
+    return collections.map((collection) => (
       <span className="collection-label" key={uuid.v4()}>
         <Button
-          disabled={isSync === true && label.isOwner === true}
+          disabled={(collection.acl?.length > 0) && collection.ownedByMe()}
           bsStyle="default" bsSize="xs"
-          onClick={(e) => this.handleOnClick(label, e)}
+          onClick={(e) => this.handleOnClick(collection, e)}
         >
-          {label.name}
+          {collection.label}
+          &nbsp;
+          <SharedByIcon collection={collection}/>
         </Button>
         &nbsp;
       </span>
     ));
   }
 
-  renderCollectionsLabels(collectionName, labels, isSync = false) {
+  renderCollectionsLabels(collectionName, labels) {
     if (labels.length == 0) return <span />;
 
     return (
       <div>
         <h3 className="popover-title">{collectionName}</h3>
         <div className="popover-content">
-          {this.formatLabels(labels, isSync)}
+          {this.formatLabels(labels)}
         </div>
       </div>
     );
@@ -67,40 +66,30 @@ export default class ElementCollectionLabels extends React.Component {
       return (<span />);
     }
 
-    let { currentUser } = UserStore.getState();
-    currentUser = currentUser || {};
+    let placement = 'left';
+    if (this.props.placement) placement = this.props.placement;
 
-    const { collection_labels } = element.tag.taggable_data;
-    const shared_labels = [];
-    const labels = [];
-    const sync_labels = [];
-    collection_labels.forEach((label) => {
-      if (label) {
-        if (!label.is_shared && !label.is_synchronized && label.user_id === currentUser.id) {
-          labels.push(label);
-        } else if (label.is_shared && !label.is_synchronized
-          && (label.user_id === currentUser.id || label.shared_by_id === currentUser.id)) {
-          shared_labels.push(label);
-        } else if (label.is_synchronized && (label.user_id
-          === currentUser.id || label.shared_by_id === currentUser.id)) {
-          let isOwner = false;
-          if (label.shared_by_id === currentUser.id) {
-            isOwner = true;
-          }
-          sync_labels.push({ ...label, isOwner });
-        }
+    let collection_ids = element.tag.taggable_data?.collection_ids;
+    let collections = [];
+    collection_ids.forEach(id => collections.push(CollectionStore.findCollectionById(id)));
+
+    let shared_labels = [];
+    let labels = [];
+    collections.map((collection) => {
+      if (collection.ownedByMe()) {
+        labels.push(collection);
+      } else {
+        shared_labels.push(collection);
       }
     });
 
-    const total_shared_collections = shared_labels.length + sync_labels.length;
-
-    if (labels.length === 0 && total_shared_collections === 0) { return (<span />); }
+    if (labels.length == 0 && shared_labels.length == 0)
+      return (<span />);
 
     const collectionOverlay = (
       <Popover className="collection-overlay" id="element-collections">
-        {this.renderCollectionsLabels('My Collections', labels)}
-        {this.renderCollectionsLabels('Shared Collections', shared_labels)}
-        {this.renderCollectionsLabels('Synchronized Collections', sync_labels, true)}
+        {this.renderCollectionsLabels("My Collections", labels)}
+        {this.renderCollectionsLabels("Shared Collections", shared_labels)}
       </Popover>
     );
 
@@ -115,10 +104,8 @@ export default class ElementCollectionLabels extends React.Component {
           <span className="collection-label" key={element.id}>
             <Label>
               <i className="fa fa-list" />
-              {` ${labels.length} `}
-              {' - '}
-              {`${total_shared_collections} `}
-              <i className="fa fa-share-alt" />
+              {" " + labels.length} {" - "}
+              {shared_labels.length + " "} <i className="fa fa-share-alt" />
             </Label>
           </span>
         </OverlayTrigger>
