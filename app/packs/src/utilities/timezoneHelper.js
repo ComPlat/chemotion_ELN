@@ -10,18 +10,12 @@ const formatDate = (dateString) => {
 
   // local timezone offset
   const timeZoneOffset = creationDateObj.getTimezoneOffset();
-  const offsetHours = Math.floor(Math.abs(timeZoneOffset / 60));
-  const offsetMinutes = Math.abs(timeZoneOffset) % 60;
+  const offsetHours = Math.trunc(timeZoneOffset / 60);
+  const offsetMinutes = timeZoneOffset % 60;
 
   // apply time offset
-  creationDateObj.setHours(
-    creationDateObj.getHours()
-    + (timeZoneOffset < 0 ? offsetHours : -offsetHours)
-  );
-  creationDateObj.setMinutes(
-    creationDateObj.getMinutes()
-    + (timeZoneOffset < 0 ? offsetMinutes : -offsetMinutes)
-  );
+  creationDateObj.setHours(creationDateObj.getHours() + offsetHours);
+  creationDateObj.setMinutes(creationDateObj.getMinutes() + offsetMinutes);
 
   // format date style to Intl.DateTimeFormat
   const dateFormatter = new Intl.DateTimeFormat(undefined, {
