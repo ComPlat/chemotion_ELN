@@ -12,7 +12,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from '../../../../stores/alt/actions/CollectionActions';
-import { getElementSegments } from '../../../../utilities/ElementUtils';
+import { filterTabLayout, getArrayFromLayout, getLayout } from 'src/utilities/CollectiontabsHelper';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;
@@ -26,53 +26,6 @@ const getNodeText = (node) => {
     return '';
   }
   return '';
-};
-
-const getArrayFromLayout = (layout, availableTabs, addInventoryTab) => {
-  const layoutKeys = Object.keys(layout);
-  if (addInventoryTab) {
-    layout.inventory = layoutKeys.length + 1;
-  }
-  const enabled = availableTabs.filter(val => layoutKeys.includes(val));
-  const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
-  const visible = [];
-  const hidden = [];
-
-  enabled.forEach((key) => {
-    const order = layout[key];
-    if (order < 0) { hidden[Math.abs(order)] = key; }
-    if (order > 0) { visible[order] = key; }
-  });
-
-  leftover.forEach(key => hidden.push(key));
-
-  let first = null;
-  if (visible.length === 0) {
-    first = hidden.filter(n => n !== undefined)[0];
-    if (first) {
-      visible.push(first);
-    }
-  }
-  if (hidden.length === 0) {
-    hidden.push('hidden');
-  }
-  return {
-    visible: Immutable.List(visible.filter(n => n !== undefined)),
-    hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
-  };
-};
-
-const filterTabLayout = (layoutState) => {
-  const { visible, hidden } = layoutState;
-  const layout = {};
-
-  visible.forEach((value, index) => {
-    layout[value] = (index + 1);
-  });
-  hidden.filter(val => val !== 'hidden').forEach((value, index) => {
-    layout[value] = (-index - 1);
-  });
-  return layout;
 };
 
 export default class ElementDetailSortTab extends Component {
@@ -108,16 +61,15 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    const { availableTabs, addInventoryTab } = this.props;
+    let { availableTabs, addInventoryTab } = this.props;
     const currentCollection = UIStore.getState().currentCollection;
     const tabs = currentCollection?.tabs_segment;
-    let layout = {};
-    if (tabs && tabs.hasOwnProperty(`${this.type}`) && tabs[`${this.type}`]) {
-      layout = tabs[`${this.type}`]
-    } else if(state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]){
-      layout = state.profile.data[`layout_detail_${this.type}`]
+    let layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]
+    if (!_.isEmpty(tabs[`${this.type}`])) {
+      layout = getLayout(Object.keys(tabs[`${this.type}`]), layout);
     }
-    const { visible, hidden } = getArrayFromLayout(layout, availableTabs, addInventoryTab);
+
+    const { visible, hidden } = getArrayFromLayout(layout, this.type, availableTabs, addInventoryTab);
 
     this.setState(
       { visible, hidden },
@@ -170,7 +122,7 @@ export default class ElementDetailSortTab extends Component {
         style={{ maxWidth: 'none', width: `${wd}px`, position: 'sticky' }}
       >
         <div>
-          <h3 className="popover-title">Tab Layout</h3>
+          <h3 className="popover-title">Tab Layout later</h3>
           <div className="popover-content">
             {tabLayoutContainerElement}
           </div>
