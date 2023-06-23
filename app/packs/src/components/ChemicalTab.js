@@ -289,14 +289,12 @@ export default class ChemicalTab extends React.Component {
   };
 
   querySafetyPhrases = (vendor) => (
-    <div>
-      <Button
-        id="safetyPhrases-btn"
-        onClick={() => this.fetchSafetyPhrases(vendor)}
-      >
-        fetch Safety Phrases
-      </Button>
-    </div>
+    <Button
+      id="safetyPhrases-btn"
+      onClick={() => this.fetchSafetyPhrases(vendor)}
+    >
+      fetch Safety Phrases
+    </Button>
   );
 
   fetchChemical(sample) {
@@ -750,7 +748,7 @@ export default class ChemicalTab extends React.Component {
         <div className="chemical-properties">
           { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
         </div>
-        <div className="safety-phrases">
+        <div className="query-safety-phrases-button">
           { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
         </div>
       </div>
@@ -785,7 +783,11 @@ export default class ChemicalTab extends React.Component {
       );
     });
 
-    return <ListGroup>{mappedSafetySheets}</ListGroup>;
+    return (
+      <div>
+        <ListGroup>{mappedSafetySheets}</ListGroup>
+      </div>
+    );
   };
 
   renderSafetyPhrases = () => {
@@ -834,8 +836,6 @@ export default class ChemicalTab extends React.Component {
                 ) : 'fetch Chemical Properties'}
             </Button>
           </OverlayTrigger>
-        </InputGroup.Button>
-        <InputGroup.Button>
           <OverlayTrigger placement="top" overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}>
             <Button active className="show-properties-modal" onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
           </OverlayTrigger>
@@ -1129,7 +1129,7 @@ export default class ChemicalTab extends React.Component {
     const { warningMessage } = this.state;
     return (
       <div className="text-danger">
-        { warningMessage !== '' ? warningMessage : null }
+        {warningMessage !== '' ? warningMessage : null}
       </div>
     );
   }
@@ -1141,7 +1141,7 @@ export default class ChemicalTab extends React.Component {
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
-      <table className="table table-borderless">
+      <table className="table table-borderless table-responsive">
         <tbody>
           <tr>
             <td className="chemical-table-cells">
