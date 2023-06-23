@@ -7,6 +7,7 @@ RSpec.describe 'ExportCollection' do
   let(:user) { create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU') }
 
   let(:collection) { create(:collection, user_id: user.id, label: 'Awesome Collection') }
+  let(:file_path) { File.join('public', 'zip', "#{job_id}.zip") }
 
   let(:molfile) { Rails.root.join('spec/fixtures/test_2.mol').read }
   let(:svg) { Rails.root.join('spec/fixtures/images/molecule.svg').read }
@@ -41,13 +42,12 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
-  context 'with a researchplan' do
+  context 'with a researchplan' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-rp') }
     let(:research_plan) { create(:research_plan, collections: [collection]) }
     let(:expected_attachment_filename) { "attachments/#{attachment.identifier}.png" }
     let(:file_names) do
       file_names = []
-      file_path = File.join('public', 'zip', "#{job_id}.zip")
       Zip::File.open(file_path) do |files|
         files.each do |file|
           file_names << file.name
@@ -70,13 +70,34 @@ RSpec.describe 'ExportCollection' do
     end
 
     it 'exported file exists' do
-      file_path = File.join('public', 'zip', "#{job_id}.zip")
       expect(File.exist?(file_path)).to be true
     end
 
     it 'attachment is in zip file' do
       expect(file_names.length).to be 4
       expect(file_names).to include expected_attachment_filename
+    end
+  end
+
+  context 'with a cell line including an analysis with a png' do
+    before do
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
+      export.prepare_data
+      export.to_file
+    end
+
+    let(:cell_line_sample) { create(:cellline_sample, user_id: user.id, collections: [collection]) }
+
+    it 'zip file was created' do
+      expect(File.exist?(file_path)).to be true
+    end
+
+    it 'zip file include the cell line and its analysis attachments' do
+      expect(file_names.length).to be 4
+    end
+
+    it 'cell line properties in zip file match the original ones' do
+      penfing
     end
   end
 

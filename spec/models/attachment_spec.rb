@@ -306,7 +306,6 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
-  # TODO: fix with_annotation factory: currently this test deletes the attached file
   describe 'annotated?' do
     let(:annotated_attachment) { create(:attachment, :with_annotation) }
     let(:unannotated_attachment) { create(:attachment) }
