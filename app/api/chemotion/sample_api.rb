@@ -123,9 +123,9 @@ module Chemotion
       end
 
       namespace :confirm_import do
-        desc "Create Samples from an Array of inchikeys"
+        desc 'Create Samples from an Array of inchikeys'
         params do
-          requires :rows, type: Array, desc: "Selected Molecule from the UI"
+          requires :rows, type: Array, desc: 'Selected Molecule from the UI'
           requires :currentCollectionId, type: Integer
           requires :mapped_keys, type: Hash
         end
@@ -145,9 +145,9 @@ module Chemotion
             )
             sdf_import.create_samples
             return {
-              sdf: true, message: sdf_import.message, 
-              status: sdf_import.status, 
-              error_messages: sdf_import.error_messages,
+              sdf: true, message: sdf_import.message,
+              status: sdf_import.status,
+              error_messages: sdf_import.error_messages
             }
           else
             parameters = {
