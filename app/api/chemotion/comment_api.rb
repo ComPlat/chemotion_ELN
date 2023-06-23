@@ -4,6 +4,35 @@ module Chemotion
   class CommentAPI < Grape::API
     helpers CommentHelpers
 
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('Comment not found', 400)
+    end
+
+    helpers do
+      def authorize_commentable_access(commentable)
+        collections = Collection.where(id: commentable.collections.ids)
+        allowed_user_ids = authorized_users(collections)
+
+        error!('401 Unauthorized', 401) unless allowed_user_ids.include?(current_user.id)
+      end
+
+      def authorize_update_access(comment)
+        error!('401 Unauthorized', 401) unless comment.created_by == current_user.id || params[:status].eql?('Resolved')
+      end
+
+      def authorize_delete_access(comment)
+        error!('401 Unauthorized', 401) unless comment.created_by == current_user.id
+      end
+
+      def validate_comment_status(comment)
+        error!('422 Unprocessable Entity', 422) if comment.resolved?
+      end
+
+      def find_commentable(commentable_type, commentable_id)
+        commentable_type.classify.constantize.find(commentable_id)
+      end
+    end
+
     resource :comments do
       route_param :id do
         desc 'Get a comment'
@@ -13,15 +42,9 @@ module Chemotion
 
         get do
           comment = Comment.find(params[:id])
+          authorize_commentable_access(comment.commentable)
 
-          collections = Collection.where(id: comment.commentable.collections.ids)
-          allowed_user_ids = authorized_users(collections)
-
-          if allowed_user_ids.include? current_user.id
-            present comment, with: Entities::CommentEntity, root: 'comment'
-          else
-            error!('401 Unauthorized', 401)
-          end
+          present comment, with: Entities::CommentEntity, root: 'comment'
         end
 
         desc 'Update a comment'
@@ -34,34 +57,22 @@ module Chemotion
         end
 
         put do
-          @comment = Comment.find(params[:id])
-          error!('404 Comment with given id not found', 404) if @comment.nil?
-          unless @comment.created_by == current_user.id || params[:status].eql?('Resolved')
-            error!('401 Unauthorized', 401)
-          end
-          error!('422 Unprocessable Entity', 422) if @comment.resolved?
+          comment = Comment.find(params[:id])
+
+          authorize_update_access(comment)
+          validate_comment_status(comment)
 
           attributes = declared(params, include_missing: false)
           if params[:status].eql?('Resolved')
             attributes[:resolver_name] = "#{current_user.first_name} #{current_user.last_name}"
           end
-          @comment.update!(attributes)
+          comment.update!(attributes)
 
-          if @comment.saved_change_to_status? && @comment.created_by != current_user.id
-            commentable_type = @comment.commentable_type
-            commentable = commentable_type.classify.constantize.find @comment.commentable_id
-
-            Message.create_msg_notification(
-              channel_subject: Channel::COMMENT_RESOLVED,
-              message_from: current_user.id, message_to: [@comment.created_by],
-              data_args: { resolved_by: current_user.name,
-                           element_type: commentable_type,
-                           element_name: element_name(commentable) },
-              level: 'info'
-            )
+          if comment.saved_change_to_status? && comment.created_by != current_user.id
+            notify_comment_resolved(comment, current_user)
           end
 
-          present @comment, with: Entities::CommentEntity, root: 'comment'
+          present comment, with: Entities::CommentEntity, root: 'comment'
         end
 
         desc 'Delete a comment'
@@ -70,11 +81,10 @@ module Chemotion
         end
 
         delete do
-          @comment = Comment.find(params[:id])
-          error!('404 Comment with given id not found', 404) if @comment.nil?
-          error!('401 Unauthorized', 401) unless @comment.created_by == current_user.id
+          comment = Comment.find(params[:id])
+          authorize_delete_access(comment)
 
-          @comment.destroy
+          comment.destroy
         end
       end
 
@@ -94,10 +104,10 @@ module Chemotion
       end
 
       post do
-        @commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
-        @collections = Collection.where(id: @commentable.collections.ids)
+        commentable = find_commentable(params[:commentable_type], params[:commentable_id])
+        collections = Collection.where(id: commentable.collections.ids)
 
-        allowed_user_ids = authorized_users(@collections)
+        allowed_user_ids = authorized_users(collections)
 
         error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
 
@@ -112,7 +122,7 @@ module Chemotion
         comment = Comment.new(attributes)
         comment.save!
 
-        create_message_notification(@collections, current_user, @commentable)
+        create_message_notification(collections, current_user, commentable)
 
         present comment, with: Entities::CommentEntity, root: 'comment'
       end
@@ -124,21 +134,16 @@ module Chemotion
       end
 
       get do
-        commentable = params[:commentable_type].classify.constantize.find params[:commentable_id]
+        commentable = find_commentable(params[:commentable_type], params[:commentable_id])
 
-        collections = Collection.where(id: commentable.collections.ids)
-        allowed_user_ids = authorized_users(collections)
+        authorize_commentable_access(commentable)
 
-        if allowed_user_ids.include? current_user.id
-          comments = Comment.where(
-            commentable_id: params[:commentable_id],
-            commentable_type: params[:commentable_type],
-          ).order(:status, :section, created_at: :desc)
+        comments = Comment.where(
+          commentable_id: params[:commentable_id],
+          commentable_type: params[:commentable_type],
+        ).order(:status, :section, created_at: :desc)
 
-          present comments, with: Entities::CommentEntity, root: 'comments'
-        else
-          error!('401 Unauthorized', 401)
-        end
+        present comments, with: Entities::CommentEntity, root: 'comments'
       end
     end
   end

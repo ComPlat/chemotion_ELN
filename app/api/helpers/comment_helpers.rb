@@ -84,4 +84,18 @@ module CommentHelpers
     notify_synchronized_collection_users(collections, current_user, element)
     notify_shared_collection_users(collections.where(is_shared: true), current_user, element)
   end
+
+  def notify_comment_resolved(comment, current_user)
+    commentable_type = comment.commentable_type
+    commentable = commentable_type.classify.constantize.find comment.commentable_id
+
+    Message.create_msg_notification(
+      channel_subject: Channel::COMMENT_RESOLVED,
+      message_from: current_user.id, message_to: [comment.created_by],
+      data_args: { resolved_by: current_user.name,
+                   element_type: commentable_type,
+                   element_name: element_name(commentable) },
+      level: 'info'
+    )
+  end
 end

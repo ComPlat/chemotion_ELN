@@ -71,6 +71,7 @@ class Comment < ApplicationRecord
   }, _prefix: true
 
   belongs_to :commentable, polymorphic: true
+  belongs_to :creator, foreign_key: :created_by, class_name: 'User', inverse_of: :comments
 
   validates :section, :status, presence: true
 

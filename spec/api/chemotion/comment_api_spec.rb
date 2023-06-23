@@ -197,7 +197,7 @@ describe Chemotion::CommentAPI do
       end
     end
 
-    describe 'POST /api/v1/comments/create' do
+    describe 'POST /api/v1/comments' do
       context 'with sample' do
         let(:params) do
           {
@@ -209,7 +209,7 @@ describe Chemotion::CommentAPI do
         end
 
         it 'creates a new comment associated with the sample' do
-          post '/api/v1/comments/create', params: params
+          post '/api/v1/comments', params: params
 
           comment = Comment.find_by(content: 'test comment sample')
           expect(comment).not_to be_nil
@@ -228,7 +228,7 @@ describe Chemotion::CommentAPI do
         end
 
         it 'creates a new comment associated with the reaction' do
-          post '/api/v1/comments/create', params: params
+          post '/api/v1/comments', params: params
 
           comment = Comment.find_by(content: 'test comment reaction')
           expect(comment).not_to be_nil
@@ -333,7 +333,7 @@ describe Chemotion::CommentAPI do
       end
     end
 
-    describe 'POST /api/v1/comments/create' do
+    describe 'POST /api/v1/comments' do
       context 'with content' do
         let(:params) do
           {
@@ -345,7 +345,7 @@ describe Chemotion::CommentAPI do
         end
 
         before do
-          post '/api/v1/comments/create', params: params
+          post '/api/v1/comments', params: params
         end
 
         it 'creates a new comment (on accessible element)' do
@@ -365,7 +365,7 @@ describe Chemotion::CommentAPI do
         end
 
         it 'creates a new comment associated with the sample' do
-          post '/api/v1/comments/create', params: params
+          post '/api/v1/comments', params: params
 
           comment = Comment.find_by(content: 'test comment sample')
           expect(comment).not_to be_nil
@@ -384,7 +384,7 @@ describe Chemotion::CommentAPI do
         end
 
         it 'creates a new comment associated with the reaction' do
-          post '/api/v1/comments/create', params: params
+          post '/api/v1/comments', params: params
 
           comment = Comment.find_by(content: 'test comment reaction')
           expect(comment).not_to be_nil

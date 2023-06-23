@@ -98,7 +98,7 @@ class User < ApplicationRecord
   has_one :research_plan_text_template, dependent: :destroy
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
-  has_many :comments, dependent: :destroy
+  has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 
