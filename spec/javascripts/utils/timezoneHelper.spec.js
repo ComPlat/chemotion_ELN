@@ -27,7 +27,7 @@ describe('formatDate', () => {
     const actualDate = formatDate(dateString);
 
     // calculate the expected date
-    const testDate = new Date('2023-06-23T12:34:56');
+    const testDate = new Date('2023-06-23T12:00:00');
     const timeZoneOffset = testDate.getTimezoneOffset();
     const offsetHours = Math.floor(Math.abs(timeZoneOffset / 60));
     const offsetMinutes = Math.abs(timeZoneOffset) % 60;
