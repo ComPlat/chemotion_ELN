@@ -37,7 +37,7 @@ const DetailSearch = () => {
     if (currentGenericElement) {
       let layers = currentGenericElement.properties_template.layers;
       genericSelectOptions = currentGenericElement.properties_template.select_options;
-  
+
       genericFields = [];
       genericFields.push({ value: { column: 'name', label: 'Name', type: 'text' }, label: 'Name' });
       genericFields.push({ value: { column: 'short_label', label: 'Short Label', type: 'text' }, label: 'Short Label' });
@@ -93,7 +93,10 @@ const DetailSearch = () => {
         options = FieldOptions.durationOptions;
       }
     } else if (genericFields.length >= 1) {
-      options = genericSelectOptions[option.option_layers].options;
+      Object.values(genericSelectOptions[option.option_layers].options).forEach((option) => {
+        option.value = option.label;
+        options.push(option);
+      });
     } else {
       options = FieldOptions[option.option_layers];
     }
@@ -113,7 +116,7 @@ const DetailSearch = () => {
           key={`${columnName}-${keyLabel}`}
           options={options}
           onChange={handleFieldChanged(option, columnName, type, selectedValue)}
-          value={selectedValue ? options.filter(({ label }) => label == selectedValue[columnName].value) : ''}
+          value={selectedValue ? options.filter((f) => { return f.value == selectedValue[columnName].value }) : ''}
         />
       </FormGroup>
     );

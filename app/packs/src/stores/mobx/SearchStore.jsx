@@ -132,7 +132,6 @@ export const SearchStore = types
       if (index != -1) {
         self.detail_search_values.splice(index, 1);
       }
-      console.log(self.detail_search_values);
     },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
