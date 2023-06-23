@@ -192,12 +192,11 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         </OverlayTrigger>
         {' '}
         <FormGroup>
-          <ControlLabel>Material Unit</ControlLabel>
+          <ControlLabel>with material unit</ControlLabel>
           {' '}
           {['Equiv', 'Amount'].map(
             (unit) => (
               <Radio
-                title="Material Unit"
                 key={unit}
                 checked={materialUnit === unit}
                 onChange={() => setMaterialUnit(unit)}
