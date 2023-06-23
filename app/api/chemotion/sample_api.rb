@@ -136,7 +136,7 @@ module Chemotion
 
         post do
           rows = params[:rows]
-          if rows.length > 25
+          if rows.length < 25
             sdf_import = Import::ImportSdf.new(
               collection_id: params[:currentCollectionId],
               current_user_id: current_user.id,

@@ -281,8 +281,8 @@ describe Chemotion::SampleAPI do
             "density": 'Test',
             "decoupled": 'f',
             "molarity": '900sdadsad',
-            "melting_point": 'test900',
-            "boiling_point": 'test1000',
+            "melting_point": '900',
+            "boiling_point": '1000',
             "location": 'location',
             "external_label": 'external_label',
             "name": 'name'
