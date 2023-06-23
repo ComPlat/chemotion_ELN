@@ -50,7 +50,7 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
-  context 'with a researchplan' do
+  context 'with a researchplan' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-rp') }
     let(:research_plan) { create(:research_plan, collections: [collection]) }
     let(:expected_attachment_filename) { "attachments/#{attachment.identifier}.png" }
