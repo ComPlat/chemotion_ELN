@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import { iupacNameTooltip } from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
-import { getMaterialData } from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
 
 function MaterialHeader({ material }) {
   return (
@@ -98,25 +98,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   const [materialUnit, setMaterialUnit] = useState('Equiv');
 
   function addRow() {
-    const { dispValue: durationValue = '', dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
-    const { userText: temperatureValue = '', valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
-    const newRow = {
-      id: uuidv4(),
-      properties: {
-        temperature: {
-          value: temperatureValue, unit: temperatureUnit
-        },
-        duration: {
-          value: durationValue, unit: durationUnit
-        }
-      },
-      startingMaterials: reaction.starting_materials.reduce((a, v) => (
-        { ...a, [v.id]: getMaterialData(v, materialUnit) }), {}),
-      reactants: reaction.reactants.reduce((a, v) => (
-        { ...a, [v.id]: getMaterialData(v, materialUnit) }), {}),
-      products: reaction.products.reduce((a, v) => (
-        { ...a, [v.id]: getMaterialData(v, 'Amount') }), {})
-    };
+    const newRow = createVariationsRow(reaction, uuidv4(), materialUnit);
     onEditVariations(
       [...reaction.variations, newRow]
     );

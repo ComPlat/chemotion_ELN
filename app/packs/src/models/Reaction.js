@@ -1,7 +1,6 @@
 import {
   isEmpty,
   round,
-  cloneDeep
 } from 'lodash';
 import Delta from 'quill-delta';
 import moment from 'moment';
@@ -14,7 +13,11 @@ import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
-import { getMaterialData, getMolFromGram } from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+import {
+  removeObsoleteMaterialsFromVariations,
+  addMissingMaterialsToVariations,
+  computeYield
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -177,57 +180,11 @@ export default class Reaction extends Element {
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
       segments: this.segments.map(s => s.serialize()),
-      variations: this.homogenizeVariations(this.variations)
+      variations: this.variations
     });
   }
 
-  removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
-    variations.forEach((row) => {
-      ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
-        Object.keys(row[materialType]).forEach((materialName) => {
-          if (!currentMaterials[materialType].map((material) => material.id.toString()).includes(materialName)) {
-            delete row[materialType][materialName];
-          }
-        });
-      });
-    });
-    return variations;
-  }
-
-  addMissingMaterialsToVariations(variations, currentMaterials) {
-    variations.forEach((row) => {
-      ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
-        currentMaterials[materialType].forEach((material) => {
-          if (!(material.id in row[materialType])) {
-            row[materialType][material.id] = getMaterialData(material, 'Equiv');
-          }
-        });
-      });
-    });
-    return variations;
-  }
-
-  computeYield(variations) {
-    variations.forEach((row) => {
-      const potentialReferenceMaterials = { ...row.startingMaterials, ...row.reactants };
-      const referenceMaterial = Object.values(potentialReferenceMaterials).find((material) => {
-        if (material.aux) {
-          return material.aux.isReference;
-        }
-        return false;
-      });
-
-      Object.entries(row.products).forEach(([productName, productProperties]) => {
-        const stoichiometryCoefficient = (productProperties.aux.coefficient || 1.0) / (referenceMaterial.aux.coefficient || 1.0);
-        const equivalent = getMolFromGram(productProperties) / getMolFromGram(referenceMaterial) / stoichiometryCoefficient;
-        const percentYield = this.hasPolymers() ? (equivalent * 100).toFixed(0) : ((equivalent <= 1 ? equivalent : 1) * 100).toFixed(0);
-        row.products[productName].aux.yield = percentYield;
-      });
-    });
-    return variations;
-  }
-
-  homogenizeVariations(variations) {
+  set variations(variations) {
     // variations data structure:
     // [
     //   {
@@ -252,27 +209,26 @@ export default class Reaction extends Element {
     //   {
     //     "id": "<number>",
     //     ...
-    //   }
+    //   },
+    //   ...
     // ]
-
-    const currentMaterials = {
-      startingMaterials: this.starting_materials,
-      reactants: this.reactants,
-      products: this.products
-    };
-
-    let homogenizedVariations = this.removeObsoleteMaterialsFromVariations(cloneDeep(variations), currentMaterials);
-    homogenizedVariations = this.addMissingMaterialsToVariations(homogenizedVariations, currentMaterials);
-    homogenizedVariations = this.computeYield(homogenizedVariations);
-
-    return homogenizedVariations;
-  }
-
-  set variations(variations) {
     if (!Array.isArray(variations) || !variations.length) {
       this._variations = [];
     } else {
-      this._variations = this.homogenizeVariations(variations);
+      const currentMaterials = {
+        startingMaterials: this.starting_materials,
+        reactants: this.reactants,
+        products: this.products
+      };
+      // Keep materials up-to-date. Materials could have been added or removed in the scheme tab
+      // (of the reaction detail modal); these changes need to be reflected in the variations.
+      let updatedVariations = removeObsoleteMaterialsFromVariations(variations, currentMaterials);
+      updatedVariations = addMissingMaterialsToVariations(updatedVariations, currentMaterials);
+      // The yields need to be updated, since the products' amounts could have been edited in
+      // the variations tab (of the reaction detail modal).
+      updatedVariations = computeYield(updatedVariations, this.hasPolymers());
+
+      this._variations = updatedVariations;
     }
   }
 
