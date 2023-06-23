@@ -22,7 +22,7 @@ export default class ResearchPlanDetailsAddField extends Component {
           {
             buttonObjects.map(button => (
               <OverlayTrigger key={uuid.v4()} placement="top" overlay={<Tooltip id={`rp_tooptip_${button.type}`}>{button.label}</Tooltip>}>
-                <Button onClick={() => onAdd(button.type)} >
+                <Button onClick={() => onAdd(button.type)} data-cy={`btn_${button.type}`}>
                   <i className={button.icon} aria-hidden="true" />&nbsp;<i className="fa fa-plus" aria-hidden="true" />
                 </Button>
               </OverlayTrigger>
