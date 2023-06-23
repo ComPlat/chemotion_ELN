@@ -4,7 +4,7 @@ import { ReactSearchAutocomplete } from 'react-search-autocomplete';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Col, ControlLabel
+  Col, Row, ControlLabel
 } from 'react-bootstrap';
 
 export default class CellLineName extends React.Component {
@@ -25,9 +25,15 @@ export default class CellLineName extends React.Component {
       });
   }
 
-  static renderNameSuggestion(name,src) {
+  static renderNameSuggestion(name, src) {
     return (
-      <span style={{ display: 'block', textAlign: 'left' }}>{name} ({src})</span>
+      <span style={{ display: 'block', textAlign: 'left' }}>
+        {name}
+        {' '}
+        (
+        {src}
+        )
+      </span>
     );
   }
 
@@ -41,26 +47,28 @@ export default class CellLineName extends React.Component {
 
     return (
       <div className="cell-line-name">
-        <Col componentClass={ControlLabel} sm={3}>Cell line name *</Col>
-        <Col sm={9}>
-          <ReactSearchAutocomplete
-            className={className}
-            showIcon={false}
-            items={nameSuggestions}
-            onSearch={(newName) => {
-              cellLineDetailsStore.changeCellLineName(id, newName);
-            }}
-            onSelect={(item) => {
-              cellLineDetailsStore.changeCellLineName(id, item.name);
-              CellLinesFetcher.getCellLineMaterialById(item.id)
-              .then((result) => { cellLineDetailsStore.setMaterialProperties(id,result)})
-            }}
-            showNoResults={false}
-            formatResult={(item) => (CellLineName.renderNameSuggestion(item.name,item.source))}
-            inputSearchString={name}
-            fuseOptions={{ threshold: 0.1 }}
-          />
-        </Col>
+        <Row>
+          <Col componentClass={ControlLabel} sm={3}>Cell line name *</Col>
+          <Col sm={9}>
+            <ReactSearchAutocomplete
+              className={className}
+              showIcon={false}
+              items={nameSuggestions}
+              onSearch={(newName) => {
+                cellLineDetailsStore.changeCellLineName(id, newName);
+              }}
+              onSelect={(item) => {
+                cellLineDetailsStore.changeCellLineName(id, item.name);
+                CellLinesFetcher.getCellLineMaterialById(item.id)
+                  .then((result) => { cellLineDetailsStore.setMaterialProperties(id, result); });
+              }}
+              showNoResults={false}
+              formatResult={(item) => (CellLineName.renderNameSuggestion(item.name, item.source))}
+              inputSearchString={name}
+              fuseOptions={{ threshold: 0.1 }}
+            />
+          </Col>
+        </Row>
       </div>
     );
   }
