@@ -79,7 +79,7 @@ export default class ResearchPlan extends Element {
           id: uuidv4(),
           type: 'richtext',
           title: 'Text',
-          value: null
+          value: ''
         });
         break;
       case 'ketcher':
@@ -147,7 +147,7 @@ export default class ResearchPlan extends Element {
   }
 
   // returns the body element with the given id, or undefined if not found
-  getBodyElementById(id) {    
+  getBodyElementById(id) {
     return this.body.find((el) => el.id === id);
   }
 
@@ -254,6 +254,6 @@ export default class ResearchPlan extends Element {
   }
   getAttachmentByIdentifier(identifier){
      return this.attachments
-     .filter((attachment)=>attachment.identifier===identifier)[0];  
+     .filter((attachment)=>attachment.identifier===identifier)[0];
   }
 }
