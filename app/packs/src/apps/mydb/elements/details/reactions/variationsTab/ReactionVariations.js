@@ -5,7 +5,7 @@ import React, {
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  ToggleButtonGroup, ToggleButton, Button, FormGroup, Radio, ControlLabel, ButtonGroup,
+  Button, FormGroup, Radio, ControlLabel, ButtonGroup,
   OverlayTrigger, Tooltip, Form
 } from 'react-bootstrap';
 import _ from 'lodash';
@@ -93,8 +93,6 @@ const CellEditor = forwardRef((props, ref) => {
 export default function ReactionVariations({ reaction, onEditVariations }) {
   const gridRef = useRef();
 
-  const togglableColumnGroups = ['Properties', 'Starting Materials', 'Reactants', 'Products'];
-
   const [materialUnit, setMaterialUnit] = useState('Equiv');
 
   function addRow() {
@@ -124,16 +122,6 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       reaction.variations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );
   }, []);
-
-  function toggleColumnGroupVisibility(columnGroupsToDisplay) {
-    togglableColumnGroups.forEach((column) => {
-      const group = gridRef.current.columnApi.getProvidedColumnGroup(column);
-      group.children.forEach(
-        (child) => gridRef.current.columnApi
-          .setColumnVisible(child.colId, columnGroupsToDisplay.includes(column))
-      );
-    });
-  }
 
   const columnDefs = [
     {
@@ -221,11 +209,6 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           )}
         </FormGroup>
       </Form>
-      <ToggleButtonGroup type="checkbox" defaultValue={togglableColumnGroups} onChange={(columnGroupsToDisplay) => toggleColumnGroupVisibility(columnGroupsToDisplay)}>
-        {togglableColumnGroups.map(
-          (column) => <ToggleButton key={column} value={column}>{column}</ToggleButton>
-        )}
-      </ToggleButtonGroup>
 
       <div style={{ height: '50vh' }} className="ag-theme-alpine">
         <AgGridReact
