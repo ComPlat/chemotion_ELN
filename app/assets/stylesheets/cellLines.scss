@@ -155,13 +155,19 @@
     }
 
     .invalid{
-        .wrapper{
+        .css-yk16xz-control{
             border-color: red !important;
+        }
+        .css-1pahdxg-control{
+            box-shadow: 0 0 0 0px #ff2626;
+            border-color: red !important;
+            border-style: solid;
         }
     }
     .cell-line-name-autocomplete{
         height:36px;
         z-index: 999;
+        margin-bottom: 2px;
 
         .wrapper{
             z-index: 999;
@@ -169,6 +175,13 @@
             border-radius: 4px;
             
         }
+        .invalid{
+            .wrapper{
+                border-color: red !important;
+            }
+            
+        }
+
         li{
             z-index: 999;
            background-color:white;

@@ -1,11 +1,11 @@
 import React from 'react';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
-import { ReactSearchAutocomplete } from 'react-search-autocomplete';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   Col, Row, ControlLabel
 } from 'react-bootstrap';
+import Creatable from 'react-select3/creatable';
 
 export default class CellLineName extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -20,6 +20,7 @@ export default class CellLineName extends React.Component {
 
   componentDidMount() {
     CellLinesFetcher.getAllCellLineNames()
+      .then((data) => data.map((x) => ({ value: x.id, label: x.name, name: x.name })))
       .then((data) => {
         this.setState({ nameSuggestions: data });
       });
@@ -50,22 +51,31 @@ export default class CellLineName extends React.Component {
         <Row>
           <Col componentClass={ControlLabel} sm={3}>Cell line name *</Col>
           <Col sm={9}>
-            <ReactSearchAutocomplete
+            <Creatable
               className={className}
-              showIcon={false}
-              items={nameSuggestions}
-              onSearch={(newName) => {
-                cellLineDetailsStore.changeCellLineName(id, newName);
+              onChange={(e) => {
+                if (typeof e.value === 'number') {
+                  const currentEntry = nameSuggestions.filter((x) => x.value === e.value);
+                  if (currentEntry.length > 0) {
+                    cellLineDetailsStore.changeCellLineName(id, currentEntry[0].name);
+                    CellLinesFetcher.getCellLineMaterialById(e.value)
+                      .then((result) => {
+                        cellLineDetailsStore.setMaterialProperties(id, result);
+                      });
+                  }
+                } else {
+                  cellLineDetailsStore.changeCellLineName(id, e.value);
+                }
               }}
-              onSelect={(item) => {
-                cellLineDetailsStore.changeCellLineName(id, item.name);
-                CellLinesFetcher.getCellLineMaterialById(item.id)
-                  .then((result) => { cellLineDetailsStore.setMaterialProperties(id, result); });
+              onInputChange={(e, action) => {
+                if (action.action === 'input-change') {
+                  console.log(`Setze auf ${e}`);
+                  cellLineDetailsStore.changeCellLineName(id, e);
+                }
               }}
-              showNoResults={false}
-              formatResult={(item) => (CellLineName.renderNameSuggestion(item.name, item.source))}
-              inputSearchString={name}
-              fuseOptions={{ threshold: 0.1 }}
+              options={nameSuggestions}
+              placeholder="enter new cell line name or choose from existing ones "
+              defaultInputValue={name}
             />
           </Col>
         </Row>
