@@ -18,6 +18,15 @@ const successfullyCreatedParameter = {
   position: 'tr'
 };
 
+const successfullyUpdatedParameter = {
+  title: 'Element updated',
+  message: 'Cell line sample successfully updated',
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+};
+
 const errorMessageParameter = {
   title: 'Error',
   message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
@@ -75,6 +84,7 @@ export default class CellLinesFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
         NotificationActions.add(errorMessageParameter);
+        return cellLine;
       });
 
     return promise;
@@ -118,21 +128,25 @@ export default class CellLinesFetcher {
   static update(cellLineItem) {
     const params = extractApiParameter(cellLineItem);
     const promise = CellLinesFetcher.uploadAttachments(cellLineItem)
-      .then(() => {
-        fetch('/api/v1/cell_lines', {
-          credentials: 'same-origin',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          method: 'PUT',
-          body: JSON.stringify(params)
-        });
-      })
+      .then(() => fetch('/api/v1/cell_lines', {
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'PUT',
+        body: JSON.stringify(params)
+      }))
       .then((response) => response.json())
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
+      .then((loadedCellLineSample) => {
+        NotificationActions.add(successfullyUpdatedParameter);
+        return loadedCellLineSample;
+      })
       .catch((errorMessage) => {
         console.log(errorMessage);
+        NotificationActions.add(errorMessageParameter);
+        return cellLineItem;
       });
     return promise;
   }
