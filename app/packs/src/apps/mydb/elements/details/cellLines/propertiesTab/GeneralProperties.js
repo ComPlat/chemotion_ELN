@@ -118,13 +118,24 @@ class GeneralProperties extends React.Component {
     );
   }
 
+  renderPanelHeaderIcon(panelName) {
+    const { openPanel } = this.state;
+    const arrowType = openPanel === panelName
+      ? 'fa fa-angle-double-down'
+      : 'fa fa-angle-double-right';
+    return (
+      <div className="floating-right">
+        <i className={arrowType} aria-hidden="true" />
+      </div>
+    );
+  }
+
   render() {
     const { item } = this.props;
     const { cellLineDetailsStore } = this.context;
     const cellLineItem = cellLineDetailsStore.cellLines(item.id);
     const cellLineId = item.id;
     const { openPanel } = this.state;
-
     return (
       <div>
         <div />
@@ -139,7 +150,10 @@ class GeneralProperties extends React.Component {
             eventKey="common-properties"
             key="common-properties"
           >
-            <Panel.Heading onClick={() => { this.setState({ openPanel: 'common-properties' }); }}>Common Properties</Panel.Heading>
+            <Panel.Heading onClick={() => { this.setState({ openPanel: 'common-properties' }); }}>
+              Common Properties
+              {this.renderPanelHeaderIcon('common-properties')}
+            </Panel.Heading>
             <Panel.Body collapsible>
 
               <CellLineName id={cellLineId} name={cellLineItem.cellLineName} />
@@ -168,7 +182,10 @@ class GeneralProperties extends React.Component {
             eventKey="specific-properties"
             key="specific-properties"
           >
-            <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>Item specific properties</Panel.Heading>
+            <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>
+              Item specific properties
+              {this.renderPanelHeaderIcon('specific-properties')}
+            </Panel.Heading>
             <Panel.Body collapsible>
               {this.renderAmount(cellLineItem)}
               {this.renderAttribute('Passage *', cellLineItem.passage, (e) => { cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value)); }, false, true)}
