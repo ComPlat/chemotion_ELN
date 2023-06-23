@@ -17,7 +17,7 @@ import {
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
   computeYield
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 

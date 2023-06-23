@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import { iupacNameTooltip } from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
-import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/utils';
+import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function MaterialHeader({ material }) {
   return (
