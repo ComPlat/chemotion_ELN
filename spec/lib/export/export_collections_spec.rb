@@ -1,25 +1,39 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 require 'rails_helper'
 
 # test for ExportJson ImportJson
 RSpec.describe 'ExportCollection' do
   let(:user) { create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU') }
+  let(:file_names) do
+    file_names = []
+    Zip::File.open(file_path) do |files|
+      files.each do |file|
+        file_names << file.name
+      end
+    end
+    file_names
+  end
 
   let(:collection) { create(:collection, user_id: user.id, label: 'Awesome Collection') }
   let(:file_path) { File.join('public', 'zip', "#{job_id}.zip") }
 
   let(:molfile) { Rails.root.join('spec/fixtures/test_2.mol').read }
   let(:svg) { Rails.root.join('spec/fixtures/images/molecule.svg').read }
-  let(:sample) { build(:sample, created_by: user.id, name: 'Sample zero', molfile: molfile, collections: [collection]) }
+  let(:sample) do
+    create(:sample, created_by: user.id, name: 'Sample zero', molfile: molfile, collections: [collection])
+  end
   let(:molecule_name_name) { 'Awesome Molecule' }
   let(:molecule_name) do
-    build(:molecule_name, user_id: user.id, name: molecule_name_name, molecule_id: sample.molecule_id)
+    create(:molecule_name, user_id: user.id, name: molecule_name_name, molecule_id: sample.molecule_id)
   end
   let(:job_id) { SecureRandom.uuid }
+  let(:molecule_file) { "images/molecules/#{sample.molecule.molecule_svg_file}" }
 
   context 'with a sample' do
     before do
+      sample
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
       export.prepare_data
       export.to_file
@@ -30,31 +44,16 @@ RSpec.describe 'ExportCollection' do
       expect(File.exist?(file_path)).to be true
     end
 
-    it 'zip file containing export.json, schema.json and description.txt' do
-      file_names = []
-      file_path = File.join('public', 'zip', "#{job_id}.zip")
-      Zip::File.open(file_path) do |files|
-        files.each do |file|
-          file_names << file.name
-        end
-      end
-      expect(file_names).to include('export.json', 'schema.json', 'description.txt')
+    it 'zip file containing export.json, schema.json and description.txt and molecule image' do
+      expect(file_names.length).to be 4
+      expect(file_names).to include('export.json', 'schema.json', 'description.txt', molecule_file)
     end
   end
 
-  context 'with a researchplan' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+  context 'with a researchplan' do
     let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-rp') }
     let(:research_plan) { create(:research_plan, collections: [collection]) }
     let(:expected_attachment_filename) { "attachments/#{attachment.identifier}.png" }
-    let(:file_names) do
-      file_names = []
-      Zip::File.open(file_path) do |files|
-        files.each do |file|
-          file_names << file.name
-        end
-      end
-      file_names
-    end
     let(:attachment) do
       create(:attachment, :with_png_image, bucket: 1, created_by: 1, attachable_id: research_plan.id)
     end
@@ -97,7 +96,7 @@ RSpec.describe 'ExportCollection' do
     end
 
     it 'cell line properties in zip file match the original ones' do
-      penfing
+      pending
     end
   end
 
@@ -116,3 +115,4 @@ RSpec.describe 'ExportCollection' do
     research_plan
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers
