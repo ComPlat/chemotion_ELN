@@ -174,6 +174,7 @@ class Import::ImportSdf < Import::ImportSamples
             sample['description'] = row['description'] if row['description'].present?
             sample['location'] = row['location'] if row['location'].present?
             sample['external_label'] = row['external_label'] if row['external_label'].present?
+            sample['density'] = row['density'] if row['density'].present?
             sample['name'] = row['name'] if row['name'].present?
             sample['xref']['cas'] = row['cas'] if row['cas'].present?
             sample['short_label'] = row['short_label'] if row['short_label'].present?
