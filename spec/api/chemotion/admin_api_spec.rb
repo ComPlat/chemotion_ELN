@@ -43,4 +43,39 @@ RSpec.describe Chemotion::AdminAPI do
       expect(parsed_json_response['listLocalCollector']).to be_a Array
     end
   end
+
+  describe 'GET /api/v1/admin/group_device/name' do
+    let(:person) { create(:person) }
+    let(:group) { create(:group) }
+    let(:person_obj) { JSON.parse(Entities::UserSimpleEntity.new(person).to_json) }
+    let(:group_obj) { JSON.parse(Entities::UserSimpleEntity.new(group).to_json) }
+
+    describe 'with group type' do
+      before do
+        get "/api/v1/admin/group_device/name?name=#{group.last_name[0..3]}&type=Group"
+      end
+
+      it 'returns the right http status' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns a response with an array of groups' do
+        expect(parsed_json_response['users']).to include(group_obj)
+      end
+    end
+
+    describe 'with person type' do
+      before do
+        get "/api/v1/admin/group_device/name?name=#{person.last_name[0..3]}&type=Person"
+      end
+
+      it 'returns the right http status' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns a response with an array of people' do
+        expect(parsed_json_response['users']).to include(person_obj)
+      end
+    end
+  end
 end

@@ -173,11 +173,11 @@ export default class GroupsDevices extends React.Component {
 
     return AdminFetcher.fetchUsersByNameType(input, actionType)
       .then((res) => {
-        const usersEntries = res.users.filter(u => u.user_type == actionType)
+        const usersEntries = res.users.filter(u => u.type == actionType)
           .map(u => ({
             value: u.id,
             name: u.name,
-            label: `${u.name} (${u.abb})`
+            label: `${u.name} (${u.initials})`
           }));
         return { options: usersEntries };
       }).catch((errorMessage) => {
