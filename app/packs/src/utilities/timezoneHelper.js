@@ -1,28 +1,13 @@
+import moment from 'moment';
+
 const formatDate = (dateString) => {
-  const [datePart, timePart] = dateString.split(', ');
-  const [day, month, year] = datePart.split('.');
-  const [hours, minutes, seconds] = timePart.split(':');
+  const date = moment.utc(dateString, 'DD.MM.YYYY, HH:mm');
 
-  // format date to js readable date
-  const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  const localDate = date.local();
 
-  const creationDateObj = new Date(formattedDate);
+  const formattedDate = localDate.format('LLLL');
 
-  // local timezone offset
-  const timeZoneOffset = creationDateObj.getTimezoneOffset();
-  const offsetHours = Math.trunc(timeZoneOffset / 60);
-  const offsetMinutes = timeZoneOffset % 60;
-
-  // apply time offset
-  creationDateObj.setHours(creationDateObj.getHours() + offsetHours);
-  creationDateObj.setMinutes(creationDateObj.getMinutes() + offsetMinutes);
-
-  // format date style to Intl.DateTimeFormat
-  const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  });
-
-  return dateFormatter.format(creationDateObj);
+  return formattedDate;
 };
+
 export default formatDate;
