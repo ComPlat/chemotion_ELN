@@ -2177,12 +2177,12 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@complat/chem-spectra-client@1.0.0-rc9":
-  version "1.0.0-rc9"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.0.0-rc9.tgz#266b6d4f175ff513815838bb5bf8895695d8cbde"
-  integrity sha512-OL4XXDxjoGvXXHRfSt4aowhNxtsn4P1tK0IozCHpQY9ykumUPenKJ+qfvi1Z1unSQpMqJVwEoMNMym/7SfQXkQ==
+"@complat/chem-spectra-client@1.0.0-rc10":
+  version "1.0.0-rc10"
+  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.0.0-rc10.tgz#31b45d0aa6c5ed726dc8ab6009e4ecaac22f0a4d"
+  integrity sha512-lEhETHAoSLN7Hoo749dZqUWYPfMt7z72iJo9n6pnf57MxDlvfZCOswNuDhhQ80dxyTR1IUsGPRAuN8N5r1TJ3Q==
   dependencies:
-    "@complat/react-spectra-editor" "1.0.0-rc9"
+    "@complat/react-spectra-editor" "1.0.0-rc10"
     "@material-ui/core" "^3.9.4"
     "@material-ui/icons" "^3.0.2"
     axios "^0.21.1"
@@ -2199,10 +2199,10 @@
     redux-form "^8.3.7"
     redux-saga "^1.1.3"
 
-"@complat/react-spectra-editor@1.0.0-rc9":
-  version "1.0.0-rc9"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.0.0-rc9.tgz#4e48f23e480a7772e2741d400d5ad59f12b162be"
-  integrity sha512-3qDsfyUAwyMmhg0xOgru+9pUM5rToAaMtv0I1KEG1vI1YVREqYd7J+wyhA1j0fLsyB/ugpsJarwZ2/YXjtSgqQ==
+"@complat/react-spectra-editor@1.0.0-rc10":
+  version "1.0.0-rc10"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.0.0-rc10.tgz#fd0df4eccf9fcda46a30ba362b898be8376612cc"
+  integrity sha512-/2TxoOSb8W7+eYyux/VTJbcj3TbbeiTENPZE0NYEypGZ4pUukEJ8GEVRKe6RsbdPSXp6QV871D13ht3+UDWTlA==
   dependencies:
     "@babel/preset-env" "^7.21.5"
     "@babel/preset-react" "^7.18.6"
