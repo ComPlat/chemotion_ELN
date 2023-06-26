@@ -7,7 +7,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import { filterTabLayout, getLayout, getArrayFromLayout } from 'src/utilities/CollectiontabsHelper';
+import { filterTabLayout, getLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
 const elements = [
   { name: 'sample', label: 'Sample' },
@@ -37,12 +37,10 @@ export default class CollectionTabs extends React.Component {
       currentTab: 'sample'
     };
     this.tabRef = React.createRef();
-    this.changedElements = React.createRef();
     this.tabRef = [];
-    this.changedElements = [];
 
     this.onStoreChange = this.onStoreChange.bind(this);
-    this.onClickNode = this.onClickNode.bind(this);
+    this.onClickCollection = this.onClickCollection.bind(this);
     this.clickedOnBack = this.clickedOnBack.bind(this);
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
   }
@@ -79,7 +77,7 @@ export default class CollectionTabs extends React.Component {
     this.setState({ profileData: data });
   }
 
-  onClickNode(node) {
+  onClickCollection(node) {
     const { addInventoryTab } = this.props;
     const { layouts, profileData } = this.state;
     this.setState({ currentCollection: node });
@@ -174,13 +172,13 @@ export default class CollectionTabs extends React.Component {
     if (!Object.keys(node).length == 0) {
       if (node.is_locked) {
         return (
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+          <span className={this.isActive(node)} onClick={this.onClickCollection.bind(this, node)}>
             {this.label(node)}
           </span>
         );
       }
       return (
-        <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+        <span className={this.isActive(node)} onClick={this.onClickCollection.bind(this, node)}>
           {this.label(node)}
         </span>
       );

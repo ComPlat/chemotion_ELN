@@ -12,7 +12,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from '../../../../stores/alt/actions/CollectionActions';
-import { filterTabLayout, getArrayFromLayout, getLayout } from 'src/utilities/CollectiontabsHelper';
+import { filterTabLayout, getArrayFromLayout, getLayout } from 'src/utilities/CollectionTabsHelper';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;
@@ -66,7 +66,7 @@ export default class ElementDetailSortTab extends Component {
     const tabs = currentCollection?.tabs_segment;
     let layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]
     if (!_.isEmpty(tabs[`${this.type}`])) {
-      layout = getLayout(Object.keys(tabs[`${this.type}`]), layout);
+      layout = getLayout(tabs[`${this.type}`], layout);
     }
 
     const { visible, hidden } = getArrayFromLayout(layout, this.type, availableTabs, addInventoryTab);
@@ -93,6 +93,7 @@ export default class ElementDetailSortTab extends Component {
     const userProfile = UserStore.getState().profile;
     const layoutName = `data.layout_detail_${this.type}`;
     _.set(userProfile, layoutName, layout);
+
     UserActions.updateUserProfile(userProfile);
   }
 

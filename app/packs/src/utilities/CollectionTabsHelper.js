@@ -1,7 +1,7 @@
 import { getElementSegments } from './ElementUtils';
 import Immutable from 'immutable';
 
-const filterArrayFromLayout = (layout, availableTabs, addInventoryTab) => {
+const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   const layoutKeys = Object.keys(layout);
 
   if (addInventoryTab) {
@@ -46,7 +46,7 @@ const getArrayFromLayout = (layout, element, availableTabs, addInventoryTab) => 
   let elementSegments = getElementSegments(element, availableTabs);
   let layoutKeys = Object.keys(layout);
   availableTabs = [...layoutKeys, ...elementSegments];
-  return filterArrayFromLayout(layout, availableTabs, addInventoryTab);
+  return getVisibilityList(layout, availableTabs, addInventoryTab);
 };
 
 const filterTabLayout = (layoutState) => {
