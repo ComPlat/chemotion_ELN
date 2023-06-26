@@ -5,6 +5,8 @@ require 'rails_helper'
 
 # test for ExportJson ImportJson
 RSpec.describe 'ExportCollection' do
+  let(:nested) { true }
+  let(:gate) { true }
   let(:user) { create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU') }
   let(:file_names) do
     file_names = []
@@ -30,6 +32,16 @@ RSpec.describe 'ExportCollection' do
   end
   let(:job_id) { SecureRandom.uuid }
   let(:molecule_file) { "images/molecules/#{sample.molecule.molecule_svg_file}" }
+
+  let(:elements_in_json) do
+    json = {}
+    Zip::File.open(file_path) do |files|
+      files.each do |file|
+        json = JSON.parse(file.get_input_stream.read) if file.name == 'export.json'
+      end
+    end
+    json[element]
+  end
 
   context 'with a sample' do
     before do
@@ -62,8 +74,7 @@ RSpec.describe 'ExportCollection' do
       research_plan.attachments = [attachment]
       research_plan.save!
       update_body_of_researchplan(research_plan, attachment.identifier)
-
-      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
       export.to_file
     end
@@ -75,6 +86,39 @@ RSpec.describe 'ExportCollection' do
     it 'attachment is in zip file' do
       expect(file_names.length).to be 4
       expect(file_names).to include expected_attachment_filename
+    end
+  end
+
+  context 'with a reaction' do # rubocop:disable RSpecq/MultipleMemoizedHelpers
+    let(:sample1) { create(:sample) }
+    let(:sample2) { create(:sample) }
+    let(:element) { 'Reaction' }
+    let(:reaction_in_json) { elements_in_json.first.second }
+
+    let(:reaction) do
+      create(:reaction, collections: [collection],
+                        starting_materials: [sample1],
+                        products: [sample2])
+    end
+
+    before do
+      reaction
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false)
+      export.prepare_data
+      export.to_file
+    end
+
+    it 'exported file exists and has 4 entries' do
+      expect(File.exist?(file_path)).to be true
+      uuid_of_reaction = elements_in_json.first.second
+      elements_in_json.first[uuid_of_reaction]
+      expect(file_names.length).to be 4
+    end
+
+    it 'export.json has one reaction entry' do
+      expect(elements_in_json.length).to be 1
+      # TO DO - find an elegant way to check all properties json <-> raction, maybe with an grape entity??
+      expect(reaction_in_json['name']).to eq reaction.name
     end
   end
 
