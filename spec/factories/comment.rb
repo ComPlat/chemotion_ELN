@@ -3,8 +3,8 @@
 FactoryBot.define do
   factory :comment do
     transient do
-      user_id { 0 }
+      user { create(:user) }
     end
-    created_by { user_id }
+    created_by { user.id }
   end
 end
