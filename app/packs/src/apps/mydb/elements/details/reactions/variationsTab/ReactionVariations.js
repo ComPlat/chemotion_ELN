@@ -121,7 +121,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     onEditVariations(
       reaction.variations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );
-  }, []);
+  }, [reaction]);
 
   const columnDefs = [
     {
