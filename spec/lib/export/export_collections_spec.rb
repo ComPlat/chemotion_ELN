@@ -124,12 +124,17 @@ RSpec.describe 'ExportCollection' do
 
   context 'with a cell line including an analysis with a png' do
     before do
-      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
+      cell_line_sample2
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
       export.to_file
     end
 
     let(:cell_line_sample) { create(:cellline_sample, user_id: user.id, collections: [collection]) }
+    let(:cell_line_sample2) do
+      create(:cellline_sample,
+             cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
+    end
 
     it 'zip file was created' do
       expect(File.exist?(file_path)).to be true

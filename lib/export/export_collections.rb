@@ -12,8 +12,8 @@ module Export
       @nested = nested
       @gt = gate
 
-      @file_path = Rails.public_path.join( format, "#{export_id}.#{format}")
-      @schema_file_path = Rails.public_path.join( 'json', 'schema.json')
+      @file_path = Rails.public_path.join(format, "#{export_id}.#{format}")
+      @schema_file_path = Rails.public_path.join('json', 'schema.json')
 
       @data = {}
       @uuids = {}
@@ -101,7 +101,7 @@ module Export
     end
     # rubocop:enable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
 
-    def prepare_data
+    def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       # get the collections from the database, in order of ancestry, but with empty ancestry first
       collections = Collection.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST")).find(@collection_ids)
       # add decendants for nested collections
@@ -117,18 +117,40 @@ module Export
       collections.each do |collection|
         # fetch collection
         fetch_one(collection, {
-          'user_id' => 'User'
-        })
+                    'user_id' => 'User',
+                  })
 
         fetch_samples collection
         fetch_reactions collection
         fetch_wellplates collection unless @gt == false
         fetch_screens collection unless @gt == false
         fetch_research_plans collection unless @gt == false
+        add_cell_line_material_to_package collection unless @gt == false
+        add_cell_line_sample_to_package collection unless @gt == false
       end
     end
 
     private
+
+    def add_cell_line_material_to_package(collection)
+      type = 'CelllineMaterial'
+      collection.cellline_samples.each do |sample|
+        material = sample.cellline_material
+        next if uuid?(type, material.id)
+
+        uuid = uuid(type, material.id)
+        @data[type] = {} unless @data[type]
+        @data[type][uuid] = material.as_json
+      end
+      # There must be no circular relationship between collections
+      return unless @nested
+
+      Collection.find_by(ancestry: collection.id) || [].each do |child_collection|
+        add_cell_line_material_to_package(child_collection)
+      end
+    end
+
+    def add_cell_line_sample_to_package(collection); end
 
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
@@ -141,11 +163,11 @@ module Export
                    'fingerprint_id' => 'Fingerprint',
                    'created_by' => 'User',
                    'user_id' => 'User',
-      })
+                 })
       fetch_many(collection.collections_samples, {
                    'collection_id' => 'Collection',
                    'sample_id' => 'Sample',
-      })
+                 })
 
       # loop over samples and fetch sample properties
       samples.each do |sample|
@@ -154,10 +176,10 @@ module Export
         fetch_one(sample.molecule_name, {
                     'molecule_id' => 'Molecule',
                     'user_id' => 'User',
-        })
+                  })
         fetch_many(sample.residues, {
                      'sample_id' => 'Sample',
-        })
+                   })
 
         # fetch containers, attachments and literature
         fetch_containers(sample)
@@ -285,9 +307,9 @@ module Export
                   'parent_id' => 'Container',
                 })
 
-      unless root_container.nil?
+      unless root_container.nil? # rubocop:disable Style/GuardClause
         # fetch analyses container
-        analyses_container = root_container.children.where("container_type = 'analyses'").first()
+        analyses_container = root_container.children.where("container_type = 'analyses'").first
         fetch_one(analyses_container, {
                     'containable_id' => containable_type,
                     'parent_id' => 'Container',
