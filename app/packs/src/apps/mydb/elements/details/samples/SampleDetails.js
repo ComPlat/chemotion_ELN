@@ -824,7 +824,7 @@ export default class SampleDetails extends React.Component {
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
-      <div className="form-row">
+      <div className="form-row" style={{ maxWidth: '300px' }}>
         <InputGroup className="sample-molecule-identifier">
           <InputGroup.Addon>CAS</InputGroup.Addon>
           <Select.Creatable
