@@ -4,7 +4,7 @@ import BaseFetcher from 'src/fetchers/BaseFetcher';
 export default class ThirdPartyAppFetcher {
 
   static fetchThirdPartyApps() {
-    return fetch('/api/v1/thirdPartyApps/listThirdPartyApps/all.json', {
+    return fetch('/api/v1/third_party_apps/all.json', {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
@@ -17,7 +17,7 @@ export default class ThirdPartyAppFetcher {
       name,
       IPAddress
     };
-    return fetch('/api/v1/thirdPartyApps/newThirdPartyApp', {
+    return fetch('/api/v1/third_party_apps/new_third_party_app', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -37,7 +37,7 @@ export default class ThirdPartyAppFetcher {
       IPAddress: IPAddress,
       name: name
     };
-    return fetch('/api/v1/thirdPartyApps/editThirdPartyApp', {
+    return fetch('/api/v1/third_party_apps/update_third_party_app', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -55,7 +55,7 @@ export default class ThirdPartyAppFetcher {
       userID,
       id
     };
-    return fetch('/api/v1/thirdPartyApps/deleteThirdPartyApp', {
+    return fetch('/api/v1/third_party_apps/delete_third_party_app', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -73,7 +73,7 @@ export default class ThirdPartyAppFetcher {
       id
     };
     const queryParams = new URLSearchParams(obj).toString();
-    const url = `/api/v1/thirdPartyApps/GetByIDThirdPartyApp/all.json?${queryParams}`;
+    const url = `/api/v1/third_party_apps/get_by_id.json?${queryParams}`;
 
     return fetch(url, {
       credentials: 'same-origin'
@@ -83,7 +83,7 @@ export default class ThirdPartyAppFetcher {
   }
 
   static fetchThirdPartyAppNames() {
-    return fetch('/api/v1/thirdPartyApps/listThirdPartyAppNames/all.json', {
+    return fetch('/api/v1/names/all.json', {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
@@ -94,7 +94,7 @@ export default class ThirdPartyAppFetcher {
     const obj = { name };
     const queryParams = new URLSearchParams(obj).toString();
 
-    const url = `/api/v1/thirdPartyApps/GetIPThirdPartyApp/all.json?${queryParams}`;
+    const url = `/api/v1/third_party_apps/IP.json?${queryParams}`;
 
     return fetch(url, {
       credentials: 'same-origin'
@@ -106,7 +106,7 @@ export default class ThirdPartyAppFetcher {
   static fetchAttachmentToken(attID, userID) {
     const obj = { attID, userID };
     const queryParams = new URLSearchParams(obj).toString();
-    const url = `/api/v1/thirdPartyApps/GetAttachmentToken/all.json?${queryParams}`;
+    const url = `/api/v1/third_party_apps/Token.json?${queryParams}`;
     return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())
