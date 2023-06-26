@@ -2,8 +2,7 @@ FactoryBot.define do
   factory :reaction do
     callback(:before_create) do |reaction|
       reaction.creator = FactoryBot.build(:user) unless reaction.creator
-      # reaction.collections << FactoryBot.build(:collection) if reaction.collections.blank?
-      reaction.container = FactoryBot.build(:container) unless reaction.container
+      reaction.container = FactoryBot.create(:container, :with_analysis) unless reaction.container
     end
 
     sequence(:name) { |i| "Reaction #{i}" }
