@@ -153,6 +153,11 @@ module Export
         @data[type] = {} unless @data[type]
         @data[type][uuid] = sample.as_json
         fetch_containers(sample)
+        @data['CollectionsCelllineSample'] = {} unless @data['CollectionsCelllineSample']
+        @data['CollectionsCelllineSample'][SecureRandom.uuid] = {
+          collection_id: @uuids['Collection'][collection.id],
+          cellline_sample_id: @uuids[type][sample.id],
+        }
       end
     end
 

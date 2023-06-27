@@ -124,7 +124,7 @@ RSpec.describe 'ExportCollection' do
       "attachments/#{cell_line_sample.container.children[0].children[0].children[0].attachments[0].identifier}.jpg"
     end
     let(:cell_line_sample) { create(:cellline_sample, :with_analysis, user_id: user.id, collections: [collection]) }
-    let(:cell_line_sample2) do
+    let!(:cell_line_sample2) do
       create(:cellline_sample,
              cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
     end
@@ -133,9 +133,7 @@ RSpec.describe 'ExportCollection' do
     let(:second_cellline_in_json) { cell_line_samples[cell_line_samples.keys.second] }
     let(:cell_line_samples) { elements_in_json['CelllineSample'] }
 
-
     before do
-      cell_line_sample2
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
       export.to_file
@@ -154,11 +152,23 @@ RSpec.describe 'ExportCollection' do
       expect(cell_line_sample.as_json).to eq fist_cellline_in_json
       expect(cell_line_sample2.as_json).to eq second_cellline_in_json
     end
+
     xit 'linking between the material and the two samples are given' do
       pending 'not yet implemented'
     end
-    xit 'linking between the collection and the two samples are given' do
-      pending 'not yet implemented'
+
+    it 'linking between the collection and the first sample is given' do
+      collection_uuid = elements_in_json['Collection'].keys.first
+      sample1_uuid = elements_in_json['CelllineSample'].keys.first
+      expect(elements_in_json['CollectionsCelllineSample'].values.first['collection_id']).to eq collection_uuid
+      expect(elements_in_json['CollectionsCelllineSample'].values.first['cellline_sample_id']).to eq sample1_uuid
+    end
+
+    it 'linking between the collection and the second sample is given' do
+      collection_uuid = elements_in_json['Collection'].keys.first
+      sample2_uuid = elements_in_json['CelllineSample'].keys.second
+      expect(elements_in_json['CollectionsCelllineSample'].values.second['collection_id']).to eq collection_uuid
+      expect(elements_in_json['CollectionsCelllineSample'].values.second['cellline_sample_id']).to eq sample2_uuid
     end
   end
 
