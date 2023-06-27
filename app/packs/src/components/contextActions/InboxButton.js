@@ -56,7 +56,13 @@ export default class InboxButton extends React.Component {
           id="inbox-button"
           bsStyle="default"
           onClick={InboxActions.toggleInboxModal}
-          style={{ height: '34px', width: '36px' }}
+          style={{
+            height: '34px',
+            width: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
           <i className="fa fa-inbox fa-lg" />
         </Button>
