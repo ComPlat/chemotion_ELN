@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
@@ -48,7 +49,12 @@ module Chemotion
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
-        sort_column = %w[updated_at rinchi_short_key rxno].include?(params[:sort_column]) ? params[:sort_column] : 'updated_at'
+        allowed_columns = %w[
+          updated_at
+          rinchi_short_key
+          rxno
+        ]
+        sort_column = allowed_columns.include?(params[:sort_column]) ? params[:sort_column] : 'updated_at'
         sort_direction = sort_column == 'updated_at' ? 'DESC' : 'ASC'
 
         scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
@@ -311,3 +317,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

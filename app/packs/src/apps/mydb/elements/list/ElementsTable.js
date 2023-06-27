@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import React from 'react';
 
 import {
@@ -15,11 +16,11 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
-import Switch from 'src/apps/mydb/elements/list/Switch';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import Select from 'react-select';
+import PropTypes from 'prop-types';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -35,12 +36,9 @@ export default class ElementsTable extends React.Component {
       productOnly: false,
       page: null,
       pages: null,
-      perPage: null,
-      totalElements: null,
       elementsGroup: 'none',
       elementsSort: false,
     };
-
 
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
@@ -64,28 +62,54 @@ export default class ElementsTable extends React.Component {
     UIStore.unlisten(this.onChangeUI);
   }
 
+  handlePaginationSelect(eventKey) {
+    const { pages } = this.state;
+    const { type } = this.props;
+
+    if (eventKey > 0 && eventKey <= pages) {
+      this.setState({
+        page: eventKey
+      }, () => {
+        const { page } = this.state;
+        UIActions.setPagination({ type, page });
+      });
+    }
+  }
+
+  handleNumberOfResultsChange(event) {
+    const { value } = event.target;
+    const { type } = this.props;
+
+    if (parseInt(value, 10) > 0) {
+      UIActions.changeNumberOfResultsShown(value);
+      ElementActions.refreshElements(type);
+    }
+  }
+
   onChangeUI(state) {
-    if (typeof state[this.props.type] === 'undefined' || state[this.props.type] === null) {
+    const { type } = this.props;
+    if (typeof state[type] === 'undefined' || state[type] === null) {
       return;
     }
-    const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
+    const { checkedIds, uncheckedIds, checkedAll } = state[type];
     const {
       filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
     } = state;
 
     // check if element details of any type are open at the moment
-    const currentId = state.sample.currentId || state.reaction.currentId ||
-      state.wellplate.currentId;
+    const currentId = state.sample.currentId || state.reaction.currentId
+      || state.wellplate.currentId;
 
     let isAdvS = false;
     if (currentSearchSelection && currentSearchSelection.search_by_method) {
       isAdvS = currentSearchSelection.search_by_method === 'advanced';
     }
 
+    const { currentStateProductOnly, advancedSearch } = this.state;
     const stateChange = (
-      checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt ||
-      fromDate || toDate || productOnly !== this.state.productOnly ||
-      isAdvS !== this.state.advancedSearch
+      checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
+      || fromDate || toDate || productOnly !== currentStateProductOnly
+      || isAdvS !== advancedSearch
     );
 
     if (stateChange) {
@@ -107,21 +131,33 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    const type = this.props.type + 's';
-    const elementsState = (state && state.elements && state.elements[type]) || {};
-    const { elements, page, pages, perPage, totalElements } = elementsState;
+    const { type } = this.props;
+    const elementsState = (state && state.elements && state.elements[`${type}s`]) || {};
+    const { elements, page, pages } = elementsState;
 
     let currentElement;
-    if (!state.currentElement || state.currentElement.type == this.props.type) {
-      currentElement = state.currentElement
+    if (!state.currentElement || state.currentElement.type === type) {
+      const { currentElement: stateCurrentElement } = state;
+      currentElement = stateCurrentElement;
     }
 
-    const elementsDidChange = elements && !deepEqual(elements, this.state.elements);
-    const currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
+    const { elements: stateElements, currentElement: stateCurrentElement } = this.state;
+    const elementsDidChange = elements && !deepEqual(elements, stateElements);
+    const currentElementDidChange = !deepEqual(currentElement, stateCurrentElement);
 
-    const nextState = { page, pages, perPage, totalElements, currentElement }
+    const nextState = { page, pages, currentElement };
     if (elementsDidChange) { nextState.elements = elements; }
     if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
+  }
+
+  setFromDate(date) {
+    const { fromDate } = this.state;
+    if (fromDate !== date) UIActions.setFromDate(date);
+  }
+
+  setToDate(date) {
+    const { toDate } = this.state;
+    if (toDate !== date) UIActions.setToDate(date);
   }
 
   initState = () => {
@@ -133,14 +169,17 @@ export default class ElementsTable extends React.Component {
       const userState = UserStore.getState();
       const filters = userState.profile.data.filters || {};
 
+      // you are not able to use this.setState because this would rerender it again and again ...
+      // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = filters[type]?.group || 'none';
+      // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsSort = filters[type]?.sort || false;
     }
-  }
+  };
 
   changeCollapse = (collapseAll) => {
-    this.setState({ collapseAll: !collapseAll })
-  }
+    this.setState({ collapseAll: !collapseAll });
+  };
 
   changeSampleSort = () => {
     let { moleculeSort } = this.state;
@@ -148,8 +187,8 @@ export default class ElementsTable extends React.Component {
 
     this.setState({
       moleculeSort
-    }, () => ElementActions.changeSorting(moleculeSort))
-  }
+    }, () => ElementActions.changeSorting(moleculeSort));
+  };
 
   changeElementsGroup = (elementsGroup) => {
     const { type } = this.props;
@@ -161,121 +200,44 @@ export default class ElementsTable extends React.Component {
 
     this.setState({
       elementsGroup,
-      elementsSort
+      elementsSort,
     }, () => {
       ElementActions.changeElementsFilter({ name: type, sort: elementsSort, group: elementsGroup });
-      UserActions.updateUserProfile({ data: { filters: { [type]: { sort: elementsSort, group: elementsGroup } } } });
+      UserActions.updateUserProfile({
+        data: {
+          filters: {
+            [type]: {
+              sort: elementsSort,
+              group: elementsGroup
+            }
+          }
+        }
+      });
     });
-  }
+  };
 
   changeElementsSort = () => {
     const { type } = this.props;
-    let { elementsSort, elementsGroup } = this.state;
+    const { elementsGroup } = this.state;
+    let { elementsSort } = this.state;
     elementsSort = !elementsSort;
 
     this.setState({
       elementsSort
     }, () => {
       ElementActions.changeElementsFilter({ name: type, sort: elementsSort, group: elementsGroup });
-      UserActions.updateUserProfile({ data: { filters: { [type]: { sort: elementsSort, group: elementsGroup } } } });
+      UserActions.updateUserProfile({
+        data: {
+          filters: {
+            [type]: {
+              sort: elementsSort,
+              group: elementsGroup
+            }
+          }
+        }
+      });
     });
-  }
-
-  handlePaginationSelect(eventKey) {
-    const { pages } = this.state;
-    const { type } = this.props;
-
-    if (eventKey > 0 && eventKey <= pages) {
-      this.setState({
-        page: eventKey
-      }, () => UIActions.setPagination({ type, page: this.state.page }));
-    }
-  }
-
-  pagination() {
-    if (pages <= 1) {
-      return;
-    }
-
-    const { page, pages } = this.state;
-    let items = [];
-    const minPage = Math.max(page - 2, 1);
-    const maxPage = Math.min(minPage + 4, pages);
-    items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
-    if (page > 1) {
-      items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
-    }
-    for (let _page = minPage; _page <= maxPage; _page = _page + 1) {
-      items.push(
-        <Pagination.Item
-          key={`eltPage${_page}`}
-          active={_page === page}
-          onClick={() => this.handlePaginationSelect(_page)}>
-          {_page}
-        </Pagination.Item>
-      );
-    }
-
-    if (pages > maxPage) {
-      items.push(<Pagination.Ellipsis key="Ell" />);
-    }
-    if (page == pages) {
-      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
-    }
-    items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
-
-    return (
-      <div className="list-pagination">
-        <Pagination>
-          {items}
-        </Pagination>
-      </div>
-    )
-  }
-
-  handleNumberOfResultsChange(event) {
-    const { value } = event.target;
-    const { type } = this.props;
-
-    if (parseInt(value, 10) > 0) {
-      UIActions.changeNumberOfResultsShown(value);
-      ElementActions.refreshElements(type);
-    }
-  }
-
-  numberOfResultsInput() {
-    const { ui } = this.state
-    return (
-      <Form horizontal className='list-show-count'>
-        <FormGroup>
-          <InputGroup>
-            <InputGroup.Addon>Show</InputGroup.Addon>
-            <FormControl type="text" style={{ textAlign: 'center', zIndex: 0 }}
-              onChange={event => this.handleNumberOfResultsChange(event)}
-              value={ui.number_of_results ? ui.number_of_results : 0} />
-          </InputGroup>
-        </FormGroup>
-      </Form>
-    );
-  }
-
-  toggleProductOnly() {
-    UIActions.setProductOnly(!this.state.productOnly);
-  }
-
-  changeDateFilter() {
-    let { filterCreatedAt } = this.state;
-    filterCreatedAt = !filterCreatedAt;
-    UIActions.setFilterCreatedAt(filterCreatedAt);
-  }
-
-  setFromDate(fromDate) {
-    if (this.state.fromDate !== fromDate) UIActions.setFromDate(fromDate);
-  }
-
-  setToDate(toDate) {
-    if (this.state.toDate !== toDate) UIActions.setToDate(toDate);
-  }
+  };
 
   collapseButton = () => {
     const { collapseAll } = this.state;
@@ -294,12 +256,85 @@ export default class ElementsTable extends React.Component {
         }}
       />
     );
+  };
+
+  changeDateFilter() {
+    let { filterCreatedAt } = this.state;
+    filterCreatedAt = !filterCreatedAt;
+    UIActions.setFilterCreatedAt(filterCreatedAt);
+  }
+
+  toggleProductOnly() {
+    const { productOnly } = this.state;
+    UIActions.setProductOnly(!productOnly);
+  }
+
+  numberOfResultsInput() {
+    const { ui } = this.state;
+    return (
+      <Form horizontal className="list-show-count">
+        <FormGroup>
+          <InputGroup>
+            <InputGroup.Addon>Show</InputGroup.Addon>
+            <FormControl
+              type="text"
+              style={
+                { textAlign: 'center', zIndex: 0 }
+              }
+              onChange={(event) => this.handleNumberOfResultsChange(event)}
+              value={ui.number_of_results ? ui.number_of_results : 0}
+            />
+          </InputGroup>
+        </FormGroup>
+      </Form>
+    );
+  }
+
+  pagination() {
+    const { page, pages } = this.state;
+    if (pages <= 1) {
+      return null;
+    }
+
+    const items = [];
+    const minPage = Math.max(page - 2, 1);
+    const maxPage = Math.min(minPage + 4, pages);
+    items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
+    if (page > 1) {
+      items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
+    }
+    for (let currentPage = minPage; currentPage <= maxPage; currentPage += 1) {
+      items.push(
+        <Pagination.Item
+          key={`eltPage${currentPage}`}
+          active={currentPage === page}
+          onClick={() => this.handlePaginationSelect(currentPage)}
+        >
+          {currentPage}
+        </Pagination.Item>
+      );
+    }
+
+    if (pages > maxPage) {
+      items.push(<Pagination.Ellipsis key="Ell" />);
+    }
+    if (page === pages) {
+      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page + 1)} />);
+    }
+    items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
+
+    return (
+      <div className="list-pagination">
+        <Pagination>
+          {items}
+        </Pagination>
+      </div>
+    );
   }
 
   renderSamplesHeader = () => {
     const {
       moleculeSort,
-      advancedSearch,
       productOnly,
     } = this.state;
 
@@ -318,9 +353,10 @@ export default class ElementsTable extends React.Component {
           searchable
           value={moleculeSort}
           onChange={this.changeSampleSort}
-          className='header-group-select'
+          className="header-group-select"
         />
         <button
+          type="button"
           style={{ border: 'none' }}
           onClick={this.toggleProductOnly}
         >
@@ -332,26 +368,31 @@ export default class ElementsTable extends React.Component {
         {this.collapseButton()}
       </>
     );
-  }
+  };
 
   renderReactionsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const optionsHash = {
-      'none': { sortColumn: 'update date', label: 'List' },
-      'rinchi_short_key': { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
-      'rxno': { sortColumn: 'type', label: 'Grouped by type' },
-    }
-    const options = Object.entries(optionsHash).map((option) => {
-      return { value: option[0], label: option[1].label }
-    });
-    const sortColumn = optionsHash[elementsGroup].sortColumn;
+      none: { sortColumn: 'update date', label: 'List' },
+      rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
+      rxno: { sortColumn: 'type', label: 'Grouped by type' },
+    };
+    const options = Object.entries(optionsHash).map((option) => ({
+      value: option[0],
+      label: option[1].label
+    }));
+    const { sortColumn } = optionsHash[elementsGroup];
     const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
     const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
-        <button style={{ border: 'none' }} onClick={this.changeElementsSort} >
+        <button
+          type="button"
+          style={{ border: 'none' }}
+          onClick={this.changeElementsSort}
+        >
           {sortIcon}
         </button>
       </OverlayTrigger>
@@ -366,61 +407,67 @@ export default class ElementsTable extends React.Component {
           searchable={false}
           value={elementsGroup}
           onChange={this.changeElementsGroup}
-          className='header-group-select'
+          className="header-group-select"
         />
         {elementsGroup !== 'none' ? (sortContent) : null}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
-  }
+  };
 
   renderGenericElementsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const { genericEl } = this.props;
 
-    let optionsHash = {
-      'none': { sortColumn: 'update date', label: 'List' },
-    }
-    const layers = genericEl.properties_release.layers;
-    const allowed_types = [
-      "select",
-      "text",
-      "integer",
-      "system-defined",
-      "textarea"
+    if (!genericEl.properties_release) return null;
+
+    const optionsHash = {
+      none: { sortColumn: 'update date', label: 'List' },
+    };
+    const { layers } = genericEl.properties_release;
+    const allowedTypes = [
+      'select',
+      'text',
+      'integer',
+      'system-defined',
+      'textarea'
     ];
 
-    Object.entries(layers).forEach(layerEntry => {
-      layerEntry[1].fields.filter(field => (allowed_types.includes(field.type))).forEach(field => {
-        if (Object.keys(optionsHash).length < 11) {
-          optionsHash[`${layerEntry[0]}.${field.field}`] = {
-            sortColumn: field.label,
-            label: field.label
+    Object.entries(layers).forEach((layerEntry) => {
+      layerEntry[1].fields
+        .filter((field) => (allowedTypes.includes(field.type)))
+        .forEach((field) => {
+          if (Object.keys(optionsHash).length < 11) {
+            optionsHash[`${layerEntry[0]}.${field.field}`] = {
+              sortColumn: field.label,
+              label: field.label
+            };
           }
-        }
-      });
+        });
     });
     const options = Object.entries(optionsHash).map((option, index) => {
       const label = index === 0 ? option[1].label : `Grouped by ${option[1].label}`;
 
-      return {
-        value: option[0], label: label }
+      return { value: option[0], label };
     });
 
-    let sortColumn;
-    if (optionsHash[elementsGroup]) {
-      sortColumn = optionsHash[elementsGroup].sortColumn;
-    } else {
-      sortColumn = optionsHash.none.sortColumn;
+    if (!optionsHash[elementsGroup]) {
+      // you are not able to use this.setState because this would rerender it again and again ...
+      // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = 'none';
     }
+    const { sortColumn } = optionsHash[elementsGroup] || optionsHash.none;
     const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
     const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
-        <button style={{ border: 'none' }} onClick={this.changeElementsSort} >
+        <button
+          type="button"
+          style={{ border: 'none' }}
+          onClick={this.changeElementsSort}
+        >
           {sortIcon}
         </button>
       </OverlayTrigger>
@@ -435,13 +482,13 @@ export default class ElementsTable extends React.Component {
           searchable
           value={elementsGroup}
           onChange={this.changeElementsGroup}
-          className='header-group-select'
+          className="header-group-select"
         />
         {elementsGroup !== 'none' ? (sortContent) : null}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
-  }
+  };
 
   renderHeader = () => {
     const { filterCreatedAt, ui } = this.state;
@@ -464,7 +511,7 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="table-header" >
+      <div className="table-header">
         <div className="select-all">
           <ElementAllCheckbox
             type={type}
@@ -481,7 +528,11 @@ export default class ElementsTable extends React.Component {
           }}
         >
           <OverlayTrigger placement="top" overlay={filterTooltip}>
-            <button style={{ border: 'none' }} onClick={this.changeDateFilter} >
+            <button
+              type="button"
+              style={{ border: 'none' }}
+              onClick={this.changeDateFilter}
+            >
               {filterIcon}
             </button>
           </OverlayTrigger>
@@ -509,7 +560,7 @@ export default class ElementsTable extends React.Component {
         </div>
       </div>
     );
-  }
+  };
 
   renderEntries() {
     const {
@@ -583,3 +634,15 @@ export default class ElementsTable extends React.Component {
     );
   }
 }
+
+ElementsTable.defaultProps = {
+  genericEl: null,
+};
+
+ElementsTable.propTypes = {
+  overview: PropTypes.bool.isRequired,
+  showReport: PropTypes.bool.isRequired,
+  type: PropTypes.string.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  genericEl: PropTypes.object,
+};

@@ -18,41 +18,78 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentIcon from 'src/components/comments/CommentIcon';
+import PropTypes from 'prop-types';
+import Aviator from 'aviator';
 
 export function reactionRole(element) {
   let tooltip = null;
-  if (element.type == 'reaction') {
+  if (element.type === 'reaction') {
     switch (element.role) {
-      case "gp":
+      case 'gp':
         tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
             <i className="fa fa-home c-bs-primary" />
           </OverlayTrigger>
-        )
-      case "parts":
+        );
+      case 'parts':
         tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
             <i className="fa fa-bookmark c-bs-success" />
           </OverlayTrigger>
-        )
-      case "single":
+        );
+      case 'single':
         tooltip = <Tooltip id="roleTp">Single</Tooltip>;
         return (
           <OverlayTrigger placement="top" overlay={tooltip}>
             <i className="fa fa-asterisk c-bs-danger" />
           </OverlayTrigger>
-        )
+        );
+      default:
     }
   }
+
+  return null;
+}
+
+function showDetails(element) {
+  const { currentCollection, isSync } = UIStore.getState();
+  const { id, type } = element;
+  const uri = isSync
+    ? `/scollection/${currentCollection.id}/${type}/${id}`
+    : `/collection/${currentCollection.id}/${type}/${id}`;
+  Aviator.navigate(uri, { silent: true });
+  const e = { type, params: { collectionID: currentCollection.id } };
+  e.params[`${type}ID`] = id;
+
+  const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+  if (genericEls.find((el) => el.name === type)) {
+    e.klassType = 'GenericEl';
+  }
+
+  elementShowOrNew(e);
+
+  return null;
+}
+
+function sampleAnalysesLabels(element) {
+  if (element.type === 'sample') {
+    return (
+      <ElementAnalysesLabels element={element} key={`${element.id}_analyses`} />
+    );
+  }
+
+  return null;
 }
 
 export function reactionStatus(element) {
   if (element.type === 'reaction' && element.status) {
     const tooltip = (
       <Tooltip id={`reaction_${element.status}`}>
-        {element.status} Reaction
+        {element.status}
+        &nbsp;
+        Reaction
       </Tooltip>
     );
 
@@ -95,8 +132,22 @@ export function reactionStatus(element) {
       </OverlayTrigger>
     );
   }
+
+  return null;
 }
 
+function topSecretIcon(element) {
+  if (element.type === 'sample' && element.is_top_secret === true) {
+    const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
+    return (
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <i className="fa fa-user-secret" />
+      </OverlayTrigger>
+    );
+  }
+
+  return null;
+}
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -105,63 +156,64 @@ export default class ElementsTableEntries extends Component {
       keyboardElementIndex: null
     };
 
-    this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this)
+    this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this);
   }
 
   componentDidMount() {
-    KeyboardStore.listen(this.entriesOnKeyDown)
+    KeyboardStore.listen(this.entriesOnKeyDown);
   }
 
   componentWillUnmount() {
-    KeyboardStore.unlisten(this.entriesOnKeyDown)
+    KeyboardStore.unlisten(this.entriesOnKeyDown);
   }
 
   entriesOnKeyDown(state) {
-    let context = state.context
+    const { context } = state;
     const { elements } = this.props;
 
-    if (elements[0] == null || context != elements[0].type)
-      return false
+    if (elements[0] == null || context !== elements[0].type) return false;
 
-    let documentKeyDownCode = state.documentKeyDownCode
-    let { keyboardElementIndex } = this.state
+    const { documentKeyDownCode } = state;
+    let { keyboardElementIndex } = this.state;
 
     switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
         if (keyboardElementIndex != null && elements[keyboardElementIndex] != null) {
-          this.showDetails(elements[keyboardElementIndex])
+          showDetails(elements[keyboardElementIndex]);
         }
-        break
-
+        break;
       case 38: // Up
         if (keyboardElementIndex > 0) {
-          keyboardElementIndex--
+          keyboardElementIndex -= 1;
         } else {
-          keyboardElementIndex = 0
+          keyboardElementIndex = 0;
         }
-        break
+        break;
       case 40: // Down
         if (keyboardElementIndex == null) {
-          keyboardElementIndex = 0
+          keyboardElementIndex = 0;
         } else if (keyboardElementIndex < elements.length - 1) {
-          keyboardElementIndex++
+          keyboardElementIndex += 1;
         }
-
-        break
+        break;
+      default:
     }
-    this.setState({ keyboardElementIndex })
+    this.setState({ keyboardElementIndex });
+
+    return null;
   }
 
   isElementChecked(element) {
-    let { checkedIds, uncheckedIds, checkedAll } = this.props.ui;
+    const { ui } = this.props;
+    const { checkedIds, uncheckedIds, checkedAll } = ui;
     return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
       || ArrayUtils.isValInArray(checkedIds || [], element.id);
   }
 
   isElementSelected(element) {
     const { currentElement } = this.props;
-    return (currentElement && currentElement.id == element.id);
+    return (currentElement && currentElement.id === element.id);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -177,24 +229,6 @@ export default class ElementsTableEntries extends Component {
     return type && currentElement && targets[type].includes(currentElement.type);
   }
 
-  showDetails(element) {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { id, type } = element;
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-
-    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
-    if (genericEls.find(el => el.name == type)) {
-      e.klassType = 'GenericEl';
-    }
-
-    elementShowOrNew(e)
-  }
-
   dragHandle(element) {
     const sourceType = this.dropSourceType(element);
     return (
@@ -208,16 +242,11 @@ export default class ElementsTableEntries extends Component {
 
   dropSourceType(el) {
     let sourceType = '';
-    const isDropForSample =
-      el.type === 'sample' && this.isCurrEleDropType('sample');
-    const isDropForWellPlate =
-      el.type === 'wellplate' && this.isCurrEleDropType('wellplate');
-    const isDropForResearchPlan =
-      el.type === 'reaction' && this.isCurrEleDropType('reaction');
-    const isDropForGP = el.type === 'reaction' && el.role === 'gp' &&
-      this.isCurrEleDropType('generalProcedure');
-    const isDropForScreen =
-      el.type === 'research_plan' && this.isCurrEleDropType('research_plan');
+    const isDropForSample = el.type === 'sample' && this.isCurrEleDropType('sample');
+    const isDropForWellPlate = el.type === 'wellplate' && this.isCurrEleDropType('wellplate');
+    const isDropForResearchPlan = el.type === 'reaction' && this.isCurrEleDropType('reaction');
+    const isDropForGP = el.type === 'reaction' && el.role === 'gp' && this.isCurrEleDropType('generalProcedure');
+    const isDropForScreen = el.type === 'research_plan' && this.isCurrEleDropType('research_plan');
 
     if (isDropForSample) {
       sourceType = DragDropItemTypes.SAMPLE;
@@ -233,65 +262,51 @@ export default class ElementsTableEntries extends Component {
     return sourceType;
   }
 
-  topSecretIcon(element) {
-    if (element.type === 'sample' && element.is_top_secret === true) {
-      const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
-      return (
-        <OverlayTrigger placement="top" overlay={tooltip}>
-          <i className="fa fa-user-secret" />
-        </OverlayTrigger>
-      );
-    }
-  }
-
   previewColumn(element) {
-    const { ui } = this.props;
     const classNames = classnames(
       {
-        'molecule': element.type == 'sample'
+        molecule: element.type === 'sample'
       },
       {
-        'reaction': element.type == 'reaction'
+        reaction: element.type === 'reaction'
       },
       {
-        'molecule-selected': element.type == 'sample' && this.isElementSelected(element)
+        'molecule-selected': element.type === 'sample' && this.isElementSelected(element)
       },
       {
-        'reaction': element.type == 'reaction' && this.isElementSelected(element)
+        reaction: element.type === 'reaction' && this.isElementSelected(element)
       },
       {
-        'research_plan': element.type == 'research_plan'
+        research_plan: element.type === 'research_plan'
       }
     );
 
-    let svgContainerStyle = {
+    const svgContainerStyle = {
       verticalAlign: 'middle',
       textAlign: 'center',
       cursor: 'pointer'
     };
 
     const { showPreviews } = UIStore.getState();
-    const clickToShowDetails = e => this.showDetails(element);
-    if (showPreviews && (element.type == 'reaction')) {
+    if (showPreviews && (element.type === 'reaction')) {
       return (
-        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
+        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
         </td>
       );
-    } else if (element.type === 'research_plan') {
+    }
+    if (element.type === 'research_plan') {
       if (element.thumb_svg !== 'not available') {
         return (
-          <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
+          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" style={{ cursor: 'pointer' }} />
           </td>
         );
       }
-      return (
-        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-        </td>
-      );
+      return <td role="gridcell" aria-label="Element" style={svgContainerStyle} onClick={() => this.showDetails(element)} />;
     }
-    return <td style={{ display: 'none', cursor: 'pointer' }} onClick={e => this.showDetails(element)} />;
+
+    return <td role="gridcell" aria-label="Element" style={{ display: 'none', cursor: 'pointer' }} onClick={() => showDetails(element)} />;
   }
 
   dragColumn(element) {
@@ -302,9 +317,8 @@ export default class ElementsTableEntries extends Component {
           {this.dragHandle(element)}
         </td>
       );
-    } else {
-      return <td style={{ display: 'none' }}></td>;
     }
+    return <td style={{ display: 'none' }} />;
   }
 
   reactionStatus(element) {
@@ -408,8 +422,8 @@ export default class ElementsTableEntries extends Component {
           {elements.map((element, index) => {
             const sampleMoleculeName = (element.type === 'sample') ? element.molecule.iupac_name : '';
             let style = {};
-            if (this.isElementSelected(element) ||
-              (keyboardElementIndex != null && keyboardElementIndex === index)) {
+            if (this.isElementSelected(element)
+              || (keyboardElementIndex != null && keyboardElementIndex === index)) {
               style = {
                 color: '#000',
                 background: '#ddd',
@@ -418,32 +432,36 @@ export default class ElementsTableEntries extends Component {
             }
 
             return (
-              <tr key={index} style={style}>
+              <tr key={element.id} style={style}>
                 <td width="30px">
                   <ElementCheckbox
                     element={element}
                     key={element.id}
                     checked={this.isElementChecked(element)}
-                  /><br />
+                  />
+                  <br />
                 </td>
-                <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px' : 'unset'}>
+                <td
+                  role="gridcell"
+                  onClick={() => showDetails(element)}
+                  style={{ cursor: 'pointer' }}
+                  width={element.type === 'research_plan' ? '280px' : 'unset'}
+                >
                   <div>
-                    {
-                      <SvgWithPopover
-                        hasPop={['reaction'].includes(element.type)}
-                        previewObject={{
-                          txtOnly: element.title(),
-                          isSVG: true,
-                          src: element.svgPath
-                        }}
-                        popObject={{
-                          title: (element.type === 'reaction' && element.short_label) || '',
-                          src: element.svgPath,
-                          height: '26vh',
-                          width: '52vw'
-                        }}
-                      />
-                    }
+                    <SvgWithPopover
+                      hasPop={['reaction'].includes(element.type)}
+                      previewObject={{
+                        txtOnly: element.title(),
+                        isSVG: true,
+                        src: element.svgPath
+                      }}
+                      popObject={{
+                        title: (element.type === 'reaction' && element.short_label) || '',
+                        src: element.svgPath,
+                        height: '26vh',
+                        width: '52vw'
+                      }}
+                    />
                     {reactionStatus(element)}
                     {' '}
                     {reactionRole(element)}
@@ -451,8 +469,8 @@ export default class ElementsTableEntries extends Component {
                     {sampleMoleculeName}
                     <CommentIcon commentCount={element.comment_count} />
                     <ElementCollectionLabels element={element} key={element.id} />
-                    {this.sampleAnalysesLabels(element)}
-                    {this.topSecretIcon(element)}
+                    {sampleAnalysesLabels(element)}
+                    {topSecretIcon(element)}
                   </div>
                 </td>
                 {this.previewColumn(element)}
@@ -465,3 +483,15 @@ export default class ElementsTableEntries extends Component {
     );
   }
 }
+
+ElementsTableEntries.defaultProps = {
+  currentElement: null
+};
+
+/* eslint-disable react/forbid-prop-types */
+ElementsTableEntries.propTypes = {
+  elements: PropTypes.arrayOf(PropTypes.object).isRequired,
+  showDragColumn: PropTypes.bool.isRequired,
+  ui: PropTypes.object.isRequired,
+  currentElement: PropTypes.object,
+};

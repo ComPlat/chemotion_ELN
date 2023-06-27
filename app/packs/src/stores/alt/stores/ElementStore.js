@@ -107,7 +107,6 @@ class ElementStore {
       refreshCoefficient: [],
       activeKey: 0,
       deletingElement: null,
-      ////
     };
 
     this.bindListeners({
@@ -1077,7 +1076,7 @@ class ElementStore {
   handleChangeSorting(sort) {
     this.state.moleculeSort = sort;
     this.waitFor(UIStore.dispatchToken);
-    this.handleRefreshElements("sample");
+    this.handleRefreshElements('sample');
   }
 
   handleChangeElementsFilter(filter) {

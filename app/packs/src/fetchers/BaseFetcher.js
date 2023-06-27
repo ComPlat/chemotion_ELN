@@ -19,9 +19,11 @@ export default class BaseFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(bodyData)
-    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => jsonTranformation(json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -35,9 +37,11 @@ export default class BaseFetcher {
     const promise = fetch(apiEndpoint, {
       credentials: 'same-origin',
       method: requestMethod
-    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => jsonTranformation(json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }

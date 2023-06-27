@@ -184,7 +184,7 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        if params[:sort_column].include?('.')
+        if params[:sort_column]&.include?('.')
           layer, field = params[:sort_column].split('.')
 
           element_klass = ElementKlass.find_by(name: params[:el_type])
