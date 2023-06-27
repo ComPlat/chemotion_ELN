@@ -3,6 +3,6 @@ module Entities
     expose :id
     expose :name
     expose :description
-    expose :vessel_template
+    expose :vessel_template, using: 'Entities::VesselTemplateEntity'
   end
 end
