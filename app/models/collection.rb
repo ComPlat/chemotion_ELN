@@ -48,7 +48,7 @@ class Collection < ApplicationRecord
   has_many :research_plans, through: :collections_research_plans
   has_many :elements, through: :collections_elements
 
-  has_many :sync_collections_users,  foreign_key: :collection_id, dependent: :destroy
+  has_many :sync_collections_users, foreign_key: :collection_id, dependent: :destroy, inverse_of: :collection
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   has_one :metadata
@@ -57,8 +57,9 @@ class Collection < ApplicationRecord
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
 
-  scope :ordered, -> { order("position ASC") }
+  scope :ordered, -> { order('position ASC') }
   scope :unshared, -> { where(is_shared: false) }
+  scope :synchronized, -> { where(is_synchronized: true) }
   scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
   scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
   scope :belongs_to_or_shared_by, ->(user_id, with_group = false) do

@@ -68,6 +68,10 @@ import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurements
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
 
 const MWPrecision = 6;
 
@@ -121,7 +125,7 @@ export default class SampleDetails extends React.Component {
       visible: Immutable.List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
-      saveInventoryAction: false
+      saveInventoryAction: false,
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -148,9 +152,11 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
+    const { sample } = this.props;
     UIStore.listen(this.onUIStoreChange);
     const { activeTab } = this.state;
     this.fetchQcWhenNeeded(activeTab);
+    CommentActions.fetchComments(sample);
   }
 
   // eslint-disable-next-line camelcase
@@ -419,7 +425,7 @@ export default class SampleDetails extends React.Component {
     } else {
       svgPath = sample.svgPath;
     }
-    let className = svgPath ? 'svg-container' : 'svg-container-empty'
+    const className = svgPath ? 'svg-container' : 'svg-container-empty';
     return (
       sample.can_update
         ? <div className={className}
@@ -544,6 +550,7 @@ export default class SampleDetails extends React.Component {
         {colLabel}
         <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
         <PubchemLabels element={sample} />
+        <HeaderCommentSection element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
@@ -601,6 +608,7 @@ export default class SampleDetails extends React.Component {
           {inventorySample}
           {decoupleCb}
         </div>
+        <ShowUserLabels element={sample} />
       </div>
     );
   }
@@ -1026,6 +1034,9 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Tab eventKey={ind} title="Properties" key={'Props' + sample.id.toString()}>
+        {
+          !sample.isNew && <CommentSection section="sample_properties" element={sample} />
+        }
         <ListGroupItem>
           <SampleForm
             sample={sample}
@@ -1076,7 +1087,10 @@ export default class SampleDetails extends React.Component {
   sampleContainerTab(ind) {
     const { sample } = this.state;
     return (
-      <Tab eventKey={ind} title="Analyses" key={'Container' + sample.id.toString()}>
+      <Tab eventKey={ind} title="Analyses" key={`Container${sample.id.toString()}`}>
+        {
+          !sample.isNew && <CommentSection section="sample_analyses" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <SampleDetailsContainers
             sample={sample}
@@ -1099,6 +1113,9 @@ export default class SampleDetails extends React.Component {
         title="References"
         key={`References_${sample.id}`}
       >
+        {
+          !sample.isNew && <CommentSection section="sample_references" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <SampleDetailsLiteratures
             element={sample}
@@ -1116,6 +1133,9 @@ export default class SampleDetails extends React.Component {
         title="Results"
         key={`Results${sample.id.toString()}`}
       >
+        {
+          !sample.isNew && <CommentSection section="sample_results" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <FormGroup controlId="importedReadoutInput">
             <ControlLabel>Imported Readout</ControlLabel>
@@ -1196,6 +1216,9 @@ export default class SampleDetails extends React.Component {
         title="QC & curation"
         key={`QC_${sample.id}_${ind}`}
       >
+        {
+          !sample.isNew && <CommentSection section="sample_qc_curation" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <QcMain
             sample={sample}
@@ -1449,9 +1472,10 @@ export default class SampleDetails extends React.Component {
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
+          <CommentModal element={sample} />
         </Panel.Body>
       </Panel>
-    )
+    );
   }
 }
 
