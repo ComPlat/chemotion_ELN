@@ -130,6 +130,10 @@ RSpec.describe 'ExportCollection' do
              cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
     end
 
+    let(:fist_cellline_in_json) { elements_in_json[elements_in_json.keys.first] }
+    let(:second_cellline_in_json) { elements_in_json[elements_in_json.keys.second] }
+    let(:element) { 'CelllineSample' }
+
     before do
       cell_line_sample2
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
@@ -147,7 +151,8 @@ RSpec.describe 'ExportCollection' do
     end
 
     it 'cell line properties in zip file match the original ones' do
-      pending
+      expect(cell_line_sample.as_json).to eq fist_cellline_in_json
+      expect(cell_line_sample2.as_json).to eq second_cellline_in_json
     end
   end
 

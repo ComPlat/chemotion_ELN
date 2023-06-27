@@ -145,7 +145,13 @@ module Export
     end
 
     def add_cell_line_sample_to_package(collection)
+      type = 'CelllineSample'
       collection.cellline_samples.each do |sample|
+        next if uuid?(type, sample.id)
+
+        uuid = uuid(type, sample.id)
+        @data[type] = {} unless @data[type]
+        @data[type][uuid] = sample.as_json
         fetch_containers(sample)
       end
     end
