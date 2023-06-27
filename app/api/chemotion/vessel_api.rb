@@ -79,12 +79,13 @@ module Chemotion
       desc 'Create a new vessel'
       params do
         requires :collection_id, type: Integer, desc: "Collection id"
-        requires :details, type: String, desc: 'Other details / specifications of vessel template'
-        requires :vessel_type, type: String, desc: 'Type of vessel'
-        requires :volume_unit, type: String, desc: 'unit of volume'
-        requires :volume_amount, type: String, desc: 'Volume of vessel'
-        requires :material_type, type: String, desc: 'vessel material type'
-        requires :material_details, type: String, desc: 'vessel material details'
+        optional :template_name, type: String, desc: "Name of vessel template"
+        optional :details, type: String, desc: 'Other details / specifications of vessel template'
+        optional :vessel_type, type: String, desc: 'Type of vessel'
+        optional :volume_unit, type: String, desc: 'unit of volume'
+        optional :volume_amount, type: String, desc: 'Volume of vessel'
+        optional :material_type, type: String, desc: 'vessel material type'
+        optional :material_details, type: String, desc: 'vessel material details'
         optional :name, type: String, desc: "Name of vessel"
         optional :description, type: String, desc: "Freeform description of vessel"
       end
@@ -100,6 +101,7 @@ module Chemotion
       params do
         requires :vessel_id, type: Integer, desc: 'id of vessel to update'
         optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :template_name, type: String, desc: "Name of vessel template"
         optional :details, type: String, desc: 'Other details / specifications of vessel template'
         optional :vessel_type, type: String, desc: 'Vessel Type'
         optional :volume_unit, type: String, desc: 'Vessel unit of volume'
