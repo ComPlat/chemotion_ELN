@@ -110,8 +110,6 @@ RSpec.describe 'ExportCollection' do
 
     it 'exported file exists and has 4 entries' do
       expect(File.exist?(file_path)).to be true
-      uuid_of_reaction = elements_in_json.first.second
-      elements_in_json.first[uuid_of_reaction]
       expect(file_names.length).to be 4
     end
 
@@ -122,18 +120,21 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
-  context 'with a cell line including an analysis with a png' do
+  context 'with two cell lines including one has a jpg attachment in analysis' do
+    let(:expected_attachment_name) do
+      "attachments/#{cell_line_sample.container.children[0].children[0].children[0].attachments[0].identifier}.jpg"
+    end
+    let(:cell_line_sample) { create(:cellline_sample, :with_analysis, user_id: user.id, collections: [collection]) }
+    let(:cell_line_sample2) do
+      create(:cellline_sample,
+             cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
+    end
+
     before do
       cell_line_sample2
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
       export.to_file
-    end
-
-    let(:cell_line_sample) { create(:cellline_sample, user_id: user.id, collections: [collection]) }
-    let(:cell_line_sample2) do
-      create(:cellline_sample,
-             cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
     end
 
     it 'zip file was created' do
@@ -142,6 +143,7 @@ RSpec.describe 'ExportCollection' do
 
     it 'zip file include the cell line and its analysis attachments' do
       expect(file_names.length).to be 4
+      expect(file_names).to include('export.json', 'schema.json', 'description.txt', expected_attachment_name)
     end
 
     it 'cell line properties in zip file match the original ones' do

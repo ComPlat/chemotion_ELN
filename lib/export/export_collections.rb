@@ -144,7 +144,11 @@ module Export
       end
     end
 
-    def add_cell_line_sample_to_package(collection); end
+    def add_cell_line_sample_to_package(collection)
+      collection.cellline_samples.each do |sample|
+        fetch_containers(sample)
+      end
+    end
 
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
@@ -293,7 +297,6 @@ module Export
     # rubocop:disable Metrics/MethodLength
     def fetch_containers(containable)
       containable_type = containable.class.name
-
       # fetch root container
       root_container = containable.container
       fetch_one(containable.container, {
@@ -311,6 +314,7 @@ module Export
 
         # fetch analysis_containers
         analysis_containers = analyses_container.children.where("container_type = 'analysis'")
+
         analysis_containers.each do |analysis_container|
           fetch_one(analysis_container, {
                       'containable_id' => containable_type,
