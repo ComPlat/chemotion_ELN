@@ -142,12 +142,6 @@ module Export
         @data[type] = {} unless @data[type]
         @data[type][uuid] = material.as_json
       end
-      # There must be no circular relationship between collections
-      return unless @nested
-
-      Collection.find_by(ancestry: collection.id) || [].each do |child_collection|
-        add_cell_line_material_to_package(child_collection)
-      end
     end
 
     def add_cell_line_sample_to_package(collection); end
