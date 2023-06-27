@@ -14,13 +14,22 @@ module Entities
     expose :sample_svg_file
     expose :short_label
     expose :scan_results, using: 'Entities::ScanResultEntity'
+    expose :target_amount_value
+    expose :target_amount_unit
     expose :done
 
     expose_timestamps
 
     private
 
-    delegate(:short_label, :sample_svg_file, to: :'object.sample', allow_nil: true)
+    delegate(
+      :short_label,
+      :sample_svg_file,
+      :target_amount_value,
+      :target_amount_unit,
+      to: :'object.sample',
+      allow_nil: true,
+    )
 
     def display_name
       object.sample&.showed_name
