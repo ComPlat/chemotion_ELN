@@ -28,7 +28,7 @@ module Entities
       :target_amount_value,
       :target_amount_unit,
       to: :'object.sample',
-      allow_nil: true
+      allow_nil: true,
     )
 
     def display_name
