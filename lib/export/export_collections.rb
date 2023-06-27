@@ -158,6 +158,12 @@ module Export
           collection_id: @uuids['Collection'][collection.id],
           cellline_sample_id: @uuids[type][sample.id],
         }
+
+        @data['CelllineMaterialCelllineSample'] = {} unless @data['CelllineMaterialCelllineSample']
+        @data['CelllineMaterialCelllineSample'][SecureRandom.uuid] = {
+          cellline_material_id: @uuids['CelllineMaterial'][sample.cellline_material.id],
+          cellline_sample_id: @uuids[type][sample.id],
+        }
       end
     end
 

@@ -153,10 +153,6 @@ RSpec.describe 'ExportCollection' do
       expect(cell_line_sample2.as_json).to eq second_cellline_in_json
     end
 
-    xit 'linking between the material and the two samples are given' do
-      pending 'not yet implemented'
-    end
-
     it 'linking between the collection and the first sample is given' do
       collection_uuid = elements_in_json['Collection'].keys.first
       sample1_uuid = elements_in_json['CelllineSample'].keys.first
@@ -169,6 +165,20 @@ RSpec.describe 'ExportCollection' do
       sample2_uuid = elements_in_json['CelllineSample'].keys.second
       expect(elements_in_json['CollectionsCelllineSample'].values.second['collection_id']).to eq collection_uuid
       expect(elements_in_json['CollectionsCelllineSample'].values.second['cellline_sample_id']).to eq sample2_uuid
+    end
+
+    it 'linking between the material and the first sample is given' do
+      material_uuid = elements_in_json['CelllineMaterial'].keys.first
+      sample1_uuid = elements_in_json['CelllineSample'].keys.first
+      expect(elements_in_json['CelllineMaterialCelllineSample'].values.first['cellline_material_id']).to eq material_uuid
+      expect(elements_in_json['CelllineMaterialCelllineSample'].values.first['cellline_sample_id']).to eq sample1_uuid
+    end
+
+    it 'linking between the material and the second sample is given' do
+      material_uuid = elements_in_json['CelllineMaterial'].keys.first
+      sample2_uuid = elements_in_json['CelllineSample'].keys.second
+      expect(elements_in_json['CelllineMaterialCelllineSample'].values.second['cellline_material_id']).to eq material_uuid
+      expect(elements_in_json['CelllineMaterialCelllineSample'].values.second['cellline_sample_id']).to eq sample2_uuid
     end
   end
 
