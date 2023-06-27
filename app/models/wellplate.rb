@@ -64,7 +64,7 @@ class Wellplate < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_ids, ->(ids) { joins(:samples).where('samples.id in (?)', ids) }
   scope :by_screen_ids, ->(ids) { joins(:screens).where('screens.id in (?)', ids) }
-  scope :includes_for_list_display, ->() { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag, :comments) }
 
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections, through: :collections_wellplates
@@ -82,6 +82,8 @@ class Wellplate < ApplicationRecord
   has_many :research_plans, through: :research_plans_wellplates
 
   has_many :sync_collections_users, through: :collections
+
+  has_many :comments, as: :commentable, dependent: :destroy
 
   has_one :container, as: :containable
 

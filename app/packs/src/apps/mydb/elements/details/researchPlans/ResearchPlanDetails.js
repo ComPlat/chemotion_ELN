@@ -26,6 +26,10 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -45,6 +49,11 @@ export default class ResearchPlanDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
+  }
+
+  componentDidMount() {
+    const { researchPlan } = this.props;
+    CommentActions.fetchComments(researchPlan);
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -460,6 +469,7 @@ export default class ResearchPlanDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
+        <HeaderCommentSection element={researchPlan} />
         <ConfirmClose el={researchPlan} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
@@ -474,6 +484,7 @@ export default class ResearchPlanDetails extends Component {
         {researchPlan.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+        <HeaderCommentSection element={researchPlan} />
       </Panel.Heading>
     );
   }
@@ -489,6 +500,9 @@ export default class ResearchPlanDetails extends Component {
     const tabContentsMap = {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_research_plan" element={researchPlan} />
+          }
           <div style={{ margin: '5px 0px 5px 5px' }}>
             {btnMode}
           </div>
@@ -498,16 +512,25 @@ export default class ResearchPlanDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_analyses" element={researchPlan} />
+          }
           {this.renderAnalysesTab(researchPlan)}
         </Tab>
       ),
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_attachments" element={researchPlan} />
+          }
           {this.renderAttachmentsTab(researchPlan)}
         </Tab>
       ),
       references: (
         <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_references" element={researchPlan} />
+          }
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
@@ -524,6 +547,9 @@ export default class ResearchPlanDetails extends Component {
       ),
       metadata: (
         <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
+          }
           <ResearchPlanMetadata
             parentResearchPlan={researchPlan}
             parentResearchPlanMetadata={researchPlan.research_plan_metadata}
@@ -569,6 +595,7 @@ export default class ResearchPlanDetails extends Component {
               researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
             }
           </ButtonToolbar>
+          <CommentModal element={researchPlan} />
         </Panel.Body>
       </Panel>
     );
