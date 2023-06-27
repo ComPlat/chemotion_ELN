@@ -133,7 +133,7 @@ class Sample < ApplicationRecord
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
-  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, molecule: :tag) }
+  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, :comments, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, -> {
@@ -196,6 +196,7 @@ class Sample < ApplicationRecord
   has_many :devices_samples
   has_many :analyses_experiments
   has_many :private_notes, as: :noteable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true

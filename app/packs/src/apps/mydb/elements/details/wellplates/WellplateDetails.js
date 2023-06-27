@@ -26,6 +26,10 @@ import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement'
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
 
 const cols = 12;
 
@@ -45,7 +49,9 @@ export default class WellplateDetails extends Component {
   }
 
   componentDidMount() {
+    const { wellplate } = this.props;
     UIStore.listen(this.onUIStoreChange);
+    CommentActions.fetchComments(wellplate);
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -214,7 +220,7 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
-
+    const { showCommentSection, comments } = this.props;
 
     return (
       <div>
@@ -225,6 +231,7 @@ export default class WellplateDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right" />
+        <HeaderCommentSection element={wellplate} />
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: saveBtnDisplay }}>
@@ -280,6 +287,9 @@ export default class WellplateDetails extends Component {
     const tabContentsMap = {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
+          {
+            !wellplate.isNew && <CommentSection section="wellplate_designer" element={wellplate} />
+          }
           <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
             <Wellplate
               show={showWellplate}
@@ -295,6 +305,9 @@ export default class WellplateDetails extends Component {
       ),
       list: (
         <Tab eventKey="list" title="List" key={`list_${wellplate.id}`}>
+          {
+            !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
+          }
           <Well style={{ overflow: 'scroll', height: '100%', 'max-height': 'calc(100vh - 375px)' }}>
             <WellplateList
               wells={wells}
@@ -306,6 +319,9 @@ export default class WellplateDetails extends Component {
       ),
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${wellplate.id}`}>
+          {
+            !wellplate.isNew && <CommentSection section="wellplate_properties" element={wellplate} />
+          }
           <WellplateProperties
             {...properties}
             changeProperties={c => this.handleChangeProperties(c)}
@@ -317,6 +333,9 @@ export default class WellplateDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${wellplate.id}`}>
+          {
+            !wellplate.isNew && <CommentSection section="wellplate_analyses" element={wellplate} />
+          }
           <ListGroupItem style={{ paddingBottom: 20 }}>
             <WellplateDetailsContainers
               wellplate={wellplate}
@@ -369,6 +388,7 @@ export default class WellplateDetails extends Component {
               Print Wells
             </Button>
           </ButtonToolbar>
+          <CommentModal element={wellplate} />
         </Panel.Body>
       </Panel>
     );

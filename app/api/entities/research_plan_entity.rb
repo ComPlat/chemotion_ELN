@@ -11,6 +11,7 @@ module Entities
       expose! :name
       expose! :thumb_svg
       expose! :type
+      expose! :comment_count
     end
 
     with_options(anonymize_below: 10) do
@@ -48,6 +49,10 @@ module Entities
 
     def wellplates
       displayed_in_list? ? [] : object.wellplates
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end
