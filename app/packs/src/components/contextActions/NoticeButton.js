@@ -1,5 +1,7 @@
 import React from 'react';
-import { PanelGroup, Panel, Button, Modal, Table } from 'react-bootstrap';
+import {
+  PanelGroup, Panel, Button, Modal, Table
+} from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
@@ -10,8 +12,15 @@ import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import formatDate from 'src/utilities/timezoneHelper';
 
-const changeUrl = (url, urlTitle) => (url ? <a href={url} target="_blank" rel="noopener noreferrer">{urlTitle || url}</a> : <span />);
+const changeUrl = (url, urlTitle) => (url ? (
+  <a href={url} target="_blank" rel="noopener noreferrer">
+    {urlTitle || url}
+  </a>
+) : (
+  <span />
+));
 
 const handleNotification = (nots, act, needCallback = true) => {
   nots.forEach((n) => {
@@ -19,15 +28,20 @@ const handleNotification = (nots, act, needCallback = true) => {
       NotificationActions.removeByUid(n.id);
     }
     if (act === 'add') {
-      const time = new Date().getTime();
-      const newText = n.content.data.split('\n').map(i => <p key={`${time + i}`}>{i}</p>);
+      const infoTimeString = formatDate(n.created_at);
+
+      const newText = n.content.data
+        .split('\n')
+        .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
       const { url, urlTitle } = n.content;
       if (url) {
-        newText[newText.length] = <p key={`${new Date().getTime()}-${url}`}>{changeUrl(url, urlTitle)}</p>;
+        newText[newText.length] = (
+          <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+        );
       }
 
       const notification = {
-        title: `From ${n.sender_name} on ${n.updated_at}`,
+        title: `From ${n.sender_name} on ${infoTimeString}`,
         message: newText,
         level: n.content.level || 'warning',
         dismissible: 'button',
@@ -35,7 +49,12 @@ const handleNotification = (nots, act, needCallback = true) => {
         position: n.content.position || 'tr',
         uid: n.id,
         action: {
-          label: <span><i className="fa fa-check" aria-hidden="true" />&nbsp;&nbsp;Got it</span>,
+          label: (
+            <span>
+              <i className="fa fa-check" aria-hidden="true" />
+              &nbsp;&nbsp;Got it
+            </span>
+          ),
           callback() {
             if (needCallback) {
               const params = { ids: [] };
@@ -43,8 +62,8 @@ const handleNotification = (nots, act, needCallback = true) => {
               MessagesFetcher.acknowledgedMessage(params);
               // .then((result) => { console.log(JSON.stringify(result)); });
             }
-          }
-        }
+          },
+        },
       };
       NotificationActions.add(notification);
 
@@ -74,10 +93,15 @@ const handleNotification = (nots, act, needCallback = true) => {
           CollectionActions.fetchSyncInCollectionRoots();
           break;
         case 'ElementActions.fetchResearchPlanById':
-          ElementActions.fetchResearchPlanById(parseInt(n.content.research_plan_id, 10));
+          ElementActions.fetchResearchPlanById(
+            parseInt(n.content.research_plan_id, 10)
+          );
           break;
         case 'CalendarActions.navigateToElement':
-          CalendarActions.navigateToElement(n.content.eventable_type, n.content.eventable_id);
+          CalendarActions.navigateToElement(
+            n.content.eventable_type,
+            n.content.eventable_id
+          );
           break;
         default:
         //
@@ -87,30 +111,26 @@ const handleNotification = (nots, act, needCallback = true) => {
 };
 
 const createUpgradeNotification = (serverVersion, localVersion) => {
-  const content = ['Dear ELNer,', 'A new version has been released. Please reload this page to enjoy the latest updates.',
+  const content = [
+    'Dear ELNer,',
+    'A new version has been released. Please reload this page to enjoy the latest updates.',
     'Thank you and have a nice day  :)',
     '--------------------------',
-    `Your version: ${localVersion}`, `Current version: ${serverVersion}`,
+    `Your version: ${localVersion}`,
+    `Current version: ${serverVersion}`,
     '--------------------------',
   ].join('\n');
   const contentJson = {
     data: content,
     url: '/about',
-    urlTitle: 'Check what\'s new here'
+    urlTitle: "Check what's new here",
   };
-  const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  };
-  const infoTimeString = new Date().toLocaleDateString('de-DE', options);
+  const infoTimeString = formatDate(new Date().toString());
   const not = {
     id: -1,
-    sender_name: 'System Adminstrator',
-    updated_at: `${infoTimeString}`,
-    content: contentJson
+    sender_name: 'System Administrator',
+    updated_at: infoTimeString,
+    content: contentJson,
   };
   handleNotification([not], 'add', false);
 };
@@ -137,6 +157,7 @@ export default class NoticeButton extends React.Component {
 
   componentDidMount() {
     this.envConfiguration();
+    this.startActivityDetection();
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -145,8 +166,8 @@ export default class NoticeButton extends React.Component {
 
     const notIds = _.map(nots, 'id');
     const nextNotIds = _.map(nextNots, 'id');
-    const newMessages = _.filter(nextNots, o => !_.includes(notIds, o.id));
-    const remMessages = _.filter(nots, o => !_.includes(nextNotIds, o.id));
+    const newMessages = _.filter(nextNots, (o) => !_.includes(notIds, o.id));
+    const remMessages = _.filter(nots, (o) => !_.includes(nextNotIds, o.id));
 
     if (Object.keys(newMessages).length > 0) {
       handleNotification(newMessages, 'add');
@@ -154,11 +175,20 @@ export default class NoticeButton extends React.Component {
     if (Object.keys(remMessages).length > 0) {
       handleNotification(remMessages, 'rem');
     }
-    if (nextState.serverVersion && nextState.localVersion
+    if (
+      nextState.serverVersion
+      && nextState.localVersion
       && nextState.serverVersion !== this.state.serverVersion
-      && nextState.serverVersion !== nextState.localVersion) {
-      const serverVer = nextState.serverVersion.substring(nextState.serverVersion.indexOf('-') + 1, nextState.serverVersion.indexOf('.js'));
-      const localVer = nextState.localVersion.substring(nextState.localVersion.indexOf('-') + 1, nextState.localVersion.indexOf('.js'));
+      && nextState.serverVersion !== nextState.localVersion
+    ) {
+      const serverVer = nextState.serverVersion.substring(
+        nextState.serverVersion.indexOf('-') + 1,
+        nextState.serverVersion.indexOf('.js')
+      );
+      const localVer = nextState.localVersion.substring(
+        nextState.localVersion.indexOf('-') + 1,
+        nextState.localVersion.indexOf('.js')
+      );
       if (serverVer !== localVer) {
         createUpgradeNotification(serverVer, localVer);
       }
@@ -168,6 +198,30 @@ export default class NoticeButton extends React.Component {
   }
 
   componentWillUnmount() {
+    this.stopActivityDetection();
+  }
+
+  handleShow() {
+    MessagesFetcher.fetchMessages(0).then((result) => {
+      result.messages.sort((a, b) => a.id - b.id);
+      this.setState({ showModal: true, dbNotices: result.messages });
+    });
+  }
+
+  handleHide() {
+    this.setState({ showModal: false });
+  }
+
+  startActivityDetection() {
+    const { messageEnable } = this.state;
+    if (messageEnable === true) {
+      this.interval = setInterval(this.messageFetch.bind(this), this.state.messageAutoInterval);
+      document.addEventListener('mousemove', this.detectActivity);
+      document.addEventListener('click', this.detectActivity);
+    }
+  }
+
+  stopActivityDetection() {
     const { messageEnable } = this.state;
     if (messageEnable === true) {
       document.removeEventListener('mousemove', this.detectActivity, false);
@@ -180,43 +234,37 @@ export default class NoticeButton extends React.Component {
     // use 'application' (not 'application-') as keyword because there is a
     // difference between production and development environment
     const documentIndex = 'application';
-    const applicationTag = _.filter(document.scripts, s => s.src.indexOf(documentIndex) > -1);
-    const applicationTagValue = applicationTag[0].src.substr(applicationTag[0].src
-      .indexOf(documentIndex));
-    MessagesFetcher.configuration()
-      .then((result) => {
-        this.setState({
-          messageEnable: result.messageEnable === 'true',
-          messageAutoInterval: result.messageAutoInterval,
-          idleTimeout: result.idleTimeout,
-          localVersion: applicationTagValue
-        });
-        const { messageEnable, messageAutoInterval } = this.state;
-
-        if (messageEnable === true) {
-          this.interval = setInterval(() => this.messageFetch(), messageAutoInterval);
-          document.addEventListener('mousemove', this.detectActivity);
-          document.addEventListener('click', this.detectActivity);
-        } else {
-          this.messageFetch();
-        }
+    const applicationTag = _.filter(
+      document.scripts,
+      (s) => s.src.indexOf(documentIndex) > -1
+    );
+    const applicationTagValue = applicationTag[0].src.substr(
+      applicationTag[0].src.indexOf(documentIndex)
+    );
+    MessagesFetcher.configuration().then((result) => {
+      this.setState({
+        messageEnable: result.messageEnable === 'true',
+        messageAutoInterval: result.messageAutoInterval,
+        idleTimeout: result.idleTimeout,
+        localVersion: applicationTagValue,
       });
+      const { messageEnable, messageAutoInterval } = this.state;
+
+      if (messageEnable === true) {
+        this.interval = setInterval(
+          () => this.messageFetch(),
+          messageAutoInterval
+        );
+        document.addEventListener('mousemove', this.detectActivity);
+        document.addEventListener('click', this.detectActivity);
+      } else {
+        this.messageFetch();
+      }
+    });
   }
 
   detectActivity() {
     this.setState({ lastActivityTime: new Date() });
-  }
-
-  handleShow() {
-    MessagesFetcher.fetchMessages(0)
-      .then((result) => {
-        result.messages.sort((a, b) => (a.id - b.id));
-        this.setState({ showModal: true, dbNotices: result.messages });
-      });
-  }
-
-  handleHide() {
-    this.setState({ showModal: false });
   }
 
   messageAck(idx, ackAll) {
@@ -229,28 +277,34 @@ export default class NoticeButton extends React.Component {
     } else {
       params.ids[0] = idx;
     }
-    MessagesFetcher.acknowledgedMessage(params)
-      .then((result) => {
-        const ackIds = _.map(result.ack, 'id');
-        dbNotices = _.filter(this.state.dbNotices, o => !_.includes(ackIds, o.id));
-        dbNotices.sort((a, b) => (a.id - b.id));
-        this.setState({
-          dbNotices
-        });
+    MessagesFetcher.acknowledgedMessage(params).then((result) => {
+      const ackIds = _.map(result.ack, 'id');
+      dbNotices = _.filter(
+        this.state.dbNotices,
+        (o) => !_.includes(ackIds, o.id)
+      );
+      dbNotices.sort((a, b) => a.id - b.id);
+      this.setState({
+        dbNotices,
       });
+    });
   }
 
   messageFetch() {
     const { lastActivityTime, idleTimeout } = this.state;
     const clientLastActivityTime = new Date(lastActivityTime).getTime();
     const currentTime = new Date().getTime();
-    const remainTime = Math.floor((currentTime - clientLastActivityTime) / 1000);
+    const remainTime = Math.floor(
+      (currentTime - clientLastActivityTime) / 1000
+    );
     if (remainTime < idleTimeout) {
-      MessagesFetcher.fetchMessages(0)
-        .then((result) => {
-          result.messages.sort((a, b) => (a.id - b.id));
-          this.setState({ dbNotices: result.messages, serverVersion: result.version });
+      MessagesFetcher.fetchMessages(0).then((result) => {
+        result.messages.sort((a, b) => a.id - b.id);
+        this.setState({
+          dbNotices: result.messages,
+          serverVersion: result.version,
         });
+      });
     }
   }
 
@@ -269,8 +323,10 @@ export default class NoticeButton extends React.Component {
         <Table>
           <tbody>
             <tr>
-              <td style={{ border: '0px', width: '100vw', textAlign: 'center' }}>
-                No new messages.
+              <td
+                style={{ border: '0px', width: '100vw', textAlign: 'center' }}
+              >
+                No new notifications.
               </td>
             </tr>
           </tbody>
@@ -279,99 +335,148 @@ export default class NoticeButton extends React.Component {
     );
 
     if (Object.keys(dbNotices).length > 0) {
-      bMessages = dbNotices.map((not, index) => (
-        <Panel
-          key={`panel-modal-body-${not.id}`}
-          eventKey={index}
-          collapsible="true"
-          defaultExpanded
-          ref={(pl) => {
-            this[`myPl${index}`] = pl;
-          }}
-        >
-          <Panel.Heading>
-            <i className="fa fa-commenting-o" aria-hidden="true" />&nbsp;{not.subject}&nbsp;&nbsp;
-            <span><strong>From: </strong>{not.sender_name}</span>&nbsp;&nbsp;
-            <span><strong>Created On: </strong>{not.created_at}</span>
-          </Panel.Heading>
-          <Panel.Body>
-            <Table>
-              <tbody>
-                <tr>
-                  <td width="10%">
-                    <Button
-                      id={`notice-button-ack-${not.id}`}
-                      key={`notice-button-ack-${not.id}`}
-                      onClick={() => this.messageAck(not.id, false)}
-                    >
-                      <i className="fa fa-check" aria-hidden="true" />&nbsp;Got it
-                    </Button>
-                  </td>
-                  <td width="90%">
-                    {not.content.data}
-                    <br />
-                    {changeUrl(not.content.url, not.content.url_title)}
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
-          </Panel.Body>
-        </Panel>
-      ));
+      bMessages = dbNotices.map((not, index) => {
+        const infoTimeString = formatDate(not.created_at);
+
+        const newText = not.content.data
+          .split('\n')
+          .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+
+        const { url, urlTitle } = not.content;
+        if (url) {
+          newText.push(
+            <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+          );
+        }
+
+        return (
+          <Panel
+            key={`panel-modal-body-${not.id}`}
+            eventKey={index}
+            collapsible="true"
+            defaultExpanded
+            ref={(pl) => {
+              this[`myPl${index}`] = pl;
+            }}
+          >
+            <Panel.Heading>
+              <i className="fa fa-commenting-o" aria-hidden="true" />
+              &nbsp;
+              {not.subject}
+              &nbsp;&nbsp;
+              <span>
+                <strong>From: </strong>
+                {not.sender_name}
+              </span>
+              &nbsp;&nbsp;
+              <span>
+                <strong>Created On: </strong>
+                {formatDate(not.created_at)}
+              </span>
+            </Panel.Heading>
+            <Panel.Body>
+              <Table>
+                <tbody>
+                  <tr>
+                    <td width="10%">
+                      <Button
+                        id={`notice-button-ack-${not.id}`}
+                        key={`notice-button-ack-${not.id}`}
+                        onClick={() => this.messageAck(not.id, false)}
+                      >
+                        <i className="fa fa-check" aria-hidden="true" />
+                        &nbsp;Got it
+                      </Button>
+                    </td>
+                    <td width="90%">{newText}</td>
+                  </tr>
+                </tbody>
+              </Table>
+            </Panel.Body>
+          </Panel>
+        );
+      });
     }
 
-    return (
-      <PanelGroup
-        id="panel-group-modal-body"
-      >
-        {bMessages}
-      </PanelGroup>
-    );
+    return <PanelGroup id="panel-group-modal-body">{bMessages}</PanelGroup>;
   }
 
   renderModal() {
     if (this.state.showModal) {
       return (
-        <Modal show={this.state.showModal} onHide={this.handleHide} dialogClassName="noticeModal">
+        <Modal
+          show={this.state.showModal}
+          onHide={this.handleHide}
+          dialogClassName="noticeModal"
+        >
           <Modal.Header closeButton>
-            <Modal.Title>Unread Messages</Modal.Title>
+            <Modal.Title>Unread Notifications</Modal.Title>
           </Modal.Header>
           <Modal.Body style={{ overflow: 'auto' }}>
             {this.renderBody()}
           </Modal.Body>
           <Modal.Footer>
-            <Button id="notice-button-ack-all" key="notice-button-ack-all" onClick={() => this.messageAck(0, true)}><i className="fa fa-check" aria-hidden="true" />&nbsp;Mark all messages as read</Button>
+            <Button
+              id="notice-button-ack-all"
+              key="notice-button-ack-all"
+              onClick={() => this.messageAck(0, true)}
+            >
+              <i className="fa fa-check" aria-hidden="true" />
+              &nbsp;Mark all notifications as read
+            </Button>
           </Modal.Footer>
         </Modal>
       );
     }
-    return (<div />);
+    return <div />;
   }
 
   render() {
     const noticeNum = Object.keys(this.state.dbNotices).length;
-    let btnStyle = 'warning';
-    let btnClass = 'fa fa-commenting-o fa-lg';
+    let btnStyle = 'default';
+    let btnClass = 'fa fa-bell-o fa-lg';
 
-    if (noticeNum <= 0) {
-      btnStyle = 'default';
-      btnClass = 'fa fa-comment-o fa-lg';
+    if (noticeNum > 0) {
+      btnStyle = 'warning';
+      btnClass = 'fa fa-bell fa-lg';
     }
 
     return (
       <div>
-        {
-          noticeNum <= 0 ? <span className="badge badge-pill">{noticeNum}</span> :
-            <Button
-              id="notice-button"
-              bsStyle={btnStyle}
-              onClick={this.handleShow}
-              style={{ height: '34px', width: '36px' }}
+        <Button
+          id="notice-button"
+          bsStyle={btnStyle}
+          onClick={this.handleShow}
+          style={{
+            height: '34px',
+            width: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '.04px',
+            marginLeft: '-10px'
+          }}
+        >
+          <i
+            className={btnClass}
+            style={{
+              left: '20px'
+            }}
+          />
+          {noticeNum > 0 && (
+            <span
+              className="badge badge-pill"
+              style={{
+                top: '25px',
+                left: '20px',
+                fontSize: '8px',
+                position: 'absolute'
+              }}
             >
-              <i className={btnClass} />&nbsp;
-              <span className="badge badge-pill" style={{ top: '6px', left: '-10px', fontSize: '8px' }}>{noticeNum}</span>
-            </Button>
-        }
+              {noticeNum}
+            </span>
+          )}
+        </Button>
         {this.renderModal()}
       </div>
     );
