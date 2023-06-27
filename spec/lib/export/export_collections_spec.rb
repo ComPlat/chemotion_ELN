@@ -40,7 +40,7 @@ RSpec.describe 'ExportCollection' do
         json = JSON.parse(file.get_input_stream.read) if file.name == 'export.json'
       end
     end
-    json[element]
+    json
   end
 
   context 'with a sample' do
@@ -92,8 +92,7 @@ RSpec.describe 'ExportCollection' do
   context 'with a reaction' do # rubocop:disable RSpecq/MultipleMemoizedHelpers
     let(:sample1) { create(:sample) }
     let(:sample2) { create(:sample) }
-    let(:element) { 'Reaction' }
-    let(:reaction_in_json) { elements_in_json.first.second }
+    let(:reaction_in_json) { elements_in_json['Reaction'].first.second }
 
     let(:reaction) do
       create(:reaction, collections: [collection],
@@ -114,7 +113,7 @@ RSpec.describe 'ExportCollection' do
     end
 
     it 'export.json has one reaction entry' do
-      expect(elements_in_json.length).to be 1
+      expect(elements_in_json['Reaction'].length).to be 1
       # TO DO - find an elegant way to check all properties json <-> raction, maybe with an grape entity??
       expect(reaction_in_json['name']).to eq reaction.name
     end
@@ -130,9 +129,10 @@ RSpec.describe 'ExportCollection' do
              cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
     end
 
-    let(:fist_cellline_in_json) { elements_in_json[elements_in_json.keys.first] }
-    let(:second_cellline_in_json) { elements_in_json[elements_in_json.keys.second] }
-    let(:element) { 'CelllineSample' }
+    let(:fist_cellline_in_json) { cell_line_samples[cell_line_samples.keys.first] }
+    let(:second_cellline_in_json) { cell_line_samples[cell_line_samples.keys.second] }
+    let(:cell_line_samples) { elements_in_json['CelllineSample'] }
+
 
     before do
       cell_line_sample2
@@ -153,6 +153,12 @@ RSpec.describe 'ExportCollection' do
     it 'cell line properties in zip file match the original ones' do
       expect(cell_line_sample.as_json).to eq fist_cellline_in_json
       expect(cell_line_sample2.as_json).to eq second_cellline_in_json
+    end
+    xit 'linking between the material and the two samples are given' do
+      pending 'not yet implemented'
+    end
+    xit 'linking between the collection and the two samples are given' do
+      pending 'not yet implemented'
     end
   end
 
