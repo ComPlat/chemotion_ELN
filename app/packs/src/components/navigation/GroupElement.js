@@ -1,8 +1,17 @@
 import React from 'react';
-import { ButtonGroup, OverlayTrigger, Popover, Button, Table, Tooltip } from 'react-bootstrap';
+import {
+  ButtonGroup,
+  OverlayTrigger,
+  Popover,
+  Button,
+  Table,
+  Tooltip,
+  Overlay,
+} from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import Select from 'react-select';
-import _ from 'lodash';
+import { _, findIndex, isEqual } from 'lodash';
+import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 export default class GroupElement extends React.Component {
@@ -12,36 +21,103 @@ export default class GroupElement extends React.Component {
       currentUser: props.currentState.currentUser || { name: 'unknown' },
       showUsers: false,
       showRowAdd: false,
+      groups: [],
+      selectedUsers: null,
+      showAdminAlert: false,
+      adminPopoverTarget: null,
     };
 
     this.toggleUsers = this.toggleUsers.bind(this);
     this.toggleRowAdd = this.toggleRowAdd.bind(this);
     this.loadUserByName = this.loadUserByName.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
+    this.setGroupAdmin = this.setGroupAdmin.bind(this);
+    this.hideAdminAlert = this.hideAdminAlert.bind(this);
+    this.fetchGroupData = this.fetchGroupData.bind(this);
   }
 
   componentDidMount() {
+    this.fetchGroupData();
   }
 
-  componentWillUnmount() {
+  componentDidUpdate(prevProps, prevState) {
+    if (!isEqual(prevState.selectedUsers, this.state.selectedUsers)) {
+      this.loadUserByName();
+    }
   }
 
-  toggleUsers() {
-    this.setState({
-      showUsers: !this.state.showUsers
-    })
-  }
-
-  toggleRowAdd() {
-    this.setState({
-      showRowAdd: !this.state.showRowAdd
-    })
-  }
+  componentWillUnmount() { }
 
   handleSelectUser(val) {
     if (val) {
       this.setState({ selectedUsers: val });
     }
+  }
+
+  async setGroupAdmin(groupRec, userRec, event, setAdmin = true) {
+    if (!setAdmin && groupRec.admins.length === 1) {
+      this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
+      return;
+    }
+
+    // const { groups } = this.state;
+
+    const params = {
+      id: groupRec.id,
+      admin_id: userRec.id,
+      set_admin: setAdmin,
+    };
+
+    try {
+      const result = await AdminFetcher.updateGroup(params);
+
+      this.setState((prevState) => {
+        const updatedGroups = [...prevState.groups];
+
+        if (setAdmin) {
+          groupRec.admins.splice(1, 0, userRec);
+        } else {
+          const usrIdx = findIndex(groupRec.admins, (o) => o.id === userRec.id);
+          groupRec.admins.splice(usrIdx, 1);
+        }
+        console.log('updatedGroups:', updatedGroups);
+        console.log('groupRec:', groupRec);
+
+        const idx = findIndex(updatedGroups, (o) => o.id === groupRec.id);
+        updatedGroups.splice(idx, 1, groupRec);
+
+        return { groups: updatedGroups };
+      });
+
+      this.props.onChangeGroupData(this.state.groups);
+    } catch (error) {
+      console.error('Error updating group: ', error);
+    }
+  }
+
+  hideAdminAlert = () => {
+    this.setState({ showAdminAlert: false });
+  };
+
+  async fetchGroupData() {
+    try {
+      const groups = await AdminFetcher.fetchGroupsDevices('group');
+      this.setState({ groups });
+    } catch (error) {
+      console.error('Error fetching group data: ', error);
+    }
+  }
+
+  toggleUsers() {
+    this.setState({
+      showUsers: !this.state.showUsers,
+    });
+  }
+
+  toggleRowAdd() {
+    this.setState({
+      showRowAdd: !this.state.showRowAdd,
+    });
   }
 
   loadUserByName(input) {
@@ -56,106 +132,12 @@ export default class GroupElement extends React.Component {
       });
   }
 
-  renderDeleteButton(type, groupRec, userRec) {
-    let msg = 'Leave this group?';
-    if (type === 'user') {
-      if (userRec.id === this.state.currentUser.id) {
-        msg = 'Leave this group?';
-      } else {
-        msg = `Remove user: ${userRec.name}?`;
-      }
-    } else {
-      msg = `Remove group: ${groupRec.name}?`;
-    }
-
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        {msg}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(type, groupRec, userRec)}>
-            Yes
-          </Button>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick}>
-            No
-          </Button>
-        </div>
-      </Popover>
-    );
-
-    return (
-      <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button bsSize="xsmall" type="button" bsStyle="danger" className="fa fa-trash-o" onClick={() => this.confirmDelete(groupRec, userRec)} />
-        </OverlayTrigger>
-      </ButtonGroup>
-    );
-  }
-
-  renderAdminButtons(group) {
-    const { selectedUsers, showRowAdd } = this.state;
-    if (group.admins && group.admins.some(admin => admin.id === this.state.currentUser.id)) {
-      return (
-        <td>
-          <OverlayTrigger placement='top' overlay={<Tooltip>View users</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} />
-          </OverlayTrigger>
-          <OverlayTrigger placement='top' overlay={<Tooltip>Add user</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="success" className="fa fa-plus" onClick={this.toggleRowAdd} />
-          </OverlayTrigger>
-          <OverlayTrigger placement='top' overlay={<Tooltip>Remove group</Tooltip>}>
-            {this.renderDeleteButton('group', group)}
-          </OverlayTrigger>
-          <span className={'collapse' + (showRowAdd ? 'in' : '')}>
-            {' '}
-            <Select.AsyncCreatable
-              multi
-              isLoading
-              backspaceRemoves
-              value={selectedUsers}
-              valueKey="value"
-              labelKey="label"
-              matchProp="name"
-              placeholder="Select users"
-              promptTextCreator={this.promptTextCreator}
-              loadOptions={this.loadUserByName}
-              onChange={this.handleSelectUser}
-            />
-            <Button bsSize="xsmall" type="button" bsStyle="warning" onClick={() => this.addUser(group)}>Save to group</Button>
-          </span>
-        </td>
-      );
-    }
-    return (
-      <td><Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-list" onClick={this.toggleUsers} /></td>
-    );
-  }
-
-  renderUserButtons(groupRec, userRec = null) {
-    if (
-      (groupRec.admins && groupRec.admins.some(admin => admin.id === this.state.currentUser.id))
-      || (userRec.id === this.state.currentUser.id)
-    ) {
-      return (
-        <OverlayTrigger placement='top' overlay={<Tooltip>Remove</Tooltip>}>
-          {this.renderDeleteButton('user', groupRec, userRec)}
-        </OverlayTrigger>
-      );
-    }
-    return (<div />);
-  }
-
   // confirm action after pressing yes
   // if type is group, call deleteGroup api, if type is user, call deleteUser api
   confirmDelete(type, groupRec, userRec) {
     switch (type) {
       case 'group':
-        this.props.onDeleteGroup(groupRec.id)
+        this.props.onDeleteGroup(groupRec.id);
         break;
       case 'user':
         this.props.onDeleteUser(groupRec, userRec);
@@ -176,42 +158,319 @@ export default class GroupElement extends React.Component {
       return true;
     });
 
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
-      .then((group) => {
-        const idx = _.findIndex(this.props.currentGroup, function (o) { return o.id == group.group.id; });
-        this.props.currentGroup.splice(idx, 1, group.group);
-        this.setState({ selectedUsers: null });
-        this.props.onChangeData(this.props.currentGroup);
-      });
+    UsersFetcher.updateGroup({
+      id: groupRec.id,
+      destroy_group: false,
+      add_users: userIds,
+    }).then((group) => {
+      const idx = _.findIndex(
+        this.props.currentGroup,
+        (o) => o.id == group.group.id
+      );
+      this.props.currentGroup.splice(idx, 1, group.group);
+      this.setState({ selectedUsers: null });
+      this.props.onChangeData(this.props.currentGroup);
+    });
+  }
+
+  renderDeleteButton(type, groupRec, userRec) {
+    let msg = 'Leave this group?';
+    if (type === 'user') {
+      if (userRec.id === this.state.currentUser.id) {
+        msg = 'Leave this group?';
+      } else {
+        msg = `Remove ${userRec.name}?`;
+      }
+    } else {
+      msg = 'Remove group?';
+    }
+
+    const popover = (
+      <Popover id="popover-positioned-scrolling-left">
+        {msg}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '10px',
+          }}
+        >
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={() => this.confirmDelete(type, groupRec, userRec)}
+            style={{
+              marginTop: '5px',
+              textAlign: 'center',
+              width: '35px',
+              fontWeight: 'Bold',
+            }}
+          >
+            Yes
+          </Button>
+          <Button
+            bsSize="xsmall"
+            bsStyle="warning"
+            onClick={this.handleClick}
+            style={{
+              marginTop: '5px',
+              textAlign: 'center',
+              width: '35px',
+              fontWeight: 'Bold',
+            }}
+          >
+            No
+          </Button>
+        </div>
+      </Popover>
+    );
+
+    return (
+      <ButtonGroup className="actions">
+        <OverlayTrigger
+          animation
+          placement="right"
+          root
+          trigger="focus"
+          overlay={popover}
+        >
+          <Button
+            bsSize="xsmall"
+            style={{
+              width: '25px',
+              height: '25px',
+              marginRight: '10px',
+              textAlign: 'center',
+            }}
+            type="button"
+            bsStyle="danger"
+            className="fa fa-trash-o"
+            onClick={() => this.confirmDelete(groupRec, userRec)}
+          />
+        </OverlayTrigger>
+      </ButtonGroup>
+    );
+  }
+
+  renderAdminButtons(group) {
+    const { selectedUsers, showRowAdd } = this.state;
+    if (
+      group.admins
+      && group.admins.some((admin) => admin.id === this.state.currentUser.id)
+    ) {
+      return (
+        <td>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip>View users</Tooltip>}
+          >
+            <Button
+              bsSize="xsmall"
+              style={{
+                width: '25px',
+                height: '25px',
+                marginRight: '10px',
+                textAlign: 'center',
+              }}
+              type="button"
+              bsStyle="info"
+              className="fa fa-list"
+              onClick={this.toggleUsers}
+            />
+          </OverlayTrigger>
+          <OverlayTrigger placement="top" overlay={<Tooltip>Add user</Tooltip>}>
+            <Button
+              bsSize="xsmall"
+              style={{
+                width: '25px',
+                height: '25px',
+                marginRight: '10px',
+                textAlign: 'center',
+              }}
+              type="button"
+              bsStyle="success"
+              className="fa fa-plus"
+              onClick={this.toggleRowAdd}
+            />
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip>Remove group</Tooltip>}
+          >
+            {this.renderDeleteButton('group', group)}
+          </OverlayTrigger>
+          <span className={`collapse${showRowAdd ? 'in' : ''}`}>
+            {' '}
+            <Select.AsyncCreatable
+              multi
+              style={{
+                marginTop: '10px',
+                width: '200px',
+              }}
+              isLoading
+              backspaceRemoves
+              value={selectedUsers}
+              valueKey="value"
+              labelKey="label"
+              matchProp="name"
+              placeholder="Select users"
+              promptTextCreator={this.promptTextCreator}
+              loadOptions={this.loadUserByName}
+              onChange={this.handleSelectUser}
+            />
+            <Button
+              bsSize="xsmall"
+              type="button"
+              style={{
+                height: '25px',
+                marginRight: '10px',
+                marginTop: '10px',
+                textAlign: 'center',
+                fontWeight: 'Bold',
+              }}
+              bsStyle="warning"
+              onClick={() => this.addUser(group)}
+            >
+              Add
+            </Button>
+          </span>
+        </td>
+      );
+    }
+    return (
+      <td>
+        <Button
+          bsSize="xsmall"
+          type="button"
+          style={{
+            width: '25px',
+            height: '25px',
+            marginRight: '10px',
+            textAlign: 'center',
+          }}
+          bsStyle="info"
+          className="fa fa-list"
+          onClick={this.toggleUsers}
+        />
+      </td>
+    );
+  }
+
+  renderUserButtons(groupRec, userRec = null) {
+    const isAdmin = groupRec.admins && groupRec.admins.some((a) => a.id === userRec.id);
+    const isCurrentUserAdmin = groupRec.admins
+      && groupRec.admins.some((a) => a.id === this.state.currentUser.id);
+    const canDelete = isCurrentUserAdmin || userRec.id === this.state.currentUser.id;
+
+    const adminButtonStyle = isAdmin ? 'warning' : 'default';
+    const adminTooltip = isAdmin ? 'Demote from Admin' : 'Promote to Admin';
+
+    return (
+      <span>
+        <ButtonGroup className="actions">
+          {isCurrentUserAdmin && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>{adminTooltip}</Tooltip>}
+            >
+              <Button
+                bsSize="xsmall"
+                style={{
+                  width: '25px',
+                  height: '25px',
+                  marginRight: '10px',
+                  textAlign: 'center',
+                }}
+                type="button"
+                bsStyle={adminButtonStyle}
+                className="fa fa-key"
+                onClick={(e) => this.setGroupAdmin(groupRec, userRec, !isAdmin, e)}
+              />
+            </OverlayTrigger>
+          )}
+          {canDelete && (
+            <OverlayTrigger placement="top" overlay={<Tooltip>Remove</Tooltip>}>
+              {this.renderDeleteButton('user', groupRec, userRec)}
+            </OverlayTrigger>
+          )}
+        </ButtonGroup>
+      </span>
+    );
   }
 
   render() {
+    const styles = {
+      lightRow: {
+        backgroundColor: '#e1edf2',
+      },
+      darkRow: {
+        backgroundColor: '#c8d6dc',
+      },
+    };
     const { groupElement } = this.props;
     const { showUsers: showInfo } = this.state;
     return (
       <tbody key={`tbody_${groupElement.id}`}>
-        <tr key={`row_${groupElement.id}`} style={{ fontWeight: 'bold' }}>
-          <td>{groupElement.name}</td>
-          <td>{groupElement.initials}</td>
-          <td>{groupElement.admins && groupElement.admins.length > 0 && groupElement.admins.map(admin => admin.name).join(', ')}</td>
+        <tr key={`row_${groupElement.id}`} style={{ fontWeight: 'Bold' }}>
+          <td style={{ verticalAlign: 'middle' }}>{groupElement.name}</td>
+          <td style={{ verticalAlign: 'middle' }}>{groupElement.initials}</td>
+          <td style={{ verticalAlign: 'middle' }}>
+            {groupElement.admins
+              && groupElement.admins.length > 0
+              && groupElement.admins.map((admin) => admin.name).join(', ')}
+          </td>
           {this.renderAdminButtons(groupElement)}
         </tr>
-        <tr className={'collapse' + (showInfo ? 'in' : '')}>
+        <tr className={`collapse${showInfo ? 'in' : ''}`}>
           <td colSpan="4">
             <Table>
               <tbody>
-                {groupElement.users.map(u => (
-                  <tr key={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                    <td width="20%">{u.name}</td>
-                    <td width="10%">{u.initials}</td>
-                    <td width="20%"></td>
-                    <td width="50%">{this.renderUserButtons(groupElement, u)}</td>
+                {groupElement.users.map((u, index) => (
+                  <tr
+                    key={`row_${groupElement.id}_${u.id}`}
+                    style={index % 2 === 0 ? styles.lightRow : styles.darkRow}
+                  >
+                    <td width="20%" style={{ verticalAlign: 'middle' }}>
+                      {u.name}
+                    </td>
+                    <td width="10%" style={{ verticalAlign: 'middle' }}>
+                      {u.initials}
+                    </td>
+                    <td width="20%" style={{ verticalAlign: 'middle' }} />
+                    <td width="50%" style={{ verticalAlign: 'middle' }}>
+                      {this.renderUserButtons(groupElement, u)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
           </td>
         </tr>
-      </tbody>);
+        <Overlay
+          show={this.state.showAdminAlert}
+          target={this.state.adminPopoverTarget}
+          placement="left"
+          containerPadding={20}
+        >
+          <Popover id="popover-contained">
+            There must be at least one admin.
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+              <Button
+                bsSize="xsmall"
+                bsStyle="primary"
+                onClick={this.hideAdminAlert}
+                style={{
+                  marginTop: '5px',
+                  textAlign: 'center',
+                  fontWeight: 'Bold',
+                }}
+              >
+                Got it!
+              </Button>
+            </div>
+          </Popover>
+        </Overlay>
+      </tbody>
+    );
   }
 }
