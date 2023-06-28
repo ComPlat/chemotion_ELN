@@ -161,8 +161,15 @@ i.fa.icon-right {
   margin-bottom: 39px;
   padding-left: 32px;
   height: 49vh;
-  overflow-y: auto;
   position: relative;
+
+  .scrollable-content {
+    overflow-y: auto;
+    height: calc(49vh - 65px);
+    .alert {
+      margin-left: 15px;
+    }
+  }
 
   .Select-menu, .css-4ljt47-MenuList {
     max-height: 250px;

@@ -202,7 +202,6 @@ const AdvancedSearchForm = () => {
         <Panel.Collapse>
           <Panel.Body>
             <div className="advanced-search">
-              {showErrorMessage(searchStore)}
               <SelectSearchTable />
               <ToggleButtonGroup
                 type="radio"
@@ -223,18 +222,21 @@ const AdvancedSearchForm = () => {
                   Advanced
                 </ToggleButton>
               </ToggleButtonGroup>
-              {
-                searchStore.searchType == 'advanced' ? (
-                  <>
-                    <AdvancedSearchRow idx={0} key={"selection_0"} />
-                    {renderDynamicRow()}
-                  </>
-                ) : (
-                  <DetailSearch
-                    key={searchStore.searchElement.element_table}
-                  />
-                )
-              }
+              <div className="scrollable-content">
+                {showErrorMessage(searchStore)}
+                {
+                  searchStore.searchType == 'advanced' ? (
+                    <>
+                      <AdvancedSearchRow idx={0} key={"selection_0"} />
+                      {renderDynamicRow()}
+                    </>
+                  ) : (
+                    <DetailSearch
+                      key={searchStore.searchElement.element_table}
+                    />
+                  )
+                }
+              </div>
             </div>
             <ButtonToolbar>
               <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
