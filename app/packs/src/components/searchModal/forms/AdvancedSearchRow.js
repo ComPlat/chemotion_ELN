@@ -88,7 +88,6 @@ const AdvancedSearchRow = ({ idx }) => {
       searchValues['unit'] = '';
     }
     searchStore.addAdvancedSearchValue(idx, searchValues);
-    console.log(searchStore.advancedSearchValues[idx]);
   }
 
   const filterTreeNode = (input, child) => {

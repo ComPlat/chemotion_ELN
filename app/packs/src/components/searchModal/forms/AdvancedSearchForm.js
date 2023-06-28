@@ -40,7 +40,9 @@ const AdvancedSearchForm = () => {
     if (searchStore.detail_search_values.length >= 1) {
       searchStore.detailSearchValues.map((f, i) => {
         let values = { ...Object.values(f)[0] };
-        filteredOptions.push(values);
+        if (values.value != '') {
+          filteredOptions.push(values);
+        }
       });
       if (filteredOptions[0]) {
         filteredOptions[0].link = '';
@@ -51,6 +53,7 @@ const AdvancedSearchForm = () => {
           (id == 0 && f.field && f.value)
       });
     }
+    console.log(filteredOptions);
     searchStore.changeSearchFilter(filteredOptions);
     const storedFilter = searchStore.searchFilters;
     return storedFilter.length == 0 ? [] : storedFilter[0].filters;
@@ -157,7 +160,8 @@ const AdvancedSearchForm = () => {
 
     if (searchStore.searchResultVisible && filters.length > 0) {
       filters.map((val, i) => {
-        let table = val.table.charAt(0).toUpperCase() + val.table.slice(1, -1).replace('_', ' ');
+        let table = val.field.table || val.table;
+        table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
         searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value, val.unit].join(" "));
       });
     }

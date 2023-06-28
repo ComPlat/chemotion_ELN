@@ -161,7 +161,7 @@ module Chemotion
         joins = []
 
         adv_params.each_with_index do |filter, i|
-          filter['field']['table'] = filter['table']
+          filter['field']['table'] = filter['field']['table'] || filter['table']
           filter['field']['column'] = filter['field']['column'] || filter['field']['field']
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
           additional_condition = ''
@@ -212,10 +212,15 @@ module Chemotion
             condition_table = ''
           end
 
-          if table == 'elements' && %w[name short_label].exclude?(field)
+          generics = (filter['field']['table'].present? && filter['field']['table'] == 'segments') ||
+                     (table == 'elements' && %w[name short_label].exclude?(field))
+
+          if generics
             key = filter['field']['key']
             prop = "prop_#{key}_#{i}"
-            joins << "CROSS JOIN jsonb_array_elements(elements.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
+            element_table = table == 'elements' ? 'elements' : 'segments'
+            joins << "INNER JOIN segments ON segments.element_type = '#{model_name}' AND segments.element_id = #{table}.id" if element_table == 'segments'
+            joins << "CROSS JOIN jsonb_array_elements(#{element_table}.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
             field = "(#{prop} ->> 'value')::TEXT"
             additional_condition = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
             condition_table = ''

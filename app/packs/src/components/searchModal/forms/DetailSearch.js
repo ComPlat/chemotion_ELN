@@ -12,8 +12,8 @@ const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
   let selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
-  const { rxnos, unitsSystem, segmentKlasses, genericEls } = UserStore.getState();
-  const tabs = UserStore.getState().profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
+  const { rxnos, unitsSystem, segmentKlasses, genericEls, profile } = UserStore.getState();
+  const tabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
 
   const defaultDetailSearchValues = [{
     link: 'AND',
@@ -28,7 +28,29 @@ const DetailSearch = () => {
     unit: ''
   }];
 
-  let genericFields = {};
+  const addGenericFieldsByLayers = (layers, fields, segment) => {
+    Object.entries(layers)
+      .sort((a, b) => a[1].position - b[1].position)
+      .map((value) => {
+        let label = value[1].label || '';
+        let values = value[1].fields.filter((f) => { return validFieldTypes.includes(f.type) });
+        let mappedValues = [];
+        if (values.length >= 1) {
+          values.map((v) => {
+            if (segment.id != undefined && v.table == undefined) {
+              Object.assign(v, { table: 'segments', element_id: segment.id });
+            }
+            if (v.key == undefined) {
+              Object.assign(v, { key: value[1].key });
+            }
+            mappedValues.push(v);
+          });
+          fields.push({ label: label, value: mappedValues });
+        }
+      });
+  }
+
+  let genericFields = [];
   let genericSelectOptions = [];
   let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea'];
 
@@ -36,28 +58,52 @@ const DetailSearch = () => {
     let currentGenericElement = genericEls.find((e) => { return e.name === selection.element_table.slice(0, -1) });
     if (currentGenericElement) {
       let layers = currentGenericElement.properties_template.layers;
-      genericSelectOptions = currentGenericElement.properties_template.select_options;
+      let options = currentGenericElement.properties_template.select_options;
+      if (options) {
+        Object.assign(genericSelectOptions, options);
+      }
 
-      genericFields = [];
-      genericFields.push({ value: { column: 'name', label: 'Name', type: 'text' }, label: 'Name' });
-      genericFields.push({ value: { column: 'short_label', label: 'Short Label', type: 'text' }, label: 'Short Label' });
-      Object.entries(layers)
-        .sort((a, b) => a.position - b.position)
-        .map((value, i) => {
-          let label = value[1].label || '';
-          let values = value[1].fields.filter((f) => { return validFieldTypes.includes(f.type) });
-          if (values.length >= 1) {
-            values = values.map((v) => {
-              return (v.key == undefined) ? Object.assign(v, { key: value[1].key }) : v;
-            });
-            genericFields.push({ label: label, value: values });
-          }
-        });
+      fieldOptions.map((o) => { genericFields.push(o) });
+      addGenericFieldsByLayers(layers, genericFields, {});
     }
   }
 
+  let segmentFields = [];
+  let segmentSelectOptions = [];
+
+  if (segmentKlasses && tabs) {
+    let segmentsByElement = [];
+
+    Object.entries(tabs)
+      .filter((value) => { return value[1] > 0 })
+      .sort((a, b) => a[1] - b[1])
+      .map((value) => {
+        segmentKlasses.filter((s) => { 
+          if (s.element_klass.name == selection.table.slice(0, -1) && s.label == value[0]) {
+            segmentsByElement.push(s);
+          }
+        });
+      });
+
+    if (segmentsByElement) {
+      segmentsByElement.map((segment) => {
+        let layers = segment.properties_template.layers;
+        let options = segment.properties_template.select_options;
+        if (options) {
+          Object.assign(segmentSelectOptions, options);
+        }
+        if (layers) {
+          let segments = [];
+          addGenericFieldsByLayers(layers, segments, segment);
+          segmentFields.push({ label: segment.label, value: segments });
+        }
+      });
+    }
+  }
+
+  //console.log(genericFields, segmentFields);
+
   const textInput = (option, type, selectedValue, column, keyLabel) => {
-    // value={(/^xref_/.test(field) ? sample.xref[field.split('xref_')[1]] : sample[field]) || ''}
     return (
       <FormGroup key={`${column}-${keyLabel}-${type}`}>
         <ControlLabel>{option.label}</ControlLabel>
@@ -66,7 +112,7 @@ const DetailSearch = () => {
           type="text"
           key={`${column}-${keyLabel}`}
           value={selectedValue ? selectedValue[column].value : ''}
-          onChange={handleFieldChanged(option, column, type, selectedValue)}
+          onChange={handleFieldChanged(option, column, type)}
         />
       </FormGroup>
     );
@@ -77,7 +123,7 @@ const DetailSearch = () => {
       <Checkbox
         key={`${column}-${keyLabel}`}
         checked={selectedValue ? selectedValue[column].value : false}
-        onChange={handleFieldChanged(option, column, type, selectedValue)}
+        onChange={handleFieldChanged(option, column, type)}
       >
         {option.label}
       </Checkbox>
@@ -86,14 +132,22 @@ const DetailSearch = () => {
 
   const optionsForSelect = (option) => {
     let options = [];
+    let genericOptions = [];
+    let genericSelections = [];
+
+    if (option.field !== undefined) {
+      genericOptions = genericFields.length >= 1 ? genericFields : segmentFields;
+      genericSelections = Object.keys(genericSelectOptions).length >= 1 ? genericSelectOptions : segmentSelectOptions;
+    }
+
     if (option.type == 'system-defined') {
       let systemOptions = unitsSystem.fields.find((u) => { return u.field === option.option_layers });
       options = systemOptions.units;
       if (option.column && option.column == 'duration') {
         options = FieldOptions.durationOptions;
       }
-    } else if (genericFields.length >= 1) {
-      Object.values(genericSelectOptions[option.option_layers].options).forEach((option) => {
+    } else if (genericOptions.length >= 1) {
+      Object.values(genericSelections[option.option_layers].options).forEach((option) => {
         option.value = option.label;
         options.push(option);
       });
@@ -115,7 +169,7 @@ const DetailSearch = () => {
           name={columnName}
           key={`${columnName}-${keyLabel}`}
           options={options}
-          onChange={handleFieldChanged(option, columnName, type, selectedValue)}
+          onChange={handleFieldChanged(option, columnName, type)}
           value={selectedValue ? options.filter((f) => { return f.value == selectedValue[columnName].value }) : ''}
         />
       </FormGroup>
@@ -138,7 +192,7 @@ const DetailSearch = () => {
           treeData={options}
           placeholder="Select type"
           dropdownStyle={{ maxHeight: '250px' }}
-          onChange={handleFieldChanged(option, option.column, type, selectedValue)}
+          onChange={handleFieldChanged(option, option.column, type)}
           filterTreeNode={filterTreeNode}
         />
       </FormGroup>
@@ -156,7 +210,7 @@ const DetailSearch = () => {
             type="text"
             key={`${column}-${keyLabel}`}
             value={selectedValue ? selectedValue[column].value : ''}
-            onChange={handleFieldChanged(option, column, type, selectedValue)}
+            onChange={handleFieldChanged(option, column, type)}
           />
           <InputGroup.Addon>{option.addon}</InputGroup.Addon>
         </InputGroup>
@@ -164,13 +218,13 @@ const DetailSearch = () => {
     );
   }
 
-  const ButtonOrAddOn = (option, units, value, selectedValue) => {
+  const ButtonOrAddOn = (option, units, value, column) => {
     if (units.length > 1) {
       return (
         <InputGroup.Button>
-          <Button key={units} bsStyle="success" onClick={changeUnit(option, units, value, selectedValue)}>
-            {value}
-          </Button>
+          <Button key={units} bsStyle="success"
+            dangerouslySetInnerHTML={{ __html: value }}
+            onClick={changeUnit(option, units, value, column)} />
         </InputGroup.Button>
       );
     } else {
@@ -181,7 +235,6 @@ const DetailSearch = () => {
   }
 
   const systemDefinedInput = (option, type, selectedValue, column, keyLabel) => {
-    //let column = option.column || option.field;
     let units = optionsForSelect(option);
     let value = selectedValue ? selectedValue[column].unit : units[0].label;
     return (
@@ -193,17 +246,17 @@ const DetailSearch = () => {
             type="text"
             key={`${column}-${keyLabel}`}
             value={selectedValue ? selectedValue[column].value : ''}
-            onChange={handleFieldChanged(option, column, type, selectedValue)}
+            onChange={handleFieldChanged(option, column, type)}
           />
-          {ButtonOrAddOn(option, units, value, selectedValue)}
+          {ButtonOrAddOn(option, units, value, column)}
         </InputGroup>
       </FormGroup>
     );
   }
 
-  const componentHeadline = (label, i) => {
+  const componentHeadline = (label, i, className) => {
     return (
-      <div className='detail-search-headline' key={`${label}-${i}`}>{label}</div>
+      <div className={className} key={`${label}-${i}`}>{label}</div>
     );
   }
 
@@ -244,8 +297,7 @@ const DetailSearch = () => {
     return (index !== -1 ? { ...searchStore.detailSearchValues[index][column] } : defaultDetailSearchValues[0]);
   }
 
-  const handleFieldChanged = (option, column, type, selectedValue) => (e) => {
-    //console.log(option, column, e);
+  const handleFieldChanged = (option, column, type) => (e) => {
     let value = valueByType(type, e);
     let searchValue = searchValueByStoreOrDefaultValue(column);
     searchValue.field = option;
@@ -262,8 +314,7 @@ const DetailSearch = () => {
     }
   }
 
-  const changeUnit = (option, units, value, selectedValue) => (e) => {
-    let column = option.column || option.field;
+  const changeUnit = (option, units, value, column) => (e) => {
     let activeUnitIndex = units.findIndex((f) => { return f.label === value })
     let nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
 
@@ -274,7 +325,8 @@ const DetailSearch = () => {
 
   const fieldsByType = (option, fields, keyLabel) => {
     let column = option.column === 'stereo' ? `${option.column}_${option.opt}` : (option.column || option.field);
-    column = genericFields && option.key !== undefined ? `${column}_${option.key}` : column;
+    let genericOptions = genericFields.length >= 1 ? genericFields : segmentFields;
+    column = genericOptions && option.key !== undefined ? `${column}_${option.key}` : column;
     const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(column) != -1 });
     switch (option.type) {
       case 'text':
@@ -300,14 +352,11 @@ const DetailSearch = () => {
     return fields;
   }
 
-  const FormElements = () => {
-    let fields = [];
-    let options = genericFields.length >= 1 ? genericFields : fieldOptions;
-
+  const mapOptions = (options, fields) => {
     options.map((field, i) => {
       if (Array.isArray(field.value)) {
         if (field.label) {
-          fields.push(componentHeadline(field.label, i));
+          fields.push(componentHeadline(field.label, i, 'detail-search-headline'));
         } else {
           fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
         }
@@ -319,6 +368,20 @@ const DetailSearch = () => {
         fields = fieldsByType(field.value, fields, selection.table);
       }
     });
+    return fields;
+  }
+
+  const FormElements = () => {
+    let fields = [];
+    let options = genericFields.length >= 1 ? genericFields : fieldOptions;
+    fields = mapOptions(options, fields);
+
+    if (segmentFields.length >= 1) {
+      segmentFields.map((segment, i) => {
+        fields.push(componentHeadline(segment.label, i, 'detail-search-segment-headline'));
+        fields = mapOptions(segment.value, fields);
+      });
+    }
     return fields;
   }
 
