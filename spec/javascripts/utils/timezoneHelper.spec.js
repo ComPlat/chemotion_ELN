@@ -4,8 +4,8 @@ import formatDate from 'src/utilities/timezoneHelper';
 
 describe('formatDate', () => {
   it('should correctly format the date', () => {
-    const testDate = moment().format('DD.MM.YYYY, HH:mm Z');
-    const expectedOutput = moment(testDate, 'DD.MM.YYYY, HH:mm Z').local().format('LLLL');
+    const testDate = moment.utc().subtract(2, 'hours').format('DD.MM.YYYY, HH:mm');
+    const expectedOutput = moment.utc(testDate, 'DD.MM.YYYY, HH:mm').local().format('LLLL');
     const actualOutput = formatDate(testDate);
 
     expect(actualOutput).toEqual(expectedOutput);
