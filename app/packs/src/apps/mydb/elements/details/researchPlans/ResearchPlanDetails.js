@@ -535,6 +535,7 @@ export default class ResearchPlanDetails extends Component {
             !researchPlan.isNew && <CommentSection section="research_plan_analyses" element={researchPlan} />
           }
           {this.renderAnalysesTab(researchPlan)}
+          <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
         </Tab>
       ),
       attachments: (

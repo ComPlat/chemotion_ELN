@@ -329,7 +329,7 @@ export default class WellplateDetails extends Component {
             handleAddReadout={c => this.handleAddReadout(c)}
             handleRemoveReadout={c => this.handleRemoveReadout(c)}
           />
-          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} /> {/*For samples and reactions (<element>): disabled={!<element>.can_update} */}
+          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
         </Tab>
       ),
       analyses: (
@@ -342,6 +342,7 @@ export default class WellplateDetails extends Component {
               wellplate={wellplate}
               parent={this}
             />
+            <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
           </ListGroupItem>
         </Tab>
       ),

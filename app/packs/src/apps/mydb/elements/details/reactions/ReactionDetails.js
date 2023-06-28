@@ -39,6 +39,7 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -441,6 +442,7 @@ export default class ReactionDetails extends Component {
             !reaction.isNew && <CommentSection section="reaction_analyses" element={reaction} />
           }
           {this.productData(reaction)}
+          <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
         </Tab>
       ),
       green_chemistry: (

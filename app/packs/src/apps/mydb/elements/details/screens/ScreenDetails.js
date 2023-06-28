@@ -377,6 +377,7 @@ export default class ScreenDetails extends Component {
             screen={screen}
             parent={this}
           />
+          <PrivateNoteElement element={screen} disabled={screen.can_update} />
         </Tab>
       ),
       research_plans: (

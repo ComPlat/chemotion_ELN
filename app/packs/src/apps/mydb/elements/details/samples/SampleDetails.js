@@ -73,6 +73,7 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 
 const MWPrecision = 6;
 
@@ -1118,6 +1119,7 @@ export default class SampleDetails extends React.Component {
             handleSubmit={this.handleSubmit}
             fromSample
           />
+          <PrivateNoteElement element={sample} disabled={!sample.can_update} />
         </ListGroupItem>
       </Tab>
     );
