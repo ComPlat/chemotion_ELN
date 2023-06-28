@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-# test for ExportJson ImportJson
+# test for ExportCollection
 RSpec.describe 'ExportCollection' do
   let(:user) { create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU') }
 
