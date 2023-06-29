@@ -165,6 +165,21 @@ RSpec.describe 'ImportCollection' do
         expect(attachment.attachment_data).not_to be_nil
       end
     end
+
+    context 'with zip file including two cell line samples' do
+      let(:import_id) { '20230629_two_cell_line_samples' }
+      let(:attachment) do
+        create(:attachment, file_path: Rails.root.join('spec/fixtures/import/20230629_two_cell_line_samples.zip'))
+      end
+
+      before do
+        importer.execute
+      end
+
+      it 'collection was created' do
+        expect(Collection.find_by(label: 'Awesome Collection')).not_to be_nil
+      end
+    end
   end
 
   def copy_target_to_import_folder(import_id)
