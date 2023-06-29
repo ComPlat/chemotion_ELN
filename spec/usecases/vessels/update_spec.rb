@@ -16,7 +16,7 @@ RSpec.describe Usecases::Vessels::Update do
     end
 
     context 'when vessel template was not changed' do
-      it 'cell line sample has changed' do
+      it 'vessel has changed' do
       end
 
       it 'vessel template has not changed' do
