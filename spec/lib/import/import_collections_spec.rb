@@ -9,12 +9,6 @@ RSpec.describe 'ImportCollection' do
 
   before do
     copy_target_to_import_folder(import_id)
-    stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
-    stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
-    stub_rest_request('XLYOFNOQVPJJNP-UHFFFAOYSA-N')
-    stub_rest_request('UHOVQNZJYSORNB-UHFFFAOYSA-N')
-    stub_rest_request('RJUFJBKOKNCXHH-UHFFFAOYSA-N')
-
     stub_const('EPSILON', 0.001)
   end
 
@@ -171,19 +165,6 @@ RSpec.describe 'ImportCollection' do
         expect(attachment.attachment_data).not_to be_nil
       end
     end
-  end
-
-  def stub_rest_request(identifier)
-    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/#{identifier}/record/JSON")
-      .with(
-        headers: {
-          'Accept' => '*/*',
-          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-          'Content-Type' => 'text/json',
-          'User-Agent' => 'Ruby',
-        },
-      )
-      .to_return(status: 200, body: '', headers: {})
   end
 
   def copy_target_to_import_folder(import_id)

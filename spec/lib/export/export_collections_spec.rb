@@ -120,6 +120,8 @@ RSpec.describe 'ExportCollection' do
   end
 
   context 'with two cell lines including one has a jpg attachment in analysis' do
+    let(:sample_material_join) { 'CelllineMaterialCelllineSample' }
+    let(:sample_collection_join) { 'CollectionsCelllineSample' }
     let(:expected_attachment_name) do
       "attachments/#{cell_line_sample.container.children[0].children[0].children[0].attachments[0].identifier}.jpg"
     end
@@ -156,29 +158,29 @@ RSpec.describe 'ExportCollection' do
     it 'linking between the collection and the first sample is given' do
       collection_uuid = elements_in_json['Collection'].keys.first
       sample1_uuid = elements_in_json['CelllineSample'].keys.first
-      expect(elements_in_json['CollectionsCelllineSample'].values.first['collection_id']).to eq collection_uuid
-      expect(elements_in_json['CollectionsCelllineSample'].values.first['cellline_sample_id']).to eq sample1_uuid
+      expect(elements_in_json[sample_collection_join].values.first['collection_id']).to eq collection_uuid
+      expect(elements_in_json[sample_collection_join].values.first['cellline_sample_id']).to eq sample1_uuid
     end
 
     it 'linking between the collection and the second sample is given' do
       collection_uuid = elements_in_json['Collection'].keys.first
       sample2_uuid = elements_in_json['CelllineSample'].keys.second
-      expect(elements_in_json['CollectionsCelllineSample'].values.second['collection_id']).to eq collection_uuid
-      expect(elements_in_json['CollectionsCelllineSample'].values.second['cellline_sample_id']).to eq sample2_uuid
+      expect(elements_in_json[sample_collection_join].values.second['collection_id']).to eq collection_uuid
+      expect(elements_in_json[sample_collection_join].values.second['cellline_sample_id']).to eq sample2_uuid
     end
 
     it 'linking between the material and the first sample is given' do
       material_uuid = elements_in_json['CelllineMaterial'].keys.first
       sample1_uuid = elements_in_json['CelllineSample'].keys.first
-      expect(elements_in_json['CelllineMaterialCelllineSample'].values.first['cellline_material_id']).to eq material_uuid
-      expect(elements_in_json['CelllineMaterialCelllineSample'].values.first['cellline_sample_id']).to eq sample1_uuid
+      expect(elements_in_json[sample_material_join].values.first['cellline_material_id']).to eq material_uuid
+      expect(elements_in_json[sample_material_join].values.first['cellline_sample_id']).to eq sample1_uuid
     end
 
     it 'linking between the material and the second sample is given' do
       material_uuid = elements_in_json['CelllineMaterial'].keys.first
       sample2_uuid = elements_in_json['CelllineSample'].keys.second
-      expect(elements_in_json['CelllineMaterialCelllineSample'].values.second['cellline_material_id']).to eq material_uuid
-      expect(elements_in_json['CelllineMaterialCelllineSample'].values.second['cellline_sample_id']).to eq sample2_uuid
+      expect(elements_in_json[sample_material_join].values.second['cellline_material_id']).to eq material_uuid
+      expect(elements_in_json[sample_material_join].values.second['cellline_sample_id']).to eq sample2_uuid
     end
   end
 
