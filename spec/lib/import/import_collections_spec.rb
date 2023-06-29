@@ -179,6 +179,14 @@ RSpec.describe 'ImportCollection' do
       it 'collection was created' do
         expect(Collection.find_by(label: 'Awesome Collection')).not_to be_nil
       end
+
+      it 'One cell line material was imported' do
+        expect(CelllineMaterial.count).to be 1
+      end
+
+      it 'Two cell line samples were imported' do
+        expect(CelllineSample.count).to be 2
+      end
     end
   end
 
