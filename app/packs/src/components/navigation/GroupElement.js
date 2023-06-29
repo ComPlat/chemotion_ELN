@@ -33,12 +33,9 @@ export default class GroupElement extends React.Component {
     this.handleSelectUser = this.handleSelectUser.bind(this);
     this.setGroupAdmin = this.setGroupAdmin.bind(this);
     this.hideAdminAlert = this.hideAdminAlert.bind(this);
-    this.fetchGroupData = this.fetchGroupData.bind(this);
   }
 
-  componentDidMount() {
-    this.fetchGroupData();
-  }
+  componentDidMount() { }
 
   componentDidUpdate(prevProps, prevState) {
     if (!isEqual(prevState.selectedUsers, this.state.selectedUsers)) {
@@ -54,70 +51,62 @@ export default class GroupElement extends React.Component {
     }
   }
 
-  async setGroupAdmin(groupRec, userRec, event, setAdmin = true) {
+  setGroupAdmin(groupRec, userRec, setAdmin = true) {
+    // of removing admin rights and this is the only admin, show warning
     if (!setAdmin && groupRec.admins.length === 1) {
       this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
       return;
     }
 
-    // const { groups } = this.state;
+    // confirm action if promoting user to admin
+    if (setAdmin) {
+      if (!window.confirm('Are you sure you want to make this user an admin?')) {
+        return;
+      }
+    }
 
+    const { groups } = this.state;
     const params = {
+      action: 'NodeAdm',
+      rootType: 'Group',
+      actionType: 'Adm',
       id: groupRec.id,
       admin_id: userRec.id,
       set_admin: setAdmin,
     };
-
-    try {
-      const result = await AdminFetcher.updateGroup(params);
-
-      this.setState((prevState) => {
-        const updatedGroups = [...prevState.groups];
-
+    AdminFetcher.updateGroup(params)
+      .then((result) => {
         if (setAdmin) {
           groupRec.admins.splice(1, 0, userRec);
         } else {
           const usrIdx = findIndex(groupRec.admins, (o) => o.id === userRec.id);
           groupRec.admins.splice(usrIdx, 1);
         }
-        console.log('updatedGroups:', updatedGroups);
-        console.log('groupRec:', groupRec);
-
-        const idx = findIndex(updatedGroups, (o) => o.id === groupRec.id);
-        updatedGroups.splice(idx, 1, groupRec);
-
-        return { groups: updatedGroups };
+        const idx = findIndex(groups, (o) => o.id === groupRec.id);
+        groups.splice(idx, 1, groupRec);
+        this.setState({ groups }, () => {
+          this.props.onChangeGroupData(groups);
+        });
+      })
+      .catch((error) => {
+        console.error('Error updating group: ', error);
       });
-
-      this.props.onChangeGroupData(this.state.groups);
-    } catch (error) {
-      console.error('Error updating group: ', error);
-    }
   }
 
   hideAdminAlert = () => {
     this.setState({ showAdminAlert: false });
   };
 
-  async fetchGroupData() {
-    try {
-      const groups = await AdminFetcher.fetchGroupsDevices('group');
-      this.setState({ groups });
-    } catch (error) {
-      console.error('Error fetching group data: ', error);
-    }
-  }
-
   toggleUsers() {
-    this.setState({
-      showUsers: !this.state.showUsers,
-    });
+    this.setState((prevState) => ({
+      showUsers: !prevState.showUsers,
+    }));
   }
 
   toggleRowAdd() {
-    this.setState({
-      showRowAdd: !this.state.showRowAdd,
-    });
+    this.setState((prevState) => ({
+      showRowAdd: !prevState.showRowAdd,
+    }));
   }
 
   loadUserByName(input) {
@@ -278,7 +267,10 @@ export default class GroupElement extends React.Component {
               onClick={this.toggleUsers}
             />
           </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip>Add user</Tooltip>}>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip>Add user</Tooltip>}
+          >
             <Button
               bsSize="xsmall"
               style={{
@@ -389,7 +381,10 @@ export default class GroupElement extends React.Component {
             </OverlayTrigger>
           )}
           {canDelete && (
-            <OverlayTrigger placement="top" overlay={<Tooltip>Remove</Tooltip>}>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>Remove</Tooltip>}
+            >
               {this.renderDeleteButton('user', groupRec, userRec)}
             </OverlayTrigger>
           )}
@@ -428,7 +423,9 @@ export default class GroupElement extends React.Component {
                 {groupElement.users.map((u, index) => (
                   <tr
                     key={`row_${groupElement.id}_${u.id}`}
-                    style={index % 2 === 0 ? styles.lightRow : styles.darkRow}
+                    style={
+                      index % 2 === 0 ? styles.lightRow : styles.darkRow
+                    }
                   >
                     <td width="20%" style={{ verticalAlign: 'middle' }}>
                       {u.name}
@@ -454,7 +451,13 @@ export default class GroupElement extends React.Component {
         >
           <Popover id="popover-contained">
             There must be at least one admin.
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '10px',
+              }}
+            >
               <Button
                 bsSize="xsmall"
                 bsStyle="primary"
