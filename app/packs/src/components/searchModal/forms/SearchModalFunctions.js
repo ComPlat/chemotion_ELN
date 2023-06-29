@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Alert } from 'react-bootstrap';
 
 const togglePanel = (store) => () => {
@@ -21,7 +21,7 @@ const panelVariables = (store) => {
       defaultClassName: 'collapsible-search-result',
       invisibleClassName: (store.search_result_panel_visible ? '' : ' inactive'),
       inactiveSearchClass: (!store.searchVisible ? 'inactive' : ''),
-      inactiveResultClass: (!store.searchResultVisible? 'inactive' : ''),
+      inactiveResultClass: (!store.searchResultVisible ? 'inactive' : ''),
       searchIcon: `fa fa-chevron-${store.search_icon} icon-right`,
       resultIcon: `fa fa-chevron-${store.result_icon} icon-right`,
       searchTitle: (store.searchVisible ? 'Search' : 'Refine search'),

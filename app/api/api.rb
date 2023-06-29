@@ -126,11 +126,11 @@ class API < Grape::API
     'samples' => %w[
       name short_label external_label xref content is_top_secret decoupled
       stereo boiling_point melting_point density molarity_value target_amount_value
-      description location
+      description location purity
     ],
     'reactions' => %w[
       name short_label status conditions rxno content temperature duration
-      role purification tlc_solvents tlc_description rf_value
+      role purification tlc_solvents tlc_description rf_value dangerous_products
     ],
     'wellplates' => %w[name short_label readout_titles content],
     'screens' => %w[name collaborator requirements conditions result content],

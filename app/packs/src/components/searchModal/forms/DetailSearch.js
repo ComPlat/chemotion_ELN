@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup } from 'react-bootstrap'
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
@@ -218,13 +218,13 @@ const DetailSearch = () => {
     );
   }
 
-  const ButtonOrAddOn = (option, units, value, column) => {
+  const ButtonOrAddOn = (units, value, column) => {
     if (units.length > 1) {
       return (
         <InputGroup.Button>
           <Button key={units} bsStyle="success"
             dangerouslySetInnerHTML={{ __html: value }}
-            onClick={changeUnit(option, units, value, column)} />
+            onClick={changeUnit(units, value, column)} />
         </InputGroup.Button>
       );
     } else {
@@ -248,7 +248,7 @@ const DetailSearch = () => {
             value={selectedValue ? selectedValue[column].value : ''}
             onChange={handleFieldChanged(option, column, type)}
           />
-          {ButtonOrAddOn(option, units, value, column)}
+          {ButtonOrAddOn(units, value, column)}
         </InputGroup>
       </FormGroup>
     );
@@ -276,7 +276,7 @@ const DetailSearch = () => {
     }
   }
 
-  const matchByField = (field) => {
+  const matchByField = (field, type) => {
     switch (field) {
       case 'boiling_point':
       case 'melting_point':
@@ -286,9 +286,10 @@ const DetailSearch = () => {
       case 'target_amount_value':
       case 'temperature':
       case 'duration':
+      case 'purity':
         return '>=';
       default:
-        return 'LIKE';
+        return type == 'system-defined' ? '>=' : 'LIKE';
     }
   }
 
@@ -302,7 +303,7 @@ const DetailSearch = () => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
     searchValue.field = option;
     searchValue.value = value;
-    searchValue.match = matchByField(column);
+    searchValue.match = matchByField(column, type);
     if (type == 'system-defined' && searchValue.unit === '') {
       let units = optionsForSelect(option);
       searchValue.unit = units[0].label;
@@ -314,7 +315,7 @@ const DetailSearch = () => {
     }
   }
 
-  const changeUnit = (option, units, value, column) => (e) => {
+  const changeUnit = (units, value, column) => (e) => {
     let activeUnitIndex = units.findIndex((f) => { return f.label === value })
     let nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
 
@@ -357,7 +358,7 @@ const DetailSearch = () => {
       if (Array.isArray(field.value)) {
         if (field.label) {
           fields.push(componentHeadline(field.label, i, 'detail-search-headline'));
-        } else {
+        } else if (i != 0) {
           fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
         }
         

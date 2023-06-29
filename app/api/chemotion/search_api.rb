@@ -139,8 +139,8 @@ module Chemotion
       end
 
       def sanitize_float_fields(filter)
-        fields = %w[boiling_point melting_point density molarity_value target_amount_value]
-        fields.include?(filter['field']['column'])
+        fields = %w[boiling_point melting_point density molarity_value target_amount_value purity]
+        fields.include?(filter['field']['column']) && filter['field']['table'] != 'segments'
       end
 
       def sanitize_words(filter)
@@ -154,6 +154,57 @@ module Chemotion
         words
       end
 
+      def filter_special_non_generic_fields(filter, table, options)
+        case filter['field']['column']
+        when 'body'
+          options[:joins] << 'CROSS JOIN jsonb_array_elements(body) AS element'
+          options[:joins] << "CROSS JOIN jsonb_array_elements(element -> 'value' -> 'ops') AS ops"
+          options[:field] = "(ops ->> 'insert')::TEXT"
+          options[:condition_table] = ''
+        when 'content'
+          options[:joins] << "INNER JOIN private_notes ON private_notes.noteable_type = '#{options[:model_name]}' AND private_notes.noteable_id = #{table}.id"
+          options[:condition_table] = 'private_notes.'
+        when 'temperature'
+          options[:field] = "(#{table}.temperature ->> 'userText')::FLOAT"
+          options[:first_condition] = "(#{table}.temperature ->> 'userText')::TEXT != ''"
+          options[:first_condition] += " AND (#{table}.temperature ->> 'valueUnit')::TEXT != '' AND "
+          options[:additional_condition] = "AND (#{table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
+          options[:words][0] = options[:words].first.to_f
+          options[:condition_table] = ''
+        when 'duration'
+          options[:field] = "(EXTRACT(epoch FROM #{table}.duration::interval)/#{duration_interval_by_unit(filter['unit'])})::INT"
+          options[:first_condition] = "#{table}.duration IS NOT NULL AND #{table}.duration != '' AND "
+          options[:words][0] = options[:words].first.to_i
+          options[:condition_table] = ''
+        when 'target_amount_value'
+          options[:additional_condition] = "AND #{table}.target_amount_unit = '#{filter['unit']}'"
+        when 'readout_titles'
+          options[:joins] << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
+          options[:field] = 'titles::TEXT'
+          options[:condition_table] = ''
+        when 'purification', 'dangerous_products'
+          options[:field] = "(#{table}.#{filter['field']['column']})::TEXT"
+          options[:condition_table] = ''
+        end
+        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
+      end
+
+      def filter_generic_fields(filter, table, i, options)
+        key = filter['field']['key']
+        prop = "prop_#{key}_#{i}"
+        segments_alias = "segments_#{filter['field']['element_id']}"
+        element_table = table == 'elements' ? 'elements' : segments_alias
+        segments_join = "INNER JOIN segments AS #{segments_alias} ON #{segments_alias}.element_type = '#{options[:model_name]}'"
+        segments_join += " AND #{segments_alias}.element_id = #{table}.id AND #{segments_alias}.segment_klass_id = #{filter['field']['element_id']}"
+
+        options[:joins] << segments_join if element_table == segments_alias && options[:joins].exclude?(segments_join)
+        options[:joins] << "CROSS JOIN jsonb_array_elements(#{element_table}.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
+        options[:field] = "(#{prop} ->> 'value')::TEXT"
+        options[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
+        options[:condition_table] = ''
+        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
+      end
+
       def filter_values_for_advanced_search(dl = @dl)
         query = ''
         cond_val = []
@@ -164,14 +215,14 @@ module Chemotion
           filter['field']['table'] = filter['field']['table'] || filter['table']
           filter['field']['column'] = filter['field']['column'] || filter['field']['field']
           adv_field = filter['field'].to_h.merge(dl).symbolize_keys
-          additional_condition = ''
-          first_condition = ''
           next unless whitelisted_table(**adv_field)
           next unless filter_with_detail_level(**adv_field)
 
           table = filter['table']
           condition_table = "#{table}."
           model_name = table.singularize.camelize.constantize
+          first_condition = ''
+          additional_condition = ''
 
           field = filter['field']['column']
           field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
@@ -180,51 +231,20 @@ module Chemotion
           words = sanitize_words(filter)
           filter_match = filter['value'] == 'true' ? '=' : filter['match']
 
-          case filter['field']['column']
-          when 'body'
-            joins << 'CROSS JOIN jsonb_array_elements(body) AS element'
-            joins << "CROSS JOIN jsonb_array_elements(element -> 'value' -> 'ops') AS ops"
-            field = "(ops ->> 'insert')::TEXT"
-            condition_table = ''
-          when 'content'
-            joins << "INNER JOIN private_notes ON private_notes.noteable_type = '#{model_name}' AND private_notes.noteable_id = #{table}.id"
-            condition_table = 'private_notes.'
-          when 'temperature'
-            field = "(#{table}.temperature ->> 'userText')::FLOAT"
-            first_condition = "(#{table}.temperature ->> 'userText')::TEXT != ''"
-            first_condition += " AND (#{table}.temperature ->> 'valueUnit')::TEXT != '' AND "
-            additional_condition = "AND (#{table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
-            words[0] = words.first.to_f
-            condition_table = ''
-          when 'duration'
-            field = "(EXTRACT(epoch FROM #{table}.duration::interval)/#{duration_interval_by_unit(filter['unit'])})::INT"
-            first_condition = "#{table}.duration IS NOT NULL AND #{table}.duration != '' AND "
-            words[0] = words.first.to_i
-            condition_table = ''
-          when 'target_amount_value'
-            additional_condition = "AND #{table}.target_amount_unit = '#{filter['unit']}'"
-          when 'readout_titles'
-            joins << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
-            field = 'titles::TEXT'
-            condition_table = ''
-          when 'purification' || 'dangerous_products'
-            field = "(#{table}.purification)::TEXT"
-            condition_table = ''
-          end
-
           generics = (filter['field']['table'].present? && filter['field']['table'] == 'segments') ||
                      (table == 'elements' && %w[name short_label].exclude?(field))
 
-          if generics
-            key = filter['field']['key']
-            prop = "prop_#{key}_#{i}"
-            element_table = table == 'elements' ? 'elements' : 'segments'
-            joins << "INNER JOIN segments ON segments.element_type = '#{model_name}' AND segments.element_id = #{table}.id" if element_table == 'segments'
-            joins << "CROSS JOIN jsonb_array_elements(#{element_table}.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
-            field = "(#{prop} ->> 'value')::TEXT"
-            additional_condition = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
-            condition_table = ''
-          end
+          options = {
+            joins: joins, field: field, condition_table: condition_table, first_condition: first_condition,
+            additional_condition: additional_condition, words: words, model_name: model_name
+          }
+
+          joins, field, condition_table, first_condition, additional_condition, words =
+            if generics
+              filter_generic_fields(filter, table, i, options)
+            else
+              filter_special_non_generic_fields(filter, table, options)
+            end
 
           conditions =
             words.collect { "#{first_condition}#{condition_table}#{field} #{filter_match} ? #{additional_condition}" }.join(' OR ')

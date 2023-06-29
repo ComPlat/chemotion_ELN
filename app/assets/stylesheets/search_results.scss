@@ -161,3 +161,9 @@
   top: 20%;
   left: 2%;
 }
+
+.search-value-list {
+  position: relative;
+  max-height: 12vh;
+  overflow-y: auto;
+}

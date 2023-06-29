@@ -1,8 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
 import SearchResult from './SearchResult';

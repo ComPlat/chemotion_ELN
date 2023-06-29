@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
-  Form, FormControl, Radio, Grid, Row, Col
-} from 'react-bootstrap';
+import { ButtonGroup, Button, DropdownButton, MenuItem } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { GenericElCriteriaModal, clsInputGroup } from 'chem-generic-ui';
 

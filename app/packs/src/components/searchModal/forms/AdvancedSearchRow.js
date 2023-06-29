@@ -19,7 +19,8 @@ const AdvancedSearchRow = ({ idx }) => {
     return f.value.advanced === true && f.value.advanced !== undefined
   });
 
-  if (['temperature', 'duration'].includes(selection.field.column)) {
+  const specialMatcherFields = ['temperature', 'duration'];
+  if (specialMatcherFields.includes(selection.field.column)) {
     mapperOptions = unitMapperFields;
   }
 
@@ -80,12 +81,14 @@ const AdvancedSearchRow = ({ idx }) => {
     searchValues['element_id'] = searchElement.element_id
 
     const fieldColumn = searchValues.field.column;
-    const additionalFields = ['temperature', 'duration'];
     if (value.column == 'temperature') { searchValues = temperatureConditions(searchValues, value.column) }
     if (value.column == 'duration') { searchValues = durationConditions(searchValues, value.column) }
-    if (additionalFields.includes(fieldColumn) && formElement == 'value') { checkValueForNumber(value) }
-    if (!additionalFields.includes(fieldColumn) && formElement != 'unit' && !additionalFields.includes(value.column)) {
+    if (specialMatcherFields.includes(fieldColumn) && formElement == 'value') { checkValueForNumber(value) }
+    if (!specialMatcherFields.includes(fieldColumn) && formElement != 'unit' && !specialMatcherFields.includes(value.column)) {
       searchValues['unit'] = '';
+    }
+    if (!specialMatcherFields.includes(fieldColumn) && ['>', '<'].includes(searchValues['match']) && formElement != 'match') {
+      searchValues['match'] = '=';
     }
     searchStore.addAdvancedSearchValue(idx, searchValues);
   }

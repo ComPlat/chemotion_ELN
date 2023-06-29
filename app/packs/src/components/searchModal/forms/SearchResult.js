@@ -70,7 +70,7 @@ const SearchResult = ({ handleClear }) => {
   const SearchValuesList = () => {
     if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
       return (
-        <div style={{ position: 'relative' }}>
+        <div className="search-value-list">
           <h4>Your Search</h4>
           {
             searchStore.searchValues.map((val, i) => {
