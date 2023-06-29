@@ -12,7 +12,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from '../../../../stores/alt/actions/CollectionActions';
-import { filterTabLayout, getArrayFromLayout, getLayout } from 'src/utilities/CollectionTabsHelper';
+import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;
@@ -61,15 +61,16 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    let { availableTabs, addInventoryTab } = this.props;
+    let { addInventoryTab } = this.props;
     const currentCollection = UIStore.getState().currentCollection;
-    const tabs = currentCollection?.tabs_segment;
-    let layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]
-    if (!_.isEmpty(tabs[`${this.type}`])) {
-      layout = getLayout(tabs[`${this.type}`], layout);
+    const collectionTabs = currentCollection?.tabs_segment;
+    let layout = {};
+    if (_.isEmpty(collectionTabs[`${this.type}`])) {
+      layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
+    } else {
+      layout = collectionTabs[`${this.type}`];
     }
-
-    const { visible, hidden } = getArrayFromLayout(layout, this.type, availableTabs, addInventoryTab);
+    const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab);
 
     this.setState(
       { visible, hidden },

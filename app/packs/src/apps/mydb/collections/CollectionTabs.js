@@ -7,7 +7,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import { filterTabLayout, getLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
+import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
 const elements = [
   { name: 'sample', label: 'Sample' },
@@ -83,13 +83,13 @@ export default class CollectionTabs extends React.Component {
     this.setState({ currentCollection: node });
     this.handleModalOptions(this.state.showModal);
     elements.forEach((element, index) => {
-      let layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
-      let availableTabs = (layout && Object.keys(layout)) || {};
-      if (!_.isEmpty(node.tabs_segment[element.name])) {
-        layout = getLayout(node.tabs_segment[element.name], layout);
+      let layout = {};
+      if (_.isEmpty(node.tabs_segment[element.name])) {
+        layout = (profileData && profileData[`layout_detail_${element.name}`]) || {};
+      } else {
+        layout = node.tabs_segment[element.name];
       }
-
-      const { visible, hidden } = getArrayFromLayout(layout, element.name, availableTabs, addInventoryTab);
+      const { visible, hidden } = getArrayFromLayout(layout, element.name, addInventoryTab);
       layout = { visible, hidden };
       layouts[index] = layout;
     });

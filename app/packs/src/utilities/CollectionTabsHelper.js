@@ -36,16 +36,10 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   };
 };
 
-const getLayout = (tabs, profileLayout) => {
-  let leftovers = Object.keys(profileLayout).filter((key) => !Object.keys(tabs).includes(key))
-    .reduce((cur, key) => { return Object.assign(cur, { [key]: profileLayout[key] })}, {});
-  return {...tabs, ...leftovers};
-};
-
-const getArrayFromLayout = (layout, element, availableTabs, addInventoryTab) => {
-  let elementSegments = getElementSegments(element, availableTabs);
+const getArrayFromLayout = (layout, element, addInventoryTab) => {
   let layoutKeys = Object.keys(layout);
-  availableTabs = [...layoutKeys, ...elementSegments];
+  let elementSegments = getElementSegments(element, layoutKeys);
+  let availableTabs = [...layoutKeys, ...elementSegments];
   return getVisibilityList(layout, availableTabs, addInventoryTab);
 };
 
@@ -63,4 +57,4 @@ const filterTabLayout = (layoutState) => {
 };
 
 
-export { getLayout, getArrayFromLayout, filterTabLayout};
+export { getArrayFromLayout, filterTabLayout};
