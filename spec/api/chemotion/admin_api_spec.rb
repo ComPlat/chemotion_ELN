@@ -107,4 +107,3 @@ RSpec.describe Chemotion::AdminAPI do
     end
   end
 end
-

@@ -186,7 +186,7 @@ export default class AdminFetcher {
   }
 
   static fetchUsersByNameType(name, type, limit = 5) {
-    return fetch(`/api/v1/admin_user/listUsers/byname.json?type=${type}&name=${name}&limit=${limit}`, {
+    return fetch(`/api/v1/admin_user/listUsers/byname.json?${new URLSearchParams({ name, type, limit })}`, {
       credentials: 'same-origin',
       method: 'GET',
     }).then(response => response.json())

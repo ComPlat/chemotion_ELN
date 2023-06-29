@@ -6,7 +6,9 @@ module Chemotion
       params do
         requires :name, type: String
         optional :type, type: [String], desc: 'user types',
-                        coerce_with: ->(val) { val.split(/[\s|,]+/) }, values: %w[Group Person]
+                        coerce_with: ->(val) { val.split(/[\s|,]+/) },
+                        values: %w[Group Person],
+                        default: %w[Group Person]
       end
       get 'name' do
         return { users: [] } if params[:name].blank?
