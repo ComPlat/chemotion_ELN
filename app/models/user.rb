@@ -402,6 +402,10 @@ class User < ApplicationRecord
     super && provider.blank?
   end
 
+  def extra_rules
+    Matrice.extra_rules || {}
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:

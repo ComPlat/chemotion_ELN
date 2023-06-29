@@ -122,9 +122,9 @@ module Export
 
         fetch_samples collection
         fetch_reactions collection
-        fetch_wellplates collection unless @gt == false
-        fetch_screens collection unless @gt == false
-        fetch_research_plans collection unless @gt == false
+        fetch_wellplates collection if @gt == false
+        fetch_screens collection if @gt == false
+        fetch_research_plans collection if @gt == false
       end
     end
 

@@ -63,8 +63,11 @@ module Chemotion
         get do
           res = {}
           config = Devise.omniauth_configs
-          config.each { |k, _v| res[k] = { icon: File.basename(config[k].options[:icon] || '') } }
-          res
+          extra_rules = Matrice.extra_rules
+          config.each do |k, _v|
+            res[k] = { icon: File.basename(config[k].options[:icon] || ''), label: config[k].options[:label] }
+          end
+          { omniauth_providers: res, extra_rules: extra_rules }
         end
       end
 

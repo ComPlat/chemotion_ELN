@@ -32,6 +32,11 @@ class Matrice < ApplicationRecord
     )
   end
 
+  def self.extra_rules
+    configs = find_by(name: 'userProvider')&.configs || {}
+    configs.dig('extra_rules', 'enable') == true ? configs['extra_rules'] : {}
+  end
+
   private
 
   def gen_json

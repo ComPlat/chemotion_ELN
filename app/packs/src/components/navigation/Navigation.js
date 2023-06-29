@@ -72,6 +72,12 @@ export default class Navigation extends React.Component {
         omniauthProviders: state.omniauthProviders
       });
     }
+
+    if (state.extraRules !== this.state.extraRules) {
+      this.setState({
+        extraRules: state.extraRules
+      });
+    }
   }
 
   onUIChange(state) {
@@ -130,7 +136,7 @@ export default class Navigation extends React.Component {
   }
 
   render() {
-    const { modalProps, showAdvancedSearch, genericEls, omniauthProviders } = this.state;
+    const { modalProps, showAdvancedSearch, genericEls, omniauthProviders, extraRules } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
@@ -153,7 +159,7 @@ export default class Navigation extends React.Component {
         <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
           <Search noSubmit={true} />
         </Nav>
-        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} />
+        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
         <div style={{ clear: "both" }} />
       </Navbar>
     )
