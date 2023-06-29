@@ -24,7 +24,7 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
       </MenuItem>
       <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
       title='Export to RADAR'>
-      Archive current collection to RADAR
+      Publish current collection via RADAR
     </MenuItem>
     </>
   ): <span />;
@@ -162,7 +162,7 @@ const editMetadataFunction = () => {
 }
 
 const exportCollectionToRadarFunction = (updateModalProps) => {
-  const title = "Archive current Collection to RADAR";
+  const title = "Publish current collection via RADAR";
   const component = ModalExportRadarCollection;
   const action = CollectionActions.exportCollectionToRadar;
 
