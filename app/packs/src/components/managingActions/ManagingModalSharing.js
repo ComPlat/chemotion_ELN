@@ -11,6 +11,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import klasses from '../../../../../config/klasses.json';
 
 export default class ManagingModalSharing extends React.Component {
@@ -286,18 +287,10 @@ export default class ManagingModalSharing extends React.Component {
       return Promise.resolve({ options: [] });
     }
 
-    return UsersFetcher.fetchUsersByName(input)
-      .then((res) => {
-        let usersEntries = res.users.filter(u => u.id != this.state.currentUser.id)
-          .map(u => {
-            return {
-              value: u.id,
-              name: u.name,
-              label: u.name + " (" + u.abb + ")"
-            }
-          });
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
+    return UsersFetcher.fetchUsersByName(input, 'Person,Group')
+      .then((res) => selectUserOptionFormater(
+        { data: res, withType: true, currentUserId: this.state.currentUser.id }
+      )).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
