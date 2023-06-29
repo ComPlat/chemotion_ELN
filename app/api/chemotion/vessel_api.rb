@@ -127,5 +127,13 @@ module Chemotion
         Vessel.find(@params[:id]).destroy # usecase required?
       end
     end
+
+    resource :vessel_templates do
+      desc 'return all vessel templates'
+      get 'all' do
+        return present VesselTemplate.all, with: Entities::VesselTemplateEntity
+      end
+    end
+
   end
 end
