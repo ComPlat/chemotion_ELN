@@ -856,6 +856,8 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.string "rxno"
     t.string "conditions"
     t.jsonb "variations", default: []
+    t.text "plain_text_description"
+    t.text "plain_text_observation"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1102,6 +1104,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.jsonb "component_graph_data", default: {}
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1312,6 +1315,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "deleted_at"
     t.string "short_label"
     t.jsonb "readout_titles", default: ["Readout"]
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
   end
 

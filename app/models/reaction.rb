@@ -146,6 +146,8 @@ class Reaction < ApplicationRecord
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
+  before_save :description_to_plain_text
+  before_save :observation_to_plain_text
   before_create :auto_set_short_label
 
   after_create :update_counter
@@ -286,5 +288,17 @@ class Reaction < ApplicationRecord
   def scrubber(value)
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     Loofah.scrub_fragment(value, :strip).to_s
+  end
+
+  def description_to_plain_text
+    return unless description_changed?
+
+    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
+  end
+
+  def observation_to_plain_text
+    return unless observation_changed?
+
+    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(observation)
   end
 end
