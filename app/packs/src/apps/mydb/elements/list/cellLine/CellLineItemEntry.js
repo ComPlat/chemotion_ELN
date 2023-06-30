@@ -51,7 +51,7 @@ export default class CellLineItemEntry extends Component {
       <div className="group-entry">
         <Table className="elements" hover>
           <tbody>
-            <tr className="white-background">
+            <tr className="white-background top-border">
               <td className="select-checkBox">
                 <ElementCheckbox
                   element={cellLineItem}

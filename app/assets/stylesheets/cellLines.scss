@@ -50,20 +50,22 @@
             border-right-width: 0px;
             border-bottom-width: 0px;
             border-top-width: 1px;
-            width:70px;
+            width:90px;
         }
         .arrow{
             border-left-width: 0px;
             border-right-width: 0px;
             border-bottom-width: 0px;
+            margin-top: -1px;
             border-top-width: 1px;
+            float:right;
         }
         .item-text{
             border-left-width: 0px;
             border-right-width: 0px;
             border-bottom-width: 0px;
             border-top-width: 1px;
-            width:95%;
+            width:75%;
         }
         .item-property-name{
             margin-left:20px;
@@ -89,6 +91,9 @@
         }
         .white-background{
             background:white
+        }
+        .top-border{
+            border-top: 1px solid #ddd;
         }
     }
 
