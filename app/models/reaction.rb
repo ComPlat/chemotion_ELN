@@ -41,6 +41,7 @@
 #  index_reactions_on_role            (role)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -302,3 +303,4 @@ class Reaction < ApplicationRecord
     self.plain_text_observation = Chemotion::QuillToPlainText.new.convert(observation)
   end
 end
+# rubocop:enable Metrics/ClassLength

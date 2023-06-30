@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'QuillToPlainText' do
-  subject { Chemotion::QuillToPlainText }
+  subject(:lib) { Chemotion::QuillToPlainText.new }
 
   describe 'convert' do
     let(:delta_ops) do
@@ -17,11 +17,11 @@ RSpec.describe 'QuillToPlainText' do
     end
 
     it 'converts a quill delta ops as ruby array to html' do
-      expect(subject.new.convert(delta_ops)).to match(plain_text)
+      expect(lib.convert(delta_ops)).to match(plain_text)
     end
 
     it 'converts a quill delta ops as ruby json string to html' do
-      expect(subject.new.convert(delta_ops.to_json)).to match(plain_text)
+      expect(lib.convert(delta_ops.to_json)).to match(plain_text)
     end
   end
 end
