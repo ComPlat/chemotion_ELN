@@ -50,18 +50,22 @@ class AnalysesContainer extends Component {
 
   renderAddButton() {
     return (
-      <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+      <div class="add-button">
+      <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
         Add analysis
       </Button>
+      </div>
     );
   }
 
   renderOrderModeButton() {
     const { mode } = this.state;
     return (
+      <div class="order-mode-button">
       <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
         {mode}
       </Button>
+      </div>
     );
   }
 
@@ -91,7 +95,7 @@ class AnalysesContainer extends Component {
     const { openPanel } = this.state;
     if (containers.length > 0) {
       return (
-        <div>
+        <div class="analyses">
           <PanelGroup
             id={`cellLineAnalysisPanelGroupOf:${currentElement.id}`}
             defaultActiveKey="none"
@@ -104,7 +108,7 @@ class AnalysesContainer extends Component {
         </div>
       );
     }
-    return <div />;
+    return <div class="no-analyses-panel">There are currently no analyses</div>;
   }
 
   render() {

@@ -39,13 +39,13 @@ export default class Container extends Element {
     return this.name;
   }
 
-  switchPositionOfChildContainer(idToMove, idOfPredecessor) {
-    const indexOfMovedContainer = this.children.findIndex((container) => container.id === idToMove);
-    const indexOfPredecContainer = this.children.findIndex((container) => container.id === idOfPredecessor);
+  static switchPositionOfChildContainer(children, idToMove, idOfPredecessor) {
+    const indexOfMovedContainer = children.findIndex((container) => container.id === idToMove);
+    const indexOfPredecContainer = children.findIndex((container) => container.id === idOfPredecessor);
 
-    const containerToMove = this.children[indexOfMovedContainer];
-    this.children.splice(indexOfMovedContainer, 1);
-    this.children.splice(indexOfPredecContainer, 0, containerToMove);
+    const containerToMove = children[indexOfMovedContainer];
+    children.splice(indexOfMovedContainer, 1);
+    children.splice(indexOfPredecContainer, 0, containerToMove);
   }
 
   serialize() {

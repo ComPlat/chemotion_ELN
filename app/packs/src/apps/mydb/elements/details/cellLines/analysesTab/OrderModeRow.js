@@ -6,6 +6,7 @@ import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { compose } from 'redux';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import PropTypes from 'prop-types';
+import Container from '../../../../../../models/Container';
 
 const dragHooks = {
   beginDrag(props) {
@@ -19,7 +20,8 @@ const dragHooks = {
       return;
     }
     const currentAnalysisContainer = ElementStore.getState().currentElement.container.children[0];
-    currentAnalysisContainer.switchPositionOfChildContainer(
+    Container.switchPositionOfChildContainer(
+      currentAnalysisContainer.children,
       props.container.id,
       monitor.getDropResult().id
     );
@@ -27,6 +29,8 @@ const dragHooks = {
   }
 
 };
+
+
 
 const dragCollectHooks = (connect, monitor) => ({
   connectDragSource: connect.dragSource(),
@@ -46,6 +50,8 @@ const dropCollectHooks = (connect, monitor) => (
     canDrop: monitor.canDrop(),
   }
 );
+
+
 
 class OrderModeRow extends Component {
   render() {
