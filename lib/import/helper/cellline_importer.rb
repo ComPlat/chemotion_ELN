@@ -29,6 +29,12 @@ class CelllineImporter
       sample.container = Container.create_root_container
       update_instances!(uuid, sample)
       # add collections
+      @data.fetch('CollectionsCelllineSample', {}).values
+           .select { |x| x['cellline_sample_id'] == uuid }.each do |entry|
+        sample.collections << @instances['Collection'][entry['collection_id']]
+      end
+
+      sample.save
     end
   end
 
