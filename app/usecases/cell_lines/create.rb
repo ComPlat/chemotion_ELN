@@ -18,6 +18,11 @@ module Usecases
           cellline_sample: sample,
         )
 
+        CollectionsCellline.create(
+          collection: all_collection_of_current_user,
+          cellline_sample: sample,
+        )
+        
         sample
       end
 
@@ -59,6 +64,7 @@ module Usecases
           description: @params[:description],
           short_label: @params[:short_label],
         )
+
       end
 
       def check_parameter
@@ -81,6 +87,10 @@ module Usecases
 
       def check_names_value(value)
         value.instance_of?(String) && !value.empty?
+      end
+
+      def all_collection_of_current_user
+        Collection.get_all_collection_for_user(@current_user.id)
       end
     end
   end
