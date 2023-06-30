@@ -5,42 +5,57 @@ class CelllineImporter
     @data = data
     @current_user_id = current_user_id
     @instances = instances
+    @material_exclude_properties = ['id']
+    @sample_exclude_properties = %w[id user_id]
   end
 
   def execute
-    # import all cell line materials
-    @data.fetch('CelllineMaterial', {}).each do |uuid, fields|
-      update_instances!(uuid, CelllineMaterial.create(
-                                fields.except('id'),
-                              ))
-    end
-    # import cell line samples
-    @data.fetch('CelllineSample', {}).each do |uuid, fields|
-      material_uuid = @data.fetch('CelllineMaterialCelllineSample', {}).values
-                           .select { |x| x['cellline_sample_id'] == uuid }
-                           .pick('cellline_material_id')
-      sample = CelllineSample.create(
-        fields.except('id', 'user_id')
-        .merge(
-          user_id: @current_user_id,
-          cellline_material_id: @instances['CelllineMaterial'][material_uuid].id,
-        ),
-      )
-      sample.container = Container.create_root_container
-      update_instances!(uuid, sample)
-      # add collections
-      @data.fetch('CollectionsCelllineSample', {}).values
-           .select { |x| x['cellline_sample_id'] == uuid }.each do |entry|
-        sample.collections << @instances['Collection'][entry['collection_id']]
-      end
+    create_cellline_materials
+    create_cellline_samples
+  end
 
-      sample.save
+  def create_cellline_samples
+    @data.fetch('CelllineSample', {}).each do |uuid, fields|
+      create_cellline_sample(uuid, fields)
     end
+  end
+
+  def create_cellline_sample(uuid, fields)
+    material_uuid = @data.fetch('CelllineMaterialCelllineSample', {}).values
+                         .select { |entry| entry['cellline_sample_id'] == uuid }
+                         .pick('cellline_material_id')
+    material = @instances['CelllineMaterial'][material_uuid]
+
+    sample = CelllineSample.create(
+      fields.except(@sample_exclude_properties)
+      .merge(
+        user_id: @current_user_id,
+        cellline_material_id: material.id,
+      ),
+    )
+    sample.container = Container.create_root_container
+    update_instances!(uuid, sample)
+    add_collections_to_sample(uuid, sample)
   end
 
   def update_instances!(uuid, instance)
     type = instance.class.name
     @instances[type] = {} unless @instances.key?(type)
     @instances[type][uuid] = instance
+  end
+
+  def create_cellline_materials
+    @data.fetch('CelllineMaterial', {}).each do |uuid, fields|
+      material = CelllineMaterial.create(fields.except(@material_exclude_properties))
+      update_instances!(uuid, material)
+    end
+  end
+
+  def add_collections_to_sample(uuid, sample)
+    @data.fetch('CollectionsCelllineSample', {}).values
+         .select { |x| x['cellline_sample_id'] == uuid }.each do |entry|
+      sample.collections << @instances['Collection'][entry['collection_id']]
+    end
+    sample.save
   end
 end
