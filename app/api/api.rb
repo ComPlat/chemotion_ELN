@@ -131,9 +131,10 @@ class API < Grape::API
     'reactions' => %w[
       name short_label status conditions rxno content temperature duration
       role purification tlc_solvents tlc_description rf_value dangerous_products
+      plain_text_description plain_text_observation
     ],
-    'wellplates' => %w[name short_label readout_titles content],
-    'screens' => %w[name collaborator requirements conditions result content],
+    'wellplates' => %w[name short_label readout_titles content plain_text_description],
+    'screens' => %w[name collaborator requirements conditions result content plain_text_description],
     'research_plans' => %w[name body content],
     'elements' => %w[name short_label],
   }.freeze

@@ -299,6 +299,6 @@ class Reaction < ApplicationRecord
   def observation_to_plain_text
     return unless observation_changed?
 
-    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(observation)
+    self.plain_text_observation = Chemotion::QuillToPlainText.new.convert(observation)
   end
 end

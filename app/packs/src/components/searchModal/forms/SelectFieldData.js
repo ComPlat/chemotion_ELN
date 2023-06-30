@@ -244,6 +244,15 @@ export default {
       },
       {
         value: {
+          column: 'plain_text_description',
+          label: 'Description',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Description'
+      },
+      {
+        value: {
           column: 'purification',
           label: 'Purification',
           type: 'select',
@@ -251,6 +260,15 @@ export default {
           advanced: false,
         },
         label: 'Purification'
+      },
+      {
+        value: {
+          column: 'plain_text_observation',
+          label: 'Additional Information',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Additional Information'
       },
       {
         value: {
@@ -329,6 +347,15 @@ export default {
       },
       {
         value: {
+          column: 'plain_text_description',
+          label: 'Description',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Description'
+      },
+      {
+        value: {
           column: 'content',
           label: 'Private Note',
           type: 'text',
@@ -382,6 +409,15 @@ export default {
           advanced: true,
         },
         label: 'Result'
+      },
+      {
+        value: {
+          column: 'plain_text_description',
+          label: 'Description',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Description'
       },
       {
         value: {
