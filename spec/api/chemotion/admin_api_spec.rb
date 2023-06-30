@@ -44,7 +44,7 @@ RSpec.describe Chemotion::AdminAPI do
     end
   end
 
-  describe 'GET /api/v1/admin/group_device/name' do
+  describe 'GET /api/v1/admin_user/listUsers/byname' do
     let(:person) { create(:person) }
     let(:group) { create(:group) }
     let(:person_obj) { JSON.parse(Entities::UserSimpleEntity.new(person).to_json) }
@@ -52,7 +52,7 @@ RSpec.describe Chemotion::AdminAPI do
 
     describe 'with group type' do
       before do
-        get "/api/v1/admin/group_device/name?name=#{group.last_name[0..3]}&type=Group"
+        get "/api/v1/admin_user/listUsers/byname?name=#{group.last_name[0..3]}&type=Group"
       end
 
       it 'returns the right http status' do
@@ -66,7 +66,35 @@ RSpec.describe Chemotion::AdminAPI do
 
     describe 'with person type' do
       before do
-        get "/api/v1/admin/group_device/name?name=#{person.last_name[0..3]}&type=Person"
+        get "/api/v1/admin_user/listUsers/byname?name=#{person.last_name[0..3]}&type=Person"
+      end
+
+      it 'returns the right http status' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns a response with an array of people' do
+        expect(parsed_json_response['users']).to include(person_obj)
+      end
+    end
+
+    describe 'with person and group type' do
+      before do
+        get "/api/v1/admin_user/listUsers/byname?name=#{person.last_name[0..3]}&type=Person,Group"
+      end
+
+      it 'returns the right http status' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns a response with an array of people' do
+        expect(parsed_json_response['users']).to include(person_obj)
+      end
+    end
+
+    describe 'with no type' do
+      before do
+        get "/api/v1/admin_user/listUsers/byname?name=#{person.last_name[0..3]}"
       end
 
       it 'returns the right http status' do
