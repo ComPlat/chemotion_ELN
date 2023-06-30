@@ -15,6 +15,12 @@
   "rules": {
     "no-console": ["off"],
     "comma-dangle": [1,"only-multiline"],
+    "max-classes-per-file": ["error", 1],
+    "complexity": ["error", 2],
+    "max-lines": ["error", 300],
+    "max-depth": ["error", 24],
+    "max-params": ["error", 4],
+    "max-lines-per-function": ["error", 20],
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
     "prefer-destructuring": ["error", {"object": true, "array": false}],
     "no-relative-import-paths/no-relative-import-paths": [
