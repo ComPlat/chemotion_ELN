@@ -4,6 +4,7 @@ import Select from 'react-select';
 import moment from 'moment';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
 import AdminDeviceElement from 'src/apps/admin/AdminDeviceElement';
@@ -172,15 +173,8 @@ export default class GroupsDevices extends React.Component {
     }
 
     return AdminFetcher.fetchUsersByNameType(input, actionType)
-      .then((res) => {
-        const usersEntries = res.users.filter(u => u.type == actionType)
-          .map(u => ({
-            value: u.id,
-            name: u.name,
-            label: `${u.name} (${u.initials})`
-          }));
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
+      .then((res) => selectUserOptionFormater({ data: res, withType: false }))
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }

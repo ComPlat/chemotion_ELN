@@ -35,9 +35,8 @@ export default class UsersFetcher {
     });
   }
 
-
-  static fetchUsersByName(name) {
-    const promise = fetch(`/api/v1/users/name.json?name=${name}`, {
+  static fetchUsersByName(name, type = 'Person') {
+    const promise = fetch(`/api/v1/users/name.json?${new URLSearchParams({ name, type })}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json()).then(json => json).catch((errorMessage) => {

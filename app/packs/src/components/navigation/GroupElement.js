@@ -3,6 +3,7 @@ import { ButtonGroup, OverlayTrigger, Popover, Button, Table, Tooltip } from 're
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import Select from 'react-select';
 import _ from 'lodash';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 export default class GroupElement extends React.Component {
   constructor(props) {
@@ -48,18 +49,9 @@ export default class GroupElement extends React.Component {
       return Promise.resolve({ options: [] });
     }
 
-    return UsersFetcher.fetchUsersByName(input)
-      .then((res) => {
-        let usersEntries = res.users.filter(u => u.user_type === 'Person')
-          .map((u) => {
-            return {
-              value: u.id,
-              name: u.name,
-              label: u.name + " (" + u.abb + ")"
-            }
-          });
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
+    return UsersFetcher.fetchUsersByName(input, 'Person')
+      .then((res) => selectUserOptionFormater({ data: res }))
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }

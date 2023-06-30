@@ -5,14 +5,16 @@ module Chemotion
       desc 'Find top 3 matched user names'
       params do
         requires :name, type: String
+        optional :type, type: [String], desc: 'user types',
+                        coerce_with: ->(val) { val.split(/[\s|,]+/) },
+                        values: %w[Group Person],
+                        default: %w[Group Person]
       end
       get 'name' do
-        unless params[:name].nil? || params[:name].empty?
-          { users: User.where(type: %w[Person Group]).by_name(params[:name]).limit(3)
-                       .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
-        else
-          { users: [] }
-        end
+        return { users: [] } if params[:name].blank?
+
+        users = User.where(type: params[:type]).by_name(params[:name]).limit(3)
+        present users, with: Entities::UserSimpleEntity, root: 'users'
       end
 
       desc 'Return current_user'
