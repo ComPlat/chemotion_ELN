@@ -25,7 +25,6 @@ export default class CollectionTabs extends React.Component {
       profileData: {},
       showModal: false,
       currentCollection: {},
-      canReset: [],
       layouts: [],
       changedIndexes: [],
       updatedlayouts: [],
@@ -103,28 +102,9 @@ export default class CollectionTabs extends React.Component {
     });
   }
 
-  handleCanReset(index, canResetValue) {
-    const { canReset } = this.state;
-    canReset[index] = canResetValue;
-    this.setState({ canReset });
-  }
-
   setLayout(index, layout) {
     const { layouts } = this.state;
     layouts[index] = layout;
-    this.setState({ layouts });
-  }
-
-  resetLayout() {
-    const { profileData, layouts } = this.state;
-    elements.map((e, i) => {
-
-      let profileLayout = (profileData && profileData[`layout_detail_${e.name}`]) || {};
-      const availableTabs = (profileLayout && Object.keys(profileLayout)) || {};
-      const { visible, hidden } = getArrayFromLayout(profileLayout, availableTabs);
-      profileLayout = { visible, hidden };
-      layouts[i] = profileLayout;
-    });
     this.setState({ layouts });
   }
 
@@ -230,14 +210,13 @@ export default class CollectionTabs extends React.Component {
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
             <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
-              <p style={{ fontSize: '10.5px' }}>
+              <p style={{ fontSize: '11.5px' }}>
                 For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.
                 Drag and drop to select the order of segment tab layout.
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
               </p>
             </div>
             <Button bsStyle="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
-            <Button bsStyle="primary" onClick={() => this.resetLayout()}>Reset</Button>
           </Modal.Footer>
         </Modal>
       </div>

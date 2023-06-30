@@ -124,7 +124,7 @@ export default class ElementDetailSortTab extends Component {
         style={{ maxWidth: 'none', width: `${wd}px`, position: 'sticky' }}
       >
         <div>
-          <h3 className="popover-title">Tab Layout later</h3>
+          <h3 className="popover-title">Tab Layout</h3>
           <div className="popover-content">
             {tabLayoutContainerElement}
           </div>
