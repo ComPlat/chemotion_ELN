@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Col, Row, PanelGroup, Panel, FormControl, ControlLabel
+  Col, Row, PanelGroup, Panel, FormControl, ControlLabel,
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import Creatable from 'react-select3/creatable';
@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
+import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -151,6 +152,7 @@ class GeneralProperties extends React.Component {
             key="common-properties"
           >
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'common-properties' }); }}>
+              <InvalidPropertyWarning item={item} propsToCheck={['cellLineName', 'source']} />
               Common Properties
               {this.renderPanelHeaderIcon('common-properties')}
             </Panel.Heading>
@@ -183,6 +185,7 @@ class GeneralProperties extends React.Component {
             key="specific-properties"
           >
             <Panel.Heading onClick={() => { this.setState({ openPanel: 'specific-properties' }); }}>
+              <InvalidPropertyWarning item={item} propsToCheck={['passage', 'amount', 'unit']} />
               Item specific properties
               {this.renderPanelHeaderIcon('specific-properties')}
             </Panel.Heading>
