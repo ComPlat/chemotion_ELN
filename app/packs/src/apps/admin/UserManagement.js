@@ -2,25 +2,18 @@ import React from 'react';
 import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 const loadUserByName = (input) => {
   if (!input) {
     return Promise.resolve({ options: [] });
   }
 
-  return UsersFetcher.fetchUsersByName(input)
-    .then((res) => {
-      const usersEntries = res.users.filter(u => u.user_type === 'Person')
-        .map(u => ({
-          value: u.id,
-          name: u.name,
-          label: `${u.name}(${u.abb})`
-        }));
-      return { options: usersEntries };
-    }).catch((errorMessage) => {
+  return AdminFetcher.fetchUsersByNameType(input, 'Person')
+    .then((res) => selectUserOptionFormater({ data: res }))
+    .catch((errorMessage) => {
       console.log(errorMessage);
     });
 };

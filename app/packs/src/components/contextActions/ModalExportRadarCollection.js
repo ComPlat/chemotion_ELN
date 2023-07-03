@@ -50,7 +50,7 @@ export default class ModalExportRadarCollection extends React.Component {
       <div>
         {metadata.datasetUrl && <div>
           <p>
-            <strong>This collection was already archived to RADAR. You can archive the collection again, but you might need to remove the existing dataset in RADAR first.</strong>
+            <strong>This collection has already been transferred to RADAR. You can transfer the collection again, but you may need to remove the existing dataset in RADAR first.</strong>
           </p>
           <dl>
             <dt>RADAR Dataset URL</dt>
@@ -243,9 +243,9 @@ export default class ModalExportRadarCollection extends React.Component {
             <a href={archiveUrl} target="_blank"
                className="btn btn-danger"
                disabled={this.isDisabled()}
-               title="Archive to RADAR"
+               title="Publish in RADAR"
                onClick={onHide}>
-              <span><i className="fa fa-file-text-o" />&nbsp;Archive to RADAR</span>
+              <span><i className="fa fa-file-text-o" />&nbsp;Publish in RADAR</span>
             </a>
           </ButtonToolbar>
         </div>
