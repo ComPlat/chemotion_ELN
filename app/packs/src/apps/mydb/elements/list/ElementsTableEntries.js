@@ -347,7 +347,7 @@ export default class ElementsTableEntries extends Component {
                     checked={this.isElementChecked(element)}
                   /><br />
                 </td>
-                <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px' : 'unset'}>
+                <td onClick={e => this.showDetails(element)} style={{ cursor: 'pointer' }} width={element.type === 'research_plan' ? '280px' : 'unset'} data-cy={"researchPLanItem-"+ element.id}>
                   <div>
                     {
                       <SvgWithPopover
