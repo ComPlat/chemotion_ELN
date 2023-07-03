@@ -60,9 +60,6 @@ export default class DetailsTabLiteratures extends Component {
         sorting: 'literature_id'
       }));
     } else {
-      if(this.props.element.type=="cell_line"){
-        return;
-      }
       LiteraturesFetcher.fetchElementReferences(this.props.element).then((literatures) => {
         const sortedIds = groupByCitation(literatures);
         this.setState(prevState => ({
