@@ -138,7 +138,8 @@ export default class CellLinesFetcher {
         body: JSON.stringify(params)
       }))
       .then((response) => response.json())
-      .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
+      .then((json) => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
+      .then(()=> CellLinesFetcher.fetchById(cellLineItem.id))
       .then((loadedCellLineSample) => {
         NotificationActions.add(successfullyUpdatedParameter);
         return loadedCellLineSample;
