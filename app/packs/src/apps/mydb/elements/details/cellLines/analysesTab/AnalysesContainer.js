@@ -18,10 +18,11 @@ class AnalysesContainer extends Component {
   }
 
   handleAdd() {
-    // eslint-disable-next-line react/destructuring-assignment
-    const newContainer = this.context.cellLineDetailsStore.addEmptyContainer(this.props.item.id);
+    const {cellLineDetailsStore} = this.context;
+    const newContainer = cellLineDetailsStore.addEmptyContainer(this.props.item.id);
     const { currentElement } = ElementStore.getState();
     currentElement.container.children[0].children.push(newContainer);
+    cellLineDetailsStore.cellLines(this.props.item.id).setChanged(true)
     this.forceUpdate();
   }
 
