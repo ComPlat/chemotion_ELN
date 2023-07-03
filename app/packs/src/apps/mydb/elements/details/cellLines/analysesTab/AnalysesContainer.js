@@ -22,8 +22,7 @@ class AnalysesContainer extends Component {
     const newContainer = cellLineDetailsStore.addEmptyContainer(this.props.item.id);
     const { currentElement } = ElementStore.getState();
     currentElement.container.children[0].children.push(newContainer);
-    cellLineDetailsStore.cellLines(this.props.item.id).setChanged(true)
-    this.forceUpdate();
+    this.handleChange(true);
   }
 
   // eslint-disable-next-line react/no-unused-class-component-methods
@@ -45,7 +44,12 @@ class AnalysesContainer extends Component {
     }
   }
 
-  handleChange() {
+  handleChange(changed=false) {
+
+    if(changed){
+ const {cellLineDetailsStore} = this.context;
+ cellLineDetailsStore.cellLines(this.props.item.id).setChanged(true)
+    }
     this.forceUpdate();
   }
 
