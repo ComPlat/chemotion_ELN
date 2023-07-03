@@ -484,7 +484,6 @@ export default class ResearchPlanDetails extends Component {
         {researchPlan.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-        <HeaderCommentSection element={researchPlan} />
       </Panel.Heading>
     );
   }
