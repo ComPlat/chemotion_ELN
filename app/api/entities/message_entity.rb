@@ -9,11 +9,12 @@ module Entities
     expose :created_at, :updated_at
 
     def created_at
-      object.created_at.strftime('%d.%m.%Y, %H:%M:%S')
+      object.created_at.strftime('%d.%m.%Y, %H:%M:%S %:z')
     end
 
     def updated_at
-      object.updated_at.strftime('%d.%m.%Y, %H:%M:%S')
+      object.updated_at.strftime('%d.%m.%Y, %H:%M:%S %:z')
     end
+
   end
 end

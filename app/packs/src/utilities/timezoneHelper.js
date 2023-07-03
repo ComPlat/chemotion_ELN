@@ -1,7 +1,7 @@
 import moment from 'moment';
 
 const formatDate = (dateString) => {
-  const date = moment.utc(dateString, 'DD.MM.YYYY, HH:mm');
+  const date = moment(dateString, 'DD.MM.YYYY, HH:mm:ss Z');
 
   const localDate = date.local();
 
