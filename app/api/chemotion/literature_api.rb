@@ -15,6 +15,8 @@ module Chemotion
     resource :literatures do
       after_validation do
         unless request.url =~ /doi\/metadata|ui_state|collection/
+          params[:element_type]= 'cellline_sample' if params[:element_type] == "cell_line"
+
           @element_klass = params[:element_type].classify
           @element = @element_klass.constantize.find_by(id: params[:element_id])
           @element_policy = ElementPolicy.new(current_user, @element)
@@ -30,7 +32,7 @@ module Chemotion
       desc 'Update type of literals by element'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :id, type: Integer
         requires :litype, type: String, values: %w[citedOwn citedRef referTo]
       end
@@ -49,7 +51,7 @@ module Chemotion
       desc 'Return the literature list for the given element'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
       end
 
       get do
@@ -65,7 +67,7 @@ module Chemotion
       desc 'create a literature entry'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :ref, type: Hash do
           optional :is_new, type: Boolean
           optional :id, types: [Integer, String]
@@ -119,7 +121,7 @@ module Chemotion
 
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :id, type: Integer
       end
 
