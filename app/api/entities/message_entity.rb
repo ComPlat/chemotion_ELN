@@ -15,6 +15,5 @@ module Entities
     def updated_at
       object.updated_at.strftime('%d.%m.%Y, %H:%M:%S %:z')
     end
-
   end
 end
