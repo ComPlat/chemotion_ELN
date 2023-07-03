@@ -10,4 +10,15 @@ const formatDate = (dateString) => {
   return formattedDate;
 };
 
-export default formatDate;
+// return `Created at: ${formattedCreatedAt} | Updated at: ${formattedUpdatedAt}`;
+const formatTimeStampsOfElement = (element) => {
+  const { created_at, updated_at } = element;
+  const formattedCreatedAt = formatDate(created_at);
+  const formattedUpdatedAt = formatDate(updated_at);
+  return `Created ${formattedCreatedAt} - Updated ${formattedUpdatedAt}`;
+};
+
+export {
+  formatDate,
+  formatTimeStampsOfElement,
+};
