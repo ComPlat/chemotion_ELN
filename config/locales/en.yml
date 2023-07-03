@@ -33,7 +33,8 @@ en:
   hello: "Hello world"
   time:
     formats:
-      eln_timestamp: "%d.%m.%Y, %H:%M:%S %Z"
+      eln_timestamp: "%d.%m.%Y, %H:%M:%S %z"
+      eln_iso8601: "%Y-%m-%dT%H:%M:%S%z"
   activerecord:
     errors:
       models:
