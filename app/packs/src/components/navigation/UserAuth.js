@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types'
 import 'whatwg-fetch';
 import { Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
-import moment from 'moment';
 import _ from 'lodash';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -14,6 +13,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/navigation/GroupElement';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -539,7 +539,7 @@ export default class UserAuth extends Component {
                   <Col smOffset={0} sm={12}>
                     <p class="text-right">
                       DataCiteVersion: {deviceMetadata.data_cite_version}<br />
-                      DataCiteUpdatedAt: {moment(deviceMetadata.data_cite_updated_at).format('YYYY-MM-DD HH:mm')}<br />
+                      DataCiteUpdatedAt: {formatDate(deviceMetadata.data_cite_updated_at)}<br />
                     </p>
                   </Col>
                 </Row>
