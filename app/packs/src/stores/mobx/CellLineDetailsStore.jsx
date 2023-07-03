@@ -146,6 +146,7 @@ export const CellLineDetailsStore = types
     },
     addEmptyContainer(id) {
       const container = Container.buildEmpty();
+      container.container_type="analysis"
       return container;
     },
     setMaterialProperties(id, properties) {
