@@ -16,22 +16,24 @@ export default class ModalImport extends React.Component {
   handleClick() {
     const { onHide, action } = this.props;
     const { file } = this.state;
-    let ui_state = UIStore.getState();
-    let params = {
-      file: file,
-      currentCollectionId: ui_state.currentCollection.id
-    }
+    const uiState = UIStore.getState();
+    const importSampleAs = uiState.modalParams.title === 'Import Chemicals from File' ? 'chemical' : 'sample';
+    const params = {
+      file,
+      currentCollectionId: uiState.currentCollection.id,
+      type: importSampleAs
+    };
     action(params);
     onHide();
 
-    let notification = {
-      title: "Uploading",
-      message: "The file is being processed. Please wait...",
-      level: "warning",
+    const notification = {
+      title: 'Uploading',
+      message: 'The file is being processed. Please wait...',
+      level: 'warning',
       dismissible: false,
-      uid: "import_samples_upload",
-      position: "bl"
-    }
+      uid: 'import_samples_upload',
+      position: 'bl'
+    };
 
     NotificationActions.add(notification);
   }
