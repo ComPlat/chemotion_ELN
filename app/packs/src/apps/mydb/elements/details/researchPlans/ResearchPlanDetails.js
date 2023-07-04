@@ -30,6 +30,7 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -454,7 +455,7 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
-    const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
+    const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
 
     return (
       <Panel.Heading>
