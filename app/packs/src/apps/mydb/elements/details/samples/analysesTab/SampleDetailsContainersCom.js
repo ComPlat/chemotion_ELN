@@ -5,75 +5,92 @@ import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/Sam
 import {
   HeaderDeleted,
   HeaderNormal,
-  AnalysisModeBtn
+  AnalysisModeBtn,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 
-const RndNotAvailable = () => (
-  <div>
-    <p className="noAnalyses-warning">
-      Not available.
-    </p>
-  </div>
-);
-
-const RndNoAnalyses = ({ addButton }) => (
-  <div>
-    <p>{addButton()}</p>
-    <p className="noAnalyses-warning">
-      There are currently no Analyses.
-    </p>
-  </div>
-);
-
-const RndOrder = ({
-  sample, mode, readOnly, isDisabled, handleRemove, handleSubmit,
-  handleMove, handleUndo, handleAccordionOpen, toggleAddToReport, toggleMode,
-  orderContainers, addButton,
-}) => {
+function RndNotAvailable() {
   return (
     <div>
-      <p>{AnalysisModeBtn(mode, toggleMode, isDisabled)}{addButton()}</p>
-      {
-        orderContainers.map((container, i) => {
-          const id = container.id || `fake_${i}`;
-          return (
-            <ContainerRow
-              sample={sample}
-              mode={mode}
-              container={container}
-              readOnly={readOnly}
-              isDisabled={isDisabled}
-              key={`${id}CRowOrder`}
-              addButton={addButton}
-              handleMove={handleMove}
-              handleRemove={handleRemove}
-              handleSubmit={handleSubmit}
-              handleAccordionOpen={handleAccordionOpen}
-              handleUndo={handleUndo}
-              toggleAddToReport={toggleAddToReport}
-            />
-          );
-        })
-      }
+      <p className="noAnalyses-warning">Not available.</p>
+    </div>
+  );
+}
+
+function RndNoAnalyses({ addButton }) {
+  return (
+    <div>
+      <p>{addButton()}</p>
+      <p className="noAnalyses-warning">There are currently no Analyses.</p>
+    </div>
+  );
+}
+
+function RndOrder({
+  sample,
+  mode,
+  readOnly,
+  isDisabled,
+  handleRemove,
+  handleSubmit,
+  handleMove,
+  handleUndo,
+  handleAccordionOpen,
+  toggleAddToReport,
+  toggleMode,
+  orderContainers,
+  addButton,
+}) {
+  return (
+    <div>
+      <p>
+        {AnalysisModeBtn(mode, toggleMode, isDisabled)}
+        {addButton()}
+      </p>
+      {orderContainers.map((container, i) => {
+        const id = container.id || `fake_${i}`;
+        return (
+          <ContainerRow
+            sample={sample}
+            mode={mode}
+            container={container}
+            readOnly={readOnly}
+            isDisabled={isDisabled}
+            key={`${id}CRowOrder`}
+            addButton={addButton}
+            handleMove={handleMove}
+            handleRemove={handleRemove}
+            handleSubmit={handleSubmit}
+            handleAccordionOpen={handleAccordionOpen}
+            handleUndo={handleUndo}
+            toggleAddToReport={toggleAddToReport}
+          />
+        );
+      })}
       <p>{addButton()}</p>
     </div>
   );
-};
+}
 
-const panelOnSelect = () => {};
+const panelOnSelect = () => { };
 
-const RndEdit = ({
-  sample, mode, handleRemove, handleSubmit, handleAccordionOpen,
-  toggleAddToReport, toggleMode, activeAnalysis, orderContainers, readOnly,
-  isDisabled, addButton, handleChange, handleUndo,
-}) => {
-
-  const headerDeletedFunc = container => (
-    <HeaderDeleted
-      container={container}
-      handleUndo={handleUndo}
-      mode={mode}
-    />
+function RndEdit({
+  sample,
+  mode,
+  handleRemove,
+  handleSubmit,
+  handleAccordionOpen,
+  toggleAddToReport,
+  toggleMode,
+  activeAnalysis,
+  orderContainers,
+  readOnly,
+  isDisabled,
+  addButton,
+  handleChange,
+  handleUndo,
+}) {
+  const headerDeletedFunc = (container) => (
+    <HeaderDeleted container={container} handleUndo={handleUndo} mode={mode} />
   );
 
   const headerNormalFunc = (container, serial) => (
@@ -94,7 +111,10 @@ const RndEdit = ({
 
   return (
     <div>
-      <p>{AnalysisModeBtn(mode, toggleMode, isDisabled)}{addButton()}</p>
+      <p>
+        {AnalysisModeBtn(mode, toggleMode, isDisabled)}
+        {addButton()}
+      </p>
       <PanelGroup
         id="editable-analysis-list"
         defaultActiveKey={0}
@@ -106,20 +126,14 @@ const RndEdit = ({
           const id = container.id || `fake_${i}`;
           if (container.is_deleted) {
             return (
-              <Panel
-                eventKey={id}
-                key={`${id}CRowEdit`}
-              >
+              <Panel eventKey={id} key={`${id}CRowEdit`}>
                 <Panel.Heading>{headerDeletedFunc(container)}</Panel.Heading>
               </Panel>
             );
           }
 
           return (
-            <Panel
-              eventKey={id}
-              key={`${id}CRowEdit`}
-            >
+            <Panel eventKey={id} key={`${id}CRowEdit`}>
               <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
               <Panel.Body collapsible>
                 <ContainerComponent
@@ -134,9 +148,10 @@ const RndEdit = ({
           );
         })}
       </PanelGroup>
-      <p>{addButton()}</p>
     </div>
   );
-};
+}
 
-export { RndNotAvailable, RndNoAnalyses, RndOrder, RndEdit };
+export {
+  RndNotAvailable, RndNoAnalyses, RndOrder, RndEdit
+};
