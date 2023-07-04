@@ -30,6 +30,7 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 const cols = 12;
 
@@ -219,7 +220,7 @@ export default class WellplateDetails extends Component {
 
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
-    const datetp = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
+    const datetp = formatTimeStampsOfElement(wellplate || {});
     const { showCommentSection, comments } = this.props;
 
     return (

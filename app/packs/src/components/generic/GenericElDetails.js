@@ -22,6 +22,7 @@ import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import PreviewModal from 'src/components/generic/PreviewModal';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class GenericElDetails extends Component {
   constructor(props) {
@@ -406,7 +407,7 @@ export default class GenericElDetails extends Component {
       <CopyElementModal element={genericEl} defCol={defCol} />
     ) : null;
     const saveBtnDisplay = genericEl.changed ? '' : 'none';
-    const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;
+    const datetp = formatTimeStampsOfElement(genericEl || {});
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="genericElDatesx">{datetp}</Tooltip>}>

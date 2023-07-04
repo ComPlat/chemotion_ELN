@@ -30,6 +30,7 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -178,7 +179,7 @@ export default class ScreenDetails extends Component {
 
   screenHeader(screen) {
     const saveBtnDisplay = screen.isEdited ? '' : 'none';
-    const datetp = `Created at: ${screen.created_at} \n Updated at: ${screen.updated_at}`;
+    const datetp = formatTimeStampsOfElement(screen || {});
     const { showCommentSection, comments } = this.props;
 
     return (

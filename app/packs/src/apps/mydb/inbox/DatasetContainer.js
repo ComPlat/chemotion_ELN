@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 const dataSource = {
   beginDrag(props) {
@@ -128,7 +128,7 @@ class DatasetContainer extends Component {
               <span style={{ marginLeft: '8px' }}>{dataset.name}</span>
             </button>
             <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-              {moment(dataset.created_at).format('DD.MM.YYYY HH:mm')}
+              {formatDate(dataset.created_at)}
             </span>
           </div>
           <div>{visible ? attachments : null}</div>

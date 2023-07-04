@@ -38,6 +38,7 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -254,7 +255,7 @@ export default class ReactionDetails extends Component {
 
   reactionHeader(reaction) {
     const hasChanged = reaction.changed ? '' : 'none';
-    const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
+    const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
