@@ -225,7 +225,7 @@ export default class CalendarEntryEditor extends React.Component {
                 clearIcon={null}
                 value={entry.start}
                 onChange={(date) => updateEntry('start', date)}
-                format="y-MM-dd H:mm"
+                format="dd-MM-y H:mm"
                 style={{
                   alignItems: 'baseline',
                 }}
@@ -240,7 +240,7 @@ export default class CalendarEntryEditor extends React.Component {
                 clearIcon={null}
                 value={entry.end}
                 onChange={(date) => updateEntry('end', date)}
-                format="y-MM-dd H:mm"
+                format="dd-MM-y H:mm"
               />
             </FormGroup>
             {notAccessible ? (
