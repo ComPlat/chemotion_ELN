@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
@@ -81,6 +82,7 @@ class CellLineDetails extends React.Component {
 
     return (
       <div>
+        <ElementCollectionLabels element={cellLineItem} key={cellLineItem.id} placement="right" />
         {content}
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}

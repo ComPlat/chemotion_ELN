@@ -2,7 +2,6 @@ import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 
 export default class CellLine extends Element {
-
   static buildEmpty(collectionId, shortLabelIn) {
     if (collectionId === undefined || !Number.isInteger(Number(collectionId))) {
       throw new Error(`collection id is not valid: ${collectionId}`);
@@ -30,6 +29,7 @@ export default class CellLine extends Element {
     cellLine.itemName = response.name;
     cellLine.passage = response.passage;
     cellLine.id = String(response.id);
+    cellLine.tag = response.tag;
 
     cellLine.cellLineName = response.cellline_material.name;
     cellLine.source = response.cellline_material.source;
@@ -47,7 +47,7 @@ export default class CellLine extends Element {
     cellLine.cryopreservationMedium = response.cellline_material.cryo_pres_medium;
     cellLine.is_new = false;
 
-    cellLine.container=response.container;
+    cellLine.container = response.container;
 
     return cellLine;
   }
