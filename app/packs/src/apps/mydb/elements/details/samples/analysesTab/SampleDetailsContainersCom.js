@@ -148,7 +148,6 @@ function RndEdit({
           );
         })}
       </PanelGroup>
-      <p>{addButton()}</p>
     </div>
   );
 }
