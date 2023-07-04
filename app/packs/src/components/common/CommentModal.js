@@ -4,7 +4,6 @@ import {
   Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table
 } from 'react-bootstrap';
 import Draggable from 'react-draggable';
-import moment from 'moment';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -19,6 +18,7 @@ import {
   getSectionComments,
   selectCurrentUser,
 } from 'src/utilities/CommentHelper';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class CommentModal extends Component {
   constructor(props) {
@@ -168,7 +168,7 @@ export default class CommentModal extends Component {
         <tr key={comment.id}>
           <td width="20%">
             <span className="text-info">
-              {moment(comment.created_at).format('DD.MM.YYYY HH:mm')}
+              {formatDate(comment.created_at)}
             </span>
           </td>
           <td width="35%">{comment.content}</td>

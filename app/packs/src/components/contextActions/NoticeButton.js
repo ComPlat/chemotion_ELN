@@ -12,7 +12,7 @@ import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
-import formatDate from 'src/utilities/timezoneHelper';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">

@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Table } from 'react-bootstrap';
-import moment from 'moment';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { formatSection, getAllComments, selectCurrentUser } from 'src/utilities/CommentHelper';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
 import DeleteComment from 'src/components/common/DeleteComment';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class CommentDetails extends Component {
   constructor(props) {
@@ -50,7 +50,7 @@ export default class CommentDetails extends Component {
           <td width="10%">{formatSection(comment.section, element.type)}</td>
           <td width="10%">
             <span className="text-info">
-              {moment(comment.created_at).format('DD.MM.YYYY HH:mm')}
+              {formatDate(comment.created_at)}
             </span>
           </td>
           <td width="34%">{comment.content}</td>
