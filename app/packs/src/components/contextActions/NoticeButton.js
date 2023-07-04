@@ -442,7 +442,7 @@ export default class NoticeButton extends React.Component {
     }
 
     return (
-      <div>
+      <div style={{ position: 'relative', marginLeft: '-10px' }}>
         <Button
           id="notice-button"
           bsStyle={btnStyle}
@@ -454,7 +454,6 @@ export default class NoticeButton extends React.Component {
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '.04px',
-            marginLeft: '-10px'
           }}
         >
           <i
@@ -468,7 +467,7 @@ export default class NoticeButton extends React.Component {
               className="badge badge-pill"
               style={{
                 top: '25px',
-                left: '20px',
+                left: '25px',
                 fontSize: '8px',
                 position: 'absolute'
               }}
