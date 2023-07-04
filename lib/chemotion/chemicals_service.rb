@@ -75,6 +75,7 @@ module Chemotion
     end
 
     def self.create_sds_file(file_path, link)
+      binding.pry
       safety_sheet_files_names = Dir.children('public/safety_sheets')
       if check_if_safety_sheet_already_saved(file_path, safety_sheet_files_names) == false
         write_file(file_path, link)
@@ -91,19 +92,22 @@ module Chemotion
                     .children[1].children[1].children[1]
     end
 
-    def self.construct_h_statements(h_phrases)
-      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
+    def self.construct_h_statements(h_phrases, vendor = nil)
       h_statements = {}
-      h_phrases.each do |element|
+      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
+
+      h_array = vendor == 'merck' ? h_phrases[1].split(/\s[+-]\s/) : h_phrases
+      h_array.each do |element|
         h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
       end
       h_statements
     end
 
-    def self.construct_p_statements(p_phrases)
-      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
+    def self.construct_p_statements(p_phrases, vendor = nil)
       p_statements = {}
-      p_phrases.each do |element|
+      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
+      p_array = vendor == 'merck' ? p_phrases[2].split(/\s[+-]\s/) : p_phrases
+      p_array.each do |element|
         p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
       p_statements
@@ -136,32 +140,12 @@ module Chemotion
                     .xpath("//*[contains(@class, '#{search_string}')]")
     end
 
-    def self.construct_h_statements_merck(safety_array)
-      h_statements = {}
-      h_array = safety_array[1].split(/\s[+-]\s/)
-      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
-      h_array.each do |element|
-        h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
-      end
-      h_statements
-    end
-
-    def self.construct_p_statements_merck(safety_array)
-      p_statements = {}
-      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
-      p_array = safety_array[2].split(/\s[+-]\s/)
-      p_array.each do |element|
-        p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
-      end
-      p_statements
-    end
-
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
       safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
       pictograms = safety_array[0].split(',')
-      { 'h_statements' => construct_h_statements_merck(safety_array),
-        'p_statements' => construct_p_statements_merck(safety_array),
+      { 'h_statements' => construct_h_statements(safety_array, 'merck'),
+        'p_statements' => construct_p_statements(safety_array, 'merck'),
         'pictograms' => pictograms }
     rescue StandardError
       'Could not find H and P phrases'
