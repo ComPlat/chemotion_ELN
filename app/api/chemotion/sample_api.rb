@@ -94,7 +94,7 @@ module Chemotion
           if file_size < 25_000
             import = Import::ImportSamples.new(
               params[:file][:tempfile].path,
-              params[:currentCollectionId], current_user.id, file['filename']
+              params[:currentCollectionId], current_user.id, file['filename'], params[:import_type]
             )
             import_result = import.process
             if import_result[:status] == 'ok' || import_result[:status] == 'warning'
@@ -115,6 +115,7 @@ module Chemotion
               user_id: current_user.id,
               file_name: file['filename'],
               file_path: tmp_file_path,
+              import_type: params[:import_type],
             }
             ImportSamplesJob.perform_later(parameters)
             { status: 'in progress', message: 'Importing samples in background' }

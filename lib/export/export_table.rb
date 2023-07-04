@@ -77,7 +77,7 @@ module Export
       when :sample_analyses
         generate_headers_sample_id
         add_analyses_header(selected_columns)
-      when :sample
+      when :sample, :sample_chemicals
         generate_headers_sample
       else generate_headers_sample_id
       end
@@ -110,6 +110,13 @@ module Export
       }
     end
 
+    def format_headers(headers)
+      headers.map! do |header|
+        header.tr('_', ' ')
+      end
+      headers
+    end
+
     def generate_headers_sample
       @headers00 = @headers.map { |column|
         HEADERS_SAMPLE_0.include?(column) ? column : nil
@@ -117,6 +124,7 @@ module Export
       @headers100 = @headers.map { |column|
         HEADERS_SAMPLE_10.include?(column) ? column : nil
       }
+      @headers = format_headers(@headers)
     end
 
     def generate_headers_sample_id

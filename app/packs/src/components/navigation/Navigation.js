@@ -96,9 +96,8 @@ export default class Navigation extends React.Component {
   }
 
   updateModalProps(modalProps) {
-    this.setState({
-      modalProps: modalProps
-    });
+    this.setState({ modalProps });
+    UIActions.updateModalProps(modalProps);
   }
 
   advancedSearch(filters) {
