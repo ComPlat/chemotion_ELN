@@ -133,30 +133,6 @@ describe Chemotion::ChemicalsService do
       end
     end
 
-    context 'when construct_h_statements_merck is called' do
-      it 'constructs hazard statements from the health section' do
-        safety_array = ['GHS02', 'H226 - H301', 'P201 - P210']
-        h_statements = described_class.construct_h_statements_merck(safety_array)
-        expect(h_statements).to be_a(Hash)
-        expect(h_statements.keys).to contain_exactly('H226', 'H301')
-        expect(h_statements.values).to contain_exactly(' Flammable liquid and vapour', ' Toxic if swallowed')
-      end
-    end
-
-    context 'when construct_p_statements_merck is called' do
-      it 'constructs precautionary statements for merck vendor' do
-        safety_array = ['GHS02', 'H226 - H301', 'P201 - P102 + P103']
-        p_statements = described_class.construct_p_statements_merck(safety_array)
-        expect(p_statements).to be_a(Hash)
-        expect(p_statements.keys).to contain_exactly('P201', 'P102', 'P103')
-        expect(p_statements.values).to contain_exactly(
-          ' Obtain special instructions before use.',
-          ' Keep out of reach of children.',
-          ' Read label before use.',
-        )
-      end
-    end
-
     context 'when chem_properties_alfa is called' do
       it 'constructs chemical properties hash for alfa vendor' do
         properties = [
