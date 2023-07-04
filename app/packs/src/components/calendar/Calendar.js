@@ -12,6 +12,17 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CalendarEvent, { setCurrentViewForEventRenderer } from 'src/components/calendar/CalendarEvent';
 
 const AllViews = Object.keys(Views).map((k) => Views[k]);
+
+const formats = {
+  agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  agendaDateFormat: 'ddd DD MMMM YYYY',
+  dayFormat: 'dddd DD',
+  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  monthHeaderFormat: 'MMMM YYYY',
+  dayHeaderFormat: 'dddd DD MMMM YYYY',
+  weekdayFormat: 'dddd',
+};
+
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(BaseCalendar);
 
@@ -879,6 +890,7 @@ export default class Calendar extends React.Component {
                 scrollToTime={scrollTime}
                 eventPropGetter={(eventStyleGetter)}
                 showMultiDayTimes={false}
+                formats={formats}
                 // enableAutoScroll={true}
               />
 
