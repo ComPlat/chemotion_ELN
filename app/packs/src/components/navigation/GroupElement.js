@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import Select from 'react-select';
-import { _, findIndex } from 'lodash';
+import _ from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
@@ -31,6 +31,7 @@ export default class GroupElement extends React.Component {
     this.loadUserByName = this.loadUserByName.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
     this.hideAdminAlert = this.hideAdminAlert.bind(this);
+    this.setGroupAdmin = this.setGroupAdmin.bind(this);
   }
 
   componentDidMount() { }
@@ -71,10 +72,10 @@ export default class GroupElement extends React.Component {
         if (setAdmin) {
           groupRec.admins.splice(1, 0, userRec);
         } else {
-          const usrIdx = findIndex(groupRec.admins, (o) => o.id === userRec.id);
+          const usrIdx = _.findIndex(groupRec.admins, (o) => o.id === userRec.id);
           groupRec.admins.splice(usrIdx, 1);
         }
-        const idx = findIndex(groups, (o) => o.id === groupRec.id);
+        const idx = _.findIndex(groups, (o) => o.id === groupRec.id);
         groups.splice(idx, 1, groupRec);
         this.props.onChangeGroupData(groups);
       });
@@ -278,7 +279,7 @@ export default class GroupElement extends React.Component {
               multi
               style={{
                 marginTop: '10px',
-                width: '200px',
+                width: '300px',
               }}
               isLoading
               backspaceRemoves
@@ -357,7 +358,7 @@ export default class GroupElement extends React.Component {
                 type="button"
                 bsStyle={adminButtonStyle}
                 className="fa fa-key"
-                onClick={(e) => this.setGroupAdmin(groupRec, userRec, !isAdmin, e)}
+                onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
               />
             </OverlayTrigger>
           )}
