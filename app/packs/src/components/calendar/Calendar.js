@@ -100,7 +100,8 @@ function getWindowStyleOffsets(state) {
 
 const allDayAccessor = (event) => {
   if ((event.start && event.start.getHours() === 0 && event.start.getMinutes() === 0)
-  && (event.end && event.end.getHours() === 0 && event.end.getMinutes() === 0)) {
+  && (event.end && event.end.getHours() === 0 && event.end.getMinutes() === 0) &&
+  moment(event.start).format() !== moment(event.end).format()) {
     return true;
   }
   return false;
