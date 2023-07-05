@@ -8,7 +8,7 @@ module Import
     attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :unprocessable,
                 :processed, :file_path, :collection_id, :current_user_id, :file_name
 
-    def initialize(file_path, collection_id, user_id, file_name)
+    def initialize(file_path, collection_id, user_id, file_name, import_type)
       @rows = []
       @unprocessable = []
       @processed = []
@@ -16,6 +16,7 @@ module Import
       @collection_id = collection_id
       @current_user_id = user_id
       @file_name = file_name
+      @import_type = import_type
     end
 
     def process
@@ -230,7 +231,9 @@ module Import
       sample.validate_stereo(stereo)
       sample.collections << Collection.find(collection_id)
       sample.collections << Collection.get_all_collection_for_user(current_user_id)
+      sample.inventory_sample = true if @import_type == 'chemical'
       sample.save!
+      ImportChemicals.create_chemical(sample['id'], row, header) if @import_type == 'chemical'
       processed.push(sample)
     end
 
