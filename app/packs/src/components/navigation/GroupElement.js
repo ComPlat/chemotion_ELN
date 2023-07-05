@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import Select from 'react-select';
-import { _, findIndex, isEqual } from 'lodash';
+import { _, findIndex } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
@@ -21,8 +21,7 @@ export default class GroupElement extends React.Component {
       currentUser: props.currentState.currentUser || { name: 'unknown' },
       showUsers: false,
       showRowAdd: false,
-      groups: [],
-      selectedUsers: null,
+      groups: props.currentState.groups,
       showAdminAlert: false,
       adminPopoverTarget: null,
     };
@@ -31,17 +30,10 @@ export default class GroupElement extends React.Component {
     this.toggleRowAdd = this.toggleRowAdd.bind(this);
     this.loadUserByName = this.loadUserByName.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
-    this.setGroupAdmin = this.setGroupAdmin.bind(this);
     this.hideAdminAlert = this.hideAdminAlert.bind(this);
   }
 
   componentDidMount() { }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (!isEqual(prevState.selectedUsers, this.state.selectedUsers)) {
-      this.loadUserByName();
-    }
-  }
 
   componentWillUnmount() { }
 
@@ -52,7 +44,7 @@ export default class GroupElement extends React.Component {
   }
 
   setGroupAdmin(groupRec, userRec, setAdmin = true) {
-    // of removing admin rights and this is the only admin, show warning
+    // if removing group admin and there is only one admin -> show warning
     if (!setAdmin && groupRec.admins.length === 1) {
       this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
       return;
@@ -72,7 +64,7 @@ export default class GroupElement extends React.Component {
       actionType: 'Adm',
       id: groupRec.id,
       admin_id: userRec.id,
-      set_admin: setAdmin,
+      set_admin: setAdmin
     };
     AdminFetcher.updateGroup(params)
       .then((result) => {
@@ -84,12 +76,7 @@ export default class GroupElement extends React.Component {
         }
         const idx = findIndex(groups, (o) => o.id === groupRec.id);
         groups.splice(idx, 1, groupRec);
-        this.setState({ groups }, () => {
-          this.props.onChangeGroupData(groups);
-        });
-      })
-      .catch((error) => {
-        console.error('Error updating group: ', error);
+        this.props.onChangeGroupData(groups);
       });
   }
 
@@ -98,15 +85,15 @@ export default class GroupElement extends React.Component {
   };
 
   toggleUsers() {
-    this.setState((prevState) => ({
-      showUsers: !prevState.showUsers,
-    }));
+    this.setState({
+      showUsers: !this.state.showUsers
+    });
   }
 
   toggleRowAdd() {
-    this.setState((prevState) => ({
-      showRowAdd: !prevState.showRowAdd,
-    }));
+    this.setState({
+      showRowAdd: !this.state.showRowAdd
+    });
   }
 
   loadUserByName(input) {
@@ -147,19 +134,13 @@ export default class GroupElement extends React.Component {
       return true;
     });
 
-    UsersFetcher.updateGroup({
-      id: groupRec.id,
-      destroy_group: false,
-      add_users: userIds,
-    }).then((group) => {
-      const idx = _.findIndex(
-        this.props.currentGroup,
-        (o) => o.id == group.group.id
-      );
-      this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: null });
-      this.props.onChangeData(this.props.currentGroup);
-    });
+    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
+      .then((group) => {
+        const idx = _.findIndex(this.props.currentGroup, (o) => o.id == group.group.id);
+        this.props.currentGroup.splice(idx, 1, group.group);
+        this.setState({ selectedUsers: null });
+        this.props.onChangeData(this.props.currentGroup);
+      });
   }
 
   renderDeleteButton(type, groupRec, userRec) {
