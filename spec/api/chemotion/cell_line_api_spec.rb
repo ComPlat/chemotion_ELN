@@ -56,7 +56,9 @@ describe Chemotion::CellLineAPI do
           material_names: '[sd]',
           biosafety_level: 'S1',
           source: 'IPB',
+          unit: 'g',
           collection_id: collection.id,
+          container: {},
         }
       end
 
@@ -76,6 +78,7 @@ describe Chemotion::CellLineAPI do
         expect(parsed_json_response['growth_medium']).to be_nil
         expect(parsed_json_response['name']).to be_nil
         expect(parsed_json_response['description']).to be_nil
+        expect(parsed_json_response['unit']).to eq 'g'
         expect(parsed_json_response['cellline_material']['name']).to eq '[sd]'
         expect(parsed_json_response['cellline_material']['cell_type']).to be_nil
         expect(parsed_json_response['cellline_material']['organism']).to eq 'something'
