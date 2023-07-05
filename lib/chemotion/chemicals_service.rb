@@ -75,7 +75,6 @@ module Chemotion
     end
 
     def self.create_sds_file(file_path, link)
-      binding.pry
       safety_sheet_files_names = Dir.children('public/safety_sheets')
       if check_if_safety_sheet_already_saved(file_path, safety_sheet_files_names) == false
         write_file(file_path, link)
