@@ -637,6 +637,12 @@ export default class Calendar extends React.Component {
 
   saveEntry() {
     const { currentEntry } = this.state;
+    const { title } = currentEntry;
+    if (!title) {
+      // eslint-disable-next-line no-alert
+      alert('Please enter a title.');
+      return;
+    }
     if (currentEntry.id) {
       CalendarActions.updateEntry(currentEntry);
     } else {
