@@ -15,18 +15,13 @@ module Usecases
 
         CollectionsCellline.create(
           collection: Collection.find(@params[:collection_id]),
-          cellline_sample: sample,
+          cellline_sample_id: sample.id,
         )
-
         CollectionsCellline.create(
           collection: all_collection_of_current_user,
-          cellline_sample: sample,
+          cellline_sample_id: sample.id,
         )
-
-        # reload the cell line element to have the collections associated
-        sample = CelllineSample.find(sample.id)
-
-        sample.update_tag!({ collection_tag: true })
+        
         sample
       end
 
