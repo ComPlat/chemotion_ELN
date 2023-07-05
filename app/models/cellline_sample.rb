@@ -12,7 +12,6 @@ class CelllineSample < ApplicationRecord
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
 
-  def create_root_container
-    self.container = Container.create_root_container if container.nil?
-  end
+  include Taggable
+  include Collectable
 end

@@ -22,7 +22,11 @@ module Usecases
           collection: all_collection_of_current_user,
           cellline_sample: sample,
         )
-        
+
+        # reload the cell line element to have the collections associated
+        sample = CelllineSample.find(sample.id)
+
+        sample.update_tag!({ collection_tag: true })
         sample
       end
 
@@ -64,7 +68,6 @@ module Usecases
           description: @params[:description],
           short_label: @params[:short_label],
         )
-
       end
 
       def check_parameter

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # update ElementTag when Element joint table association is updated
 module Tagging
   extend ActiveSupport::Concern
@@ -8,8 +10,10 @@ module Tagging
     after_restore :update_tag
   end
 
+  # rubocop: disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
   def update_tag
     klass = self.class.name
+
     case klass
     when 'ReactionsProductSample', 'ReactionsStartingMaterialSample',
       'ReactionsSolventSample', 'ReactionsReactantSample'
@@ -22,14 +26,22 @@ module Tagging
       el = Element.find_by(id: element_id)
       return if el.nil?
 
-      args = deleted_at.nil? ? { element_tag: { "type": el.element_klass.name, "id": element_id } } : { element_tag: {} }
+      args = if deleted_at.nil?
+               { element_tag: { type: el.element_klass.name,
+                                id: element_id } }
+             else
+               { element_tag: {} }
+             end
       element = 'sample'
     when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'CollectionsElement',
-      'CollectionsScreen', 'CollectionsResearchPlan'
+      'CollectionsScreen', 'CollectionsResearchPlan', 'CollectionsCellline'
+
       args = { collection_tag: true }
-      element = klass[11..-1].underscore
+      element = klass[11..].underscore
+      element = 'cellline_sample' if element == 'cellline'
     end
     element && send(element)&.update_tag!(args)
   end
   # handle_asynchronously :update_tag
 end
+# rubocop: enable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
