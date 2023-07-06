@@ -168,32 +168,45 @@ module Chemotion
         desc 'update a group of persons'
         params do
           requires :id, type: Integer
-          optional :rm_users, type: Array
-          optional :add_users, type: Array
+          optional :rm_users, type: [Integer], desc: 'remove users from group', default: []
+          optional :add_users, type: [Integer], desc: 'add users to group', default: []
+          optional :add_admin, type: [Integer], desc: 'add admin to group', default: []
+          optional :rm_admin, type: [Integer], desc: 'remove admin from group', default: []
           optional :destroy_group, type: Boolean, default: false
         end
 
         after_validation do
-          if current_user.administrated_accounts.where(id: params[:id]).empty? &&
-             !params[:rm_users].nil? && current_user.id != params[:rm_users][0]
-            error!('401 Unauthorized', 401)
-          end
+          @group = Group.find_by(id: params[:id])
+          @as_admin = @group.administrated_by?(current_user)
+          @rm_current_user_id = !@as_admin && params[:rm_users].delete(current_user.id)
+          error!('401 Unauthorized', 401) unless @group.administrated_by?(current_user) || @rm_current_user_id
         end
 
         put ':id' do
-          group = Group.find(params[:id])
-          if params[:destroy_group]
-            User.find_by(id: params[:id])&.remove_from_matrices
-            { destroyed_id: params[:id] } if group.destroy!
+          if @rm_current_user_id
+            @group.users.delete(User.where(id: rm_user_id))
+            User.gen_matrix([@rm_current_user_id])
+            present @group, with: Entities::GroupEntity, root: 'group'
           else
-            new_users =
-              (params[:add_users] || []).map(&:to_i) - group.users.pluck(:id)
-            rm_users = (params[:rm_users] || []).map(&:to_i)
-            group.users << Person.where(id: new_users)
-            group.save!
-            group.users.delete(User.where(id: rm_users))
-            User.gen_matrix(rm_users) if rm_users&.length&.positive?
-            present group, with: Entities::GroupEntity, root: 'group'
+            if params[:destroy_group]
+              { destroyed_id: params[:id] } if @group.destroy!
+            else
+              # add new admins
+              params[:add_admin].delete(@group.admins.pluck(:id)) # ensure that admins are not added twice
+              @group.admins << User.where(id: params[:add_admin])
+              # remove admins
+              params[:rm_admin].delete(current_user.id) # ensure that current_user is not removed from admins
+              @group.users_admins.where(admin_id: params[:rm_admin]).destroy_all
+
+              # add new users
+              params[:add_users].delete(@group.users.pluck(:id))
+              @group.users << Person.where(id: params[:add_users])
+              # remove users
+              @group.users.delete(User.where(id: params[:rm_users]))
+              User.gen_matrix(params[:rm_users]) if params[:rm_users].length.positive?
+
+              present @group, with: Entities::GroupEntity, root: 'group'
+            end
           end
         end
       end
