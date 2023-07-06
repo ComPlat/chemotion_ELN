@@ -98,6 +98,15 @@ function getWindowStyleOffsets(state) {
   }
 }
 
+const allDayAccessor = (event) => {
+  if ((event.start && event.start.getHours() === 0 && event.start.getMinutes() === 0)
+  && (event.end && event.end.getHours() === 0 && event.end.getMinutes() === 0) &&
+  moment(event.start).format() !== moment(event.end).format()) {
+    return true;
+  }
+  return false;
+};
+
 // see:
 //  https://react-bootstrap-v3.netlify.app/components/modal/
 //  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
@@ -629,6 +638,12 @@ export default class Calendar extends React.Component {
 
   saveEntry() {
     const { currentEntry } = this.state;
+    const { title } = currentEntry;
+    if (!title) {
+      // eslint-disable-next-line no-alert
+      alert('Please enter a title.');
+      return;
+    }
     if (currentEntry.id) {
       CalendarActions.updateEntry(currentEntry);
     } else {
@@ -891,6 +906,7 @@ export default class Calendar extends React.Component {
                 eventPropGetter={(eventStyleGetter)}
                 showMultiDayTimes={false}
                 formats={formats}
+                allDayAccessor={allDayAccessor}
                 // enableAutoScroll={true}
               />
 
