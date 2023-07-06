@@ -39,10 +39,26 @@
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include AASM
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
+
+  enum edit_state: { not_editing: 0, editing: 1 }
+
+  aasm(:document, column: :edit_state) do
+    state :not_editing, initial: true
+    state :editing
+
+    event :editing_start do
+      transitions from: :not_editing, to: :editing
+    end
+
+    event :editing_end do
+      transitions from: %i[editing not_editing], to: :not_editing
+    end
+  end
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
@@ -253,28 +269,18 @@ class Attachment < ApplicationRecord
     )
   end
 
-  # @return [String] build annotation file name based on the original file name
-  def annotated_filename
-    return '' unless annotated?
-
-    # NB: original tiff file are converted to png for the annotation background layer
-    extension_of_annotation = content_type == 'image/tiff' ? '.png' : File.extname(filename)
-    "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
+  def file_extension
+    extname = File.extname(filename.to_s)
+    extname && extname[1..-1]
   end
 
-  def thumbnail_base64
-    return nil unless thumb
+  def editable_document?
+    return false unless file_extension.present?
 
-    thumbnail_data = read_thumbnail
-    Base64.encode64(thumbnail_data)
-  rescue TypeError, Errno::ENOENT
-    Rails.logger.error "Thumbnail data is not available for attachment #{id} but thumb is set to true"
-    nil
-  end
+    available_extensions = Rails.configuration.editors&.available_extensions
+    return false unless available_extensions.present?
 
-  def preview
-    base64_data = thumbnail_base64
-    base64_data ? "data:image/png;base64,#{base64_data}" : nil
+    available_extensions.include?(file_extension.downcase)
   end
 
   private

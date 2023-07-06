@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { ButtonToolbar } from 'react-bootstrap';
 
-import EditorFetcher from 'src/fetchers/EditorFetcher';
 import Attachment from 'src/models/Attachment';
 
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
@@ -11,7 +10,7 @@ import {
   undoButton,
   downloadButton,
   removeButton,
-  editButton,
+  EditButton,
   importButton,
   annotateButton,
   customDropzone,
@@ -32,7 +31,6 @@ const AttachmentForm = ({ readonly }) => {
   const { thirdPartyApps } = UIStore.getState() || [];
 
   useEffect(() => {
-    editorInitial();
     createAttachmentPreviewImage();
   }, []);
 
@@ -41,13 +39,6 @@ const AttachmentForm = ({ readonly }) => {
       createAttachmentPreviewImage();
     }
   }, [deviceDescription.attachments]);
-
-  const editorInitial = () => {
-    EditorFetcher.initial().then((result) => {
-      deviceDescriptionsStore.setAttachmentEditor(result.installed);
-      deviceDescriptionsStore.setAttachmentExtension(result.ext);
-    });
-  }
 
   const createAttachmentPreviewImage = () => {
     const attachments = deviceDescription.attachments.map((attachment) => {
@@ -135,28 +126,6 @@ const AttachmentForm = ({ readonly }) => {
     updateEditedAttachment(selectedAttachment);
   }
 
-  const handleEditAttachment = (attachment) => {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}
-          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-          &only_office_token=${result.only_office_token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          updateEditedAttachment(attachment);
-        } else {
-          alert('Unauthorized to edit this file.');
-        }
-      });
-  }
-
   const onUndoDelete = (attachment) => {
     const index = deviceDescription.attachments.indexOf(attachment);
     deviceDescriptionsStore.changeAttachment(index, 'is_deleted', false);
@@ -208,14 +177,7 @@ const AttachmentForm = ({ readonly }) => {
       <ButtonToolbar className="gap-1">
         {downloadButton(attachment)}
         <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
-        {editButton(
-          attachment,
-          deviceDescriptionsStore.attachment_extension,
-          deviceDescriptionsStore.attachment_editor,
-          isEditing,
-          editDisable,
-          handleEditAttachment
-        )}
+        <EditButton attachment={attachment} onChange={updateEditedAttachment} />
         {annotateButton(attachment, () => openAnnotateModal(attachment))}
         {importButton(
           attachment,
