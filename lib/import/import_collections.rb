@@ -320,6 +320,7 @@ module Import
           'solvent',
           'short_label',
           'role',
+          'rxno',
           'origin',
           'duration',
           'created_at',
