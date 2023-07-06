@@ -4,21 +4,19 @@
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import React, { Component } from 'react';
-import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { Button, ButtonToolbar, Alert } from 'react-bootstrap';
-import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
   downloadButton,
   removeButton,
   annotateButton,
-  editButton,
+  EditButton,
   importButton,
   customDropzone,
   sortingAndFilteringUI,
@@ -39,8 +37,6 @@ class ResearchPlanDetailsAttachments extends Component {
     this.thirdPartyApps = thirdPartyApps;
 
     this.state = {
-      attachmentEditor: false,
-      extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
       filteredAttachments: [...props.attachments],
@@ -48,9 +44,7 @@ class ResearchPlanDetailsAttachments extends Component {
       sortBy: 'name',
       sortDirection: 'asc',
     };
-    this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
-    this.handleEdit = this.handleEdit.bind(this);
     this.onImport = this.onImport.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
@@ -61,7 +55,6 @@ class ResearchPlanDetailsAttachments extends Component {
   }
 
   componentDidMount() {
-    this.editorInitial();
     this.createAttachmentPreviews();
   }
 
@@ -71,29 +64,6 @@ class ResearchPlanDetailsAttachments extends Component {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
     }
-  }
-
-  handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}
-          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-          &only_office_token=${result.only_office_token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          this.props.onEdit(attachment);
-        } else {
-          // eslint-disable-next-line no-alert
-          alert('Unauthorized to edit this file.');
-        }
-      });
   }
 
   onImport(attachment) {
@@ -189,28 +159,6 @@ class ResearchPlanDetailsAttachments extends Component {
     });
   }
 
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, (o) => o.includes(ext));
-
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  editorInitial() {
-    EditorFetcher.initial().then((result) => {
-      this.setState({
-        attachmentEditor: result.installed,
-        extension: result.ext,
-      });
-    });
-  }
-
   showImportConfirm(attachmentId) {
     const { showImportConfirm } = this.state;
     showImportConfirm[attachmentId] = true;
@@ -250,7 +198,7 @@ class ResearchPlanDetailsAttachments extends Component {
 
   render() {
     const {
-      filteredAttachments, sortDirection, attachmentEditor, extension
+      filteredAttachments, sortDirection,
     } = this.state;
     const { researchPlan } = this.props;
     const { currentUser } = UserStore.getState();
@@ -326,16 +274,7 @@ class ResearchPlanDetailsAttachments extends Component {
                       <ButtonToolbar className="gap-1">
                         {downloadButton(attachment)}
                         <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
-                        {editButton(
-                          attachment,
-                          extension,
-                          attachmentEditor,
-                          attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                          !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                        || attachment.is_new || this.documentType(attachment.filename) === null,
-                          this.handleEdit
-                        )}
+                        <EditButton attachment={attachment} onEdit={this.onEdit} />
                         {annotateButton(attachment, () => {
                           this.setState({
                             imageEditModalShown: true,

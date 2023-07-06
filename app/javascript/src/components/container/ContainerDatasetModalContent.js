@@ -3,19 +3,16 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import {
-  Form, ListGroup, ListGroupItem, Button, Overlay, ButtonToolbar, Alert
+  Form, Button, ButtonToolbar, Alert
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import EditorFetcher from 'src/fetchers/EditorFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import debounce from 'es6-promise-debounce';
 import {
-  findIndex, cloneDeep, last, findKey,
-  create
+  findIndex, cloneDeep
 } from 'lodash';
 import { absOlsTermId } from 'chem-generic-ui';
 import Attachment from 'src/models/Attachment';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
@@ -28,7 +25,7 @@ import {
   downloadButton,
   removeButton,
   annotateButton,
-  editButton,
+  EditButton,
   sortingAndFilteringUI,
   formatFileSize,
   moveBackButton,
@@ -92,8 +89,6 @@ export class ContainerDatasetModalContent extends Component {
       instruments: [],
       instrumentInputValue: '',
       timeoutReference: null,
-      attachmentEditor: false,
-      extension: null,
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
       prevMessages: [],
@@ -114,8 +109,6 @@ export class ContainerDatasetModalContent extends Component {
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
     this.handleDSChange = this.handleDSChange.bind(this);
-    this.editorInitial = this.editorInitial.bind(this);
-    this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
@@ -124,7 +117,6 @@ export class ContainerDatasetModalContent extends Component {
   }
 
   componentDidMount() {
-    this.editorInitial();
     const { datasetContainer } = this.state;
     this.setState({
       attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments),
@@ -327,28 +319,6 @@ export class ContainerDatasetModalContent extends Component {
     this.setState({ datasetContainer });
   }
 
-  handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}
-          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-          &only_office_token=${result.only_office_token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          this.props.onChange(attachment);
-        } else {
-          alert('Unauthorized to edit this file.');
-        }
-      });
-  }
-
   handleFilterChange = (e) => {
     this.setState({ filterText: e.target.value }, this.filterAttachments);
   };
@@ -421,28 +391,6 @@ export class ContainerDatasetModalContent extends Component {
       .catch((error) => console.log(error));
   }
 
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, (o) => o.includes(ext));
-
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  editorInitial() {
-    EditorFetcher.initial().then((result) => {
-      this.setState({
-        attachmentEditor: result.installed,
-        extension: result.ext,
-      });
-    });
-  }
-
   customDropzone() {
     return (
       <Dropzone
@@ -475,7 +423,6 @@ export class ContainerDatasetModalContent extends Component {
   }
 
   renderAttachmentRow(attachment) {
-    const { extension, attachmentEditor } = this.state;
     const { readOnly } = this.props;
     return (
       <div className="attachment-row" key={attachment.id}>
@@ -517,16 +464,7 @@ export class ContainerDatasetModalContent extends Component {
               <ButtonToolbar className="gap-1">
                 {downloadButton(attachment)}
                 <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                {editButton(
-                  attachment,
-                  extension,
-                  attachmentEditor,
-                  attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                  !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                  || attachment.is_new || this.documentType(attachment.filename) === null,
-                  this.handleEdit
-                )}
+                <EditButton attachment={attachment} onChange={this.props.onChange} />
                 {annotateButton(attachment, () => {
                   this.setState({
                     imageEditModalShown: true,

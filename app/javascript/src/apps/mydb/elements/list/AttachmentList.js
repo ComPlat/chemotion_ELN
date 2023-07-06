@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState, useEffect, useMemo, useCallback
+} from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
@@ -11,6 +13,8 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import EditorFetcher from 'src/fetchers/EditorFetcher';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -143,38 +147,89 @@ export const annotateButton = (attachment, onClick) => (
   />
 );
 
-export const editButton = (
-  attachment,
-  extension,
-  attachmentEditor,
-  isEditing,
-  editDisable,
-  handleEdit
-) => {
-  const editorTooltip = (exts) => (
-    <Tooltip id="editor_tooltip">
-      {editDisable ? (
-        <span>
-          Editing is only available for these files:&nbsp;
-          <strong>{exts}</strong>
-          .
-          <br />
-          Or you are not authorized to edit this file.
-        </span>
-      ) : (
-        <span>Edit attachment</span>
-      )}
-    </Tooltip>
+// EditButton
+/**
+ * Props:
+ *  - attachment: Attachment instance
+ *  - disabled: boolean
+ *  - onChange: function
+ */
+export const EditButton = ({ attachment, disabled, onChange }) => {
+  const { docserver } = UIStore.getState() || {};
+  const extensionsObj = docserver.extensions || {};
+  // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
+  const attachmentEditor = Boolean(docserver?.available);
+  const editDisable = disabled || !attachmentEditor;
+  const isEditing = Boolean(attachment.aasm_state === 'oo_editing' && new Date().getTime());
+
+  const extsList = useMemo(
+    () => values(extensionsObj).join(','),
+    [extensionsObj]
   );
+
+  const editorTooltip = useCallback(
+    (exts) => (
+      <Tooltip id="editor_tooltip">
+        {disabled ? (
+          <span>
+            Editing is only available for these files:&nbsp;
+            <strong>{exts}</strong>.
+            <br />
+            Or you are not authorized to edit this file.
+          </span>
+        ) : (
+          <span>Edit attachment</span>
+        )}
+      </Tooltip>
+    ),
+    [disabled]
+  );
+
+  const handleEdit = useCallback(() => {
+    if (editDisable) return;
+
+    const fileType = last(attachment.filename.split('.'));
+    const docType = this.documentType(attachment.filename);
+    const forceStop = attachment.edit_state === 'editing';
+
+
+    EditorFetcher.startEditing({ attachmentId: attachment.id, forceStop })
+      .then((result) => {
+        if (!forceStop && result.token) {
+          const url = `/editor?id=${attachment.id}&docType=${docType}
+          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
+          &only_office_token=${result.only_office_token}`;
+          window.open(url, '_blank');
+
+          attachment.edit_state = 'editing';
+          attachment.updated_at = new Date();
+
+          onChange(attachment);
+        } else if (forceStop) {
+          attachment.edit_state = 'not_editing';
+          attachment.updated_at = new Date();
+          onChange(attachment);
+        } else {
+          // alert('Unauthorized to edit this file.');
+          NotificationActions.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
+          onChange(attachment);
+        }
+      });
+
+
+  }, [attachment, editDisable]);
+
   return (
-    <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
+    <OverlayTrigger placement="top" overlay={editorTooltip(extsList)}>
       <Button
         size="sm"
         variant="success"
         disabled={editDisable}
-        onClick={() => handleEdit(attachment)}
+        onClick={handleEdit}
       >
-        <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+        <SpinnerPencilIcon
+          spinningLock={isEditing}
+        />
       </Button>
     </OverlayTrigger>
   );

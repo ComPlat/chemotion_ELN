@@ -18,6 +18,7 @@ module Chemotion
         collector_address = collector_config.present? && (
           collector_config.dig(:mailcollector, :aliases, -1) || collector_config.dig(:mailcollector, :mail_address)
         )
+        docserver = Rails.configuration.editors&.docserver
 
         {
           has_chem_spectra: has_chem_spectra,
@@ -33,6 +34,7 @@ module Chemotion
           third_party_apps: Entities::ThirdPartyAppEntity.represent(ThirdPartyApp.all),
           pg_cartridge: Chemotion::Application.config.pg_cartridge,
           version: Chemotion::Application.config.version,
+          docserver:  { available: (docserver && docserver[:enable]) || false, extensions: docserver && docserver[:ext] }
         }
       end
     end
