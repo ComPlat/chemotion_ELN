@@ -9,6 +9,7 @@ import {
   ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
@@ -178,13 +179,20 @@ export default class StructureEditorModal extends React.Component {
         });
       });
     } else {
-      const { molfile, info } = structure;
-      structure.fetchSVG().then((svg) => {
-        this.setState({
-          showModal: false,
-          showWarning: this.props.hasChildren || this.props.hasParent
-        }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
-      });
+      try {
+        const { molfile, info } = structure;
+        if (!molfile) throw new Error('No molfile');
+        structure.fetchSVG().then((svg) => {
+          this.setState({
+            showModal: false,
+            showWarning: this.props.hasChildren || this.props.hasParent
+          }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
+        });
+      } catch (e) {
+        NotificationActions.add({
+          title: 'Editor error', message: `The drawing is not supported! ${e}`, level: 'error', position: 'tc'
+        });
+      }
     }
   }
 

@@ -284,6 +284,7 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         sample.molecule = result;
         sample.molecule_id = result.id;
+        if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
         this.setState({
           sample, pageMessage: result.ob_log
         });
@@ -320,43 +321,50 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
+
+    const fetchError = (errorMessage) => {
+      NotificationActions.add({
+        title: 'Error on Sample creation', message: `Cannot create molecule! Error: [${errorMessage}]`, level: 'error', position: 'tc'
+      });
+      this.setState({ loadingMolecule: false });
+    };
+
+    const fetchSuccess = (result) => {
+      if (!result || result == null) {
+        throw new Error('No molecule returned!');
+      }
+      sample.molecule = result;
+      sample.molecule_id = result.id;
+      if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+      this.setState({
+        sample,
+        smileReadonly: true,
+        pageMessage: result.ob_log,
+        loadingMolecule: false
+      });
+    };
+
+    const fetchMolecule = (fetchFunction) => {
+      fetchFunction()
+        .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.hideStructureEditor();
+        });
+    };
+
     if (!smiles || smiles === '') {
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
-        .then((result) => {
-          sample.molecule = result;
-          sample.molecule_id = result.id;
-          this.setState({
-            sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
-          });
-        }).catch((errorMessage) => {
-          alert('Cannot create molecule!');
-          console.log(`handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`);
-        });
+      fetchMolecule(
+        () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
+      );
     } else {
-      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile, editor)
-        .then((result) => {
-          if (!result || result == null) {
-            alert('Cannot create molecule!');
-          } else {
-            sample.molecule = result;
-            sample.molecule_id = result.id;
-            this.setState({
-              sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
-            });
-          }
-        }).catch((errorMessage) => {
-          alert('Cannot create molecule!');
-          console.log(`handleStructureEditorSave exception of fetchBySmi: ${errorMessage}`);
-        });
+      fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-    this.hideStructureEditor();
   }
 
   handleStructureEditorCancel() {
