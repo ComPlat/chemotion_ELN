@@ -624,27 +624,28 @@ export default class SampleDetails extends React.Component {
 
   transferToDeviceButton(sample) {
     return (
-      <Button bsSize="xsmall"
+      <Button
+        bsSize="xsmall"
         onClick={() => {
-          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices
-          const device = devices.find((d) => d.id === selectedDeviceId)
-          ElementActions.addSampleToDevice(sample, device, { save: true })
+          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices;
+          const device = devices.find((d) => d.id === selectedDeviceId);
+          ElementActions.addSampleToDevice(sample, device, { save: true });
         }}
         style={{ marginLeft: 25 }}
       >
         Transfer to Device
       </Button>
-    )
+    );
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px', marginBottom: '100px' };
+    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
-      const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
+      const echa = pubchemLcss.Reference.filter((e) => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
       if (echa.length > 0) {
-        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Safety and Hazards') || [];
-        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Hazards Identification') || [];
+        pubchemLcss = pubchemLcss.Section.find((e) => e.TOCHeading === 'Safety and Hazards') || [];
+        pubchemLcss = pubchemLcss.Section.find((e) => e.TOCHeading === 'Hazards Identification') || [];
         pubchemLcss = pubchemLcss.Section[0].Information.filter(e => echa.includes(e.ReferenceNumber)) || null;
       } else pubchemLcss = null;
     }
