@@ -13,6 +13,39 @@ import Select from 'react-select';
 import _ from 'lodash';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
+const styles = {
+  button: {
+    width: '25px', height: '25px', marginRight: '10px', textAlign: 'center',
+  },
+  popover: {
+    display: 'flex', flexDirection: 'row', gap: '10px',
+  },
+  confirmButton: {
+    marginTop: '5px', textAlign: 'center', width: '35px', fontWeight: 'Bold',
+  },
+  gotItButton: {
+    marginTop: '5px', textAlign: 'center', fontWeight: 'Bold',
+  },
+  addUserButton: {
+    marginLeft: '10px', marginTop: '5px', textAlign: 'center', width: '25px', height: '25px',
+  },
+  select: {
+    marginTop: '5px', width: '300px',
+  },
+  flexRow: {
+    display: 'flex', flexDirection: 'row', alignItems: 'center'
+  },
+  lightRow: {
+    backgroundColor: '#e1edf2',
+  },
+  darkRow: {
+    backgroundColor: '#c8d6dc',
+  },
+  tableData: {
+    verticalAlign: 'middle'
+  }
+};
+
 export default class GroupElement extends React.Component {
   constructor(props) {
     super(props);
@@ -39,11 +72,8 @@ export default class GroupElement extends React.Component {
   componentWillUnmount() { }
 
   handleSelectUser(val) {
-    if (val && val.length > 0) {
-      this.setState({ selectedUsers: val });
-    } else {
-      this.setState({ selectedUsers: null });
-    }
+    if (val && val.length > 0) { this.setState({ selectedUsers: val }); }
+    else { this.setState({ selectedUsers: null }); }
   }
 
   setGroupAdmin(groupRec, userRec, setAdmin = true) {
@@ -90,9 +120,7 @@ export default class GroupElement extends React.Component {
     });
   }
 
-  hideAdminAlert = () => {
-    this.setState({ showAdminAlert: false });
-  };
+  hideAdminAlert = () => { this.setState({ showAdminAlert: false }); };
 
   toggleUsers() {
     this.setState((prevState) => ({
@@ -154,9 +182,7 @@ export default class GroupElement extends React.Component {
       const isUserInGroup = groupRec.users.some((user) => user.id === g.value);
 
       // only add users not already in group
-      if (!isUserInGroup) {
-        userIds.push(g.value);
-      }
+      if (!isUserInGroup) { userIds.push(g.value); }
     });
 
     UsersFetcher.updateGroup({
@@ -189,23 +215,12 @@ export default class GroupElement extends React.Component {
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         {msg}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '10px',
-          }}
-        >
+        <div style={styles.popover}>
           <Button
             bsSize="xsmall"
             bsStyle="danger"
             onClick={() => this.confirmDelete(type, groupRec, userRec)}
-            style={{
-              marginTop: '5px',
-              textAlign: 'center',
-              width: '35px',
-              fontWeight: 'Bold',
-            }}
+            style={styles.confirmButton}
           >
             Yes
           </Button>
@@ -213,12 +228,7 @@ export default class GroupElement extends React.Component {
             bsSize="xsmall"
             bsStyle="warning"
             onClick={this.handleClick}
-            style={{
-              marginTop: '5px',
-              textAlign: 'center',
-              width: '35px',
-              fontWeight: 'Bold',
-            }}
+            style={styles.confirmButton}
           >
             No
           </Button>
@@ -237,12 +247,7 @@ export default class GroupElement extends React.Component {
         >
           <Button
             bsSize="xsmall"
-            style={{
-              width: '25px',
-              height: '25px',
-              marginRight: '10px',
-              textAlign: 'center',
-            }}
+            style={styles.button}
             type="button"
             bsStyle="danger"
             className="fa fa-trash-o"
@@ -267,12 +272,7 @@ export default class GroupElement extends React.Component {
           >
             <Button
               bsSize="xsmall"
-              style={{
-                width: '25px',
-                height: '25px',
-                marginRight: '10px',
-                textAlign: 'center',
-              }}
+              style={styles.button}
               type="button"
               bsStyle="info"
               className="fa fa-list"
@@ -282,12 +282,7 @@ export default class GroupElement extends React.Component {
           <OverlayTrigger placement="top" overlay={<Tooltip>Add user</Tooltip>}>
             <Button
               bsSize="xsmall"
-              style={{
-                width: '25px',
-                height: '25px',
-                marginRight: '10px',
-                textAlign: 'center',
-              }}
+              style={styles.button}
               type="button"
               bsStyle="success"
               className="fa fa-plus"
@@ -301,14 +296,11 @@ export default class GroupElement extends React.Component {
             {this.renderDeleteButton('group', group)}
           </OverlayTrigger>
           <span className={`collapse${showRowAdd ? 'in' : ''}`}>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            <div style={styles.flexRow}>
               {' '}
               <Select.AsyncCreatable
                 multi
-                style={{
-                  marginTop: '5px',
-                  width: '300px',
-                }}
+                style={styles.select}
                 isLoading
                 backspaceRemoves
                 value={selectedUsers}
@@ -328,13 +320,7 @@ export default class GroupElement extends React.Component {
               <Button
                 bsSize="xsmall"
                 type="button"
-                style={{
-                  marginLeft: '10px',
-                  marginTop: '5px',
-                  textAlign: 'center',
-                  width: '25px',
-                  height: '25px',
-                }}
+                style={styles.addUserButton}
                 bsStyle="success"
                 className="fa fa-user-plus"
                 onClick={() => this.addUser(group)}
@@ -350,12 +336,7 @@ export default class GroupElement extends React.Component {
         <Button
           bsSize="xsmall"
           type="button"
-          style={{
-            width: '25px',
-            height: '25px',
-            marginRight: '10px',
-            textAlign: 'center',
-          }}
+          style={styles.button}
           bsStyle="info"
           className="fa fa-list"
           onClick={this.toggleUsers}
@@ -376,18 +357,10 @@ export default class GroupElement extends React.Component {
     return (
       <span>
         {isCurrentUserAdmin && (
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip>{adminTooltip}</Tooltip>}
-          >
+          <OverlayTrigger placement="top" overlay={<Tooltip>{adminTooltip}</Tooltip>}>
             <Button
               bsSize="xsmall"
-              style={{
-                width: '25px',
-                height: '25px',
-                marginRight: '10px',
-                textAlign: 'center',
-              }}
+              style={styles.button}
               type="button"
               bsStyle={adminButtonStyle}
               className="fa fa-key"
@@ -405,22 +378,14 @@ export default class GroupElement extends React.Component {
   }
 
   render() {
-    const styles = {
-      lightRow: {
-        backgroundColor: '#e1edf2',
-      },
-      darkRow: {
-        backgroundColor: '#c8d6dc',
-      },
-    };
     const { groupElement } = this.props;
     const { showUsers: showInfo } = this.state;
     return (
       <tbody key={`tbody_${groupElement.id}`}>
         <tr key={`row_${groupElement.id}`} style={{ fontWeight: 'Bold' }}>
-          <td style={{ verticalAlign: 'middle' }}>{groupElement.name}</td>
-          <td style={{ verticalAlign: 'middle' }}>{groupElement.initials}</td>
-          <td style={{ verticalAlign: 'middle' }}>
+          <td style={styles.tableData}>{groupElement.name}</td>
+          <td style={styles.tableData}>{groupElement.initials}</td>
+          <td style={styles.tableData}>
             {groupElement.admins
               && groupElement.admins.length > 0
               && groupElement.admins.map((admin) => admin.name).join(', ')}
@@ -436,16 +401,10 @@ export default class GroupElement extends React.Component {
                     key={`row_${groupElement.id}_${u.id}`}
                     style={index % 2 === 0 ? styles.lightRow : styles.darkRow}
                   >
-                    <td width="20%" style={{ verticalAlign: 'middle' }}>
-                      {u.name}
-                    </td>
-                    <td width="10%" style={{ verticalAlign: 'middle' }}>
-                      {u.initials}
-                    </td>
-                    <td width="20%" style={{ verticalAlign: 'middle' }} />
-                    <td width="50%" style={{ verticalAlign: 'middle' }}>
-                      {this.renderUserButtons(groupElement, u)}
-                    </td>
+                    <td width="20%" style={styles.tableData}>{u.name}</td>
+                    <td width="10%" style={styles.tableData}>{u.initials}</td>
+                    <td width="20%" style={styles.tableData} />
+                    <td width="50%" style={styles.tableData}>{this.renderUserButtons(groupElement, u)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -460,22 +419,12 @@ export default class GroupElement extends React.Component {
         >
           <Popover id="popover-contained">
             At least one admin is required.
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '10px',
-              }}
-            >
+            <div style={styles.popover}>
               <Button
                 bsSize="xsmall"
                 bsStyle="primary"
                 onClick={this.hideAdminAlert}
-                style={{
-                  marginTop: '5px',
-                  textAlign: 'center',
-                  fontWeight: 'Bold',
-                }}
+                style={styles.gotItButton}
               >
                 Got it!
               </Button>
