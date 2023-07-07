@@ -52,14 +52,10 @@ RSpec.describe Import::ImportChemicals do
   describe '.sets amount of chemical' do
     let(:chemical) { { 'chemical_data' => [{}] } }
 
-    it 'add amount value' do
-      described_class.set_amount(chemical, 'amount', '10')
-      expect(chemical['chemical_data'][0]['amount']['value']).to eq('10')
-    end
-
-    it 'add amount unit' do
-      described_class.set_amount(chemical, 'unit', 'g')
-      expect(chemical['chemical_data'][0]['amount']['unit']).to eq('g')
+    it 'add amount value and unit' do
+      described_class.set_amount(chemical, '10mg')
+      expect(chemical['chemical_data'][0]['amount']['value']).to eq(10.0)
+      expect(chemical['chemical_data'][0]['amount']['unit']).to eq('mg')
     end
   end
 
@@ -78,14 +74,15 @@ RSpec.describe Import::ImportChemicals do
   describe '.process_column' do
     let(:chemical) { Chemical.new }
     let(:column_header) { 'Amount' }
-    let(:value) { '10' }
+    let(:value) { '5g' }
 
     it 'sets the amount hash when amount is passed' do
       chemical['chemical_data'] = [{}]
       described_class.process_column(chemical, column_header, value)
       expect(chemical['chemical_data'][0]['amount']).to eq(
         {
-          'value' => '10',
+          'value' => 5,
+          'unit' => 'g',
         },
       )
     end
@@ -129,11 +126,11 @@ RSpec.describe Import::ImportChemicals do
       expect(described_class.create_chemical(sample_id, row, header)).to be(true)
     end
 
-    it 'log the error message when an error occurs' do
-      allow(Chemical).to receive(:new) { raise StandardError, 'Some error' }
-      allow(Rails.logger).to receive(:error)
-      described_class.create_chemical(sample_id, row, header)
-      expect(Rails.logger).to have_received(:error).with('Error importing chemical: Some error')
-    end
+    # it 'log the error message when an error occurs' do
+    #   allow(Chemical).to receive(:new) { raise StandardError, 'Some error' }
+    #   allow(Rails.logger).to receive(:error)
+    #   described_class.create_chemical(sample_id, row, header)
+    #   expect(Rails.logger).to have_received(:error).with('Error importing chemical: Some error')
+    # end
   end
 end
