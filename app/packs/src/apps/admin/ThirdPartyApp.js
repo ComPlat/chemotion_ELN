@@ -154,60 +154,40 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   checkInput(name, ip) {
+    return new Promise((resolve, reject) => {
 
     if (name.length < 1) {
       this.setState({
         errorMessageNewTPA: "name is shorter than 1 character"
       });
-      return false;
+      reject();
     }
-
 
     if ((ip.slice(0, 7) != "http://") &&
       (ip.slice(0, 8) != "https://")) {
       this.setState({
         errorMessageNewTPA: "Begin of ip address has to be http:// or https://"
       });
-      return false;
+      reject();
     }
 
-    if (this.state.thirdPartyAppNames.includes(name)) {
-      this.setState({
-        errorMessageNewTPA: "name is not unique"
-      });
-      return false;
-    }
+    console.log("test1")
 
-    return true;
-  }
+    ThirdPartyAppFetcher.isNameUnique(name)
+      .then((result) => {
+        const message = JSON.parse(result).message
+        if (message == "Name is not unique") {
+          this.setState({
+            errorMessageNewTPA: "name is not unique"
+          });
+          reject();
+        } else {
+          resolve();
+        }
+      }) 
 
-  checkInputEdit(name, ip) { 
+    })
 
-    if (name.length < 1) {
-      this.setState({
-        errorMessageEditTPA: "name is shorter than 1 character"
-      });
-      return false;
-    }
-
-    if ((ip.slice(0, 7) != "http://") &&
-      (ip.slice(0, 8) != "https://")) {
-      this.setState({
-        errorMessageEditTPA: "Begin of ip address has to be http:// or https://"
-      });
-      return false;
-    }
-
-    const arr = this.state.thirdPartyAppNames;
-    const filteredList = arr.filter(x => x === name);
-    if (filteredList.length > 0) {
-      this.setState({
-        errorMessageEditTPA: "name is not unique"
-      });
-      return false;
-    }
-
-    return true;
   }
 
   getThirdPartyAppNames() {
@@ -271,14 +251,16 @@ export default class ThirdPartyApp extends React.Component {
 
       const IPAddress = IPAddressRef.value;
       const name = nameRef.value;
-      const check = this.checkInputEdit(name, IPAddress);
-      if (check) {
-        this.edit(name, IPAddress).then(() => {
-          this.getThirdPartyAppNames();
-          this.closeEditThirdPartyAppModal();
-          this.thirdPartyApps();
-        });
-      }
+      this.checkInput(name, IPAddress)
+        .then(() => {
+          this.edit(name, IPAddress).then(() => {
+            this.getThirdPartyAppNames();
+            this.closeEditThirdPartyAppModal();
+            this.thirdPartyApps();
+          });
+        })
+        .catch(() => {
+        })
 
     }
 
@@ -349,11 +331,13 @@ export default class ThirdPartyApp extends React.Component {
       this.getThirdPartyAppNames();
       const IPAddress = IPAddressRef.value;
       const name = nameRef.value;
-      const check = this.checkInput(name, IPAddress);
-      if (check) {
-        this.new(name, IPAddress);
-        this.closeNewThirdPartyAppModal();
-      }
+      this.checkInput(name, IPAddress)
+        .then(() => {
+          this.new(name, IPAddress);
+          this.closeNewThirdPartyAppModal();
+        })
+        .catch(() => {
+        });
 
     }
 

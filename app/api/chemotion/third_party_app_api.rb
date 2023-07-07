@@ -77,6 +77,22 @@ module Chemotion
         error(401) unless current_user.is_a?(Admin)
       end
 
+      desc 'check that name is unique'
+      params do
+        requires :name
+      end
+      post '/name_unique' do
+        declared(params, include_missing: false)
+        result = ThirdPartyApp.all_names.exclude?(params[:name])
+        if result
+          { message: 'Name is unique' }
+        else
+          { message: 'Name is not unique' }
+        end.to_json
+      rescue ActiveRecord::RecordInvalid
+        error!('Unauthorized. User has to be admin.', 401)
+      end
+
       desc 'create new third party app entry'
       params do
         requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
@@ -86,7 +102,7 @@ module Chemotion
         declared(params, include_missing: false)
         ThirdPartyApp.create!(IPAddress: params[:IPAddress], name: params[:name])
         status 201
-      rescue ActiveRecord::RecordInvalid => e
+      rescue ActiveRecord::RecordInvalid
         error!('Unauthorized. User has to be admin.', 401)
       end
 
@@ -101,7 +117,7 @@ module Chemotion
         entry = ThirdPartyApp.find(params[:id])
         entry.update!(IPAddress: params[:IPAddress], name: params[:name])
         status 201
-      rescue ActiveRecord::RecordInvalid => e
+      rescue ActiveRecord::RecordInvalid
         error!('Unauthorized. User has to be admin.', 401)
       end
 
@@ -113,7 +129,7 @@ module Chemotion
         id = params[:id].to_i
         ThirdPartyApp.delete(id)
         status 201
-      rescue ActiveRecord::RecordInvalid => e
+      rescue ActiveRecord::RecordInvalid
         error!('Unauthorized. User has to be admin.', 401)
       end
     end

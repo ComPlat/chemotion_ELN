@@ -11,6 +11,23 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static isNameUnique(name) {
+    const obj = {
+      name
+    };
+    return fetch('/api/v1/third_party_apps_administration/name_unique', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(obj)
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static newThirdPartyApp(name, IPAddress) {
     const obj = {
       name,
