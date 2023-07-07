@@ -97,7 +97,7 @@ const predictionShowFwdRxn = () => {
 const sampleShowOrNew = (e) => {
   const { sampleID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex(el => el.type === 'sample' && el.id === sampleID);
+  const index = selecteds.findIndex((el) => el.type === 'sample' && el.id === sampleID);
 
   if (sampleID === 'new') {
     ElementActions.generateEmptySample(collectionID);
@@ -113,13 +113,17 @@ const sampleShowOrNew = (e) => {
 
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'reaction' && el.id === reactionID);
   // UIActions.selectTab(2);
-  if (reactionID !== 'new' && reactionID !== 'copy') {
-    ElementActions.fetchReactionById(reactionID);
+  if (reactionID === 'new') {
+    ElementActions.generateEmptyReaction(collectionID);
   } else if (reactionID === 'copy') {
     //ElementActions.copyReactionFromClipboard(collectionID);
-  } else {
-    ElementActions.generateEmptyReaction(collectionID);
+  } else if (index < 0) {
+    ElementActions.fetchReactionById(reactionID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -130,13 +134,17 @@ const reactionShowSample = (e) => {
 
 const wellplateShowOrNew = (e) => {
   const { wellplateID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'wellplate' && el.id === wellplateID);
 
   if (wellplateID === 'new') {
     ElementActions.generateEmptyWellplate(collectionID);
   } else if (wellplateID === 'template') {
     ElementActions.generateWellplateFromClipboard.defer(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchWellplateById(wellplateID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -147,12 +155,17 @@ const wellplateShowSample = (e) => {
 
 const screenShowOrNew = (e) => {
   const { screenID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'screen' && el.id === screenID);
+
   if (screenID === 'new') {
     ElementActions.generateEmptyScreen(collectionID);
   } else if (screenID === 'template') {
     ElementActions.generateScreenFromClipboard.defer(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchScreenById(screenID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -177,10 +190,15 @@ const deviceShowDeviceManagement = () => {
 
 const researchPlanShowOrNew = (e) => {
   const { research_planID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex(el => el.type === 'research_plan' && el.id === research_planID);
+
   if (research_planID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchResearchPlanById(research_planID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
