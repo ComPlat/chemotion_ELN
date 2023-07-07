@@ -23,45 +23,6 @@ module Chemotion
           data_args: data_args, attach_id: attachment.id, research_plan_id: attachment.attachable_id, level: level
         )
       end
-
-      def decode_token(token)
-        payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
-        error!('401 Unauthorized', 401) if payload&.length&.zero?
-        att_id = payload[0]['attID']&.to_i
-        user_id = payload[0]['userID']&.to_i
-        [att_id, user_id]
-      end
-
-      def verify_token(token)
-        payload = decode_token(token)
-        @attachment = Attachment.find_by(id: payload[0])
-        @user = User.find_by(id: payload[1])
-        error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-      end
-
-      def download_third_party_app(token)
-        content_type 'application/octet-stream'
-        verify_token(token)
-        payload = decode_token(token)
-        @attachment = Attachment.find_by(id: payload[0])
-        @user = User.find_by(id: payload[1])
-        header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
-        env['api.format'] = :binary
-        @attachment.read_file
-      end
-
-      def upload_third_party_app(token, file_name, file, file_type)
-        payload = decode_token(token)
-        attachment = Attachment.find_by(id: payload[0])
-        new_attachment = Attachment.new(attachable: attachment.attachable,
-                                        created_by: attachment.created_by,
-                                        created_for: attachment.created_for,
-                                        content_type: file_type)
-        File.open(file[:tempfile].path, 'rb') do |f|
-          new_attachment.update(file_path: f, filename: file_name)
-        end
-        { message: 'File uploaded successfully' }
-      end
     end
 
     namespace :public do
@@ -124,35 +85,6 @@ module Chemotion
           header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
           env['api.format'] = :binary
           @attachment.read_file
-        end
-      end
-
-      namespace :download_third_party_app do
-        desc 'download file from third party app'
-        before do
-          error!('401 Unauthorized', 401) if params[:token].nil?
-        end
-        get do
-          download_third_party_app(params[:token])
-        end
-      end
-
-      namespace :upload_third_party_app do
-        desc 'Upload file from third party app'
-        before do
-          error!('401 Unauthorized', 401) if params[:token].nil?
-          error!('401 Unauthorized', 401) if params[:attachmentName].nil?
-          error!('401 Unauthorized', 401) if params[:fileType].nil?
-        end
-        params do
-          requires :attachmentName, type: String, desc: 'Name of new file'
-        end
-        post do
-          verify_token(params[:token])
-          upload_third_party_app(params[:token],
-                                 params[:attachmentName],
-                                 params[:file],
-                                 params[:file_type])
         end
       end
 

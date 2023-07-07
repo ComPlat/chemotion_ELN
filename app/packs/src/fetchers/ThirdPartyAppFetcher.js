@@ -11,13 +11,12 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static newThirdPartyApp(userID, name, IPAddress) {
+  static newThirdPartyApp(name, IPAddress) {
     const obj = {
-      userID,
       name,
       IPAddress
     };
-    return fetch('/api/v1/third_party_apps/new_third_party_app', {
+    return fetch('/api/v1/third_party_apps_administration/new_third_party_app', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -30,14 +29,13 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static editThirdPartyApp(userID, id, name, IPAddress) {
+  static editThirdPartyApp(id, name, IPAddress) {
     const obj = {
-      userID: userID,
       id: id,
       IPAddress: IPAddress,
       name: name
     };
-    return fetch('/api/v1/third_party_apps/update_third_party_app', {
+    return fetch('/api/v1/third_party_apps_administration/update_third_party_app', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -50,12 +48,11 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static deleteThirdPartyApp(userID, id) {
+  static deleteThirdPartyApp(id) {
     const obj = {
-      userID,
       id
     };
-    return fetch('/api/v1/third_party_apps/delete_third_party_app', {
+    return fetch('/api/v1/third_party_apps_administration/delete_third_party_app', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {

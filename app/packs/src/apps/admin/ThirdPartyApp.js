@@ -3,7 +3,6 @@ import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormCo
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const editTip = <Tooltip id="inchi_tooltip">edit third party app</Tooltip>;
 const newTip = <Tooltip id="inchi_tooltip">create new third party app</Tooltip>;
@@ -24,8 +23,7 @@ export default class ThirdPartyApp extends React.Component {
       thirdPartyAppNames: [""],
       currentName: '',
       currentIP: '',
-      currentID: '',
-      currentUser: ''
+      currentID: ''
     };
     this.thirdPartyApps();
     this.closeNewThirdPartyAppModal = this.closeNewThirdPartyAppModal.bind(this);
@@ -45,16 +43,6 @@ export default class ThirdPartyApp extends React.Component {
 
   componentDidMount() {
     this.getThirdPartyAppNames();
-    this.getCurrentUser();
-  }
-
-  getCurrentUser() {
-    UsersFetcher.fetchCurrentUser()
-      .then((result) => {
-        this.setState({
-          currentUser: result.user.id
-        })
-      });
   }
 
   thirdPartyApps() {
@@ -78,7 +66,6 @@ export default class ThirdPartyApp extends React.Component {
 
   new(name, IPAddress) {
     ThirdPartyAppFetcher.newThirdPartyApp(
-      this.state.currentUser,
       name,
       IPAddress)
       .then((result) => {
@@ -94,7 +81,6 @@ export default class ThirdPartyApp extends React.Component {
 
   edit(name, IPAddress) {
     return ThirdPartyAppFetcher.editThirdPartyApp(
-      this.state.currentUser,
       this.state.currentID,
       name,
       IPAddress)
@@ -112,7 +98,6 @@ export default class ThirdPartyApp extends React.Component {
 
   delete(id) {
     ThirdPartyAppFetcher.deleteThirdPartyApp(
-      this.state.currentUser,
       id)
       .then((result) => {
         if (result.error) {

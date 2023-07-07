@@ -4,9 +4,117 @@ module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
     helpers do
-      def user_type(id)
-        user = User.find_by(id: params[:userID])
-        user[:type]
+      def decode_token(token)
+        payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
+        error!('401 Unauthorized', 401) if payload&.length&.zero?
+        att_id = payload[0]['attID']&.to_i
+        user_id = payload[0]['userID']&.to_i
+        [att_id, user_id]
+      end
+
+      def verify_token(token)
+        payload = decode_token(token)
+        @attachment = Attachment.find_by(id: payload[0])
+        @user = User.find_by(id: payload[1])
+        error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+      end
+
+      def download_third_party_app(token)
+        content_type 'application/octet-stream'
+        verify_token(token)
+        payload = decode_token(token)
+        @attachment = Attachment.find_by(id: payload[0])
+        @user = User.find_by(id: payload[1])
+        header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
+        env['api.format'] = :binary
+        @attachment.read_file
+      end
+
+      def upload_third_party_app(token, file_name, file, file_type)
+        payload = decode_token(token)
+        attachment = Attachment.find_by(id: payload[0])
+        new_attachment = Attachment.new(attachable: attachment.attachable,
+                                        created_by: attachment.created_by,
+                                        created_for: attachment.created_for,
+                                        content_type: file_type)
+        File.open(file[:tempfile].path, 'rb') do |f|
+          new_attachment.update(file_path: f, filename: file_name)
+        end
+        { message: 'File uploaded successfully' }
+      end
+    end
+
+    namespace :public_third_party_app do
+      desc 'download file from third party app'
+      params do
+        requires :token, type: String, desc: 'Token for authentication'
+      end
+      get '/download' do
+        error!('401 Unauthorized', 401) if params[:token].nil?
+        download_third_party_app(params[:token])
+      end
+
+      desc 'Upload file from third party app'
+      params do
+        requires :token, type: String, desc: 'Token for authentication'
+        requires :attachmentName, type: String, desc: 'Name of the attachment'
+        requires :fileType, type: String, desc: 'Type of the file'
+      end
+      post '/upload' do
+        error!('401 Unauthorized', 401) if params[:token].nil?
+        error!('401 Unauthorized', 401) if params[:attachmentName].nil?
+        error!('401 Unauthorized', 401) if params[:fileType].nil?
+        verify_token(params[:token])
+        upload_third_party_app(params[:token],
+                               params[:attachmentName],
+                               params[:file],
+                               params[:file_type])
+      end
+    end
+
+    resource :third_party_apps_administration do
+      before do
+        error(401) unless current_user.is_a?(Admin)
+      end
+
+      desc 'create new third party app entry'
+      params do
+        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
+        requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
+      end
+      post '/new_third_party_app' do
+        declared(params, include_missing: false)
+        ThirdPartyApp.create!(IPAddress: params[:IPAddress], name: params[:name])
+        status 201
+      rescue ActiveRecord::RecordInvalid => e
+        error!('Unauthorized. User has to be admin.', 401)
+      end
+
+      desc 'update a third party app entry'
+      params do
+        requires :id, type: String, desc: 'The id of the app which should be updated'
+        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
+        requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
+      end
+      post '/update_third_party_app' do
+        declared(params, include_missing: false)
+        entry = ThirdPartyApp.find(params[:id])
+        entry.update!(IPAddress: params[:IPAddress], name: params[:name])
+        status 201
+      rescue ActiveRecord::RecordInvalid => e
+        error!('Unauthorized. User has to be admin.', 401)
+      end
+
+      desc 'delete third party app entry'
+      params do
+        requires :id, type: String, desc: 'The id of the app which should be deleted'
+      end
+      post '/delete_third_party_app' do
+        id = params[:id].to_i
+        ThirdPartyApp.delete(id)
+        status 201
+      rescue ActiveRecord::RecordInvalid => e
+        error!('Unauthorized. User has to be admin.', 401)
       end
     end
 
@@ -14,64 +122,6 @@ module Chemotion
       desc 'Find all thirdPartyApps'
       get 'all' do
         ThirdPartyApp.all
-      end
-
-      desc 'create new third party app entry'
-      params do
-        requires :userID, type: Integer, desc: 'The ID of the current user.'
-        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
-        requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
-      end
-      post '/new_third_party_app' do
-        declared(params, include_missing: false)
-        if user_type(params[:userID]) == 'Admin'
-          ThirdPartyApp.create!(IPAddress: params[:IPAddress], name: params[:name])
-          status 201
-        else
-          status 403
-          { error: 'Access denied. User must be an Admin.' }
-        end
-      rescue ActiveRecord::RecordInvalid => e
-        { error: e.message }
-      end
-
-      desc 'update a third party app entry'
-      params do
-        requires :userID, type: Integer, desc: 'The ID of the current user.'
-        requires :id, type: String, desc: 'The id of the app which should be updated'
-        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
-        requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
-      end
-      post '/update_third_party_app' do
-        declared(params, include_missing: false)
-        if user_type(params[:userID]) == 'Admin'
-          entry = ThirdPartyApp.find(params[:id])
-          entry.update!(IPAddress: params[:IPAddress], name: params[:name])
-          status 201
-        else
-          status 403
-          { error: 'Access denied. User must be an Admin.' }
-        end
-      rescue ActiveRecord::RecordInvalid => e
-        { error: e.message }
-      end
-
-      desc 'delete third party app entry'
-      params do
-        requires :userID, type: Integer, desc: 'The ID of the current user.'
-        requires :id, type: String, desc: 'The id of the app which should be deleted'
-      end
-      post '/delete_third_party_app' do
-        if user_type(params[:userID]) == 'Admin'
-          id = params[:id].to_i
-          ThirdPartyApp.delete(id)
-          status 201
-        else
-          status 403
-          { error: 'Access denied. User must be an Admin.' }
-        end
-      rescue ActiveRecord::RecordInvalid => e
-        { error: e.message }
       end
 
       desc 'get third party app by id'
@@ -101,9 +151,7 @@ module Chemotion
       end
       get 'Token' do
         payload = { attID: params[:attID], userID: params[:userID] }
-        secret = Rails.application.secrets.secret_key_base
-        token = JWT.encode payload, secret, 'HS256'
-        token
+        JsonWebToken.encode(payload, 48.hours.from_now)
       end
     end
 
