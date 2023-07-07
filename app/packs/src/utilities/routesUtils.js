@@ -96,12 +96,17 @@ const predictionShowFwdRxn = () => {
 
 const sampleShowOrNew = (e) => {
   const { sampleID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex(el => el.type === 'sample' && el.id === sampleID);
+
   if (sampleID === 'new') {
     ElementActions.generateEmptySample(collectionID);
   } else if (sampleID === 'copy') {
     ElementActions.copySampleFromClipboard.defer(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchSampleById(sampleID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
   // UIActions.selectTab(1);
 };
