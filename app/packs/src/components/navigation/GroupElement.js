@@ -11,7 +11,6 @@ import {
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import Select from 'react-select';
 import _ from 'lodash';
-import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 export default class GroupElement extends React.Component {
@@ -21,9 +20,10 @@ export default class GroupElement extends React.Component {
       currentUser: props.currentState.currentUser || { name: 'unknown' },
       showUsers: false,
       showRowAdd: false,
-      groups: props.currentState.groups,
       showAdminAlert: false,
       adminPopoverTarget: null,
+      usersToggled: false,
+      rowAddToggled: false,
     };
 
     this.toggleUsers = this.toggleUsers.bind(this);
@@ -39,8 +39,10 @@ export default class GroupElement extends React.Component {
   componentWillUnmount() { }
 
   handleSelectUser(val) {
-    if (val) {
+    if (val && val.length > 0) {
       this.setState({ selectedUsers: val });
+    } else {
+      this.setState({ selectedUsers: null });
     }
   }
 
@@ -51,34 +53,41 @@ export default class GroupElement extends React.Component {
       return;
     }
 
-    // confirm action if promoting user to admin
-    if (setAdmin) {
-      if (!window.confirm('Are you sure you want to make this user an admin?')) {
-        return;
-      }
-    }
-
-    const { groups } = this.state;
+    // const { groups } = this.state;
     const params = {
-      action: 'NodeAdm',
-      rootType: 'Group',
-      actionType: 'Adm',
       id: groupRec.id,
-      admin_id: userRec.id,
-      set_admin: setAdmin
+      add_admin: setAdmin ? [userRec.id] : [],
+      rm_admin: !setAdmin ? [userRec.id] : [],
     };
-    AdminFetcher.updateGroup(params)
-      .then((result) => {
-        if (setAdmin) {
-          groupRec.admins.splice(1, 0, userRec);
-        } else {
-          const usrIdx = _.findIndex(groupRec.admins, (o) => o.id === userRec.id);
-          groupRec.admins.splice(usrIdx, 1);
+
+    UsersFetcher.updateGroup(params).then((group) => {
+      if (setAdmin) {
+        const usrIdx = _.findIndex(
+          group.group.admins,
+          (o) => o.id === userRec.id
+        );
+        // if user is not already admin
+        if (usrIdx === -1) {
+          group.group.admins.push(userRec);
         }
-        const idx = _.findIndex(groups, (o) => o.id === groupRec.id);
-        groups.splice(idx, 1, groupRec);
-        this.props.onChangeGroupData(groups);
-      });
+      } else {
+        const usrIdx = _.findIndex(
+          group.group.admins,
+          (o) => o.id === userRec.id
+        );
+        // if user is already  admin
+        if (usrIdx !== -1) {
+          group.group.admins.splice(usrIdx, 1);
+        }
+      }
+      const idx = _.findIndex(
+        this.props.currentGroup,
+        (o) => o.id === group.group.id
+      );
+      this.props.currentGroup.splice(idx, 1, group.group);
+      this.setState({ selectedUsers: null });
+      this.props.onChangeData(this.props.currentGroup);
+    });
   }
 
   hideAdminAlert = () => {
@@ -86,15 +95,17 @@ export default class GroupElement extends React.Component {
   };
 
   toggleUsers() {
-    this.setState({
-      showUsers: !this.state.showUsers
-    });
+    this.setState((prevState) => ({
+      showUsers: !prevState.showUsers,
+      usersToggled: !prevState.usersToggled,
+    }));
   }
 
   toggleRowAdd() {
-    this.setState({
-      showRowAdd: !this.state.showRowAdd
-    });
+    this.setState((prevState) => ({
+      showRowAdd: !prevState.showRowAdd,
+      rowAddToggled: !prevState.rowAddToggled,
+    }));
   }
 
   loadUserByName(input) {
@@ -118,6 +129,14 @@ export default class GroupElement extends React.Component {
         break;
       case 'user':
         this.props.onDeleteUser(groupRec, userRec);
+
+        // check if the user being deleted is an admin.
+        const userIsAdmin = groupRec.admins.some((admin) => admin.id === userRec.id);
+
+        // if admin, remove admin status
+        if (userIsAdmin) {
+          this.setGroupAdmin(groupRec, userRec, false);
+        }
         break;
       default:
         break;
@@ -128,20 +147,31 @@ export default class GroupElement extends React.Component {
   // replace with response result and then setState (with forceUpdate)
   addUser(groupRec) {
     const { selectedUsers } = this.state;
-
     const userIds = [];
-    selectedUsers.map((g) => {
-      userIds.push(g.value);
-      return true;
+
+    selectedUsers.forEach((g) => {
+      // check if user is already in group
+      const isUserInGroup = groupRec.users.some((user) => user.id === g.value);
+
+      // only add users not already in group
+      if (!isUserInGroup) {
+        userIds.push(g.value);
+      }
     });
 
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, add_users: userIds })
-      .then((group) => {
-        const idx = _.findIndex(this.props.currentGroup, (o) => o.id == group.group.id);
-        this.props.currentGroup.splice(idx, 1, group.group);
-        this.setState({ selectedUsers: null });
-        this.props.onChangeData(this.props.currentGroup);
-      });
+    UsersFetcher.updateGroup({
+      id: groupRec.id,
+      destroy_group: false,
+      add_users: userIds,
+    }).then((group) => {
+      const idx = _.findIndex(
+        this.props.currentGroup,
+        (o) => o.id == group.group.id
+      );
+      this.props.currentGroup.splice(idx, 1, group.group);
+      this.setState({ selectedUsers: null });
+      this.props.onChangeData(this.props.currentGroup);
+    });
   }
 
   renderDeleteButton(type, groupRec, userRec) {
@@ -249,10 +279,7 @@ export default class GroupElement extends React.Component {
               onClick={this.toggleUsers}
             />
           </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip>Add user</Tooltip>}
-          >
+          <OverlayTrigger placement="top" overlay={<Tooltip>Add user</Tooltip>}>
             <Button
               bsSize="xsmall"
               style={{
@@ -274,39 +301,46 @@ export default class GroupElement extends React.Component {
             {this.renderDeleteButton('group', group)}
           </OverlayTrigger>
           <span className={`collapse${showRowAdd ? 'in' : ''}`}>
-            {' '}
-            <Select.AsyncCreatable
-              multi
-              style={{
-                marginTop: '10px',
-                width: '300px',
-              }}
-              isLoading
-              backspaceRemoves
-              value={selectedUsers}
-              valueKey="value"
-              labelKey="label"
-              matchProp="name"
-              placeholder="Select users"
-              promptTextCreator={this.promptTextCreator}
-              loadOptions={this.loadUserByName}
-              onChange={this.handleSelectUser}
-            />
-            <Button
-              bsSize="xsmall"
-              type="button"
-              style={{
-                height: '25px',
-                marginRight: '10px',
-                marginTop: '10px',
-                textAlign: 'center',
-                fontWeight: 'Bold',
-              }}
-              bsStyle="warning"
-              onClick={() => this.addUser(group)}
-            >
-              Add
-            </Button>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              {' '}
+              <Select.AsyncCreatable
+                multi
+                style={{
+                  marginTop: '5px',
+                  width: '300px',
+                }}
+                isLoading
+                backspaceRemoves
+                value={selectedUsers}
+                valueKey="value"
+                labelKey="label"
+                matchProp="name"
+                placeholder="Select users"
+                promptTextCreator={this.promptTextCreator}
+                loadOptions={this.loadUserByName}
+                onChange={this.handleSelectUser}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && this.state.selectedUsers) {
+                    this.addUser(group);
+                  }
+                }}
+              />
+              <Button
+                bsSize="xsmall"
+                type="button"
+                style={{
+                  marginLeft: '10px',
+                  marginTop: '5px',
+                  textAlign: 'center',
+                  width: '25px',
+                  height: '25px',
+                }}
+                bsStyle="success"
+                className="fa fa-user-plus"
+                onClick={() => this.addUser(group)}
+                disabled={!this.state.selectedUsers}
+              />
+            </div>
           </span>
         </td>
       );
@@ -341,36 +375,31 @@ export default class GroupElement extends React.Component {
 
     return (
       <span>
-        <ButtonGroup className="actions">
-          {isCurrentUserAdmin && (
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip>{adminTooltip}</Tooltip>}
-            >
-              <Button
-                bsSize="xsmall"
-                style={{
-                  width: '25px',
-                  height: '25px',
-                  marginRight: '10px',
-                  textAlign: 'center',
-                }}
-                type="button"
-                bsStyle={adminButtonStyle}
-                className="fa fa-key"
-                onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
-              />
-            </OverlayTrigger>
-          )}
-          {canDelete && (
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip>Remove</Tooltip>}
-            >
-              {this.renderDeleteButton('user', groupRec, userRec)}
-            </OverlayTrigger>
-          )}
-        </ButtonGroup>
+        {isCurrentUserAdmin && (
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip>{adminTooltip}</Tooltip>}
+          >
+            <Button
+              bsSize="xsmall"
+              style={{
+                width: '25px',
+                height: '25px',
+                marginRight: '10px',
+                textAlign: 'center',
+              }}
+              type="button"
+              bsStyle={adminButtonStyle}
+              className="fa fa-key"
+              onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
+            />
+          </OverlayTrigger>
+        )}
+        {canDelete && (
+          <OverlayTrigger placement="top" overlay={<Tooltip>Remove</Tooltip>}>
+            {this.renderDeleteButton('user', groupRec, userRec)}
+          </OverlayTrigger>
+        )}
       </span>
     );
   }
@@ -405,9 +434,7 @@ export default class GroupElement extends React.Component {
                 {groupElement.users.map((u, index) => (
                   <tr
                     key={`row_${groupElement.id}_${u.id}`}
-                    style={
-                      index % 2 === 0 ? styles.lightRow : styles.darkRow
-                    }
+                    style={index % 2 === 0 ? styles.lightRow : styles.darkRow}
                   >
                     <td width="20%" style={{ verticalAlign: 'middle' }}>
                       {u.name}
@@ -432,7 +459,7 @@ export default class GroupElement extends React.Component {
           containerPadding={20}
         >
           <Popover id="popover-contained">
-            There must be at least one admin.
+            At least one admin is required.
             <div
               style={{
                 display: 'flex',
