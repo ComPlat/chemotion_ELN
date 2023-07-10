@@ -200,7 +200,8 @@ module Chemotion
             params[:add_admin].delete(@group.admins.pluck(:id)) # ensure that admins are not added twice
             @group.admins << User.where(id: params[:add_admin])
             # remove admins
-            params[:rm_admin].delete(current_user.id) # ensure that current_user is not removed from admins
+            # ensure that current_user is not removed from admins when being last admin
+            params[:rm_admin].delete(current_user.id) if Group.last.admins.count == 1
             @group.users_admins.where(admin_id: params[:rm_admin]).destroy_all
             # add new users
             params[:add_users].delete(@group.users.pluck(:id))
