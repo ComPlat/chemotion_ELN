@@ -189,7 +189,7 @@ export default class ContainerComponent extends Component {
         </Col>
         <Col md={12}>
           <div style={{ marginBottom: 11 }}>
-            <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
+            <ControlLabel>{this.props.analysisMethodTitle}</ControlLabel>
             <OlsTreeSelect
               selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
@@ -234,7 +234,8 @@ export default class ContainerComponent extends Component {
 }
 
 ContainerComponent.defaultProps = {
- ontologyName:"chmo"
+ ontologyName:"chmo",
+ analysisMethodTitle:"Type (Chemical Methods Ontology)"
 };
 
 ContainerComponent.propTypes = {
