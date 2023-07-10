@@ -60,6 +60,7 @@ th.drag {
 }
 
 .collection-overlay > .popover-content {
+  overflow-y: scroll;
   padding: 0px !important;
 }
 

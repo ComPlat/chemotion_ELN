@@ -103,7 +103,7 @@ module Chemotion
         collects = Collection.where(user_id: current_user.id).unlocked.unshared.order('id')
         .select(
           <<~SQL
-            id, label, ancestry, is_synchronized, permission_level, position, collection_shared_names(user_id, id) as shared_names,
+            id, label, ancestry, is_synchronized, permission_level, tabs_segment, position, collection_shared_names(user_id, id) as shared_names,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked,is_shared,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
           SQL
@@ -118,7 +118,7 @@ module Chemotion
         .select(
           <<~SQL
             id, user_id, label,ancestry, permission_level, user_as_json(collections.user_id) as shared_to,
-            is_shared, is_locked, is_synchronized, false as is_remoted,
+            is_shared, is_locked, is_synchronized, false as is_remoted, tabs_segment,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
           SQL
@@ -132,7 +132,7 @@ module Chemotion
         collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id]).order("id")
         .select(
           <<~SQL
-            id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by,
+            id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by, tabs_segment,
             case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared,
             shared_user_as_json(collections.user_id, #{current_user.id}) as shared_to,position
@@ -502,6 +502,35 @@ module Chemotion
             ImportCollectionsJob.perform_later(att, current_user.id)
             status 204
           end
+        end
+      end
+
+      namespace :tabs do
+        after_validation do
+          @collection = Collection.find(params[:id])
+          error!('404 Collection with given id not found', 404) if @collection.nil?
+          error!('401 Unauthorized', 401) unless @collection.user_id == current_user.id
+        end
+        desc 'insert tab segments'
+        params do
+          requires :id, type: Integer, desc: 'collection id'
+          requires :segments, type: Hash, desc: 'orientation of the tabs'
+        end
+        post do
+          collection = Collection.find(params[:id])
+          collection.update(tabs_segment: params[:segments])
+          collection
+        end
+
+        desc 'Update tab segment'
+        params do
+          requires :id, type: Integer, desc: 'Collection id'
+          optional :segment, type: Hash, desc: 'Tab segment type'
+        end
+
+        patch do
+          @collection.update(tabs_segment: params[:segment])
+          status 204
         end
       end
     end
