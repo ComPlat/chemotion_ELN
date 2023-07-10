@@ -100,7 +100,7 @@ module Import
               next
             end
             sample_save(row, molfile, molecule)
-          rescue StandardError
+          rescue StandardError => _e
             unprocessable_count += 1
             @unprocessable << { row: row, index: i }
           end
@@ -217,21 +217,34 @@ module Import
       sample[db_column] = row[field] == 'Yes' if %w[decoupled].include?(db_column)
     end
 
+    def save_chemical(chemical, sample)
+      chemical.sample_id = sample.id
+      chemical.save!
+    end
+
     def validate_sample_and_save(sample, stereo, row)
       handle_sample_solvent_column(sample, row)
       sample.validate_stereo(stereo)
       sample.collections << Collection.find(collection_id)
       sample.collections << Collection.get_all_collection_for_user(current_user_id)
       sample.inventory_sample = true if @import_type == 'chemical'
+      chemical = ImportChemicals.build_chemical(row, header) if @import_type == 'chemical'
       sample.save!
-      ImportChemicals.create_chemical(sample['id'], row, header) if @import_type == 'chemical'
+      save_chemical(chemical, sample) if @import_type == 'chemical'
       processed.push(sample)
+    rescue StandardError => e
+      raise e
     end
 
-    def sample_save(row, molfile, molecule)
+    def create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       sample = Sample.new(created_by: current_user_id)
       sample.molfile = molfile
       sample.molecule = molecule
+      sample
+    end
+
+    def sample_save(row, molfile, molecule)
+      sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       stereo = {}
       header.each do |field|
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
@@ -240,6 +253,8 @@ module Import
         process_sample_fields(sample, db_column, field, row)
       end
       validate_sample_and_save(sample, stereo, row)
+    rescue StandardError => e
+      raise e
     end
 
     def process_all_rows

@@ -114,16 +114,15 @@ RSpec.describe Import::ImportChemicals do
     end
   end
 
-  describe 'create_chemical' do
-    let(:sample_id) { 1 }
+  describe 'build_chemical' do
     let(:row) { { 'cas' => '123-45-6', 'price' => '50 EUR' } }
     let(:header) { %w[cas price] }
     let(:chemical) { create(:chemical) }
 
     it 'creates a chemical with valid data' do
       allow(PubChem).to receive(:get_cid_from_inchikey).and_return('12345')
-      allow(chemical).to receive(:valid?).and_return(true)
-      expect(described_class.create_chemical(sample_id, row, header)).to be(true)
+      # allow(chemical).to receive(:valid?).and_return(true)
+      expect(described_class.build_chemical(row, header)).not_to be_nil
     end
 
     # it 'log the error message when an error occurs' do

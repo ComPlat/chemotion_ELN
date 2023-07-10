@@ -222,12 +222,12 @@ export default class ChemicalTab extends React.Component {
       precautionaryPhrases.push(st);
     }
 
-    const pictogramsArray = str.pictograms.map((i) => (i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
+    const pictogramsArray = str.pictograms?.map((i) => (i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
 
     return (
       <div>
         <p className="safety-phrases">Pictograms: </p>
-        {(str.pictograms !== undefined || str.pictograms.length !== 0)
+        {(str.pictograms !== undefined && str.pictograms.length !== 0)
           ? pictogramsArray : <p>Could not find pictograms</p>}
         <p className="safety-phrases">Hazard Statements: </p>
         {HazardPhrases}
