@@ -166,6 +166,8 @@ export default class UsersFetcher {
         destroy_group: params.destroy_group,
         rm_users: params.rm_users,
         add_users: params.add_users,
+        add_admin: params.add_admin,
+        rm_admin: params.rm_admin,
       })
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);
