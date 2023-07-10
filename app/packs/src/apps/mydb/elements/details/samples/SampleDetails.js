@@ -660,7 +660,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
-          { sample.isNew ? null : <h6>{this.moleculeCas()}</h6> }
+          {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
         <Col md={8}>
@@ -774,7 +774,13 @@ export default class SampleDetails extends React.Component {
       this.molfileInput.value = sample.molfile;
     }
 
-    const textAreaStyle = { height: '35px', overflow: 'auto', whiteSpace: 'pre' };
+    const textAreaStyle = {
+      minHeight: '35px',
+      height: '35px',
+      overflow: 'auto',
+      whiteSpace: 'pre',
+      resize: 'vertical',
+    };
 
     return (
       <InputGroup className="sample-molecule-identifier">
