@@ -1,6 +1,8 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, FormControl, Modal, Col } from 'react-bootstrap';
+import {
+  Button, FormControl, Modal, Col
+} from 'react-bootstrap';
 import _ from 'lodash';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
@@ -26,16 +28,12 @@ export default class CollectionTabs extends React.Component {
       showModal: false,
       currentCollection: {},
       layouts: [],
-      changedIndexes: [],
-      updatedlayouts: [],
       tree: {
         label: 'My Collections',
         id: -1,
         children: [{}]
       },
-      currentTab: 'sample'
     };
-    this.tabRef = React.createRef();
     this.tabRef = [];
 
     this.onStoreChange = this.onStoreChange.bind(this);
@@ -57,13 +55,13 @@ export default class CollectionTabs extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
+    const children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
 
     this.setState({
       tree: {
         label: 'My Collections',
         id: -1,
-        children: children
+        children
       }
     });
   }
@@ -98,14 +96,8 @@ export default class CollectionTabs extends React.Component {
 
   handleChange(tree) {
     this.setState({
-      tree: tree
+      tree
     });
-  }
-
-  setLayout(index, layout) {
-    const { layouts } = this.state;
-    layouts[index] = layout;
-    this.setState({ layouts });
   }
 
   handleModalOptions(showModal) {
@@ -122,10 +114,10 @@ export default class CollectionTabs extends React.Component {
     const params = { layoutSegments, currentCollectionId: cCol.id };
     CollectionActions.createTabsSegment(params);
     this.setState({ showModal: !showModal });
-    if (cCol.ancestry){
-      this.state.tree.children.find(c => c.id === parseInt(cCol.ancestry)).children.find(ch => ch.id === cCol.id).tabs_segment = layoutSegments;
+    if (cCol.ancestry) {
+      this.state.tree.children.find((c) => c.id === parseInt(cCol.ancestry)).children.find((ch) => ch.id === cCol.id).tabs_segment = layoutSegments;
     } else {
-      this.state.tree.children.find(c => c.id === cCol.id).tabs_segment = layoutSegments;
+      this.state.tree.children.find((c) => c.id === cCol.id).tabs_segment = layoutSegments;
     }
   }
 
@@ -140,7 +132,7 @@ export default class CollectionTabs extends React.Component {
       );
     }
     return (
-      <FormControl className="collection-label" type="text" value={node.label || ''} disabled/>
+      <FormControl className="collection-label" type="text" value={node.label || ''} disabled />
     );
   }
 
@@ -187,7 +179,7 @@ export default class CollectionTabs extends React.Component {
           </Modal.Header>
           <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px', overflow: 'auto' }} className="collection-tab-modal-body">
             {layouts.map((lay, index) => {
-              var callbackRef = node => this.tabRef[index] = node;
+              const callbackRef = (node) => this.tabRef[index] = node;
               return (
                 <div style={{ textAlign: 'left' }}>
                   <Col md={6}>
@@ -205,8 +197,7 @@ export default class CollectionTabs extends React.Component {
                   &nbsp;
                 </div>
               );
-             })
-            }
+            })}
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
             <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
