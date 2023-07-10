@@ -1,6 +1,15 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.6.2]
+> 2023-07-10
+* Fixes
+  * Expose target amount in sample task api (#1373)
+  * User select in UI feature (#1385)
+  * refactoring transfer (#1320)
+  * login-and-signup-configurable (#1377)
+  * structure editor with decoupled sample (#1393)
+  * Text editor in researchPlan is now getting removed properly (#1363)
 
 ## [v1.6.1]
 > 2023-06-19
