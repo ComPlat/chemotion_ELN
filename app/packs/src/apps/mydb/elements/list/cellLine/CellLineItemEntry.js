@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 
 export default class CellLineItemEntry extends Component {
   constructor() {
@@ -67,8 +68,8 @@ export default class CellLineItemEntry extends Component {
                 cellLineItem={cellLineItem}
                 showDetails={this.showDetails}
               />
-
               <td className="arrow">
+              <ElementCollectionLabels element={cellLineItem} key={cellLineItem.id}/>
                 <ElementContainer
                   key={cellLineItem.id}
                   sourceType={DragDropItemTypes.CELL_LINE}
