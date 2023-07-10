@@ -82,8 +82,10 @@ class CellLineDetails extends React.Component {
 
     return (
       <div>
-        <ElementCollectionLabels element={cellLineItem} key={cellLineItem.id} placement="right" />
-        {content}
+        
+        <ElementCollectionLabels class="collection-label floating" element={cellLineItem} key={cellLineItem.id} placement="right" />
+        <div class="floating header">{content}</div> 
+       
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
         {this.renderSaveButton()}
