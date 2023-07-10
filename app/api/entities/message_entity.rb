@@ -2,18 +2,11 @@
 
 module Entities
   # Publish-Subscription Entities
-  class MessageEntity < Grape::Entity
+  class MessageEntity < ApplicationEntity
     expose :id, :message_id
     expose :subject, :content, :channel_type
     expose :sender_id, :sender_name, :receiver_id, :is_ack
-    expose :created_at, :updated_at
 
-    def created_at
-      object.created_at.strftime('%d.%m.%Y, %H:%M:%S')
-    end
-
-    def updated_at
-      object.updated_at.strftime('%d.%m.%Y, %H:%M:%S')
-    end
+    expose_timestamps
   end
 end

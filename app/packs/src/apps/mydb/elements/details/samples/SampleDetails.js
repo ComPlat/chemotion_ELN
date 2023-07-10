@@ -72,6 +72,7 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 const MWPrecision = 6;
 
@@ -283,6 +284,7 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         sample.molecule = result;
         sample.molecule_id = result.id;
+        if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
         this.setState({
           sample, pageMessage: result.ob_log
         });
@@ -319,43 +321,50 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
+
+    const fetchError = (errorMessage) => {
+      NotificationActions.add({
+        title: 'Error on Sample creation', message: `Cannot create molecule! Error: [${errorMessage}]`, level: 'error', position: 'tc'
+      });
+      this.setState({ loadingMolecule: false });
+    };
+
+    const fetchSuccess = (result) => {
+      if (!result || result == null) {
+        throw new Error('No molecule returned!');
+      }
+      sample.molecule = result;
+      sample.molecule_id = result.id;
+      if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+      this.setState({
+        sample,
+        smileReadonly: true,
+        pageMessage: result.ob_log,
+        loadingMolecule: false
+      });
+    };
+
+    const fetchMolecule = (fetchFunction) => {
+      fetchFunction()
+        .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.hideStructureEditor();
+        });
+    };
+
     if (!smiles || smiles === '') {
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
-        .then((result) => {
-          sample.molecule = result;
-          sample.molecule_id = result.id;
-          this.setState({
-            sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
-          });
-        }).catch((errorMessage) => {
-          alert('Cannot create molecule!');
-          console.log(`handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`);
-        });
+      fetchMolecule(
+        () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
+      );
     } else {
-      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile, editor)
-        .then((result) => {
-          if (!result || result == null) {
-            alert('Cannot create molecule!');
-          } else {
-            sample.molecule = result;
-            sample.molecule_id = result.id;
-            this.setState({
-              sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
-            });
-          }
-        }).catch((errorMessage) => {
-          alert('Cannot create molecule!');
-          console.log(`handleStructureEditorSave exception of fetchBySmi: ${errorMessage}`);
-        });
+      fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-    this.hideStructureEditor();
   }
 
   handleStructureEditorCancel() {
@@ -510,7 +519,7 @@ export default class SampleDetails extends React.Component {
 
   sampleHeader(sample) {
     const saveBtnDisplay = sample.isEdited ? '' : 'none';
-    const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
+    const titleTooltip = formatTimeStampsOfElement(sample || {});
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
@@ -615,27 +624,28 @@ export default class SampleDetails extends React.Component {
 
   transferToDeviceButton(sample) {
     return (
-      <Button bsSize="xsmall"
+      <Button
+        bsSize="xsmall"
         onClick={() => {
-          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices
-          const device = devices.find((d) => d.id === selectedDeviceId)
-          ElementActions.addSampleToDevice(sample, device, { save: true })
+          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices;
+          const device = devices.find((d) => d.id === selectedDeviceId);
+          ElementActions.addSampleToDevice(sample, device, { save: true });
         }}
         style={{ marginLeft: 25 }}
       >
         Transfer to Device
       </Button>
-    )
+    );
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px', marginBottom: '100px' };
+    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
-      const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
+      const echa = pubchemLcss.Reference.filter((e) => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
       if (echa.length > 0) {
-        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Safety and Hazards') || [];
-        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Hazards Identification') || [];
+        pubchemLcss = pubchemLcss.Section.find((e) => e.TOCHeading === 'Safety and Hazards') || [];
+        pubchemLcss = pubchemLcss.Section.find((e) => e.TOCHeading === 'Hazards Identification') || [];
         pubchemLcss = pubchemLcss.Section[0].Information.filter(e => echa.includes(e.ReferenceNumber)) || null;
       } else pubchemLcss = null;
     }
