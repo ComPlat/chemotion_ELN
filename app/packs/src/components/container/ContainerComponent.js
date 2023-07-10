@@ -191,7 +191,7 @@ export default class ContainerComponent extends Component {
           <div style={{ marginBottom: 11 }}>
             <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
             <OlsTreeSelect
-              selectName="chmo"
+              selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
               onSelectChange={event => this.handleInputChange('kind', event)}
               selectedDisable={readOnly || disabled || false}
@@ -232,6 +232,10 @@ export default class ContainerComponent extends Component {
     );
   }
 }
+
+ContainerComponent.defaultProps = {
+ ontologyName:"chmo"
+};
 
 ContainerComponent.propTypes = {
   templateType: PropTypes.string,
