@@ -106,6 +106,7 @@
             margin-top: 5px;
             background-color: #337ab7;
             border-color: #2e6da4;
+            margin-top: 14px;
             color: white;
 
             &:hover{
@@ -118,6 +119,7 @@
         .detailed-info-off{
             margin: 5px;
             background-color: #5bc0de;
+            margin-top: 14px;
 
             .fa-info-circle{
                 color: #ffffff;
@@ -132,6 +134,7 @@
             margin: 5px;
             background-color: #40adce;
             border-color: rgb(44, 44, 44);
+            margin-top: 14px;
 
             .fa-info-circle{
                 color: #ffffff;
@@ -227,7 +230,7 @@
     color: rgb(51, 122, 183);
     line-height: 10px;
     margin-right:5px;
-    margin-top:5px;
+    margin-top:16px;
 }
 
 .missing-property{
@@ -256,7 +259,8 @@
 .cell-line-group-header-name{
     font-size: large;
     margin-left: 30px;
-    font-weight: bold;    
+    margin-top: 13px;
+    font-weight: bold;
 }
 .cell-line-group-header-property{
     margin-left: 35px;
