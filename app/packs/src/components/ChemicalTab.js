@@ -228,8 +228,8 @@ export default class ChemicalTab extends React.Component {
       precautionaryPhrases.push(st);
     }
 
-    const pictogramsArray = str.pictograms ? str.pictograms.map((i) => (i !== null
-      ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null)) : [];
+    const pictogramsArray = str.pictograms?.map((i) => (
+      i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
 
     return (
       <div>

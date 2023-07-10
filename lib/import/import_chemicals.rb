@@ -13,18 +13,18 @@ module Import
       SIGMA_ALDRICH_PATTERN => 'Merck',
       THERMOFISCHER_PATTERN => 'Alfa',
     }.freeze
+    CHEMICAL_FIELDS = [
+      'cas', 'status', 'vendor', 'order number', 'amount', 'price', 'person', 'required date', 'ordered date',
+      'required by', 'pictograms', 'h statements', 'p statements', 'safety sheet link', 'product link', 'host building',
+      'host room', 'host cabinet', 'host group', 'owner', 'borrowed by', 'current building', 'current room',
+      'current cabinet', 'current group', 'disposal info', 'important notes'
+    ].freeze
+    GHS_VALUES = %w[GHS01 GHS02 GHS03 GHS04 GHS05 GHS06 GHS07 GHS08 GHS09].freeze
 
-    def self.create_chemical(sample_id, row, header)
-      chemical = build_chemical(sample_id)
-      import_data(chemical, row, header)
-      save_chemical(chemical)
-    end
-
-    def self.build_chemical(sample_id)
+    def self.build_chemical(row, header)
       chemical = Chemical.new
-      chemical.sample_id = sample_id
       chemical.chemical_data = [{}]
-      chemical
+      import_data(chemical, row, header)
     end
 
     def self.import_data(chemical, row, header)
@@ -38,60 +38,27 @@ module Import
           process_column(chemical, column_header, value)
         end
       end
-    end
-
-    def self.save_chemical(chemical)
-      chemical.save!
+      chemical
     end
 
     def self.skip_import?(value, column_header)
-      value.blank? || column_header.nil?
+      value.blank? 
+      # || column_header.nil?
     end
 
     def self.process_column(chemical, column_header, value)
-      map_column = chemical_fields.find { |e| e == column_header.downcase.rstrip }
+      map_column = CHEMICAL_FIELDS.find { |e| e == column_header.downcase.rstrip }
       key = to_snake_case(column_header)
+      format_value = value.strip
       if map_column.present? && should_process_key(key)
-        chemical['chemical_data'][0][key] = value
+        chemical['chemical_data'][0][key] = format_value
       elsif SAFETY_SHEET.include?(key)
-        set_safety_sheet(chemical, key, value)
+        set_safety_sheet(chemical, key, format_value)
       elsif SAFETY_PHRASES.include?(key)
-        set_safety_phrases(chemical, key, value)
+        set_safety_phrases(chemical, key, format_value)
       elsif AMOUNT.include?(key)
-        set_amount(chemical, value)
+        set_amount(chemical, format_value)
       end
-    end
-
-    def self.chemical_fields
-      [
-        'cas',
-        'status',
-        'vendor',
-        'order number',
-        'amount',
-        'price',
-        'person',
-        'required date',
-        'ordered date',
-        'required by',
-        'pictograms',
-        'h statements',
-        'p statements',
-        'safety sheet link',
-        'product link',
-        'host building',
-        'host room',
-        'host cabinet',
-        'host group',
-        'owner',
-        'borrowed by',
-        'current building',
-        'current room',
-        'current cabinet',
-        'current group',
-        'disposal info',
-        'important notes',
-      ]
     end
 
     def self.to_snake_case(column_header)
@@ -107,12 +74,10 @@ module Import
       vendor = detect_vendor(value)
       return unless vendor
 
-      product_number = extract_product_number(value)
-      product_info = handle_safety_sheet(key, vendor, product_number, value, chemical)
-
+      product_info = handle_safety_sheet(key, vendor, value, chemical)
       product_info_key = "#{vendor.downcase}ProductInfo"
       chemical['chemical_data'][0][product_info_key] ||= {}
-      chemical['chemical_data'][0][product_info_key].merge!(product_info)
+      chemical['chemical_data'][0][product_info_key].merge!(product_info || {})
     rescue StandardError => e
       raise "Error setting safety sheet info for chemical: #{e.message}"
     end
@@ -125,15 +90,16 @@ module Import
     end
 
     def self.extract_product_number(url)
-      match = url.match(/productNumber=(\d+)/)
+      match = url.match(/productNumber=(\d+)/) || url.match(/sku=(\w+)/)
       match[1] if match
     end
 
-    def self.handle_safety_sheet(key, vendor, product_number, value, chemical)
+    def self.handle_safety_sheet(key, vendor, value, chemical)
       case key
       when 'safety_sheet_link'
-        create_safety_sheet_path(vendor.downcase, value, product_number, chemical)
-        set_safety_sheet_link(vendor, product_number, value)
+        product_number = extract_product_number(value)
+        create_safety_sheet_path(vendor.downcase, value, product_number, chemical) if product_number.present?
+        set_safety_sheet_link(vendor, product_number, value) if product_number.present?
       when 'product_link'
         { 'productLink' => value }
       end
@@ -157,15 +123,33 @@ module Import
       }
     end
 
+    def self.check_available_ghs_values(values)
+      ghs_values_to_set = []
+      values.each do |value|
+        format_value = value.strip
+        ghs_values_to_set.push(format_value) if GHS_VALUES.include?(format_value)
+      end
+      ghs_values_to_set
+    end
+
+    def self.assign_phrases(key, values, phrases)
+      case key
+      when 'pictograms'
+        value = check_available_ghs_values(values)
+        phrases[key] = value
+      when 'h_statements'
+        value = Chemotion::ChemicalsService.construct_h_statements(values)
+        phrases[key] = value
+      when 'p_statements'
+        value = Chemotion::ChemicalsService.construct_p_statements(values)
+        phrases[key] = value
+      end
+    end
+
     def self.set_safety_phrases(chemical, key, value)
       phrases = chemical['chemical_data'][0]['safetyPhrases'] ||= {}
       values = value.split(/,|-/)
-      statements = {
-        'pictograms' => values,
-        'h_statements' => Chemotion::ChemicalsService.construct_h_statements(values),
-        'p_statements' => Chemotion::ChemicalsService.construct_p_statements(values),
-      }
-      phrases[key] = statements[key] unless statements[key].empty?
+      assign_phrases(key, values, phrases)
     end
 
     def self.set_amount(chemical, value)
