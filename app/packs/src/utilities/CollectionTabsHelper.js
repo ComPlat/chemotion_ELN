@@ -38,8 +38,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
 
 const getArrayFromLayout = (layout, element, addInventoryTab) => {
   let layoutKeys = Object.keys(layout);
-  let elementSegments = getElementSegments(element, layoutKeys);
-  let availableTabs = [...layoutKeys, ...elementSegments];
+  let availableTabs = getElementSegments(element, layoutKeys);
   return getVisibilityList(layout, availableTabs, addInventoryTab);
 };
 
@@ -56,5 +55,4 @@ const filterTabLayout = (layoutState) => {
   return layout;
 };
 
-
-export { getArrayFromLayout, filterTabLayout};
+export { getArrayFromLayout, filterTabLayout };

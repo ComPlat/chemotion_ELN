@@ -2,6 +2,7 @@ import Aviator from 'aviator';
 import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from '../stores/alt/stores/UserStore';
@@ -462,8 +463,12 @@ const instrumentText = (analysis) => {
 
 const getElementSegments = (elementName, tabs) => {
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-  let names = segmentKlasses.filter(s => s.element_klass.name == elementName).map(s => s.label);
-  return _.uniq(tabs.concat(names));
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  let labels = segmentKlasses.filter(s => s.element_klass.name == elementName).map(s => s.label);
+  if (!MatrixCheck(currentUser.matrix, 'segment')) {
+    return tabs.filter((key) => !labels.includes(key));
+  }
+  return _.uniq(tabs.concat(labels));
 }
 
 export {

@@ -166,5 +166,3 @@ ElementDetailSortTab.propTypes = {
   tabTitles: PropTypes.object,
   addInventoryTab: PropTypes.bool,
 };
-
-export { getArrayFromLayout, filterTabLayout };
