@@ -393,6 +393,41 @@ describe Chemotion::SampleAPI do
         expect(JSON.parse(response.body)['samples'].size).to eq(0)
       end
     end
+
+    context 'when filtered by created at with from_date and to_date' do
+      let(:time) { Time.current }
+      let(:sample1) { create(:sample, created_at: time, collections: [personal_collection]) }
+      let(:sample2) { create(:sample, created_at: time.end_of_day, collections: [personal_collection]) }
+      let(:sample3) { create(:sample, created_at: time.beginning_of_day, collections: [personal_collection]) }
+      let(:sample4) { create(:sample, created_at: 1.day.from_now.end_of_day, collections: [personal_collection]) }
+      let(:sample5) { create(:sample, created_at: 1.day.from_now.beginning_of_day, collections: [personal_collection]) }
+      let(:sample6) { create(:sample, created_at: 1.day.ago.beginning_of_day, collections: [personal_collection]) }
+
+      it 'returns samples in range' do
+        sample1
+        sample2
+        sample3
+        sample4
+        sample5
+        sample6
+
+        get '/api/v1/samples', params: {
+          collection_id: personal_collection.id,
+          filter_created_at: true,
+          from_date: time.to_i,
+          to_date: time.to_i,
+        }
+
+        expect(JSON.parse(response.body)['samples'].pluck('id').sort).to eq(
+          [
+            sample1.id,
+            sample2.id,
+            # sample3.id, should have been included
+            sample5.id, # should have been excluded
+          ],
+        )
+      end
+    end
   end
 
   describe 'GET /api/v1/samples/:id' do

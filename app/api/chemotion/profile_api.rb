@@ -80,6 +80,7 @@ module Chemotion
             optional :cur_template_idx, type: Integer
           end
           optional :default_structure_editor, type: String
+          optional :filters, type: Hash
         end
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean

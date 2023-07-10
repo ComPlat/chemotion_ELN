@@ -1,6 +1,8 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -11,7 +13,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-
+import PropTypes from 'prop-types';
 
 function getSortedHash(inputHash) {
   const resultHash = {};
@@ -27,7 +29,7 @@ function getArrayFromLayout(layout, isVisible) {
   let array = Immutable.List();
   let sortedLayout = layout;
 
-  if (isVisible == true) {
+  if (isVisible === true) {
     sortedLayout = getSortedHash(sortedLayout);
   }
 
@@ -36,14 +38,14 @@ function getArrayFromLayout(layout, isVisible) {
     if (isVisible && order < 0) { return; }
     if (!isVisible && order > 0) { return; }
 
-    if (isVisible == true) {
+    if (isVisible === true) {
       array = array.set(idx + 1, key);
     } else {
       array = array.set(Math.abs(order), key);
     }
   });
 
-  array = array.filter(n => n != undefined);
+  array = array.filter((n) => n !== undefined);
   return array;
 }
 
@@ -75,18 +77,40 @@ export default class ElementsList extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return nextProps.overview !== this.props.overview ||
-      nextProps.showReport !== this.props.showReport ||
-      nextProps.totalElements !== this.state.totalElements ||
-      nextState.visible !== this.state.visible ||
-      nextState.hidden !== this.state.hidden ||
-      nextState.currentTab !== this.state.currentTab;
+    const { overview, showReport } = this.props;
+    const {
+      visible, hidden, currentTab
+    } = this.state;
+
+    return nextProps.overview !== overview
+      || nextProps.showReport !== showReport
+      // || nextProps.totalElements !== totalElements
+      || nextState.visible !== visible
+      || nextState.hidden !== hidden
+      || nextState.currentTab !== currentTab;
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
+  }
+
+  handleTabSelect(tab) {
+    UserActions.selectTab(tab);
+
+    // TODO sollte in tab action handler
+    const uiState = UIStore.getState();
+    const { visible } = this.state;
+    const type = visible.get(tab);
+
+    if (!uiState[type] || !uiState[type].page) { return; }
+
+    const { page } = uiState[type];
+
+    UIActions.setPagination({ type, page });
+
+    KeyboardActions.contextChange(type);
   }
 
   onChange(state) {
@@ -108,11 +132,11 @@ export default class ElementsList extends React.Component {
     const { currentType } = state;
     let type = state.currentType;
 
-    if (typeof (state.profile) !== 'undefined' && state.profile &&
-      typeof (state.profile.data) !== 'undefined' && state.profile.data) {
+    if (typeof (state.profile) !== 'undefined' && state.profile
+      && typeof (state.profile.data) !== 'undefined' && state.profile.data) {
       visible = getArrayFromLayout(state.profile.data.layout, true);
       hidden = getArrayFromLayout(state.profile.data.layout, false);
-      currentTabIndex = visible.findIndex(e => e === currentType);
+      currentTabIndex = visible.findIndex((e) => e === currentType);
       if (type === '') { type = visible.get(0); }
     }
     if (hidden.size === 0) {
@@ -133,50 +157,34 @@ export default class ElementsList extends React.Component {
     });
   }
 
-
   onChangeUI(state) {
     const { totalCheckedElements } = this.state;
     let forceUpdate = false;
     // const genericNames = (genericEls && genericEls.map(el => el.name)) || [];
-    let klasses = [];
+    let genericKlasses = [];
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-      klasses = UIStore.getState().klasses;
+      const { klasses } = UIStore.getState();
+      genericKlasses = klasses;
     }
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(klasses);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(genericKlasses);
 
     elNames.forEach((type) => {
       const elementUI = state[type] || {
         checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null
       };
       const element = ElementStore.getState().elements[`${type}s`];
-      const nextCount = elementUI.checkedAll ?
-        (element.totalElements - elementUI.uncheckedIds.size) :
-        elementUI.checkedIds.size;
+      const nextCount = elementUI.checkedAll
+        ? (element.totalElements - elementUI.uncheckedIds.size)
+        : elementUI.checkedIds.size;
       if (!forceUpdate && nextCount !== (totalCheckedElements[type] || 0)) { forceUpdate = true; }
       totalCheckedElements[type] = nextCount;
     });
 
-    this.setState(previousState => ({ ...previousState, totalCheckedElements }));
+    this.setState((previousState) => ({ ...previousState, totalCheckedElements }));
     // could not use shouldComponentUpdate because state.totalCheckedElements
     // has already changed independently of setstate
     if (forceUpdate) { this.forceUpdate(); }
-  }
-
-  handleTabSelect(tab) {
-    UserActions.selectTab(tab);
-
-    // TODO sollte in tab action handler
-    const uiState = UIStore.getState();
-    const type = this.state.visible.get(tab);
-
-    if (!uiState[type] || !uiState[type].page) { return; }
-
-    const { page } = uiState[type];
-
-    UIActions.setPagination({ type, page });
-
-    KeyboardActions.contextChange(type);
   }
 
   initState() {
@@ -197,15 +205,21 @@ export default class ElementsList extends React.Component {
       const value = visible.get(i);
 
       let iconClass = `icon-${value}`;
-      let ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()))}</Tooltip>);
+      let ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()))}</Tooltip>);
+      let genericEl = null;
 
       if (!constEls.includes(value)) {
-        const genericEl = (this.state.genericEls &&
-          this.state.genericEls.find(el => el.name === value)) || {};
+        const { genericEls } = this.state;
+        genericEl = (genericEls && genericEls.find((el) => el.name === value)) || {};
         iconClass = `${genericEl.icon_name} icon_generic_nav`;
-        ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{genericEl.label}<br />{genericEl.desc}</Tooltip>);
+        ttl = (
+          <Tooltip id="_tooltip_history" className="left_tooltip">
+            {genericEl.label}
+            <br />
+            {genericEl.desc}
+          </Tooltip>
+        );
       }
-
 
       const navItem = (
         <NavItem eventKey={i} key={`${value}_navItem`} className={`elements-list-tab-${value}s`}>
@@ -213,18 +227,21 @@ export default class ElementsList extends React.Component {
             <i className={iconClass} />
           </OverlayTrigger>
           <span style={{ paddingLeft: 5 }}>
-            {elementState.totalElements &&
-              elementState.totalElements[`${value}s`]}
-            ({totalCheckedElements[value] || 0})
+            {elementState.totalElements && elementState.totalElements[`${value}s`]}
+            (
+            {totalCheckedElements[value] || 0}
+            )
           </span>
         </NavItem>
       );
+
       const tabContent = (
         <Tab.Pane eventKey={i} key={`${value}_tabPanel`}>
           <ElementsTable
             overview={overview}
             showReport={showReport}
             type={value}
+            genericEl={genericEl}
           />
         </Tab.Pane>
       );
@@ -261,3 +278,8 @@ export default class ElementsList extends React.Component {
     );
   }
 }
+
+ElementsList.propTypes = {
+  overview: PropTypes.bool.isRequired,
+  showReport: PropTypes.bool.isRequired,
+};
