@@ -13,6 +13,7 @@ import ModalExportRadarCollection from 'src/components/contextActions/ModalExpor
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js'
 
+<<<<<<< HEAD
 function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
   const showRadar = UIStore.getState().hasRadar ? (
     <>
@@ -97,6 +98,8 @@ ExportImportButton.defaultProps = {
   customClass: null,
 };
 
+=======
+>>>>>>> d31be3775 (refactor ExportImportButton react component)
 const importSampleFunction = (updateModalProps, ImportAsChemical) => {
   const title = ImportAsChemical ? 'Import Chemicals from File' : 'Import Samples from File';
   const component = ModalImport;
@@ -122,7 +125,7 @@ const exportFunction = (updateModalProps) => {
     customModal: 'exportModal'
   };
   updateModalProps(modalProps);
-}
+};
 
 const exportReactionFunction = (updateModalProps) => {
   const component = ModalReactionExport;
@@ -133,7 +136,7 @@ const exportReactionFunction = (updateModalProps) => {
     customModal: 'exportModal'
   };
   updateModalProps(modalProps);
-}
+};
 
 const exportCollectionFunction = (updateModalProps) => {
   const title = 'Export Collections as ZIP archive';
@@ -152,7 +155,7 @@ const exportCollectionFunction = (updateModalProps) => {
   };
 
   updateModalProps(modalProps);
-}
+};
 
 const importCollectionFunction = (updateModalProps) => {
   const title = 'Import Collections from ZIP archive';
@@ -182,7 +185,7 @@ const editMetadataFunction = () => {
     type: 'metadata',
     params: { collectionID: currentCollection.id }
   });
-}
+};
 
 const exportCollectionToRadarFunction = (updateModalProps) => {
 <<<<<<< HEAD
@@ -202,6 +205,91 @@ const exportCollectionToRadarFunction = (updateModalProps) => {
   };
 
   updateModalProps(modalProps);
+};
+
+function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
+  const showRadar = UIStore.getState().hasRadar ? (
+    <>
+      <MenuItem divider />
+      <MenuItem
+        onSelect={() => editMetadataFunction()}
+        disabled={isDisabled}
+        title="Edit metadata"
+      >
+        Edit collection metadata
+      </MenuItem>
+      <MenuItem
+        onSelect={() => exportCollectionToRadarFunction(updateModalProps)}
+        disabled={isDisabled}
+        title="Export to RADAR"
+      >
+        Archive current collection to RADAR
+      </MenuItem>
+    </>
+  ) : <span />;
+
+  return (
+    <Dropdown id="export-dropdown">
+      <Dropdown.Toggle className={customClass}>
+        <Glyphicon glyph="import" />
+        <Glyphicon glyph="export" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <MenuItem
+          onSelect={() => exportFunction(updateModalProps)}
+          title="Export to spreadsheet"
+        >
+          Export samples from selection
+        </MenuItem>
+        <MenuItem
+          onSelect={() => exportReactionFunction(updateModalProps)}
+          title="Export reaction smiles to csv"
+        >
+          Export reactions from selection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem
+          onSelect={() => importSampleFunction(updateModalProps, false)}
+          disabled={isDisabled}
+          title="Import from spreadsheet or sdf"
+        >
+          Import samples to collection
+        </MenuItem>
+        <MenuItem
+          onSelect={() => importSampleFunction(updateModalProps, true)}
+          disabled={isDisabled}
+          title="Import chemicals from spreadsheet"
+        >
+          Import chemicals to collection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem
+          onSelect={() => exportCollectionFunction(updateModalProps)}
+          title="Export as ZIP archive"
+        >
+          Export collections
+        </MenuItem>
+        <MenuItem
+          onSelect={() => importCollectionFunction(updateModalProps)}
+          title="Import collections from ZIP archive"
+        >
+          Import collections
+        </MenuItem>
+
+        {showRadar}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}
+
+ExportImportButton.propTypes = {
+  isDisabled: PropTypes.bool,
+  customClass: PropTypes.string,
+};
+
+ExportImportButton.defaultProps = {
+  isDisabled: false,
+  customClass: null,
 };
 
 export default ExportImportButton;
