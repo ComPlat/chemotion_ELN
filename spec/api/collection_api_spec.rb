@@ -262,6 +262,12 @@ describe Chemotion::CollectionAPI do
         }
       end
 
+      let!(:tabs_segment) do
+        {
+          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
+        }
+      end
+
       describe '01 - from and to collections owned by user, ' do
         # before do
         #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s.id)
@@ -424,6 +430,25 @@ describe Chemotion::CollectionAPI do
       end
       # TODO: from/to authorized sync/shared collection
       # TODO from All collection put and delete:   expect(response.status).to eq 401
+
+      describe 'update tab segments collection' do
+        describe 'POST /api/v1/collections/tabs' do
+          it 'find collection and insert creates tab segments value' do
+            post '/api/v1/collections/tabs', params: { segments: tabs_segment, id: c_target.id }
+            c = Collection.find(c_target.id)
+            expect(c).to_not be_nil
+            expect(c.tabs_segment).to_not be_nil
+            expect(response.status).to eq 201
+          end
+        end
+
+        describe 'PATCH /api/v1/collections/tabs' do
+          it 'updates new tab segments value and returns 204' do
+            patch '/api/v1/collections/tabs', params: { segment: tabs_segment, id: c_target.id }
+            expect(response.status).to eq 204
+          end
+        end
+      end
     end
 
     describe 'PUT /api/v1/collections/shared/:id' do

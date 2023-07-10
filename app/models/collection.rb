@@ -21,6 +21,7 @@
 #  is_synchronized           :boolean          default(FALSE), not null
 #  researchplan_detail_level :integer          default(10)
 #  element_detail_level      :integer          default(10)
+#  tabs_segment              :jsonb
 #
 # Indexes
 #

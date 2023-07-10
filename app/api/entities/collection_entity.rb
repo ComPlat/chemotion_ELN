@@ -16,6 +16,7 @@ module Entities
       :screen_detail_level,
       :shared_by_id,
       :wellplate_detail_level,
+      :tabs_segment
     )
 
     expose :children, using: 'Entities::CollectionEntity'

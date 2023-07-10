@@ -45,6 +45,12 @@ module Entities
     expose :shared_by do |obj|
         obj['shared_by']
     end
+    expose :tabs_segment do |obj|
+      obj['tabs_segment']
+    end
+    expose :ancestry do |obj|
+      obj['ancestry']
+    end
     expose :children, as: 'children', using: 'Entities::CollectionRootEntity'
   end
 end

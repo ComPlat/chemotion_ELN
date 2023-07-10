@@ -48,7 +48,7 @@ export default class TabLayoutContainer extends React.Component {
 
   render() {
     const { visible, hidden } = this.state;
-    const { isElementDetails, tabTitles } = this.props;
+    const { isElementDetails, tabTitles, isCollectionTab } = this.props;
     let moveLayout = this.moveLayout;
     const visibleCells = visible.map((cell, index) => {
       const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
@@ -61,6 +61,7 @@ export default class TabLayoutContainer extends React.Component {
             isHidden={false}
             moveLayout={moveLayout}
             title={tabTitles[cell] || defTitle}
+            isCollectionTab={isCollectionTab}
           />
         </td>
       );
@@ -77,14 +78,15 @@ export default class TabLayoutContainer extends React.Component {
             isHidden
             moveLayout={moveLayout}
             title={tabTitles[cell] || defTitle}
+            isCollectionTab={isCollectionTab}
           />
         </td>
       );
     });
 
     return (
-      <table className="layout-container">
-        <tbody>
+      <table className="layout-container" style={{ overflowY: 'scroll'}}>
+        <tbody style={{ textAlign: 'left' }}>
           <tr>{visibleCells}</tr>
           <tr>{hiddenCells}</tr>
         </tbody>
