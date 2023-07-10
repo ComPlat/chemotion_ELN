@@ -21,7 +21,7 @@ export default class EditModeRow extends Component {
         <Panel.Body collapsible>
           <ContainerComponent
             analysisMethodTitle="Type (Cell line ontology)"
-            ontologyName="cellLine"
+            ontologyName="cellOls"
             templateType="researchPlan"
             readOnly={false}
             disabled={false}

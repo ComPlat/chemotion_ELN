@@ -18,7 +18,7 @@ export default class OlsTreeSelect extends Component {
   }
 
   render() {
-    const { rxnos, chmos } = UserStore.getState();
+    const { rxnos, chmos,cellOls } = UserStore.getState();
     let treeData = [];
     switch (this.props.selectName) {
       case 'rxno':
@@ -26,6 +26,9 @@ export default class OlsTreeSelect extends Component {
         break;
       case 'chmo':
         treeData = chmos;
+        break;
+      case 'cellOls':
+        treeData = cellOls;
         break;
       default:
         break;

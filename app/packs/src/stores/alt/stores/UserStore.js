@@ -19,7 +19,8 @@ class UserStore {
       dsKlasses: [],
       unitsSystem: {},
       matriceConfigs: [],
-      omniauthProviders: []
+      omniauthProviders: [],
+      cellOls:[{search:"A cell ontology entry",title:"my Title",synonym:"Other title",value:"My Value",is_enabled:true,id:100,children:[]}]
     };
 
     this.bindListeners({
