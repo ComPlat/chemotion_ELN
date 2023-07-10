@@ -488,7 +488,13 @@ class Group < User
   has_many :users, class_name: 'User', through: :users_groups
 
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
-  has_many :admins,  through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
+  has_many :admins, through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
+
+  before_destroy :remove_from_matrices
+
+  def administrated_by?(user)
+    users_admins.where(admin: user).present?
+  end
 
   private
 
