@@ -18,6 +18,8 @@ function getMaterialData(material, requestedUnit) {
     purity: material.purity ?? null,
     molarity: material.molarity_value ?? null,
     molecularWeight: material.molecule_molecular_weight ?? null,
+    sumFormula: material.molecule_formula ?? null,
+    yield: null
   };
   return { value, unit, aux };
 }

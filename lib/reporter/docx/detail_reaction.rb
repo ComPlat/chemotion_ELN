@@ -44,10 +44,29 @@ module Reporter
           gp_title_html: gp_title_html,
           synthesis_title_html: synthesis_title_html,
           synthesis_html: synthesis_html,
+          variations: variations
         }
       end
 
       private
+
+      def variations
+        obj.variations.map do |variation|
+          {
+            'temperature' => "#{variation['properties']['temperature']['value']} #{variation['properties']['temperature']['unit']}",
+            'duration' => "#{variation['properties']['duration']['value']} #{variation['properties']['duration']['unit']}",
+            'startingMaterials' => variation['startingMaterials'].map do |_, v|
+              "#{v['aux']['sumFormula']}:\n#{v['value']} #{v['unit']}" + (v['aux']['isReference'] ? '; Ref' : '')
+            end,
+            'reactants' => variation['reactants'].map do |_, v|
+              "#{v['aux']['sumFormula']}:\n#{v['value']} #{v['unit']}" + (v['aux']['isReference'] ? '; Ref' : '')
+            end,
+            'products' => variation['products'].map do |_, v|
+              "#{v['aux']['sumFormula']}:\n#{v['value']} #{v['unit']}; (#{v['aux']['yield']} % yield)"
+            end,
+          }
+        end
+      end
 
       def title
         (obj.name.presence || obj.short_label)
