@@ -42,8 +42,7 @@ module Import
     end
 
     def self.skip_import?(value, column_header)
-      value.blank? 
-      # || column_header.nil?
+      value.blank? || column_header.nil?
     end
 
     def self.process_column(chemical, column_header, value)
