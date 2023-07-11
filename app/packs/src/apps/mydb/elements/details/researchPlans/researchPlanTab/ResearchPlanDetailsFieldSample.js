@@ -24,9 +24,13 @@ const hasAuth = (id) => {
   if (typeof id === 'string' && id.includes('error')) return false; return true;
 };
 
-const noAuth = el => (
+const noAuth = (el) => (
   <div className="research-plan-no-auth">
-    <h4>{el.id.split(':')[2]}&nbsp;<i className="fa fa-eye-slash" aria-hidden="true" /></h4>
+    <h4>
+      {el.id.split(':')[2]}
+      &nbsp;
+      <i className="fa fa-eye-slash" aria-hidden="true" />
+    </h4>
   </div>
 );
 
@@ -51,7 +55,9 @@ class ResearchPlanDetailsFieldSample extends Component {
   componentDidUpdate() {
     const { field } = this.props;
     const { idle, sample } = this.state;
-    if (idle && field.value.sample_id !== sample.id && hasAuth(sample.id)) {
+
+    // check if field.value and sample are not undefined before accessing their properties
+    if (idle && field && field.value && sample && field.value.sample_id !== sample.id && hasAuth(sample.id)) {
       this.setState({ idle: false }, this.fetch);
     }
   }
@@ -80,7 +86,9 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (edit) {
       link = (
         <p>
-          Sample: {title}
+          Sample:
+          {' '}
+          {title}
         </p>
       );
     }
@@ -92,7 +100,8 @@ class ResearchPlanDetailsFieldSample extends Component {
             <img src={sample.svgPath} alt={title} />
           </a>
           <SampleName sample={sample} />
-        </div>)
+        </div>
+      );
     }
     // render name of sample if no image exists
     else {
@@ -101,7 +110,8 @@ class ResearchPlanDetailsFieldSample extends Component {
           <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
             {title}
           </a>
-        </div>)
+        </div>
+      );
     }
     return (
       <div className="research-plan-field-image">
@@ -114,18 +124,23 @@ class ResearchPlanDetailsFieldSample extends Component {
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
     const { sample } = this.state;
-    if (!hasAuth(sample.id)) {
+    if (sample && !hasAuth(sample.id)) {
       return noAuth(sample);
     }
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
-    return connectDropTarget(<div className={className}>{sample.id ? this.renderSample(sample) : 'Drop sample here.'}</div>);
+    return connectDropTarget(<div className={className}>{sample && sample.id ? this.renderSample(sample) : 'Drop sample here.'}</div>);
   }
 
   renderStatic() {
     const { sample } = this.state;
-    return sample.id ? this.renderSample(sample) : '';
+
+    // check if sample is not undefined before accessing
+    if (sample) {
+      return sample.id ? this.renderSample(sample) : '';
+    }
+    return '';
   }
 
   render() {
