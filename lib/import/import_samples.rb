@@ -203,16 +203,23 @@ module Import
       "[#{lower_bound}, #{upper_bound}]"
     end
 
+    def handle_sample_fields(sample, db_column, value)
+      if db_column == 'cas'
+        sample['xref']['cas'] = value
+      else
+        sample[db_column] = value || ''
+      end
+    end
+
     def process_sample_fields(sample, db_column, field, row)
-      return unless included_fields.include?(db_column)
+      return unless included_fields.include?(db_column) || db_column == 'cas'
 
       excluded_column = %w[description solvent location external_label].freeze
       comparison_values = %w[melting_point boiling_point].freeze
 
       value = row[field]
       value = format_to_interval_syntax(value) if comparison_values.include?(db_column)
-
-      sample[db_column] = value || ''
+      handle_sample_fields(sample, db_column, value)
       sample[db_column] = '' if excluded_column.include?(db_column) && row[field].nil?
       sample[db_column] = row[field] == 'Yes' if %w[decoupled].include?(db_column)
     end
@@ -249,7 +256,7 @@ module Import
       header.each do |field|
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
-        db_column = map_column.nil? ? field : map_column[0].sub('s.', '').delete!('"')
+        db_column = map_column.nil? || map_column[1] == "\"cas\"" ? field : map_column[0].sub('s.', '').delete!('"')
         process_sample_fields(sample, db_column, field, row)
       end
       validate_sample_and_save(sample, stereo, row)
@@ -304,7 +311,7 @@ module Import
         # 'melting_point',
         # 'boiling_point',
         'fingerprint_id',
-        'xref',
+        # 'xref',
         # 'molarity_value',
         # 'molarity_unit',
         'molecule_name_id',
