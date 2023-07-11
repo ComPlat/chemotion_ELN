@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class BaseFetcher {
   /**
@@ -18,9 +19,11 @@ export default class BaseFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(bodyData)
-    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => jsonTranformation(json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -34,9 +37,11 @@ export default class BaseFetcher {
     const promise = fetch(apiEndpoint, {
       credentials: 'same-origin',
       method: requestMethod
-    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => jsonTranformation(json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -47,14 +52,37 @@ export default class BaseFetcher {
     const filterCreatedAt = queryParams.filterCreatedAt === true ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
-    const product_only = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
+    const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
               + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-              + `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
-    let addQuery = type === 'samples'
-      ? `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
-      : '';
-    addQuery = type === 'generic_elements' ? `&el_type=${queryParams.name}` : '';
+              + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
+    let addQuery = '';
+    let userState;
+    let group;
+    let sort;
+    let filters;
+
+    switch (type) {
+      case 'samples':
+        addQuery = `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`;
+        break;
+      case 'reactions':
+        userState = UserStore.getState();
+        filters = userState?.profile?.data?.filters || {};
+        group = filters.reaction?.group || 'none';
+        sort = filters.reaction?.sort || false;
+        addQuery = `&sort_column=${(sort && group) || 'updated_at'}`;
+        break;
+      case 'generic_elements':
+        userState = UserStore.getState();
+        filters = userState?.profile?.data?.filters || {};
+        group = filters[queryParams.name]?.group || 'none';
+        sort = filters[queryParams.name]?.sort || false;
+        addQuery = `&el_type=${queryParams.name}&sort_column=${(sort && group) || 'updated_at'}`;
+        break;
+      default:
+    }
+
     return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
     }).then((response) => (

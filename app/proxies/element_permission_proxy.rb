@@ -90,10 +90,11 @@ class ElementPermissionProxy
   end
 
   def user_collections_for_element
-  #    collection_ids = element.collections.pluck(:id)
-  #    Collection.where("id IN (?) AND user_id IN (?)", collection_ids, @user_ids)
+    #    collection_ids = element.collections.pluck(:id)
+    #    Collection.where("id IN (?) AND user_id IN (?)", collection_ids, @user_ids)
     element.collections.select { |c| @user_ids.include?(c.user_id) }
   end
+
   def sync_collections_users_for_element
     coll_ids = element.collections.map(&:id)
     element.collections.map(&:sync_collections_users).flatten.select do |sc|

@@ -54,6 +54,8 @@ class Screen < ApplicationRecord
   has_many :research_plans_screens, dependent: :destroy
   has_many :research_plans, through: :research_plans_screens
 
+  has_many :comments, as: :commentable, dependent: :destroy
+
   has_one :container, :as => :containable
 
   accepts_nested_attributes_for :collections_screens

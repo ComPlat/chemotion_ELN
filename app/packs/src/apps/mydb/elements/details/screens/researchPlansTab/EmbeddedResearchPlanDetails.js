@@ -9,6 +9,7 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/models/ResearchPlan';
 import ResearchPlanDetailsBody from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 const InfoLabel = ({ iconClass, text, style, tooltip }) => {
   style ||= 'info'
@@ -238,7 +239,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
 
   renderPanelHeading(researchPlan) {
     const { deleteResearchPlan, saveResearchPlan } = this.props;
-    const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
+    const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
 
     const popover = (

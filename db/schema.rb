@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_03_090936) do
+ActiveRecord::Schema.define(version: 2023_06_13_063121) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -118,6 +118,12 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "chemicals", force: :cascade do |t|
+    t.integer "sample_id"
+    t.text "cas"
+    t.jsonb "chemical_data"
+  end
+
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
     t.string "source"
     t.integer "source_id"
@@ -147,6 +153,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.boolean "is_synchronized", default: false, null: false
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
+    t.jsonb "tabs_segment", default: {}
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -210,6 +217,22 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "error_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.string "content"
+    t.integer "created_by", null: false
+    t.string "section"
+    t.integer "commentable_id"
+    t.string "commentable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
+    t.index ["created_by"], name: "index_comments_on_user"
+    t.index ["section"], name: "index_comments_on_section"
   end
 
   create_table "computed_props", id: :serial, force: :cascade do |t|
@@ -799,8 +822,10 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "rxno"
     t.string "conditions"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
+    t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
     t.index ["role"], name: "index_reactions_on_role"
+    t.index ["rxno"], name: "index_reactions_on_rxno", order: :desc
   end
 
   create_table "reactions_samples", id: :serial, force: :cascade do |t|
@@ -1000,8 +1025,10 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
+    t.boolean "inventory_sample", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
+    t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
@@ -1249,9 +1276,9 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", null: false
     t.string "additive"
     t.datetime "deleted_at"
-    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
+    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
@@ -1358,7 +1385,6 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
             )
             and sync_cols.user_id in (select user_ids(in_user_id))
         ) all_cols;
-
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
@@ -1384,7 +1410,6 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
-
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1462,7 +1487,6 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
-
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);

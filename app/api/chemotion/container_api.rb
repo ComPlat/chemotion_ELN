@@ -47,7 +47,7 @@ module Chemotion
           # NB: attachments are destroy through container (DJ in production)
           # NB: attachments are not paranoidized so cannot be restored)
         @container.self_and_descendants.each(&:destroy)
-        status 200
+        status 204
       end
 
       desc 'Update Container Content'

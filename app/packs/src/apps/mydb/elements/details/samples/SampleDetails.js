@@ -66,7 +66,13 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
+import ChemicalTab from 'src/components/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 const MWPrecision = 6;
 
@@ -120,6 +126,7 @@ export default class SampleDetails extends React.Component {
       visible: Immutable.List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
+      saveInventoryAction: false,
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -146,9 +153,11 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
+    const { sample } = this.props;
     UIStore.listen(this.onUIStoreChange);
     const { activeTab } = this.state;
     this.fetchQcWhenNeeded(activeTab);
+    CommentActions.fetchComments(sample);
   }
 
   // eslint-disable-next-line camelcase
@@ -275,6 +284,7 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         sample.molecule = result;
         sample.molecule_id = result.id;
+        if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
         this.setState({
           sample, pageMessage: result.ob_log
         });
@@ -302,43 +312,59 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svg_file = null, config = null, editor = 'ketcher') {
+  handleInventorySample(e) {
+    const { sample } = this.state;
+    sample.inventory_sample = e.target.checked;
+    this.handleSampleChanged(sample);
+    if (!e.target.checked) {
+      this.setState({ activeTab: 'properties' });
+    }
+  }
+
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
+
+    const fetchError = (errorMessage) => {
+      NotificationActions.add({
+        title: 'Error on Sample creation', message: `Cannot create molecule! Error: [${errorMessage}]`, level: 'error', position: 'tc'
+      });
+      this.setState({ loadingMolecule: false });
+    };
+
+    const fetchSuccess = (result) => {
+      if (!result || result == null) {
+        throw new Error('No molecule returned!');
+      }
+      sample.molecule = result;
+      sample.molecule_id = result.id;
+      if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+      this.setState({
+        sample,
+        smileReadonly: true,
+        pageMessage: result.ob_log,
+        loadingMolecule: false
+      });
+    };
+
+    const fetchMolecule = (fetchFunction) => {
+      fetchFunction()
+        .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.hideStructureEditor();
+        });
+    };
+
     if (!smiles || smiles === '') {
-      MoleculesFetcher.fetchByMolfile(molfile, svg_file, editor, sample.decoupled)
-        .then((result) => {
-          sample.molecule = result;
-          sample.molecule_id = result.id;
-          this.setState({
-            sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
-          });
-        }).catch((errorMessage) => {
-          alert('Cannot create molecule!');
-          console.log(`handleStructureEditorSave exception of fetchByMolfile: ${errorMessage}`);
-        });
+      fetchMolecule(
+        () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
+      );
     } else {
-      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile, editor)
-        .then((result) => {
-          if (!result || result == null) {
-            alert('Cannot create molecule!');
-          } else {
-            sample.molecule = result;
-            sample.molecule_id = result.id;
-            this.setState({
-              sample, smileReadonly: true, pageMessage: result.ob_log, loadingMolecule: false
-            });
-          }
-        }).catch((errorMessage) => {
-          alert('Cannot create molecule!');
-          console.log(`handleStructureEditorSave exception of fetchBySmi: ${errorMessage}`);
-        });
+      fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-    this.hideStructureEditor();
   }
 
   handleStructureEditorCancel() {
@@ -408,7 +434,7 @@ export default class SampleDetails extends React.Component {
     } else {
       svgPath = sample.svgPath;
     }
-    let className = svgPath ? 'svg-container' : 'svg-container-empty'
+    const className = svgPath ? 'svg-container' : 'svg-container-empty';
     return (
       sample.can_update
         ? <div className={className}
@@ -493,7 +519,7 @@ export default class SampleDetails extends React.Component {
 
   sampleHeader(sample) {
     const saveBtnDisplay = sample.isEdited ? '' : 'none';
-    const titleTooltip = `Created at: ${sample.created_at} \n Updated at: ${sample.updated_at}`;
+    const titleTooltip = formatTimeStampsOfElement(sample || {});
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
@@ -509,6 +535,11 @@ export default class SampleDetails extends React.Component {
     const colLabel = sample.isNew ? null : (
       <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
     );
+    const inventorySample = (
+      <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
+        Inventory
+      </Checkbox>
+    );
 
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={e => this.decoupleChanged(e)}>
@@ -517,69 +548,74 @@ export default class SampleDetails extends React.Component {
     ) : null;
 
     return (
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-sample" />{sample.title()}</span>
+          <span>
+            <i className="icon-sample" />{sample.title()}
+          </span>
         </OverlayTrigger>
-        <ConfirmClose el={sample} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit(true)}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-            <i className="fa fa-times" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
-        >
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.handleSubmit()}
-            style={{ display: saveBtnDisplay }}
-            disabled={!this.sampleIsValid() || !sample.can_update}
-          >
-            <i className="fa fa-floppy-o" />
-          </Button>
-        </OverlayTrigger>
-        {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={() => this.props.toggleFullScreen()}
-          >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        {sample.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-        <PrintCodeButton element={sample} />
+        <ShowUserLabels element={sample} />
+        <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+        {colLabel}
+        <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+        <PubchemLabels element={sample} />
+        <HeaderCommentSection element={sample} />
         {sample.isNew
           ? <FastInput fnHandle={this.handleFastInput} />
           : null}
-        {decoupleCb}
-        <div style={{ display: 'inline-block', marginLeft: '10px' }}>
-          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-          {colLabel}
-          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <PubchemLabels element={sample} />
+        <div style={{ marginLeft: 'auto' }}>
+          <ConfirmClose el={sample} />
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit(true)}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+              <i className="fa fa-times" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
+          >
+            <Button
+              bsStyle="warning"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.handleSubmit()}
+              style={{ display: saveBtnDisplay }}
+              disabled={!this.sampleIsValid() || !sample.can_update}
+            >
+              <i className="fa fa-floppy-o" />
+            </Button>
+          </OverlayTrigger>
+          {copyBtn}
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+          >
+            <Button
+              bsStyle="info"
+              bsSize="xsmall"
+              className="button-right"
+              onClick={() => this.props.toggleFullScreen()}
+            >
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          <PrintCodeButton element={sample} />
+          {sample.isNew
+            ? null
+            : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+          {inventorySample}
+          {decoupleCb}
         </div>
         <ShowUserLabels element={sample} />
       </div>
@@ -588,27 +624,28 @@ export default class SampleDetails extends React.Component {
 
   transferToDeviceButton(sample) {
     return (
-      <Button bsSize="xsmall"
+      <Button
+        bsSize="xsmall"
         onClick={() => {
-          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices
-          const device = devices.find((d) => d.id === selectedDeviceId)
-          ElementActions.addSampleToDevice(sample, device, { save: true })
+          const { selectedDeviceId, devices } = ElementStore.getState().elements.devices;
+          const device = devices.find((d) => d.id === selectedDeviceId);
+          ElementActions.addSampleToDevice(sample, device, { save: true });
         }}
         style={{ marginLeft: 25 }}
       >
         Transfer to Device
       </Button>
-    )
+    );
   }
 
   sampleInfo(sample) {
-    const style = { height: '200px' };
+    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
-      const echa = pubchemLcss.Reference.filter(e => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
+      const echa = pubchemLcss.Reference.filter((e) => e.SourceName === 'European Chemicals Agency (ECHA)').map(e => e.ReferenceNumber);
       if (echa.length > 0) {
-        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Safety and Hazards') || [];
-        pubchemLcss = pubchemLcss.Section.find(e => e.TOCHeading === 'Hazards Identification') || [];
+        pubchemLcss = pubchemLcss.Section.find((e) => e.TOCHeading === 'Safety and Hazards') || [];
+        pubchemLcss = pubchemLcss.Section.find((e) => e.TOCHeading === 'Hazards Identification') || [];
         pubchemLcss = pubchemLcss.Section[0].Information.filter(e => echa.includes(e.ReferenceNumber)) || null;
       } else pubchemLcss = null;
     }
@@ -623,6 +660,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
+          {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
         <Col md={8}>
@@ -736,7 +774,13 @@ export default class SampleDetails extends React.Component {
       this.molfileInput.value = sample.molfile;
     }
 
-    const textAreaStyle = { height: '35px', overflow: 'auto', whiteSpace: 'pre' };
+    const textAreaStyle = {
+      minHeight: '35px',
+      height: '35px',
+      overflow: 'auto',
+      whiteSpace: 'pre',
+      resize: 'vertical',
+    };
 
     return (
       <InputGroup className="sample-molecule-identifier">
@@ -804,7 +848,7 @@ export default class SampleDetails extends React.Component {
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
-      <div className="form-row">
+      <div className="form-row" style={{ maxWidth: '300px' }}>
         <InputGroup className="sample-molecule-identifier">
           <InputGroup.Addon>CAS</InputGroup.Addon>
           <Select.Creatable
@@ -851,8 +895,10 @@ export default class SampleDetails extends React.Component {
       private_notes,
       ...customKeys
     } = cloneDeep(xref || {});
+    const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
 
-    if (Object.keys(customKeys).length === 0) return null;
+    if (Object.keys(customKeys).length === 0
+      || check.some((key) => Object.keys(customKeys).includes(key))) return null;
     return (
       Object.keys(customKeys).map(key => (
         <tr key={`field_${key}`}>
@@ -979,7 +1025,6 @@ export default class SampleDetails extends React.Component {
         {this.moleculeInchi(sample)}
         {this.moleculeCanoSmiles(sample)}
         {this.moleculeMolfile(sample)}
-        {this.moleculeCas()}
       </ListGroupItem>
     );
   }
@@ -1005,6 +1050,9 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Tab eventKey={ind} title="Properties" key={'Props' + sample.id.toString()}>
+        {
+          !sample.isNew && <CommentSection section="sample_properties" element={sample} />
+        }
         <ListGroupItem>
           <SampleForm
             sample={sample}
@@ -1021,10 +1069,44 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  handleSubmitInventory() {
+    this.setState({ saveInventoryAction: true });
+  }
+
+  saveSampleOrInventory(closeView) {
+    const { activeTab, sample } = this.state;
+    if (activeTab === 'inventory' && sample.inventory_sample) {
+      this.handleSubmitInventory();
+    } else {
+      this.handleSubmit(closeView);
+    }
+  }
+
+  sampleInventoryTab(ind) {
+    const sample = this.state.sample || {};
+    const { saveInventoryAction } = this.state;
+
+    return (
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+        <ListGroupItem>
+          <ChemicalTab
+            sample={sample}
+            parent={this}
+            saveInventory={saveInventoryAction}
+            key={`ChemicalTab${sample.id.toString()}`}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   sampleContainerTab(ind) {
     const { sample } = this.state;
     return (
-      <Tab eventKey={ind} title="Analyses" key={'Container' + sample.id.toString()}>
+      <Tab eventKey={ind} title="Analyses" key={`Container${sample.id.toString()}`}>
+        {
+          !sample.isNew && <CommentSection section="sample_analyses" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <SampleDetailsContainers
             sample={sample}
@@ -1047,6 +1129,9 @@ export default class SampleDetails extends React.Component {
         title="References"
         key={`References_${sample.id}`}
       >
+        {
+          !sample.isNew && <CommentSection section="sample_references" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <SampleDetailsLiteratures
             element={sample}
@@ -1064,6 +1149,9 @@ export default class SampleDetails extends React.Component {
         title="Results"
         key={`Results${sample.id.toString()}`}
       >
+        {
+          !sample.isNew && <CommentSection section="sample_results" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <FormGroup controlId="importedReadoutInput">
             <ControlLabel>Imported Readout</ControlLabel>
@@ -1144,6 +1232,9 @@ export default class SampleDetails extends React.Component {
         title="QC & curation"
         key={`QC_${sample.id}_${ind}`}
       >
+        {
+          !sample.isNew && <CommentSection section="sample_qc_curation" element={sample} />
+        }
         <ListGroupItem style={{ paddingBottom: 20 }} >
           <QcMain
             sample={sample}
@@ -1186,7 +1277,7 @@ export default class SampleDetails extends React.Component {
       <Button
         id="submit-sample-btn"
         bsStyle="warning"
-        onClick={() => this.handleSubmit(closeView)}
+        onClick={() => this.saveSampleOrInventory(closeView)}
         disabled={!this.sampleIsValid() || isDisabled}
       >
         {submitLabel}
@@ -1315,14 +1406,18 @@ export default class SampleDetails extends React.Component {
       tabContentsMap.nmr_sim = this.nmrSimTab('nmr_sim');
     }
 
+    if (sample.inventory_sample) {
+      tabContentsMap.inventory = this.sampleInventoryTab('inventory');
+    }
+
     const tabTitlesMap = {
       literature: 'References',
       qc_curation: 'QC curation',
       computed_props: 'computed props',
       nmr_sim: 'NMR Simulation',
-      measurements: 'Measurements'
+      measurements: 'Measurements',
+      inventory: 'Inventory'
     };
-
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
     const stb = [];
@@ -1383,6 +1478,7 @@ export default class SampleDetails extends React.Component {
               availableTabs={Object.keys(tabContentsMap)}
               tabTitles={tabTitlesMap}
               onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={sample.inventory_sample}
             />
             {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
@@ -1392,9 +1488,10 @@ export default class SampleDetails extends React.Component {
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
+          <CommentModal element={sample} />
         </Panel.Body>
       </Panel>
-    )
+    );
   }
 }
 

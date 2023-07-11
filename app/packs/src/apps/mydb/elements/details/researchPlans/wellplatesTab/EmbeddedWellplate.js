@@ -7,6 +7,7 @@ import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {
@@ -167,7 +168,7 @@ export default class EmbeddedWellplate extends Component {
 
   renderPanelHeading(wellplate) {
     const { deleteWellplate } = this.props;
-    const titleTooltip = `Created at: ${wellplate.created_at} \n Updated at: ${wellplate.updated_at}`;
+    const titleTooltip = formatTimeStampsOfElement(wellplate || {});
     const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
 
     const popover = (

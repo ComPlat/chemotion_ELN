@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/NestedGroups
+# rubocop:disable RSpec/MessageSpies
+
 require 'rails_helper'
 
-RSpec.describe Attachment, type: :model do
+RSpec.describe Attachment do
   let(:attachment) { create(:attachment) }
 
   describe '#extname' do
@@ -48,13 +51,13 @@ RSpec.describe Attachment, type: :model do
   end
 
   describe '#for_research_plan?' do
-    subject { attachment.for_research_plan? }
+    subject(:reseachplan) { attachment.for_research_plan? }
 
     context 'when not attached to research_plan' do
       let(:attachment) { create(:attachment, :attached_to_container) }
 
       it 'returns false' do
-        expect(subject).to be(false)
+        expect(reseachplan).to be(false)
       end
     end
 
@@ -62,19 +65,19 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_research_plan) }
 
       it 'returns true' do
-        expect(subject).to be(true)
+        expect(reseachplan).to be(true)
       end
     end
   end
 
   describe '#for_container?' do
-    subject { attachment.for_container? }
+    subject(:for_container) { attachment.for_container? }
 
     context 'when not attached to container' do
       let(:attachment) { create(:attachment, :attached_to_research_plan) }
 
       it 'returns false' do
-        expect(subject).to be(false)
+        expect(for_container).to be(false)
       end
     end
 
@@ -82,7 +85,7 @@ RSpec.describe Attachment, type: :model do
       let(:attachment) { create(:attachment, :attached_to_container) }
 
       it 'returns true' do
-        expect(subject).to be(true)
+        expect(for_container).to be(true)
       end
     end
   end
@@ -184,8 +187,8 @@ RSpec.describe Attachment, type: :model do
       let(:old_file_content) { 'Foo Bar' }
       let(:attachment) { create(:attachment, file_data: old_file_content) }
 
-      let(:new_file_path) { File.join("#{Rails.root}/spec/fixtures/upload.txt") }
-      let(:new_file_content) { IO.binread(new_file_path) }
+      let(:new_file_path) { Rails.root.join('spec/fixtures/upload.txt') }
+      let(:new_file_content) { File.binread(new_file_path) }
 
       it 'overwrites the attachment file with the new file' do
         attachment.file_path = new_file_path
@@ -306,13 +309,12 @@ RSpec.describe Attachment, type: :model do
     end
   end
 
-  # TODO: fix with_annotation factory: currently this test deletes the attached file
   describe 'annotated?' do
     let(:annotated_attachment) { create(:attachment, :with_annotation) }
     let(:unannotated_attachment) { create(:attachment) }
 
-    xit 'returns true if the attachment is annotated, or false if not' do
-      expect(puts(annotated_attachment.attachment_attacher.derivatives) && annotated_attachment.annotated?).to be true
+    it 'returns true if the attachment is annotated, or false if not' do
+      expect(annotated_attachment.annotated?).to be true
       expect(unannotated_attachment.annotated?).to be false
     end
   end
@@ -327,7 +329,7 @@ RSpec.describe Attachment, type: :model do
       # Thumbnails are only generated when a file is attached, having file_data does not suffice
 
       context 'when the file is not thumbnailable' do
-        let(:attachment) { create(:attachment, file_path: Rails.root.join('spec', 'fixtures', 'upload.txt')) }
+        let(:attachment) { create(:attachment, file_path: Rails.root.join('spec/fixtures/upload.txt')) }
 
         it 'saves the file' do
           expect(attachment.read_file).not_to be_nil
@@ -606,13 +608,13 @@ RSpec.describe Attachment, type: :model do
   describe '#generate_att' do
     let(:attachment) { build(:attachment) }
     let(:ext) { 'jpg' }
-    let(:new_attachment) { attachment.generate_att(tempfile, addon = 'foo', to_edit = false, ext) }
+    let(:new_attachment) { attachment.generate_att(tempfile, 'foo', false, ext) }
 
     context 'without tempfile' do
       let(:tempfile) { nil }
 
       it 'does not create a new attachment' do
-        expect { attachment.generate_att(nil, false) }.not_to change(Attachment, :count)
+        expect { attachment.generate_att(nil, false) }.not_to change(described_class, :count)
       end
 
       it 'returns nil' do
@@ -647,7 +649,7 @@ RSpec.describe Attachment, type: :model do
 
       context 'with spectra file and to_edit = true' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
-        let(:new_attachment) { attachment.generate_att(tempfile, addon = nil, to_edit = true) }
+        let(:new_attachment) { attachment.generate_att(tempfile, nil, true) }
 
         it 'sets the new attachment\'s aasm_state to edited' do
           expect(new_attachment.edited?).to be true
@@ -724,9 +726,9 @@ RSpec.describe Attachment, type: :model do
   describe '#generate_csv_att' do
     it 'calls #generate_att with ext = csv and all other parameters verbatim' do
       csv_temp = Tempfile.new(['jcamp', '.csv'])
-      csv_data = Array.new(10) {
-        Array.new(5) {|i| i.to_s }
-      }
+      csv_data = Array.new(10) do
+        Array.new(5, &:to_s)
+      end
       CSV.open(csv_temp, 'wb') do |csv|
         csv_data.each do |row|
           csv << row
@@ -740,8 +742,8 @@ RSpec.describe Attachment, type: :model do
         analysis_id: 2,
       }
 
-      expected_csv_data = Array.new(10) { |line|
-        Array.new(5) { |i|
+      expected_csv_data = Array.new(10) do |line|
+        Array.new(5) do |i|
           if line == 2 && i == 1
             params[:sample_id].to_s
           elsif line == 3 && i == 1
@@ -753,8 +755,8 @@ RSpec.describe Attachment, type: :model do
           else
             i.to_s
           end
-        }
-      }
+        end
+      end
 
       att = attachment.generate_csv_att(csv_temp, 'foo', false, params)
       generated_csv = att.read_file
@@ -851,7 +853,7 @@ RSpec.describe Attachment, type: :model do
       it 'returns the result of #auto_infer_n_clear_json' do
         expect(attachment).to receive(:auto_infer_n_clear_json).with('MS', false)
 
-        attachment.update_prediction(params = { foo: :bar }, spc_type = 'MS', is_regen = false)
+        attachment.update_prediction({ foo: :bar }, 'MS', false)
       end
     end
 
@@ -863,7 +865,7 @@ RSpec.describe Attachment, type: :model do
       it 'calls #write_infer_to_file with the value of params["predict"]' do
         expect(attachment).to receive(:write_infer_to_file).with('foobar')
 
-        attachment.update_prediction(params = { 'predict' => 'foobar' }, spc_type = 'foo', is_regen = false)
+        attachment.update_prediction({ 'predict' => 'foobar' }, 'foo', false)
       end
     end
   end
@@ -889,4 +891,33 @@ RSpec.describe Attachment, type: :model do
       end
     end
   end
+
+  describe '#annotated_file_location' do
+    context 'when type is txt' do
+      let(:attachment) { create(:attachment) }
+
+      it 'no attachment_data should be present' do
+        expect(attachment.annotated_file_location).to eq ''
+      end
+    end
+
+    context 'when type is png but without annotation' do
+      let(:attachment) { create(:attachment, :with_png_image) }
+
+      it 'no attachment_data should be present' do
+        expect(attachment.annotated_file_location).to eq ''
+      end
+    end
+
+    context 'when type is png with annotation' do
+      let(:attachment) { create(:attachment, :with_annotation) }
+
+      it 'attachment_data should be present' do
+        expect(attachment.annotated_file_location).to eq attachment.attachment.url
+      end
+    end
+  end
 end
+
+# rubocop:enable RSpec/NestedGroups
+# rubocop:enable RSpec/MessageSpies

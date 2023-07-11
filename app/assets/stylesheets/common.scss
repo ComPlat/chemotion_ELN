@@ -181,6 +181,17 @@
   }
 }
 
+.collection-tab-modal {
+  .modal-dialog {
+    width: 1200px;
+    overflow-y: scroll;
+  }
+}
+
+.collection-tab-modal-body {
+  position: sticky;
+}
+
 .status-select {
   .Select-menu-outer {
     z-index: 30;
@@ -316,6 +327,23 @@
   background: none;
   padding: 0;
   cursor: pointer;
+}
+
+.dataset-pagination {
+  text-align: center;
+  margin-top: 5px;
+}
+
+.page-count {
+  margin-left: 20px;
+}
+
+.current-page {
+  background-color: #f0f0f0;
+  color: #000;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
 }
 
 .profile-row {

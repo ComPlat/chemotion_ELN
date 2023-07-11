@@ -188,6 +188,7 @@ export default class Sample extends Element {
       can_copy: false,
       stereo: Sample.defaultStereo(),
       decoupled: false,
+      inventory_sample: false,
       molecular_mass: 0,
       sum_formula: '',
       xref: {}
@@ -319,6 +320,7 @@ export default class Sample extends Element {
       decoupled: this.decoupled,
       molecular_mass: this.molecular_mass,
       sum_formula: this.sum_formula,
+      inventory_sample: this.inventory_sample,
       segments: this.segments.map(s => s.serialize()),
     });
 

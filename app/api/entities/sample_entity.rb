@@ -10,6 +10,7 @@ module Entities
       expose! :can_update,      unless: :displayed_in_list
       expose! :code_log,        unless: :displayed_in_list, using: 'Entities::CodeLogEntity'
       expose! :decoupled
+      expose! :inventory_sample
       expose! :external_label
       expose! :id
       expose! :is_restricted
@@ -18,6 +19,8 @@ module Entities
       expose! :molecule_computed_props,                     using: 'Entities::ComputedPropEntity'
       expose! :sum_formula
       expose! :type
+      expose :comments,                                     using: 'Entities::CommentEntity'
+      expose :comment_count
     end
 
     # Level 1 attributes
@@ -128,6 +131,10 @@ module Entities
 
     def type
       'sample'
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end
