@@ -14,6 +14,25 @@ import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
+const elementList = () => {
+  const elements = [
+    { name: 'sample', label: 'Sample' },
+    { name: 'reaction', label: 'Reaction' },
+    { name: 'wellplate', label: 'Wellplate' },
+    { name: 'screen', label: 'Screen' },
+    { name: 'research_plan', label: 'Research Plan' }
+  ];
+  let genericEls = [];
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+
+  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+    genericEls = UserStore.getState().genericEls || [];
+  }
+  const itemTables = [];
+
+  return { elements, genericEls, itemTables };
+};
+
 export default class CreateButton extends React.Component {
   constructor(props) {
     super(props);
@@ -244,25 +263,23 @@ export default class CreateButton extends React.Component {
     const { isDisabled, customClass } = this.props;
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
-    const elements = [
-      { name: 'sample', label: 'Sample' },
-      { name: 'reaction', label: 'Reaction' },
-      { name: 'wellplate', label: 'Wellplate' },
-      { name: 'screen', label: 'Screen' },
-      { name: 'research_plan', label: 'Research Plan' }
-    ];
-    let genericEls = [];
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-      genericEls = UserStore.getState().genericEls || [];
-    }
-    const itemTables = [];
-    // eslint-disable-next-line max-len
-    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+    const { elements, genericEls, itemTables } = elementList();
 
-    sortedLayout?.forEach(([k]) => {
-      const el = elements.concat(genericEls).find((ael) => ael.name === k);
-      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    // let genericEls = [];
+    // const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    // if (MatrixCheck(currentUser.matrix, 'genericElement')) {
+    //   genericEls = UserStore.getState().genericEls || [];
+    // }
+    // const itemTables = [];
+    // // eslint-disable-next-line max-len
+    // const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+
+    // sortedLayout?.forEach(([k]) => {
+    //   const el = elements.concat(genericEls).find((ael) => ael.name === k);
+    //   if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    // });
+    elements.concat(genericEls).forEach((el) => {
+      itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
     });
 
     return (
@@ -306,3 +323,5 @@ CreateButton.propTypes = {
 CreateButton.defaultProps = {
   customClass: null,
 };
+
+export { elementList };

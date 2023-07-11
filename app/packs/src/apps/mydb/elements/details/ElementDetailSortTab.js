@@ -6,10 +6,13 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Button, Overlay, Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import CollectionActions from '../../../../stores/alt/actions/CollectionActions';
+import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 
 const getNodeText = (node) => {
   if (['string', 'number'].includes(typeof node)) return node;
@@ -23,40 +26,6 @@ const getNodeText = (node) => {
     return '';
   }
   return '';
-};
-
-const getArrayFromLayout = (layout, availableTabs, addInventoryTab) => {
-  const layoutKeys = Object.keys(layout);
-  if (addInventoryTab) {
-    layout.inventory = layoutKeys.length + 1;
-  }
-  const enabled = availableTabs.filter(val => layoutKeys.includes(val));
-  const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
-  const visible = [];
-  const hidden = [];
-
-  enabled.forEach((key) => {
-    const order = layout[key];
-    if (order < 0) { hidden[Math.abs(order)] = key; }
-    if (order > 0) { visible[order] = key; }
-  });
-
-  leftover.forEach(key => hidden.push(key));
-
-  let first = null;
-  if (visible.length === 0) {
-    first = hidden.filter(n => n !== undefined)[0];
-    if (first) {
-      visible.push(first);
-    }
-  }
-  if (hidden.length === 0) {
-    hidden.push('hidden');
-  }
-  return {
-    visible: Immutable.List(visible.filter(n => n !== undefined)),
-    hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
-  };
 };
 
 export default class ElementDetailSortTab extends Component {
@@ -92,9 +61,17 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    const { availableTabs, addInventoryTab } = this.props;
-    const layout = (state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`]) || {};
-    const { visible, hidden } = getArrayFromLayout(layout, availableTabs, addInventoryTab);
+    let { addInventoryTab } = this.props;
+    const currentCollection = UIStore.getState().currentCollection;
+    const collectionTabs = currentCollection?.tabs_segment;
+    let layout = {};
+    if (_.isEmpty(collectionTabs[`${this.type}`])) {
+      layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
+    } else {
+      layout = collectionTabs[`${this.type}`];
+    }
+    const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab);
+
     this.setState(
       { visible, hidden },
       () => this.props.onTabPositionChanged(visible)
@@ -107,18 +84,17 @@ export default class ElementDetailSortTab extends Component {
   }
 
   updateLayout() {
-    const { visible, hidden } = this.tabLayoutContainerElement.state;
-    const layout = {};
-    visible.forEach((value, index) => {
-      layout[value] = (index + 1);
-    });
-    hidden.filter(val => val !== 'hidden').forEach((value, index) => {
-      layout[value] = (-index - 1);
-    });
+    const layout = filterTabLayout(this.tabLayoutContainerElement.state);
+    const currentCollection = UIStore.getState().currentCollection;
+    let tabSegment = currentCollection?.tabs_segment;
+    _.set(tabSegment, `${this.type}`, layout);
+    tabSegment = { ...tabSegment, [`${this.type}`]: layout };
+    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
 
     const userProfile = UserStore.getState().profile;
     const layoutName = `data.layout_detail_${this.type}`;
     _.set(userProfile, layoutName, layout);
+
     UserActions.updateUserProfile(userProfile);
   }
 
@@ -127,6 +103,9 @@ export default class ElementDetailSortTab extends Component {
   }
 
   render() {
+    const currentCollection = UIStore.getState().currentCollection;
+    const tabs = currentCollection?.tabs_segment;
+    const buttonInfo = isEmpty(tabs) ? 'info' : 'default';
     const tabLayoutContainerElement = (
       <TabLayoutContainer
         visible={this.state.visible}
@@ -142,7 +121,7 @@ export default class ElementDetailSortTab extends Component {
       <Popover
         className="collection-overlay"
         id="popover-layout"
-        style={{ maxWidth: 'none', width: `${wd}px` }}
+        style={{ maxWidth: 'none', width: `${wd}px`, position: 'sticky' }}
       >
         <div>
           <h3 className="popover-title">Tab Layout</h3>
@@ -153,17 +132,19 @@ export default class ElementDetailSortTab extends Component {
       </Popover>
     );
     return (
-      <div style={{position: 'relative'}}>
+      <div>
         <Button
-          bsStyle="info"
+          bsStyle={buttonInfo}
           bsSize="xsmall"
           className="button-right"
           ref={button => { this.tabLayoutButton = button; }}
           onClick={this.toggleTabLayoutContainer}
+          title="Tabs layout for all collections can also be managed in Collection Tabs page"
         >
           <i className="fa fa-sliders" aria-hidden="true" />
         </Button>
         <Overlay
+          style={{ overflowY: 'scroll'}}
           container={this}
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"

@@ -2,7 +2,7 @@ require 'open-uri'
 #require './helpers'
 
 module Chemotion
-  # rubocop: disable Metrics/ClassLength
+  # rubocop:disable Metrics/ClassLength
 
   class SampleAPI < Grape::API
     include Grape::Kaminari
@@ -71,6 +71,7 @@ module Chemotion
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
         end
         post do
+          # Create a temp file in the tmp folder and sdf delayed job, and pass it to sdf delayed job
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(sdf?|mol)/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file][:tempfile].path,
@@ -105,18 +106,35 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          import_result = Import::ImportSamples.new.from_file(
-            params[:file][:tempfile].path,
-            params[:currentCollectionId], current_user.id
-          ).process
-
-          if import_result[:status] == 'ok'
-            # the FE does not actually use the returned data, just the number of elements.
-            # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
-            import_result[:data] = import_result[:data].map(&:id)
+          file_size = params[:file][:tempfile].size
+          file = params[:file]
+          if file_size < 25_000
+            import = Import::ImportSamples.new(
+              params[:file][:tempfile].path,
+              params[:currentCollectionId], current_user.id, file['filename']
+            )
+            import_result = import.process
+            if import_result[:status] == 'ok' || import_result[:status] == 'warning'
+              # the FE does not actually use the returned data, just the number of elements.
+              # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js
+              # handleNotificationImportSamplesFromFile **
+              import_result[:data] = import_result[:data].map(&:id)
+            end
+            import_result
+          else
+            temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
+            # Create a new file in the tmp folder
+            tmp_file_path = File.join('tmp', temp_filename)
+            # Write the contents of the uploaded file to the temporary file
+            File.binwrite(tmp_file_path, file[:tempfile].read)
+            ImportSamplesJob.perform_later(
+              tmp_file_path,
+              params[:currentCollectionId],
+              current_user.id,
+              file['filename'],
+            )
+            { status: 'in progress', message: 'Importing samples in background' }
           end
-
-          import_result
         end
       end
 
@@ -205,12 +223,11 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        sample_scope = sample_scope.samples_created_time_from(Time.at(from)) if from && by_created_at
-        sample_scope = sample_scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        sample_scope = sample_scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
-        sample_scope = sample_scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.created_time_from(Time.at(from)) if from && by_created_at
+        sample_scope = sample_scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        sample_scope = sample_scope.updated_time_from(Time.at(from)) if from && !by_created_at
+        sample_scope = sample_scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
-        reset_pagination_page(sample_scope)
         samplelist = []
 
         if params[:molecule_sort] == 1
@@ -230,6 +247,7 @@ module Chemotion
             end
           end
         else
+          reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('updated_at DESC')
           paginate(sample_scope).each do |sample|
             detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
@@ -567,5 +585,6 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
 # rubocop:enable Metrics/ClassLength

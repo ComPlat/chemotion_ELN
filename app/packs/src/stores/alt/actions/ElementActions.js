@@ -907,6 +907,10 @@ class ElementActions {
     return sort;
   }
 
+  changeElementsFilter(filter) {
+    return filter;
+  }
+
   updateContainerContent(params) {
     return (dispatch) => {
       ContainerFetcher.updateContainerContent(params)
