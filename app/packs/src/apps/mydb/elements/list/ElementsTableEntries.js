@@ -53,26 +53,6 @@ export function reactionRole(element) {
   return null;
 }
 
-function showDetails(element) {
-  const { currentCollection, isSync } = UIStore.getState();
-  const { id, type } = element;
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/${type}/${id}`
-    : `/collection/${currentCollection.id}/${type}/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  const e = { type, params: { collectionID: currentCollection.id } };
-  e.params[`${type}ID`] = id;
-
-  const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
-  if (genericEls.find((el) => el.name === type)) {
-    e.klassType = 'GenericEl';
-  }
-
-  elementShowOrNew(e);
-
-  return null;
-}
-
 function sampleAnalysesLabels(element) {
   if (element.type === 'sample') {
     return (
@@ -157,6 +137,7 @@ export default class ElementsTableEntries extends Component {
     };
 
     this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this);
+    this.showDetails = this.showDetails.bind(this);
   }
 
   componentDidMount() {
@@ -180,7 +161,7 @@ export default class ElementsTableEntries extends Component {
       case 13: // Enter
       case 39: // Right
         if (keyboardElementIndex != null && elements[keyboardElementIndex] != null) {
-          showDetails(elements[keyboardElementIndex]);
+          this.showDetails(elements[keyboardElementIndex]);
         }
         break;
       case 38: // Up
@@ -200,6 +181,26 @@ export default class ElementsTableEntries extends Component {
       default:
     }
     this.setState({ keyboardElementIndex });
+
+    return null;
+  }
+
+  showDetails(element) {
+    const { currentCollection, isSync } = UIStore.getState();
+    const { id, type } = element;
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = id;
+
+    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+    if (genericEls.find((el) => el.name === type)) {
+      e.klassType = 'GenericEl';
+    }
+
+    elementShowOrNew(e);
 
     return null;
   }
@@ -290,7 +291,7 @@ export default class ElementsTableEntries extends Component {
     const { showPreviews } = UIStore.getState();
     if (showPreviews && (element.type === 'reaction')) {
       return (
-        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+        <td role="gridcell" style={svgContainerStyle} onClick={() => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
         </td>
       );
@@ -298,7 +299,7 @@ export default class ElementsTableEntries extends Component {
     if (element.type === 'research_plan') {
       if (element.thumb_svg !== 'not available') {
         return (
-          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+          <td role="gridcell" style={svgContainerStyle} onClick={() => this.showDetails(element)}>
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" style={{ cursor: 'pointer' }} />
           </td>
         );
@@ -306,7 +307,7 @@ export default class ElementsTableEntries extends Component {
       return <td role="gridcell" aria-label="Element" style={svgContainerStyle} onClick={() => this.showDetails(element)} />;
     }
 
-    return <td role="gridcell" aria-label="Element" style={{ display: 'none', cursor: 'pointer' }} onClick={() => showDetails(element)} />;
+    return <td role="gridcell" aria-label="Element" style={{ display: 'none', cursor: 'pointer' }} onClick={() => this.showDetails(element)} />;
   }
 
   dragColumn(element) {
@@ -352,7 +353,7 @@ export default class ElementsTableEntries extends Component {
                 </td>
                 <td
                   role="gridcell"
-                  onClick={() => showDetails(element)}
+                  onClick={() => this.showDetails(element)}
                   style={{ cursor: 'pointer' }}
                   width={element.type === 'research_plan' ? '280px' : 'unset'}
                   data-cy={"researchPLanItem-"+ element.id}
