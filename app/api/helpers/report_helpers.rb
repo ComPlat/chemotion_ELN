@@ -460,7 +460,7 @@ module ReportHelpers
       sample: {
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
-        cas: ['s.xref', nil, 0],
+        cas: ['s.xref', '"cas"', 0],
         target_amount_value: ['s.target_amount_value', '"target amount"', 0],
         target_amount_unit: ['s.target_amount_unit', '"target unit"', 0],
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
