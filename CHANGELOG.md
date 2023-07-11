@@ -1,6 +1,42 @@
 
 # Chemotion_ELN Changelog
 
+## [v1.7.0]
+> 2023-07-11
+
+* Features and Improvements:
+   * Inventory Feature [#1262](https://github.com/ComPlat/chemotion_ELN/pull/1262) - [see docs](https://chemotion.net/docs/eln/ui/inventory#creating-chemical-entry)
+   * Comment functionality on shared and synchronized collections  [#1237](https://github.com/ComPlat/chemotion_ELN/pull/1237) - [see docs](https://chemotion.net/docs/eln/ui/comments?_highlight=comment)
+   * calendar [#1189](https://github.com/ComPlat/chemotion_ELN/pull/1189)
+   * collection profile for element tab layout  [#681](https://github.com/ComPlat/chemotion_ELN/pull/681) - [see docs]()
+   * cas as option in import samples to collection function [#1306](https://github.com/ComPlat/chemotion_ELN/pull/1306)
+   * chemspectra with aif layout [#1335](https://github.com/ComPlat/chemotion_ELN/pull/1335)
+   * Feature/elements grouping [#1188](https://github.com/ComPlat/chemotion_ELN/pull/1188)
+   * enhance import sample feature [#1347](https://github.com/ComPlat/chemotion_ELN/pull/1341)
+   * Groups ui revamp and making group admins set/unset admins  [#1396](https://github.com/ComPlat/chemotion_ELN/pull/1396)
+   * Add inbox pagination [#1108](https://github.com/ComPlat/chemotion_ELN/pull/1108)
+   * login-and-signup-configurable [#1377](https://github.com/ComPlat/chemotion_ELN/pull/1377)
+
+* Fixes
+  * port fixes from v1.6.1 v1.6.2
+  * Datacollector api fx [#1344](https://github.com/ComPlat/chemotion_ELN/pull/1344)
+  * notification timestamps and formatting notification button [#1362](https://github.com/ComPlat/chemotion_ELN/pull/1362)
+  * saving data from NMRium [#1348](https://github.com/ComPlat/chemotion_ELN/pull/1348)
+  * Structure editor with decoupled sample [#1393](https://github.com/ComPlat/chemotion_ELN/pull/1393)
+  * User select in UI feature [#1385](https://github.com/ComPlat/chemotion_ELN/pull/1385)
+  * Unsaved sample changes retained when reselected from list [#1397](https://github.com/ComPlat/chemotion_ELN/pull/1397)
+
+
+
+## [v1.6.2]
+> 2023-07-10
+* Fixes
+  * Expose target amount in sample task api (#1373)
+  * User select in UI feature (#1385)
+  * refactoring transfer (#1320)
+  * login-and-signup-configurable (#1377)
+  * structure editor with decoupled sample (#1393)
+  * Text editor in researchPlan is now getting removed properly (#1363)
 
 ## [v1.6.1]
 > 2023-06-19
