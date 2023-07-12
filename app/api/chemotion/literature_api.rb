@@ -15,11 +15,18 @@ module Chemotion
     resource :literatures do
       after_validation do
         unless request.url =~ /doi\/metadata|ui_state|collection/
-          params[:element_type]= 'cellline_sample' if params[:element_type] == "cell_line"
-
-          @element_klass = params[:element_type].classify
-          @element = @element_klass.constantize.find_by(id: params[:element_id])
-          @element_policy = ElementPolicy.new(current_user, @element)
+          if params[:element_type] == "cell_line" then
+            cell_line_sample = CelllineSample.find(params[:element_id])
+            @element = CelllineMaterial.find(cell_line_sample.cellline_material_id)
+            @element_policy = ElementPolicy.new(current_user, cell_line_sample)
+            @element_klass="CelllineMaterial"
+            params[:element_id] = @element.id
+          else
+            @element_klass = params[:element_type].classify
+            @element = @element_klass.constantize.find_by(id: params[:element_id])
+            @element_policy = ElementPolicy.new(current_user, @element)
+          end
+          
           allowed = if request.env['REQUEST_METHOD'] =~ /get/i
                       @element_policy.read?
                     else
