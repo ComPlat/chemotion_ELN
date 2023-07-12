@@ -83,7 +83,7 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
     ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
-          row[materialType][material.id] = getMaterialData(material, 'Equiv');
+          row[materialType][material.id] = getMaterialData(material, materialType === 'products' ? 'Amount' : 'Equiv');
         }
       });
     });
