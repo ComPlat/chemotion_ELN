@@ -20,12 +20,13 @@ class UserStore {
       unitsSystem: {},
       matriceConfigs: [],
       omniauthProviders: [],
-      cellOls:[{search:"A cell ontology entry",title:"my Title",synonym:"Other title",value:"My Value",is_enabled:true,id:100,children:[]}]
+      clo:[]
     };
 
     this.bindListeners({
       handleFetchOlsRxno: UserActions.fetchOlsRxno,
       handleFetchOlsChmo: UserActions.fetchOlsChmo,
+      handleFetchOlsClo: UserActions.fetchOlsClo,
       handleFetchGenericEls: UserActions.fetchGenericEls,
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchUserLabels: UserActions.fetchUserLabels,
@@ -47,6 +48,9 @@ class UserStore {
 
   handleFetchEditors(result) {
     this.state.matriceConfigs = result.matrices;
+  }
+  handleFetchOlsClo(result) {
+    this.state.clo = result.ols_terms;
   }
 
   handleFetchOlsRxno(result) {

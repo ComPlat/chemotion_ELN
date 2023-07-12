@@ -1,0 +1,41 @@
+{
+    "ols_terms": [{
+            "key": null,
+            "title": "-- Recently selected --",
+            "selectable": false,
+            "children": []
+        }, {
+            "term_id": null,
+            "synonyms": null,
+            "search": "Cell line analyses",
+            "title": "Cell line analyses",
+            "synonym": null,
+            "value": "Cell line analyses",
+            "is_enabled": true,
+            "id": 30415,
+            "children": [{
+                    "term_id": null,
+                    "synonyms": null,
+                    "search": "Mycoplasma check",
+                    "title": "Mycoplasma check",
+                    "synonym": null,
+                    "value": "Mycoplasma check",
+                    "is_enabled": true,
+                    "id": 32748,
+                    "children": [{
+                            "term_id": null,
+                            "synonyms": null,
+                            "search": "a specialized mycoplasma test",
+                            "title": "a specialized mycoplasma test",
+                            "synonym": null,
+                            "value": "a specialized mycoplasma test",
+                            "is_enabled": true,
+                            "id": 32749,
+                            "children": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

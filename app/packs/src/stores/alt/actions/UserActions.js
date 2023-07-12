@@ -27,6 +27,16 @@ class UserActions {
         });
     };
   }
+  fetchOlsClo() {
+    return (dispatch) => {
+      UsersFetcher.fetchOls('clo')
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
 
   fetchCurrentUser() {
     return (dispatch) => {

@@ -6,7 +6,7 @@ module Chemotion
     namespace :ols_terms do
       desc 'Get List'
       params do
-        requires :name, type: String, desc: 'OLS Name', values: %w[chmo rxno]
+        requires :name, type: String, desc: 'OLS Name', values: %w[chmo rxno clo]
         optional :edited, type: Boolean, default: true, desc: 'Only list visible terms'
       end
 
