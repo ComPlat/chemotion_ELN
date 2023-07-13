@@ -47,6 +47,7 @@ export default class CellLineEntry extends Component {
         {firstCellLineItem.cellLineName}
         {' '}
         -
+        {' '}
         {firstCellLineItem.source}
       </div>];
   }
