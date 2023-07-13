@@ -18,7 +18,6 @@ module Entities
       expose! :starting_materials,                                                      using: 'Entities::ReactionMaterialEntity'
       expose! :type
       expose :comment_count
-      expose! :variations, anonymize_with: []
     end
 
     with_options(anonymize_below: 10) do
