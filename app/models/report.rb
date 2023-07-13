@@ -112,6 +112,7 @@ class Report < ApplicationRecord
     reaction = Reaction.find(params[:id])
     serialized_reaction = Entities::ReactionReportEntity.represent(
       reaction,
+      current_user: current_user,
       detail_levels: ElementDetailLevelCalculator.new(user: current_user, element:reaction).detail_levels
     ).serializable_hash
     content = Reporter::Docx::Document.new(objs: [serialized_reaction]).convert
