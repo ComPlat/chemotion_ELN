@@ -25,7 +25,7 @@ const dragHooks = {
       props.container.id,
       monitor.getDropResult().id
     );
-    props.updateFunction();
+    props.updateFunction(true);
   }
 
 };

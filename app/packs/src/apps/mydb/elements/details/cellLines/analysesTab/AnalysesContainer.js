@@ -45,10 +45,9 @@ class AnalysesContainer extends Component {
   }
 
   handleChange(changed=false) {
-
     if(changed){
- const {cellLineDetailsStore} = this.context;
- cellLineDetailsStore.cellLines(this.props.item.id).setChanged(true)
+      const {cellLineDetailsStore} = this.context;
+      cellLineDetailsStore.cellLines(this.props.item.id).setChanged(true)
     }
     this.forceUpdate();
   }
@@ -92,7 +91,7 @@ class AnalysesContainer extends Component {
       : containers.map((container) => (
         <OrderModeRow
           key={container.id}
-          updateFunction={() => { this.handleChange(); }}
+          updateFunction={(e) => { this.handleChange(e); }}
           container={container}
         />
       ), this);
