@@ -102,16 +102,18 @@ function computeYield(variations, reactionHasPolymers) {
       return false;
     });
 
-    Object.entries(row.products).forEach(([productName, productProperties]) => {
-      const stoichiometryCoefficient = (productProperties.aux.coefficient || 1.0)
-      / (referenceMaterial.aux.coefficient || 1.0);
-      const equivalent = getMolFromGram(productProperties)
-      / getMolFromGram(referenceMaterial) / stoichiometryCoefficient;
-      const percentYield = reactionHasPolymers ? (equivalent * 100).toFixed(0)
-        : ((equivalent <= 1 ? equivalent : 1) * 100).toFixed(0);
+    if (referenceMaterial) {
+      Object.entries(row.products).forEach(([productName, productProperties]) => {
+        const stoichiometryCoefficient = (productProperties.aux.coefficient || 1.0)
+        / (referenceMaterial.aux.coefficient || 1.0);
+        const equivalent = getMolFromGram(productProperties)
+        / getMolFromGram(referenceMaterial) / stoichiometryCoefficient;
+        const percentYield = reactionHasPolymers ? (equivalent * 100).toFixed(0)
+          : ((equivalent <= 1 ? equivalent : 1) * 100).toFixed(0);
 
-      row.products[productName].aux.yield = percentYield;
-    });
+        row.products[productName].aux.yield = percentYield;
+      });
+    }
   });
   return updatedVariations;
 }
