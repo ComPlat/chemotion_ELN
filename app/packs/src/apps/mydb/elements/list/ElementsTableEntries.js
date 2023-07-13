@@ -160,7 +160,7 @@ export default class ElementsTableEntries extends Component {
     switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
-        if (keyboardElementIndex != null && elements[keyboardElementIndex] != null) {
+        if (keyboardElementIndex && elements[keyboardElementIndex]) {
           this.showDetails(elements[keyboardElementIndex]);
         }
         break;
@@ -304,10 +304,24 @@ export default class ElementsTableEntries extends Component {
           </td>
         );
       }
-      return <td role="gridcell" aria-label="Element" style={svgContainerStyle} onClick={() => this.showDetails(element)} />;
+      return (
+        <td
+          role="gridcell"
+          aria-label="Element"
+          style={svgContainerStyle}
+          onClick={() => this.showDetails(element)}
+        />
+      );
     }
 
-    return <td role="gridcell" aria-label="Element" style={{ display: 'none', cursor: 'pointer' }} onClick={() => this.showDetails(element)} />;
+    return (
+      <td
+        role="gridcell"
+        aria-label="Element"
+        style={{ display: 'none', cursor: 'pointer' }}
+        onClick={() => this.showDetails(element)}
+      />
+    );
   }
 
   dragColumn(element) {

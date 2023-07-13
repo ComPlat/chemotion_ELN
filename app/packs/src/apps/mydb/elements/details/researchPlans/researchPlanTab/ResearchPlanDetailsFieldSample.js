@@ -57,7 +57,7 @@ class ResearchPlanDetailsFieldSample extends Component {
     const { idle, sample } = this.state;
 
     // check if field.value and sample are not undefined before accessing their properties
-    if (idle && field && field.value && sample && field.value.sample_id !== sample.id && hasAuth(sample.id)) {
+    if (idle && field?.value?.sample_id !== sample?.id && hasAuth(sample?.id)) {
       this.setState({ idle: false }, this.fetch);
     }
   }
@@ -84,13 +84,7 @@ class ResearchPlanDetailsFieldSample extends Component {
     const title = sample.title();
     let link;
     if (edit) {
-      link = (
-        <p>
-          Sample:
-          {' '}
-          {title}
-        </p>
-      );
+      link = (<p>{`Sample: ${title}`}</p>);
     }
     let image;
     if (sample.svgPath) {
@@ -130,7 +124,11 @@ class ResearchPlanDetailsFieldSample extends Component {
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
-    return connectDropTarget(<div className={className}>{sample && sample.id ? this.renderSample(sample) : 'Drop sample here.'}</div>);
+    return connectDropTarget(
+      <div className={className}>
+        {sample?.id ? this.renderSample(sample) : 'Drop sample here.'}
+      </div>
+    );
   }
 
   renderStatic() {
