@@ -257,6 +257,15 @@ describe Chemotion::ThirdPartyAppAPI do
 
     it 'download a file' do
       payload = { attID: params_token[:attID], userID: params_token[:userID]}
+      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}"
+      cached_token = Rails.cache.read(cache_key)
+      if cached_token.nil?
+        payload = { attID: params_token[:attID], userID: params_token[:userID] }
+        secret = Rails.application.secrets.secret_key_base
+        token = JWT.encode(payload, secret, 'HS256')
+        token_class = CachedTokenThirdPartyApp.new(token, 0)
+        Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
+      end
       secret = Rails.application.secrets.secret_key_base
       token = JWT.encode payload, secret, 'HS256'
       params = {token: token}
@@ -289,6 +298,15 @@ describe Chemotion::ThirdPartyAppAPI do
 
     it 'upload a file' do
       payload = { attID: params_token[:attID], userID: params_token[:userID]}
+      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}"
+      cached_token = Rails.cache.read(cache_key)
+      if cached_token.nil?
+        payload = { attID: params_token[:attID], userID: params_token[:userID] }
+        secret = Rails.application.secrets.secret_key_base
+        token = JWT.encode(payload, secret, 'HS256')
+        token_class = CachedTokenThirdPartyApp.new(token, 0)
+        Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
+      end
       secret = Rails.application.secrets.secret_key_base
       token = JWT.encode payload, secret, 'HS256'
       file_path = 'spec/fixtures/upload.csv'

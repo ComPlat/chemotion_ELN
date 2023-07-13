@@ -3,6 +3,8 @@
 module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
+    cache_options = { store: Rails.cache }
+
     helpers do
       def decode_token(token)
         payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
@@ -27,11 +29,21 @@ module Chemotion
         @user = User.find_by(id: payload[1])
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         env['api.format'] = :binary
-        @attachment.read_file
+        cache_key = "token/#{payload[0]}/#{payload[1]}"
+        token_cached = Rails.cache.read(cache_key)
+        token_cached.counter = token_cached.counter + 1
+        Rails.cache.write(cache_key, token_cached)
+        @attachment.read_file if token_cached.counter <= 2
       end
 
       def upload_third_party_app(token, file_name, file, file_type)
         payload = decode_token(token)
+        cache_key = "token/#{payload[0]}/#{payload[1]}"
+        token_cached = Rails.cache.read(cache_key)
+        token_cached.counter = token_cached.counter + 1
+        Rails.cache.write(cache_key, token_cached)
+        return unless token_cached.counter <= 30
+
         attachment = Attachment.find_by(id: payload[0])
         new_attachment = Attachment.new(attachable: attachment.attachable,
                                         created_by: attachment.created_by,
@@ -41,6 +53,18 @@ module Chemotion
           new_attachment.update(file_path: f, filename: file_name)
         end
         { message: 'File uploaded successfully' }
+      end
+
+      def encode_token(payload)
+        cache_key = cache_key_for_encoded_token(payload)
+        Rails.cache.fetch(cache_key, expires_in: 48.hours) do
+          token = JsonWebToken.encode(payload, 48.hours.from_now)
+          CachedTokenThirdPartyApp.new(token, 0)
+        end
+      end
+
+      def cache_key_for_encoded_token(payload)
+        "encoded_token/#{payload[:attID]}/#{payload[:userID]}"
       end
     end
 
@@ -166,8 +190,11 @@ module Chemotion
         requires :userID, type: String, desc: 'User ID'
       end
       get 'Token' do
+        cache_key = "token/#{params[:attID]}/#{params[:userID]}"
         payload = { attID: params[:attID], userID: params[:userID] }
-        JsonWebToken.encode(payload, 48.hours.from_now)
+        cached_token = encode_token(payload)
+        Rails.cache.write(cache_key, cached_token, expires_in: 48.hours)
+        cached_token.token
       end
     end
 
