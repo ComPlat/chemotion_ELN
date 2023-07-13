@@ -49,6 +49,7 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
   let(:serialized_reaction) do
     Entities::ReactionReportEntity.represent(
       reaction,
+      current_user: user,
       detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction).detail_levels,
       serializable: true
     )
