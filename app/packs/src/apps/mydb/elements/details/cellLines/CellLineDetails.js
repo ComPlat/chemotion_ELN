@@ -42,17 +42,11 @@ class CellLineDetails extends React.Component {
   handleClose(cellLineItem) {
     const { cellLineDetailsStore } = this.context;
     const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    console.log();
     // eslint-disable-next-line no-alert
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost.Close sample?')) {
       cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
       DetailActions.close(cellLineItem, true);
     }
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  handleLiteratureChange() {
-
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -193,7 +187,6 @@ class CellLineDetails extends React.Component {
               <DetailsTabLiteratures
                 element={cellLineItem}
                 literatures={cellLineItem.isNew === true ? cellLineItem.literatures : null}
-                onElementChange={(r) => this.handleLiteratureChange(r)}
               />
             </Tab>
           </Tabs>
