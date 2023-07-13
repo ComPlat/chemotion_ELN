@@ -65,7 +65,7 @@ export default class ElementDetailSortTab extends Component {
     const currentCollection = UIStore.getState().currentCollection;
     const collectionTabs = currentCollection?.tabs_segment;
     let layout = {};
-    if (_.isEmpty(collectionTabs[`${this.type}`])) {
+    if (!collectionTabs || _.isEmpty(collectionTabs[`${this.type}`])) {
       layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
     } else {
       layout = collectionTabs[`${this.type}`];
@@ -89,7 +89,9 @@ export default class ElementDetailSortTab extends Component {
     let tabSegment = currentCollection?.tabs_segment;
     _.set(tabSegment, `${this.type}`, layout);
     tabSegment = { ...tabSegment, [`${this.type}`]: layout };
-    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+    if (currentCollection && !currentCollection.is_sync_to_me) {
+      CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+    }
 
     const userProfile = UserStore.getState().profile;
     const layoutName = `data.layout_detail_${this.type}`;

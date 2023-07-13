@@ -1412,7 +1412,7 @@ export default class SampleDetails extends React.Component {
 
     const tabTitlesMap = {
       literature: 'References',
-      qc_curation: 'QC curation',
+      qc_curation: 'QC & curation',
       computed_props: 'computed props',
       nmr_sim: 'NMR Simulation',
       measurements: 'Measurements',

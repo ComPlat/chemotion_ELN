@@ -46,12 +46,16 @@ export default class TabLayoutContainer extends React.Component {
     this.setState({ visible, hidden });
   }
 
+  rearrangeText(cell) {
+    return cell && (cell.replace('_', ' ').replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase()));
+  }
+
   render() {
     const { visible, hidden } = this.state;
     const { isElementDetails, tabTitles, isCollectionTab } = this.props;
     let moveLayout = this.moveLayout;
     const visibleCells = visible.map((cell, index) => {
-      const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
+      const defTitle = this.rearrangeText(cell);
       return (
         <td key={index + "_visible"}>
           <TabLayoutCell
@@ -68,7 +72,7 @@ export default class TabLayoutContainer extends React.Component {
     });
 
     const hiddenCells = hidden.map((cell, index) => {
-      const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
+      const defTitle = this.rearrangeText(cell);
       return (
         <td className="hidden-layout" key={index + "_hidden"}>
           <TabLayoutCell

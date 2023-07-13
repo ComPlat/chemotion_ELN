@@ -32,14 +32,6 @@ class TabLayoutCell extends Component {
       isCollectionTab
     } = this.props;
 
-    const styleObj = {
-      fontSize: 12,
-      color: '#000000',
-      textAlign: 'center',
-      wordWrap: 'break-word',
-      width: '85px'
-    };
-
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let cellIcon = `icon-${cell}`;
     let cellTitle = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
@@ -54,7 +46,7 @@ class TabLayoutCell extends Component {
 
     let content = isElementDetails ? (
       <div style={{ width: '100%' }}>
-        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
+        <p className='tab-layout-cell'>{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       <div>
@@ -66,7 +58,7 @@ class TabLayoutCell extends Component {
 
     content = isCollectionTab ? (
       <div style={{ width: 'auto' }}>
-        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
+        <p className='tab-layout-cell'>{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       content
