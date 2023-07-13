@@ -422,7 +422,8 @@ class ElementActions {
 
   createCellLine(params){
     return (dispatch) => {
-      CellLinesFetcher.create(params)
+      const { currentUser } = UserStore.getState();
+      CellLinesFetcher.create(params,currentUser)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -436,8 +437,6 @@ class ElementActions {
     const { currentUser } = UserStore.getState();
     if (!currentUser) {return }
 
-    // TO DO : backend user entity has yet no cellLines_count expose -> fake stuff here
-    // return CellLine.buildEmpty(collectionId,`${currentUser.initials}-${currentUser.cellLines_count + 1}` );
     const cellLineSample= CellLine.buildEmpty(collectionId,`${currentUser.initials}-C${currentUser.cell_lines_count}`);
     if(template){
       cellLineSample.copyMaterialFrom(template);

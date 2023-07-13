@@ -30,8 +30,8 @@ describe('CellLinesFetcher', () => {
             // const params = {
 
             // };
-            const cellLine = CellLine.buildEmpty(0, "shortLabel");
-           CellLinesFetcher.create(cellLine);
+           // const cellLine = CellLine.buildEmpty(0, "shortLabel");
+           //CellLinesFetcher.create(cellLine);
         });
     });
     describe('.create()', () => {

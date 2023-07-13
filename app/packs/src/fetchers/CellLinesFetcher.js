@@ -60,7 +60,7 @@ export default class CellLinesFetcher {
     return promise;
   }
 
-  static create(cellLine) {
+  static create(cellLine,user) {
     const params = extractApiParameter(cellLine);
 
     const promise = CellLinesFetcher.uploadAttachments(cellLine)
@@ -79,6 +79,7 @@ export default class CellLinesFetcher {
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .then((cellLineItem) => {
         NotificationActions.add(successfullyCreatedParameter);
+        user.cell_lines_count = user.cell_lines_count +1;
         return cellLineItem;
       })
       .catch((errorMessage) => {
