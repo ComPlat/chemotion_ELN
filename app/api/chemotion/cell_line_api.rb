@@ -103,8 +103,6 @@ module Chemotion
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
-
-        current_user.increment_counter('celllines')
         
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end

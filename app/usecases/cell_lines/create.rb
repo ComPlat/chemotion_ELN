@@ -21,7 +21,7 @@ module Usecases
           collection: all_collection_of_current_user,
           cellline_sample_id: sample.id,
         )
-        
+        @current_user.increment_counter('celllines')
         sample
       end
 

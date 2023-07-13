@@ -20,6 +20,7 @@ FactoryBot.define do
         samples: 0,
         reactions: 0,
         wellplates: 0,
+        celllines: 0,
       }
     end
 

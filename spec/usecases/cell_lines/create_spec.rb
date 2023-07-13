@@ -115,6 +115,10 @@ RSpec.describe Usecases::CellLines::Create do
         expect(loaded_cell_line_sample.description).to eq('none')
       end
 
+      it 'cell line counter was increased' do
+        expect { loaded_cell_line_material }.to change(user, :counters)
+      end
+
       it 'new cell line material was not saved' do # rubocop:disable RSpec/MultipleExpectations
         expect(loaded_cell_line_material).not_to be_nil
         expect(loaded_cell_line_material.name).to eq('name-001')
