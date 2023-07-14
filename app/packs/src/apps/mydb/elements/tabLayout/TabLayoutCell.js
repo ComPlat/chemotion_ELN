@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from 'src/stores/alt/stores/UserStore';
-
+import capitalizeWords from 'src/utilities/textHelper';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 const layoutSource = {
@@ -20,7 +19,6 @@ const layoutTarget = {
 };
 
 class TabLayoutCell extends Component {
-
   render() {
     const {
       cell,
@@ -34,7 +32,7 @@ class TabLayoutCell extends Component {
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let cellIcon = `icon-${cell}`;
-    let cellTitle = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
+    let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
 
     if (!elnElements.includes(cell)) {
