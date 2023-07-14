@@ -25,8 +25,8 @@ export default class InvalidPropertyWarning extends React.Component {
   }
 }
 InvalidPropertyWarning.propTypes = {
-  item: PropTypes.objectOf(PropTypes.shape({
+  item: PropTypes.shape({
     id: PropTypes.string.isRequired
-  })).isRequired,
+  }).isRequired,
   propsToCheck: PropTypes.arrayOf(PropTypes.string).isRequired
 };

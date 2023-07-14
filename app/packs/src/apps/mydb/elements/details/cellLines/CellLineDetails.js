@@ -76,10 +76,10 @@ class CellLineDetails extends React.Component {
 
     return (
       <div>
-        
+
         <ElementCollectionLabels class="collection-label floating" element={cellLineItem} key={cellLineItem.id} placement="right" />
-        <div class="floating header">{content}</div> 
-       
+        <div className="floating header">{content}</div>
+
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
         {this.renderSaveButton()}
@@ -186,7 +186,7 @@ class CellLineDetails extends React.Component {
             <Tab eventKey="tab3" title="References" key="tab3">
               <DetailsTabLiteratures
                 element={cellLineItem}
-                literatures={cellLineItem.isNew === true ? cellLineItem.literatures : null}
+                literatures={cellLineItem.is_new === true ? cellLineItem.literatures : null}
               />
             </Tab>
           </Tabs>
@@ -206,14 +206,14 @@ class CellLineDetails extends React.Component {
 export default observer(CellLineDetails);
 
 CellLineDetails.propTypes = {
-  cellLineItem: PropTypes.arrayOf(PropTypes.shape({
+  cellLineItem: PropTypes.shape({
     id: PropTypes.string.isRequired,
     itemName: PropTypes.string.isRequired,
     cellLineName: PropTypes.string.isRequired,
-    isNew: PropTypes.bool.isRequired,
+    is_new: PropTypes.bool.isRequired,
     // eslint-disable-next-line react/forbid-prop-types
-    literatures: PropTypes.arrayOf(PropTypes.object).isRequired,
+    literatures: PropTypes.arrayOf(PropTypes.object),
     disease: PropTypes.string.isRequired
-  })).isRequired,
+  }).isRequired,
   toggleFullScreen: PropTypes.func.isRequired
 };

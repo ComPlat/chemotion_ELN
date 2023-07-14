@@ -53,9 +53,8 @@ class GeneralProperties extends React.Component {
             <FormControl
               className={styleClass}
               type="text"
-              defaultValue={defaultValue}
-              onChange={onChangeCallBack}
               value={defaultValue}
+              onChange={onChangeCallBack}
             />
           </Col>
         </Row>
@@ -207,7 +206,7 @@ class GeneralProperties extends React.Component {
 export default observer(GeneralProperties);
 
 GeneralProperties.propTypes = {
-  item: PropTypes.objectOf(PropTypes.shape({
+  item: PropTypes.shape({
     id: PropTypes.string.isRequired
-  })).isRequired
+  }).isRequired
 };

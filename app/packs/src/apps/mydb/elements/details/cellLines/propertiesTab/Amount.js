@@ -34,7 +34,6 @@ class Amount extends React.Component {
     return (
       <FormControl
         className={this.getStyleClass(cellLineItem)}
-        defaultValue={currentValue}
         value={currentValue}
         onChange={(e) => {
           const { value } = e.target;
@@ -99,6 +98,6 @@ class Amount extends React.Component {
 export default observer(Amount);
 
 Amount.propTypes = {
-  cellLineId: PropTypes.number.isRequired,
+  cellLineId: PropTypes.string.isRequired,
   initialValue: PropTypes.number.isRequired,
 };

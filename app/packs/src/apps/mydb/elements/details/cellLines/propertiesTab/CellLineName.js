@@ -85,6 +85,6 @@ export default class CellLineName extends React.Component {
 }
 
 CellLineName.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
 };

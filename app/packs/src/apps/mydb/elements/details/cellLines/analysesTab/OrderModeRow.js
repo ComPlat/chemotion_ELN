@@ -6,7 +6,7 @@ import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { compose } from 'redux';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import PropTypes from 'prop-types';
-import Container from '../../../../../../models/Container';
+import Container from 'src/models/Container';
 
 const dragHooks = {
   beginDrag(props) {
@@ -30,8 +30,6 @@ const dragHooks = {
 
 };
 
-
-
 const dragCollectHooks = (connect, monitor) => ({
   connectDragSource: connect.dragSource(),
   isDragging: monitor.isDragging(),
@@ -50,8 +48,6 @@ const dropCollectHooks = (connect, monitor) => (
     canDrop: monitor.canDrop(),
   }
 );
-
-
 
 class OrderModeRow extends Component {
   render() {

@@ -18,8 +18,9 @@ class AnalysesContainer extends Component {
   }
 
   handleAdd() {
-    const {cellLineDetailsStore} = this.context;
-    const newContainer = cellLineDetailsStore.addEmptyContainer(this.props.item.id);
+    const { item } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const newContainer = cellLineDetailsStore.addEmptyContainer(item.id);
     const { currentElement } = ElementStore.getState();
     currentElement.container.children[0].children.push(newContainer);
     this.handleChange(true);
@@ -44,20 +45,21 @@ class AnalysesContainer extends Component {
     }
   }
 
-  handleChange(changed=false) {
-    if(changed){
-      const {cellLineDetailsStore} = this.context;
-      cellLineDetailsStore.cellLines(this.props.item.id).setChanged(true)
+  handleChange(changed = false) {
+    const { item } = this.props;
+    if (changed) {
+      const { cellLineDetailsStore } = this.context;
+      cellLineDetailsStore.cellLines(item.id).setChanged(true);
     }
     this.forceUpdate();
   }
 
   renderAddButton() {
     return (
-      <div class="add-button">
-      <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-        Add analysis
-      </Button>
+      <div className="add-button">
+        <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          Add analysis
+        </Button>
       </div>
     );
   }
@@ -65,10 +67,10 @@ class AnalysesContainer extends Component {
   renderOrderModeButton() {
     const { mode } = this.state;
     return (
-      <div class="order-mode-button">
-      <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
-        {mode}
-      </Button>
+      <div className="order-mode-button">
+        <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
+          {mode}
+        </Button>
       </div>
     );
   }
@@ -76,7 +78,7 @@ class AnalysesContainer extends Component {
   renderContainerPanel() {
     const { currentElement } = ElementStore.getState();
     const containers = currentElement.container.children[0].children;
-    
+
     const { mode } = this.state;
 
     const analysisRows = mode === 'edit'
@@ -99,7 +101,7 @@ class AnalysesContainer extends Component {
     const { openPanel } = this.state;
     if (containers.length > 0) {
       return (
-        <div class="analyses">
+        <div className="analyses">
           <PanelGroup
             id={`cellLineAnalysisPanelGroupOf:${currentElement.id}`}
             defaultActiveKey="none"
@@ -112,18 +114,17 @@ class AnalysesContainer extends Component {
         </div>
       );
     }
-    return <div class="no-analyses-panel">There are currently no analyses</div>;
+    return <div className="no-analyses-panel">There are currently no analyses</div>;
   }
 
   render() {
     return (
       <div>
-        <p>
+        <div>
           {this.renderOrderModeButton()}
           {this.renderAddButton()}
-        </p>
+        </div>
         { this.renderContainerPanel()}
-
       </div>
     );
   }
@@ -131,7 +132,7 @@ class AnalysesContainer extends Component {
 export default observer(AnalysesContainer);
 
 AnalysesContainer.propTypes = {
-  item: PropTypes.arrayOf(PropTypes.shape({
+  item: PropTypes.shape({
     id: PropTypes.string.isRequired,
-  })).isRequired
+  }).isRequired
 };
