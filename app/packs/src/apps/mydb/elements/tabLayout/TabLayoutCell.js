@@ -31,32 +31,32 @@ class TabLayoutCell extends Component {
     } = this.props;
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-    let cellIcon = `icon-${cell}`;
+    const cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
 
     if (!elnElements.includes(cell)) {
       const genericElements = UserStore.getState().genericEls || [];
-      const genericElement = (genericElements && genericElements.find(el => el.name === cell)) || {};
+      const genericElement = (genericElements && genericElements.find((el) => el.name === cell)) || {};
       cellTitle = genericElement.label;
       cellDescription = genericElement.desc;
     }
 
     let content = isElementDetails ? (
       <div style={{ width: '100%' }}>
-        <p className='tab-layout-cell'>{title === 'hidden' ? '-' : title}</p>
+        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       <div>
-        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')} >
-          {isHidden ? "\u00A0" : ''}
+        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')}>
+          {isHidden ? '\u00A0' : ''}
         </i>
       </div>
     );
 
     content = isCollectionTab ? (
       <div style={{ width: 'auto' }}>
-        <p className='tab-layout-cell'>{title === 'hidden' ? '-' : title}</p>
+        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       content
@@ -71,7 +71,7 @@ export default flow(
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging()
   })),
-  DropTarget(DragDropItemTypes.LAYOUT, layoutTarget, connect => ({
+  DropTarget(DragDropItemTypes.LAYOUT, layoutTarget, (connect) => ({
     connectDropTarget: connect.dropTarget()
   }))
 )(TabLayoutCell);
