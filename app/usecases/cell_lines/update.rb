@@ -42,6 +42,7 @@ module Usecases
           cryo_pres_medium: @params[:cryo_pres_medium],
           gender: @params[:gender],
           description: @params[:material_description],
+          source: @params[:source],
         )
       end
 
@@ -72,11 +73,10 @@ module Usecases
       end
 
       def check_parameter # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-        raise 'organism not valid' unless !@params[:organism] || check_ontology(@params[:organism])
-        raise 'tissue not valid' unless !@params[:tissue] || check_ontology(@params[:tissue])
         raise 'amount not valid' unless !@params[:amount] || check_scalar_value(@params[:amount])
         raise 'passage not valid' unless !@params[:passage] || check_scalar_value(@params[:passage])
-        raise 'disease not valid' unless !@params[:disease] || check_string_value(@params[:disease])
+        raise 'unit not valid' unless !@params[:unit] || check_string_value(@params[:unit])
+        raise 'source not valid' unless !@params[:source] || check_string_value(@params[:source])
         raise 'material name not valid' unless !@params[:material_names] || check_names_value(@params[:material_names])
       end
 
