@@ -100,6 +100,9 @@ export default class CellLineEntry extends Component {
 
   renderCreateSubSampleButton() {
     const { cellLineItems } = this.props;
+    const { currentCollection, isSync } = UIStore.getState();
+    if (currentCollection.label === 'All') { return null; }
+
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
         <Button
@@ -108,7 +111,6 @@ export default class CellLineEntry extends Component {
           onClick={(event) => {
             event.stopPropagation();
 
-            const { currentCollection, isSync } = UIStore.getState();
             const uri = isSync
               ? `/scollection/${currentCollection.id}/cell_line/new`
               : `/collection/${currentCollection.id}/cell_line/new`;
