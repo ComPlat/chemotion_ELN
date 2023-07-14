@@ -214,7 +214,7 @@ export default class ManagingActions extends React.Component {
     const assignDisabled = noSel || !assign_allowed;
     const removeDisabled = noSel || isAll || !deletion_allowed; //!remove_allowed
     const deleteDisabled = noSel || !deletion_allowed;
-    const shareDisabled = noSel || !sharing_allowed;
+    const shareDisabled = noSel || !sharing_allowed || !move_allowed;
 
     return (
       <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
