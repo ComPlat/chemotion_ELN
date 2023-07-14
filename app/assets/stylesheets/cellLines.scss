@@ -94,6 +94,9 @@
         .white-background{
             background:white
         }
+        .blue-background{
+            background:rgb(51, 122, 183)
+        }
         .top-border{
             border-top: 1px solid #ddd;
         }
@@ -242,19 +245,27 @@
         color:red;
     }
 }
-.eln-panel-detail{
-    .header{
-        margin-top: 3px;
-        margin-right: 10px;
-    }
-    .panel-heading{
-        min-height: 41px;
+.tab-content{
+    .eln-panel-detail{
+        .header{
+            margin-top: 3px;
+            margin-right: 10px;
+            color: white;
+        }
+        .panel-heading{
+            min-height: 41px;
+        }
+        .blue-background{
+            background:rgb(51, 122, 183)
+        }
+        .collection-label{
+            margin-top: 2px;
+            margin-right: 10px;
+        }
     }
 }
 
-.collection-label{
-    margin-right: 10px;
-}
+
 
 
 .floating{

@@ -10,6 +10,7 @@ import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemT
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class CellLineItemEntry extends Component {
   constructor(props) {
@@ -48,11 +49,14 @@ export default class CellLineItemEntry extends Component {
 
   render() {
     const { cellLineItem } = this.props;
+    const { currentElement } = ElementStore.getState();
+
+    const backgroundColor=currentElement!==null&&currentElement.id==cellLineItem.id?"blue-background":"white-background";
     return (
       <div className="group-entry">
         <Table className="elements" hover>
           <tbody>
-            <tr className="white-background top-border">
+            <tr className={backgroundColor+" top-border"}>
               <td className="select-checkBox">
                 <ElementCheckbox
                   element={cellLineItem}

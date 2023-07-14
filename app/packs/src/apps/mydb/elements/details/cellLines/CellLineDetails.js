@@ -66,19 +66,11 @@ class CellLineDetails extends React.Component {
   renderHeaderContent() {
     const { cellLineItem } = this.props;
 
-    let content = 'new Cell Line';
-    if (cellLineItem.cellLineName) {
-      content = `${cellLineItem.cellLineName}`;
-    }
-    if (cellLineItem.itemName) {
-      content += ` - ${cellLineItem.itemName}`;
-    }
-
     return (
       <div>
 
         <ElementCollectionLabels class="collection-label floating" element={cellLineItem} key={cellLineItem.id} placement="right" />
-        <div className="floating header">{content}</div>
+        <div className="floating header"> <i className="icon-cell_line" />{cellLineItem.short_label}</div>
 
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
@@ -178,7 +170,7 @@ class CellLineDetails extends React.Component {
       <Panel
         className="eln-panel-detail"
       >
-        <Panel.Heading>{this.renderHeaderContent()}</Panel.Heading>
+        <Panel.Heading className="blue-background">{this.renderHeaderContent()}</Panel.Heading>
         <Panel.Body>
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralProperties item={cellLineItem} /></Tab>
