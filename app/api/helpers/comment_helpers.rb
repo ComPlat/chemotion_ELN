@@ -4,21 +4,10 @@ module CommentHelpers
   extend Grape::API::Helpers
 
   def authorized_users(collections)
-    sync_collections = collections.synchronized
-    shared_collections = collections.where(is_shared: true)
+    user_ids = collections.pluck(:user_id)
+    shared_collections_user_ids = CollectionAcl.where(collection_id: collections.ids).pluck(:user_id)
 
-    sync_collection_users = SyncCollectionsUser.includes(:user)
-                                               .where(shared_by_id: sync_collections.pluck(:user_id),
-                                                      collection_id: sync_collections.ids)
-    user_ids = sync_collection_users&.flat_map do |sync_collection_user|
-      sync_collection_user.user&.send(:user_ids)
-    end
-
-    shared_collections&.flat_map do |collection|
-      user_ids += collection.user&.send(:user_ids)
-    end
-
-    (collections.unshared.pluck(:user_id) + user_ids).compact.uniq
+    (user_ids + shared_collections_user_ids).compact.uniq
   end
 
   def element_name(element)

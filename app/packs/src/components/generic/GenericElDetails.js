@@ -314,7 +314,17 @@ export default class GenericElDetails extends Component {
 
   elementalPropertiesItem(genericEl) {
     const options = [];
-    const defaultName = <GenProperties key={`${genericEl.id}_elementalPropertiesItem`} label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
+    const defaultName =
+      <GenProperties
+        key={`${genericEl.id}_elementalPropertiesItem`}
+        label="" description={genericEl.description || ''}
+        value={genericEl.name || ''}
+        type="text"
+        onChange={event => this.handleInputChange(event, 'name', '')}
+        isEditable
+        readOnly={!genericEl.can_update}
+        isRequired
+      />;
     options.push(defaultName);
     const layersLayout = LayersLayout(
       genericEl.properties.layers,

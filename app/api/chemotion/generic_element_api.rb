@@ -156,8 +156,7 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        collection_id = params[:collection_id] &&
-          Collection.fetch_collection_w_current_user(params[:collection_id])&.id
+        collection_id = params[:collection_id] && fetch_collection_w_current_user(params[:collection_id])&.id
 
         scope =
           if collection_id

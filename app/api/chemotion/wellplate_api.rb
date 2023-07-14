@@ -37,7 +37,8 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          cid = fetch_collection_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_shared])&.id
+          params_cid = params[:ui_state][:collection_id]
+          cid = params_cid && fetch_collection_w_current_user(params_cid)&.id
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)
@@ -62,23 +63,12 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope = if params[:collection_id]
-          begin
-            Collection.owned_by(user_ids)
-              .find(params[:collection_id]).wellplates
-          rescue ActiveRecord::RecordNotFound
-            Wellplate.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
-          rescue ActiveRecord::RecordNotFound
-            Wellplate.none
-          end
-        else
-          # All collection of current_user
-          Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
+        scope = begin
+                  collection = fetch_collection_w_current_user(params[:collection_id])
+                  collection ? collection.wellplates.order('created_at DESC') : Wellplate.none
+                rescue ActiveRecord::RecordNotFound
+                  Wellplate.none
+                end
 
         from = params[:from_date]
         to = params[:to_date]

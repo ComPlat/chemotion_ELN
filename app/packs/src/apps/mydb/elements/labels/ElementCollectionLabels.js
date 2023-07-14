@@ -31,11 +31,11 @@ export default class ElementCollectionLabels extends React.Component {
     return collections.map((collection) => (
       <span className="collection-label" key={uuid.v4()}>
         <Button
-          disabled={(collection.acl?.length > 0) && collection.ownedByMe()}
+          disabled={(collection?.acl?.length > 0) && collection?.ownedByMe()}
           bsStyle="default" bsSize="xs"
           onClick={(e) => this.handleOnClick(collection, e)}
         >
-          {collection.label}
+          {collection?.label}
           &nbsp;
           <SharedByIcon collection={collection}/>
         </Button>
@@ -73,7 +73,7 @@ export default class ElementCollectionLabels extends React.Component {
     let shared_labels = [];
     let labels = [];
     collections.map((collection) => {
-      if (collection.ownedByMe()) {
+      if (collection?.ownedByMe()) {
         labels.push(collection);
       } else {
         shared_labels.push(collection);

@@ -492,7 +492,9 @@ export default class ResearchPlanDetails extends Component {
   render() {
     const { researchPlan, update, visible } = this.state;
 
-    let btnMode = <Button bsSize="xs" bsStyle="success" onClick={() => this.handleSwitchMode('edit')}>click to edit</Button>;
+    let btnMode = <Button bsSize="xs" bsStyle="success" disabled={!researchPlan.can_update} onClick={() => this.handleSwitchMode('edit')}>
+                    click to edit
+                  </Button>;
     if (researchPlan.mode !== 'view') {
       btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
     }
