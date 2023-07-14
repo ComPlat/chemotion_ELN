@@ -67,8 +67,11 @@ export default class CellLineItemEntry extends Component {
                 cellLineItem={cellLineItem}
                 showDetails={this.showDetails}
               />
-              <td className="arrow">
+               <td >
                 <ElementCollectionLabels element={cellLineItem} />
+              </td>
+              <td className="arrow">
+               
                 <ElementContainer
                   sourceType={DragDropItemTypes.CELL_LINE}
                   element={cellLineItem}
