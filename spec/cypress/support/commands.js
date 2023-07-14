@@ -56,6 +56,17 @@ Cypress.Commands.add('createDefaultAdmin', () => {
   ]);
 });
 
+Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname, abbr, ) => {
+  cy.get('[data-cy="create-user"]').click();
+  cy.get('#formControlEmail').type(email);
+  cy.get('#formControlPassword').type(password);
+  cy.get('#formControlPasswordConfirmation').type(password);
+  cy.get('#formControlFirstName').type(fname);
+  cy.get('#formControlLastName').type(lname);
+  cy.get('#formControlAbbr').type(abbr);
+  cy.get('.col-sm-10 > .btn').click();
+});
+
 Cypress.Commands.add('createCollection', (userID, label) => {
   cy.appFactories([
     ['create', 'collection', {
