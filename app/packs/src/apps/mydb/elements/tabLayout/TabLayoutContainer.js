@@ -1,9 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
+import uuid from 'uuid';
 
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import TabLayoutCell from 'src/apps/mydb/elements/tabLayout/TabLayoutCell';
+import capitalizeWords from 'src/utilities/textHelper';
 
 export default class TabLayoutContainer extends React.Component {
   constructor(props) {
@@ -12,7 +14,7 @@ export default class TabLayoutContainer extends React.Component {
     this.state = {
       visible: Immutable.List(props.visible),
       hidden: Immutable.List(props.hidden)
-    }
+    };
 
     this.moveLayout = this.moveLayout.bind(this);
   }
@@ -22,7 +24,7 @@ export default class TabLayoutContainer extends React.Component {
 
     if (!dragItem.isHidden && hoverItem.isHidden && visible.size === 1) return;
 
-    if (dragItem.isHidden && dragItem.title === 'hidden') return
+    if (dragItem.isHidden && dragItem.title === 'hidden') return;
 
     if (dragItem.isHidden) {
       hidden = hidden.splice(dragItem.index, 1);
@@ -42,18 +44,18 @@ export default class TabLayoutContainer extends React.Component {
       hidden = ArrayUtils.removeFromListByValue(hidden, 'hidden');
     }
 
-     visible = ArrayUtils.removeFromListByValue(visible, 'hidden');
+    visible = ArrayUtils.removeFromListByValue(visible, 'hidden');
     this.setState({ visible, hidden });
   }
 
   render() {
     const { visible, hidden } = this.state;
     const { isElementDetails, tabTitles, isCollectionTab } = this.props;
-    let moveLayout = this.moveLayout;
+    const { moveLayout } = this;
     const visibleCells = visible.map((cell, index) => {
-      const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
+      const defTitle = capitalizeWords(cell);
       return (
-        <td key={index + "_visible"}>
+        <td key={uuid.v4()}>
           <TabLayoutCell
             cell={cell}
             index={index}
@@ -68,9 +70,9 @@ export default class TabLayoutContainer extends React.Component {
     });
 
     const hiddenCells = hidden.map((cell, index) => {
-      const defTitle = cell.replace(/(^\w{1})|(\s+\w{1})/g, l => l.toUpperCase());
+      const defTitle = capitalizeWords(cell);
       return (
-        <td className="hidden-layout" key={index + "_hidden"}>
+        <td className="hidden-layout" key={uuid.v4()}>
           <TabLayoutCell
             cell={cell}
             index={index}
@@ -85,7 +87,7 @@ export default class TabLayoutContainer extends React.Component {
     });
 
     return (
-      <table className="layout-container" style={{ overflowY: 'scroll'}}>
+      <table className="layout-container" style={{ overflowY: 'scroll' }}>
         <tbody style={{ textAlign: 'left' }}>
           <tr>{visibleCells}</tr>
           <tr>{hiddenCells}</tr>

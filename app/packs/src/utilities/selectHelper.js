@@ -2,7 +2,6 @@
 // input: { users: [{ id: 1, name: 'John Doe', initials: 'JD', type: 'Person' }, ...]}
 // output: { options: [{ value: 1, label: 'John Doe (JD - Person)' }, ...]}
 
-
 const buildLabel = (user, withType = false) => (
   withType ? `${user.name} (${user.initials} - ${user.type})` : `${user.name} (${user.initials})`
 );

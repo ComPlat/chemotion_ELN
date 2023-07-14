@@ -160,7 +160,7 @@ export default class CollectionTabs extends React.Component {
   render() {
     const { tree, showModal, layouts } = this.state;
     const tabTitlesMap = {
-      qc_curation: 'qc curation',
+      qc_curation: 'QC & curation',
       computed_props: 'computed props',
       nmr_sim: 'NMR Simulation'
     };
@@ -183,7 +183,7 @@ export default class CollectionTabs extends React.Component {
               return (
                 <div style={{ textAlign: 'left' }}>
                   <Col md={6}>
-                    <p style={{ fontSize: '11px', fontWeight: 'bold' }}>{elements[index].label}</p>
+                    <p className="collection-tag-element">{elements[index].label}</p>
                   </Col>
                   <Col md={12}>
                     <TabLayoutContainer

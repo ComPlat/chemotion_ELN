@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from 'src/stores/alt/stores/UserStore';
-
+import capitalizeWords from 'src/utilities/textHelper';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 
 const layoutSource = {
@@ -20,7 +19,6 @@ const layoutTarget = {
 };
 
 class TabLayoutCell extends Component {
-
   render() {
     const {
       cell,
@@ -32,41 +30,33 @@ class TabLayoutCell extends Component {
       isCollectionTab
     } = this.props;
 
-    const styleObj = {
-      fontSize: 12,
-      color: '#000000',
-      textAlign: 'center',
-      wordWrap: 'break-word',
-      width: '85px'
-    };
-
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-    let cellIcon = `icon-${cell}`;
-    let cellTitle = cell && (cell.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
+    const cellIcon = `icon-${cell}`;
+    let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
 
     if (!elnElements.includes(cell)) {
       const genericElements = UserStore.getState().genericEls || [];
-      const genericElement = (genericElements && genericElements.find(el => el.name === cell)) || {};
+      const genericElement = (genericElements && genericElements.find((el) => el.name === cell)) || {};
       cellTitle = genericElement.label;
       cellDescription = genericElement.desc;
     }
 
     let content = isElementDetails ? (
       <div style={{ width: '100%' }}>
-        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
+        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       <div>
-        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')} >
-          {isHidden ? "\u00A0" : ''}
+        <i className={cellIcon} title={[cellTitle, cellDescription].join(': ')}>
+          {isHidden ? '\u00A0' : ''}
         </i>
       </div>
     );
 
     content = isCollectionTab ? (
       <div style={{ width: 'auto' }}>
-        <p style={styleObj}>{title === 'hidden' ? '-' : title}</p>
+        <p className="tab-layout-cell">{title === 'hidden' ? '-' : title}</p>
       </div>
     ) : (
       content
@@ -81,7 +71,7 @@ export default flow(
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging()
   })),
-  DropTarget(DragDropItemTypes.LAYOUT, layoutTarget, connect => ({
+  DropTarget(DragDropItemTypes.LAYOUT, layoutTarget, (connect) => ({
     connectDropTarget: connect.dropTarget()
   }))
 )(TabLayoutCell);
