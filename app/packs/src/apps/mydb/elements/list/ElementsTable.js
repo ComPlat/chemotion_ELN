@@ -369,7 +369,6 @@ export default class ElementsTable extends React.Component {
         />
       )
     }else if (type === 'cell_line') {
-
       elementsTableEntries = (
         <CellLineContainer 
           cellLineGroups={CellLineGroup.buildFromElements(elements)}

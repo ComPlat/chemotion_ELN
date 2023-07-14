@@ -5,11 +5,11 @@ import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 
 export default class CellLineItemEntry extends Component {
   constructor() {
@@ -69,7 +69,7 @@ export default class CellLineItemEntry extends Component {
                 showDetails={this.showDetails}
               />
               <td className="arrow">
-              <ElementCollectionLabels element={cellLineItem} key={cellLineItem.id}/>
+                <ElementCollectionLabels element={cellLineItem} key={cellLineItem.id} />
                 <ElementContainer
                   key={cellLineItem.id}
                   sourceType={DragDropItemTypes.CELL_LINE}
@@ -85,13 +85,5 @@ export default class CellLineItemEntry extends Component {
 }
 
 CellLineItemEntry.propTypes = {
-  cellLineItem: PropTypes.shape({
-    amount: PropTypes.number.isRequired,
-    passage: PropTypes.number.isRequired,
-    short_label: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
-    contamination: PropTypes.string.isRequired,
-    id: PropTypes.string.isRequired,
-    is_checked: PropTypes.bool,
-  }).isRequired
+  cellLineItem: CellLinePropTypeTableEntry.isRequired
 };

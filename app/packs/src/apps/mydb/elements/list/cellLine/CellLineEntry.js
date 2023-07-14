@@ -4,6 +4,8 @@ import CellLineItemEntry from 'src/apps/mydb/elements/list/cellLine/CellLineItem
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
+import Aviator from 'aviator';
 
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -164,10 +166,7 @@ export default class CellLineEntry extends Component {
 }
 
 CellLineEntry.propTypes = {
-  cellLineItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    cellLineName: PropTypes.string.isRequired,
-    organism: PropTypes.string.isRequired,
-    disease: PropTypes.string.isRequired
-  })).isRequired
+  cellLineItems: PropTypes.arrayOf(
+    CellLinePropTypeTableEntry
+  ).isRequired
 };

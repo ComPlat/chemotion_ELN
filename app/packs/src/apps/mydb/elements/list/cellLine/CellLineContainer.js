@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import CellLineEntry from 'src/apps/mydb/elements/list/cellLine/CellLineEntry';
 import PropTypes from 'prop-types';
+import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class CellLineContainer extends Component {
@@ -23,9 +24,9 @@ export default class CellLineContainer extends Component {
 }
 
 CellLineContainer.propTypes = {
-  cellLineGroups: PropTypes.shape({
-    // eslint-disable-next-line react/forbid-prop-types
-    cellLineItems: PropTypes.arrayOf(PropTypes.object),
-    map: PropTypes.func.isRequired
-  }).isRequired
+  cellLineGroups: PropTypes.arrayOf(
+    PropTypes.shape({
+      cellLineItems: PropTypes.arrayOf(CellLinePropTypeTableEntry),
+    })
+  ).isRequired
 };
