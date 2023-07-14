@@ -86,6 +86,7 @@ module Reporter
 
         entity_class.new(
           instance,
+          current_user: @author,
           detail_levels: ElementDetailLevelCalculator.new(user: @author, element: instance).detail_levels,
         ).serializable_hash
       end
