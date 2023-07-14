@@ -58,7 +58,7 @@ export default class CellLineEntry extends Component {
     const { showEntries } = this.state;
     const arrowType = showEntries ? 'glyphicon-chevron-right' : 'glyphicon-chevron-down';
     return (
-      <div className="cell-line-group-arrow floating-right">
+      <div key="arrow" className="cell-line-group-arrow floating-right">
         <i className={`glyphicon ${arrowType}`} />
       </div>
 
@@ -83,7 +83,7 @@ export default class CellLineEntry extends Component {
     const { detailedInformation } = this.state;
     const buttonActive = detailedInformation ? 'detailed-info-on' : 'detailed-info-off';
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
+      <OverlayTrigger key="detailedInfoButton" placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
         <Button
           className={`button-right ${buttonActive}`}
           bsSize="xsmall"
@@ -104,7 +104,7 @@ export default class CellLineEntry extends Component {
     if (currentCollection.label === 'All') { return null; }
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
+      <OverlayTrigger key="subSampleButton" placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
         <Button
           className="button-right quick-sample"
           bsSize="xsmall"

@@ -12,8 +12,8 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
 
 export default class CellLineItemEntry extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.showDetails = this.showDetails.bind(this);
   }
 
