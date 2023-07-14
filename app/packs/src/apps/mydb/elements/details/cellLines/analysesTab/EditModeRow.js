@@ -35,13 +35,13 @@ export default class EditModeRow extends Component {
 }
 
 EditModeRow.propTypes = {
-  container: PropTypes.arrayOf(PropTypes.shape({
+  container: PropTypes.shape({
     id: PropTypes.string.isRequired,
-  })).isRequired,
+  }).isRequired,
   parent: PropTypes.shape({
     handleClickOnPanelHeader: PropTypes.func.isRequired,
     handleChange: PropTypes.func.isRequired
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
-  element: PropTypes.objectOf(PropTypes.object).isRequired
+  element: PropTypes.object.isRequired
 };
