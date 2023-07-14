@@ -183,7 +183,7 @@ class CellLineDetails extends React.Component {
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralProperties item={cellLineItem} /></Tab>
             <Tab eventKey="tab2" title="Analyses" key="tab2"><AnalysesContainer item={cellLineItem} /></Tab>
-            <Tab eventKey="tab3" title="References" key="tab3">
+            <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
               <DetailsTabLiteratures
                 element={cellLineItem}
                 literatures={cellLineItem.is_new === true ? cellLineItem.literatures : null}
