@@ -56,43 +56,41 @@ class Report < ApplicationRecord
     if ReportTemplate.where(id: report_templates_id).present?
       report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
       template = report_template.report_type
-#     tpl_path = if report_template.attachment
-#                  report_template.attachment.attachment_url
-#                else
-#                  report_template.report_type
-#                end
-      tpl_path = self.class.template_path(template)
-    else
-      tpl_path = self.class.template_path(template)
+      #     tpl_path = if report_template.attachment
+      #                  report_template.attachment.attachment_url
+      #                else
+      #                  report_template.report_type
+      #                end
     end
+    tpl_path = self.class.template_path(template)
     case template
     when 'spectrum'
       Reporter::WorkerSpectrum.new(
-        report: self, template_path: tpl_path
+        report: self, template_path: tpl_path,
       ).process
     when 'supporting_information'
       Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path, std_rxn: false
+        report: self, template_path: tpl_path, std_rxn: false,
       ).process
     when 'supporting_information_std_rxn'
       Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path, std_rxn: true
+        report: self, template_path: tpl_path, std_rxn: true,
       ).process
     when 'rxn_list_xlsx'
       Reporter::WorkerRxnList.new(
-        report: self, ext: 'xlsx'
+        report: self, ext: 'xlsx',
       ).process
     when 'rxn_list_csv'
       Reporter::WorkerRxnList.new(
-        report: self, ext: 'csv'
+        report: self, ext: 'csv',
       ).process
     when 'rxn_list_html'
       Reporter::WorkerRxnList.new(
-        report: self, template_path: tpl_path, ext: 'html'
+        report: self, template_path: tpl_path, ext: 'html',
       ).process
     else
       Reporter::Worker.new(
-        report: self, template_path: tpl_path
+        report: self, template_path: tpl_path,
       ).process
     end
   end
@@ -112,16 +110,17 @@ class Report < ApplicationRecord
     reaction = Reaction.find(params[:id])
     serialized_reaction = Entities::ReactionReportEntity.represent(
       reaction,
-      detail_levels: ElementDetailLevelCalculator.new(user: current_user, element:reaction).detail_levels
+      current_user: current_user,
+      detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
     ).serializable_hash
     content = Reporter::Docx::Document.new(objs: [serialized_reaction]).convert
     tpl_path = template_path(params[:template])
-    file = Sablon.template(tpl_path)
-                 .render_to_string(merge(current_user,
-                                         content,
-                                         all_spl_settings,
-                                         all_rxn_settings,
-                                         all_configs))
+    Sablon.template(tpl_path)
+          .render_to_string(merge(current_user,
+                                  content,
+                                  all_spl_settings,
+                                  all_rxn_settings,
+                                  all_configs))
   end
 
   def self.docx_file_name(template)
@@ -162,7 +161,7 @@ class Report < ApplicationRecord
       spl_settings: spl_settings,
       rxn_settings: rxn_settings,
       configs: configs,
-      objs: contents
+      objs: contents,
     }
   end
 
@@ -171,7 +170,7 @@ class Report < ApplicationRecord
       diagram: true,
       collection: true,
       analyses: true,
-      reaction_description: true
+      reaction_description: true,
     }
   end
 
@@ -185,14 +184,14 @@ class Report < ApplicationRecord
       tlc: true,
       observation: true,
       analysis: true,
-      literature: true
+      literature: true,
     }
   end
 
   def self.all_configs
     {
       page_break: true,
-      whole_diagram: true
+      whole_diagram: true,
     }
   end
 
