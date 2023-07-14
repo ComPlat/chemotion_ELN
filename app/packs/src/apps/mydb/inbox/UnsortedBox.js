@@ -142,21 +142,21 @@ export default class UnsortedBox extends React.Component {
   render() {
     const { unsorted_box, largerInbox, fromCollectionTree } = this.props;
     const {
-      visible, modal, checkedAll, currentUnsortedBoxPage, dataItemsPerPage
+      visible, modal, checkedAll, checkedIds, currentUnsortedBoxPage, dataItemsPerPage
     } = this.state;
 
     const renderCheckAll = (
       <div>
         <input
           type="checkbox"
-          checked={checkedAll}
+          checked={checkedAll && checkedIds.length === unsorted_box.length}
           onChange={this.toggleSelectAllCheckbox}
         />
         <span
           className="g-marginLeft--10"
           style={{ fontWeight: 'bold' }}
         >
-          {this.hasChecked() ? 'Deselect all' : 'Select all'}
+          {this.hasChecked() && checkedIds.length === unsorted_box.length ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
@@ -206,6 +206,7 @@ export default class UnsortedBox extends React.Component {
         attachment={attachment}
         largerInbox={largerInbox}
         fromUnsorted
+        isSelected={checkedIds.includes(attachment.id)}
       />
     )) : <div />;
 
