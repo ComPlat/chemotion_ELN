@@ -57,7 +57,8 @@ module Chemotion
               move_allowed = false
             end
           end
-          { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed, is_top_secret: is_top_secret, assign_allowed: assign_allowed, move_allowed: move_allowed }
+          { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed, is_top_secret: is_top_secret,
+            assign_allowed: assign_allowed, move_allowed: move_allowed }
         end
       end
     end
