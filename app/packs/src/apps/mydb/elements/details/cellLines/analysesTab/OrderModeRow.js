@@ -74,9 +74,9 @@ export default compose(
 )(OrderModeRow);
 
 OrderModeRow.propTypes = {
-  container: PropTypes.objectOf(PropTypes.shape({
-    id: PropTypes.string.isRequired
-  })).isRequired,
+  container: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  }).isRequired,
   // eslint-disable-next-line  react/forbid-prop-types
   connectDragSource: PropTypes.any.isRequired,
   // eslint-disable-next-line  react/forbid-prop-types

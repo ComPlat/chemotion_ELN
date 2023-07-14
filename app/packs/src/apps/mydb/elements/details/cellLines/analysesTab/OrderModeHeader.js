@@ -1,7 +1,6 @@
 import React from 'react';
 import QuillViewer from 'src/components/QuillViewer';
 import PropTypes from 'prop-types';
-import Container from 'src/models/Container';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 
@@ -98,5 +97,17 @@ export default class OrderModeHeader extends React.Component {
 }
 
 OrderModeHeader.propTypes = {
-  container: PropTypes.instanceOf(Container).isRequired,
+  container: PropTypes.shape({
+    extended_metadata: PropTypes.shape({
+      status: PropTypes.string,
+      kind: PropTypes.string,
+      report: PropTypes.bool,
+      // eslint-disable-next-line react/forbid-prop-types
+      content: PropTypes.object,
+    }),
+    name: PropTypes.string,
+    is_deleted: PropTypes.bool,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+
+  }).isRequired
 };

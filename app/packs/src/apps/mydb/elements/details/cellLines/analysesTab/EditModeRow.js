@@ -36,7 +36,7 @@ export default class EditModeRow extends Component {
 
 EditModeRow.propTypes = {
   container: PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   }).isRequired,
   parent: PropTypes.shape({
     handleClickOnPanelHeader: PropTypes.func.isRequired,
