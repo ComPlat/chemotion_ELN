@@ -56,7 +56,6 @@ export default class CellLineItemEntry extends Component {
               <td className="select-checkBox">
                 <ElementCheckbox
                   element={cellLineItem}
-                  key={cellLineItem.id}
                   checked={this.isElementChecked(cellLineItem)}
                 />
               </td>
@@ -69,9 +68,8 @@ export default class CellLineItemEntry extends Component {
                 showDetails={this.showDetails}
               />
               <td className="arrow">
-                <ElementCollectionLabels element={cellLineItem} key={cellLineItem.id} />
+                <ElementCollectionLabels element={cellLineItem} />
                 <ElementContainer
-                  key={cellLineItem.id}
                   sourceType={DragDropItemTypes.CELL_LINE}
                   element={cellLineItem}
                 />
