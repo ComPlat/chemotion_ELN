@@ -25,7 +25,8 @@ export default class Screen extends Element {
       component_graph_data: {
         nodes: [],
         edges: []
-      }
+      },
+      can_update: true
     });
   }
 
@@ -50,7 +51,8 @@ export default class Screen extends Element {
       component_graph_data: {
         nodes: [],
         edges: []
-      }
+      },
+      can_update: true
     })
   }
 

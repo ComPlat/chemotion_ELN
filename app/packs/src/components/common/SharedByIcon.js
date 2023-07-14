@@ -15,13 +15,14 @@ const SharedByIcon = ({ collection }) => {
     sharedUsers.push(collection.user);
   }
 
-  return (
-    sharedUsers && sharedUsers.length > 0
-      ? <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>
+  if (sharedUsers && sharedUsers.length > 0)
+    return (
+      <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>
         <i className="fa fa-share-alt" style={{ float: "right", marginTop: '2px' }}></i>
       </OverlayTrigger>
-      : null
-  )
+    );
+
+  return null;
 };
 
 export default SharedByIcon;
