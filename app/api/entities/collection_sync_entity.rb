@@ -45,6 +45,9 @@ module Entities
     expose :sharer do |obj|
         obj['temp_sharer']
     end
+    expose :tabs_segment do |obj|
+        obj['tabs_segment']
+    end
     expose :children, as: 'children', using: Entities::CollectionSyncEntity
 
     expose :is_sync_to_me do |obj|
