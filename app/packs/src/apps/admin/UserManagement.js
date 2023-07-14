@@ -914,7 +914,7 @@ export default class UserManagement extends React.Component {
             Send Message&nbsp;<i className="fa fa-commenting-o" />
           </Button>
           &nbsp;
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()}>
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()} data-cy="create-user">
             New User&nbsp;<i className="fa fa-plus" />
           </Button>
         </Panel>

@@ -355,6 +355,7 @@ export default class ElementsTableEntries extends Component {
                   onClick={() => showDetails(element)}
                   style={{ cursor: 'pointer' }}
                   width={element.type === 'research_plan' ? '280px' : 'unset'}
+                  data-cy={"researchPLanItem-"+ element.id}
                 >
                   <div>
                     <SvgWithPopover
