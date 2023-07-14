@@ -1,6 +1,3 @@
-//cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json').as('colletions4');
-//cy.intercept('PATCH', '/api/v1/collections').as('collections.patch');
-
 describe('Collections APIs Testing', () => {
 
     it('GET collections/root', () => {
