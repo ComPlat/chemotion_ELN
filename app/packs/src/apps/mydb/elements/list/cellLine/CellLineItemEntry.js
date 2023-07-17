@@ -50,8 +50,10 @@ export default class CellLineItemEntry extends Component {
   render() {
     const { cellLineItem } = this.props;
     const { currentElement } = ElementStore.getState();
-
-    const backgroundColor=currentElement!==null&&currentElement.id==cellLineItem.id?"blue-background":"white-background";
+    let backgroundColor="white-background"
+    if(currentElement) { 
+     backgroundColor=currentElement!==null&&currentElement.id==cellLineItem.id?"blue-background":"white-background";
+    }
     return (
       <div className="group-entry">
         <Table className="elements" hover>
