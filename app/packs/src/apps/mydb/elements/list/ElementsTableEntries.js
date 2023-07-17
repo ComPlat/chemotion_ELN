@@ -65,23 +65,15 @@ function reactionVariations(element) {
 }
 
 function showDetails(element) {
-  const { currentCollection, isSync } = UIStore.getState();
   const { id, type } = element;
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/${type}/${id}`
-    : `/collection/${currentCollection.id}/${type}/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  const e = { type, params: { collectionID: currentCollection.id } };
+  AviatorNavigation({ element, silent: true });
+  const e = { type, params: {} };
   e.params[`${type}ID`] = id;
-
   const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
   if (genericEls.find((el) => el.name === type)) {
     e.klassType = 'GenericEl';
   }
-
   elementShowOrNew(e);
-
-  return null;
 }
 
 function sampleAnalysesLabels(element) {
