@@ -20,7 +20,7 @@ const elementList = () => {
     { name: 'reaction', label: 'Reaction' },
     { name: 'wellplate', label: 'Wellplate' },
     { name: 'screen', label: 'Screen' },
-    { name: 'research_plan', label: 'Research Plan' }
+    { name: 'research_plan', label: 'Research Plan' },
     { name: 'cell_line', label: 'Cell Line' }
   ];
   let genericEls = [];
