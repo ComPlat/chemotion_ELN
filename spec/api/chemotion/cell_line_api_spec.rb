@@ -37,8 +37,12 @@ describe Chemotion::CellLineAPI do
         get '/api/v1/cell_lines/-1'
       end
 
-      it 'returns correct http status 401' do
-        expect(response).to have_http_status :unauthorized
+      it 'returns correct http status 400' do
+        expect(response).to have_http_status :bad_request
+      end
+
+      it 'correct error message' do
+        expect(parsed_json_response['error']).to eq 'id not valid'
       end
     end
   end

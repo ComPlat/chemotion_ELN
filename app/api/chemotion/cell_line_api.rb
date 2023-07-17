@@ -56,7 +56,8 @@ module Chemotion
           Entities::CellLineSampleEntity.represent(
             cell_line_sample,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: cell_line_sample).detail_levels
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user,
+                                                            element: cell_line_sample).detail_levels,
           )
         end
         { cell_lines: cell_line_samples }
@@ -68,7 +69,11 @@ module Chemotion
       end
       get ':id' do
         use_case = Usecases::CellLines::Load.new(params[:id], current_user)
-        cell_line_sample = use_case.execute!
+        begin
+          cell_line_sample = use_case.execute!
+        rescue StandardError => e
+          error!(e, 400)
+        end
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 
