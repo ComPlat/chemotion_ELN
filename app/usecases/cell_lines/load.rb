@@ -3,15 +3,22 @@
 module Usecases
   module CellLines
     class Load
-      def initialize(params, current_user)
+      def initialize(id, current_user)
         @current_user = current_user
-        @params = params
+        @id = id
       end
 
       def execute!
-        raise unless @current_user.cellline_samples.find(@params[:id])
+        raise 'user is not valid' unless @current_user&.cellline_samples
+        raise 'id not valid' unless @id.is_a?(Numeric) && @id.positive?
 
-        CelllineSample.find(@params[:id])
+        begin
+          cell_line_sample = @current_user.cellline_samples.find(@id)
+        rescue StandardError
+          raise 'user has no access to object'
+        end
+
+        cell_line_sample
       end
     end
   end

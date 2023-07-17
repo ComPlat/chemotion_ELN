@@ -3,54 +3,51 @@
 require 'spec_helper'
 
 RSpec.describe Usecases::CellLines::Load do
+  let(:user) { create(:user) }
+  let(:collection) { create(:collection) }
+  let(:cellline_sample) { create(:cellline_sample) }
+  let(:cellline_sample2) { create(:cellline_sample) }
+  let(:id) { cellline_sample.id }
+
+  let(:loaded_cellline_sample) { described_class.new(id, user).execute! }
+
   describe 'execute!' do
-    context 'when loading parameter is "by sample id"' do
-      context 'when data is not valid' do
-        it 'error message delivered' do
-        end
+    before do
+      CollectionsCellline.create(
+        collection: collection,
+        cellline_sample: cellline_sample,
+      )
+      user.collections << collection
+      user.save
+    end
 
-        it 'returned value is empty' do
-        end
-      end
+    context 'when data is not valid' do
+      let(:loaded_cellline_sample) { described_class.new(id, nil).execute! }
 
-      context 'when cell line does not exist' do
-        it 'returned value is empty' do
-        end
-      end
-
-      context 'when cell line does exist but user has no access' do
-        it 'returned value is empty' do
-        end
-      end
-
-      context 'when cell line does exist and user has access' do
-        it 'returned value is the cellline' do
-        end
+      it 'error message delivered' do
+        expect { loaded_cellline_sample }.to raise_error(RuntimeError, 'user is not valid')
       end
     end
 
-    context 'when loading parameter is "by collection id"' do
-      context 'when data is not valid' do
-        it 'error message delivered' do
-        end
+    context 'when cell line does not exist' do
+      let(:id) { -1 }
 
-        it 'returned value is empty' do
-        end
+      it 'returned value is empty' do
+        expect { loaded_cellline_sample }.to raise_error(RuntimeError, 'id not valid')
       end
+    end
 
-      context 'when cell line does not exist' do
-        it 'returned value is empty' do
-        end
+    context 'when cell line does exist but user has no access' do
+      let(:id) { cellline_sample2.id }
+
+      it 'returned value is empty' do
+        expect { loaded_cellline_sample }.to raise_error(RuntimeError, 'user has no access to object')
       end
+    end
 
-      context 'when cell line does exist but user has no access' do
-        it 'returned value is empty' do
-        end
-      end
-
-      context 'when cell line does exist and user has access' do
-        it 'returned value is the cellline' do
-        end
+    context 'when cell line does exist and user has access' do
+      it 'returned value is the cellline' do
+        expect(loaded_cellline_sample).to eq(cellline_sample)
       end
     end
   end
