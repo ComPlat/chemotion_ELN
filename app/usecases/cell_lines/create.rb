@@ -11,18 +11,19 @@ module Usecases
       def execute!
         check_parameter
         cell_line_material = find_cellline_material || create_cellline_material
-        sample = create_cellline_sample(cell_line_material)
+        cell_line_sample = create_cellline_sample(cell_line_material)
 
         CollectionsCellline.create(
           collection: Collection.find(@params[:collection_id]),
-          cellline_sample_id: sample.id,
+          cellline_sample_id: cell_line_sample.id,
         )
         CollectionsCellline.create(
           collection: all_collection_of_current_user,
-          cellline_sample_id: sample.id,
+          cellline_sample_id: cell_line_sample.id,
         )
-        @current_user.increment_counter('celllines')
-        sample
+
+        @current_user.increment_counter('celllines') # rubocop: disable Rails/SkipsModelValidations
+        cell_line_sample
       end
 
       def find_cellline_material
@@ -68,11 +69,8 @@ module Usecases
       def check_parameter
         raise 'amount not valid' unless check_scalar_value(@params[:amount])
         raise 'passage not valid' unless check_scalar_value(@params[:passage])
-        raise 'material name not valid' unless check_names_value(@params[:material_names])
-      end
-
-      def check_ontology(field)
-        field.instance_of?(String) && !field.empty?
+        raise 'material name not valid' unless check_string_value(@params[:material_names])
+        raise 'source not valid' unless check_string_value(@params[:source])
       end
 
       def check_scalar_value(value)
@@ -80,10 +78,6 @@ module Usecases
       end
 
       def check_string_value(value)
-        value.instance_of?(String) && !value.empty?
-      end
-
-      def check_names_value(value)
         value.instance_of?(String) && !value.empty?
       end
 
