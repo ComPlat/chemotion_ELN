@@ -75,7 +75,7 @@ module Chemotion
           content: params[:content],
           noteable_id: params[:noteable_id],
           noteable_type: params[:noteable_type],
-          created_by: current_user.id
+          created_by: current_user.id,
         }
         note = PrivateNote.new(attributes)
         note.save!
