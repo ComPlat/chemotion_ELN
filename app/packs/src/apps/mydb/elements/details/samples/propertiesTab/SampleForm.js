@@ -17,7 +17,6 @@ import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/proper
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
-
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
@@ -415,7 +414,7 @@ export default class SampleForm extends React.Component {
             break;
       }
     }
-    
+
     return (
       <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
@@ -763,7 +762,9 @@ SampleForm.propTypes = {
   parent: PropTypes.object,
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
-  decoupleMolecule: PropTypes.func.isRequired
+  decoupleMolecule: PropTypes.func.isRequired,
 };
 
-SampleForm.defaultProps = { enableSampleDecoupled: false };
+SampleForm.defaultProps = {
+  enableSampleDecoupled: false,
+};

@@ -3,7 +3,7 @@
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 require 'rails_helper'
 
-# test for ExportJson ImportJson
+# test for ExportCollection
 RSpec.describe 'ExportCollection' do
   let(:nested) { true }
   let(:gate) { true }

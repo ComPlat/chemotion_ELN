@@ -1,8 +1,10 @@
+# rubocop:disable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment
+#
 Rails.application.routes.draw do
   post "/graphql", to: "graphql#execute" unless Rails.env.production?
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
-    devise_for :users, controllers: { registrations: 'users/registrations' }, skip: [:registrations]
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
@@ -80,3 +82,5 @@ Rails.application.routes.draw do
 
   get 'test', to: 'pages#test'
 end
+
+# rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment

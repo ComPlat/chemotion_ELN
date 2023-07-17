@@ -905,7 +905,7 @@ class ElementActions {
   // -- General --
 
   refreshElements(type) {
-    return type
+    return type;
   }
 
   deleteElements(options) {
@@ -964,6 +964,10 @@ class ElementActions {
 
   changeSorting(sort) {
     return sort;
+  }
+
+  changeElementsFilter(filter) {
+    return filter;
   }
 
   updateContainerContent(params) {

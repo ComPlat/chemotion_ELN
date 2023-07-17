@@ -16,8 +16,9 @@ export default class InboxButton extends React.Component {
     };
 
     this.onChange = this.onChange.bind(this);
-    this.renderBadge = this.renderBadge.bind(this);
+    this.render = this.render.bind(this);
   }
+
   componentDidMount() {
     InboxStore.listen(this.onChange);
     InboxActions.fetchInboxCount();
@@ -31,36 +32,46 @@ export default class InboxButton extends React.Component {
     this.setState(state);
   }
 
-  renderBadge() {
-    const { numberOfAttachments } = this.state;
-    return (
-      <Badge
-        style={{
-          position: 'absolute',
-          top: -5,
-          right: -20,
-          justifyContent: 'center',
-          alignItems: 'center',
-          display: numberOfAttachments > 0 ? 'flex' : 'none',
-        }}
-      >
-        {numberOfAttachments}
-      </Badge>
-    );
-  }
-
   render() {
+    const { numberOfAttachments } = this.state;
+    let btnStyle = 'default';
+    let btnClass = 'fa fa-inbox fa-lg';
+
+    if (numberOfAttachments > 0) {
+      btnStyle = 'warning';
+      btnClass = 'fa fa-inbox fa-lg';
+    }
+
     return (
       <div style={{ position: 'relative', display: 'inline-block' }}>
         <Button
           id="inbox-button"
-          bsStyle="default"
+          bsStyle={btnStyle}
           onClick={InboxActions.toggleInboxModal}
-          style={{ height: '34px', width: '36px' }}
+          style={{
+            height: '34px',
+            width: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <i className="fa fa-inbox fa-lg" />
+          <i className={btnClass} />
+          {numberOfAttachments > 0 && (
+            <span
+              className="badge badge-pill"
+              style={{
+                top: '25px',
+                left: '25px',
+                fontSize: '8px',
+                position: 'absolute',
+                display: 'flex',
+              }}
+            >
+              {numberOfAttachments}
+            </span>
+          )}
         </Button>
-        {this.renderBadge()}
       </div>
     );
   }

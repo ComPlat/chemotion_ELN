@@ -20,7 +20,6 @@ import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/Wellplat
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 
-
 const tabInfoHash = {
   metadata: {
     title: 'Metadata',
@@ -102,7 +101,7 @@ export default class ElementDetails extends Component {
       activeKey,
       deletingElement,
       showTooltip: false,
-      genericEls: UserStore.getState().genericEls || []
+      genericEls: UserStore.getState().genericEls || [],
     };
 
     this.handleResize = this.handleResize.bind(this);

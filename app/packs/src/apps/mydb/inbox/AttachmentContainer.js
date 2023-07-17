@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -10,6 +9,7 @@ import Utils from 'src/utilities/Functions';
 import MoveToAnalysisButton from 'src/apps/mydb/inbox/MoveToAnalysisButton';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 const dataSource = {
   beginDrag(props) {
@@ -160,7 +160,7 @@ class AttachmentContainer extends Component {
           </span>
         </OverlayTrigger>
         <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-          {moment(attachment.created_at).format('DD.MM.YYYY HH:mm')}
+          {formatDate(attachment.created_at)}
         </span>
       </div>,
       { dropEffect: 'move' }

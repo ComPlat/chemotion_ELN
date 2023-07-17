@@ -114,7 +114,6 @@ class ElementStore {
       refreshCoefficient: [],
       activeKey: 0,
       deletingElement: null,
-      ////
     };
 
     this.bindListeners({
@@ -172,6 +171,7 @@ class ElementStore {
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
       handleChangeSorting: ElementActions.changeSorting,
+      handleChangeElementsFilter: ElementActions.changeElementsFilter,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleTryFetchById: [
@@ -1102,7 +1102,20 @@ class ElementStore {
   handleChangeSorting(sort) {
     this.state.moleculeSort = sort;
     this.waitFor(UIStore.dispatchToken);
-    this.handleRefreshElements("sample");
+    this.handleRefreshElements('sample');
+  }
+
+  handleChangeElementsFilter(filter) {
+    const userState = UserStore.getState();
+    if (!userState.profile.filters) {
+      userState.profile.data.filters = {};
+    }
+    userState.profile.data.filters[filter.name] = {
+      sort: filter.sort,
+      group: filter.group
+    };
+
+    this.handleRefreshElements(filter.name);
   }
 
   // //////////////////////

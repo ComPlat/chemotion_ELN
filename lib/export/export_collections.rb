@@ -178,11 +178,11 @@ module Export
                    'fingerprint_id' => 'Fingerprint',
                    'created_by' => 'User',
                    'user_id' => 'User',
-                 })
+      })
       fetch_many(collection.collections_samples, {
                    'collection_id' => 'Collection',
                    'sample_id' => 'Sample',
-                 })
+      })
 
       # loop over samples and fetch sample properties
       samples.each do |sample|
@@ -191,10 +191,10 @@ module Export
         fetch_one(sample.molecule_name, {
                     'molecule_id' => 'Molecule',
                     'user_id' => 'User',
-                  })
+        })
         fetch_many(sample.residues, {
                      'sample_id' => 'Sample',
-                   })
+        })
 
         # fetch containers, attachments and literature
         fetch_containers(sample)

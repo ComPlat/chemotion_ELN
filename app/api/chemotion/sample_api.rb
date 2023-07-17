@@ -70,6 +70,7 @@ module Chemotion
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
         end
         post do
+          # Create a temp file in the tmp folder and sdf delayed job, and pass it to sdf delayed job
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(sdf?|mol)/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file][:tempfile].path,
@@ -104,18 +105,35 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          import_result = Import::ImportSamples.new.from_file(
-            params[:file][:tempfile].path,
-            params[:currentCollectionId], current_user.id
-          ).process
-
-          if import_result[:status] == 'ok'
-            # the FE does not actually use the returned data, just the number of elements.
-            # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js handleNotificationImportSamplesFromFile
-            import_result[:data] = import_result[:data].map(&:id)
+          file_size = params[:file][:tempfile].size
+          file = params[:file]
+          if file_size < 25_000
+            import = Import::ImportSamples.new(
+              params[:file][:tempfile].path,
+              params[:currentCollectionId], current_user.id, file['filename']
+            )
+            import_result = import.process
+            if import_result[:status] == 'ok' || import_result[:status] == 'warning'
+              # the FE does not actually use the returned data, just the number of elements.
+              # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js
+              # handleNotificationImportSamplesFromFile **
+              import_result[:data] = import_result[:data].map(&:id)
+            end
+            import_result
+          else
+            temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
+            # Create a new file in the tmp folder
+            tmp_file_path = File.join('tmp', temp_filename)
+            # Write the contents of the uploaded file to the temporary file
+            File.binwrite(tmp_file_path, file[:tempfile].read)
+            ImportSamplesJob.perform_later(
+              tmp_file_path,
+              params[:currentCollectionId],
+              current_user.id,
+              file['filename'],
+            )
+            { status: 'in progress', message: 'Importing samples in background' }
           end
-
-          import_result
         end
       end
 
@@ -204,12 +222,11 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        sample_scope = sample_scope.samples_created_time_from(Time.at(from)) if from && by_created_at
-        sample_scope = sample_scope.samples_created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        sample_scope = sample_scope.samples_updated_time_from(Time.at(from)) if from && !by_created_at
-        sample_scope = sample_scope.samples_updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.created_time_from(Time.at(from)) if from && by_created_at
+        sample_scope = sample_scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
+        sample_scope = sample_scope.updated_time_from(Time.at(from)) if from && !by_created_at
+        sample_scope = sample_scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
-        reset_pagination_page(sample_scope)
         samplelist = []
 
         if params[:molecule_sort] == 1
@@ -229,6 +246,7 @@ module Chemotion
             end
           end
         else
+          reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('updated_at DESC')
           paginate(sample_scope).each do |sample|
             detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
@@ -301,7 +319,7 @@ module Chemotion
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
         # optional :molecule, type: Hash, desc: "Sample molecule" do
-          # optional :id, type: Integer
+        #   optional :id, type: Integer
         # end
         optional :molecule_id, type: Integer
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
@@ -342,21 +360,23 @@ module Chemotion
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
-          update_element_labels(@sample,attributes[:user_labels], current_user.id)
+          update_element_labels(@sample, attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
           attributes.delete(:segments)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
-          attributes[:elemental_compositions].each do |i|
+          attributes[:elemental_compositions]&.each do |i|
             i.delete :description
-          end if attributes[:elemental_compositions]
+          end
 
           # set nested attributes
-          %i(molecule residues elemental_compositions).each do |prop|
+          %i[molecule residues elemental_compositions].each do |prop|
             prop_value = attributes.delete(prop)
+            next if prop_value.blank?
+
             attributes.merge!(
               "#{prop}_attributes".to_sym => prop_value
-            ) unless prop_value.blank?
+            )
           end
 
           boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
@@ -481,21 +501,23 @@ module Chemotion
 
         # otherwise ActiveRecord::UnknownAttributeError appears
         # TODO should be in params validation
-        attributes[:elemental_compositions].each do |i|
+        attributes[:elemental_compositions]&.each do |i|
           i.delete :description
           i.delete :id
-        end if attributes[:elemental_compositions]
+        end
 
-        attributes[:residues].each do |i|
+        attributes[:residues]&.each do |i|
           i.delete :id
-        end if attributes[:residues]
+        end
 
         # set nested attributes
-        %i(molecule residues elemental_compositions).each do |prop|
+        %i[molecule residues elemental_compositions].each do |prop|
           prop_value = attributes.delete(prop)
+          next if prop_value.blank?
+
           attributes.merge!(
             "#{prop}_attributes".to_sym => prop_value
-          ) unless prop_value.blank?
+          )
         end
         attributes.delete(:segments)
 
@@ -562,5 +584,6 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
 # rubocop:enable Metrics/ClassLength

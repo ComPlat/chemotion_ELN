@@ -34,6 +34,11 @@ import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -63,9 +68,10 @@ export default class ReactionDetails extends Component {
     }
   }
 
-
   componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
+    const { reaction } = this.props;
+    UIStore.listen(this.onUIStoreChange);
+    CommentActions.fetchComments(reaction);
   }
 
   // eslint-disable-next-line camelcase
@@ -231,7 +237,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-
   reactionSVG(reaction) {
     if (!reaction.svgPath) {
       return false;
@@ -249,8 +254,8 @@ export default class ReactionDetails extends Component {
   }
 
   reactionHeader(reaction) {
-    let hasChanged = reaction.changed ? '' : 'none'
-    const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
+    const hasChanged = reaction.changed ? '' : 'none';
+    const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
@@ -267,8 +272,6 @@ export default class ReactionDetails extends Component {
     const colLabel = reaction.isNew ? null : (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
-
-
 
     return (
       <div>
@@ -336,6 +339,7 @@ export default class ReactionDetails extends Component {
         <div style={{ display: "inline-block", marginLeft: "10px" }}>
           {colLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
+          <HeaderCommentSection element={reaction} />
         </div>
         {reaction.isNew
           ? null
@@ -349,11 +353,11 @@ export default class ReactionDetails extends Component {
     UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
       activeTab: key
-    })
+    });
   }
 
   onTabPositionChanged(visible) {
-    this.setState({ visible })
+    this.setState({ visible });
   }
 
   updateReactionSvg() {
@@ -396,6 +400,9 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
+          }
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
@@ -405,6 +412,9 @@ export default class ReactionDetails extends Component {
       ),
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_properties" element={reaction} />
+          }
           <ReactionDetailsProperties
             reaction={reaction}
             onReactionChange={r => this.handleReactionChange(r)}
@@ -415,6 +425,9 @@ export default class ReactionDetails extends Component {
       ),
       references: (
         <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
+          }
           <ReactionDetailsLiteratures
             element={reaction}
             literatures={reaction.isNew === true ? reaction.literatures : null}
@@ -424,11 +437,17 @@ export default class ReactionDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_analyses" element={reaction} />
+          }
           {this.productData(reaction)}
         </Tab>
       ),
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
+          }
           <GreenChemistry
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
@@ -481,6 +500,7 @@ export default class ReactionDetails extends Component {
             </Button>
             {exportButton}
           </ButtonToolbar>
+          <CommentModal element={reaction} />
         </Panel.Body>
       </Panel>
     );
@@ -490,4 +510,4 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   reaction: PropTypes.object,
   toggleFullScreen: PropTypes.func,
-}
+};

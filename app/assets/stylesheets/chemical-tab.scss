@@ -30,43 +30,56 @@ table.table-borderless {
     color: green;
 }
 
-.choose-vendor {
+.safety-sheets-form {
+    margin-top: 15px;
     width: 100%;
 }
-
-.choose-vendor .control-label {
-    padding-right: 100px;
+  
+.render-childs {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
-.render-childs {
-    margin-top: 15px;
+.child-elements {
+    width: 100%;
+    display: flex !important;
+}
 
-    .child-elements {
-        width: 100%;
-        display: flex !important;     
-        .link-wrapper {
-            padding-top: 5px;
-            padding-right: 5px;
-            width: 36%;
-            a {
-                cursor: pointer;
-            }
-        }
+.link-wrapper {
+    padding-top: 5px;
+    padding-right: 5px;
+    width: 36%;
 
-        .button-toolbar-wrapper {
-            width: 13%;
-            padding-top: 5px;
-        }
-
-        .chemical-properties {
-            width: 32%;
-        }
-
-        .safety-phrases {
-            margin-top: 0px;
-            width: 18%;
-        }
+    a {
+        cursor: pointer;
     }
+}
+
+.button-toolbar-wrapper {
+    width: 13%;
+    padding-top: 5px;
+}
+
+.chemical-properties {
+    width: 38%;
+
+    .render-chemical-properties {
+        width: 100%;
+        margin-top: 0px;
+        margin-left: 10px;
+    }
+
+    .fetch-properties-button {
+        width: 80%;
+        min-width: 200px;
+        margin-right: 0px;
+        overflow: auto;
+    }
+}
+  
+.query-safety-phrases-button {
+    width: 19%;
+    margin-left: 20px;
 }
 
 .safety-tab {
@@ -78,6 +91,9 @@ table.table-borderless {
         .choose-vendor {
             width: 24%;
         }
+        .choose-vendor .control-label {
+            padding-right: 100px;
+        }
         .query-option {
             width: 24%;
         } 
@@ -87,6 +103,7 @@ table.table-borderless {
         .query-safety-sheet-button {
             margin-top: 25.5px;
             margin-right: 0px;
+            min-width: 150px;
             width: 25%;
         }
     }
@@ -169,26 +186,10 @@ table.table-borderless {
     }
 }
 
-.render-chemical-properties {
-
-    .fetch-properties-button {
-        width: 200px;
-        margin-right: 0px;
-    }
-
-    .show-properties-modal {
-        margin-left: -23px !important;
-    }
-}
 
 .fa fa-check-circle {
     padding-left: 10px;
     color: green;
-}
-
-.safety-sheets-form {
-    margin-top: 15px;
-    width: 100%;
 }
 
 .safety-sheets-paragraph {
@@ -208,4 +209,26 @@ table.table-borderless {
     width: 100%;
     padding-top: 7px;
     padding-bottom: 7px;
+}
+
+#safetyPhrases-btn {
+    width: 100%;
+    overflow: auto;
+}
+
+#fetch-properties {
+    border-radius: 5px;
+}
+
+@media (max-width: 1600px) {
+    /* Adjust styles for smaller screens */
+    .render-chemical-properties {
+        width: 50%;
+
+        .fetch-properties-button  {
+            min-width: 130px;
+            max-width: 130px;
+            overflow: auto;
+        }
+    }
 }
