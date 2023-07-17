@@ -39,13 +39,12 @@ export default class ContainerDataset extends Component {
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
   }
 
-  componentDidMount() {
-    this.createAttachmentPreviews(this.state.dataset_container);
-  }
 
   createAttachmentPreviews(dataset_container) {
     const { attachments } = dataset_container;
-    let updatedAttachments = attachments.map((attachment) => {
+    const newAttachments = attachments.filter((attachment) => !attachment.preview);
+
+    const updatedAttachments = newAttachments.map(attachment => {
       return attachment.thumb ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then((result) => {
         if (result != null) {
           attachment.preview = `data:image/png;base64,${result}`;
