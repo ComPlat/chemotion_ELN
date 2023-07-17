@@ -51,12 +51,12 @@ module Chemotion
         scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
+
         cell_line_samples = paginate(scope).map do |cell_line_sample|
           Entities::CellLineSampleEntity.represent(
             cell_line_sample,
             displayed_in_list: true,
-            # detail_levels: ElementDetailLevelCalculator.
-            # new(user: current_user, element: cell_line_sample).detail_levels
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: cell_line_sample).detail_levels
           )
         end
         { cell_lines: cell_line_samples }
@@ -103,7 +103,7 @@ module Chemotion
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
-        
+
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
       desc 'Update a Cell line sample'

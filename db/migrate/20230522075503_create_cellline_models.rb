@@ -40,6 +40,7 @@ class CreateCelllineModels < ActiveRecord::Migration[6.1]
       t.datetime "deleted_at"
     end
 
-    add_column :collections, :celllinesample_detail_level, :int
+    add_column :collections, :celllinesample_detail_level, :int, :default => 10
+    add_column :sync_collections_users, :celllinesample_detail_level, :int, :default => 10
   end
 end
