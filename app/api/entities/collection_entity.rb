@@ -9,8 +9,8 @@ module Entities
       :is_shared,
       :label,
       :user_id,
-      :wellplate_detail_level,
-      :tabs_segment
+      :tabs_segment,
+      :position,
     )
   end
 end
