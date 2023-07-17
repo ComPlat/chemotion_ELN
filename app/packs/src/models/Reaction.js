@@ -185,25 +185,28 @@ export default class Reaction extends Element {
   }
 
   set variations(variations) {
-    // variations data structure:
+    // variations data structure (also see Entities::ReactionVariationEntity):
     // [
     //   {
-    //     "id": "<number>",
+    //     "id": <number>,
     //     "properties": {
-    //         "temperature": {"value": "<number>", "unit": "<string>"},
-    //         "duration": {"value": "<number>", "unit": "<string>"}
+    //         "temperature": {"value": <number>, "unit": <string>},
+    //         "duration": {"value": <number>, "unit": <string>}
     //     },
     //     "startingMaterials": {
-    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}},
-    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}}
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
     //     },
     //     "reactants": {
-    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}},
-    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}}
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
     //     },
     //     "products": {
-    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}},
-    //         "<material_id>": {"value": "<number>", "unit": "<string>", aux: {}}
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
     //     }
     //   },
     //   {
