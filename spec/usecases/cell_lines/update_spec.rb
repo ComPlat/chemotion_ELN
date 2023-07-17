@@ -42,6 +42,8 @@ RSpec.describe Usecases::CellLines::Update do
           source: 'IPB',
           cell_line_sample_id: original_cellline_sample.id,
           amount: 200,
+          passage: original_cellline_sample.passage,
+          unit: original_cellline_sample.unit,
         }
       end
 
@@ -63,6 +65,8 @@ RSpec.describe Usecases::CellLines::Update do
           source: 'IPB',
           cell_line_sample_id: original_cellline_sample.id,
           amount: 200,
+          passage: original_cellline_sample.passage,
+          unit: original_cellline_sample.unit,
         }
       end
 

@@ -6,6 +6,7 @@ FactoryBot.define do
     cellline_material { create(:cellline_material) }
     amount { 999 }
     passage { 10 }
+    unit { "g" }
   end
 
   trait :with_analysis do

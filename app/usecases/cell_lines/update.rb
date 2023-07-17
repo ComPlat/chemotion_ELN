@@ -72,16 +72,12 @@ module Usecases
         material.save
       end
 
-      def check_parameter # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-        raise 'amount not valid' unless !@params[:amount] || check_scalar_value(@params[:amount])
-        raise 'passage not valid' unless !@params[:passage] || check_scalar_value(@params[:passage])
-        raise 'unit not valid' unless !@params[:unit] || check_string_value(@params[:unit])
-        raise 'source not valid' unless !@params[:source] || check_string_value(@params[:source])
-        raise 'material name not valid' unless !@params[:material_names] || check_names_value(@params[:material_names])
-      end
-
-      def check_ontology(field)
-        field.instance_of?(String) && !field.empty?
+      def check_parameter
+        raise 'amount not valid' unless  check_scalar_value(@params[:amount])
+        raise 'passage not valid' unless check_scalar_value(@params[:passage])
+        raise 'unit not valid' unless check_string_value(@params[:unit])
+        raise 'source not valid' unless check_string_value(@params[:source])
+        raise 'material name not valid' unless  check_names_value(@params[:material_names])
       end
 
       def check_scalar_value(value)

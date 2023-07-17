@@ -71,6 +71,7 @@ module Usecases
         raise 'passage not valid' unless check_scalar_value(@params[:passage])
         raise 'material name not valid' unless check_string_value(@params[:material_names])
         raise 'source not valid' unless check_string_value(@params[:source])
+        raise 'unit not valid' unless check_string_value(@params[:unit])
       end
 
       def check_scalar_value(value)

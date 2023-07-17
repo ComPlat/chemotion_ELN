@@ -17,6 +17,7 @@ RSpec.describe Usecases::CellLines::Create do
       source: 'IPB',
       growth_medium: 'water',
       name: 'probe-123',
+      unit: 'g',
       description: 'none',
       material_names: 'name-001;name-002',
       cell_type: 'primary cells',
