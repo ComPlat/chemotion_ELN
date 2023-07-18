@@ -71,7 +71,15 @@ export default class BaseFetcher {
         filters = userState?.profile?.data?.filters || {};
         group = filters.reaction?.group || 'none';
         sort = filters.reaction?.sort || false;
-        addQuery = `&sort_column=${(sort && group) || 'updated_at'}`;
+        if (group === 'none') {
+          if (sort) {
+            addQuery = `&sort_column=${'updated_at'}`;
+          } else {
+            addQuery = `&sort_column=${'short_label'}`;
+          }
+        } else {
+          addQuery = `&sort_column=${(sort && group) || 'updated_at'}`;
+        }
         break;
       case 'generic_elements':
         userState = UserStore.getState();

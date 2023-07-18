@@ -373,7 +373,7 @@ export default class ElementsTable extends React.Component {
   renderReactionsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const optionsHash = {
-      none: { sortColumn: 'update date', label: 'List' },
+      none: { sortColumn: 'short label', label: 'List' },
       rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
       rxno: { sortColumn: 'type', label: 'Grouped by type' },
     };
@@ -409,7 +409,7 @@ export default class ElementsTable extends React.Component {
           onChange={this.changeElementsGroup}
           className="header-group-select"
         />
-        {elementsGroup !== 'none' ? (sortContent) : null}
+        {sortContent}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
