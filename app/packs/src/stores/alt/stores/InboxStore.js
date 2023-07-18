@@ -20,6 +20,7 @@ class InboxStore {
       currentPage: 1,
       itemsPerPage: 20,
       currentContainerPage: 1,
+      currentUnsortedBoxPage: 1,
       dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
@@ -40,6 +41,8 @@ class InboxStore {
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
       handleCheckedAll: InboxActions.checkedAll,
       handleCheckedIds: InboxActions.checkedIds,
+      handlePrevClick: InboxActions.prevClick,
+      handleNextClick: InboxActions.nextClick,
 
       handleUpdateCreateElementDict: [
         ElementActions.createSample,
@@ -131,6 +134,22 @@ class InboxStore {
     this.setState(inbox);
     this.countAttachments();
   }
+
+  handlePrevClick() {
+    this.setState((prevState) => ({
+      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage - 1,
+      checkedAll: false,
+      checkedIds: [],
+    }));
+  }
+
+  handleNextClick = () => {
+    this.setState((prevState) => ({
+      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage + 1,
+      checkedAll: false,
+      checkedIds: [],
+    }));
+  };
 
   handleRemoveUnlinkedAttachmentFromList(attachment) {
     const { inbox } = this.state;
@@ -304,17 +323,24 @@ class InboxStore {
   }
 
   handleCheckedIds(params) {
-    const { inbox, checkedIds } = this.state;
-    const unlikedAttachments = inbox.unlinked_attachments;
+    const {
+      inbox, checkedIds, currentUnsortedBoxPage, dataItemsPerPage
+    } = this.state;
+    const unlinkedAttachments = inbox.unlinked_attachments;
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const currentAttachments = unlinkedAttachments.slice(startIndex, endIndex);
+
     if (params.type && params.range === 'child') {
       ArrayUtils.pushUniq(checkedIds, params.ids);
     } else if (params.type === false && params.range === 'child') {
       ArrayUtils.removeFromListByValue(checkedIds || [], params.ids);
     } else if (params.range === 'all' && params.type === true) {
-      unlikedAttachments.map(attachment => ArrayUtils.pushUniq(checkedIds, attachment.id));
+      currentAttachments.forEach((attachment) => ArrayUtils.pushUniq(checkedIds, attachment.id));
+
       this.handleCheckedAll(params);
     } else if (params.range === 'all' && params.type === false) {
-      unlikedAttachments.map(attachment => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
+      currentAttachments.forEach((attachment) => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
       this.handleCheckedAll(params);
     }
   }

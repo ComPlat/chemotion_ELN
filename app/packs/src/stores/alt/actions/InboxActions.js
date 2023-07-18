@@ -35,6 +35,14 @@ class InboxActions {
     return params;
   }
 
+  prevClick() {
+    return null;
+  }
+
+  nextClick() {
+    return null;
+  }
+
   fetchInbox(queryParams = {}) {
     return (dispatch) => {
       InboxFetcher.fetchInbox(false, queryParams)
