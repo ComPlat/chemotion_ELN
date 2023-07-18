@@ -151,20 +151,23 @@ export default class UnsortedBox extends React.Component {
     const {
       visible, modal, checkedAll, checkedIds, currentUnsortedBoxPage, dataItemsPerPage
     } = this.state;
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const totalPages = Math.ceil(unsorted_box.length / dataItemsPerPage);
     const currentItems = unsorted_box.slice(startIndex, endIndex);
 
     const renderCheckAll = (
       <div>
         <input
           type="checkbox"
-          checked={checkedAll}
+          checked={checkedAll && checkedIds.length === currentItems.length}
           onChange={this.toggleSelectAllCheckbox}
         />
         <span
           className="g-marginLeft--10"
           style={{ fontWeight: 'bold' }}
         >
-          {this.hasChecked() ? 'Deselect all' : 'Select all'}
+          {checkedAll && checkedIds.length === currentItems.length ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
@@ -203,9 +206,6 @@ export default class UnsortedBox extends React.Component {
       </span>
     );
 
-    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
-    const endIndex = startIndex + dataItemsPerPage;
-    const totalPages = Math.ceil(unsorted_box.length / dataItemsPerPage);
 
     const attachments = visible ? unsorted_box.slice(startIndex, endIndex).map((attachment) => (
       <AttachmentContainer
