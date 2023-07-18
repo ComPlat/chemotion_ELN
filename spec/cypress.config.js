@@ -1,7 +1,5 @@
 const { defineConfig } = require('cypress');
 
-const port = 3000;
-
 module.exports = defineConfig({
 
   viewportWidth: 1536,
@@ -11,7 +9,7 @@ module.exports = defineConfig({
     defaultCommandTimeout: 5000,
     specPattern: 'cypress/end_to_end/*.cy.js',
     supportFile: 'cypress/support/index.js',
-    baseUrl: `http://localhost:${port}/`,
+    baseUrl: 'http://localhost:3000/',
     video: false,
     env: {
       reservedList: ['CRR', 'CRS', 'CRD'],
