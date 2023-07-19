@@ -257,10 +257,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
       });
   }
 
-  getAttachmentToken(attachment) {
+  getAttachmentToken(attachment, nameThirdPartyApp) {
     const userID = this.state.currentUser.user.id;
     const attID = attachment.id;
-    return ThirdPartyAppFetcher.fetchAttachmentToken(attID, userID)
+    return ThirdPartyAppFetcher.fetchAttachmentToken(attID, userID, nameThirdPartyApp)
       .then((result) => {
         this.setState({
           attachmentToken: result
@@ -282,8 +282,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
     const currentAttachment = arrIdx.find(entry => entry.id === attachment.id);
     const index = currentAttachment.i;
-
-    this.getAttachmentToken(attachment)
+    const nameThirdPartyApp = this.state.thirdPartyAppNames[index]
+    this.getAttachmentToken(attachment, nameThirdPartyApp)
       .then(() => {
         const ip = this.state.thirdPartyAppIPList[attachment.id];
 

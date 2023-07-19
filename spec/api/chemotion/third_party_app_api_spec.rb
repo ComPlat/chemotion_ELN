@@ -223,6 +223,7 @@ describe Chemotion::ThirdPartyAppAPI do
       {
         attID: 1,
         userID: user_id,
+        nameThirdPartyApp: 'fakeName'
       }
     end
 
@@ -252,22 +253,18 @@ describe Chemotion::ThirdPartyAppAPI do
       {
         attID: attachment.id,
         userID: user.id,
+        nameThirdPartyApp: 'fakeDownload',
       }
     end
 
     it 'download a file' do
-      payload = { attID: params_token[:attID], userID: params_token[:userID]}
-      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}"
-      cached_token = Rails.cache.read(cache_key)
-      if cached_token.nil?
-        payload = { attID: params_token[:attID], userID: params_token[:userID] }
-        secret = Rails.application.secrets.secret_key_base
-        token = JWT.encode(payload, secret, 'HS256')
-        token_class = CachedTokenThirdPartyApp.new(token, 0)
-        Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
-      end
+      payload = { attID: params_token[:attID], userID: params_token[:userID],
+                  nameThirdPartyApp: params_token[:nameThirdPartyApp] }
+      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}/#{params_token[:nameThirdPartyApp]}"
       secret = Rails.application.secrets.secret_key_base
-      token = JWT.encode payload, secret, 'HS256'
+      token = JWT.encode(payload, secret, 'HS256')
+      token_class = CachedTokenThirdPartyApp.new(token, 0, 'fakeDownload')
+      Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
       params = {token: token}
       file = File.open('spec/fixtures/upload.csv')
       file_content = file.read
@@ -276,9 +273,20 @@ describe Chemotion::ThirdPartyAppAPI do
       res = response.body
       expect(res).to eq(file_content)
     end
+
+    it 'download a file with an invalid token (not in cache)' do
+      payload_invalid = { attID: params_token[:attID], userID: params_token[:userID],
+                  nameThirdPartyApp: "Invalid" }
+      secret_invalid = Rails.application.secrets.secret_key_base
+      token_invalid = JWT.encode(payload_invalid, secret_invalid, 'HS256')
+      params_invalid = {token: token_invalid}
+      get '/api/v1/public_third_party_app/download', params: params_invalid
+      res_invalid = response.body
+      expect(res_invalid).to eq("{\"error\":\"Invalid token\"}")
+    end
   end
 
-  describe 'upload a file to the ELN' , type: :request do
+  describe 'upload a file to the ELN', type: :request do
     let(:user) { create(:person) }
     let!(:attachment) do
       create(
@@ -293,22 +301,18 @@ describe Chemotion::ThirdPartyAppAPI do
       {
         attID: attachment.id,
         userID: user.id,
+        nameThirdPartyApp: 'fakeUpload',
       }
     end
 
     it 'upload a file' do
-      payload = { attID: params_token[:attID], userID: params_token[:userID]}
-      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}"
-      cached_token = Rails.cache.read(cache_key)
-      if cached_token.nil?
-        payload = { attID: params_token[:attID], userID: params_token[:userID] }
-        secret = Rails.application.secrets.secret_key_base
-        token = JWT.encode(payload, secret, 'HS256')
-        token_class = CachedTokenThirdPartyApp.new(token, 0)
-        Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
-      end
+      payload = { attID: params_token[:attID], userID: params_token[:userID],
+                  nameThirdPartyApp: params_token[:nameThirdPartyApp] }
+      cache_key = "token/#{params_token[:attID]}/#{params_token[:userID]}/#{params_token[:nameThirdPartyApp]}"
       secret = Rails.application.secrets.secret_key_base
-      token = JWT.encode payload, secret, 'HS256'
+      token = JWT.encode(payload, secret, 'HS256')
+      token_class = CachedTokenThirdPartyApp.new(token, 0, 'fakeUpload')
+      Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
       file_path = 'spec/fixtures/upload.csv'
       file = Rack::Test::UploadedFile.new(file_path, 'spec/fixtures/upload2.csv')
       params = {token: token, attachmentName: 'NewName', file: file, fileType: '.csv'}

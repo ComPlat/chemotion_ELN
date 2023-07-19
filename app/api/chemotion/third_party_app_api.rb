@@ -11,7 +11,8 @@ module Chemotion
         error!('401 Unauthorized', 401) if payload&.length&.zero?
         att_id = payload[0]['attID']&.to_i
         user_id = payload[0]['userID']&.to_i
-        [att_id, user_id]
+        name_third_party_app = payload[0]['nameThirdPartyApp']&.to_s
+        [att_id, user_id, name_third_party_app]
       end
 
       def verify_token(token)
@@ -29,42 +30,54 @@ module Chemotion
         @user = User.find_by(id: payload[1])
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         env['api.format'] = :binary
-        cache_key = "token/#{payload[0]}/#{payload[1]}"
+        cache_key = "token/#{payload[0]}/#{payload[1]}/#{payload[2]}"
         token_cached = Rails.cache.read(cache_key)
+        if token_cached.nil? 
+          error!('Invalid token', 403)
+        end
         token_cached.counter = token_cached.counter + 1
         Rails.cache.write(cache_key, token_cached)
-        @attachment.read_file if token_cached.counter <= 2
+        if token_cached.counter <= 3
+          @attachment.read_file
+        else
+          error!('To many requests with this token', 403)
+        end
       end
 
       def upload_third_party_app(token, file_name, file, file_type)
         payload = decode_token(token)
-        cache_key = "token/#{payload[0]}/#{payload[1]}"
+        cache_key = "token/#{payload[0]}/#{payload[1]}/#{payload[2]}"
         token_cached = Rails.cache.read(cache_key)
+        if token_cached.nil? 
+          error!('Invalid token', 403)
+        end
         token_cached.counter = token_cached.counter + 1
         Rails.cache.write(cache_key, token_cached)
-        return unless token_cached.counter <= 30
-
-        attachment = Attachment.find_by(id: payload[0])
-        new_attachment = Attachment.new(attachable: attachment.attachable,
-                                        created_by: attachment.created_by,
-                                        created_for: attachment.created_for,
-                                        content_type: file_type)
-        File.open(file[:tempfile].path, 'rb') do |f|
-          new_attachment.update(file_path: f, filename: file_name)
+        if token_cached.counter > 30
+          error!('To many request with this token', 403)
+        else
+          attachment = Attachment.find_by(id: payload[0])
+          new_attachment = Attachment.new(attachable: attachment.attachable,
+                                          created_by: attachment.created_by,
+                                          created_for: attachment.created_for,
+                                          content_type: file_type)
+          File.open(file[:tempfile].path, 'rb') do |f|
+            new_attachment.update(file_path: f, filename: file_name)
+          end
+          { message: 'File uploaded successfully' }
         end
-        { message: 'File uploaded successfully' }
       end
 
-      def encode_token(payload)
+      def encode_token(payload, name_third_party_app)
         cache_key = cache_key_for_encoded_token(payload)
         Rails.cache.fetch(cache_key, expires_in: 48.hours) do
           token = JsonWebToken.encode(payload, 48.hours.from_now)
-          CachedTokenThirdPartyApp.new(token, 0)
+          CachedTokenThirdPartyApp.new(token, 0, name_third_party_app)
         end
       end
 
       def cache_key_for_encoded_token(payload)
-        "encoded_token/#{payload[:attID]}/#{payload[:userID]}"
+        "encoded_token/#{payload[:attID]}/#{payload[:userID]}/#{payload[:nameThirdPartyApp]}"
       end
     end
 
@@ -188,11 +201,12 @@ module Chemotion
       params do
         requires :attID, type: String, desc: 'Attachment ID'
         requires :userID, type: String, desc: 'User ID'
+        requires :nameThirdPartyApp, type: String, desc: 'name of the third party app'
       end
       get 'Token' do
-        cache_key = "token/#{params[:attID]}/#{params[:userID]}"
-        payload = { attID: params[:attID], userID: params[:userID] }
-        cached_token = encode_token(payload)
+        cache_key = "token/#{params[:attID]}/#{params[:userID]}/#{params[:nameThirdPartyApp]}"
+        payload = { attID: params[:attID], userID: params[:userID], nameThirdPartyApp: params[:nameThirdPartyApp] }
+        cached_token = encode_token(payload, params[:nameThirdPartyApp])
         Rails.cache.write(cache_key, cached_token, expires_in: 48.hours)
         cached_token.token
       end
