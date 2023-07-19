@@ -44,6 +44,10 @@ export default class Element {
     return this.is_new == true
   }
 
+  set isNew(boolean) {
+    this.is_new = boolean;
+  }
+
   get isPendingToSave() {
     return !_.isEmpty(this) && (this.isNew || this.isEdited);
   }

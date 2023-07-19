@@ -2,6 +2,7 @@ require 'open-uri'
 #require './helpers'
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class SampleAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
@@ -53,7 +54,9 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
           Sample.where(id: sample_ids).each do |sample|
-            subsample = sample.create_subsample current_user, col_id, true
+            # rubocop:disable Lint/UselessAssignment
+            subsample = sample.create_subsample(current_user, col_id, true, 'sample')
+            # rubocop:enable Lint/UselessAssignment
           end
 
           {} # JS layer does not use the reply
@@ -319,6 +322,7 @@ module Chemotion
         requires :container, type: Hash
         optional :user_labels, type: Array
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
+        optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         #use :root_container_params
@@ -431,6 +435,7 @@ module Chemotion
         optional :molecule_id, type: Integer
         requires :container, type: Hash
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
+        optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
       end
@@ -462,6 +467,7 @@ module Chemotion
           stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id],
           decoupled: params[:decoupled],
+          inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula]
         }
@@ -557,3 +563,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

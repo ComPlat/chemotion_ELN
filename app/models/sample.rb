@@ -42,18 +42,19 @@
 #  molecular_mass      :float
 #  sum_formula         :string
 #  solvent             :jsonb
+#  inventory_sample    :boolean          default(FALSE)
 #
 # Indexes
 #
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
+#  index_samples_on_inventory_sample  (inventory_sample)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
 #  index_samples_on_user_id           (user_id)
 #
 
-# rubocop: disable Metrics/ClassLength
-
+# rubocop:disable Metrics/ClassLength
 class Sample < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -201,6 +202,7 @@ class Sample < ApplicationRecord
   belongs_to :molecule_name, optional: true
 
   has_one :container, as: :containable
+  has_one :chemical, dependent: :destroy
 
   has_many :wells
   has_many :wellplates, through: :wells
@@ -278,7 +280,72 @@ class Sample < ApplicationRecord
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_subsample user, collection_ids, copy_ea = false
+  def extract_product_info(chemical_data, safety_sheet_path, chemical_data_output)
+    return unless safety_sheet_path.any? { |s| s.key?('alfa_link') }
+
+    alfa_product_info = chemical_data[0]['alfaProductInfo']
+    chemical_data_output['alfaProductInfo'] = alfa_product_info if alfa_product_info
+
+    return unless safety_sheet_path.any? { |s| s.key?('merck_link') }
+
+    merck_product_info = chemical_data[0]['merckProductInfo']
+    chemical_data_output['merckProductInfo'] = merck_product_info if merck_product_info
+  end
+
+  def chemical_data_for_entry(chemical_data)
+    if chemical_data[0] && chemical_data[0]['safetySheetPath']
+      safety_sheet_path = chemical_data[0]['safetySheetPath']
+      safety_phrases = chemical_data[0]['safetyPhrases'] || []
+
+      chemical_data_output = {
+        'safetySheetPath' => safety_sheet_path,
+      }
+      chemical_data_output['safetyPhrases'] = safety_phrases unless safety_phrases.empty?
+
+      # Extract alfaProductInfo or merckProductInfo based on safety_sheet_path
+      extract_product_info(chemical_data, safety_sheet_path, chemical_data_output)
+      [chemical_data_output]
+    else
+      []
+    end
+  end
+
+  def create_chemical_entry_for_subsample(sample_id, subsample_id, type)
+    chemical_entry = Chemical.find_by(sample_id: sample_id) || Chemical.new
+    chemical_data = chemical_entry.chemical_data || []
+    cas = chemical_entry.cas.presence ? chemical_entry.cas : nil
+
+    case type
+    when 'sample'
+      attributes = {
+        cas: cas,
+        chemical_data: chemical_data,
+        sample_id: subsample_id,
+      }
+      chemical = Chemical.new(attributes)
+      chemical.save!
+    # create chemical entry for subsample in a reaction
+    when 'reaction'
+      update_chemical_data = chemical_data_for_entry(chemical_data)
+      unless update_chemical_data.empty?
+        attributes = {
+          cas: cas,
+          chemical_data: update_chemical_data,
+          sample_id: subsample_id,
+        }
+        chemical = Chemical.new(attributes)
+        chemical.save!
+      end
+    end
+  end
+
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
+  # rubocop:disable Style/MethodDefParentheses
+  # rubocop:disable Style/OptionalBooleanParameter
+  # rubocop:disable Layout/TrailingWhitespace
+  def create_subsample user, collection_ids, copy_ea = false, type = nil 
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
@@ -309,8 +376,16 @@ class Sample < ApplicationRecord
 
     subsample.container = Container.create_root_container
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
-    subsample.save! && subsample
+    subsample.save!
+    create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
+    subsample
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/PerceivedComplexity
+  # rubocop:enable Style/MethodDefParentheses
+  # rubocop:enable Style/OptionalBooleanParameter
+  # rubocop:enable Layout/TrailingWhitespace
 
   def reaction_description
     reactions.first.try(:description)
@@ -638,5 +713,4 @@ private
     Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
-
-# rubocop: enable Metrics/ClassLength
+# rubocop:enable Metrics/ClassLength

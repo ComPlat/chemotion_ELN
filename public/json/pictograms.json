@@ -1,0 +1,11 @@
+{
+    "Explosive.gif":"GHS01",
+    "Flammable.gif":"GHS02",
+    "Oxidizing.gif":"GHS03",
+    "Gases.gif":"GHS04",
+    "Corrosive.gif":"GHS05",
+    "Toxic.gif":"GHS06",
+    "Harmful_Irritant.gif":"GHS07",
+    "Health_hazard.gif":"GHS08",
+    "Dangerous.gif":"GHS09"
+ }
