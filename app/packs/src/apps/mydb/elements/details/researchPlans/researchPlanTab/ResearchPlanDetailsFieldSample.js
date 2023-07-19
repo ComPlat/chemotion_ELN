@@ -39,45 +39,75 @@ class ResearchPlanDetailsFieldSample extends Component {
     super(props);
     this.state = {
       idle: true,
-      sample: {
-        id: null
-      }
+      sample: {},
+      wasSampleSet: false
     };
   }
 
   componentDidMount() {
     const { field } = this.props;
-    if (field && field.value && field.value.sample_id && hasAuth(field.value.sample_id)) {
+    if (field?.value?.sample_id && hasAuth(field?.value?.sample_id) && !this.state.sample.id) {
       this.fetch();
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const { field } = this.props;
-    const { idle, sample } = this.state;
-
-    // check if field.value and sample are not undefined before accessing their properties
-    if (idle && field?.value?.sample_id !== sample?.id && hasAuth(sample?.id)) {
-      this.setState({ idle: false }, this.fetch);
+    const { idle } = this.state;
+    const prevSampleId = prevProps.field?.value?.sample_id;
+    const currentSampleId = field?.value?.sample_id;
+    if (
+      prevSampleId !== currentSampleId
+      && hasAuth(currentSampleId)
+      && idle
+      && currentSampleId !== this.state.sample?.id
+    ) {
+      this.setState(
+        {
+          idle: false,
+          wasSampleSet: !!currentSampleId,
+        },
+        this.fetch
+      );
     }
   }
 
   fetch() {
     const { field } = this.props;
-    SamplesFetcher.fetchById(field.value.sample_id).then((sample) => {
-      this.setState({ idle: true, sample });
-    });
+    const sampleId = field?.value?.sample_id;
+    if (sampleId && hasAuth(sampleId) && sampleId !== this.state.sample.id) {
+      SamplesFetcher.fetchById(sampleId)
+        .then((sample) => {
+          if (!sample) {
+            console.log(`Sample ${sampleId} not found or access denied!`);
+            this.setState({
+              idle: true,
+              sample: null,
+              errorMessage: `Sample ${sampleId} not found or access denied!`
+            });
+          } else {
+            this.setState({ idle: true, sample });
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+          this.setState({
+            idle: true,
+            sample: null,
+            errorMessage: 'An error occurred while fetching the sample.'
+          });
+        });
+    }
   }
 
   showSample() {
     const { sample } = this.state;
     UrlSilentNavigation(sample);
-    ElementActions.fetchSampleById(sample.id);
+    ElementActions.fetchSampleById(sample?.id);
   }
 
-  // modified from sampleInfo in SampleDetails.js
   renderSample(sample) {
-    if (!hasAuth(sample.id)) {
+    if (!hasAuth(sample?.id)) {
       return noAuth(sample);
     }
     const { edit } = this.props;
@@ -96,9 +126,7 @@ class ResearchPlanDetailsFieldSample extends Component {
           <SampleName sample={sample} />
         </div>
       );
-    }
-    // render name of sample if no image exists
-    else {
+    } else {
       image = (
         <div className="image-container">
           <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
@@ -117,28 +145,53 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { sample } = this.state;
-    if (sample && !hasAuth(sample.id)) {
+    const { sample, wasSampleSet, errorMessage } = this.state;
+
+    if (!hasAuth(sample?.id)) {
       return noAuth(sample);
     }
+
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
+
+    let content;
+    if (!sample?.id) {
+      if (wasSampleSet) {
+        content = (
+          <div style={{ color: 'red', textAlign: 'left' }}>
+            <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+            <span style={{ fontWeight: 'bold' }}>{errorMessage || 'Element not found!'}</span>
+          </div>
+        );
+      } else {
+        content = 'Drop sample here.';
+      }
+    }
+
     return connectDropTarget(
       <div className={className}>
-        {sample?.id ? this.renderSample(sample) : 'Drop sample here.'}
+        {content}
       </div>
     );
   }
 
   renderStatic() {
-    const { sample } = this.state;
+    const { sample, wasSampleSet, errorMessage } = this.state;
 
-    // check if sample is not undefined before accessing
-    if (sample) {
-      return sample.id ? this.renderSample(sample) : '';
+    let content;
+    if (!sample?.id && wasSampleSet) {
+      content = (
+        <div style={{ color: 'red', textAlign: 'left' }}>
+          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+          <span style={{ fontWeight: 'bold' }}>{errorMessage || 'Element not found!'}</span>
+        </div>
+      );
+    } else {
+      content = null;
     }
-    return '';
+
+    return content;
   }
 
   render() {
