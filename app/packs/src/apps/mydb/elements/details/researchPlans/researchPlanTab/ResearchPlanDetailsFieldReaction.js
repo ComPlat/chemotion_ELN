@@ -40,7 +40,8 @@ class ResearchPlanDetailsFieldReaction extends Component {
       idle: true,
       reaction: {
         id: null
-      }
+      },
+      wasReactionSet: false
     };
   }
 
@@ -55,7 +56,10 @@ class ResearchPlanDetailsFieldReaction extends Component {
     const { field } = this.props;
     const { idle, reaction } = this.state;
     if (idle && field?.value?.reaction_id !== reaction?.id && hasAuth(reaction?.id)) {
-      this.setState({ idle: false }, this.fetch);
+      this.setState({
+        idle: false,
+        wasReactionSet: !!field?.value?.reaction_id
+      }, this.fetch);
     }
   }
 
@@ -76,6 +80,14 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (!hasAuth(reaction?.id)) {
       return noAuth(reaction);
     }
+    if (!reaction?.id) {
+      return (
+        <div style={{ color: 'red', textAlign: 'left' }}>
+          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+        </div>
+      );
+    }
     const link = <p>{reaction.title()}</p>;
 
     return (
@@ -92,23 +104,55 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { reaction } = this.state;
+    const { reaction, wasReactionSet } = this.state;
+
     if (!hasAuth(reaction?.id)) {
       return noAuth(reaction);
     }
+
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
+
+    let content;
+    if (reaction?.id) {
+      content = this.renderReaction(reaction);
+    } else if (wasReactionSet) {
+      content = (
+        <div style={{ color: 'red', textAlign: 'left' }}>
+          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+        </div>
+      );
+    } else {
+      content = 'Drop reaction here.';
+    }
+
     return connectDropTarget(
       <div className={className}>
-        {reaction?.id ? this.renderReaction(reaction) : 'Drop reaction here.'}
+        {content}
       </div>
     );
   }
 
   renderStatic() {
-    const { reaction } = this.state;
-    return reaction?.id ? this.renderReaction(reaction) : '';
+    const { reaction, wasReactionSet } = this.state;
+
+    let content;
+    if (reaction?.id) {
+      content = this.renderReaction(reaction);
+    } else if (wasReactionSet) {
+      content = (
+        <div style={{ color: 'red', textAlign: 'left' }}>
+          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+        </div>
+      );
+    } else {
+      content = null;
+    }
+
+    return content;
   }
 
   render() {
