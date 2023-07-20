@@ -355,12 +355,11 @@ export default class ResearchPlanDetails extends Component {
     let btnMode = (
       <OverlayTrigger placement="top" overlay={editTooltip}>
         <Button
-          bsSize="small"
-          bsStyle="success"
-          className="custom-button"
+          bsSize="middle"
+          bsStyle="warning"
           onClick={() => this.handleSwitchMode('edit')}
         >
-          Click to Edit
+          <i className="fa fa-pencil" />
         </Button>
       </OverlayTrigger>
     );
@@ -369,12 +368,11 @@ export default class ResearchPlanDetails extends Component {
       btnMode = (
         <OverlayTrigger placement="top" overlay={viewTooltip}>
           <Button
-            bsSize="small"
+            bsSize="middle"
             bsStyle="info"
-            className="custom-button"
             onClick={() => this.handleSwitchMode('view')}
           >
-            Click to View
+            <i className="fa fa-eye fa-sm" />
           </Button>
         </OverlayTrigger>
       );
@@ -383,16 +381,23 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          {this.renderExportButton(changed)}
-          {btnMode}
-          {' '}
-          {/* Place the edit button here */}
-          <ResearchPlanDetailsName
-            value={name}
-            disabled={researchPlan.isMethodDisabled('name')}
-            onChange={this.handleNameChange}
-            edit={edit}
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <ResearchPlanDetailsName
+                value={name}
+                disabled={researchPlan.isMethodDisabled('name')}
+                onChange={this.handleNameChange}
+                edit={edit}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+              <div style={{ marginRight: '5px', marginLeft: '5px' }}>
+                {btnMode}
+              </div>
+              {this.renderExportButton(changed)}
+            </div>
+          </div>
+
           <ResearchPlanDetailsBody
             body={body}
             attachments={attachments}
