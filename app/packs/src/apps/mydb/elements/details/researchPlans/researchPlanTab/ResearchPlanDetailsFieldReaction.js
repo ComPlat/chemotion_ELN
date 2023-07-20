@@ -111,6 +111,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (!hasAuth(reaction?.id)) {
       return noAuth(reaction);
     }
+
     if (!reaction?.id) {
       return (
         <div style={{ color: 'red', textAlign: 'left' }}>
@@ -119,15 +120,42 @@ class ResearchPlanDetailsFieldReaction extends Component {
         </div>
       );
     }
-    const link = <p>{reaction.title()}</p>;
+
+    const { edit } = this.props;
+
+    const link = (
+      <button
+        type="button"
+        style={{
+          cursor: 'pointer',
+          color: '#003366',
+          backgroundColor: 'transparent',
+          border: '1px solid #003366',
+          borderRadius: '4px',
+          margin: '5px',
+          outline: 'none',
+        }}
+        onClick={() => this.showReaction()}
+      >
+        {reaction.title()}
+      </button>
+    );
+
+    let image;
+    if (reaction.svgPath) {
+      image = <img src={reaction.svgPath} alt={reaction.title()} />;
+    }
+
+    const reactionStyle = edit ? {} : {
+      border: '1px solid #cccccc',
+      padding: '5px',
+    };
 
     return (
-      <div className="research-plan-field-reaction">
+      <div className="research-plan-field-reaction" style={reactionStyle}>
+        {link}
         <div className="image-container">
-          <img src={reaction?.svgPath} alt={reaction?.title()} />
-          <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
-            {link}
-          </a>
+          {image}
         </div>
       </div>
     );

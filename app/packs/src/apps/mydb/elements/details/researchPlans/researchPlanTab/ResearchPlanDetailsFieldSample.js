@@ -96,7 +96,7 @@ class ResearchPlanDetailsFieldSample extends Component {
           }
         });
     } else if (!field?.value?.sample_id) {
-      // if there is no reaction_id in the field's value, set the state to idle and reaction to null
+      // if there is no sample_id in the field's value, set the state to idle and sample to null
       this.setState({ idle: true, sample: { id: null }, wasSampleSet: false });
     }
   }
@@ -111,35 +111,53 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (!hasAuth(sample?.id)) {
       return noAuth(sample);
     }
-    const { edit } = this.props;
-    const title = sample.title();
-    let link;
-    if (edit) {
-      link = (<p>{`Sample: ${title}`}</p>);
+
+    if (!sample?.id) {
+      return (
+        <div style={{ color: 'red', textAlign: 'left' }}>
+          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+        </div>
+      );
     }
+
+    const { edit } = this.props;
+
+    const link = (
+      <button
+        type="button"
+        style={{
+          cursor: 'pointer',
+          color: '#003366',
+          backgroundColor: 'transparent',
+          border: '1px solid #003366',
+          borderRadius: '4px',
+          margin: '5px',
+          outline: 'none',
+        }}
+        onClick={() => this.showSample()}
+      >
+        {sample.title()}
+      </button>
+    );
+
     let image;
     if (sample.svgPath) {
-      image = (
+      image = <img src={sample.svgPath} alt={sample.title()} />;
+    }
+
+    const sampleStyle = edit ? {} : {
+      border: '1px solid #cccccc',
+      padding: '5px',
+    };
+
+    return (
+      <div className="research-plan-field-image" style={sampleStyle}>
+        {link}
         <div className="image-container">
-          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-            <img src={sample.svgPath} alt={title} />
-          </a>
+          {image}
           <SampleName sample={sample} />
         </div>
-      );
-    } else {
-      image = (
-        <div className="image-container">
-          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-            {title}
-          </a>
-        </div>
-      );
-    }
-    return (
-      <div className="research-plan-field-image">
-        {link}
-        {image}
       </div>
     );
   }

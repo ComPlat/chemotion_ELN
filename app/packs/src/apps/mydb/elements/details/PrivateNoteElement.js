@@ -2,7 +2,9 @@
 object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, ControlLabel, FormControl, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  FormGroup, ControlLabel, FormControl, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import PrivateNote from 'src/models/PrivateNote';
 
@@ -81,31 +83,35 @@ export default class PrivateNoteElement extends React.Component {
     }
 
     return (
-      <FormGroup>
-        <OverlayTrigger
-          placement="top"
-          overlay={
-            <Tooltip id='private-note'>Only you can see this note</Tooltip>
+      <div style={{ marginBottom: '10px' }}>
+        <FormGroup>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id="private-note">Only you can see this note</Tooltip>
           }
-        >
-          <ControlLabel>
-            Private Note <span className="glyphicon glyphicon-info-sign" />
-          </ControlLabel>
-        </OverlayTrigger>
+          >
+            <ControlLabel>
+              Private Note
+              {' '}
+              <span className="glyphicon glyphicon-info-sign" />
+            </ControlLabel>
+          </OverlayTrigger>
 
-        <i>{isSaving ? " saving your note" : ""}</i>
+          <i>{isSaving ? ' saving your note' : ''}</i>
 
-        <FormControl
-          componentClass="textarea"
-          ref={(input) => { this.noteInput = input; }}
-          placeholder={content}
-          value={content ?? ''}
-          onChange={e => this.handleInputChange(e.target.value)}
-          rows={2}
-          disabled={disabled}
-          onBlur={() => this.saveNote()}
-        />
-      </FormGroup>
+          <FormControl
+            componentClass="textarea"
+            ref={(input) => { this.noteInput = input; }}
+            placeholder={content}
+            value={content ?? ''}
+            onChange={(e) => this.handleInputChange(e.target.value)}
+            rows={2}
+            disabled={disabled}
+            onBlur={() => this.saveNote()}
+          />
+        </FormGroup>
+      </div>
     )
   }
 }
