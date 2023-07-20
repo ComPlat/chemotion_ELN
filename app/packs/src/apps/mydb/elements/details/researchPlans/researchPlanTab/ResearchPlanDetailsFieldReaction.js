@@ -52,14 +52,22 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { field } = this.props;
     const { idle } = this.state;
-    if (prevProps.field?.value?.reaction_id !== field?.value?.reaction_id && hasAuth(field?.value?.reaction_id) && idle) {
+    // if reaction id is not the same as before or the previous state of reaction was null, fetch the new one
+    if (
+      idle
+      && field?.value?.reaction_id
+      && (prevState.reaction?.id !== field?.value?.reaction_id
+        || (prevState.reaction?.id === null && field?.value?.reaction_id !== null))
+        && hasAuth(field?.value?.reaction_id)
+    ) {
       this.setState(
         {
           idle: false,
-          wasReactionSet: !!field?.value?.sample_id
+          // set wasReactionSet to true if a reaction_id exists in the field's value
+          wasReactionSet: field?.value?.reaction_id !== undefined,
         },
         this.fetch
       );
@@ -68,9 +76,29 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   fetch() {
     const { field } = this.props;
-    ReactionsFetcher.fetchById(field?.value?.reaction_id).then((reaction) => {
-      this.setState({ idle: true, reaction });
-    });
+
+    // check if the field's reaction_id exists and if the reaction id in the state is different from the one in the field's value
+    if (
+      field?.value?.reaction_id
+      && this.state.reaction?.id !== field?.value?.reaction_id
+    ) {
+      ReactionsFetcher.fetchById(field.value.reaction_id)
+        .then((reaction) => {
+          // only update state if the fetched reaction's id is the same as the current field's reaction_id
+          if (field?.value?.reaction_id === reaction.id) {
+            this.setState({ idle: true, reaction });
+          }
+        })
+        .catch(() => {
+          // handle case when the reaction is not found
+          if (field?.value?.reaction_id === this.state.reaction?.id) {
+            this.setState({ idle: true, reaction: { id: null }, wasReactionSet: true });
+          }
+        });
+    } else if (!field?.value?.reaction_id) {
+      // if there is no reaction_id in the field's value, set the state to idle and reaction to null
+      this.setState({ idle: true, reaction: { id: null }, wasReactionSet: false });
+    }
   }
 
   showReaction() {

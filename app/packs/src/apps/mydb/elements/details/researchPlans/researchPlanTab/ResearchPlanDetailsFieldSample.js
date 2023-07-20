@@ -53,14 +53,21 @@ class ResearchPlanDetailsFieldSample extends Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { field } = this.props;
     const { idle } = this.state;
-    if (prevProps.field?.value?.sample_id !== field?.value?.sample_id && hasAuth(field?.value?.sample_id) && idle) {
+    if (
+      idle
+      && field?.value?.sample_id
+      && (prevState.sample?.id !== field?.value?.sample_id
+        || (prevState.sample?.id === null && field?.value?.sample_id !== null))
+      && hasAuth(field?.value?.sample_id)
+    ) {
       this.setState(
         {
           idle: false,
-          wasSampleSet: !!field?.value?.sample_id
+          // set wasSampleSet to true if a sample_id exists in the field's value
+          wasSampleSet: field?.value?.sample_id !== undefined,
         },
         this.fetch
       );
@@ -69,9 +76,29 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   fetch() {
     const { field } = this.props;
-    SamplesFetcher.fetchById(field?.value?.sample_id).then((sample) => {
-      this.setState({ idle: true, sample });
-    });
+
+    // check if the field's sample_id exists and if the sample id in the state is different from the one in the field's value
+    if (
+      field?.value?.sample_id
+      && this.state.sample?.id !== field?.value?.sample_id
+    ) {
+      SamplesFetcher.fetchById(field.value.sample_id)
+        .then((sample) => {
+          // only update state if the fetched sample's id is the same as the current field's sample_id
+          if (field?.value?.sample_id === sample.id) {
+            this.setState({ idle: true, sample });
+          }
+        })
+        .catch(() => {
+          // handle case when the sample is not found
+          if (field?.value?.sample_id === this.state.sample?.id) {
+            this.setState({ idle: true, sample: { id: null }, wasSampleSet: true });
+          }
+        });
+    } else if (!field?.value?.sample_id) {
+      // if there is no reaction_id in the field's value, set the state to idle and reaction to null
+      this.setState({ idle: true, sample: { id: null }, wasSampleSet: false });
+    }
   }
 
   showSample() {
