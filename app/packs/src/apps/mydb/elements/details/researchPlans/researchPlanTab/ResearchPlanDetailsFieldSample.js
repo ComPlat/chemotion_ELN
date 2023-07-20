@@ -39,7 +39,9 @@ class ResearchPlanDetailsFieldSample extends Component {
     super(props);
     this.state = {
       idle: true,
-      sample: {},
+      sample: {
+        id: null
+      },
       wasSampleSet: false
     };
   }
@@ -54,18 +56,11 @@ class ResearchPlanDetailsFieldSample extends Component {
   componentDidUpdate(prevProps) {
     const { field } = this.props;
     const { idle } = this.state;
-    const prevSampleId = prevProps.field?.value?.sample_id;
-    const currentSampleId = field?.value?.sample_id;
-    if (
-      prevSampleId !== currentSampleId
-      && hasAuth(currentSampleId)
-      && idle
-      && currentSampleId !== this.state.sample?.id
-    ) {
+    if (prevProps.field?.value?.sample_id !== field?.value?.sample_id && hasAuth(field?.value?.sample_id) && idle) {
       this.setState(
         {
           idle: false,
-          wasSampleSet: !!currentSampleId,
+          wasSampleSet: !!field?.value?.sample_id
         },
         this.fetch
       );
@@ -74,30 +69,9 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   fetch() {
     const { field } = this.props;
-    const sampleId = field?.value?.sample_id;
-    if (sampleId && hasAuth(sampleId) && sampleId !== this.state.sample.id) {
-      SamplesFetcher.fetchById(sampleId)
-        .then((sample) => {
-          if (!sample) {
-            console.log(`Sample ${sampleId} not found or access denied!`);
-            this.setState({
-              idle: true,
-              sample: null,
-              errorMessage: `Sample ${sampleId} not found or access denied!`
-            });
-          } else {
-            this.setState({ idle: true, sample });
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          this.setState({
-            idle: true,
-            sample: null,
-            errorMessage: 'An error occurred while fetching the sample.'
-          });
-        });
-    }
+    SamplesFetcher.fetchById(field?.value?.sample_id).then((sample) => {
+      this.setState({ idle: true, sample });
+    });
   }
 
   showSample() {
@@ -145,7 +119,7 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { sample, wasSampleSet, errorMessage } = this.state;
+    const { sample, wasSampleSet } = this.state;
 
     if (!hasAuth(sample?.id)) {
       return noAuth(sample);
@@ -156,17 +130,17 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (canDrop) className += ' can-drop';
 
     let content;
-    if (!sample?.id) {
-      if (wasSampleSet) {
-        content = (
-          <div style={{ color: 'red', textAlign: 'left' }}>
-            <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-            <span style={{ fontWeight: 'bold' }}>{errorMessage || 'Element not found!'}</span>
-          </div>
-        );
-      } else {
-        content = 'Drop sample here.';
-      }
+    if (sample?.id) {
+      content = this.renderSample(sample);
+    } else if (wasSampleSet) {
+      content = (
+        <div style={{ color: 'red', textAlign: 'left' }}>
+          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+        </div>
+      );
+    } else {
+      content = 'Drop sample here.';
     }
 
     return connectDropTarget(
@@ -177,14 +151,16 @@ class ResearchPlanDetailsFieldSample extends Component {
   }
 
   renderStatic() {
-    const { sample, wasSampleSet, errorMessage } = this.state;
+    const { sample, wasSampleSet } = this.state;
 
     let content;
-    if (!sample?.id && wasSampleSet) {
+    if (sample?.id) {
+      content = this.renderSample(sample);
+    } else if (wasSampleSet) {
       content = (
         <div style={{ color: 'red', textAlign: 'left' }}>
           <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>{errorMessage || 'Element not found!'}</span>
+          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
         </div>
       );
     } else {

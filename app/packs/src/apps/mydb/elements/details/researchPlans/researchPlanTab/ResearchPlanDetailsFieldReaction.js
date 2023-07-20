@@ -9,7 +9,7 @@ import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 const spec = {
   drop(props, monitor) {
     const { field, onChange } = props;
-    onChange({ reaction_id: monitor.getItem()?.element?.id }, field?.id);
+    onChange({ reaction_id: monitor.getItem().element.id }, field.id);
   }
 };
 
@@ -26,7 +26,7 @@ const hasAuth = (id) => {
 const noAuth = (el) => (
   <div className="research-plan-no-auth">
     <h4>
-      {el?.id?.split(':')[2]}
+      {el.id.split(':')[2]}
       &nbsp;
       <i className="fa fa-eye-slash" aria-hidden="true" />
     </h4>
@@ -52,14 +52,17 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const { field } = this.props;
-    const { idle, reaction } = this.state;
-    if (idle && field?.value?.reaction_id !== reaction?.id && hasAuth(reaction?.id)) {
-      this.setState({
-        idle: false,
-        wasReactionSet: !!field?.value?.reaction_id
-      }, this.fetch);
+    const { idle } = this.state;
+    if (prevProps.field?.value?.reaction_id !== field?.value?.reaction_id && hasAuth(field?.value?.reaction_id) && idle) {
+      this.setState(
+        {
+          idle: false,
+          wasReactionSet: !!field?.value?.sample_id
+        },
+        this.fetch
+      );
     }
   }
 
