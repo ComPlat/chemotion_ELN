@@ -39,7 +39,7 @@ export default class PrivateNoteFetcher {
     if (prms.noteable_type) {
       params.noteable_type = classify(prms.noteable_type);
     }
-    return fetch('/api/v1/private_notes/create', {
+    return fetch('/api/v1/private_notes', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
