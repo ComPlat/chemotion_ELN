@@ -339,10 +339,54 @@ export default class ResearchPlanDetails extends Component {
       name, body, changed, attachments
     } = researchPlan;
     const edit = researchPlan.mode === 'edit';
+
+    const editTooltip = (
+      <Tooltip id="edit-tooltip">
+        Click to switch to edit mode
+      </Tooltip>
+    );
+
+    const viewTooltip = (
+      <Tooltip id="view-tooltip">
+        Click to switch to view mode
+      </Tooltip>
+    );
+
+    let btnMode = (
+      <OverlayTrigger placement="top" overlay={editTooltip}>
+        <Button
+          bsSize="small"
+          bsStyle="success"
+          className="custom-button"
+          onClick={() => this.handleSwitchMode('edit')}
+        >
+          Click to Edit
+        </Button>
+      </OverlayTrigger>
+    );
+
+    if (researchPlan.mode !== 'view') {
+      btnMode = (
+        <OverlayTrigger placement="top" overlay={viewTooltip}>
+          <Button
+            bsSize="small"
+            bsStyle="info"
+            className="custom-button"
+            onClick={() => this.handleSwitchMode('view')}
+          >
+            Click to View
+          </Button>
+        </OverlayTrigger>
+      );
+    }
+
     return (
       <ListGroup fill="true">
         <ListGroupItem>
           {this.renderExportButton(changed)}
+          {btnMode}
+          {' '}
+          {/* Place the edit button here */}
           <ResearchPlanDetailsName
             value={name}
             disabled={researchPlan.isMethodDisabled('name')}
@@ -370,48 +414,6 @@ export default class ResearchPlanDetails extends Component {
               { title: 'Related Identifier', fieldName: 'related_identifier' },
               { title: 'Description', fieldName: 'description' },
             ]}
-            researchPlan={researchPlan}
-          />
-        </ListGroupItem>
-      </ListGroup>
-    );
-  } /* eslint-enable */
-
-  renderPropertiesTab(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
-    const { name, body } = researchPlan;
-    return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <ResearchPlanDetailsName
-            value={name}
-            isNew={researchPlan.isNew}
-            disabled={researchPlan.isMethodDisabled('name')}
-            onChange={this.handleNameChange}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            edit
-          />
-          <ResearchPlanDetailsBody
-            body={body}
-            disabled={researchPlan.isMethodDisabled('body')}
-            onChange={this.handleBodyChange.bind(this)}
-            onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd}
-            onDelete={this.handleBodyDelete.bind(this)}
-            onExport={this.handleExportField.bind(this)}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            isNew={researchPlan.isNew}
-            copyableFields={[
-              { title: 'Subject', fieldName: 'subject' },
-              {
-                title: 'Alternate Identifier',
-                fieldName: 'alternate_identifier',
-              },
-              { title: 'Related Identifier', fieldName: 'related_identifier' },
-              { title: 'Description', fieldName: 'description' },
-            ]}
-            update={update}
-            edit
-            attachments={researchPlan.attachments}
             researchPlan={researchPlan}
           />
         </ListGroupItem>
@@ -473,7 +475,13 @@ export default class ResearchPlanDetails extends Component {
         <HeaderCommentSection element={researchPlan} />
         <ConfirmClose el={researchPlan} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.handleSubmit()}
+            style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+          >
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -492,55 +500,12 @@ export default class ResearchPlanDetails extends Component {
   render() {
     const { researchPlan, update, visible } = this.state;
 
-    const editTooltip = (
-      <Tooltip id="edit-tooltip">
-        Click to switch to edit mode
-      </Tooltip>
-    );
-
-    const viewTooltip = (
-      <Tooltip id="view-tooltip">
-        Click to switch to view mode
-      </Tooltip>
-    );
-
-    let btnMode = (
-      <OverlayTrigger placement="top" overlay={editTooltip}>
-        <Button
-          bsSize="small"
-          bsStyle="success"
-          className="custom-button"
-          onClick={() => this.handleSwitchMode('edit')}
-        >
-          Click to Edit
-        </Button>
-      </OverlayTrigger>
-    );
-
-    if (researchPlan.mode !== 'view') {
-      btnMode = (
-        <OverlayTrigger placement="top" overlay={viewTooltip}>
-          <Button
-            bsSize="small"
-            bsStyle="info"
-            className="custom-button"
-            onClick={() => this.handleSwitchMode('view')}
-          >
-            Click to View
-          </Button>
-        </OverlayTrigger>
-      );
-    }
-
     const tabContentsMap = {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
           {
             !researchPlan.isNew && <CommentSection section="research_plan_research_plan" element={researchPlan} />
           }
-          <div style={{ margin: '5px 0px 5px 5px' }}>
-            {btnMode}
-          </div>
           {this.renderResearchPlanMain(researchPlan, update)}
           <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
         </Tab>
@@ -612,7 +577,10 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
+      <Panel
+        bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'}
+        className="eln-panel-detail research-plan-details"
+      >
         {this.renderPanelHeading(researchPlan)}
         <Panel.Body>
           <ElementDetailSortTab
@@ -627,7 +595,11 @@ export default class ResearchPlanDetails extends Component {
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
+              researchPlan.changed ? (
+                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                  {researchPlan.isNew ? 'Create' : 'Save'}
+                </Button>
+              ) : <div />
             }
           </ButtonToolbar>
           <CommentModal element={researchPlan} />
