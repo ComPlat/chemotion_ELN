@@ -79,12 +79,12 @@ export default class ElementsList extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { overview, showReport } = this.props;
     const {
-      visible, hidden, currentTab
+      visible, hidden, currentTab, totalElements
     } = this.state;
 
     return nextProps.overview !== overview
       || nextProps.showReport !== showReport
-      // || nextProps.totalElements !== totalElements
+      || nextProps.totalElements !== totalElements
       || nextState.visible !== visible
       || nextState.hidden !== hidden
       || nextState.currentTab !== currentTab;

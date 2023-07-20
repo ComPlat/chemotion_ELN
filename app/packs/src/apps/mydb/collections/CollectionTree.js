@@ -3,7 +3,6 @@ import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstr
 import update from 'immutability-helper';
 import Aviator from 'aviator';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
