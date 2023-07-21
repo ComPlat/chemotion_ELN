@@ -23,12 +23,11 @@ import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
-const editorTooltip = (exts) => (
+const editorTooltip = (isEditing) => (
   <Tooltip id="editor_tooltip">
-    Available extensions:
-    {' '}
-    {exts}
+    {isEditing ? 'Cancel editing: this will not close any open editor but will prevent them to push updates' : 'Open this document in another tab with OnlyOffice'}
   </Tooltip>
 );
 const downloadTooltip = <Tooltip id="download_tooltip">Download original attachment</Tooltip>;
@@ -96,21 +95,28 @@ export default class ResearchPlanDetailsAttachments extends Component {
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
+    const forceStop = attachment.edit_state === 'editing';
 
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
+    EditorFetcher.startEditing({ attachmentId: attachment.id, forceStop })
     .then((result) => {
-      if (result.token) {
+      if (!forceStop && result.token) {
         const url = `/editor?id=${attachment.id}&docType=${docType}
         &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
         &only_office_token=${result.only_office_token}`;
         window.open(url, '_blank');
 
-        attachment.aasm_state = 'oo_editing';
+        attachment.edit_state = 'editing';
         attachment.updated_at = new Date();
 
         this.props.onEdit(attachment);
+      } else if (forceStop) {
+        attachment.edit_state = 'not_editing';
+        attachment.updated_at = new Date();
+        this.props.onEdit(attachment);
       } else {
-        alert('Unauthorized to edit this file.');
+        // alert('Unauthorized to edit this file.');
+        NotificationActions.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
+        this.props.onEdit(attachment);
       }
     });
   }
@@ -195,11 +201,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const hasPop = false;
     const fetchNeeded = false;
     const fetchId = attachment.id;
-    const isEditing = attachment.aasm_state === 'oo_editing'
-      && new Date().getTime() < updateTime;
+    const isEditing = attachment.edit_state === 'editing';
 
     const docType = this.documentType(attachment.filename);
-    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
+    const editable = attachmentEditor && !(attachment.is_new) && docType !== null;
+    console.log('editable', editable);
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
     const isAnnotationUpdated = attachment.updatedAnnotation;
     if (attachment.is_deleted) {
@@ -254,12 +260,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
             {this.renderDownloadOriginalButton(attachment, downloadTooltip)}
             {this.renderEditAttachmentButton(
               attachment,
-              extension,
               attachmentEditor,
               isEditing,
               styleEditorBtn,
-              styleEditorBtn,
-              editDisable
+              editable
             )}
             {this.renderDownloadAnnotatedImageButton(attachment)}
             {this.renderAnnotateImageButton(attachment)}
@@ -270,22 +274,19 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderEditAttachmentButton(attachment, extension, attachmentEditor, isEditing, styleEditorBtn, editDisable) {
-    return (
-      <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
+  renderEditAttachmentButton(attachment, attachmentEditor, isEditing, styleEditorBtn, editable) {
+    return(editable ? (
+      <OverlayTrigger placement="left" overlay={editorTooltip(isEditing)}>
         <Button
           style={{ display: styleEditorBtn }}
           bsSize="xsmall"
           className="button-right"
-          bsStyle="success"
-          disabled={editDisable}
+          bsStyle={isEditing ? 'danger' : 'success'}
           onClick={() => this.handleEdit(attachment)}>
-
           <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing}/>
         </Button>
       </OverlayTrigger>
-
-    );
+    ) : null);
   }
 
   renderDownloadOriginalButton(attachment, downloadTooltip) {

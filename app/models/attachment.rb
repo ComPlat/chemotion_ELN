@@ -32,10 +32,26 @@
 #
 
 class Attachment < ApplicationRecord
+  include AASM
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
+
+  enum edit_state: { not_editing: 0, editing: 1 }
+
+  aasm(:document, column: :edit_state) do
+    state :not_editing, initial: true
+    state :editing
+
+    event :editing_start do
+      transitions from: :not_editing, to: :editing
+    end
+
+    event :editing_end do
+      transitions from: %i[editing not_editing], to: :not_editing
+    end
+  end
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
@@ -240,6 +256,20 @@ class Attachment < ApplicationRecord
       attachment.storage.directory,
       attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location'),
     )
+  end
+
+  def file_extension
+    extname = File.extname(filename.to_s)
+    extname && extname[1..-1]
+  end
+
+  def editable_document?
+    return false unless file_extension.present?
+
+    available_extensions = Rails.configuration.editors&.available_extensions
+    return false unless available_extensions.present?
+
+    available_extensions.include?(file_extension.downcase)
   end
 
   private

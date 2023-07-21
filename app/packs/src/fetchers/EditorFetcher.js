@@ -12,16 +12,12 @@ export default class EditorFetcher {
   }
 
   static startEditing(params) {
-    const promise = fetch('/api/v1/editor/start/', {
+    const { attachmentId, forceStop } = params;
+    const promise = fetch(`/api/v1/editor/${attachmentId}/${forceStop ? 'end' : 'start'}/`, {
       credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
+      method: 'GET',
     })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+      .then(response => response.json()).catch((errorMessage) => {
         console.log(errorMessage);
       });
     return promise;

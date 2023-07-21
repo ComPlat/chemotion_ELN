@@ -76,13 +76,13 @@ export default class WellplateDetailsAttachments extends Component {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
 
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
+    EditorFetcher.startEditing({ attachmentId: attachment.id })
       .then((result) => {
         if (result.token) {
           const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
           window.open(url, '_blank');
 
-          attachment.aasm_state = 'oo_editing';
+          attachment.edit_state = 'editing';
           attachment.updated_at = new Date();
 
           onEdit(attachment);
@@ -202,7 +202,7 @@ export default class WellplateDetailsAttachments extends Component {
     const fetchId = attachment.id;
 
     const previewImg = previewAttachmentImage(attachment);
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
+    const isEditing = attachment.edit_state === 'editing' && new Date().getTime() < updateTime;
 
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
