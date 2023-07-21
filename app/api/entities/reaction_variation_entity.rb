@@ -49,21 +49,21 @@ module Entities
     expose(
       :value,
       :unit,
-      :aux,
     )
+    expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
+  end
 
-    def aux
-      {}.tap do |aux|
-        aux[:coefficient] = object[:aux][:coefficient]
-        aux[:isReference] = object[:aux][:isReference]
-        aux[:referenceAmount] = object[:aux][:referenceAmount]
-        aux[:loading] = object[:aux][:loading]
-        aux[:purity] = object[:aux][:purity]
-        aux[:molarity] = object[:aux][:molarity]
-        aux[:molecularWeight] = object[:aux][:molecularWeight]
-        aux[:sumFormula] = object[:aux][:sumFormula]
-        aux[:yield] = object[:aux][:yield]
-      end
-    end
+  class ReactionVariationMaterialAuxEntity < ApplicationEntity
+    expose(
+      :coefficient,
+      :isReference,
+      :referenceAmount,
+      :loading,
+      :purity,
+      :molarity,
+      :molecularWeight,
+      :sumFormula,
+      :yield,
+    )
   end
 end
