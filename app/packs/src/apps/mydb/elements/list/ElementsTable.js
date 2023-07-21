@@ -37,7 +37,7 @@ export default class ElementsTable extends React.Component {
       page: null,
       pages: null,
       elementsGroup: 'none',
-      elementsSort: false,
+      elementsSort: true,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -173,7 +173,7 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = filters[type]?.group || 'none';
       // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.elementsSort = filters[type]?.sort || false;
+      this.state.elementsSort = filters[type]?.sort || true;
     }
   };
 
@@ -193,10 +193,6 @@ export default class ElementsTable extends React.Component {
   changeElementsGroup = (elementsGroup) => {
     const { type } = this.props;
     let { elementsSort } = this.state;
-
-    if (elementsGroup === 'none') {
-      elementsSort = false;
-    }
 
     this.setState({
       elementsGroup,
@@ -373,7 +369,7 @@ export default class ElementsTable extends React.Component {
   renderReactionsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const optionsHash = {
-      none: { sortColumn: 'update date', label: 'List' },
+      none: { sortColumn: 'label (Z to A)', label: 'List' },
       rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
       rxno: { sortColumn: 'type', label: 'Grouped by type' },
     };
@@ -382,7 +378,7 @@ export default class ElementsTable extends React.Component {
       label: option[1].label
     }));
     const { sortColumn } = optionsHash[elementsGroup];
-    const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
+    const sortTitle = elementsSort ? `click to sort by update date (descending) - currently sorted by ${sortColumn}` : `click to sort by ${sortColumn} - currently sorted by update date (descending)`;
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
     const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
@@ -409,7 +405,7 @@ export default class ElementsTable extends React.Component {
           onChange={this.changeElementsGroup}
           className="header-group-select"
         />
-        {elementsGroup !== 'none' ? (sortContent) : null}
+        {sortContent}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
