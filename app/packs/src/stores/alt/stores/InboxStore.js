@@ -15,12 +15,15 @@ class InboxStore {
       numberOfAttachments: 0,
       checkedIds: [],
       checkedAll: false,
+      checkedDeviceIds: [],
+      checkedDeviceAll: false,
       inboxModalVisible: false,
       inboxVisible: false,
       currentPage: 1,
       itemsPerPage: 20,
       currentContainerPage: 1,
       currentUnsortedBoxPage: 1,
+      currentDeviceBoxPage: 1,
       dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
@@ -41,6 +44,7 @@ class InboxStore {
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
       handleCheckedAll: InboxActions.checkedAll,
       handleCheckedIds: InboxActions.checkedIds,
+      handleCheckedDeviceAll: InboxActions.checkedDeviceAll,
       handlePrevClick: InboxActions.prevClick,
       handleNextClick: InboxActions.nextClick,
 
@@ -343,6 +347,36 @@ class InboxStore {
       currentAttachments.forEach((attachment) => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
       this.handleCheckedAll(params);
     }
+  }
+
+  handleCheckedDeviceAll(params) {
+    const { checkedDeviceAll, inbox, activeDeviceBoxId } = this.state;
+
+    if (params.range === 'all') {
+      if (params.type) {
+        const currentDeviceBox = inbox.children.find((deviceBox) => deviceBox.id === activeDeviceBoxId);
+        if (currentDeviceBox) {
+          const allDatasetIdsFlat = currentDeviceBox.children.map((dataset) => dataset.id);
+          const allAttachments = currentDeviceBox.children.reduce((acc, dataset) => {
+            acc.push(...dataset.attachments);
+            return acc;
+          }, []);
+          const allAttachmentsFlat = _.flatten(allAttachments).map((attachment) => attachment.id);
+
+          this.setState({
+            checkedDeviceIds: allDatasetIdsFlat,
+            checkedIds: allAttachmentsFlat,
+          });
+        }
+      } else {
+        this.setState({
+          checkedDeviceIds: [],
+          checkedIds: [],
+        });
+      }
+    }
+
+    this.setState({ checkedDeviceAll: !checkedDeviceAll });
   }
 }
 

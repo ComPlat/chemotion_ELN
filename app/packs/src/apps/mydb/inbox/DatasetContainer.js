@@ -6,6 +6,7 @@ import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
 
 const dataSource = {
   beginDrag(props) {
@@ -21,9 +22,11 @@ const collectSource = (connect, monitor) => ({
 class DatasetContainer extends Component {
   constructor(props) {
     super(props);
+    const inboxState = InboxStore.getState();
     this.state = {
       visible: false,
       deletingTooltip: false,
+      checkedIds: inboxState.checkedIds,
     }
   }
 
@@ -56,16 +59,17 @@ class DatasetContainer extends Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, dataset, largerInbox } = this.props;
+    const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect } = this.props;
 
     if (sourceType === DragDropItemTypes.DATASET) {
-      const { visible, deletingTooltip } = this.state;
+      const { visible, deletingTooltip, checkedIds } = this.state;
       const attachments = dataset.attachments.map(attachment => (
         <AttachmentContainer
           key={`attach_${attachment.id}`}
           sourceType={DragDropItemTypes.DATA}
           attachment={attachment}
           largerInbox={largerInbox}
+          isSelected={checkedIds.includes(attachment.id)}
         />
       ));
       const attCount = this.attachmentCount();
@@ -110,9 +114,18 @@ class DatasetContainer extends Component {
             ) : null}
           </span>
         ) : null;
+      const datasetCheckbox = (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onDatasetSelect(dataset.id)}
+        />
+      );
+
       return connectDragSource(
         <div>
           <div style={textStyle}>
+            {datasetCheckbox}
             &nbsp;{trash}&nbsp;
             <button
               type="button"
@@ -147,7 +160,9 @@ DatasetContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
   sourceType: PropTypes.string.isRequired,
-  largerInbox: PropTypes.bool
+  largerInbox: PropTypes.bool,
+  isSelected: PropTypes.bool.isRequired,
+  onDatasetSelect: PropTypes.func.isRequired,
 };
 
 DatasetContainer.defaultProps = {
