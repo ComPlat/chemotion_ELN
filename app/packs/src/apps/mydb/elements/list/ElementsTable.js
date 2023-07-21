@@ -369,18 +369,18 @@ export default class ElementsTable extends React.Component {
   renderReactionsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const optionsHash = {
-      none: { sortColumn: 'the list Z to A', label: 'List' },
-      rinchi_short_key: { sortColumn: 'by RInChI', label: 'Grouped by RInChI' },
-      rxno: { sortColumn: 'by type', label: 'Grouped by type' },
+      none: { sortColumn: 'label (Z to A)', label: 'List' },
+      rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
+      rxno: { sortColumn: 'type', label: 'Grouped by type' },
     };
     const options = Object.entries(optionsHash).map((option) => ({
       value: option[0],
       label: option[1].label
     }));
     const { sortColumn } = optionsHash[elementsGroup];
-    const sortTitle = elementsSort ? 'sort by update date/time (descending)' : `sort ${sortColumn}`;
+    const sortTitle = elementsSort ? `click to sort by update date (descending) - currently sorted by ${sortColumn}` : `click to sort by ${sortColumn} - currently sorted by update date (descending)`;
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = elementsSort ? 'fa-clock-o' : 'fa-sort-alpha-desc';
+    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
     const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
