@@ -47,7 +47,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.map { |reaction| reaction['id'] }).to eq([r2.id, r1.id])
+        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
       end
     end
 
@@ -72,7 +72,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.map { |reaction| reaction['id'] }).to eq([r2.id, r1.id])
+        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
       end
     end
 
@@ -125,14 +125,14 @@ describe Chemotion::ReactionAPI do
         Reaction.set_callback(:save, :before, :generate_rinchis)
       end
 
-      it 'returns sorted reactions per default by updated_at' do
+      it 'returns sorted reactions per default by short_label' do
         get '/api/v1/reactions', params: { collection_id: collection.id }
 
         expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
           [
             reaction3.id,
-            reaction1.id,
             reaction2.id,
+            reaction1.id,
           ],
         )
       end
@@ -173,16 +173,11 @@ describe Chemotion::ReactionAPI do
         )
       end
 
-      it 'returns sorted reactions by updated_at for not allowed sort_column' do
+      it 'gives error for invalid value for sort_column' do
         get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'not_allowed' }
 
-        expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
-          [
-            reaction3.id,
-            reaction1.id,
-            reaction2.id,
-          ],
-        )
+        expect(response).to have_http_status(:bad_request)
+        expect(JSON.parse(response.body)['error']).to eq('sort_column does not have a valid value')
       end
     end
   end
