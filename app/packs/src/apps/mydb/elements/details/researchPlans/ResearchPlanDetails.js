@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem
+  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -340,43 +340,57 @@ export default class ResearchPlanDetails extends Component {
     } = researchPlan;
     const edit = researchPlan.mode === 'edit';
 
-    const editTooltip = (
-      <Tooltip id="edit-tooltip">
-        Click to switch to edit mode
-      </Tooltip>
+    const editTooltip = (<Tooltip id="edit-tooltip">Click to switch to edit mode</Tooltip>);
+    const viewTooltip = (<Tooltip id="view-tooltip">Click to switch to view mode</Tooltip>);
+
+    const EditButton = (
+      <Button
+        bsSize="middle"
+        bsStyle={researchPlan.mode === 'edit' ? 'warning' : 'default'}
+        style={{
+          pointerEvents: 'none',
+          backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
+        }}
+      >
+        <i className="fa fa-pencil" />
+      </Button>
     );
 
-    const viewTooltip = (
-      <Tooltip id="view-tooltip">
-        Click to switch to view mode
-      </Tooltip>
+    const ViewButton = (
+      <Button
+        bsSize="middle"
+        bsStyle={researchPlan.mode === 'view' ? 'info' : 'default'}
+        style={{
+          pointerEvents: 'none',
+          backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,
+        }}
+      >
+        <i className="fa fa-eye fa-sm" />
+      </Button>
     );
 
-    let btnMode = (
-      <OverlayTrigger placement="top" overlay={editTooltip}>
-        <Button
-          bsSize="middle"
-          bsStyle="warning"
-          onClick={() => this.handleSwitchMode('edit')}
-        >
-          <i className="fa fa-pencil" />
-        </Button>
-      </OverlayTrigger>
-    );
-
-    if (researchPlan.mode !== 'view') {
-      btnMode = (
-        <OverlayTrigger placement="top" overlay={viewTooltip}>
-          <Button
-            bsSize="middle"
-            bsStyle="info"
-            onClick={() => this.handleSwitchMode('view')}
-          >
-            <i className="fa fa-eye fa-sm" />
-          </Button>
+    const btnMode = (
+      <div
+        role="button"
+        tabIndex={0}
+        style={{ cursor: 'pointer' }}
+        onClick={() => {
+          if (researchPlan.mode === 'view') {
+            this.handleSwitchMode('edit');
+          } else {
+            this.handleSwitchMode('view');
+          }
+        }}
+        onKeyPress={() => {}}
+      >
+        <OverlayTrigger placement="top" overlay={researchPlan.mode === 'view' ? editTooltip : viewTooltip}>
+          <ButtonGroup>
+            {EditButton}
+            {ViewButton}
+          </ButtonGroup>
         </OverlayTrigger>
-      );
-    }
+      </div>
+    );
 
     return (
       <ListGroup fill="true">
