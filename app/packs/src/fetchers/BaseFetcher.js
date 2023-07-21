@@ -69,17 +69,12 @@ export default class BaseFetcher {
       case 'reactions':
         userState = UserStore.getState();
         filters = userState?.profile?.data?.filters || {};
-        group = filters.reaction?.group || 'none';
+        group = filters.reaction?.group || 'short_label';
         sort = filters.reaction?.sort || false;
         if (group === 'none') {
-          if (sort) {
-            addQuery = `&sort_column=${'updated_at'}`;
-          } else {
-            addQuery = `&sort_column=${'short_label'}`;
-          }
-        } else {
-          addQuery = `&sort_column=${(sort && group) || 'updated_at'}`;
+          group = 'short_label';
         }
+        addQuery = `&sort_column=${(sort && group) || 'updated_at'}`;
         break;
       case 'generic_elements':
         userState = UserStore.getState();
