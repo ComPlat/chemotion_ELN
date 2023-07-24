@@ -57,6 +57,7 @@ module Chemotion
         c_id = params[:uiState][:currentCollection]
         c_id = SyncCollectionsUser.find(c_id)&.collection_id if params[:uiState][:isSync]
         %i[sample reaction wellplate].each do |table|
+          # binding.pry
           next unless (p_t = params[:uiState][table])
 
           ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
@@ -65,10 +66,12 @@ module Chemotion
           column_query = build_column_query(filter_column_selection(table), current_user.id)
           sql_query = send("build_sql_#{table}_sample", column_query, c_id, ids, p_t[:checkedAll])
           next unless sql_query
+          # binding.pry
 
           result = db_exec_query(sql_query)
+          # binding.pry
           export.generate_sheet_with_samples(table, result)
-        end
+        end if params[:columns][:chemicals].blank?
 
         if params[:exportType] == 1 && params[:columns][:analyses].present?
           %i[sample].each do |table|
@@ -76,13 +79,33 @@ module Chemotion
 
             ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
             next unless p_t[:checkedAll] || ids
-
+            # binding.pry
             column_query = build_column_query(filter_column_selection("#{table}_analyses".to_sym), current_user.id)
+            # binding.pry
             sql_query = send("build_sql_#{table}_analyses", column_query, c_id, ids, p_t[:checkedAll])
             next unless sql_query
-
+            # binding.pry
             result = db_exec_query(sql_query)
+
             export.generate_analyses_sheet_with_samples("#{table}_analyses".to_sym, result, params[:columns][:analyses])
+          end
+        end
+
+        if params[:exportType] == 1 && params[:columns][:chemicals].present?
+          %i[sample].each do |table|
+            next unless (p_t = params[:uiState][table])
+
+            ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+            next unless p_t[:checkedAll] || ids
+
+            column_query = build_column_query(filter_column_selection("#{table}_chemicals".to_sym), current_user.id)
+            # binding.pry
+            sql_query = send("build_sql_#{table}_chemical", column_query, c_id, ids, p_t[:checkedAll])
+            next unless sql_query
+            binding.pry
+            result = db_exec_query(sql_query)
+            binding.pry
+            export.generate_sheet_with_samples("#{table}_chemicals", result, params[:columns][:chemicals])
           end
         end
 
