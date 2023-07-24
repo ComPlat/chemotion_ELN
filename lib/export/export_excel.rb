@@ -11,11 +11,11 @@ module Export
       @xfile.workbook.styles.fonts.first.name = 'Calibri'
     end
 
-    def generate_sheet_with_samples(table, samples = nil)
+    def generate_sheet_with_samples(table, samples = nil, selected_columns = nil)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
 
-      generate_headers(table)
+      generate_headers(table, [], selected_columns)
       sheet = @xfile.workbook.add_worksheet(name: table.to_s) # do |sheet|
       grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
       sheet.add_row(@headers, style: grey) # Add header
