@@ -50,7 +50,7 @@ module Chemotion
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
-
+      
         sort_column = params[:sort_column].presence || 'created_at'
         sort_direction = sort_column == 'updated_at' ? 'DESC' : 'ASC'
 

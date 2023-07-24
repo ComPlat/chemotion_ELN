@@ -369,7 +369,7 @@ export default class ElementsTable extends React.Component {
   renderReactionsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const optionsHash = {
-      none: { sortColumn: 'label (Z to A)', label: 'List' },
+      none: { sortColumn: 'create date', label: 'List' },
       rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
       rxno: { sortColumn: 'type', label: 'Grouped by type' },
     };
