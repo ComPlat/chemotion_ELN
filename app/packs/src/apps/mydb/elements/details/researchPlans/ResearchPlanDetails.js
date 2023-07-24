@@ -546,7 +546,7 @@ export default class ResearchPlanDetails extends Component {
         </Tab>
       ),
       metadata: (
-        <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+        <Tab eventKey="metadata" title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
           {
             !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
           }
