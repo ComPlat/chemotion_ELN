@@ -55,7 +55,7 @@ const KetcherRailsform = () => {
       changedValues[0].queryMolfile = molfile;
       setChangedValues((a) => [...a]);
     }
-    searchStore.changeErrorMessage("Please fill out all needed fields");
+    searchStore.changeErrorMessage("Please add a drawing. The drawing is empty");
     //// Check if blank molfile
     const molfileLines = molfile.match(/[^\r\n]+/g);
     //// If the first character ~ num of atoms is 0, we will not search
