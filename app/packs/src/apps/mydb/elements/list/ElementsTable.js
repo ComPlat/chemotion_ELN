@@ -355,7 +355,6 @@ export default class ElementsTable extends React.Component {
     const {
       moleculeSort,
       productOnly,
-      searchResult,
     } = this.state;
 
     const options = [
