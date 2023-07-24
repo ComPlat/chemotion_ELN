@@ -562,7 +562,6 @@ export default class ResearchPlanDetails extends Component {
       research_plan: 'Research Plan',
       analyses: 'Analyses',
       attachments: 'Attachments',
-      literature: 'Literature',
       wellplates: 'Wellplates',
       references: 'References',
       metadata: 'Metadata',

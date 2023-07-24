@@ -10,7 +10,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
   const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
   const visible = [];
-  const hidden = [];
+  let hidden = [];
 
   enabled.forEach((key) => {
     const order = layout[key];
@@ -27,6 +27,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
       visible.push(first);
     }
   }
+  hidden = hidden.filter(n => n);
   if (hidden.length === 0) {
     hidden.push('hidden');
   }
@@ -36,9 +37,10 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   };
 };
 
-const getArrayFromLayout = (layout, element, addInventoryTab) => {
+const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = null ) => {
   let layoutKeys = Object.keys(layout);
-  let availableTabs = getElementSegments(element, layoutKeys);
+  let segmentAvailableTabs = getElementSegments(element, layoutKeys);
+  availableTabs = [...availableTabs, ...segmentAvailableTabs];
   return getVisibilityList(layout, availableTabs, addInventoryTab);
 };
 
