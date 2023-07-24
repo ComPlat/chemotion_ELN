@@ -9,6 +9,7 @@ import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 const spec = {
   drop(props, monitor) {
     const { field, onChange } = props;
+    field.value.reaction_id = null;
     onChange({ reaction_id: monitor.getItem().element.id }, field.id);
   }
 };

@@ -10,6 +10,7 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 const spec = {
   drop(props, monitor) {
     const { field, onChange } = props;
+    field.value.sample_id = null;
     onChange({ sample_id: monitor.getItem().element.id }, field.id);
   }
 };
