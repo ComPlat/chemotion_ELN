@@ -283,29 +283,6 @@ export default class UserManagement extends React.Component {
       });
   }
 
-  validateUserInput() {
-    if (this.email.value === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input email.' });
-      return false;
-    } if (!validateEmail(this.email.value.trim())) { // also validated in backend
-      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
-      return false;
-    } if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
-      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
-      return false;
-    } if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
-      this.setState({ messageNewUserModal: 'passwords do not mach!' });
-      return false;
-    } if (this.password.value.trim().length < 8) { // also validated in backend
-      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
-      return false;
-    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
-      return false;
-    }
-    return true;
-  }
-
   handleCreateNewUser() {
     if (!this.validateUserInput()) {
       return false;
@@ -375,6 +352,39 @@ export default class UserManagement extends React.Component {
           this.setState({ messageNewUserModal: `Failed to process user file: ${reason}.` });
         });
     }
+  }
+
+  handleUpdateUser(user) {
+    if (!validateEmail(this.u_email.value.trim())) {
+      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
+      return false;
+    } if (this.u_firstname.value.trim() === ''
+      || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
+      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
+      return false;
+    }
+    AdminFetcher.updateUser({
+      id: user.id,
+      email: this.u_email.value.trim(),
+      first_name: this.u_firstname.value.trim(),
+      last_name: this.u_lastname.value.trim(),
+      name_abbreviation: this.u_abbr.value.trim(),
+      type: this.u_type.value
+    })
+      .then((result) => {
+        if (result.error) {
+          this.setState({ messageEditUserModal: result.error });
+          return false;
+        }
+        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
+        this.u_email.value = '';
+        this.u_firstname.value = '';
+        this.u_lastname.value = '';
+        this.u_abbr.value = '';
+        this.handleFetchUsers();
+        return true;
+      });
+    return true;
   }
 
   createNewUserFromFile(newUser) {
@@ -475,35 +485,26 @@ export default class UserManagement extends React.Component {
     });
   }
 
-  handleUpdateUser(user) {
-    if (!validateEmail(this.u_email.value.trim())) {
-      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
+  validateUserInput() {
+    if (this.email.value === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input email.' });
       return false;
-    } if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
-      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
+    } if (!validateEmail(this.email.value.trim())) { // also validated in backend
+      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
+      return false;
+    } if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
+      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
+      return false;
+    } if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
+      this.setState({ messageNewUserModal: 'passwords do not mach!' });
+      return false;
+    } if (this.password.value.trim().length < 8) { // also validated in backend
+      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
+      return false;
+    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
-    AdminFetcher.updateUser({
-      id: user.id,
-      email: this.u_email.value.trim(),
-      first_name: this.u_firstname.value.trim(),
-      last_name: this.u_lastname.value.trim(),
-      name_abbreviation: this.u_abbr.value.trim(),
-      type: this.u_type.value
-    })
-      .then((result) => {
-        if (result.error) {
-          this.setState({ messageEditUserModal: result.error });
-          return false;
-        }
-        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
-        this.u_email.value = '';
-        this.u_firstname.value = '';
-        this.u_lastname.value = '';
-        this.u_abbr.value = '';
-        this.handleFetchUsers();
-        return true;
-      });
     return true;
   }
 

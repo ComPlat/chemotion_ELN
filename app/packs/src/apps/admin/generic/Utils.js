@@ -217,10 +217,7 @@ function ButtonTooltip(props) {
   );
 }
 
-ButtonTooltip.propTypes = {handleClose() {
-  this.updateState(this.props.element.properties_template, false);
-  this.props.fnClose();
-}
+ButtonTooltip.propTypes = {
   tip: PropTypes.string.isRequired,
   element: PropTypes.object,
   fnClick: PropTypes.func.isRequired,
