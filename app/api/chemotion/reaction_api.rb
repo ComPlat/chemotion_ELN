@@ -158,7 +158,7 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :segments, type: Array
-        optional :variations, type: Array[Hash]
+        optional :variations, type: [Hash]
       end
       route_param :id do
         after_validation do
@@ -224,7 +224,7 @@ module Chemotion
         requires :container, type: Hash
         optional :duration, type: String
         optional :rxno, type: String
-        optional :variations, type: Array[Hash]
+        optional :variations, type: [Hash]
       end
 
       post do

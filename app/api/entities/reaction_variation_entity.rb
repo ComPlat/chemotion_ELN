@@ -5,15 +5,15 @@ module Entities
     expose(
       :id,
       :properties,
-      :startingMaterials,
       :reactants,
       :products,
     )
+    expose :starting_materials, as: :startingMaterials
 
     def properties
       {}.tap do |properties|
         properties[:temperature] = ReactionVariationPropertyEntity.represent(object[:properties][:temperature])
-        properties[:duration] =  ReactionVariationPropertyEntity.represent(object[:properties][:duration])
+        properties[:duration] = ReactionVariationPropertyEntity.represent(object[:properties][:duration])
       end
     end
 
@@ -25,7 +25,7 @@ module Entities
       end
     end
 
-    def startingMaterials
+    def starting_materials
       materials(:startingMaterials)
     end
 
