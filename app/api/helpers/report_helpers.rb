@@ -486,7 +486,7 @@ module ReportHelpers
         # deleted_at: ['wp.deleted_at', nil, 10],
         molecule_name: ['mn."name"', '"molecule name"', 1],
         molarity_value: ['s."molarity_value"', '"molarity_value"', 0],
-        dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0]
+        dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -499,7 +499,7 @@ module ReportHelpers
         sum_formular: ['m.sum_formular', '"sum formula"', 10],
         inchistring: ['m.inchistring', 'inchistring', 10],
         molecular_weight: ['m.molecular_weight', '"MW"', 0],
-        inchikey: ['m.inchikey', '"InChI"', 10]
+        inchikey: ['m.inchikey', '"InChI"', 10],
       },
       wellplate: {
         name: ['wp."name"', '"wellplate name"', 10],
@@ -517,7 +517,7 @@ module ReportHelpers
         # created_at: ['w.created_at', nil, 10],
         # updated_at: ['w.updated_at', nil, 10],
         readouts: ['w.readouts', '"well readouts"', 10],
-        additive: ['w.additive', nil, 10]
+        additive: ['w.additive', nil, 10],
         # deleted_at: ['w.deleted_at', nil, 10],
       },
       reaction: {
@@ -543,24 +543,24 @@ module ReportHelpers
         # created_by: ['r.created', ni, 10l]
         # reactions_sample:
         equivalent: ['r_s.equivalent', '"r eq"', 10],
-        reference: ['r_s.reference', '"r ref"', 10]
+        reference: ['r_s.reference', '"r ref"', 10],
       },
       analysis: {
         name: ['anac."name"', '"name"', 10],
         description: ['anac.description', '"description"', 10],
         kind: ['anac.extended_metadata->\'kind\'', '"kind"', 10],
         content: ['anac.extended_metadata->\'content\'', '"content"', 10],
-        status: ['anac.extended_metadata->\'status\'', '"status"', 10]
+        status: ['anac.extended_metadata->\'status\'', '"status"', 10],
       },
       dataset: {
         name: ['datc."name"', '"dataset name"', 10],
         description: ['datc.description', '"dataset description"', 10],
-        instrument: ['datc.extended_metadata->\'instrument\'', '"instrument"', 10]
+        instrument: ['datc.extended_metadata->\'instrument\'', '"instrument"', 10],
       },
       attachment: {
         filename: ['att.filename', '"filename"', 10],
         checksum: ['att.checksum', '"checksum"', 10],
-      }
+      },
     }.freeze
 
   # desc: concatenate columns to be queried
@@ -634,7 +634,7 @@ module ReportHelpers
       position_x
       position_y
       readouts
-    ]
+    ],
   }.freeze
 
   DEFAULT_COLUMNS_REACTION = {
@@ -664,7 +664,7 @@ module ReportHelpers
       sum_formular
       inchistring
       molecular_weight
-    ]
+    ],
   }.freeze
 
   def default_columns_reaction
