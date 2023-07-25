@@ -786,6 +786,8 @@ GEM
       httpclient (>= 2.4)
     sys-filesystem (1.4.3)
       ffi (~> 1.1)
+    tailwindcss-rails (2.0.30)
+      railties (>= 6.0.0)
     temple (0.9.1)
     thor (1.2.1)
     tilt (2.0.11)
@@ -978,6 +980,7 @@ DEPENDENCIES
   spring
   stackprof
   sys-filesystem
+  tailwindcss-rails (~> 2.0)
   thor
   thumbnailer!
   turbo-sprockets-rails4
@@ -990,4 +993,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   2.1.4
+   2.4.17

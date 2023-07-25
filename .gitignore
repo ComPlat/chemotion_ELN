@@ -191,3 +191,6 @@ public/sprite.png
 /public/svgedit
 
 !spec/fixtures/import/sample_import_template.xlsx
+
+/app/assets/builds/*
+!/app/assets/builds/.keep
