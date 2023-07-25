@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, FormGroup, Modal, Button } from 'react-bootstrap';
+import {
+  Form, FormGroup, Modal, Button
+} from 'react-bootstrap';
 import { Content } from 'src/apps/admin/generic/AttrForm';
 
 export default class AttrNewModal extends Component {
@@ -47,7 +49,10 @@ export default class AttrNewModal extends Component {
             <Content ref={this.formRef} content={content} element={{}} editable />
             <Form horizontal>
               <FormGroup>
-                <Button bsStyle="primary" onClick={() => this.handleCreate()}>Create&nbsp;<i className="fa fa-save" aria-hidden="true" /></Button>
+                <Button bsStyle="primary" onClick={() => this.handleCreate()}>
+                  Create&nbsp;
+                  <i className="fa fa-save" aria-hidden="true" />
+                </Button>
                 &nbsp;
                 <Button bsStyle="warning" onClick={() => fnClose()}>Cancel</Button>
               </FormGroup>

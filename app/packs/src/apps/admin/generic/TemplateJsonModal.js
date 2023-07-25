@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import JSONInput from 'react-json-editor-ajrm';
-import { Form, FormGroup, Modal, Button } from 'react-bootstrap';
+import {
+  Form, FormGroup, Modal, Button
+} from 'react-bootstrap';
 
 export default class TemplateJsonModal extends React.Component {
   constructor(props) {
@@ -23,6 +25,16 @@ export default class TemplateJsonModal extends React.Component {
     }
   }
 
+  handleUpdateJson() {
+    const { propertiesTemplate } = this.state;
+    this.props.fnUpdate(propertiesTemplate);
+  }
+
+  handleClose() {
+    this.updateState(this.props.element.properties_template, false);
+    this.props.fnClose();
+  }
+
   onChangeJson(e) {
     let { propertiesTemplate } = this.state;
     if (e.error === false) {
@@ -41,16 +53,6 @@ export default class TemplateJsonModal extends React.Component {
     this.updateState(this.props.element.properties_template, false);
   }
 
-  handleUpdateJson() {
-    const { propertiesTemplate } = this.state;
-    this.props.fnUpdate(propertiesTemplate);
-  }
-
-  handleClose() {
-    this.updateState(this.props.element.properties_template, false);
-    this.props.fnClose();
-  }
-
   render() {
     const { showModal } = this.props;
     const { propertiesTemplate, isValidJson } = this.state;
@@ -65,13 +67,25 @@ export default class TemplateJsonModal extends React.Component {
                   placeholder={propertiesTemplate}
                   width="100%"
                   height="750px"
-                  onChange={e => this.onChangeJson(e)}
+                  onChange={(e) => this.onChangeJson(e)}
                 />
               </FormGroup>
               <FormGroup>
-                <Button bsStyle="default" onClick={() => this.handleClose()}>Close&nbsp;<i className="fa fa-times" aria-hidden="true" /></Button>&nbsp;
-                <Button bsStyle="info" onClick={() => this.resetJson()}>Reset&nbsp;<i className="fa fa-repeat" aria-hidden="true" /></Button>&nbsp;
-                <Button bsStyle="warning" disabled={isValidJson} onClick={() => this.handleUpdateJson()}>Save&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" /></Button>&nbsp;
+                <Button bsStyle="default" onClick={() => this.handleClose()}>
+                  Close&nbsp;
+                  <i className="fa fa-times" aria-hidden="true" />
+                </Button>
+&nbsp;
+                <Button bsStyle="info" onClick={() => this.resetJson()}>
+                  Reset&nbsp;
+                  <i className="fa fa-repeat" aria-hidden="true" />
+                </Button>
+&nbsp;
+                <Button bsStyle="warning" disabled={isValidJson} onClick={() => this.handleUpdateJson()}>
+                  Save&nbsp;
+                  <i className="fa fa-floppy-o" aria-hidden="true" />
+                </Button>
+&nbsp;
               </FormGroup>
             </Form>
           </div>

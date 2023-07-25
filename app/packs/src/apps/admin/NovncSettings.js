@@ -1,7 +1,11 @@
 /* eslint-disable react/no-multi-comp */
+/* eslint-disable max-classes-per-file */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Row, Col } from 'react-bootstrap';
+import {
+  Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Row, Col
+} from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -10,8 +14,7 @@ import NovncConfigContainer from 'src/apps/admin/NovncConfigContainer';
 
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
 const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;
-const Notification = props =>
-(
+const Notification = (props) => (
   NotificationActions.add({
     title: `Device [${props.device.name}]`,
     message: props.msg,
@@ -21,7 +24,7 @@ const Notification = props =>
     uid: uuid.v4()
   })
 );
-const NotificationError = props => Notification({ ...props, lvl: 'error' });
+const NotificationError = (props) => Notification({ ...props, lvl: 'error' });
 
 class ModelConfig extends Component {
   constructor(props) {
@@ -116,7 +119,13 @@ class ModelConfig extends Component {
         onHide={this.props.onClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title> <b>NoVNC Settings for <u>{this.props.device.name}</u></b></Modal.Title>
+          <Modal.Title>
+            {' '}
+            <b>
+              NoVNC Settings for
+              <u>{this.props.device.name}</u>
+            </b>
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Row style={rowStyle}>
@@ -131,7 +140,7 @@ class ModelConfig extends Component {
                 id="inputTarget"
                 placeholder="e.g. ws://localhost:8092/websockify"
                 required
-                onChange={e => this.updateTarget(e)}
+                onChange={(e) => this.updateTarget(e)}
                 defaultValue={storedTarget || ''}
               />
 
@@ -148,7 +157,7 @@ class ModelConfig extends Component {
                 id="inputToken"
                 placeholder="e.g. 000001"
                 required
-                onChange={e => this.updateToken(e)}
+                onChange={(e) => this.updateToken(e)}
                 disabled={missingTarget}
                 defaultValue={storedToken || ''}
               />
@@ -157,7 +166,8 @@ class ModelConfig extends Component {
           </Row>
           <Row style={rowStyle}>
             <Col style={colStyle}>
-              <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
+              <span className="fa fa-info-circle" aria-hidden="true">
+&nbsp;
                 <b>Current Target   </b>
                 <RenderStoredTarget />
               </span>
@@ -165,7 +175,8 @@ class ModelConfig extends Component {
           </Row>
           <Row style={rowStyle}>
             <Col style={colStyle}>
-              <span className="fa fa-info-circle" aria-hidden="true">&nbsp;
+              <span className="fa fa-info-circle" aria-hidden="true">
+&nbsp;
                 <b>Edited Target   </b>
                 <RenderCurrentTarget />
               </span>
@@ -294,12 +305,14 @@ export default class NovncSettings extends Component {
   }
 
   renderConfiModal() {
-    return this.state.showConfigModal ?
-      <ModelConfig
-        device={this.state.selectedDevice}
-        isShow={this.state.showConfigModal}
-        onClose={this.handleConfigModalClose}
-      /> : null;
+    return this.state.showConfigModal
+      ? (
+        <ModelConfig
+          device={this.state.selectedDevice}
+          isShow={this.state.showConfigModal}
+          onClose={this.handleConfigModalClose}
+        />
+      ) : null;
   }
 
   render() {
@@ -308,7 +321,7 @@ export default class NovncSettings extends Component {
     const renderTarget = (device) => {
       if (device.data && device.data.novnc && device.data.novnc.token) {
         return `${device.data.novnc.target}?token=${device.data.novnc.token}`;
-      } else if (device.data && device.data.novnc && !device.data.novnc.token) {
+      } if (device.data && device.data.novnc && !device.data.novnc.token) {
         return device.data.novnc.target;
       }
       return 'Blank target';
@@ -329,7 +342,7 @@ export default class NovncSettings extends Component {
           {idx + 1}
         </td>
         <td>
-          <OverlayTrigger placement="bottom" overlay={tipEditConfig} >
+          <OverlayTrigger placement="bottom" overlay={tipEditConfig}>
             <Button
               bsSize="xsmall"
               bsStyle="primary"
@@ -339,15 +352,23 @@ export default class NovncSettings extends Component {
             </Button>
           </OverlayTrigger>
           &nbsp;&nbsp;&nbsp;&nbsp;
-          <OverlayTrigger placement="left" overlay={tipRemoveConfig} >
+          <OverlayTrigger placement="left" overlay={tipRemoveConfig}>
             <NovncConfigContainer
               device={device}
               handleRemoveConfig={() => this.handleRemoveConfig(device.id)}
             />
           </OverlayTrigger>
         </td>
-        <td> {device.id} </td>
-        <td> {device.name} </td>
+        <td>
+          {' '}
+          {device.id}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {device.name}
+          {' '}
+        </td>
         <td>
           {renderTarget(device)}
         </td>

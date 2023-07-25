@@ -6,19 +6,37 @@ import GenericSubField from 'src/models/GenericSubField';
 import LayerSelect from 'src/components/generic/LayerSelect';
 import FieldSelect from 'src/components/generic/FieldSelect';
 
-const AddRowBtn = ({ addRow }) => (
-  <Button active onClick={() => addRow()} bsSize="xsmall" bsStyle="primary"><i className="fa fa-plus" aria-hidden="true" /></Button>
-);
+function AddRowBtn({ addRow }) {
+  return (
+    <Button
+      active
+      onClick={() => addRow()}
+      bsSize="xsmall"
+      bsStyle="primary"
+    >
+      <i className="fa fa-plus" aria-hidden="true" />
+    </Button>
+  );
+}
 
 AddRowBtn.propTypes = { addRow: PropTypes.func.isRequired };
 
-const DelRowBtn = ({ delRow, node }) => {
+function DelRowBtn({ delRow, node }) {
   const { data } = node;
   const btnClick = () => {
     delRow(data);
   };
-  return (<Button active onClick={btnClick} bsSize="xsmall" bsStyle="danger"><i className="fa fa-trash" aria-hidden="true" /></Button>);
-};
+  return (
+    <Button
+      active
+      onClick={btnClick}
+      bsSize="xsmall"
+      bsStyle="danger"
+    >
+      <i className="fa fa-trash" aria-hidden="true" />
+    </Button>
+  );
+}
 
 DelRowBtn.propTypes = { delRow: PropTypes.func.isRequired, node: PropTypes.object.isRequired };
 
@@ -67,7 +85,11 @@ export default class FieldCondEditModal extends Component {
         minWidth: 120,
         width: 120,
         cellRendererFramework: FieldSelect,
-        cellRendererParams: { allLayers: this.props.allLayers, selField: this.selField, types: ['text', 'select', 'checkbox'] },
+        cellRendererParams: {
+          allLayers: this.props.allLayers,
+          selField: this.selField,
+          types: ['text', 'select', 'checkbox']
+        },
       },
       {
         headerName: 'Value',
@@ -103,9 +125,11 @@ export default class FieldCondEditModal extends Component {
 
   addRow() {
     const { allLayers } = this.props;
-    const lys = allLayers.filter(e => (e.fields || []).filter(f => ['text', 'select', 'checkbox'].includes(f.type)).length > 0);
+    const lys = allLayers.filter((e) => (e.fields
+      || []).filter((f) => ['text', 'select', 'checkbox'].includes(f.type)).length > 0);
     const ly = (lys.length > 0 && lys[0].key) || '';
-    const fd = ly === '' ? '' : ((allLayers.find(e => e.key === ly) || {}).fields || []).filter(e => ['text', 'select', 'checkbox'].includes(e.type))[0].field;
+    const fd = ly === '' ? '' : ((allLayers.find((e) => e.key === ly)
+      || {}).fields || []).filter((e) => ['text', 'select', 'checkbox'].includes(e.type))[0].field;
     const newSub = new GenericSubField({ layer: ly, field: fd, value: '' });
     const idx = this.gridApi.getDisplayedRowCount();
     this.gridApi.applyTransaction({ add: [newSub], addIndex: idx });
@@ -123,10 +147,13 @@ export default class FieldCondEditModal extends Component {
     data.layer = e.target.value;
     const { allLayers } = this.props;
     const ly = data.layer;
-    const fdf = ((allLayers.find(l => l.key === ly) || {}).fields || []).filter(l => ['text', 'select', 'checkbox'].includes(l.type)) || [];
+    const fdf = ((allLayers.find((l) => l.key === ly) || {}).fields
+      || []).filter((l) => ['text', 'select', 'checkbox'].includes(l.type)) || [];
     const fd = (fdf.length > 0 && fdf[0].field) || '';
     data.field = fd;
-    const { updSub, updLayer, layer, layerKey, field } = this.props;
+    const {
+      updSub, updLayer, layer, layerKey, field
+    } = this.props;
     const rows = [];
     this.gridApi.forEachNode((nd) => { rows.push(nd.data); });
     this.gridApi.setRowData(rows);
@@ -147,7 +174,9 @@ export default class FieldCondEditModal extends Component {
   }
 
   refresh() {
-    const { updSub, updLayer, layer, layerKey, field } = this.props;
+    const {
+      updSub, updLayer, layer, layerKey, field
+    } = this.props;
     const rows = [];
     this.gridApi.forEachNode((nd) => { rows.push(nd.data); });
 
@@ -172,7 +201,8 @@ export default class FieldCondEditModal extends Component {
     } = this.props;
 
     const sub = (field == null ? layer.cond_fields : field.cond_fields) || [];
-    const title = field == null ? `Layer Restriction Setting [ ${layer.label}]` : `Field Restriction Setting [ layer: ${layer.label} ] [ field: ${field.label} ]`;
+    const title = field == null ? `Layer Restriction Setting [ ${layer.label}]`
+      : `Field Restriction Setting [ layer: ${layer.label} ] [ field: ${field.label} ]`;
     const lafi = field == null ? `layer:${layer.label}` : `field:${field.label}(in layer:${layer.label})`;
 
     if (showModal) {
@@ -184,8 +214,16 @@ export default class FieldCondEditModal extends Component {
           <Modal.Body style={{ overflow: 'auto' }}>
             <div style={{ fontSize: '10px' }}>
               <b>Field Restriction: </b>
-              when a restriction has been set, the {lafi} is hidden, it shows only when the [Layer,Field,Value] got matched;
-              if there are more than one setting, the {lafi} shows when one of them got matched.
+              when a restriction has been set, the
+              {' '}
+              {lafi}
+              {' '}
+              is hidden, it shows only when the [Layer,Field,Value] got matched;
+              if there are more than one setting, the
+              {' '}
+              {lafi}
+              {' '}
+              shows when one of them got matched.
             </div>
             <div style={{ fontSize: '10px' }}>
               <b>available field type: </b>

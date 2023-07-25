@@ -1,7 +1,9 @@
 import React from 'react';
-import { Row, Col, DropdownButton, MenuItem } from 'react-bootstrap';
+import {
+  Row, Col, DropdownButton, MenuItem,
+  ButtonToolbar, Button
+} from 'react-bootstrap';
 import Tree from 'antd/lib/tree';
-import { ButtonToolbar, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
@@ -14,11 +16,11 @@ const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {
       enableIds.push(idkey);
     }
     if (disableIds.includes(idkey)) {
-      disableIds = disableIds.filter(r => r !== idkey);
+      disableIds = disableIds.filter((r) => r !== idkey);
     }
   } else {
     if (enableIds.includes(idkey)) {
-      enableIds = enableIds.filter(r => r !== idkey);
+      enableIds = enableIds.filter((r) => r !== idkey);
     }
     if (!disableIds.includes(idkey)) {
       disableIds.push(idkey);
@@ -26,7 +28,6 @@ const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {
   }
   return { enableIds, disableIds };
 };
-
 
 export default class OlsTerms extends React.Component {
   constructor(props) {
@@ -68,6 +69,49 @@ export default class OlsTerms extends React.Component {
     AdminFetcher.importOlsTerms(file);
   }
 
+  handleSelectName(olsName) {
+    this.setState({
+      selectName: olsName,
+      enableIds: [],
+      disableIds: []
+    });
+    this.initialOls(olsName);
+  }
+
+  handleSaveBtn() {
+    const { enableIds, disableIds } = this.state;
+    AdminFetcher.olsTermDisableEnable({ owl_name: this.state.selectName, enableIds, disableIds })
+      .then((result) => {
+        if (result === true) {
+          alert('update successfully!');
+          this.setState({ enableIds: [], disableIds: [] });
+          this.initialOls(this.state.selectName);
+        } else {
+          alert('update error, please check system log!');
+        }
+      });
+  }
+
+  handleAssociateBtn() {
+    this.setState({ checkStrictly: !this.state.checkStrictly });
+  }
+
+  onExpand(expandedKeys) {
+    this.setState({
+      expandedKeys,
+      autoExpandParent: false,
+    });
+  }
+
+  onCheck(checkedKeys, e) {
+    const { checkStrictly, orgCheckedKeys } = this.state;
+    const checkedObj = (checkStrictly === true) ? checkedKeys.checked : checkedKeys;
+    const disableIds = difference(orgCheckedKeys, checkedObj);
+    const enableIds = difference(checkedObj, orgCheckedKeys);
+
+    this.setState({ checkedKeys, enableIds, disableIds });
+  }
+
   dropzoneOrfilePreview() {
     const { file } = this.state;
     return file ? (
@@ -79,7 +123,7 @@ export default class OlsTerms extends React.Component {
       </div>
     ) : (
       <Dropzone
-        onDrop={attach => this.handleFileDrop(attach)}
+        onDrop={(attach) => this.handleFileDrop(attach)}
         style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
       >
         <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
@@ -116,57 +160,19 @@ export default class OlsTerms extends React.Component {
       });
   }
 
-  onExpand(expandedKeys) {
-    this.setState({
-      expandedKeys,
-      autoExpandParent: false,
-    });
-  }
-
-  onCheck(checkedKeys, e) {
-    const { checkStrictly, orgCheckedKeys } = this.state;
-    const checkedObj = (checkStrictly === true) ? checkedKeys.checked : checkedKeys;
-    const disableIds = difference(orgCheckedKeys, checkedObj);
-    const enableIds = difference(checkedObj, orgCheckedKeys);
-
-    this.setState({ checkedKeys, enableIds, disableIds });
-  }
-
-  handleSelectName(olsName) {
-    this.setState({
-      selectName: olsName,
-      enableIds: [],
-      disableIds: []
-    });
-    this.initialOls(olsName);
-  }
-
-
-  handleSaveBtn() {
-    const { enableIds, disableIds } = this.state;
-    AdminFetcher.olsTermDisableEnable({ owl_name: this.state.selectName, enableIds, disableIds })
-      .then((result) => {
-        if (result === true) {
-          alert('update successfully!');
-          this.setState({ enableIds: [], disableIds: [] });
-          this.initialOls(this.state.selectName);
-        } else {
-          alert('update error, please check system log!');
-        }
-      });
-  }
-
-  handleAssociateBtn() {
-    this.setState({ checkStrictly: !this.state.checkStrictly });
-  }
-
   render() {
     return (
-      <React.Fragment>
+      <>
         <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
           {this.dropzoneOrfilePreview()}
           <ButtonToolbar>
-            <Button bsStyle="warning" onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
+            <Button
+              bsStyle="warning"
+              onClick={() => this.handleClick()}
+            >
+              Import OLS Terms (the file name will be the OLS_name)
+
+            </Button>
           </ButtonToolbar>
         </Row>
         <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
@@ -183,12 +189,16 @@ export default class OlsTerms extends React.Component {
             <Button
               bsStyle="primary"
               onClick={() => this.handleSaveBtn()}
-            >Save
-            </Button> &nbsp; &nbsp;
+            >
+              Save
+            </Button>
+            {' '}
+&nbsp; &nbsp;
             <Button
               bsStyle="primary"
               onClick={() => this.handleAssociateBtn()}
-            >switch mode
+            >
+              switch mode
             </Button>
             &nbsp;
             {this.state.checkStrictly === true ? 'Check Strickly' : 'Associated'}
@@ -213,7 +223,7 @@ export default class OlsTerms extends React.Component {
             </div>
           </Col>
         </Row>
-      </React.Fragment>
+      </>
     );
   }
 }

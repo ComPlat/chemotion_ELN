@@ -1,5 +1,7 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Checkbox, FormControl, Button, Modal, Col, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
+import {
+  Panel, Table, FormGroup, Checkbox, FormControl, Button, Modal, Col, Form, Tooltip, OverlayTrigger, InputGroup
+} from 'react-bootstrap';
 import uuid from 'uuid';
 import Select from 'react-select';
 import JSONInput from 'react-json-editor-ajrm';
@@ -9,8 +11,7 @@ import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
-const Notification = props =>
-(
+const Notification = (props) => (
   NotificationActions.add({
     title: props.title,
     message: props.msg,
@@ -114,11 +115,11 @@ export default class MatrixManagement extends React.Component {
     };
 
     if (includeUsers != null) {
-      params.include_ids = includeUsers && includeUsers.map(u => u.value);
+      params.include_ids = includeUsers && includeUsers.map((u) => u.value);
     }
 
     if (excludeUsers != null) {
-      params.exclude_ids = excludeUsers && excludeUsers.map(u => u.value);
+      params.exclude_ids = excludeUsers && excludeUsers.map((u) => u.value);
     }
 
     AdminFetcher.updateMatrice(params)
@@ -128,13 +129,14 @@ export default class MatrixManagement extends React.Component {
           return false;
         }
         Notification({ title: `Function [${matrice.name}]`, lvl: 'info', msg: 'Updated successfully' });
-        this.setState({ showEditModal: false, includeUsers: null, excludeUsers: null, matrice: {} });
+        this.setState({
+          showEditModal: false, includeUsers: null, excludeUsers: null, matrice: {}
+        });
         this.m_label.value = '';
         this.fetchMatrices();
         return true;
       });
   }
-
 
   handleJsonSave(matrice) {
     AdminFetcher.updateMatriceJson({ id: matrice.id, configs: matrice.configs })
@@ -143,7 +145,9 @@ export default class MatrixManagement extends React.Component {
           Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });
           return false;
         }
-        Notification({ title: `Function [${matrice.name}]`, lvl: 'info', msg: 'JSON Configuration updated successfully' });
+        Notification({
+          title: `Function [${matrice.name}]`, lvl: 'info', msg: 'JSON Configuration updated successfully'
+        });
         this.setState({ showJsonModal: false, showJsonBtn: false, matrice: {} });
         this.fetchMatrices();
         return true;
@@ -165,7 +169,7 @@ export default class MatrixManagement extends React.Component {
         <tr key={`row_${e.id}`} id={`row_${e.id}`} style={{ fontWeight: 'bold' }}>
           <td>{idx + 1}</td>
           <td>
-            <OverlayTrigger placement="bottom" overlay={editTooltip} >
+            <OverlayTrigger placement="bottom" overlay={editTooltip}>
               <Button
                 bsSize="xsmall"
                 bsStyle="info"
@@ -175,7 +179,7 @@ export default class MatrixManagement extends React.Component {
               </Button>
             </OverlayTrigger>
             &nbsp;
-            <OverlayTrigger placement="bottom" overlay={jsonTooltip} >
+            <OverlayTrigger placement="bottom" overlay={jsonTooltip}>
               <Button
                 bsSize="xsmall"
                 bsStyle="warning"
@@ -190,11 +194,11 @@ export default class MatrixManagement extends React.Component {
           <td>{e.name}</td>
           <td>{e.label}</td>
           <td>{e.enabled === true ? 'true' : 'false'}</td>
-          <td>{e.include_users.map(u => u.label).join(', ')}</td>
-          <td>{e.exclude_users.map(u => u.label).join(', ')}</td>
+          <td>{e.include_users.map((u) => u.label).join(', ')}</td>
+          <td>{e.exclude_users.map((u) => u.label).join(', ')}</td>
         </tr>
       </tbody>
-    ))
+    ));
 
     return (
       <Panel>
@@ -260,7 +264,18 @@ export default class MatrixManagement extends React.Component {
                 </InputGroup>
               </FormGroup>
               <FormGroup controlId="formControlLabel">
-                <Checkbox inline type="checkbox" checked={matrice.enabled} onChange={e => this.handleChange(!matrice.enabled, e)}>Enable globally <br /> (when [checked], all users can see/use this feature, when [unchecked], only allowed users can see/use this function)</Checkbox>
+                <Checkbox
+                  inline
+                  type="checkbox"
+                  checked={matrice.enabled}
+                  onChange={(e) => this.handleChange(!matrice.enabled, e)}
+                >
+                  Enable globally
+                  {' '}
+                  <br />
+                  {' '}
+                  (when [checked], all users can see/use this feature, when [unchecked], only allowed users can see/use this function)
+                </Checkbox>
               </FormGroup>
               <FormGroup controlId="formControlInclude">
                 <InputGroup>
@@ -300,11 +315,11 @@ export default class MatrixManagement extends React.Component {
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="warning" onClick={() => this.handleClose()} >
+                  <Button bsStyle="warning" onClick={() => this.handleClose()}>
                     Cancel&nbsp;
                   </Button>
                   &nbsp;
-                  <Button bsStyle="primary" onClick={() => this.handleSave(matrice)} >
+                  <Button bsStyle="primary" onClick={() => this.handleSave(matrice)}>
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>
@@ -316,7 +331,6 @@ export default class MatrixManagement extends React.Component {
       </Modal>
     );
   }
-
 
   renderJsonModal() {
     const { matrice, showJsonBtn } = this.state;
@@ -343,17 +357,17 @@ export default class MatrixManagement extends React.Component {
                 <JSONInput
                   placeholder={matrice.configs}
                   width="100%"
-                  onChange={e => this.onChangeJson(e)}
+                  onChange={(e) => this.onChangeJson(e)}
                 />
               </FormGroup>
 
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="warning" onClick={() => this.handleJsonClose()} >
+                  <Button bsStyle="warning" onClick={() => this.handleJsonClose()}>
                     Cancel&nbsp;
                   </Button>
                   &nbsp;
-                  <Button bsStyle="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
+                  <Button bsStyle="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)}>
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>

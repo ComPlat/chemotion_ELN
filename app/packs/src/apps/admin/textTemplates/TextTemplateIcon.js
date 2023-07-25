@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const TextTemplateIcon = ({ template }) => {
+function TextTemplateIcon({ template }) {
   if (!template) return <span />;
 
   const { data, name } = template;
@@ -17,7 +17,7 @@ const TextTemplateIcon = ({ template }) => {
   return (
     <span>{text.toUpperCase()}</span>
   );
-};
+}
 
 TextTemplateIcon.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types

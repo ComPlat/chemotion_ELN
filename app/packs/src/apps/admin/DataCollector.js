@@ -1,7 +1,13 @@
 /* eslint-disable react/no-multi-comp */
+/* eslint-disable max-classes-per-file */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, FormControl, InputGroup, FormGroup, DropdownButton, MenuItem, Row, Col } from 'react-bootstrap';
+import {
+  Panel, Button, Table, Modal, Tooltip,
+  OverlayTrigger, FormControl, InputGroup,
+  FormGroup, DropdownButton, MenuItem, Row, Col
+} from 'react-bootstrap';
 import { startsWith, endsWith } from 'lodash';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
@@ -14,8 +20,7 @@ const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;
 const tipTestConnect = <Tooltip id="test_tooltip">test connection</Tooltip>;
 const optionsMethod = ['filewatchersftp', 'filewatcherlocal', 'folderwatchersftp', 'folderwatcherlocal'];
 const optionsAuth = ['password', 'keyfile'];
-const Notification = props =>
-(
+const Notification = (props) => (
   NotificationActions.add({
     title: `Device [${props.device.name}]`,
     message: props.msg,
@@ -25,20 +30,20 @@ const Notification = props =>
     uid: uuid.v4()
   })
 );
-const NotificationError = props => Notification({ ...props, lvl: 'error' });
-const NotificationWarn = props => Notification({ ...props, lvl: 'warning' });
-const ListLocalCollector = props =>
-(
-  <div style={{ margin: '5px', padding: '5px', border: 'thin dashed darkred' }}>
-    <h6 style={{ margin: 'unset' }}><b>Local Collector Dir Configurtaion</b></h6>
-    {
+const NotificationError = (props) => Notification({ ...props, lvl: 'error' });
+const NotificationWarn = (props) => Notification({ ...props, lvl: 'warning' });
+function ListLocalCollector(props) {
+  return (
+    <div style={{ margin: '5px', padding: '5px', border: 'thin dashed darkred' }}>
+      <h6 style={{ margin: 'unset' }}><b>Local Collector Dir Configurtaion</b></h6>
+      {
       props.localCollector.map((c, i) => (
         <div key={uuid.v4()}>
           <FormGroup bsSize="small" style={{ marginBottom: 'unset' }}>
             <InputGroup>
               <InputGroup.Button>
                 <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                  <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
+                  <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`}>
                     <i className="fa fa-clipboard" />
                   </Button>
                 </OverlayTrigger>
@@ -55,30 +60,32 @@ const ListLocalCollector = props =>
         </div>
       ))
     }
-  </div>
-);
+    </div>
+  );
+}
 
 ListLocalCollector.propTypes = {
   localCollector: PropTypes.arrayOf(PropTypes.object).isRequired
 };
 
-const DropdownSelection = props =>
-(
-  <DropdownButton
-    title={props.selected || props.placeholder}
-    key={props.selected}
-    id={`dropdown-${uuid.v4()}`}
-    onSelect={props.onSelect}
-  >
-    {
-      props.options.map(element => (
+function DropdownSelection(props) {
+  return (
+    <DropdownButton
+      title={props.selected || props.placeholder}
+      key={props.selected}
+      id={`dropdown-${uuid.v4()}`}
+      onSelect={props.onSelect}
+    >
+      {
+      props.options.map((element) => (
         <MenuItem key={element} eventKey={element} disabled={props.disabled}>
           {element}
         </MenuItem>
       ))
     }
-  </DropdownButton>
-);
+    </DropdownButton>
+  );
+}
 
 DropdownSelection.propTypes = {
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -185,7 +192,11 @@ class ModelConfig extends Component {
         onHide={this.props.onClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Data Collector Configuration - Device: {this.props.device.name}</Modal.Title>
+          <Modal.Title>
+            Data Collector Configuration - Device:
+            {' '}
+            {this.props.device.name}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Row style={rowStyle}>
@@ -212,7 +223,8 @@ class ModelConfig extends Component {
                 placeholder="e.g. User"
                 required
                 readOnly={endsWith(selectedMethod, 'local')}
-                defaultValue={`${this.props.device.data.method_params && this.props.device.data.method_params.user ? this.props.device.data.method_params.user : ''}`}
+                defaultValue={`${this.props.device.data.method_params
+                  && this.props.device.data.method_params.user ? this.props.device.data.method_params.user : ''}`}
               />
             </Col>
           </Row>
@@ -229,7 +241,8 @@ class ModelConfig extends Component {
                 placeholder="e.g. google.com"
                 required
                 readOnly={endsWith(selectedMethod, 'local')}
-                defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.host ? this.props.device.data.method_params.host : '')}`}
+                defaultValue={`${(this.props.device.data.method_params
+                  && this.props.device.data.method_params.host ? this.props.device.data.method_params.host : '')}`}
               />
             </Col>
           </Row>
@@ -258,7 +271,9 @@ class ModelConfig extends Component {
                 placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
                 required
                 readOnly={endsWith(selectedMethod, 'local') || (selectedAuth === 'password')}
-                defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.key_name ? this.props.device.data.method_params.key_name : '')}`}
+                defaultValue={`${(this.props.device.data.method_params
+                  && this.props.device.data.method_params.key_name
+                  ? this.props.device.data.method_params.key_name : '')}`}
               />
             </Col>
           </Row>
@@ -274,10 +289,12 @@ class ModelConfig extends Component {
                 id="inputDirectory"
                 placeholder="e.g. /home/sftp/eln"
                 required
-                defaultValue={`${(this.props.device.data.method_params ? this.props.device.data.method_params.dir : '')}`}
+                defaultValue={`${(this.props.device.data.method_params
+                  ? this.props.device.data.method_params.dir : '')}`}
               />
               {
-                endsWith(selectedMethod, 'local') ? <ListLocalCollector localCollector={this.props.localCollector} /> : null
+                endsWith(selectedMethod, 'local')
+                  ? <ListLocalCollector localCollector={this.props.localCollector} /> : null
               }
             </Col>
           </Row>
@@ -295,8 +312,13 @@ class ModelConfig extends Component {
                 placeholder="e.g. 10"
                 required
                 readOnly={startsWith(selectedMethod, 'file')}
-                defaultValue={`${(this.props.device.data.method_params ? this.props.device.data.method_params.number_of_files : 1)}`}
-              />&nbsp;<span className="fa fa-info-circle" aria-hidden="true">&nbsp;Folderwatcher: set to 0 for a varying number of files</span>
+                defaultValue={`${(this.props.device.data.method_params
+                  ? this.props.device.data.method_params.number_of_files : 1)}`}
+              />
+&nbsp;
+              <span className="fa fa-info-circle" aria-hidden="true">
+                &nbsp;Folderwatcher: set to 0 for a varying number of files
+              </span>
             </Col>
           </Row>
         </Modal.Body>
@@ -356,14 +378,16 @@ class BtnConnect extends Component {
   render() {
     const { lock } = this.state;
     return (
-      <OverlayTrigger placement="bottom" overlay={this.props.btnTip} >
+      <OverlayTrigger placement="bottom" overlay={this.props.btnTip}>
         <Button
           bsSize="xsmall"
           // bsStyle="info"
           onClick={() => this.handleClick(this.props.device)}
         >
           {
-            lock ? <i className="fa fa-spin fa-spinner" aria-hidden="true" /> : <i className="fa fa-plug" aria-hidden="true" />
+            lock
+              ? <i className="fa fa-spin fa-spinner" aria-hidden="true" />
+              : <i className="fa fa-plug" aria-hidden="true" />
           }
         </Button>
       </OverlayTrigger>
@@ -455,19 +479,21 @@ export default class DataCollector extends Component {
     const { devices } = this.state;
     AdminFetcher.removeDeviceMethod({ id })
       .then((result) => {
-        devices.splice(devices.findIndex(o => o.id === result.device.id), 1, result.device);
+        devices.splice(devices.findIndex((o) => o.id === result.device.id), 1, result.device);
         this.setState({ devices });
       });
   }
 
   renderConfiModal() {
-    return this.state.showConfigModal ?
-      <ModelConfig
-        device={this.state.selectedDevice}
-        localCollector={this.state.localCollector}
-        isShow={this.state.showConfigModal}
-        onClose={this.handleConfigModalClose}
-      /> : null;
+    return this.state.showConfigModal
+      ? (
+        <ModelConfig
+          device={this.state.selectedDevice}
+          localCollector={this.state.localCollector}
+          isShow={this.state.showConfigModal}
+          onClose={this.handleConfigModalClose}
+        />
+      ) : null;
   }
 
   render() {
@@ -494,7 +520,7 @@ export default class DataCollector extends Component {
           {idx + 1}
         </td>
         <td>
-          <OverlayTrigger placement="bottom" overlay={tipEditConfig} >
+          <OverlayTrigger placement="bottom" overlay={tipEditConfig}>
             <Button
               bsSize="xsmall"
               bsStyle="primary"
@@ -504,7 +530,7 @@ export default class DataCollector extends Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={tipRemoveConfig} >
+          <OverlayTrigger placement="bottom" overlay={tipRemoveConfig}>
             <Button
               bsSize="xsmall"
               bsStyle="danger"
@@ -514,7 +540,11 @@ export default class DataCollector extends Component {
             </Button>
           </OverlayTrigger>
         </td>
-        <td> {device.name} </td>
+        <td>
+          {' '}
+          {device.name}
+          {' '}
+        </td>
         <td>
           {(device.data && device.data.method ? device.data.method : '')}
           &nbsp;
@@ -522,18 +552,42 @@ export default class DataCollector extends Component {
             endsWith(device.data.method, 'sftp') ? <BtnConnect device={device} btnTip={tipTestConnect} /> : null
           }
         </td>
-        <td> {(device.data && device.data.method_params ? device.data.method_params.user : '')} </td>
-        <td> {(device.data && device.data.method_params ? device.data.method_params.host : '')} </td>
         <td>
-          {(device.data && device.data.method_params && device.data.method_params.authen ? device.data.method_params.authen : 'password')}
+          {' '}
+          {(device.data && device.data.method_params ? device.data.method_params.user : '')}
+          {' '}
         </td>
-        <td> {(device.data && device.data.method_params && device.data.method_params.key_name ? device.data.method_params.key_name : '')} </td>
-        <td> {(device.data && device.data.method_params ? device.data.method_params.dir : '')} </td>
         <td>
-          {(device.data && device.data.method_params && device.data.method_params.number_of_files ?
-            device.data.method_params.number_of_files : 0)}
+          {' '}
+          {(device.data && device.data.method_params ? device.data.method_params.host : '')}
+          {' '}
         </td>
-        <td> {device.id} </td>
+        <td>
+          {(device.data && device.data.method_params
+            && device.data.method_params.authen
+            ? device.data.method_params.authen : 'password')}
+        </td>
+        <td>
+          {' '}
+          {(device.data && device.data.method_params
+            && device.data.method_params.key_name
+            ? device.data.method_params.key_name : '')}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {(device.data && device.data.method_params ? device.data.method_params.dir : '')}
+          {' '}
+        </td>
+        <td>
+          {(device.data && device.data.method_params && device.data.method_params.number_of_files
+            ? device.data.method_params.number_of_files : 0)}
+        </td>
+        <td>
+          {' '}
+          {device.id}
+          {' '}
+        </td>
       </tr>
     ));
 

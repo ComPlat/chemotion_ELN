@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, ButtonGroup, Popover, OverlayTrigger } from 'react-bootstrap';
+import {
+  Button, ButtonGroup, Popover, OverlayTrigger
+} from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 export default class DeleteGroupDeviceButton extends React.Component {
@@ -19,11 +21,11 @@ export default class DeleteGroupDeviceButton extends React.Component {
 
   onChangeGroupData = (groups) => {
     this.props.onChangeGroupData(groups);
-  }
+  };
 
   onChangeDeviceData = (devices) => {
     this.props.onChangeDeviceData(devices);
-  }
+  };
 
   confirmDelete(rootType, actionType, groupRec, userRec, isRoot = false) {
     const { groups, devices } = this.state;
@@ -54,7 +56,9 @@ export default class DeleteGroupDeviceButton extends React.Component {
   }
 
   render() {
-    const { rootType, actionType, groupRec, userRec, isRoot } = this.props;
+    const {
+      rootType, actionType, groupRec, userRec, isRoot
+    } = this.props;
     let msg = 'remove yourself from the group';
     if (rootType === 'Group' && isRoot) {
       msg = `remove group: ${groupRec.name}`;
@@ -72,12 +76,19 @@ export default class DeleteGroupDeviceButton extends React.Component {
 
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
-        {msg} <br />
+        {msg}
+        {' '}
+        <br />
         <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}
+          >
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          </Button>
+          <span>&nbsp;&nbsp;</span>
+          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick}>
             No
           </Button>
         </div>
@@ -93,7 +104,7 @@ export default class DeleteGroupDeviceButton extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button bsSize="xsmall" bsStyle="danger">
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>

@@ -1,5 +1,7 @@
 import React from 'react';
-import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row } from 'react-bootstrap';
+import {
+  Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row
+} from 'react-bootstrap';
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -69,10 +71,10 @@ export default class GroupsDevices extends React.Component {
         if (setAdmin) {
           groupRec.admins.splice(1, 0, userRec);
         } else {
-          const usrIdx = findIndex(groupRec.admins, o => o.id === userRec.id);
+          const usrIdx = findIndex(groupRec.admins, (o) => o.id === userRec.id);
           groupRec.admins.splice(usrIdx, 1);
         }
-        const idx = findIndex(groups, o => o.id === groupRec.id);
+        const idx = findIndex(groups, (o) => o.id === groupRec.id);
         groups.splice(idx, 1, groupRec);
         this.setState({ groups });
       });
@@ -149,7 +151,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   deviceMetadataDoiExists() {
-    return this.state.deviceMetadata.doi
+    return this.state.deviceMetadata.doi;
   }
 
   handleShowCreateModal(rootType) {
@@ -341,10 +343,10 @@ export default class GroupsDevices extends React.Component {
           case 'Group':
             if (isRoot === true) {
               this.setState({
-                groups: filter(this.state.groups, o => o.id != groupRec.id),
+                groups: filter(this.state.groups, (o) => o.id != groupRec.id),
               });
             } else {
-              const idx = findIndex(groups, o => o.id === result.root.id);
+              const idx = findIndex(groups, (o) => o.id === result.root.id);
               groups.splice(idx, 1, result.root);
               this.setState({ groups });
             }
@@ -353,10 +355,10 @@ export default class GroupsDevices extends React.Component {
           case 'Device':
             if (isRoot === true) {
               this.setState({
-                devices: filter(this.state.devices, o => o.id !== groupRec.id),
+                devices: filter(this.state.devices, (o) => o.id !== groupRec.id),
               });
             } else {
-              const idx = findIndex(devices, o => o.id === result.root.id);
+              const idx = findIndex(devices, (o) => o.id === result.root.id);
               devices.splice(idx, 1, result.root);
               this.setState({ devices });
             }
@@ -395,12 +397,12 @@ export default class GroupsDevices extends React.Component {
       .then((result) => {
         switch (rootType) {
           case 'Group':
-            idx = findIndex(groups, o => o.id === result.root.id);
+            idx = findIndex(groups, (o) => o.id === result.root.id);
             groups.splice(idx, 1, result.root);
             this.fetch('Device');
             break;
           case 'Device':
-            idx = findIndex(devices, o => o.id === result.root.id);
+            idx = findIndex(devices, (o) => o.id === result.root.id);
             devices.splice(idx, 1, result.root);
             this.fetch('Group');
             break;
@@ -413,14 +415,26 @@ export default class GroupsDevices extends React.Component {
 
   renderGroups() {
     const { groups } = this.state;
-    const adminIcon = (<OverlayTrigger placement="top" overlay={<Tooltip id="admin">Group Administrator</Tooltip>}><i className="fa fa-key" /></OverlayTrigger>);
+    const adminIcon = (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="admin">Group Administrator</Tooltip>}
+      >
+        <i className="fa fa-key" />
+      </OverlayTrigger>
+    );
     let tbody = '';
     if (Object.keys(groups).length <= 0) {
       tbody = '';
     } else {
       tbody = groups.map((g, idx) => (
-        <AdminGroupElement groupElement={g} index={idx} currentState={this.state}
-          onChangeGroupData={this.handleGroupChange} onShowModal={this.handleShowModal}></AdminGroupElement>
+        <AdminGroupElement
+          groupElement={g}
+          index={idx}
+          currentState={this.state}
+          onChangeGroupData={this.handleGroupChange}
+          onShowModal={this.handleShowModal}
+        />
       ));
     }
 
@@ -429,7 +443,9 @@ export default class GroupsDevices extends React.Component {
         <Panel.Heading>
           <Panel.Title>
             Group List &nbsp;
-            ({groups.length}) &nbsp;
+            (
+            {groups.length}
+            ) &nbsp;
             <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
           </Panel.Title>
         </Panel.Heading>
@@ -458,8 +474,14 @@ export default class GroupsDevices extends React.Component {
       tbody = '';
     } else {
       tbody = devices && devices.map((device, idx) => (
-        <AdminDeviceElement deviceElement={device} index={idx} currentState={this.state}
-          onChangeDeviceData={this.handleDeviceChange} onShowModal={this.handleShowModal} onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}></AdminDeviceElement>
+        <AdminDeviceElement
+          deviceElement={device}
+          index={idx}
+          currentState={this.state}
+          onChangeDeviceData={this.handleDeviceChange}
+          onShowModal={this.handleShowModal}
+          onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}
+        />
       ));
     }
 
@@ -467,7 +489,9 @@ export default class GroupsDevices extends React.Component {
       <Panel>
         <Panel.Heading>
           <Panel.Title>
-            Device List &nbsp; ({devices.length}) &nbsp;
+            Device List &nbsp; (
+            {devices.length}
+            ) &nbsp;
             <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Device')}>Add New Device</Button>
           </Panel.Title>
         </Panel.Heading>
@@ -508,7 +532,8 @@ export default class GroupsDevices extends React.Component {
             <Panel.Body>
               <Form>
                 <FormGroup controlId="formInlineName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name*</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     inputRef={(m) => { this.firstInput = m; }}
@@ -521,17 +546,21 @@ export default class GroupsDevices extends React.Component {
                     inputRef={(m) => { this.lastInput = m; }}
                     placeholder="J. Moriarty"
                   />
-                </FormGroup>&nbsp;&nbsp;
+                </FormGroup>
+&nbsp;&nbsp;
                 <FormGroup controlId="formInlineNameAbbr">
-                  <ControlLabel>Name abbreviation* </ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name abbreviation* </ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     inputRef={(m) => { this.abbrInput = m; }}
                     placeholder="AK-JM"
                   />
-                </FormGroup>&nbsp;&nbsp;
+                </FormGroup>
+&nbsp;&nbsp;
                 <FormGroup controlId="formInlineEmail">
-                  <ControlLabel>Email</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Email</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     inputRef={(m) => { this.emailInput = m; }}
@@ -539,7 +568,9 @@ export default class GroupsDevices extends React.Component {
                   />
                 </FormGroup>
                 <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
-                  Create new {rootType === 'Group' ? 'group' : 'device'}
+                  Create new
+                  {' '}
+                  {rootType === 'Group' ? 'group' : 'device'}
                 </Button>
               </Form>
             </Panel.Body>
@@ -558,7 +589,13 @@ export default class GroupsDevices extends React.Component {
         onHide={this.handleCloseDeviceMetadata}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Edit {device.name} Metadata</Modal.Title>
+          <Modal.Title>
+            Edit
+            {' '}
+            {device.name}
+            {' '}
+            Metadata
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Panel bsStyle="success">
@@ -569,11 +606,11 @@ export default class GroupsDevices extends React.Component {
             </Panel.Heading>
             <Panel.Body>
               <Form>
-                {!this.deviceMetadataDoiExists() &&
-                  <p className="text-center">Get Metadata from DataCite</p>
-                }
+                {!this.deviceMetadataDoiExists()
+                  && <p className="text-center">Get Metadata from DataCite</p>}
                 <FormGroup controlId="metadataFormDOI">
-                  <ControlLabel>DOI*</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>DOI*</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     defaultValue={deviceMetadata.doi}
@@ -582,23 +619,27 @@ export default class GroupsDevices extends React.Component {
                     readOnly={this.deviceMetadataDoiExists()}
                   />
                 </FormGroup>
-                {!this.deviceMetadataDoiExists() &&
+                {!this.deviceMetadataDoiExists()
+                  && (
                   <Col smOffset={0} sm={12}>
-                    <Button className="pull-right" bsStyle="danger" onClick={() => this.syncDeviceMetadataFromDataCite(device.id)}>
+                    <Button
+                      className="pull-right"
+                      bsStyle="danger"
+                      onClick={() => this.syncDeviceMetadataFromDataCite(device.id)}
+                    >
                       Sync from DataCite
                     </Button>
                   </Col>
-                }
-                {!this.deviceMetadataDoiExists() &&
-                  <p className="text-center">Or create Metadata and sync to DataCite</p>
-                }
+                  )}
+                {!this.deviceMetadataDoiExists()
+                  && <p className="text-center">Or create Metadata and sync to DataCite</p>}
 
                 <FormGroup controlId="metadataFormState">
                   <ControlLabel>State*</ControlLabel>
                   <FormControl
                     componentClass="select"
                     value={deviceMetadata.data_cite_state}
-                    onChange={event => this.updateDeviceMetadataDataCiteState(event.target.value)}
+                    onChange={(event) => this.updateDeviceMetadataDataCiteState(event.target.value)}
                     inputRef={(m) => { this.dataCiteState = m; }}
                   >
                     <option value="draft">Draft</option>
@@ -627,7 +668,8 @@ export default class GroupsDevices extends React.Component {
                   />
                 </FormGroup>
                 <FormGroup controlId="metadataFormName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name*</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     defaultValue={deviceMetadata.name}
@@ -665,7 +707,7 @@ export default class GroupsDevices extends React.Component {
                             type="text"
                             value={dateItem.date}
                             placeholder="Date e.g. '2020-01-01'"
-                            onChange={event => this.updateDeviceMetadataDate(index, 'date', event.target.value)}
+                            onChange={(event) => this.updateDeviceMetadataDate(index, 'date', event.target.value)}
                           />
                         </FormGroup>
                       </Col>
@@ -676,13 +718,18 @@ export default class GroupsDevices extends React.Component {
                             type="text"
                             value={dateItem.dateType}
                             placeholder="DateType e.g. 'Created'"
-                            onChange={event => this.updateDeviceMetadataDate(index, 'dateType', event.target.value)}
+                            onChange={(event) => this.updateDeviceMetadataDate(index, 'dateType', event.target.value)}
                           />
                         </FormGroup>
                       </Col>
                       <Col smOffset={0} sm={2}>
                         <ControlLabel>Action</ControlLabel>
-                        <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeDeviceMetadataDate(index)}>
+                        <Button
+                          bsStyle="danger"
+                          className="pull-right"
+                          bsSize="small"
+                          onClick={() => this.removeDeviceMetadataDate(index)}
+                        >
                           <i className="fa fa-trash-o" />
                         </Button>
                       </Col>
@@ -691,7 +738,12 @@ export default class GroupsDevices extends React.Component {
                 ))}
                 <Row>
                   <Col smOffset={0} sm={12}>
-                    <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addDeviceMetadataDate()}>
+                    <Button
+                      className="pull-right"
+                      bsStyle="success"
+                      bsSize="small"
+                      onClick={() => this.addDeviceMetadataDate()}
+                    >
                       <i className="fa fa-plus" />
                     </Button>
                   </Col>
@@ -700,8 +752,14 @@ export default class GroupsDevices extends React.Component {
                 <Row>
                   <Col smOffset={0} sm={12}>
                     <p className="text-right">
-                      DataCiteVersion: {deviceMetadata.data_cite_version}<br />
-                      DataCiteUpdatedAt: {formatDate(deviceMetadata.data_cite_updated_at)}<br />
+                      DataCiteVersion:
+                      {' '}
+                      {deviceMetadata.data_cite_version}
+                      <br />
+                      DataCiteUpdatedAt:
+                      {' '}
+                      {formatDate(deviceMetadata.data_cite_updated_at)}
+                      <br />
                     </p>
                   </Col>
                 </Row>

@@ -1,7 +1,9 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, OverlayTrigger, Tooltip, Popover, ControlLabel } from 'react-bootstrap';
+import {
+  Button, OverlayTrigger, Tooltip, Popover, ControlLabel
+} from 'react-bootstrap';
 import uuid from 'uuid';
 import { findIndex } from 'lodash';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -22,11 +24,11 @@ class GenericDummy {
 const inputEventVal = (event, type) => {
   if (type === 'select') {
     return event ? event.value : null;
-  } else if (type.startsWith('drag')) {
+  } if (type.startsWith('drag')) {
     return event;
-  } else if (type === 'checkbox') {
+  } if (type === 'checkbox') {
     return event.target.checked;
-  } else if (type === 'formula-field') {
+  } if (type === 'formula-field') {
     if (event.target) {
       return event.target.value;
     }
@@ -35,8 +37,8 @@ const inputEventVal = (event, type) => {
   return event.target && event.target.value;
 };
 
-const absOlsTermId = val => (val || '').split('|')[0].trim();
-const absOlsTermLabel = val => val.replace(absOlsTermId(val), '').replace('|', '').trim();
+const absOlsTermId = (val) => (val || '').split('|')[0].trim();
+const absOlsTermLabel = (val) => val.replace(absOlsTermId(val), '').replace('|', '').trim();
 const toNum = (val) => {
   const parse = Number((val || ''));
   return Number.isNaN(parse) ? 0 : parse;
@@ -65,16 +67,16 @@ const genUnitsSystem = () => {
   return (unitsSystem.fields || []);
 };
 
-const genUnits = field => (genUnitsSystem().find(u => u.field === field) || {}).units || [];
+const genUnits = (field) => (genUnitsSystem().find((u) => u.field === field) || {}).units || [];
 
 const genUnit = (field, key) => {
   const units = genUnits(field);
-  return units.find(u => u.key === key) || {};
+  return units.find((u) => u.key === key) || {};
 };
 
 const reUnit = (unitsSystem, optionLayers) => {
   const uniFileds = (unitsSystem.fields || []);
-  const uniObj = uniFileds.find(fiel => fiel.field === optionLayers);
+  const uniObj = uniFileds.find((fiel) => fiel.field === optionLayers);
   const defaultUnit = ((uniObj && uniObj.field) || '');
   const preUnit = uniFileds.length > 0 ? uniFileds[0].field : '';
   return defaultUnit === '' ? preUnit : defaultUnit;
@@ -98,7 +100,7 @@ const unitConvToBase = (field = {}) => {
   if (units.length <= 1) {
     return field.value;
   }
-  const idx = findIndex(units, u => u.key === field.value_system);
+  const idx = findIndex(units, (u) => u.key === field.value_system);
   if (idx <= 0) return field.value;
   return ((field.value * units[0].nm) / ((units[idx] && units[idx].nm) || 1) || 0);
 };
@@ -114,7 +116,7 @@ const unitConversion = (field, key, val) => {
   if (units.length <= 1) {
     return val;
   }
-  const idx = findIndex(units, u => u.key === key);
+  const idx = findIndex(units, (u) => u.key === key);
   if (idx === -1) {
     return val;
   }
@@ -124,18 +126,17 @@ const unitConversion = (field, key, val) => {
   return parseFloat((parseFloat(val) * (curr / pre)).toFixed(5));
 };
 
-const notification = props =>
-  (
-    NotificationActions.add({
-      title: props.title,
-      message: props.msg,
-      level: props.lvl,
-      position: 'tc',
-      dismissible: 'button',
-      autoDismiss: props.autoDismiss || 5,
-      uid: props.uid || uuid.v4()
-    })
-  );
+const notification = (props) => (
+  NotificationActions.add({
+    title: props.title,
+    message: props.msg,
+    level: props.lvl,
+    position: 'tc',
+    dismissible: 'button',
+    autoDismiss: props.autoDismiss || 5,
+    uid: props.uid || uuid.v4()
+  })
+);
 
 const validateLayerInput = (layer) => {
   if (layer.key === '') {
@@ -143,11 +144,19 @@ const validateLayerInput = (layer) => {
     return false;
   }
   if (!(/^[a-z]+[_]*[a-z]*[^_]*$/g.test(layer.key))) {
-    notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'This Name is invalid, please try a different one.' });
+    notification({
+      title: `Layer [${layer.key}]`,
+      lvl: 'error',
+      msg: 'This Name is invalid, please try a different one.'
+    });
     return false;
   }
   if (parseInt((layer.cols || 1), 10) < 1) {
-    notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'The minimun of Column per Row is 1, please input a different one.' });
+    notification({
+      title: `Layer [${layer.key}]`,
+      lvl: 'error',
+      msg: 'The minimun of Column per Row is 1, please input a different one.'
+    });
     return false;
   }
   return true;
@@ -159,41 +168,59 @@ const validateSelectList = (selectName, element) => {
     return false;
   }
   if (!(/^[a-z]+[_]*[a-z]*[^_]*$/g.test(selectName))) {
-    notification({ title: `Select List [${selectName}]`, lvl: 'error', msg: 'This Name is invalid, please try a different one.' });
+    notification({
+      title: `Select List [${selectName}]`,
+      lvl: 'error',
+      msg: 'This Name is invalid, please try a different one.'
+    });
     return false;
   }
   if (element.properties_template.select_options[`${selectName}`]) {
-    notification({ title: `Select List [${selectName}]`, lvl: 'error', msg: 'This name of Select List is already taken. Please choose another one.' });
+    notification({
+      title: `Select List [${selectName}]`,
+      lvl: 'error',
+      msg: 'This name of Select List is already taken. Please choose another one.'
+    });
     return false;
   }
   return true;
 };
 
-const ButtonTooltip = (props) => {
+function ButtonTooltip(props) {
   const tip = <Tooltip id={uuid.v4()}>{props.tip}</Tooltip>;
   const {
     size, bs, fnClick, element, place, fa, disabled, txt
   } = props;
-  const content = txt ? (<span>{txt}&nbsp;</span>) : '';
+  const content = txt ? (
+    <span>
+      {txt}
+&nbsp;
+    </span>
+  ) : '';
   if (bs === '') {
     return (
-      <OverlayTrigger placement={place} overlay={tip} >
+      <OverlayTrigger placement={place} overlay={tip}>
         <Button bsSize={size} onClick={() => fnClick(element)} disabled={disabled}>
-          {content}<i className={`fa ${fa}`} aria-hidden="true" />
+          {content}
+          <i className={`fa ${fa}`} aria-hidden="true" />
         </Button>
       </OverlayTrigger>
     );
   }
   return (
-    <OverlayTrigger placement={place} overlay={tip} >
+    <OverlayTrigger placement={place} overlay={tip}>
       <Button bsSize={size} bsStyle={bs} onClick={() => fnClick(element)} disabled={disabled}>
-        {content}<i className={`fa ${fa}`} aria-hidden="true" />
+        {content}
+        <i className={`fa ${fa}`} aria-hidden="true" />
       </Button>
     </OverlayTrigger>
   );
-};
+}
 
-ButtonTooltip.propTypes = {
+ButtonTooltip.propTypes = {handleClose() {
+  this.updateState(this.props.element.properties_template, false);
+  this.props.fnClose();
+}
   tip: PropTypes.string.isRequired,
   element: PropTypes.object,
   fnClick: PropTypes.func.isRequired,
@@ -209,17 +236,20 @@ ButtonTooltip.defaultProps = {
   bs: '', size: 'xs', place: 'right', fa: 'fa-pencil-square-o', disabled: false, txt: null, element: {}
 };
 
-const ButtonConfirm = (props) => {
+function ButtonConfirm(props) {
   const {
     msg, size, bs, fnClick, fnParams, place, fa, disabled
   } = props;
   const popover = (
     <Popover id="popover-button-confirm">
-      {msg} <br />
+      {msg}
+      {' '}
+      <br />
       <div className="btn-toolbar">
         <Button bsSize="xsmall" bsStyle="danger" aria-hidden="true" onClick={() => fnClick(fnParams)}>
           Yes
-        </Button><span>&nbsp;&nbsp;</span>
+        </Button>
+        <span>&nbsp;&nbsp;</span>
         <Button bsSize="xsmall" bsStyle="warning">No</Button>
       </div>
     </Popover>
@@ -232,7 +262,7 @@ const ButtonConfirm = (props) => {
       </Button>
     </OverlayTrigger>
   );
-};
+}
 
 ButtonConfirm.propTypes = {
   msg: PropTypes.string.isRequired,
@@ -249,29 +279,41 @@ ButtonConfirm.defaultProps = {
   bs: 'danger', size: 'xs', place: 'right', fa: 'fa-trash-o', disabled: false
 };
 
-const FieldLabel = (props) => {
+function FieldLabel(props) {
   const { label, desc } = props;
   return (desc && desc !== '') ? (
     <OverlayTrigger placement="top" delayShow={1000} overlay={<Tooltip id={uuid.v4()}>{desc}</Tooltip>}>
       <ControlLabel>{label}</ControlLabel>
     </OverlayTrigger>
   ) : <ControlLabel>{label}</ControlLabel>;
-};
+}
 
 FieldLabel.propTypes = { label: PropTypes.string.isRequired, desc: PropTypes.string };
 FieldLabel.defaultProps = { desc: '' };
 
-const GenericDSMisType = () => {
+function GenericDSMisType() {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   if (MatrixCheck(currentUser.matrix, 'genericDataset')) {
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip">Type (Chemical Methods Ontology) has been changed. <br />Please review this Dataset content.</Tooltip>}>
-        <span style={{ color: 'red' }}><i className="fa fa-exclamation-triangle" />&nbsp;</span>
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id="tooltip">
+            Type (Chemical Methods Ontology) has been changed.
+            <br />
+            Please review this Dataset content.
+          </Tooltip>
+)}
+      >
+        <span style={{ color: 'red' }}>
+          <i className="fa fa-exclamation-triangle" />
+&nbsp;
+        </span>
       </OverlayTrigger>
     );
   }
   return null;
-};
+}
 
 const clsInputGroup = (el) => {
   if (!el) return el;
@@ -280,7 +322,7 @@ const clsInputGroup = (el) => {
   const keys = Object.keys(layers);
   keys.forEach((key) => {
     const layer = layers[key];
-    layer.fields.filter(e => e.type === 'input-group')
+    layer.fields.filter((e) => e.type === 'input-group')
       .forEach((e) => {
         e.sub_fields.forEach((s) => {
           const ff = s;
@@ -291,8 +333,10 @@ const clsInputGroup = (el) => {
   return genericEl;
 };
 
-const molOptions = [{ label: 'InChiKey', value: 'inchikey' }, { label: 'SMILES', value: 'smiles' }, { label: 'IUPAC', value: 'iupac' }, { label: 'Mass', value: 'molecular_weight' }];
-const samOptions = [{ label: 'Name', value: 'name' }, { label: 'Ext. Label', value: 'external_label' }, { label: 'Mass', value: 'molecular_weight' }];
+const molOptions = [{ label: 'InChiKey', value: 'inchikey' }, { label: 'SMILES', value: 'smiles' },
+  { label: 'IUPAC', value: 'iupac' }, { label: 'Mass', value: 'molecular_weight' }];
+const samOptions = [{ label: 'Name', value: 'name' },
+  { label: 'Ext. Label', value: 'external_label' }, { label: 'Mass', value: 'molecular_weight' }];
 
 export {
   ButtonTooltip, ButtonConfirm, GenericDSMisType, FieldLabel, GenericDummy,
