@@ -114,6 +114,11 @@ export const defaultMultiSolventsSmilesOptions = [{
            smiles: 'C1=CC=CC=C1',
            density: 0.88 }
   }, {
+  label: '2-Butanone',
+  value: { external_label: '2-Butanone',
+    smiles: 'CCC(=O)C',
+    density: 0.805 }
+  }, {
   label: 'n-Butanol',
   value: { external_label: 'n-Butanol',
            smiles: 'CCCCO',
@@ -208,6 +213,11 @@ export const defaultMultiSolventsSmilesOptions = [{
   value: { external_label: 'Pyridine',
            smiles: 'C1=CC=NC=C1',
            density: 0.98 }
+  }, {
+  label: 'Tetramethylethylenediamine (TMEDA)',
+  value: { external_label: 'TMEDA',
+    smiles: 'CN(C)CCN(C)C',
+    density: 0.775 }
   }, {
   label: 'Tetrahydrofuran (THF)',
   value: { external_label: 'THF',
@@ -333,6 +343,12 @@ export const purificationOptions = [{
   label: 'Distillation',
   value: 'Distillation'
 }, {
+  label: 'Dialysis',
+  value: 'Dialysis'
+}, {
+  label: 'Filtration',
+  value: 'Filtration'
+}, {
   label: 'Sublimation',
   value: 'Sublimation'
 }, {
@@ -341,9 +357,6 @@ export const purificationOptions = [{
 }, {
   label: 'Recrystallisation',
   value: 'Recrystallisation'
-}, {
-  label: 'Dialysis',
-  value: 'Dialysis'
 }, {
   label: 'Precipitation',
   value: 'Precipitation'
