@@ -328,7 +328,7 @@ class InboxStore {
 
   handleCheckedIds(params) {
     const {
-      inbox, checkedIds, currentUnsortedBoxPage, dataItemsPerPage
+      inbox, checkedIds, currentUnsortedBoxPage, dataItemsPerPage,
     } = this.state;
     const unlinkedAttachments = inbox.unlinked_attachments;
     const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
@@ -346,6 +346,17 @@ class InboxStore {
     } else if (params.range === 'all' && params.type === false) {
       currentAttachments.forEach((attachment) => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
       this.handleCheckedAll(params);
+    }
+
+    // If unsortedBox, remove devicebox attachments from checkedIds
+    if (this.state.activeDeviceBoxId === -1) {
+      for (let i = checkedIds.length - 1; i >= 0; i--) {
+        const checkedId = checkedIds[i];
+        const hasCorrespondingAttachment = currentAttachments.some((attachment) => attachment.id === checkedId);
+        if (!hasCorrespondingAttachment) {
+          checkedIds.splice(i, 1);
+        }
+      }
     }
   }
 
