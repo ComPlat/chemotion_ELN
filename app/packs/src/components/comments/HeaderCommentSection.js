@@ -41,7 +41,7 @@ class HeaderCommentSection extends Component {
 
   render() {
     const { element } = this.props;
-    const { comments, currentUser, showCommentSection, } = this.state;
+    const { comments, currentUser, showCommentSection } = this.state;
     const headerSection = `${element.type}_header`;
 
     const sectionComments = getSectionComments(comments, headerSection);
