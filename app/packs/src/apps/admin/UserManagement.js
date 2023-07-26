@@ -1,6 +1,8 @@
 import React from 'react';
 import {
-  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab
+  Panel, Table, Button, Modal, FormGroup,
+  ControlLabel, Form, Col, FormControl,
+  Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
@@ -40,86 +42,58 @@ const handleResetPassword = (id, random) => {
 };
 
 const validateEmail = (mail) => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
-const editTooltip = <Tooltip id="inchi_tooltip">edit User Info</Tooltip>;
-const resetPasswordTooltip = <Tooltip id="assign_button">reset password</Tooltip>;
-const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">send password instructions</Tooltip>;
-const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Tooltip>;
+const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
+const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
+const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
+const confirmUserTooltip = <Tooltip id="assign_button">Confirm this account</Tooltip>;
 const confirmEmailChangeTooltip = (email) => (
   <Tooltip id="email_change_button">
-    confirm email:
+    Confirm E-Mail:
     {' '}
     <br />
     {' '}
     {email}
   </Tooltip>
 );
-const disableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
-    lock this account
-  </Tooltip>
-);
-const enableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
-    unlock this account
-  </Tooltip>
-);
+const disableTooltip = <Tooltip id="assign_button">Lock this account</Tooltip>;
+const enableTooltip = <Tooltip id="assign_button">Unlock this account</Tooltip>;
 const converterEnableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     Enable Converter profiles editing for this user (currently disabled)
   </Tooltip>
 );
 const converterDisableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     Disable Converter profiles editing for this user (currently enabled)
   </Tooltip>
 );
 const templateModeratorEnableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     Enable Ketcher template editing for this user (currently disabled)
   </Tooltip>
 );
 const templateModeratorDisableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     Disable Ketcher template editing for this user (currently enabled)
   </Tooltip>
 );
 const moleculeModeratorEnableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     Enable editing the representation of the global molecules for this user (currently disabled)
   </Tooltip>
 );
 const moleculeModeratorDisableTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     Disable editing the representation of the global molecules for this user (currently enabled)
   </Tooltip>
 );
 const accountActiveTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     This user account is deactivated, press button to [activate]
   </Tooltip>
 );
 const accountInActiveTooltip = (
-  <Tooltip
-    id="assign_button"
-  >
+  <Tooltip id="assign_button">
     This user account is activated, press button to [deactivate]
   </Tooltip>
 );
@@ -252,7 +226,7 @@ export default class UserManagement extends React.Component {
     AdminFetcher.updateAccount({ user_id: id, account_active: !isActive })
       .then((result) => {
         this.handleFetchUsers();
-        const message = isActive === true ? 'User is In-Active!' : 'User is Active now!';
+        const message = isActive === true ? 'User is inactive!' : 'User is active!';
         alert(message);
       });
   }
@@ -360,7 +334,7 @@ export default class UserManagement extends React.Component {
       return false;
     } if (this.u_firstname.value.trim() === ''
       || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
-      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
+      this.setState({ messageEditUserModal: 'Please input first name, last name and name abbreviation!' });
       return false;
     }
     AdminFetcher.updateUser({
@@ -415,7 +389,10 @@ export default class UserManagement extends React.Component {
     const nUsers = this.newUsers.length;
     const nUsersMax = 100;
     if (nUsers > nUsersMax) {
-      this.setState({ processingSummaryUserFile: `The file contains too many users. Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.` });
+      this.setState({
+        processingSummaryUserFile: `The file contains too many users.
+        Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
+      });
       return false;
     }
 
@@ -423,7 +400,10 @@ export default class UserManagement extends React.Component {
     const validHeader = ['email', 'password', 'firstname', 'lastname', 'nameabbr', 'type'];
     if (!(fileHeader.length === validHeader.length
       && fileHeader.every((val, index) => val === validHeader[index]))) {
-      this.setState({ processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. Please make sure that your file's header is organized as follows: ${validHeader}.` });
+      this.setState({
+        processingSummaryUserFile: `The file contains an invalid header ${fileHeader}.
+        Please make sure that your file's header is organized as follows: ${validHeader}.`
+      });
       return false;
     }
 
@@ -451,7 +431,8 @@ export default class UserManagement extends React.Component {
     this.newUsers.forEach((user) => {
       const userType = user.data.type.trim();
       if (!validTypes.includes(userType)) {
-        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. Please select a valid type from ${validTypes}.\n\n`;
+        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}"
+          is invalid. Please select a valid type from ${validTypes}.\n\n`;
       }
     });
     if (!(invalidTypeMessage === '')) {
@@ -467,7 +448,10 @@ export default class UserManagement extends React.Component {
       }
     }
     if (duplicateUserEmails.size) {
-      this.setState({ processingSummaryUserFile: `The file contains duplicate user emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.` });
+      this.setState({
+        processingSummaryUserFile: `The file contains duplicate user emails:
+        ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
+      });
       return false;
     }
 
@@ -496,13 +480,14 @@ export default class UserManagement extends React.Component {
       this.setState({ messageNewUserModal: 'Please input password with correct format.' });
       return false;
     } if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
-      this.setState({ messageNewUserModal: 'passwords do not mach!' });
+      this.setState({ messageNewUserModal: 'Passwords do not match!' });
       return false;
     } if (this.password.value.trim().length < 8) { // also validated in backend
       this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
       return false;
-    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
+    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
+        || this.nameAbbr.value.trim() === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input first name, last name and name abbreviation' });
       return false;
     }
     return true;
@@ -758,123 +743,148 @@ export default class UserManagement extends React.Component {
   renderEditUserModal() {
     const { user } = this.state;
     return (
-      <Modal
-        show={this.state.showEditUserModal}
-        onHide={this.handleEditUserClose}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
-            <Form horizontal>
-              <FormGroup controlId="formControlEmail">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Email:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="email"
-                    name="u_email"
-                    defaultValue={user.email}
-                    inputRef={(ref) => { this.u_email = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlFirstName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  First name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_firstname"
-                    defaultValue={user.first_name}
-                    inputRef={(ref) => { this.u_firstname = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlLastName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Last name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_lastname"
-                    defaultValue={user.last_name}
-                    inputRef={(ref) => { this.u_lastname = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlAbbr">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Abbr (3):
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_abbr"
-                    defaultValue={user.initials}
-                    inputRef={(ref) => { this.u_abbr = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlsType">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Type:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    componentClass="select"
-                    defaultValue={user.type}
-                    inputRef={(ref) => { this.u_type = ref; }}
-                  >
-                    <option value="Person">Person</option>
-                    <option value="Group">Group</option>
-                    <option value="Device">Device</option>
-                    <option value="Admin">Admin</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlMessage">
-                <Col sm={12}>
-                  <FormControl
-                    type="text"
-                    readOnly
-                    name="messageEditUserModal"
-                    value={this.state.messageEditUserModal}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)}>
-                    Update&nbsp;
-                    <i className="fa fa-save" />
-                  </Button>
-                  &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()}>
-                    Cancel&nbsp;
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
+      <div>
+        <Modal
+          show={this.state.showEditUserModal}
+          onHide={this.handleEditUserClose}
+          dialogClassName="modal-75w"
+        >
+          <div>
+            <Modal.Header closeButton>
+              <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>Edit User</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div>
+                <Form horizontal>
+                  <FormGroup controlId="formControlEmail">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Email:
+                    </Col>
+                    <Col sm={6}>
+                      <FormControl
+                        type="email"
+                        name="u_email"
+                        defaultValue={user.email}
+                        inputRef={(ref) => { this.u_email = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlFirstName">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      First name:
+                    </Col>
+                    <Col sm={6}>
+                      <FormControl
+                        type="text"
+                        name="u_firstname"
+                        defaultValue={user.first_name}
+                        inputRef={(ref) => { this.u_firstname = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlLastName">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Last name:
+                    </Col>
+                    <Col sm={6}>
+                      <FormControl
+                        type="text"
+                        name="u_lastname"
+                        defaultValue={user.last_name}
+                        inputRef={(ref) => { this.u_lastname = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlAbbr">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Abbreviation:
+                    </Col>
+                    <Col sm={6}>
+                      <FormControl
+                        type="text"
+                        name="u_abbr"
+                        defaultValue={user.initials}
+                        inputRef={(ref) => { this.u_abbr = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlsType">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Type:
+                    </Col>
+                    <Col sm={6}>
+                      <FormControl
+                        componentClass="select"
+                        defaultValue={user.type}
+                        inputRef={(ref) => { this.u_type = ref; }}
+                      >
+                        <option value="Person">Person</option>
+                        <option value="Group">Group</option>
+                        <option value="Device">Device</option>
+                        <option value="Admin">Admin</option>
+                      </FormControl>
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlMessage">
+                    <Col sm={6} smOffset={3}>
+                      <FormControl
+                        type="text"
+                        readOnly
+                        name="messageEditUserModal"
+                        value={this.state.messageEditUserModal}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup>
+                    <Col smOffset={7}>
+                      <Button
+                        size="lg"
+                        bsStyle="warning"
+                        onClick={() => this.handleUpdateUser(user)}
+                        style={{
+                          borderRadius: '8px',
+                          boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                          height: '45px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        Update&nbsp;&nbsp;
+                        <i className="fa fa-floppy-o" style={{ color: 'white', fontSize: '20px' }} />
+                      </Button>
+                    </Col>
+                  </FormGroup>
+                </Form>
+              </div>
+            </Modal.Body>
           </div>
-        </Modal.Body>
-      </Modal>
+        </Modal>
+      </div>
     );
   }
 
   render() {
+    const buttonStyle = {
+      borderRadius: '4px',
+      fontWeight: '500',
+      boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+      width: '25px',
+      height: '25px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    };
+
     const renderConfirmButton = (show, userId) => {
       if (show) {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmUserTooltip}>
             <Button
-              bsSize="xsmall"
               bsStyle="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
+              style={buttonStyle}
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -889,9 +899,9 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
             <Button
-              bsSize="xsmall"
               bsStyle="warning"
               onClick={() => this.handleReConfirmUserAccount(userId)}
+              style={buttonStyle}
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -917,109 +927,123 @@ export default class UserManagement extends React.Component {
     );
 
     const tbody = users.map((g, idx) => (
-      <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
+      <tr
+        key={`row_${g.id}`}
+        style={{
+          height: '26px',
+          verticalAlign: 'middle',
+          backgroundColor: idx % 2 === 0 ? '#F0F2F5' : '#F4F6F9',
+        }}
+      >
         <td width="1%">
           {idx + 1}
         </td>
         <td width="12%">
-          <OverlayTrigger placement="bottom" overlay={editTooltip}>
-            <Button
-              bsSize="xsmall"
-              bsStyle="info"
-              onClick={() => this.handleEditUserShow(g)}
-            >
-              <i className="fa fa-user" />
-            </Button>
-          </OverlayTrigger>
+          <div style={{ display: 'flex' }}>
+
+            <OverlayTrigger placement="top" overlay={editTooltip}>
+              <Button
+                bsStyle="info"
+                onClick={() => this.handleEditUserShow(g)}
+                style={buttonStyle}
+              >
+                <i className="fa fa-user" />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip}>
-            <Button
-              bsSize="xsmall"
-              bsStyle="success"
-              onClick={() => handleResetPassword(g.id, true)}
-            >
-              <i className="fa fa-key" />
-            </Button>
-          </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={resetPasswordTooltip}>
+              <Button
+                bsStyle="success"
+                onClick={() => handleResetPassword(g.id, true)}
+                style={buttonStyle}
+              >
+                <i className="fa fa-key" />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip}>
-            <Button
-              bsSize="xsmall"
-              bsStyle="primary"
-              onClick={() => handleResetPassword(g.id, false)}
-            >
-              <i className="fa fa-key" />
-            </Button>
-          </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={resetPasswordInstructionsTooltip}>
+              <Button
+                bsStyle="primary"
+                onClick={() => handleResetPassword(g.id, false)}
+                style={buttonStyle}
+              >
+                <i className="fa fa-key" />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.locked_at === null ? 'default' : 'warning'}
-              onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
-            >
-              <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
-            </Button>
-          </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
+              <Button
+                bsStyle={g.locked_at === null ? 'default' : 'warning'}
+                onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
+                style={buttonStyle}
+              >
+                <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(g.converter_admin === null || g.converter_admin === false)
-              ? converterEnableTooltip : converterDisableTooltip}
-          >
-            <Button
-              bsSize="xsmall"
-              bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
-              onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
+            <OverlayTrigger
+              placement="top"
+              overlay={(g.converter_admin === null || g.converter_admin === false)
+                ? converterEnableTooltip : converterDisableTooltip}
             >
-              <i className="fa fa-hourglass-half" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+              <Button
+                bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+                onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
+                style={buttonStyle}
+              >
+                <i className="fa fa-hourglass-half" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false)
-              ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
-          >
-            <Button
-              bsSize="xsmall"
-              bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false)
-                ? 'default' : 'success'}
-              onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
+            <OverlayTrigger
+              placement="top"
+              overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false)
+                ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
             >
-              <i className="fa fa-book" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+              <Button
+                bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false)
+                  ? 'default' : 'success'}
+                onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
+                style={buttonStyle}
+              >
+                <i className="fa fa-book" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(g.molecule_editor == null || g.molecule_editor === false)
-              ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
-          >
-            <Button
-              bsSize="xsmall"
-              bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
-              onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
+            <OverlayTrigger
+              placement="top"
+              overlay={(g.molecule_editor == null || g.molecule_editor === false)
+                ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
             >
-              <i className="icon-sample" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+              <Button
+                bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
+                onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
+                style={buttonStyle}
+              >
+                <i className="icon-sample" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger
-            placement="bottom"
-            overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
-          >
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.account_active === true ? 'default' : 'danger'}
-              onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
+            <OverlayTrigger
+              placement="top"
+              overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
             >
-              <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+              <Button
+                bsStyle={g.account_active === true ? 'default' : 'danger'}
+                onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
+                style={buttonStyle}
+              >
+                <i
+                  className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'}
+                  aria-hidden="true"
+                />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
-          {renderReConfirmButton(g.unconfirmed_email, g.id)}
+            {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
+            {renderReConfirmButton(g.unconfirmed_email, g.id)}
+          </div>
+
         </td>
         <td width="12%">
           {' '}
@@ -1056,18 +1080,74 @@ export default class UserManagement extends React.Component {
 
     return (
       <div>
-        <Panel>
-          <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
-            Send Message&nbsp;
-            <i className="fa fa-commenting-o" />
-          </Button>
-          &nbsp;
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()} data-cy="create-user">
-            New User&nbsp;
-            <i className="fa fa-plus" />
-          </Button>
+        <Panel style={{
+          borderWidth: '0px',
+          backgroundColor: '#F0F2F5',
+          padding: '5px',
+          borderRadius: '8px',
+          display: 'flex',
+          justifyContent: 'flex-start'
+        }}
+        >
+          <OverlayTrigger
+            placement="top"
+            delay={{ show: 250, hide: 400 }}
+            overlay={<Tooltip id="button-tooltip">Send Message</Tooltip>}
+          >
+            <Button
+              size="sm"
+              bsStyle="warning"
+              onClick={() => this.handleMsgShow()}
+              style={{
+                borderRadius: '8px',
+                fontWeight: '500',
+                marginRight: '5px',
+                boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <i className="fa fa-paper-plane" style={{ color: 'white', fontSize: '16px' }} />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            delay={{ show: 250, hide: 400 }}
+            overlay={<Tooltip id="button-tooltip-2">New User</Tooltip>}
+          >
+            <Button
+              bsStyle="primary"
+              size="sm"
+              onClick={() => this.handleNewUserShow()}
+              data-cy="create-user"
+              style={{
+                borderRadius: '8px',
+                fontWeight: '500',
+                boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
+            </Button>
+          </OverlayTrigger>
         </Panel>
-        <Panel>
+
+        <Panel style={{
+          borderWidth: '0px',
+          backgroundColor: '#F0F2F5',
+          borderRadius: '8px',
+          padding: '5px',
+          display: 'flex',
+          justifyContent: 'flex-start'
+        }}
+        >
           <Table>
             <thead>
               {tcolumn}
