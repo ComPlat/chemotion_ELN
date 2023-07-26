@@ -22,25 +22,6 @@ const loadUserByName = (input) => {
     });
 };
 
-const handleResetPassword = (id, random) => {
-  AdminFetcher.resetUserPassword({ user_id: id, random })
-    .then((result) => {
-      if (result.rp) {
-        let message = '';
-        if (random) {
-          message = result.pwd ? `Password reset! New password: \n ${result.pwd}`
-            : 'Password reset!';
-        } else {
-          message = result.email ? `Password reset! instructions sent to : \n ${result.email}`
-            : 'Password instruction sent!';
-        }
-        alert(message);
-      } else {
-        alert(`Password reset fail: \n ${result.pwd}`);
-      }
-    });
-};
-
 const validateEmail = (mail) => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
 const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
 const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
@@ -111,6 +92,8 @@ export default class UserManagement extends React.Component {
       messageNewUserModal: '',
       messageEditUserModal: '',
       processingSummaryUserFile: '',
+      alertModalShow: false,
+      alertModalMessage: '',
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -123,6 +106,8 @@ export default class UserManagement extends React.Component {
     this.handleEditUserShow = this.handleEditUserShow.bind(this);
     this.handleEditUserClose = this.handleEditUserClose.bind(this);
     this.handleUpdateUser = this.handleUpdateUser.bind(this);
+    this.showAlertModal = this.showAlertModal.bind(this);
+    this.hideAlertModal = this.hideAlertModal.bind(this);
   }
 
   componentDidMount() {
@@ -131,6 +116,14 @@ export default class UserManagement extends React.Component {
   }
 
   componentWillUnmount() {
+  }
+
+  showAlertModal(message) {
+    this.setState({ alertModalShow: true, alertModalMessage: message });
+  }
+
+  hideAlertModal() {
+    this.setState({ alertModalShow: false, alertModalMessage: '' });
   }
 
   handleMsgShow() {
@@ -182,12 +175,31 @@ export default class UserManagement extends React.Component {
       });
   }
 
+  handleResetPassword(id, random) {
+    AdminFetcher.resetUserPassword({ user_id: id, random })
+      .then((result) => {
+        let message = '';
+        if (result.rp) {
+          if (random) {
+            message = result.pwd ? `Password reset!\nNew password: ${result.pwd}`
+              : 'Password reset!';
+          } else {
+            message = result.email ? `Password reset!\nInstructions sent to: ${result.email}`
+              : 'Password instruction sent!';
+          }
+          this.showAlertModal(message);
+        } else {
+          this.showAlertModal(`Password reset fail: \n ${result.pwd}`);
+        }
+      });
+  }
+
   handleEnableDisableAccount(id, lockedAt) {
     AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
       .then((result) => {
         this.handleFetchUsers();
         const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
-        alert(message);
+        this.showAlertModal(message);
       });
   }
 
@@ -196,8 +208,8 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         this.handleFetchUsers();
         const message = isConverterAdmin === true
-          ? 'Disable Converter profiles editing for this user' : 'Enable Converter profiles editing for this user';
-        alert(message);
+          ? 'Disabled Converter profiles editing for this user.' : 'Enabled Converter profiles editing for this user.';
+        this.showAlertModal(message);
       });
   }
 
@@ -206,8 +218,8 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         this.handleFetchUsers();
         const message = isTemplatesModerator === true
-          ? 'Disable Ketcher template editing for this user' : 'Enable Ketcher template editing for this user';
-        alert(message);
+          ? 'Disabled Ketcher template editing for this user.' : 'Enabled Ketcher template editing for this user.';
+        this.showAlertModal(message);
       });
   }
 
@@ -216,9 +228,9 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         this.handleFetchUsers();
         const message = isMoleculesEditor === true
-          ? 'Disable editing the representation of the global molecules for this user'
-          : 'Enable editing the representation of the global molecules for this user';
-        alert(message);
+          ? 'Disabled editing the representation of the global molecules for this user.'
+          : 'Enabled editing the representation of the global molecules for this user.';
+        this.showAlertModal(message);
       });
   }
 
@@ -227,7 +239,7 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         this.handleFetchUsers();
         const message = isActive === true ? 'User is inactive!' : 'User is active!';
-        alert(message);
+        this.showAlertModal(message);
       });
   }
 
@@ -242,7 +254,7 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         if (result !== null) {
           this.handleFetchUsers();
-          alert('User Account has been confirmed!');
+          this.showAlertModal('User Account has been confirmed!');
         }
       });
   }
@@ -252,7 +264,7 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         if (result !== null) {
           this.handleFetchUsers();
-          alert('User New Email has been confirmed!');
+          this.showAlertModal('New user email has been confirmed!');
         }
       });
   }
@@ -496,9 +508,9 @@ export default class UserManagement extends React.Component {
   messageSend() {
     const { selectedUsers } = this.state;
     if (this.myMessage.value === '') {
-      alert('Please input the message!');
+      this.showAlertModal('Please input the message!');
     } else if (!selectedUsers) {
-      alert('Please select user(s)!');
+      this.showAlertModal('Please select user(s)!');
     } else {
       const userIds = [];
       selectedUsers.map((g) => {
@@ -532,18 +544,22 @@ export default class UserManagement extends React.Component {
         onHide={this.handleMsgClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Send Message</Modal.Title>
+          <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>Send Message</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
+        <Modal.Body style={{ overflow: 'auto', maxHeight: '80%' }}>
+          <div>
             <Form>
               <FormGroup controlId="formControlsTextarea">
                 <ControlLabel>Message</ControlLabel>
                 <FormControl
                   componentClass="textarea"
                   placeholder="message..."
-                  rows="20"
+                  rows="10"
                   inputRef={(ref) => { this.myMessage = ref; }}
+                  style={{
+                    resize: 'vertical',
+                    maxHeight: '60vh'
+                  }}
                 />
               </FormGroup>
               <FormGroup>
@@ -561,13 +577,24 @@ export default class UserManagement extends React.Component {
                   onChange={this.handleSelectUser}
                 />
               </FormGroup>
-              <Button
-                bsStyle="primary"
-                onClick={() => this.messageSend()}
-              >
-                Send&nbsp;
-                <i className="fa fa-paper-plane" />
-              </Button>
+              <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  bsStyle="primary"
+                  onClick={() => this.messageSend()}
+                  style={{
+                    borderRadius: '8px',
+                    boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Send&nbsp;
+                  <i className="fa fa-paper-plane" />
+                </Button>
+              </FormGroup>
             </Form>
           </div>
         </Modal.Body>
@@ -576,70 +603,72 @@ export default class UserManagement extends React.Component {
   }
 
   renderNewUserModal() {
-    // const { selectedUsers } = this.state;
     return (
       <Modal
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>New User</Modal.Title>
+          <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Tabs id="createUserTabs">
             <Tab eventKey="singleUser" title="Single user">
-              <Form horizontal>
+              <Form horizontal style={{ marginTop: '20px' }}>
                 <FormGroup controlId="formControlEmail">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Email:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    Email: *
                   </Col>
                   <Col sm={9}>
                     <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlPassword">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Password:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    Password: *
                   </Col>
                   <Col sm={9}>
                     <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlPasswordConfirmation">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Password Confirmation:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    Password
+                    &nbsp;&nbsp;
+                    <br />
+                    confirmation: *
                   </Col>
                   <Col sm={9}>
                     <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlFirstName">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    First name:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    First name: *
                   </Col>
                   <Col sm={9}>
                     <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlLastName">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Last name:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    Last name: *
                   </Col>
                   <Col sm={9}>
                     <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlAbbr">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Abbr (3) *:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    Abbreviation: *
                   </Col>
                   <Col sm={9}>
                     <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlsType">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Type:
+                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
+                    Type: *
                   </Col>
                   <Col sm={9}>
                     <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
@@ -649,9 +678,31 @@ export default class UserManagement extends React.Component {
                     </FormControl>
                   </Col>
                 </FormGroup>
-                <FormGroup>
-                  <Col smOffset={0} sm={10}>
-                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()}>
+                <FormGroup controlId="formControlMessage">
+                  <Col style={{ marginLeft: '35px' }} sm={11} smOffset={3}>
+                    <FormControl
+                      type="text"
+                      readOnly
+                      name="messageNewUserModal"
+                      value={this.state.messageNewUserModal}
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup style={{ marginRight: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <Col>
+                    <Button
+                      bsStyle="primary"
+                      onClick={() => this.handleCreateNewUser()}
+                      style={{
+                        borderRadius: '8px',
+                        boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                      }}
+                    >
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -661,8 +712,10 @@ export default class UserManagement extends React.Component {
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
               <Form>
-                <FormGroup>
-                  <ControlLabel>Please format the user file like the table below.</ControlLabel>
+                <FormGroup style={{ marginTop: '20px' }}>
+                  <ControlLabel style={{ marginBottom: '20px' }}>
+                    Please format the user file like the table below:
+                  </ControlLabel>
                   <Table striped bordered hover>
                     <thead>
                       <tr>
@@ -694,7 +747,7 @@ export default class UserManagement extends React.Component {
                     </tbody>
                   </Table>
                 </FormGroup>
-                <FormGroup id="userFileDragAndDrop">
+                <FormGroup id="userFileDragAndDrop" style={{ marginTop: '30px', marginBottom: '30px' }}>
                   <CSVReader
                     onDrop={this.handleOnDropUserFile}
                     onError={this.handleOnErrorUserFile}
@@ -703,38 +756,34 @@ export default class UserManagement extends React.Component {
                     addRemoveButton
                     onRemoveFile={this.handleOnRemoveUserFile}
                   >
-                    <span>
+                    <span style={{ marginRight: '70px', marginTop: '30px', marginBottom: '30px' }}>
                       Drop a CSV user file here or click to upload.
+                      <br />
                       The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
                     </span>
                   </CSVReader>
                 </FormGroup>
-                <FormGroup>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()}>
-                    Create users&nbsp;
-                    <i className="fa fa-plus" />
+                <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    bsStyle="primary"
+                    onClick={() => this.handleUploadUsers()}
+                    style={{
+                      borderRadius: '8px',
+                      boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                      height: '40px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Upload users&nbsp;
+                    <i className="fa fa-upload" />
                   </Button>
-                </FormGroup>
-                <FormGroup>
-                  <ControlLabel>Processing Summary</ControlLabel>
-                  <FormControl
-                    readOnly
-                    id="processingSummary"
-                    componentClass="textarea"
-                    rows="5"
-                    style={{ whiteSpace: 'pre-wrap', overflowY: 'scroll' }}
-                    value={this.state.processingSummaryUserFile}
-                  />
                 </FormGroup>
               </Form>
             </Tab>
           </Tabs>
-          <Modal.Footer>
-            <FormGroup controlId="formControlMessage">
-              <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
-            </FormGroup>
-            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()}>Cancel</Button>
-          </Modal.Footer>
         </Modal.Body>
       </Modal>
     );
@@ -747,7 +796,6 @@ export default class UserManagement extends React.Component {
         <Modal
           show={this.state.showEditUserModal}
           onHide={this.handleEditUserClose}
-          dialogClassName="modal-75w"
         >
           <div>
             <Modal.Header closeButton>
@@ -757,10 +805,10 @@ export default class UserManagement extends React.Component {
               <div>
                 <Form horizontal>
                   <FormGroup controlId="formControlEmail">
-                    <Col componentClass={ControlLabel} sm={3}>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
                       Email:
                     </Col>
-                    <Col sm={6}>
+                    <Col sm={9}>
                       <FormControl
                         type="email"
                         name="u_email"
@@ -769,11 +817,12 @@ export default class UserManagement extends React.Component {
                       />
                     </Col>
                   </FormGroup>
+
                   <FormGroup controlId="formControlFirstName">
-                    <Col componentClass={ControlLabel} sm={3}>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
                       First name:
                     </Col>
-                    <Col sm={6}>
+                    <Col sm={9}>
                       <FormControl
                         type="text"
                         name="u_firstname"
@@ -783,10 +832,10 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlLastName">
-                    <Col componentClass={ControlLabel} sm={3}>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
                       Last name:
                     </Col>
-                    <Col sm={6}>
+                    <Col sm={9}>
                       <FormControl
                         type="text"
                         name="u_lastname"
@@ -796,10 +845,10 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlAbbr">
-                    <Col componentClass={ControlLabel} sm={3}>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
                       Abbreviation:
                     </Col>
-                    <Col sm={6}>
+                    <Col sm={9}>
                       <FormControl
                         type="text"
                         name="u_abbr"
@@ -809,10 +858,10 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlsType">
-                    <Col componentClass={ControlLabel} sm={3}>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
                       Type:
                     </Col>
-                    <Col sm={6}>
+                    <Col sm={9}>
                       <FormControl
                         componentClass="select"
                         defaultValue={user.type}
@@ -826,7 +875,7 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlMessage">
-                    <Col sm={6} smOffset={3}>
+                    <Col style={{ marginLeft: '30px' }} sm={11}>
                       <FormControl
                         type="text"
                         readOnly
@@ -835,26 +884,24 @@ export default class UserManagement extends React.Component {
                       />
                     </Col>
                   </FormGroup>
-                  <FormGroup>
-                    <Col smOffset={7}>
-                      <Button
-                        size="lg"
-                        bsStyle="warning"
-                        onClick={() => this.handleUpdateUser(user)}
-                        style={{
-                          borderRadius: '8px',
-                          boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                          height: '45px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        Update&nbsp;&nbsp;
-                        <i className="fa fa-floppy-o" style={{ color: 'white', fontSize: '20px' }} />
-                      </Button>
-                    </Col>
+                  <FormGroup style={{ marginRight: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      size="lg"
+                      bsStyle="warning"
+                      onClick={() => this.handleUpdateUser(user)}
+                      style={{
+                        borderRadius: '8px',
+                        boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      Update&nbsp;&nbsp;
+                      <i className="fa fa-floppy-o" style={{ color: 'white', fontSize: '20px' }} />
+                    </Button>
                   </FormGroup>
                 </Form>
               </div>
@@ -872,6 +919,7 @@ export default class UserManagement extends React.Component {
       boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
       width: '25px',
       height: '25px',
+      marginRight: '5px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
@@ -930,7 +978,7 @@ export default class UserManagement extends React.Component {
       <tr
         key={`row_${g.id}`}
         style={{
-          height: '26px',
+          height: '25px',
           verticalAlign: 'middle',
           backgroundColor: idx % 2 === 0 ? '#F0F2F5' : '#F4F6F9',
         }}
@@ -940,7 +988,6 @@ export default class UserManagement extends React.Component {
         </td>
         <td width="12%">
           <div style={{ display: 'flex' }}>
-
             <OverlayTrigger placement="top" overlay={editTooltip}>
               <Button
                 bsStyle="info"
@@ -954,7 +1001,7 @@ export default class UserManagement extends React.Component {
             <OverlayTrigger placement="top" overlay={resetPasswordTooltip}>
               <Button
                 bsStyle="success"
-                onClick={() => handleResetPassword(g.id, true)}
+                onClick={() => this.handleResetPassword(g.id, true)}
                 style={buttonStyle}
               >
                 <i className="fa fa-key" />
@@ -964,7 +1011,7 @@ export default class UserManagement extends React.Component {
             <OverlayTrigger placement="top" overlay={resetPasswordInstructionsTooltip}>
               <Button
                 bsStyle="primary"
-                onClick={() => handleResetPassword(g.id, false)}
+                onClick={() => this.handleResetPassword(g.id, false)}
                 style={buttonStyle}
               >
                 <i className="fa fa-key" />
@@ -1080,6 +1127,20 @@ export default class UserManagement extends React.Component {
 
     return (
       <div>
+        <Modal size="sm" show={this.state.alertModalShow} onHide={this.hideAlertModal}>
+          <Modal.Header closeButton>
+            <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>Alert</Modal.Title>
+          </Modal.Header>
+          <Modal.Body size="sm" style={{ fontWeight: 'bold' }}>
+            {this.state.alertModalMessage.split('\n').map((item, key) => (
+              <React.Fragment key={key}>
+                {item}
+                <br />
+              </React.Fragment>
+            ))}
+          </Modal.Body>
+          {' '}
+        </Modal>
         <Panel style={{
           borderWidth: '0px',
           backgroundColor: '#F0F2F5',
