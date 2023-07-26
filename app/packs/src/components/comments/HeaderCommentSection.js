@@ -49,7 +49,7 @@ class HeaderCommentSection extends Component {
     if (MatrixCheck(currentUser.matrix, commentActivation)) {
       return (
         element?.isNew ? <span /> : (
-          <span style={{ marginLeft: '10px' }}>
+          <span className="comments-header-btn">
             <OverlayTrigger
               key="ot_comments"
               placement="top"
