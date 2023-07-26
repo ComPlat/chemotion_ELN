@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import {
-  Button, FormControl, Modal, Col
+  Button, FormControl, Modal, Col, ButtonGroup,
 } from 'react-bootstrap';
 import _ from 'lodash';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -142,18 +142,36 @@ export default class CollectionTabs extends React.Component {
 
   renderNode(node) {
     if (!Object.keys(node).length == 0) {
-      if (node.is_locked) {
+      if (node.is_locked || node.id < 1) {
         return (
-          <span className={this.isActive(node)} onClick={this.onClickCollection.bind(this, node)}>
+          <span className={this.isActive(node)}>
             {this.label(node)}
           </span>
         );
+      } else {
+        return (
+          <tr>
+            <td colSpan='6'>
+              <span className={this.isActive(node)}>
+                {this.label(node)}
+              </span>
+            </td>
+            <td colSpan='6'>
+              <ButtonGroup className='collection-tab-edit-btn'>
+                <Button
+                  className='collection-tab-edit-btn'
+                  bsSize='xsmall'
+                  bsStyle='primary'
+                  onClick={this.onClickCollection.bind(this, node)}
+                  title='Click to edit collection tab sorting'
+                >
+                  <i className='glyphicon glyphicon-pencil'/>
+                </Button>
+              </ButtonGroup>
+            </td>
+          </tr>
+        );
       }
-      return (
-        <span className={this.isActive(node)} onClick={this.onClickCollection.bind(this, node)}>
-          {this.label(node)}
-        </span>
-      );
     }
   }
 
@@ -201,7 +219,7 @@ export default class CollectionTabs extends React.Component {
           </Modal.Body>
           <Modal.Footer style={{ textAlign: 'left' }}>
             <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
-              <p style={{ fontSize: '11.5px' }}>
+              <p style={{ fontSize: '13px' }}>
                 For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.
                 Drag and drop to select the order of segment tab layout.
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
