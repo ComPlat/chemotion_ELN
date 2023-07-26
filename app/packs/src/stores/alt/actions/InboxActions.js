@@ -39,10 +39,6 @@ class InboxActions {
     return params;
   }
 
-  checkedDeviceIds(params) {
-    return params;
-  }
-
   prevClick() {
     return null;
   }

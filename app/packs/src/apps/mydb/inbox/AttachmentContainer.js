@@ -45,6 +45,8 @@ class AttachmentContainer extends Component {
 
   toggleAttachmentsCheckbox(id) {
     const { checkedIds } = this.state;
+    const { isSelected, attachment, sourceType } = this.props;
+    const attachmentId = attachment && attachment.id;
     const params = {
       type: false,
       ids: id,
@@ -56,11 +58,20 @@ class AttachmentContainer extends Component {
     }
     InboxActions.checkedIds(params);
     InboxActions.checkedAll(params);
+
+    if (sourceType === DragDropItemTypes.DATA && attachmentId) {
+      const newCheckedIds = isSelected
+        ? checkedIds.filter((checkedId) => checkedId !== attachmentId)
+        : [...checkedIds, attachmentId];
+
+      this.setState({ checkedIds: newCheckedIds });
+    }
   }
 
   isAttachmentChecked(attachment) {
+    const { isSelected } = this.props;
     const { checkedIds } = this.state;
-    return (ArrayUtils.isValInArray(checkedIds || [], attachment.id));
+    return (isSelected || ArrayUtils.isValInArray(checkedIds || [], attachment.id));
   }
 
 
@@ -181,6 +192,7 @@ AttachmentContainer.propTypes = {
   largerInbox: PropTypes.bool,
   sourceType: PropTypes.string,
   fromUnsorted: PropTypes.bool,
+  isSelected: PropTypes.bool.isRequired,
 };
 
 AttachmentContainer.defaultProps = {

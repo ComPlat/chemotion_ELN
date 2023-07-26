@@ -26,7 +26,6 @@ class DatasetContainer extends Component {
     this.state = {
       visible: false,
       deletingTooltip: false,
-      checkedIds: inboxState.checkedIds,
     }
   }
 
@@ -59,10 +58,10 @@ class DatasetContainer extends Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect } = this.props;
+    const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect, checkedIds } = this.props;
 
     if (sourceType === DragDropItemTypes.DATASET) {
-      const { visible, deletingTooltip, checkedIds } = this.state;
+      const { visible, deletingTooltip } = this.state;
       const attachments = dataset.attachments.map(attachment => (
         <AttachmentContainer
           key={`attach_${attachment.id}`}
@@ -70,6 +69,7 @@ class DatasetContainer extends Component {
           attachment={attachment}
           largerInbox={largerInbox}
           isSelected={checkedIds.includes(attachment.id)}
+          checked={isSelected}
         />
       ));
       const attCount = this.attachmentCount();

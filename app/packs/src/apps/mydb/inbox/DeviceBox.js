@@ -18,8 +18,8 @@ export default class DeviceBox extends React.Component {
     this.state = {
       visible: false,
       checkedDeviceAll: inboxState.checkedDeviceAll,
-      checkedDeviceIds: inboxState.checkedDeviceIds,
-      checkedIds: inboxState.checkedIds,
+      checkedDeviceIds: [],
+      checkedIds: [],
       deletingTooltip: false,
       currentDeviceBoxPage: inboxState.currentDeviceBoxPage,
       dataItemsPerPage: inboxState.dataItemsPerPage,
@@ -34,12 +34,6 @@ export default class DeviceBox extends React.Component {
   componentDidMount() {
     const { device_box, deviceBoxVisible } = this.props;
     const { currentDeviceBoxPage } = this.state;
-    // if (deviceBoxVisible) {
-    //   if (Array.isArray(device_box.children) && !device_box.children.length) {
-    //     LoadingActions.start();
-    //     InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
-    //   }
-    // }
     this.setState({ visible: deviceBoxVisible });
     InboxStore.listen(this.onChange);
   }
@@ -56,7 +50,7 @@ export default class DeviceBox extends React.Component {
   }
 
   handleDeviceBoxClick(deviceBox) {
-    const { visible, currentDeviceBoxPage, checkedDeviceAll, checkedDeviceIds, checkedIds } = this.state;
+    const { visible, currentDeviceBoxPage } = this.state;
     const { fromCollectionTree } = this.props;
 
     InboxActions.setActiveDeviceBoxId(deviceBox.id);
@@ -111,7 +105,11 @@ export default class DeviceBox extends React.Component {
   handlePrevClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage - 1;
-    this.setState({ currentDeviceBoxPage: updatedPage });
+    this.setState({
+      currentDeviceBoxPage: updatedPage,
+      checkedDeviceAll: false,
+      checkedIds: []
+    });
     LoadingActions.start();
     InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
   };
@@ -119,7 +117,11 @@ export default class DeviceBox extends React.Component {
   handleNextClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage + 1;
-    this.setState({ currentDeviceBoxPage: updatedPage });
+    this.setState({
+      currentDeviceBoxPage: updatedPage,
+      checkedDeviceAll: false,
+      checkedIds: []
+    });
     LoadingActions.start();
     InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
   };
@@ -142,7 +144,6 @@ export default class DeviceBox extends React.Component {
     }));
 
     InboxActions.checkedDeviceAll(params);
-    InboxActions.checkedIds(params);
   }
 
   toggleTooltip() {
@@ -206,11 +207,11 @@ export default class DeviceBox extends React.Component {
       <div>
         <input
           type="checkbox"
-          checked={checkedDeviceAll && checkedDeviceIds.length === device_box.children.length }
+          checked={checkedDeviceIds.length === device_box.children.length }
           onChange={this.toggleSelectAllFiles}
         />
         <span className="g-marginLeft--10" style={{ fontWeight: 'bold' }}>
-          {checkedDeviceAll && checkedDeviceIds.length === device_box.children.length? 'Deselect all' : 'Select all'}
+          {checkedDeviceIds.length === device_box.children.length ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
@@ -258,6 +259,7 @@ export default class DeviceBox extends React.Component {
         largerInbox={largerInbox}
         isSelected={checkedDeviceIds.includes(dataset.id)}
         onDatasetSelect={this.handleDatasetSelect}
+        checkedIds={checkedIds}
       />
     ));
 
