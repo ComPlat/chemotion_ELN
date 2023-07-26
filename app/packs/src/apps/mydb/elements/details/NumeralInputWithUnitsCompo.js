@@ -181,9 +181,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
               bsSize={bsSize}
               bsStyle={bsStyle}
               value={val() || ''}
-              onChange={event => this._handleInputValueChange(event)}
-              onFocus={event => this._handleInputValueFocus(event)}
-              onBlur={event => this._handleInputValueBlur(event)}
+              onChange={(event) => this._handleInputValueChange(event)}
+              onFocus={(event) => this._handleInputValueFocus(event)}
+              onBlur={(event) => this._handleInputValueBlur(event)}
               name={name}
             />
             {prefixSwitch}
@@ -202,9 +202,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
             bsSize={bsSize}
             bsStyle={bsStyle}
             value={val() || ''}
-            onChange={event => this._handleInputValueChange(event)}
-            onFocus={event => this._handleInputValueFocus(event)}
-            onBlur={event => this._handleInputValueBlur(event)}
+            onChange={(event) => this._handleInputValueChange(event)}
+            onFocus={(event) => this._handleInputValueFocus(event)}
+            onBlur={(event) => this._handleInputValueBlur(event)}
             name={name}
           />
         </div>
