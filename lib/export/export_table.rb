@@ -81,10 +81,8 @@ module Export
       when :sample_analyses
         generate_headers_sample_id
         add_analyses_header(selected_columns)
-      when :sample
+      when :sample, :sample_chemicals
         generate_headers_sample
-      when :sample_chemicals
-        add_chemical_headers(selected_columns)
       else generate_headers_sample_id
       end
     end
@@ -139,10 +137,6 @@ module Export
       @headers100 << 'analyses'
     end
 
-    def add_chemical_headers(selected_headers)
-      h = HEADERS_CHEMICAL & selected_headers
-      @headers += h
-    end
 
     def quill_to_html_to_string(delta)
       html_content = Chemotion::QuillToHtml.new.convert(delta)

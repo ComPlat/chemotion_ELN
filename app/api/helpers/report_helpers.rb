@@ -193,6 +193,53 @@ module ReportHelpers
   # - selected columns from samples, molecules table
   #
 
+  def generate_sheet(table, result, columns_params, export, type)
+    case type
+    when :analyses
+      sheet_name = "#{table}_analyses".to_sym
+      export.generate_analyses_sheet_with_samples(sheet_name, result, columns_params)
+    when :chemicals
+      sheet_name = "#{table}_chemicals"
+      format_result = type == :chemicals ? format_chemical_row_values(result) : result
+      export.generate_sheet_with_samples(sheet_name, format_result, columns_params)
+    else
+      export.generate_sheet_with_samples(table, result)
+    end
+  end
+
+  def build_sql_query(table, current_user, sql_params, type)
+    filter_parameter = if table == :sample && type.nil?
+                         table
+                       else
+                         "#{table}_#{type}".to_sym
+                       end
+    type ||= :sample
+    filter_selections = filter_column_selection(filter_parameter)
+    column_query = build_column_query(filter_selections, current_user.id)
+    send("build_sql_#{table}_#{type}", column_query, sql_params[:c_id], sql_params[:ids], sql_params[:checked_all])
+  end
+
+  def generate_sheets_for_tables(tables, table_params, export, columns_params = nil, type = nil)
+    tables.each do |table|
+      next unless (p_t = table_params[:ui_state][table])
+
+      checked_all = p_t[:checkedAll]
+
+      ids = checked_all ? p_t[:uncheckedIds] : p_t[:checkedIds]
+      next unless checked_all || ids.present?
+
+      sql_params = {
+        c_id: table_params[:c_id], ids: ids, checked_all: checked_all
+      }
+      sql_query = build_sql_query(table, current_user, sql_params, type)
+      next unless sql_query
+
+      result = db_exec_query(sql_query)
+
+      generate_sheet(table, result, columns_params, export, type)
+    end
+  end
+
   def sample_details_subquery(u_ids, selection)
     # Extract sample details subquery
     <<~SQL.squish
@@ -265,27 +312,9 @@ module ReportHelpers
     individual_queries.join(' UNION ALL ')
   end
 
-  def build_sql_sample_chemical(columns, c_id, ids, checkedAll = false)
-    s_ids = [ids].flatten.join(',')
-    u_ids = [user_ids].flatten.join(',')
-    return if columns.empty? || u_ids.empty?
-    return if !checkedAll && s_ids.empty?
-
-    t = 's' # table samples
-    cont_type = 'Sample' # containable_type
-    if checkedAll
-      return unless c_id
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
-      order = 's_id asc'
-      selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
-    else
-      order = "position(','||s_id::text||',' in '(,#{s_ids},)')"
-      selection = "s.id in (#{s_ids}) and"
-    end
-    s_subquery = sample_details_subquery(u_ids, selection)
+  def build_sql_sample_chemicals(columns, c_id, ids, checked_all)
+    sample_query = build_sql_sample_sample(columns[0].join(','), c_id, ids, checked_all)
     chemical_query = chemical_query(columns[1].join(','), ids)
-    sample_query = build_sql_sample_sample(columns[0].join(','), c_id, ids)
-    binding.pry
     <<~SQL.squish
       SELECT *
       FROM (#{sample_query}) AS sample_results
@@ -325,7 +354,6 @@ module ReportHelpers
   def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
-    # binding.pry
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && s_ids.empty?
     t = 's' # table samples
@@ -645,6 +673,19 @@ module ReportHelpers
     gathered_selections = []
     gathered_selections << selection
     gathered_selections << chemical_selections
+  end
+
+  def format_chemical_row_values(result)
+    result.rows.map! do |row|
+      row.map do |value|
+        if value.is_a?(String)
+          # Remove square brackets and curly braces backslashes and extra quotes
+          value = value.gsub(/[\[\]{}"]/, '')
+        end
+        value
+      end
+    end
+    result
   end
 
   def custom_column_query(table, col, selection, user_id, attrs)
