@@ -316,6 +316,9 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>
+        {reaction.isNew
+          ? null
+          : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
@@ -341,9 +344,7 @@ export default class ReactionDetails extends Component {
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
           <HeaderCommentSection element={reaction} />
         </div>
-        {reaction.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
+        
         <PrintCodeButton element={reaction} />
       </div>
     );

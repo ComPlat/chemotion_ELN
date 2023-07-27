@@ -610,10 +610,10 @@ export default class SampleDetails extends React.Component {
               <i className="fa fa-expand" />
             </Button>
           </OverlayTrigger>
-          <PrintCodeButton element={sample} />
           {sample.isNew
             ? null
             : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+          <PrintCodeButton element={sample} />
           {inventorySample}
           {decoupleCb}
         </div>
