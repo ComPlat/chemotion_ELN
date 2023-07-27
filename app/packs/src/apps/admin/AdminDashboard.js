@@ -63,7 +63,7 @@ function DiskUsageChart({ diskPercentUsed, onRefresh }) {
             </text>
           </svg>
         </div>
-        <div style={{ position: 'absolute', bottom: '20px', right: '20px' }}>
+        <div style={{ position: 'absolute', bottom: '20px', right: '10px' }}>
           <OverlayTrigger
             placement="top"
             delay={{ show: 250, hide: 400 }}

@@ -10,6 +10,8 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
+import styles from 'Styles';
+
 const loadUserByName = (input) => {
   if (!input) {
     return Promise.resolve({ options: [] });
@@ -544,7 +546,7 @@ export default class UserManagement extends React.Component {
         onHide={this.handleMsgClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>Send Message</Modal.Title>
+          <Modal.Title style={styles.modalTitle}>Send Message</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ overflow: 'auto', maxHeight: '80%' }}>
           <div>
@@ -556,10 +558,7 @@ export default class UserManagement extends React.Component {
                   placeholder="message..."
                   rows="10"
                   inputRef={(ref) => { this.myMessage = ref; }}
-                  style={{
-                    resize: 'vertical',
-                    maxHeight: '60vh'
-                  }}
+                  style={{ resize: 'vertical', maxHeight: '60vh' }}
                 />
               </FormGroup>
               <FormGroup>
@@ -578,19 +577,7 @@ export default class UserManagement extends React.Component {
                 />
               </FormGroup>
               <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  bsStyle="primary"
-                  onClick={() => this.messageSend()}
-                  style={{
-                    borderRadius: '8px',
-                    boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                  }}
-                >
+                <Button bsStyle="primary" onClick={() => this.messageSend()} style={styles.modalBtn}>
                   Send&nbsp;
                   <i className="fa fa-paper-plane" />
                 </Button>
@@ -609,75 +596,77 @@ export default class UserManagement extends React.Component {
         onHide={this.handleNewUserClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>New User</Modal.Title>
+          <Modal.Title style={styles.modalTitle}>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Tabs id="createUserTabs">
             <Tab eventKey="singleUser" title="Single user">
               <Form horizontal style={{ marginTop: '20px' }}>
-                <FormGroup controlId="formControlEmail">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    Email: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlPassword">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    Password: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlPasswordConfirmation">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    Password
-                    &nbsp;&nbsp;
-                    <br />
-                    confirmation: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlFirstName">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    First name: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlLastName">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    Last name: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlAbbr">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    Abbreviation: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlsType">
-                  <Col style={{ marginLeft: '-15px' }} componentClass={ControlLabel} sm={3}>
-                    Type: *
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
-                      <option value="Person">Person</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Device">Device</option>
-                    </FormControl>
-                  </Col>
-                </FormGroup>
+                <div style={{ marginRight: '15px' }}>
+                  <FormGroup controlId="formControlEmail">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Email: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlPassword">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Password: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlPasswordConfirmation">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Password
+                      &nbsp;&nbsp;
+                      <br />
+                      confirmation: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlFirstName">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      First name: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlLastName">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Last name: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlAbbr">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Abbreviation: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlsType">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Type: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
+                        <option value="Person">Person</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Device">Device</option>
+                      </FormControl>
+                    </Col>
+                  </FormGroup>
+                </div>
                 <FormGroup controlId="formControlMessage">
                   <Col style={{ marginLeft: '35px' }} sm={11} smOffset={3}>
                     <FormControl
@@ -690,19 +679,7 @@ export default class UserManagement extends React.Component {
                 </FormGroup>
                 <FormGroup style={{ marginRight: '15px', display: 'flex', justifyContent: 'flex-end' }}>
                   <Col>
-                    <Button
-                      bsStyle="primary"
-                      onClick={() => this.handleCreateNewUser()}
-                      style={{
-                        borderRadius: '8px',
-                        boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                        height: '40px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold',
-                      }}
-                    >
+                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()} style={styles.modalBtn}>
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -764,19 +741,7 @@ export default class UserManagement extends React.Component {
                   </CSVReader>
                 </FormGroup>
                 <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button
-                    bsStyle="primary"
-                    onClick={() => this.handleUploadUsers()}
-                    style={{
-                      borderRadius: '8px',
-                      boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                    }}
-                  >
+                  <Button bsStyle="primary" onClick={() => this.handleUploadUsers()} style={styles.modalBtn}>
                     Upload users&nbsp;
                     <i className="fa fa-upload" />
                   </Button>
@@ -793,21 +758,16 @@ export default class UserManagement extends React.Component {
     const { user } = this.state;
     return (
       <div>
-        <Modal
-          show={this.state.showEditUserModal}
-          onHide={this.handleEditUserClose}
-        >
+        <Modal show={this.state.showEditUserModal} onHide={this.handleEditUserClose}>
           <div>
             <Modal.Header closeButton>
-              <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>Edit User</Modal.Title>
+              <Modal.Title style={styles.modalTitle}>Edit User</Modal.Title>
             </Modal.Header>
             <Modal.Body>
               <div>
                 <Form horizontal>
                   <FormGroup controlId="formControlEmail">
-                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
-                      Email:
-                    </Col>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Email:</Col>
                     <Col sm={9}>
                       <FormControl
                         type="email"
@@ -832,9 +792,7 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlLastName">
-                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
-                      Last name:
-                    </Col>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Last name:</Col>
                     <Col sm={9}>
                       <FormControl
                         type="text"
@@ -845,9 +803,7 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlAbbr">
-                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
-                      Abbreviation:
-                    </Col>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Abbreviation:</Col>
                     <Col sm={9}>
                       <FormControl
                         type="text"
@@ -858,9 +814,7 @@ export default class UserManagement extends React.Component {
                     </Col>
                   </FormGroup>
                   <FormGroup controlId="formControlsType">
-                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
-                      Type:
-                    </Col>
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Type:</Col>
                     <Col sm={9}>
                       <FormControl
                         componentClass="select"
@@ -889,18 +843,10 @@ export default class UserManagement extends React.Component {
                       size="lg"
                       bsStyle="warning"
                       onClick={() => this.handleUpdateUser(user)}
-                      style={{
-                        borderRadius: '8px',
-                        boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                        height: '40px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold',
-                      }}
+                      style={styles.modalBtn}
                     >
                       Update&nbsp;&nbsp;
-                      <i className="fa fa-floppy-o" style={{ color: 'white', fontSize: '20px' }} />
+                      <i className="fa fa-floppy-o" />
                     </Button>
                   </FormGroup>
                 </Form>
@@ -913,26 +859,14 @@ export default class UserManagement extends React.Component {
   }
 
   render() {
-    const buttonStyle = {
-      borderRadius: '4px',
-      fontWeight: '500',
-      boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-      width: '25px',
-      height: '25px',
-      marginRight: '5px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    };
-
     const renderConfirmButton = (show, userId) => {
       if (show) {
         return (
-          <OverlayTrigger placement="bottom" overlay={confirmUserTooltip}>
+          <OverlayTrigger placement="top" overlay={confirmUserTooltip}>
             <Button
               bsStyle="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
-              style={buttonStyle}
+              style={styles.panelIcons}
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -949,7 +883,7 @@ export default class UserManagement extends React.Component {
             <Button
               bsStyle="warning"
               onClick={() => this.handleReConfirmUserAccount(userId)}
-              style={buttonStyle}
+              style={styles.panelIcons}
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -965,7 +899,7 @@ export default class UserManagement extends React.Component {
       <tr style={{ height: '26px', verticalAlign: 'middle' }}>
         <th width="1%">#</th>
         <th width="12%">Actions</th>
-        <th width="12%">Name</th>
+        <th style={{ flex: '1 1 auto' }}>Name</th>
         <th width="6%">Abbr.</th>
         <th width="8%">Email</th>
         <th width="7%">Type</th>
@@ -983,16 +917,16 @@ export default class UserManagement extends React.Component {
           backgroundColor: idx % 2 === 0 ? '#F0F2F5' : '#F4F6F9',
         }}
       >
-        <td width="1%">
+        <td width="1%" style={{ verticalAlign: 'middle' }}>
           {idx + 1}
         </td>
-        <td width="12%">
+        <td width="12%" style={{ verticalAlign: 'middle' }}>
           <div style={{ display: 'flex' }}>
             <OverlayTrigger placement="top" overlay={editTooltip}>
               <Button
                 bsStyle="info"
                 onClick={() => this.handleEditUserShow(g)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className="fa fa-user" />
               </Button>
@@ -1002,7 +936,7 @@ export default class UserManagement extends React.Component {
               <Button
                 bsStyle="success"
                 onClick={() => this.handleResetPassword(g.id, true)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className="fa fa-key" />
               </Button>
@@ -1012,7 +946,7 @@ export default class UserManagement extends React.Component {
               <Button
                 bsStyle="primary"
                 onClick={() => this.handleResetPassword(g.id, false)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className="fa fa-key" />
               </Button>
@@ -1022,7 +956,7 @@ export default class UserManagement extends React.Component {
               <Button
                 bsStyle={g.locked_at === null ? 'default' : 'warning'}
                 onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
               </Button>
@@ -1036,7 +970,7 @@ export default class UserManagement extends React.Component {
               <Button
                 bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
                 onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className="fa fa-hourglass-half" aria-hidden="true" />
               </Button>
@@ -1051,7 +985,7 @@ export default class UserManagement extends React.Component {
                 bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false)
                   ? 'default' : 'success'}
                 onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className="fa fa-book" aria-hidden="true" />
               </Button>
@@ -1065,7 +999,7 @@ export default class UserManagement extends React.Component {
               <Button
                 bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
                 onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i className="icon-sample" aria-hidden="true" />
               </Button>
@@ -1078,7 +1012,7 @@ export default class UserManagement extends React.Component {
               <Button
                 bsStyle={g.account_active === true ? 'default' : 'danger'}
                 onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
-                style={buttonStyle}
+                style={styles.panelIcons}
               >
                 <i
                   className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'}
@@ -1092,32 +1026,32 @@ export default class UserManagement extends React.Component {
           </div>
 
         </td>
-        <td width="12%">
+        <td width="12%" style={{ verticalAlign: 'middle' }}>
           {' '}
           {g.name}
           {' '}
         </td>
-        <td width="6%">
+        <td width="6%" style={{ verticalAlign: 'middle' }}>
           {' '}
           {g.initials}
           {' '}
         </td>
-        <td width="8%">
+        <td width="8%" style={{ verticalAlign: 'middle' }}>
           {' '}
           {g.email}
           {' '}
         </td>
-        <td width="7%">
+        <td width="7%" style={{ verticalAlign: 'middle' }}>
           {' '}
           {g.type}
           {' '}
         </td>
-        <td width="15%">
+        <td width="15%" style={{ verticalAlign: 'middle' }}>
           {' '}
           {g.current_sign_in_at}
           {' '}
         </td>
-        <td width="2%">
+        <td width="2%" style={{ verticalAlign: 'middle' }}>
           {' '}
           {g.id}
           {' '}
@@ -1129,7 +1063,7 @@ export default class UserManagement extends React.Component {
       <div>
         <Modal size="sm" show={this.state.alertModalShow} onHide={this.hideAlertModal}>
           <Modal.Header closeButton>
-            <Modal.Title style={{ fontWeight: 'bold', fontSize: '20px' }}>Alert</Modal.Title>
+            <Modal.Title style={styles.modalTitle}>Alert</Modal.Title>
           </Modal.Header>
           <Modal.Body size="sm" style={{ fontWeight: 'bold' }}>
             {this.state.alertModalMessage.split('\n').map((item, key) => (
@@ -1139,83 +1073,29 @@ export default class UserManagement extends React.Component {
               </React.Fragment>
             ))}
           </Modal.Body>
-          {' '}
         </Modal>
-        <Panel style={{
-          borderWidth: '0px',
-          backgroundColor: '#F0F2F5',
-          padding: '5px',
-          borderRadius: '8px',
-          display: 'flex',
-          justifyContent: 'flex-start'
-        }}
-        >
-          <OverlayTrigger
-            placement="top"
-            delay={{ show: 250, hide: 400 }}
-            overlay={<Tooltip id="button-tooltip">Send Message</Tooltip>}
-          >
-            <Button
-              size="sm"
-              bsStyle="warning"
-              onClick={() => this.handleMsgShow()}
-              style={{
-                borderRadius: '8px',
-                fontWeight: '500',
-                marginRight: '5px',
-                boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                width: '35px',
-                height: '35px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
+        <Panel style={styles.panel}>
+          <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Send Message</Tooltip>}>
+            <Button size="sm" bsStyle="warning" onClick={() => this.handleMsgShow()} style={styles.amazingBtn}>
               <i className="fa fa-paper-plane" style={{ color: 'white', fontSize: '16px' }} />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            delay={{ show: 250, hide: 400 }}
-            overlay={<Tooltip id="button-tooltip-2">New User</Tooltip>}
-          >
+          <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>New User</Tooltip>}>
             <Button
               bsStyle="primary"
               size="sm"
               onClick={() => this.handleNewUserShow()}
               data-cy="create-user"
-              style={{
-                borderRadius: '8px',
-                fontWeight: '500',
-                boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
-                width: '35px',
-                height: '35px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
+              style={styles.amazingBtn}
             >
               <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
             </Button>
           </OverlayTrigger>
         </Panel>
-
-        <Panel style={{
-          borderWidth: '0px',
-          backgroundColor: '#F0F2F5',
-          borderRadius: '8px',
-          padding: '5px',
-          display: 'flex',
-          justifyContent: 'flex-start'
-        }}
-        >
+        <Panel style={styles.panel}>
           <Table>
-            <thead>
-              {tcolumn}
-            </thead>
-            <tbody>
-              {tbody}
-            </tbody>
+            <thead>{tcolumn}</thead>
+            <tbody>{tbody}</tbody>
           </Table>
         </Panel>
         {this.renderMessageModal()}
