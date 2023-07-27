@@ -32,6 +32,7 @@ class Comment < ApplicationRecord
     qc_curation: 'sample_qc_curation',
     results: 'sample_results',
     references: 'sample_references',
+    inventory: 'sample_inventory',
   }, _prefix: true
 
   enum reaction_section: {
