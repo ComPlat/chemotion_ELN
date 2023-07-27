@@ -27,14 +27,14 @@ describe Chemotion::ReactionAPI do
           [[r1.id, r1.name], [r2.id, r2.name], [r3.id, r3.name]],
         )
         expect(reactions.first).to include(
-          'id' => r1.id, 'name' => r1.name, 'type' => 'reaction',
+          'id' => r3.id, 'name' => r3.name, 'type' => 'reaction',
           'tag' => include(
-            'taggable_id' => r1.id, 'taggable_type' => 'Reaction',
+            'taggable_id' => r3.id, 'taggable_type' => 'Reaction',
             'taggable_data' => include(
               'collection_labels' => include(
-                'name' => 'C1', 'is_shared' => false, 'id' => c1.id,
-                'user_id' => user.id, 'shared_by_id' => c1.shared_by_id,
-                'is_synchronized' => c1.is_synchronized
+                'name' => 'C2', 'is_shared' => false, 'id' => c2.id,
+                'user_id' => user.id, 'shared_by_id' => c2.shared_by_id,
+                'is_synchronized' => c2.is_synchronized
               ),
             )
           )
@@ -47,7 +47,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.pluck('id')).to eq([r1.id, r2.id])
+        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
       end
     end
 
@@ -72,7 +72,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.pluck('id')).to eq([r1.id, r2.id])
+        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
       end
     end
 
@@ -130,9 +130,9 @@ describe Chemotion::ReactionAPI do
 
         expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
           [
-            reaction1.id,
-            reaction2.id,
             reaction3.id,
+            reaction2.id,
+            reaction1.id,
           ],
         )
       end
