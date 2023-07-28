@@ -1,8 +1,9 @@
 import React, { useContext, useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { Panel } from 'react-bootstrap';
+import { Button, Panel } from 'react-bootstrap';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
@@ -92,16 +93,49 @@ const SampleTaskCard = ({ sampleTask }) => {
   };
 
   const contentForSample = () => {
-    console.debug(sampleTask)
     if (sampleTask.sample_id) { return sampleImage() }
     else if (sample) { return droppedSample() }
     else { return sampleDropzone() }
+  }
+
+  const deleteButton = () => {
+    return (
+      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => deleteSampleTask() }>
+        <i className="fa fa-trash-o" />
+      </Button>
+    );
+  }
+
+  const deleteSampleTask = () => {
+    sampleTasksStore
+      .deleteSampleTask(sampleTask)
+      .then(result => {
+        let level = 'success'
+        let message = 'Sample task successfully deleted'
+
+        if (result.error) {
+          level = 'error'
+          message = result.error
+        }
+
+        const notification = {
+          title: message,
+          message: message,
+          level: level,
+          dismissible: 'button',
+          autoDismiss: 5,
+          position: 'tr',
+          uid: 'SampleTaskInbox'
+        };
+        NotificationActions.add(notification);
+      });
   }
 
   return (
     <Panel bsStyle="info">
       <Panel.Heading>
         {panelHeading()}
+        {deleteButton()}
       </Panel.Heading>
       <Panel.Body>
         <div className="row">

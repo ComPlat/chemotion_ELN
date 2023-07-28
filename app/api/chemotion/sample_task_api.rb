@@ -60,6 +60,17 @@ module Chemotion
         present updater.sample_task, with: Entities::SampleTaskEntity
       end
 
+      # delete an open sample task
+      delete ':id' do
+        task = SampleTask.for(current_user).open.find(params[:id])
+
+        if task.destroy
+          { deleted: task.id }
+        else
+          { error: 'Task could not be deleted' }
+        end
+      end
+
       route_param :id do
         resource :scan_results do
           params do

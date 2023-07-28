@@ -54,6 +54,13 @@ export const SampleTasksStore = types
         let createdSampleTask = SampleTask.create({ ...result });
         self.sample_tasks.set(createdSampleTask.id, createdSampleTask)
       }
+    }),
+    deleteSampleTask: flow(function* deleteSampleTask(sampleTask) {
+      let result = yield SampleTasksFetcher.deleteSampleTask(sampleTask.id)
+      if (result.deleted == sampleTask.id) {
+        self.sample_tasks.delete(sampleTask.id)
+      }
+      return result
     })
   }))
   .views(self => ({
