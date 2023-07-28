@@ -30,6 +30,15 @@ const styles = {
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
+  panelGrp: {
+    borderWidth: '0px',
+    backgroundColor: '#F0F2F5',
+    padding: '5px',
+    borderRadius: '8px',
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
+  },
   panelItem: {
     borderWidth: '0px',
     backgroundColor: '#FAFAFA',
@@ -37,13 +46,13 @@ const styles = {
     borderRadius: '8px',
     boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
     display: 'flex',
-    alignItems: 'center',
+    flexDirection: 'column',
     marginTop: '5px',
   },
   panelItemContent: {
     fontWeight: 'Bold', width: '100%', display: 'flex', justifyContent: 'space-between', padding: '10px 20px'
   },
-  modalTitle: { fontWeight: 'bold', fontSize: '20px' },
+  modalTitle: { fontWeight: 'bold', fontSize: '20px', display: 'flex', marginRight: '10px' },
   modalBtn: {
     borderRadius: '8px',
     boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
@@ -52,6 +61,11 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 'bold',
+  },
+  modalBody: {
+    maxHeight: '80vh',
+    overflow: 'auto',
+    overflowX: 'hidden',
   },
   panelIcons: {
     borderRadius: '4px',
@@ -62,7 +76,17 @@ const styles = {
     marginRight: '10px',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+  },
+  grpIcons: {
+    borderRadius: '4px',
+    fontWeight: '500',
+    boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
+    height: '30px',
+    marginRight: '5px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 };
 export default styles;

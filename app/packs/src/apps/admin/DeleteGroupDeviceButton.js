@@ -4,6 +4,8 @@ import {
 } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
+import styles from 'Styles';
+
 export default class DeleteGroupDeviceButton extends React.Component {
   constructor(props) {
     super(props);
@@ -97,15 +99,9 @@ export default class DeleteGroupDeviceButton extends React.Component {
 
     return (
       <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button bsSize="xsmall" bsStyle="danger">
-            <i className="fa fa-trash-o" />
+        <OverlayTrigger animation placement="right" root trigger="focus" overlay={popover}>
+          <Button bsSize="xsmall" bsStyle="danger" style={styles.panelIcons}>
+            <i className="fa fa-trash-o" style={{ fontSize: '16px' }} />
           </Button>
         </OverlayTrigger>
       </ButtonGroup>
