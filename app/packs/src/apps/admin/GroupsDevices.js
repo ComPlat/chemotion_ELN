@@ -132,7 +132,7 @@ export default class GroupsDevices extends React.Component {
       showModal: false,
       rootType: '',
       actionType: '',
-      root: null
+      root: {}
     });
   }
 
