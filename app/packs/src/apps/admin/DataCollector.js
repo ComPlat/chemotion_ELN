@@ -4,9 +4,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, Button, Table, Modal, Tooltip,
-  OverlayTrigger, FormControl, InputGroup,
-  FormGroup, DropdownButton, MenuItem, Row, Col
+  Panel, Button, Table, Modal, Tooltip, Form,
+  OverlayTrigger, FormControl, InputGroup, ControlLabel,
+  FormGroup, DropdownButton, MenuItem, Col
 } from 'react-bootstrap';
 import { startsWith, endsWith } from 'lodash';
 import uuid from 'uuid';
@@ -14,10 +14,12 @@ import Clipboard from 'clipboard';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
-const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
-const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
-const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;
-const tipTestConnect = <Tooltip id="test_tooltip">test connection</Tooltip>;
+import styles from 'Styles';
+
+const tipCopyClipboard = <Tooltip id="copy_tooltip">Copy to clipboard</Tooltip>;
+const tipEditConfig = <Tooltip id="edit_tooltip">Edit config</Tooltip>;
+const tipRemoveConfig = <Tooltip id="remove_tooltip">Remove config</Tooltip>;
+const tipTestConnect = <Tooltip id="test_tooltip">Test connection</Tooltip>;
 const optionsMethod = ['filewatchersftp', 'filewatcherlocal', 'folderwatchersftp', 'folderwatcherlocal'];
 const optionsAuth = ['password', 'keyfile'];
 const Notification = (props) => (
@@ -35,7 +37,7 @@ const NotificationWarn = (props) => Notification({ ...props, lvl: 'warning' });
 function ListLocalCollector(props) {
   return (
     <div style={{ margin: '5px', padding: '5px', border: 'thin dashed darkred' }}>
-      <h6 style={{ margin: 'unset' }}><b>Local Collector Dir Configurtaion</b></h6>
+      <h6 style={{ margin: 'unset' }}><b>Local Collector Directory Configuration</b></h6>
       {
       props.localCollector.map((c, i) => (
         <div key={uuid.v4()}>
@@ -43,9 +45,11 @@ function ListLocalCollector(props) {
             <InputGroup>
               <InputGroup.Button>
                 <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                  <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`}>
-                    <i className="fa fa-clipboard" />
-                  </Button>
+                  <div style={{ marginLeft: '20px' }}>
+                    <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`}>
+                      <i className="fa fa-clipboard" />
+                    </Button>
+                  </div>
                 </OverlayTrigger>
               </InputGroup.Button>
               <FormControl
@@ -131,12 +135,12 @@ class ModelConfig extends Component {
         return false;
       }
       if (selectedAuth === 'keyfile' && (!this.refKey || this.refKey.value.trim() === '')) {
-        NotificationError({ device, msg: 'Use key file, Please input Key path!' });
+        NotificationError({ device, msg: 'Use key file, please input Key path!' });
         return false;
       }
     }
     if (!this.refDirectory || this.refDirectory.value.trim() === '') {
-      NotificationError({ device, msg: 'Please input Dir!' });
+      NotificationError({ device, msg: 'Please input directory!' });
       return false;
     }
     NotificationWarn({ device, msg: 'Warning: Unprocessable files will be deleted from the target directory!' });
@@ -182,150 +186,156 @@ class ModelConfig extends Component {
 
   render() {
     const { selectedMethod, selectedAuth } = this.state;
-    const rowStyle = { padding: '8px', display: 'flex' };
-    const colStyle = { textAlign: 'right', marginTop: 'auto', marginBottom: 'auto' };
 
     return (
-      <Modal
-        bsSize="large"
-        show={this.props.isShow}
-        onHide={this.props.onClose}
-      >
+      <Modal show={this.props.isShow} onHide={this.props.onClose}>
         <Modal.Header closeButton>
-          <Modal.Title>
-            Data Collector Configuration - Device:
-            {' '}
+          <Modal.Title style={styles.modalTitle}>
+            Configuration:&nbsp;
             {this.props.device.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Watch method</b>
-            </Col>
-            <Col sm={2} md={2} lg={2}>
-              <DropdownSelection
-                options={optionsMethod}
-                selected={selectedMethod}
-                placeholder="Select method"
-                onSelect={this.handleSelectMethod}
-              />
-            </Col>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>User</b>
-            </Col>
-            <Col sm={6} md={6} lg={6}>
-              <input
-                ref={(ref) => { this.refUser = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputUser"
-                placeholder="e.g. User"
-                required
-                readOnly={endsWith(selectedMethod, 'local')}
-                defaultValue={`${this.props.device.data.method_params
+          <Form horizontal>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineForms">
+              <Col componentClass={ControlLabel} sm={3}>
+                Watch Method:
+              </Col>
+              <Col sm={3}>
+                <DropdownSelection
+                  options={optionsMethod}
+                  selected={selectedMethod}
+                  placeholder="Select method"
+                  onSelect={this.handleSelectMethod}
+                />
+              </Col>
+              <Col componentClass={ControlLabel} sm={3}>
+                <div style={{ marginRight: '-25px' }}>
+                  SFTP auth. with:
+                </div>
+
+              </Col>
+              <Col style={{ display: 'flex', justifyContent: 'flex-end' }} sm={3}>
+                <DropdownSelection
+                  options={optionsAuth}
+                  selected={selectedAuth || 'password'}
+                  placeholder="Select authentication"
+                  onSelect={this.handleSelectAuth}
+                  disabled={endsWith(selectedMethod, 'local')}
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineUser">
+              <Col componentClass={ControlLabel} sm={3}>
+                User:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refUser = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputUser"
+                  placeholder="e.g. User"
+                  required
+                  readOnly={endsWith(selectedMethod, 'local')}
+                  defaultValue={`${this.props.device.data.method_params
                   && this.props.device.data.method_params.user ? this.props.device.data.method_params.user : ''}`}
-              />
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Host</b>
-            </Col>
-            <Col sm={10} md={10} lg={10}>
-              <input
-                ref={(ref) => { this.refHost = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputHost"
-                placeholder="e.g. google.com"
-                required
-                readOnly={endsWith(selectedMethod, 'local')}
-                defaultValue={`${(this.props.device.data.method_params
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineHost">
+              <Col componentClass={ControlLabel} sm={3}>
+                Host:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refHost = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputHost"
+                  placeholder="e.g. google.com"
+                  required
+                  readOnly={endsWith(selectedMethod, 'local')}
+                  defaultValue={`${(this.props.device.data.method_params
                   && this.props.device.data.method_params.host ? this.props.device.data.method_params.host : '')}`}
-              />
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>SFTP auth. with</b>
-            </Col>
-            <Col sm={2} md={2} lg={2}>
-              <DropdownSelection
-                options={optionsAuth}
-                selected={selectedAuth || 'password'}
-                placeholder="Select authentication"
-                onSelect={this.handleSelectAuth}
-                disabled={endsWith(selectedMethod, 'local')}
-              />
-            </Col>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Key file</b>
-            </Col>
-            <Col sm={6} md={6} lg={6} style={{ display: 'flex' }}>
-              <input
-                ref={(ref) => { this.refKey = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputKey"
-                placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
-                required
-                readOnly={endsWith(selectedMethod, 'local') || (selectedAuth === 'password')}
-                defaultValue={`${(this.props.device.data.method_params
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineKeyFile">
+              <Col componentClass={ControlLabel} sm={3}>
+                Key file:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refKey = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputKey"
+                  placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
+                  required
+                  readOnly={endsWith(selectedMethod, 'local') || (selectedAuth === 'password')}
+                  defaultValue={`${(this.props.device.data.method_params
                   && this.props.device.data.method_params.key_name
-                  ? this.props.device.data.method_params.key_name : '')}`}
-              />
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Watch Directory</b>
-            </Col>
-            <Col sm={10} md={10} lg={10}>
-              <input
-                ref={(ref) => { this.refDirectory = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputDirectory"
-                placeholder="e.g. /home/sftp/eln"
-                required
-                defaultValue={`${(this.props.device.data.method_params
-                  ? this.props.device.data.method_params.dir : '')}`}
-              />
-              {
+                    ? this.props.device.data.method_params.key_name : '')}`}
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineWatchDirectory">
+              <Col componentClass={ControlLabel} sm={3}>
+                Watch Directory:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refDirectory = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputDirectory"
+                  placeholder="e.g. /home/sftp/eln"
+                  required
+                  defaultValue={`${(this.props.device.data.method_params
+                    ? this.props.device.data.method_params.dir : '')}`}
+                />
+                {
                 endsWith(selectedMethod, 'local')
                   ? <ListLocalCollector localCollector={this.props.localCollector} /> : null
-              }
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Number of files</b>
-            </Col>
-            <Col sm={10} md={10} lg={10}>
-              <input
-                ref={(ref) => { this.refNumFiles = ref; }}
-                className="form-control is-invalid"
-                type="number"
-                id="inputNumFiles"
-                min="0"
-                placeholder="e.g. 10"
-                required
-                readOnly={startsWith(selectedMethod, 'file')}
-                defaultValue={`${(this.props.device.data.method_params
-                  ? this.props.device.data.method_params.number_of_files : 1)}`}
-              />
-&nbsp;
-              <span className="fa fa-info-circle" aria-hidden="true">
+                }
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineNumFiles">
+              <Col componentClass={ControlLabel} sm={3}>
+                Number of files:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refNumFiles = ref; }}
+                  className="form-control is-invalid"
+                  type="number"
+                  id="inputNumFiles"
+                  min="0"
+                  placeholder="e.g. 10"
+                  required
+                  readOnly={startsWith(selectedMethod, 'file')}
+                  defaultValue={`${(this.props.device.data.method_params
+                    ? this.props.device.data.method_params.number_of_files : 1)}`}
+                />
+                &nbsp;
+                <span className="fa fa-info-circle" aria-hidden="true">
                 &nbsp;Folderwatcher: set to 0 for a varying number of files
-              </span>
-            </Col>
-          </Row>
+                </span>
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }}>
+              <Col style={{ display: 'flex', justifyContent: 'flex-end' }} sm={12}>
+                <Button bsStyle="warning" style={styles.modalBtn} onClick={() => this.handleSave(this.props.device)}>
+                  Save&nbsp;&nbsp;
+                  <i className="fa fa-floppy-o" style={{ fontSize: '18px' }} />
+                </Button>
+                &nbsp;
+              </Col>
+            </FormGroup>
+          </Form>
         </Modal.Body>
-        <Modal.Footer style={{ textAlign: 'left' }}>
-          <Button bsStyle="primary" onClick={() => this.props.onClose()}>Close</Button>
-          <Button bsStyle="warning" onClick={() => this.handleSave(this.props.device)}>Save</Button>
-        </Modal.Footer>
+
       </Modal>
     );
   }
@@ -378,11 +388,12 @@ class BtnConnect extends Component {
   render() {
     const { lock } = this.state;
     return (
-      <OverlayTrigger placement="bottom" overlay={this.props.btnTip}>
+      <OverlayTrigger placement="top" overlay={this.props.btnTip}>
         <Button
           bsSize="xsmall"
           // bsStyle="info"
           onClick={() => this.handleClick(this.props.device)}
+          style={styles.panelIcons}
         >
           {
             lock
@@ -501,89 +512,109 @@ export default class DataCollector extends Component {
 
     const tcolumn = (
       <tr style={{ height: '26px', verticalAlign: 'middle' }}>
-        <th width="5%" colSpan="2">#</th>
-        <th width="15%">Name</th>
-        <th width="10%">Watch Method</th>
-        <th width="10%">User</th>
-        <th width="15%">Host</th>
-        <th width="5%">SFTP Authentication</th>
-        <th width="10%">Key file Path</th>
-        <th width="25%">Watch Directory</th>
-        <th width="3%">Num. of Files</th>
-        <th width="2%">ID</th>
+        <th width="3%">#</th>
+        <th width="7%">Actions</th>
+        <th width="9%">Name</th>
+        <th width="15%">Watch Method</th>
+        <th width="8%">User</th>
+        <th width="8%">Host</th>
+        <th width="8%">SFTP Auth.</th>
+        <th width="10%">Key Path</th>
+        <th width="17%">Watch Dir.</th>
+        <th width="7%"># Files</th>
+        <th width="7%">ID</th>
       </tr>
     );
 
     const tbody = devices.map((device, idx) => (
-      <tr key={`row_${device.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td>
+      <tr
+        key={`row_${device.id}`}
+        style={{
+          height: '25px',
+          verticalAlign: 'middle',
+          backgroundColor: idx % 2 === 0 ? '#F0F2F5' : '#F4F6F9',
+        }}
+      >
+        <td style={{ verticalAlign: 'middle' }}>
           {idx + 1}
         </td>
-        <td>
-          <OverlayTrigger placement="bottom" overlay={tipEditConfig}>
-            <Button
-              bsSize="xsmall"
-              bsStyle="primary"
-              onClick={() => this.handleConfigModalShow(device)}
-            >
-              <i className="fa fa-pencil" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+        <td style={{ verticalAlign: 'middle' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center'
+          }}
+          >
+            <OverlayTrigger placement="top" overlay={tipEditConfig}>
+              <Button
+                bsSize="xsmall"
+                bsStyle="primary"
+                onClick={() => this.handleConfigModalShow(device)}
+                style={styles.panelIcons}
+              >
+                <i className="fa fa-pencil" aria-hidden="true" style={{ fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={tipRemoveConfig}>
-            <Button
-              bsSize="xsmall"
-              bsStyle="danger"
-              onClick={() => this.handleRemoveConfig(device.id)}
-            >
-              <i className="fa fa-eraser" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={tipRemoveConfig}>
+              <Button
+                bsSize="xsmall"
+                bsStyle="danger"
+                onClick={() => this.handleRemoveConfig(device.id)}
+                style={styles.panelIcons}
+              >
+                <i className="fa fa-eraser" aria-hidden="true" style={{ fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
+          </div>
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {' '}
           {device.name}
           {' '}
         </td>
-        <td>
-          {(device.data && device.data.method ? device.data.method : '')}
+        <td style={{ verticalAlign: 'middle' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center'
+          }}
+          >
+            {(device.data && device.data.method ? device.data.method : '')}
           &nbsp;
-          {
+            {
             endsWith(device.data.method, 'sftp') ? <BtnConnect device={device} btnTip={tipTestConnect} /> : null
           }
+          </div>
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {' '}
           {(device.data && device.data.method_params ? device.data.method_params.user : '')}
           {' '}
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {' '}
           {(device.data && device.data.method_params ? device.data.method_params.host : '')}
           {' '}
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {(device.data && device.data.method_params
             && device.data.method_params.authen
             ? device.data.method_params.authen : 'password')}
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {' '}
           {(device.data && device.data.method_params
             && device.data.method_params.key_name
             ? device.data.method_params.key_name : '')}
           {' '}
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {' '}
           {(device.data && device.data.method_params ? device.data.method_params.dir : '')}
           {' '}
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {(device.data && device.data.method_params && device.data.method_params.number_of_files
             ? device.data.method_params.number_of_files : 0)}
         </td>
-        <td>
+        <td style={{ verticalAlign: 'middle' }}>
           {' '}
           {device.id}
           {' '}
@@ -593,19 +624,16 @@ export default class DataCollector extends Component {
 
     return (
       <div>
-        <Panel>
-          <Panel.Heading>
-            <Panel.Title>
-              Data Collector
-            </Panel.Title>
-          </Panel.Heading>
-          <Table responsive hover bordered>
-            <thead>
-              {tcolumn}
-            </thead>
-            <tbody>
-              {tbody}
-            </tbody>
+        <Panel style={styles.panelGrp}>
+          <Panel.Title style={{
+            ...styles.modalTitle, marginTop: '20px', marginLeft: '20px', marginBottom: '20px', verticalAlign: 'center'
+          }}
+          >
+            Data Collector
+          </Panel.Title>
+          <Table>
+            <thead>{tcolumn}</thead>
+            <tbody>{tbody}</tbody>
           </Table>
         </Panel>
         {this.renderConfiModal()}
