@@ -1074,7 +1074,7 @@ export default class UserManagement extends React.Component {
             ))}
           </Modal.Body>
         </Modal>
-        <Panel style={styles.panel}>
+        {/* <Panel style={styles.panel}>
           <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Send Message</Tooltip>}>
             <Button size="sm" bsStyle="warning" onClick={() => this.handleMsgShow()} style={styles.amazingBtn}>
               <i className="fa fa-paper-plane" style={{ color: 'white', fontSize: '16px' }} />
@@ -1091,8 +1091,35 @@ export default class UserManagement extends React.Component {
               <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
             </Button>
           </OverlayTrigger>
-        </Panel>
-        <Panel style={styles.panel}>
+        </Panel> */}
+        <Panel style={styles.panelGrp}>
+          <Panel.Title style={{
+            ...styles.modalTitle, marginTop: '20px', marginLeft: '20px', marginBottom: '20px', verticalAlign: 'center'
+          }}
+          >
+            Users
+            <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Send Message</Tooltip>}>
+              <Button
+                size="sm"
+                bsStyle="warning"
+                onClick={() => this.handleMsgShow()}
+                style={{ ...styles.amazingBtn, marginLeft: '15px', marginTop: '-3px' }}
+              >
+                <i className="fa fa-paper-plane" style={{ color: 'white', fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>New User</Tooltip>}>
+              <Button
+                bsStyle="primary"
+                size="sm"
+                onClick={() => this.handleNewUserShow()}
+                data-cy="create-user"
+                style={{ ...styles.amazingBtn, marginTop: '-3px' }}
+              >
+                <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
+          </Panel.Title>
           <Table>
             <thead>{tcolumn}</thead>
             <tbody>{tbody}</tbody>
