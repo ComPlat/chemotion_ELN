@@ -103,6 +103,7 @@ export default class DeviceBox extends React.Component {
     this.setState({
       currentDeviceBoxPage: updatedPage,
       checkedDeviceAll: false,
+      checkedDeviceIds: [],
       checkedIds: []
     });
     LoadingActions.start();
@@ -115,6 +116,7 @@ export default class DeviceBox extends React.Component {
     this.setState({
       currentDeviceBoxPage: updatedPage,
       checkedDeviceAll: false,
+      checkedDeviceIds: [],
       checkedIds: []
     });
     LoadingActions.start();
@@ -143,11 +145,6 @@ export default class DeviceBox extends React.Component {
 
   toggleTooltip() {
     this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
-  }
-
-  hasChecked() {
-    const { checkedDeviceAll } = this.props;
-    return checkedDeviceAll;
   }
 
   deleteCheckedDataset(device_box) {
