@@ -16,6 +16,7 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
 import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsTableEntries';
+import CommentIcon from 'src/components/comments/CommentIcon';
 import Aviator from 'aviator';
 
 const dragHandle = (element) => {
@@ -349,6 +350,7 @@ export default class ElementsTableGroupedEntries extends Component {
                 {reactionStatus(element)}
                 {reactionRole(element)}
               </div>
+              <CommentIcon commentCount={element.comment_count} />
               <ElementCollectionLabels element={element} key={element.id} />
             </div>
           </td>
