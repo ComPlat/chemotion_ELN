@@ -75,25 +75,20 @@ export default class DeviceBox extends React.Component {
       const newCheckedDeviceIds = checkedDeviceIds.includes(datasetId)
         ? checkedDeviceIds.filter((id) => id !== datasetId)
         : [...checkedDeviceIds, datasetId];
-  
-      // Find the current device box
+
       const currentDeviceBox = this.props.device_box;
-  
-      // Find the dataset in the current device box
       const dataset = currentDeviceBox.children.find((d) => d.id === datasetId);
-  
+
       dataset.attachments.forEach((attachment) => {
         const attachmentIndex = newCheckedIds.indexOf(attachment.id);
-  
+
         if (attachmentIndex !== -1) {
-          // If the attachment is already selected, deselect it
           newCheckedIds.splice(attachmentIndex, 1);
         } else {
-          // If the attachment is not selected, select it
           newCheckedIds.push(attachment.id);
         }
       });
-  
+
       return { checkedIds: newCheckedIds, checkedDeviceIds: newCheckedDeviceIds };
     });
   }
@@ -155,31 +150,28 @@ export default class DeviceBox extends React.Component {
     return checkedDeviceAll;
   }
 
-  deleteCheckedDataset() {
-    const { checkedDeviceIds, currentDeviceBoxPage, dataItemsPerPage, device_box } = this.state;
-    const startIndex = (currentDeviceBoxPage - 1) * dataItemsPerPage;
-    const endIndex = startIndex + dataItemsPerPage;
-    const currentItems = device_box.children.slice(startIndex, endIndex);
-    const currentItemsCount = currentItems.length;
+  deleteCheckedDataset(device_box) {
+    const { checkedDeviceIds, currentDeviceBoxPage } = this.state;
+
+    const currentItemsCount = device_box.children.length;
     const itemsDeleted = checkedDeviceIds.length;
 
-    checkedDeviceIds.forEach((checkedId) => {
-      device_box.children.forEach((dataset) => {
-        if (checkedId === dataset.id) {
-          InboxActions.deleteDataset(dataset, true);
-        }
-      });
+    checkedDeviceIds.forEach((checkedDeviceId) => {
+      const datasetToDelete = device_box.children.find((dataset) => dataset.id === checkedDeviceId);
+      if (datasetToDelete) {
+        InboxActions.deleteContainer(datasetToDelete, true);
+      }
     });
 
     if (currentDeviceBoxPage > 1 && itemsDeleted === currentItemsCount) {
-      InboxActions.prevClick();
+      this.handlePrevClick(device_box);
     } else {
       InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
     }
 
     checkedDeviceIds.length = 0;
     this.toggleTooltip();
-    this.setState({ checkedDeviceAll: false });
+    this.setState({ checkedDeviceAll: false, checkedIds: [], checkedDeviceIds: [] });
   }
 
   deleteDeviceBox(deviceBox) {
@@ -202,16 +194,18 @@ export default class DeviceBox extends React.Component {
     // while device_box.children contains only the paginated entries
 
     const totalPages = Math.ceil(device_box.children_count / dataItemsPerPage);
+    const currentItemsCount = device_box.children.length;
 
     const renderCheckAll = (
       <div>
         <input
           type="checkbox"
-          checked={checkedDeviceIds.length === device_box.children.length }
+          checked={checkedDeviceIds.length === currentItemsCount && currentItemsCount !== 0 }
           onChange={this.toggleSelectAllFiles}
         />
         <span className="g-marginLeft--10" style={{ fontWeight: 'bold' }}>
-          {checkedDeviceIds.length === device_box.children.length ? 'Deselect all' : 'Select all'}
+          {checkedDeviceIds.length === currentItemsCount
+          && currentItemsCount !== 0 ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
@@ -233,7 +227,7 @@ export default class DeviceBox extends React.Component {
               <Button
                 bsStyle="danger"
                 bsSize="xsmall"
-                onClick={() => this.deleteCheckedDataset()}
+                onClick={() => this.deleteCheckedDataset(device_box)}
               >
                 Yes
               </Button>
