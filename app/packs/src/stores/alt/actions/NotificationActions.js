@@ -45,6 +45,15 @@ class NotificationActions {
     }
     return this.add(params);
   }
+
+  notifyAssociatedElement(message) {
+    let notification = {
+      title: 'Delete Error',
+      level: 'error',
+      message: message.error
+    }
+    return this.add(notification);
+  }
 }
 
 export default alt.createActions(NotificationActions);

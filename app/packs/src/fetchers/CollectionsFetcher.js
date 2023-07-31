@@ -161,7 +161,7 @@ export default class CollectionsFetcher {
   }
 
   static removeElementsCollection(params) {
-    return fetch('/api/v1/collections/elements/', {
+    let promise = fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
@@ -171,8 +171,16 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
       })
-    }).then(response => response)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    }).then((response) => {
+        return response.json();
+      }).then((json) => {
+        NotificationActions.notifyAssociatedElement(json);
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
   }
 
   static createExportJob(params) {

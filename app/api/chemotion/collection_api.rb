@@ -204,10 +204,15 @@ module Chemotion
             collections_element_klass = ('collections_' + element).classify.constantize
             element_klass = element.classify.constantize
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.remove_in_collection(ids, from_collection.id)
+            associated_element = collections_element_klass.remove_in_collection(ids, from_collection.id)
+
+            if CollectionsSample::ASSOCIATIONS.include?(associated_element)
+              error_message = "#{element} has an associated #{associated_element}, hence it cannot be deleted."
+              error!(error_message, 500)
+            end
           end
 
-          klasses = ElementKlass.find_each do |klass|
+          ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
 
