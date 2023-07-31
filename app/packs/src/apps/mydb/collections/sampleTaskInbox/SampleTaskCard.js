@@ -4,10 +4,12 @@ import { Button, Panel } from 'react-bootstrap';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { ConfirmModal } from 'src/components/common/ConfirmModal';
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
   const [sample, setSample] = useState(null);
+  const [showDeletionConfirmationDialog, setShowDeletionConfirmationDialog] = useState(false);
   const [_spec, dropRef] = useDrop({
     accept: [
       DragDropItemTypes.SAMPLE,
@@ -100,13 +102,16 @@ const SampleTaskCard = ({ sampleTask }) => {
 
   const deleteButton = () => {
     return (
-      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => deleteSampleTask() }>
+      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => setShowDeletionConfirmationDialog(true) }>
         <i className="fa fa-trash-o" />
       </Button>
     );
   }
 
-  const deleteSampleTask = () => {
+  const deleteSampleTask = (confirmationResult) => {
+    setShowDeletionConfirmationDialog(false);
+    if (confirmationResult != true) return;
+
     sampleTasksStore
       .deleteSampleTask(sampleTask)
       .then(result => {
@@ -147,6 +152,12 @@ const SampleTaskCard = ({ sampleTask }) => {
           </div>
         </div>
       </Panel.Body>
+      <ConfirmModal
+        showModal={showDeletionConfirmationDialog}
+        title="Are you sure?"
+        content="Deletion of a Sample Task cannot be undone. Please check carefully"
+        onClick={ deleteSampleTask }
+      />
     </Panel>
   )
 }
