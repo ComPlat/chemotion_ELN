@@ -383,7 +383,7 @@ export default class ElementsTable extends React.Component {
       : `click to sort by ${sortColumn} - currently sorted by update date (descending)`;
     const sortTooltip = (
       <Tooltip id="reaction_sort_tooltip">
-        {elementsGroup !== 'none' ? sortTitle : 'Currently sorted by created date'}
+        {elementsGroup !== 'none' ? sortTitle : 'Currently sorted by created date (descending)'}
       </Tooltip>
     );
     let sortIconClass = 'fa-clock-o';
