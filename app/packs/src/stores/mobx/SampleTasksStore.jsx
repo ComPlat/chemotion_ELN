@@ -19,7 +19,7 @@ const SampleTask = types.model({
   display_name: types.maybeNull(types.string),
   short_label: types.maybeNull(types.string),
   sample_svg_file: types.maybeNull(types.string),
-  image: types.maybeNull(types.string),
+  required_scan_results: types.number,
   scan_results: types.array(ScanResult)
 });
 

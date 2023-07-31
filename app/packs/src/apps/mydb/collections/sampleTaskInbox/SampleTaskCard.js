@@ -136,6 +136,30 @@ const SampleTaskCard = ({ sampleTask }) => {
       });
   }
 
+  const sampleTaskStillOpenReasons = () => {
+    let reasons = [];
+    if (sampleTask.sample_id == null) reasons.push('The task has no sample assigned');
+    if (sampleTask.required_scan_results > sampleTask.scan_results.length) {
+      let missing_scan_results = sampleTask.required_scan_results - sampleTask.scan_results.length;
+      if (missing_scan_results == 1) reasons.push('The task needs one more scan result');
+      if (missing_scan_results > 1) reasons.push(`The tasks needs ${missing_scan_results} more scan results`);
+    }
+
+    return reasons;
+  }
+
+  const deletionConfirmationContent = () => {
+    return (
+      <div>
+        <p>Deletion of a Scan Task cannot be undone. Please check carefully</p>
+        <p>The task is missing the following to be completed:</p>
+        <ul>
+          {sampleTaskStillOpenReasons().map((reason) => (<li>{reason}</li>))}
+        </ul>
+      </div>
+    );
+  }
+
   return (
     <Panel bsStyle="info">
       <Panel.Heading>
@@ -155,7 +179,7 @@ const SampleTaskCard = ({ sampleTask }) => {
       <ConfirmModal
         showModal={showDeletionConfirmationDialog}
         title="Are you sure?"
-        content="Deletion of a Sample Task cannot be undone. Please check carefully"
+        content={deletionConfirmationContent()}
         onClick={ deleteSampleTask }
       />
     </Panel>
