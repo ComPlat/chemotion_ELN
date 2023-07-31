@@ -52,7 +52,7 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
       
         sort_column = params[:sort_column].presence || 'created_at'
-        sort_direction = sort_column == 'updated_at' ? 'DESC' : 'ASC'
+        sort_direction = %w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC'
 
         scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
