@@ -1088,6 +1088,9 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+        {
+          !sample.isNew && <CommentSection section="sample_inventory" element={sample} />
+        }
         <ListGroupItem>
           <ChemicalTab
             sample={sample}

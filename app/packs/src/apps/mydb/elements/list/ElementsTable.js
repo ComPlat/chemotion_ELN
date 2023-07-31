@@ -339,6 +339,7 @@ export default class ElementsTable extends React.Component {
       { value: true, label: 'Grouped by Molecule' }
     ];
     const color = productOnly ? '#5cb85c' : 'currentColor';
+    const tooltipText = productOnly ? 'Show all' : 'Show products only';
 
     return (
       <>
@@ -351,16 +352,21 @@ export default class ElementsTable extends React.Component {
           onChange={this.changeSampleSort}
           className="header-group-select"
         />
-        <button
-          type="button"
-          style={{ border: 'none' }}
-          onClick={this.toggleProductOnly}
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="showProductsOnly">{tooltipText}</Tooltip>}
         >
-          <i
-            style={{ cursor: 'pointer', color }}
-            className="fa fa-lg fa-product-hunt"
-          />
-        </button>
+          <button
+            type="button"
+            style={{ border: 'none' }}
+            onClick={this.toggleProductOnly}
+          >
+            <i
+              style={{ cursor: 'pointer', color }}
+              className="fa fa-lg fa-product-hunt"
+            />
+          </button>
+        </OverlayTrigger>
         {this.collapseButton()}
       </>
     );
