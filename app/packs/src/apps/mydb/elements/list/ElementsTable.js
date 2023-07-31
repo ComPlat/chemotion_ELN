@@ -114,7 +114,8 @@ export default class ElementsTable extends React.Component {
           toDate
         },
         productOnly,
-        searchResult: isSearchResult
+        searchResult: isSearchResult,
+        moleculeSort: ElementStore.getState().moleculeSort
       });
     }
   }

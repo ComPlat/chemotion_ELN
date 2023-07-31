@@ -50,7 +50,8 @@ const SearchResultTabContent = ({ list, tabResult }) => {
       collectionId: collectionId,
       isSync: isSync,
       page_size: tabResult.per_page,
-      page: index
+      page: index,
+      moleculeSort: true,
     });
   }
 

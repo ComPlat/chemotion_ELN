@@ -47,6 +47,7 @@ const SearchResult = ({ handleClear }) => {
   const handleAdoptResult = () => {
     const preparedResult = prepareResultForDispatch();
     UIActions.setSearchById(preparedResult);
+    ElementActions.changeSorting(true);
     ElementActions.dispatchSearchResult(preparedResult);
     searchStore.handleCancel();
   }

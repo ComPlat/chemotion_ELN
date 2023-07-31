@@ -382,13 +382,15 @@ class UIStore {
           }
         }
 
+        const with_filter = Object.keys(filterParams).length >= 1 ? true : false;
+
         const selection = {
           elementType: 'by_ids',
           id_params: {
             model_name: key.slice(0, -1),
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
-            with_filter: true,
+            with_filter: with_filter,
           },
           list_filter_params: filterParams,
           search_by_method: 'search_by_ids',

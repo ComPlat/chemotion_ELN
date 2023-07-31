@@ -278,7 +278,6 @@ module Chemotion
       end
 
       def search_by_ids(c_id = @c_id)
-        # TODO: generic elements
         model = id_params[:model_name].camelize.constantize
         scope =
           if id_params[:model_name] == 'sample'
@@ -287,6 +286,7 @@ module Chemotion
             model
               .by_collection_id(c_id.to_i)
               .where(id: ids_by_params)
+              .page(params[:page]).per(page_size)
           end
         search_filter_scope(scope)
       end
@@ -313,13 +313,18 @@ module Chemotion
                .by_collection_id(c_id.to_i)
                .where(id: ids)
         scope = scope.product_only if list_filter_params.present? && list_filter_params[:product_only]
-        scope = order_by_updated_at(scope) if params[:molecule_sort]
-        scope
+        order_by_samples_filter(scope, ids)
       end
 
-      def order_by_updated_at(scope)
-        scope.order('samples.updated_at ASC')
-             .page(params[:page]).per(page_size)
+      def order_by_samples_filter(scope, ids)
+        scope =
+          if params[:molecule_sort]
+            order_by_molecule(scope)
+          else
+            scope.order('samples.updated_at ASC')
+          end
+        scope = scope.page(params[:page]).per(page_size) if ids.length > page_size
+        scope
       end
 
       def serialize_result_by_ids(scope)
