@@ -166,9 +166,6 @@ module Chemotion
       desc 'Return serialized molecules_samples_groups of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id,
-                 type: Integer,
-                 desc: 'SyncCollectionsUser id'
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'

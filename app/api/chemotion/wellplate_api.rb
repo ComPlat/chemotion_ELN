@@ -53,7 +53,6 @@ module Chemotion
       desc 'Return serialized wellplates'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
