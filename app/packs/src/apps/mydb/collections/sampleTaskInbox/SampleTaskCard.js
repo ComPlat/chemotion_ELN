@@ -1,12 +1,15 @@
 import React, { useContext, useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { Panel } from 'react-bootstrap';
+import { Button, Panel } from 'react-bootstrap';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { ConfirmModal } from 'src/components/common/ConfirmModal';
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
   const [sample, setSample] = useState(null);
+  const [showDeletionConfirmationDialog, setShowDeletionConfirmationDialog] = useState(false);
   const [_spec, dropRef] = useDrop({
     accept: [
       DragDropItemTypes.SAMPLE,
@@ -92,16 +95,76 @@ const SampleTaskCard = ({ sampleTask }) => {
   };
 
   const contentForSample = () => {
-    console.debug(sampleTask)
     if (sampleTask.sample_id) { return sampleImage() }
     else if (sample) { return droppedSample() }
     else { return sampleDropzone() }
+  }
+
+  const deleteButton = () => {
+    return (
+      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => setShowDeletionConfirmationDialog(true) }>
+        <i className="fa fa-trash-o" />
+      </Button>
+    );
+  }
+
+  const deleteSampleTask = (confirmationResult) => {
+    setShowDeletionConfirmationDialog(false);
+    if (confirmationResult != true) return;
+
+    sampleTasksStore
+      .deleteSampleTask(sampleTask)
+      .then(result => {
+        let level = 'success'
+        let message = 'Sample task successfully deleted'
+
+        if (result.error) {
+          level = 'error'
+          message = result.error
+        }
+
+        const notification = {
+          title: message,
+          message: message,
+          level: level,
+          dismissible: 'button',
+          autoDismiss: 5,
+          position: 'tr',
+          uid: 'SampleTaskInbox'
+        };
+        NotificationActions.add(notification);
+      });
+  }
+
+  const sampleTaskStillOpenReasons = () => {
+    let reasons = [];
+    if (sampleTask.sample_id == null) reasons.push('The task has no sample assigned');
+    if (sampleTask.required_scan_results > sampleTask.scan_results.length) {
+      let missing_scan_results = sampleTask.required_scan_results - sampleTask.scan_results.length;
+      if (missing_scan_results == 1) reasons.push('The task needs one more scan result');
+      if (missing_scan_results > 1) reasons.push(`The tasks needs ${missing_scan_results} more scan results`);
+    }
+
+    return reasons;
+  }
+
+  const deletionConfirmationContent = () => {
+    return (
+      <div>
+        <p>Deletion of a Scan Task cannot be undone. Please check carefully</p>
+        <p>The task is missing the following to be completed:</p>
+        <ul>
+          {sampleTaskStillOpenReasons().map((reason) => (<li>{reason}</li>))}
+        </ul>
+      </div>
+    );
   }
 
   return (
     <Panel bsStyle="info">
       <Panel.Heading>
         {panelHeading()}
+        {deleteButton()}
       </Panel.Heading>
       <Panel.Body>
         <div className="row">
@@ -113,6 +176,12 @@ const SampleTaskCard = ({ sampleTask }) => {
           </div>
         </div>
       </Panel.Body>
+      <ConfirmModal
+        showModal={showDeletionConfirmationDialog}
+        title="Are you sure?"
+        content={deletionConfirmationContent()}
+        onClick={ deleteSampleTask }
+      />
     </Panel>
   )
 }

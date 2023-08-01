@@ -100,7 +100,7 @@ const SampleTaskInbox = ({}) => {
         className="sampleTaskInbox small-col col-md-6"
         style={{
           zIndex: 10, position: 'absolute', top: '70px', left: '10px', display: display_value,
-          maxHeight: '80%', overflow: 'scroll'
+          maxHeight: '80%'
         }}
       >
         <Panel.Heading className="handle">
@@ -127,7 +127,9 @@ const SampleTaskInbox = ({}) => {
               {sampleDropzone(doubleScanDropRef, 'Double Scan (weighing vessel and vessel+compound to calculate difference')}
             </div>
           </div>
-          {openSampleTasks()}
+          <div class="openSampleTasks" style={{ maxHeight: '500px', overflow: 'scroll' }}>
+            {openSampleTasks()}
+          </div>
         </Panel.Body>
       </Panel>
     </Draggable>
