@@ -264,12 +264,6 @@ module Chemotion
         scope
       end
 
-      def elements_search(c_id = @c_id, dl = @dl)
-        Labimotion::Search.elements_search(params, current_user, c_id, dl)
-      end
-
-      # rubocop:enable Lint/SymbolConversion, Style/CaseLikeIf, Style/NumericPredicate, Style/ZeroLengthPredicate, Style/HashEachMethods
-
       def ids_by_params
         return id_params[:ids] if !id_params[:with_filter] || list_filter_params.present? || params[:molecule_sort]
 

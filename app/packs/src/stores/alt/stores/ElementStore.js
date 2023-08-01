@@ -1017,10 +1017,10 @@ class ElementStore {
 
   handleSetPagination(pagination) {
     this.waitFor(UIStore.dispatchToken);
-    this.handleRefreshElements(pagination.type, true);
+    this.handleRefreshElements(pagination.type);
   }
 
-  handleRefreshElements(type, changedPage = false) {
+  handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
     if (!uiState.currentCollection || !uiState.currentCollection.id) return;
@@ -1047,7 +1047,7 @@ class ElementStore {
         moleculeSort
       });
     } else if (currentSearchByID != null) {
-      this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID, changedPage);
+      this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
@@ -1079,7 +1079,7 @@ class ElementStore {
     })
   }
 
-  handleRefreshElementsForSearchById(type, uiState, currentSearchByID, changedPage) {
+  handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
     currentSearchByID.page_size = uiState.number_of_results;
     const { filterCreatedAt, fromDate, toDate, productOnly } = uiState;
     const { moleculeSort } = this.state;
@@ -1096,17 +1096,13 @@ class ElementStore {
       }
     }
 
-    let with_filter = moleculeSort && type == 'sample' ? true : false;
-    with_filter = Object.keys(filterParams).length >= 1 ? true : false;
-    with_filter = changedPage ? true : false;
-
     const selection = {
       elementType: 'by_ids',
       id_params: {
         model_name: `${type}`,
         ids: currentSearchByID[`${type}s`].ids,
         total_elements: currentSearchByID[`${type}s`].totalElements,
-        with_filter: with_filter,
+        with_filter: true,
       },
       list_filter_params: filterParams,
       search_by_method: 'search_by_ids',
