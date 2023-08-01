@@ -1,5 +1,11 @@
-
 # Chemotion_ELN Changelog
+
+## [v1.7.2] 
+> (2023-08-01)
+* Fixes:
+  * Comment functionality, closes #1435
+  * Sort reactions by creation time  4922fc3, closes #1439
+  * display wrong shifted peaks after zoom, closes #1443
 
 ## [v1.7.1]
 > 2023-07-27
