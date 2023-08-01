@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: collections_samples
@@ -23,9 +25,13 @@ class CollectionsSample < ApplicationRecord
   include Tagging
   include Collecting
 
+  ASSOCIATIONS = %w[reaction wellplate].freeze
+
   def self.remove_in_collection(element_ids, collection_ids)
     # Remove from collections
-    delete_in_collection_with_filter(element_ids, collection_ids)
+    delete_flag = delete_in_collection_with_filter(element_ids, collection_ids)
+    return delete_flag if ASSOCIATIONS.include?(delete_flag)
+
     # update sample tag with collection info
     update_tag_by_element_ids(element_ids)
   end
@@ -34,23 +40,16 @@ class CollectionsSample < ApplicationRecord
   def self.delete_in_collection_with_filter(sample_ids, collection_ids)
     [collection_ids].flatten.each do |cid|
       next unless cid.is_a?(Integer)
+
       # TODO: sql function
       # from a collection, select sample_ids with neither wellplate nor reaction associated
-      ids = CollectionsSample.joins(
-        <<~SQL
-          left join reactions_samples rs
-          on rs.sample_id = collections_samples.sample_id and rs.deleted_at isnull
-          left join collections_reactions cr
-          on cr.collection_id = #{cid} and cr.reaction_id = rs.reaction_id and cr.deleted_at is null
-          left join wells w
-          on w.sample_id = collections_samples.sample_id and w.deleted_at isnull
-          left join collections_wellplates cw
-          on cw.collection_id = #{cid} and cw.wellplate_id = w.wellplate_id and cw.deleted_at is null
-        SQL
-      ).where(
-        "collections_samples.collection_id = #{cid} and collections_samples.sample_id in (?) and cw.id isnull and cr.id isnull",
-        sample_ids
-      ).pluck(:sample_id)
+      sample_reaction_ids = sample_ids('reactions_samples', ASSOCIATIONS[0], cid, sample_ids)
+      return ASSOCIATIONS[0] if sample_reaction_ids.empty?
+
+      sample_well_ids = sample_ids('wells', ASSOCIATIONS[1], cid, sample_ids)
+      return ASSOCIATIONS[1] if sample_well_ids.empty?
+
+      ids = sample_reaction_ids & sample_well_ids
       delete_in_collection(ids, cid)
     end
   end
@@ -68,5 +67,18 @@ class CollectionsSample < ApplicationRecord
     insert_in_collection(element_ids, to_col_ids)
     # Update element tag with collection info
     update_tag_by_element_ids(element_ids)
+  end
+
+  def self.sample_ids(join_class, element, cid, sample_ids)
+    CollectionsSample.joins(
+      <<~SQL.squish
+        left join #{join_class} record
+        on record.sample_id = collections_samples.sample_id and record.deleted_at is null
+        left join collections_#{element}s c
+        on c.collection_id = #{cid} and c.#{element}_id = record.#{element}_id and c.deleted_at is null
+      SQL
+    ).where(
+      "collections_samples.collection_id = #{cid} and collections_samples.sample_id in (?) and c.id is null", sample_ids
+    ).pluck(:sample_id)
   end
 end
