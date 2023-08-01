@@ -144,7 +144,7 @@ describe Chemotion::SampleTaskAPI do
       it 'deletes the sample task and its related scan results and attachments' do
         delete "/api/v1/sample_tasks/#{new_sample_task.id}"
 
-        expect(parsed_json_response).to include("deleted" => new_sample_task.id)
+        expect(parsed_json_response).to include('deleted' => new_sample_task.id)
       end
     end
 
