@@ -19,7 +19,7 @@ const SampleTask = types.model({
   display_name: types.maybeNull(types.string),
   short_label: types.maybeNull(types.string),
   sample_svg_file: types.maybeNull(types.string),
-  image: types.maybeNull(types.string),
+  required_scan_results: types.number,
   scan_results: types.array(ScanResult)
 });
 
@@ -54,6 +54,13 @@ export const SampleTasksStore = types
         let createdSampleTask = SampleTask.create({ ...result });
         self.sample_tasks.set(createdSampleTask.id, createdSampleTask)
       }
+    }),
+    deleteSampleTask: flow(function* deleteSampleTask(sampleTask) {
+      let result = yield SampleTasksFetcher.deleteSampleTask(sampleTask.id)
+      if (result.deleted == sampleTask.id) {
+        self.sample_tasks.delete(sampleTask.id)
+      }
+      return result
     })
   }))
   .views(self => ({
