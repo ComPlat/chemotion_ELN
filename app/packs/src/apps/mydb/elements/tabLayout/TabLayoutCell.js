@@ -31,13 +31,14 @@ class TabLayoutCell extends Component {
     } = this.props;
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-    const cellIcon = `icon-${cell}`;
+    let cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
 
     if (!elnElements.includes(cell)) {
       const genericElements = UserStore.getState().genericEls || [];
       const genericElement = (genericElements && genericElements.find((el) => el.name === cell)) || {};
+      cellIcon = genericElement.icon_name || 'fa fa-circle-thin';
       cellTitle = genericElement.label;
       cellDescription = genericElement.desc;
     }
