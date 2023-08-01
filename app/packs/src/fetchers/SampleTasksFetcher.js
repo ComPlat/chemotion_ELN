@@ -32,6 +32,14 @@ export default class SampleTaskFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static deleteSampleTask(sample_task_id) {
+    return fetch(
+      `/api/v1/sample_tasks/${sample_task_id}`,
+      { ...this._httpOptions('DELETE') }
+    ).then(response => response.json())
+     .catch(errorMessage => console.log(errorMessage));
+  }
+
   static _fetchSampleTasks(status) {
     return fetch(
       `/api/v1/sample_tasks?status=${status}`,

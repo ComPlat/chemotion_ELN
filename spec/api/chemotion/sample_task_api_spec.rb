@@ -138,4 +138,22 @@ describe Chemotion::SampleTaskAPI do
       end
     end
   end
+
+  describe 'DELETE /api/v1/sample_tasks/:id' do
+    context 'when sample task is open' do
+      it 'deletes the sample task and its related scan results and attachments' do
+        delete "/api/v1/sample_tasks/#{new_sample_task.id}"
+
+        expect(parsed_json_response).to include('deleted' => new_sample_task.id)
+      end
+    end
+
+    context 'when sample task is not open' do
+      it 'returns a 400' do
+        delete "/api/v1/sample_tasks/#{finished_scan.id}"
+
+        expect(parsed_json_response).to include('error' => 'Task could not be deleted')
+      end
+    end
+  end
 end
