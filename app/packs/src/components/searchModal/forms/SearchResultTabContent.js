@@ -124,6 +124,12 @@ const SearchResultTabContent = ({ list, tabResult }) => {
     );
   }
 
+  const copyToClipboard = (element) => {
+    if (element.target.dataset.clipboardText) {
+      navigator.clipboard.writeText(element.target.dataset.clipboardText);
+    }
+  }
+
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
     let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
@@ -138,7 +144,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
 
         if (['sample', 'reaction'].includes(object.type)) {
           return (
-            <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+            <div key={`${list.key}-${i}`} className="search-result-tab-content-list" onClick={copyToClipboard}>
               <div key={moleculeName} className={`search-result-molecule ${object.type}`}>
                 {moleculeName || object.type == 'reaction' ? svgPreview(object) : ''}
                 {moleculeName}
