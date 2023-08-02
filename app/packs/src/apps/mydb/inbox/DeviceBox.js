@@ -148,7 +148,7 @@ export default class DeviceBox extends React.Component {
   }
 
   deleteCheckedDataset(device_box) {
-    const { checkedDeviceIds, currentDeviceBoxPage } = this.state;
+    const { checkedDeviceIds, currentDeviceBoxPage, checkedIds } = this.state;
 
     const currentItemsCount = device_box.children.length;
     const itemsDeleted = checkedDeviceIds.length;
@@ -158,6 +158,15 @@ export default class DeviceBox extends React.Component {
       if (datasetToDelete) {
         InboxActions.deleteContainer(datasetToDelete, true);
       }
+    });
+
+    checkedIds.forEach((checkedId) => {
+      device_box.children.forEach((dataset) => {
+        const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
+        if (attachmentToDelete) {
+          InboxActions.deleteAttachment(attachmentToDelete, true);
+        }
+      });
     });
 
     if (currentDeviceBoxPage > 1 && itemsDeleted === currentItemsCount) {
