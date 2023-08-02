@@ -1,28 +1,13 @@
 import 'whatwg-fetch';
+import { ReactionRenderer, DisplayMatrix } from 'chemotion_reaction_rendering';
 
 export default class ReactionSvgFetcher {
 
-  static fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, duration, conditions) {
-    const promise = fetch('/api/v1/reaction_svg', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        materials_svg_paths: materialsSvgPaths,
-        temperature,
-        duration,
-        solvents,
-        conditions: (typeof conditions === 'string') ? conditions : '',
-      })
-    }).then((response) => {
-      return response.status == 201 ? response.json() : {}
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
+  static fetchByReaction(elnReaction) {
+    return ReactionRenderer.convertELNReaction(elnReaction).then((reactionArray) => {
+      const displayMatrix = DisplayMatrix.createDisplayMatrixFromELNReaction(elnReaction);
+      const rr = new ReactionRenderer(displayMatrix, reactionArray);
+      return { reaction_svg: rr.renderReaction() };
     });
-
-    return promise;
   }
 }

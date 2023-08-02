@@ -449,27 +449,10 @@ export default class ReactionDetails extends Component {
 
   updateReactionSvg() {
     const { reaction } = this.state;
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactants.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
-    };
-
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter((s) => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
-      .then((result) => {
-        reaction.reaction_svg_file = result.reaction_svg;
-        this.setState(reaction);
-      });
+    ReactionSvgFetcher.fetchByReaction(reaction).then((result) => {
+      reaction.reaction_svg_file = result.reaction_svg;
+      this.setState(reaction);
+    });
   }
 
   handleSegmentsChange(se) {
