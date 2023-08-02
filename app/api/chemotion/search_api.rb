@@ -199,10 +199,31 @@ module Chemotion
 
         options[:joins] << segments_join if element_table == segments_alias && options[:joins].exclude?(segments_join)
         options[:joins] << "CROSS JOIN jsonb_array_elements(#{element_table}.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
-        options[:field] = "(#{prop} ->> 'value')::TEXT"
-        options[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
+
+        if filter['field']['sub_fields'].present?
+          options[:field], options[:additional_condition], options[:joins] =
+            filter_values_for_generic_sub_fields(filter['field']['sub_fields'], prop, filter, options)
+        else
+          options[:field] = "(#{prop} ->> 'value')::TEXT"
+          options[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
+        end
+
         options[:condition_table] = ''
         [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
+      end
+
+      def filter_values_for_generic_sub_fields(sub_fields, prop, filter, options)
+        options[:field] = ''
+        options[:additional_condition] = "(#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
+
+        sub_fields.each_with_index do |sub, j|
+          next if sub['type'] == 'label' || sub['value'] == ''
+
+          prop_sub = "#{prop}_sub_#{j}"
+          options[:joins] << "CROSS JOIN jsonb_array_elements(#{prop} -> 'sub_fields') AS #{prop_sub}"
+          options[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = '#{sub['id']}' AND (#{prop_sub} ->> 'value')::TEXT LIKE '%#{sub['value']}%'"
+        end
+        [options[:field], options[:additional_condition], options[:joins]]
       end
 
       def filter_values_for_advanced_search(dl = @dl)
@@ -247,17 +268,23 @@ module Chemotion
             end
 
           conditions =
-            words.collect { "#{first_condition}#{condition_table}#{field} #{filter_match} ? #{additional_condition}" }.join(' OR ')
+            if field.blank?
+              words.collect { "#{first_condition}#{additional_condition}" }.join(' OR ')
+            else
+              words.collect { "#{first_condition}#{condition_table}#{field} #{filter_match} ? #{additional_condition}" }.join(' OR ')
+            end
+
           query = "#{query} #{filter['link']} (#{conditions}) "
-          cond_val += words
+          cond_val += words if field.present?
         end
         [query, cond_val, model_name, joins]
       end
 
       def advanced_search(c_id = @c_id, dl = @dl)
         query, cond_val, model_name, joins = filter_values_for_advanced_search(dl)
+        query_cond = cond_val.present? ? [query] + cond_val : query
         scope = model_name.by_collection_id(c_id.to_i)
-                          .where([query] + cond_val)
+                          .where(query_cond)
                           .joins(joins.join(' '))
         scope = order_by_molecule(scope) if model_name == Sample
         scope = scope.group("#{model_name.table_name}.id") if %w[ResearchPlan Wellplate].include?(model_name.to_s)

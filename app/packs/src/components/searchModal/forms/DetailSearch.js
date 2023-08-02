@@ -32,6 +32,7 @@ const DetailSearch = () => {
     Object.entries(layers)
       .sort((a, b) => a[1].position - b[1].position)
       .map((value) => {
+        // console.log(value);
         let label = value[1].label || '';
         let values = value[1].fields.filter((f) => { return validFieldTypes.includes(f.type) });
         let mappedValues = [];
@@ -52,7 +53,7 @@ const DetailSearch = () => {
 
   let genericFields = [];
   let genericSelectOptions = [];
-  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea'];
+  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group'];
 
   if (genericEls) {
     let currentGenericElement = genericEls.find((e) => { return e.name === selection.element_table.slice(0, -1) });
@@ -254,6 +255,28 @@ const DetailSearch = () => {
     );
   }
 
+  const inputGroupInput = (option, type, column, keyLabel) => {
+    let subFields = [];
+    option.sub_fields.map((field) => {
+      if (field.type == 'label') {
+        subFields.push(<span key={field.id} className="form-control g_input_group_label">{field.value}</span>);
+      }
+      if (field.type == 'text') {
+        subFields.push(<FormControl className="g_input_group" key={field.id} type={field.type} name={field.id} value={field.value} onChange={handleSubFieldChanged(field.id, option, column, type)} />);
+      }
+      //console.log(option.label, field);
+    });
+
+    return (
+      <FormGroup key={`${column}-${keyLabel}-${type}`}>
+        <ControlLabel>{option.label}</ControlLabel>
+        <InputGroup style={{ display: 'flex' }}>
+          {subFields}
+        </InputGroup>
+      </FormGroup>
+    );
+  }
+
   const componentHeadline = (label, i, className) => {
     return (
       <div className={className} key={`${label}-${i}`}>{label}</div>
@@ -298,8 +321,21 @@ const DetailSearch = () => {
     return (index !== -1 ? { ...searchStore.detailSearchValues[index][column] } : defaultDetailSearchValues[0]);
   }
 
+  const handleSubFieldChanged = (id, option, column, type) => (e) => {
+    option.sub_fields.map((field) => {
+      if (field.id == id) {
+        field.value = e.target.value;
+      }
+    });
+    setSearchStoreValues(e.target.value, option, column, type);
+  }
+
   const handleFieldChanged = (option, column, type) => (e) => {
     let value = valueByType(type, e);
+    setSearchStoreValues(value, option, column, type);
+  }
+
+  const setSearchStoreValues = (value, option, column, type) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
     searchValue.field = option;
     searchValue.value = value;
@@ -348,6 +384,9 @@ const DetailSearch = () => {
         break;
       case 'system-defined':
         fields.push(systemDefinedInput(option, 'system-defined', selectedValue, column, keyLabel));
+        break;
+      case 'input-group':
+        fields.push(inputGroupInput(option, 'input-group', column, keyLabel));
         break;
     }
     return fields;

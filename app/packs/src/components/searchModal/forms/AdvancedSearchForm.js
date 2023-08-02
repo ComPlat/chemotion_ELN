@@ -162,7 +162,19 @@ const AdvancedSearchForm = () => {
       filters.map((val, i) => {
         let table = val.field.table || val.table;
         table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
-        searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value, val.unit].join(" "));
+
+        if (val.field.sub_fields) {
+          let label = '';
+          val.field.sub_fields.map((sub) => {
+            if (sub.type == 'label') {
+              label = sub.value;
+            } else if (sub.value != '') {
+              searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, val.match, sub.value, val.unit].join(" "));
+            }
+          });
+        } else {
+          searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value, val.unit].join(" "));
+        }
       });
     }
     searchStore.changeSearchValues(searchValues);
