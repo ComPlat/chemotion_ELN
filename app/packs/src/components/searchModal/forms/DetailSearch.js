@@ -53,7 +53,7 @@ const DetailSearch = () => {
 
   let genericFields = [];
   let genericSelectOptions = [];
-  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group'];
+  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field'];
 
   if (genericEls) {
     let currentGenericElement = genericEls.find((e) => { return e.name === selection.element_table.slice(0, -1) });
@@ -289,6 +289,7 @@ const DetailSearch = () => {
       case 'textarea':
       case 'textWithAddOn':
       case 'system-defined':
+      case 'formula-field':
         return e.target.value;
       case 'checkbox':
         return e.target.checked;
@@ -368,6 +369,7 @@ const DetailSearch = () => {
     switch (option.type) {
       case 'text':
       case 'textarea':
+      case 'formula-field':
         fields.push(textInput(option, 'text', selectedValue, column, keyLabel));
         break;
       case 'checkbox':

@@ -163,7 +163,7 @@ const AdvancedSearchForm = () => {
         let table = val.field.table || val.table;
         table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
 
-        if (val.field.sub_fields) {
+        if (val.field.sub_fields && val.field.sub_fields.length >= 1) {
           let label = '';
           val.field.sub_fields.map((sub) => {
             if (sub.type == 'label') {
