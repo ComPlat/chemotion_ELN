@@ -22,6 +22,15 @@ export default class PrivateNoteElement extends React.Component {
     this.fetchNote(element);
   }
 
+  handleInputChange(value) {
+    let { note } = this.state;
+    if (note === undefined) {
+      note = PrivateNote.buildEmpty();
+    }
+    note.content = value;
+    this.setState({ note: note });
+  }
+
   fetchNote(element) {
     if (element === undefined || element.is_new) {
       return;
@@ -34,15 +43,6 @@ export default class PrivateNoteElement extends React.Component {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-  }
-
-  handleInputChange(value) {
-    let { note } = this.state;
-    if (note === undefined) {
-      note = PrivateNote.buildEmpty();
-    }
-    note.content = value;
-    this.setState({ note: note });
   }
 
   saveNote() {
