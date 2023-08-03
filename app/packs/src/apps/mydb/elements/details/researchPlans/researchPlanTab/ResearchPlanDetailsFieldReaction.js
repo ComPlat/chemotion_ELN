@@ -7,10 +7,13 @@ import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
 const spec = {
-  drop(props, monitor) {
+  drop(props, monitor, component) {
     const { field, onChange } = props;
-    field.value.reaction_id = null;
+    field.value.reaction_id = monitor.getItem().element.id;
     onChange({ reaction_id: monitor.getItem().element.id }, field.id);
+
+    // trigger immediate update of the state after dropping
+    component.onDropReaction(monitor.getItem().element.id);
   }
 };
 
@@ -44,12 +47,18 @@ class ResearchPlanDetailsFieldReaction extends Component {
       },
       wasReactionSet: false
     };
+    this.onDropReaction = this.onDropReaction.bind(this);
   }
 
   componentDidMount() {
     const { field } = this.props;
-    if (field?.value?.reaction_id && hasAuth(field?.value?.reaction_id)) {
+    if (field?.value?.reaction_id && hasAuth(field?.value?.reaction_id) && !this.state.reaction.id) {
       this.fetch();
+    }
+
+    if (this.state.reactionDropped) {
+      this.onDropReaction(this.props.field?.value?.reaction_id);
+      this.setState({ reactionDropped: false });
     }
   }
 
@@ -62,7 +71,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
       && field?.value?.reaction_id
       && (prevState.reaction?.id !== field?.value?.reaction_id
         || (prevState.reaction?.id === null && field?.value?.reaction_id !== null))
-        && hasAuth(field?.value?.reaction_id)
+      && hasAuth(field?.value?.reaction_id)
     ) {
       this.setState(
         {
@@ -73,6 +82,26 @@ class ResearchPlanDetailsFieldReaction extends Component {
         this.fetch
       );
     }
+
+    if (this.state.reactionDropped) {
+      this.onDropReaction(this.props.field?.value?.reaction_id);
+      this.setState({ reactionDropped: false });
+    }
+  }
+
+  onDropReaction(reaction_id) {
+    ReactionsFetcher.fetchById(reaction_id)
+      .then((reaction) => {
+        if (reaction_id === reaction.id) {
+          this.setState({ idle: true, reaction });
+        }
+      })
+      .catch(() => {
+        // handle case when the reaction is not found
+        if (reaction_id === this.state.reaction.id) {
+          this.setState({ idle: true, reaction: { id: null }, wasReactionSet: true });
+        }
+      });
   }
 
   fetch() {

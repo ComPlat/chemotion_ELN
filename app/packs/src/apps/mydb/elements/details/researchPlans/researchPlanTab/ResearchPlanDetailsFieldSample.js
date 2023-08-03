@@ -8,10 +8,13 @@ import SampleName from 'src/components/common/SampleName';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 const spec = {
-  drop(props, monitor) {
+  drop(props, monitor, component) {
     const { field, onChange } = props;
-    field.value.sample_id = null;
+    field.value.sample_id = monitor.getItem().element.id;
     onChange({ sample_id: monitor.getItem().element.id }, field.id);
+
+    // trigger immediate update of the state after dropping
+    component.onDropSample(monitor.getItem().element.id);
   }
 };
 
@@ -45,12 +48,18 @@ class ResearchPlanDetailsFieldSample extends Component {
       },
       wasSampleSet: false
     };
+    this.onDropSample = this.onDropSample.bind(this);
   }
 
   componentDidMount() {
     const { field } = this.props;
     if (field?.value?.sample_id && hasAuth(field?.value?.sample_id) && !this.state.sample.id) {
       this.fetch();
+    }
+
+    if (this.state.sampleDropped) {
+      this.onDropSample(this.props.field?.value?.sample_id);
+      this.setState({ sampleDropped: false });
     }
   }
 
@@ -73,6 +82,26 @@ class ResearchPlanDetailsFieldSample extends Component {
         this.fetch
       );
     }
+
+    if (this.state.sampleDropped) {
+      this.onDropSample(this.props.field?.value?.sample_id);
+      this.setState({ sampleDropped: false });
+    }
+  }
+
+  onDropSample(sample_id) {
+    SamplesFetcher.fetchById(sample_id)
+      .then((sample) => {
+        if (sample_id === sample.id) {
+          this.setState({ idle: true, sample });
+        }
+      })
+      .catch(() => {
+        // handle case when the sample is not found
+        if (sample_id === this.state.sample.id) {
+          this.setState({ idle: true, sample: { id: null }, wasSampleSet: true });
+        }
+      });
   }
 
   fetch() {
