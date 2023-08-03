@@ -1085,7 +1085,6 @@ class ElementStore {
     const { moleculeSort } = this.state;
     const { page } = uiState[type];
     let filterParams = {};
-    console.log(currentSearchByID, changedPage, type, type == 'sample');
 
     if (fromDate || toDate || productOnly) {
       filterParams = {
