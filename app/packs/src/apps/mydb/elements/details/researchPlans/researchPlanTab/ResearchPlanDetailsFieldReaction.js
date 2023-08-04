@@ -137,18 +137,22 @@ class ResearchPlanDetailsFieldReaction extends Component {
     ElementActions.fetchReactionById(reaction?.id);
   }
 
+  static renderElementError() {
+    return (
+      <div style={{ color: 'red', textAlign: 'left' }}>
+        <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+        <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+      </div>
+    );
+  }
+
   renderReaction(reaction) {
     if (!hasAuth(reaction?.id)) {
       return noAuth(reaction);
     }
 
     if (!reaction?.id) {
-      return (
-        <div style={{ color: 'red', textAlign: 'left' }}>
-          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-        </div>
-      );
+      this.renderElementError();
     }
 
     const { edit } = this.props;
@@ -207,12 +211,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (reaction?.id) {
       content = this.renderReaction(reaction);
     } else if (wasReactionSet) {
-      content = (
-        <div style={{ color: 'red', textAlign: 'left' }}>
-          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-        </div>
-      );
+      content = this.renderElementError();
     } else {
       content = 'Drop reaction here.';
     }
@@ -231,12 +230,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (reaction?.id) {
       content = this.renderReaction(reaction);
     } else if (wasReactionSet) {
-      content = (
-        <div style={{ color: 'red', textAlign: 'left' }}>
-          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-        </div>
-      );
+      content = this.renderElementError();
     } else {
       content = null;
     }

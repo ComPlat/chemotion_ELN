@@ -137,18 +137,22 @@ class ResearchPlanDetailsFieldSample extends Component {
     ElementActions.fetchSampleById(sample?.id);
   }
 
+  static renderElementError() {
+    return (
+      <div style={{ color: 'red', textAlign: 'left' }}>
+        <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+        <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+      </div>
+    );
+  }
+
   renderSample(sample) {
     if (!hasAuth(sample?.id)) {
       return noAuth(sample);
     }
 
     if (!sample?.id) {
-      return (
-        <div style={{ color: 'red', textAlign: 'left' }}>
-          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-        </div>
-      );
+      this.renderElementError();
     }
 
     const { edit } = this.props;
@@ -208,12 +212,7 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (sample?.id) {
       content = this.renderSample(sample);
     } else if (wasSampleSet) {
-      content = (
-        <div style={{ color: 'red', textAlign: 'left' }}>
-          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-        </div>
-      );
+      content = this.renderElementError();
     } else {
       content = 'Drop sample here.';
     }
@@ -232,12 +231,7 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (sample?.id) {
       content = this.renderSample(sample);
     } else if (wasSampleSet) {
-      content = (
-        <div style={{ color: 'red', textAlign: 'left' }}>
-          <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-          <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-        </div>
-      );
+      content = this.renderElementError();
     } else {
       content = null;
     }
