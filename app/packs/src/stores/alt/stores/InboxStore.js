@@ -44,6 +44,7 @@ class InboxStore {
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
       handleCheckedAll: InboxActions.checkedAll,
       handleCheckedIds: InboxActions.checkedIds,
+      handleCheckedDeviceIds: InboxActions.checkedDeviceIds,
       handleCheckedDeviceAll: InboxActions.checkedDeviceAll,
       handlePrevClick: InboxActions.prevClick,
       handleNextClick: InboxActions.nextClick,
@@ -388,6 +389,13 @@ class InboxStore {
     }
 
     this.setState({ checkedDeviceAll: !checkedDeviceAll });
+  }
+
+  handleCheckedDeviceIds(params) {
+    this.setState({
+      checkedDeviceIds: params.checkedDeviceIds,
+      checkedIds: params.checkedIds
+    });
   }
 }
 

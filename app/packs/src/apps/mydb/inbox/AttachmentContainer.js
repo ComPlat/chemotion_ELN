@@ -132,7 +132,7 @@ class AttachmentContainer extends Component {
     const checkBox = (
       <input
         type="checkbox"
-        checked={this.isAttachmentChecked(attachment)}
+        checked={this.props.isSelected}
         onChange={() => this.toggleAttachmentsCheckbox(attachmentId)}
       />
     );

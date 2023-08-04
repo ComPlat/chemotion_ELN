@@ -18,8 +18,8 @@ export default class DeviceBox extends React.Component {
     this.state = {
       visible: false,
       checkedDeviceAll: inboxState.checkedDeviceAll,
-      checkedDeviceIds: [],
-      checkedIds: [],
+      checkedDeviceIds: inboxState.checkedDeviceIds,
+      checkedIds: inboxState.checkedIds,
       deletingTooltip: false,
       currentDeviceBoxPage: inboxState.currentDeviceBoxPage,
       dataItemsPerPage: inboxState.dataItemsPerPage,
@@ -69,28 +69,44 @@ export default class DeviceBox extends React.Component {
   }
 
   handleDatasetSelect(datasetId) {
-    this.setState((prevState) => {
-      const { checkedDeviceIds, checkedIds } = prevState;
-      const newCheckedIds = [...checkedIds];
-      const newCheckedDeviceIds = checkedDeviceIds.includes(datasetId)
-        ? checkedDeviceIds.filter((id) => id !== datasetId)
-        : [...checkedDeviceIds, datasetId];
+    const { checkedDeviceIds, checkedIds } = this.state;
+    const newCheckedIds = [...checkedIds];
+    const datasetIndex = checkedDeviceIds.indexOf(datasetId);
+    const datasetSelected = datasetIndex !== -1;
 
+    if (datasetSelected) {
+      const newCheckedDeviceIds = checkedDeviceIds.filter((id) => id !== datasetId);
       const currentDeviceBox = this.props.device_box;
       const dataset = currentDeviceBox.children.find((d) => d.id === datasetId);
-
       dataset.attachments.forEach((attachment) => {
         const attachmentIndex = newCheckedIds.indexOf(attachment.id);
-
         if (attachmentIndex !== -1) {
           newCheckedIds.splice(attachmentIndex, 1);
-        } else {
+        }
+      });
+
+      const params = {
+        checkedDeviceIds: newCheckedDeviceIds,
+        checkedIds: newCheckedIds,
+      };
+
+      InboxActions.checkedDeviceIds(params);
+    } else {
+      const newCheckedDeviceIds = [...checkedDeviceIds, datasetId];
+      const currentDeviceBox = this.props.device_box;
+      const dataset = currentDeviceBox.children.find((d) => d.id === datasetId);
+      dataset.attachments.forEach((attachment) => {
+        if (!newCheckedIds.includes(attachment.id)) {
           newCheckedIds.push(attachment.id);
         }
       });
 
-      return { checkedIds: newCheckedIds, checkedDeviceIds: newCheckedDeviceIds };
-    });
+      const params = {
+        checkedDeviceIds: newCheckedDeviceIds,
+        checkedIds: newCheckedIds,
+      };
+      InboxActions.checkedDeviceIds(params);
+    }
   }
 
   onChange(state) {
@@ -164,7 +180,7 @@ export default class DeviceBox extends React.Component {
       device_box.children.forEach((dataset) => {
         const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
         if (attachmentToDelete) {
-          InboxActions.deleteAttachment(attachmentToDelete, true);
+          InboxActions.deleteAttachment(attachmentToDelete, false);
         }
       });
     });
@@ -228,7 +244,7 @@ export default class DeviceBox extends React.Component {
         </i>
         {this.state.deletingTooltip ? (
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-            Delete this dataset?
+            Delete this item(s)?
             <ButtonGroup>
               <Button
                 bsStyle="danger"
