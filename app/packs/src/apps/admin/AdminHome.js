@@ -16,6 +16,7 @@ import SegmentElementAdmin from 'src/apps/admin/SegmentElementAdmin';
 import DatasetElementAdmin from 'src/apps/admin/DatasetElementAdmin';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
+import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -74,6 +75,10 @@ class AdminHome extends React.Component {
       return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
       return this.renderDelayedJobs();
+    } else if (pageIndex === 14) {
+      return this.renderConverterAdmin();
+    } else if (pageIndex === 15) {
+      return this.renderThirdPartyApp();
     }
     return (<div />);
   }
@@ -102,9 +107,19 @@ class AdminHome extends React.Component {
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
 	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
+            <NavItem eventKey={15}>Third Party Apps </NavItem>
           </Nav>
         </Col>
       </div>
+    );
+  }
+
+  renderThirdPartyApp() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <ThirdPartyApp />
+      </Col>
     );
   }
 
