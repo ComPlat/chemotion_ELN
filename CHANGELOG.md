@@ -1,5 +1,24 @@
-
 # Chemotion_ELN Changelog
+
+## [v1.7.2] 
+> (2023-08-01)
+* Fixes:
+  * Comment functionality, closes #1435
+  * Sort reactions by creation time  4922fc3, closes #1439
+  * display wrong shifted peaks after zoom, closes #1443
+
+## [v1.7.1]
+> 2023-07-27
+
+* Fixes:
+  * Report creation for shared reaction [#1412](https://github.com/ComPlat/chemotion_ELN/pull/1412)
+  * Collection tab profile [1411](https://github.com/ComPlat/chemotion_ELN/pull/1411) [1427](https://github.com/ComPlat/chemotion_ELN/pull/1427)
+  * opening a dataset without making changes [#1410](https://github.com/ComPlat/chemotion_ELN/pull/1410)
+  * inbox (de)select boxes [#1416](in https://github.com/ComPlat/chemotion_ELN/pull/1416)
+  * sort reaction list by creation date [#1429](https://github.com/ComPlat/chemotion_ELN/pull/1429)
+  * change ref area and display shift ref [#1431]( https://github.com/ComPlat/chemotion_ELN/pull/1431)
+  * total element count in list tabs [#1426]( https://github.com/ComPlat/chemotion_ELN/pull/1426)
+  
 
 ## [v1.7.0]
 > 2023-07-11
@@ -37,17 +56,6 @@
   * login-and-signup-configurable (#1377)
   * structure editor with decoupled sample (#1393)
   * Text editor in researchPlan is now getting removed properly (#1363)
-
-## [v1.6.1]
-> 2023-06-19
-
-* Fixes
-  * scan result calculation [PR1325](https://github.com/ComPlat/chemotion_ELN/pull/1325)
-  * Load the correct url of nmrium wrapper [#1339](https://github.com/ComPlat/chemotion_ELN/pull/1339)
-  * Zooming in chemspectra on firefox [#1346](https://github.com/ComPlat/chemotion_ELN/pull/1346)
-  * AdminUI: Datacollector setting [#1344](https://github.com/ComPlat/chemotion_ELN/pull/1344)
-  * nmrium: display preview image after saving [#1356](https://github.com/ComPlat/chemotion_ELN/pull/1356)
-
 
 ## [v1.6.1]
 > 2023-06-19

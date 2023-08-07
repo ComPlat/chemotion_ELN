@@ -38,6 +38,7 @@ class TabLayoutCell extends Component {
     if (!elnElements.includes(cell)) {
       const genericElements = UserStore.getState().genericEls || [];
       const genericElement = (genericElements && genericElements.find((el) => el.name === cell)) || {};
+      cellIcon = genericElement.icon_name || 'fa fa-circle-thin';
       cellTitle = genericElement.label;
       cellDescription = genericElement.desc;
     }

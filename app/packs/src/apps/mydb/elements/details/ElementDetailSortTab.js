@@ -61,7 +61,7 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onChangeUser(state) {
-    let { addInventoryTab } = this.props;
+    let { addInventoryTab, availableTabs } = this.props;
     const currentCollection = UIStore.getState().currentCollection;
     const collectionTabs = currentCollection?.tabs_segment;
     let layout = {};
@@ -70,7 +70,7 @@ export default class ElementDetailSortTab extends Component {
     } else {
       layout = collectionTabs[`${this.type}`];
     }
-    const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab);
+    const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab, availableTabs);
 
     this.setState(
       { visible, hidden },

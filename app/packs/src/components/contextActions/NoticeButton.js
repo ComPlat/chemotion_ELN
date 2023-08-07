@@ -103,9 +103,6 @@ const handleNotification = (nots, act, needCallback = true) => {
             n.content.eventable_id
           );
           break;
-        case 'CalendarActions.navigateToElement':
-          CalendarActions.navigateToElement(n.content.eventable_type, n.content.eventable_id);
-          break;
         default:
         //
       }

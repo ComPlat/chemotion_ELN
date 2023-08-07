@@ -16,13 +16,13 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
-import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
-import Switch from 'src/apps/mydb/elements/list/Switch';
-import CellLineGroup from '../../../../models/cellLine/CellLineGroup';
+
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
+import CellLineGroup from '../../../../models/cellLine/CellLineGroup';
+import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -39,7 +39,7 @@ export default class ElementsTable extends React.Component {
       page: null,
       pages: null,
       elementsGroup: 'none',
-      elementsSort: false,
+      elementsSort: true,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -175,7 +175,7 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = filters[type]?.group || 'none';
       // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.elementsSort = filters[type]?.sort || false;
+      this.state.elementsSort = filters[type]?.sort || true;
     }
   };
 
@@ -195,10 +195,6 @@ export default class ElementsTable extends React.Component {
   changeElementsGroup = (elementsGroup) => {
     const { type } = this.props;
     let { elementsSort } = this.state;
-
-    if (elementsGroup === 'none') {
-      elementsSort = false;
-    }
 
     this.setState({
       elementsGroup,
@@ -345,6 +341,7 @@ export default class ElementsTable extends React.Component {
       { value: true, label: 'Grouped by Molecule' }
     ];
     const color = productOnly ? '#5cb85c' : 'currentColor';
+    const tooltipText = productOnly ? 'Show all' : 'Show products only';
 
     return (
       <>
@@ -357,16 +354,21 @@ export default class ElementsTable extends React.Component {
           onChange={this.changeSampleSort}
           className="header-group-select"
         />
-        <button
-          type="button"
-          style={{ border: 'none' }}
-          onClick={this.toggleProductOnly}
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="showProductsOnly">{tooltipText}</Tooltip>}
         >
-          <i
-            style={{ cursor: 'pointer', color }}
-            className="fa fa-lg fa-product-hunt"
-          />
-        </button>
+          <button
+            type="button"
+            style={{ border: 'none' }}
+            onClick={this.toggleProductOnly}
+          >
+            <i
+              style={{ cursor: 'pointer', color }}
+              className="fa fa-lg fa-product-hunt"
+            />
+          </button>
+        </OverlayTrigger>
         {this.collapseButton()}
       </>
     );
@@ -375,7 +377,7 @@ export default class ElementsTable extends React.Component {
   renderReactionsHeader = () => {
     const { elementsGroup, elementsSort } = this.state;
     const optionsHash = {
-      none: { sortColumn: 'update date', label: 'List' },
+      none: { sortColumn: 'create date', label: 'List' },
       rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
       rxno: { sortColumn: 'type', label: 'Grouped by type' },
     };
@@ -384,16 +386,25 @@ export default class ElementsTable extends React.Component {
       label: option[1].label
     }));
     const { sortColumn } = optionsHash[elementsGroup];
-    const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
-    const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortTitle = elementsSort
+      ? `click to sort by update date (descending) - currently sorted by ${sortColumn}`
+      : `click to sort by ${sortColumn} - currently sorted by update date (descending)`;
+    const sortTooltip = (
+      <Tooltip id="reaction_sort_tooltip">
+        {elementsGroup !== 'none' ? sortTitle : 'Currently sorted by created date (descending)'}
+      </Tooltip>
+    );
+    let sortIconClass = 'fa-clock-o';
+    if (elementsGroup !== 'none') {
+      sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    }
     const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
           type="button"
           style={{ border: 'none' }}
-          onClick={this.changeElementsSort}
+          onClick={elementsGroup !== 'none' ? this.changeElementsSort : null}
         >
           {sortIcon}
         </button>
@@ -411,7 +422,7 @@ export default class ElementsTable extends React.Component {
           onChange={this.changeElementsGroup}
           className="header-group-select"
         />
-        {elementsGroup !== 'none' ? (sortContent) : null}
+        {sortContent}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
@@ -610,6 +621,7 @@ export default class ElementsTable extends React.Component {
       />
       );
     }
+    
     
     else {
       elementsTableEntries = (

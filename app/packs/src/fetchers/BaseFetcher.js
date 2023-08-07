@@ -70,9 +70,11 @@ export default class BaseFetcher {
       case 'reactions':
         userState = UserStore.getState();
         filters = userState?.profile?.data?.filters || {};
-        group = filters.reaction?.group || 'none';
+        group = filters.reaction?.group || 'created_at';
         sort = filters.reaction?.sort || false;
-        addQuery = `&sort_column=${(sort && group) || 'updated_at'}`;
+        addQuery = group === 'none'
+          ? '&sort_column=created_at'
+          : `&sort_column=${sort && group ? group : 'updated_at'}`;
         break;
       case 'generic_elements':
         userState = UserStore.getState();
