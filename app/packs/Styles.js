@@ -52,7 +52,9 @@ const styles = {
   panelItemContent: {
     fontWeight: 'Bold', width: '100%', display: 'flex', justifyContent: 'space-between', padding: '10px 20px'
   },
-  modalTitle: { fontWeight: 'bold', fontSize: '20px', display: 'flex', marginRight: '10px' },
+  modalTitle: {
+    fontWeight: 'bold', fontSize: '20px', display: 'flex', marginRight: '10px'
+  },
   modalBtn: {
     borderRadius: '8px',
     boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
@@ -84,6 +86,33 @@ const styles = {
     boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
     height: '30px',
     marginRight: '5px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  popover: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '10px',
+    borderWidth: '0px',
+    backgroundColor: '#FFFFFF',
+    padding: '5px',
+    borderRadius: '8px',
+    justifyContent: 'flex-start',
+  },
+  popover2: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '10px',
+  },
+  popoverBtn: {
+    marginTop: '5px',
+    textAlign: 'center',
+    width: '35px',
+    height: '25px',
+    borderRadius: '4px',
+    fontWeight: 'Bold',
+    boxShadow: '0px 2px 10px rgba(0,0,0,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

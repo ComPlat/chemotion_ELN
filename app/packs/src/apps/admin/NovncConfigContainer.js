@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
-import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
+import {
+  Button, Overlay, OverlayTrigger, Tooltip, Popover
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
+
+import styles from 'Styles';
+
+const tipRemoveConfig = <Tooltip id="remove_tooltip">Delete config</Tooltip>;
 
 export default class NovncConfigContainer extends Component {
   constructor(props) {
@@ -8,56 +14,71 @@ export default class NovncConfigContainer extends Component {
     this.state = {
       deletingTooltip: false,
     };
-
     this.toggleTooltip = this.toggleTooltip.bind(this);
+    this.target = React.createRef();
   }
 
   toggleTooltip() {
-    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+    this.setState((prevState) => ({ deletingTooltip: !prevState.deletingTooltip }));
   }
 
   render() {
     const { device } = this.props;
-    const style = { marginLeft: '20px', marginTop: '-15px' };
     return (
-      <Button
-        bsSize="xsmall"
-        bsStyle="danger"
-        onClick={this.toggleTooltip}
-      >
-        {' '}
-        {this.state.deletingTooltip ? (
-          <Tooltip placement="right" className="in" id="tooltip-bottom" style={style}>
+      <>
+        <OverlayTrigger placement="top" overlay={tipRemoveConfig}>
+          <Button
+            ref={this.target}
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={this.toggleTooltip}
+            style={styles.panelIcons}
+          >
+            <i className="fa fa-eraser" aria-hidden="true" style={{ fontSize: '16px' }} />
+          </Button>
+        </OverlayTrigger>
+
+        <Overlay
+          show={this.state.deletingTooltip}
+          target={this.target.current}
+          placement="right"
+          rootClose
+          onHide={() => this.setState({ deletingTooltip: false })}
+        >
+          <Popover style={styles.popover} id="popover-positioned-scrolling-left">
             Delete configuration for
-            {' '}
+            &nbsp;
             {device.name}
             ?
-            <br />
-            <ButtonGroup>
+            <div style={styles.popover2}>
               <Button
-                bsStyle="danger"
                 bsSize="xsmall"
-                onClick={this.props.handleRemoveConfig}
+                bsStyle="danger"
+                onClick={() => {
+                  this.props.handleRemoveConfig();
+                  this.toggleTooltip();
+                }}
+                style={styles.popoverBtn}
               >
                 Yes
               </Button>
               <Button
-                bsStyle="warning"
                 bsSize="xsmall"
-                onClick={() => this.setState({ deletingTooltip: true })}
+                bsStyle="info"
+                onClick={this.toggleTooltip}
+                style={styles.popoverBtn}
               >
                 No
               </Button>
-            </ButtonGroup>
-          </Tooltip>
-        ) : null}
-        <i className="fa fa-eraser" aria-hidden="true" />
-      </Button>
+            </div>
+          </Popover>
+        </Overlay>
+      </>
     );
   }
 }
 
 NovncConfigContainer.propTypes = {
-  device: PropTypes.objectOf.isRequired,
-  handleRemoveConfig: PropTypes.func.isRequired
+  device: PropTypes.object.isRequired,
+  handleRemoveConfig: PropTypes.func.isRequired,
 };

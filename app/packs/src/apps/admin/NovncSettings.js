@@ -4,7 +4,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Row, Col
+  Panel, Button, Table, Modal, Tooltip, OverlayTrigger, Form, FormGroup, ControlLabel, Col
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
@@ -12,8 +12,9 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NovncConfigContainer from 'src/apps/admin/NovncConfigContainer';
 
-const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
-const tipRemoveConfig = <Tooltip id="remove_tooltip">remove config</Tooltip>;
+import styles from 'Styles';
+
+const tipEditConfig = <Tooltip id="edit_tooltip">Edit config</Tooltip>;
 const Notification = (props) => (
   NotificationActions.add({
     title: `Device [${props.device.name}]`,
@@ -88,8 +89,6 @@ class ModelConfig extends Component {
   }
 
   render() {
-    const rowStyle = { padding: '8px', display: 'flex' };
-    const colStyle = { textAlign: 'right', marginTop: 'auto', marginBottom: 'auto' };
     const storedTarget = this.props.device.data.novnc.target;
     const storedToken = this.props.device.data.novnc.token;
     const storedPassword = this.props.device.data.novnc.password;
@@ -114,99 +113,100 @@ class ModelConfig extends Component {
 
     return (
       <Modal
-        bsSize="large"
         show={this.props.isShow}
         onHide={this.props.onClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>
-            {' '}
-            <b>
-              NoVNC Settings for
-              <u>{this.props.device.name}</u>
-            </b>
+          <Modal.Title style={styles.modalTitle}>
+            NoVNC Settings:&nbsp;
+            {this.props.device.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Target</b>
-            </Col>
-            <Col sm={6} md={6} lg={6}>
-              <input
-                ref={(ref) => { this.refTarget = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputTarget"
-                placeholder="e.g. ws://localhost:8092/websockify"
-                required
-                onChange={(e) => this.updateTarget(e)}
-                defaultValue={storedTarget || ''}
-              />
-
-            </Col>
-
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Websockify Token</b>
-            </Col>
-            <Col sm={6} md={6} lg={6}>
-              <input
-                ref={(ref) => { this.refToken = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputToken"
-                placeholder="e.g. 000001"
-                required
-                onChange={(e) => this.updateToken(e)}
-                disabled={missingTarget}
-                defaultValue={storedToken || ''}
-              />
-
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col style={colStyle}>
+          <Form horizontal>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlineTarget">
+              <Col componentClass={ControlLabel} sm={3}>
+                Target:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refTarget = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputTarget"
+                  placeholder="e.g. ws://localhost:8092/websockify"
+                  required
+                  onChange={(e) => this.updateTarget(e)}
+                  defaultValue={storedTarget || ''}
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup
+              style={{ marginRight: '5px', display: 'flex', alignItems: 'center' }}
+              controlId="formInlineToken"
+            >
+              <Col componentClass={ControlLabel} sm={3}>
+                Websockify Token:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refToken = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputToken"
+                  placeholder="e.g. 000001"
+                  required
+                  onChange={(e) => this.updateToken(e)}
+                  disabled={missingTarget}
+                  defaultValue={storedToken || ''}
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginTop: '20px', marginLeft: '40px' }}>
               <span className="fa fa-info-circle" aria-hidden="true">
-&nbsp;
+              &nbsp;
                 <b>Current Target   </b>
                 <RenderStoredTarget />
               </span>
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col style={colStyle}>
+            </FormGroup>
+            <FormGroup style={{ marginTop: '-10px', marginLeft: '40px' }}>
               <span className="fa fa-info-circle" aria-hidden="true">
-&nbsp;
+              &nbsp;
                 <b>Edited Target   </b>
                 <RenderCurrentTarget />
               </span>
-            </Col>
-          </Row>
-          <hr />
-          <Row style={rowStyle}>
-            <h4>RFB Credentials</h4>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={2} md={2} lg={2} style={colStyle}>
-              <b>Password</b>
-            </Col>
-            <Col sm={10} md={10} lg={10}>
-              <input
-                ref={(ref) => { this.refPassword = ref; }}
-                className="form-control is-invalid"
-                type="text"
-                id="inputPassword"
-                placeholder="Password"
-                required
-                defaultValue={storedPassword || ''}
-              />
-            </Col>
-          </Row>
+            </FormGroup>
+            <FormGroup />
+            <p className="text-left" style={{ fontWeight: 'bold', marginLeft: '10px', fontSize: '18px' }}>
+              RFB Credentials
+            </p>
+            <FormGroup style={{ marginRight: '5px' }} controlId="formInlinePassword">
+              <Col componentClass={ControlLabel} sm={3}>
+                Password:
+              </Col>
+              <Col sm={9}>
+                <input
+                  ref={(ref) => { this.refPassword = ref; }}
+                  className="form-control is-invalid"
+                  type="text"
+                  id="inputPassword"
+                  placeholder="Password"
+                  required
+                  defaultValue={storedPassword || ''}
+                />
+              </Col>
+            </FormGroup>
+            <FormGroup style={{ marginRight: '5px' }}>
+              <Col sm={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button bsStyle="warning" style={styles.modalBtn} onClick={() => this.handleSave(this.props.device)}>
+                  Save&nbsp;&nbsp;
+                  <i className="fa fa-floppy-o" style={{ fontSize: '18px' }} />
+                </Button>
+          &nbsp;
+              </Col>
+            </FormGroup>
+          </Form>
         </Modal.Body>
-        <Modal.Footer style={{ textAlign: 'left' }}>
-          <Button bsStyle="primary" onClick={() => this.props.onClose()}>Close</Button>
-          <Button bsStyle="warning" onClick={() => this.handleSave(this.props.device)}>Save</Button>
-        </Modal.Footer>
       </Modal>
     );
   }
@@ -329,67 +329,63 @@ export default class NovncSettings extends Component {
 
     const tcolumn = (
       <tr style={{ height: '26px', verticalAlign: 'middle' }}>
-        <th width="2%" colSpan="2">#</th>
-        <th width="5%">ID</th>
-        <th width="20%">Name</th>
+        <th width="3%">#</th>
+        <th width="7%">Actions</th>
+        <th width="15%">Name</th>
+        <th width="15%">ID</th>
         <th width="40%">Target</th>
       </tr>
     );
 
     const tbody = devices.map((device, idx) => (
-      <tr key={`row_${device.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td>
-          {idx + 1}
-        </td>
-        <td>
-          <OverlayTrigger placement="bottom" overlay={tipEditConfig}>
-            <Button
-              bsSize="xsmall"
-              bsStyle="primary"
-              onClick={() => this.handleConfigModalShow(device)}
-            >
-              <i className="fa fa-pencil" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          <OverlayTrigger placement="left" overlay={tipRemoveConfig}>
+      <tr
+        key={`row_${device.id}`}
+        style={{
+          height: '25px',
+          verticalAlign: 'middle',
+          backgroundColor: idx % 2 === 0 ? '#F0F2F5' : '#F4F6F9',
+        }}
+      >
+        <td style={{ verticalAlign: 'middle' }}>{idx + 1}</td>
+        <td style={{ verticalAlign: 'middle' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center'
+          }}
+          >
+            <OverlayTrigger placement="top" overlay={tipEditConfig}>
+              <Button
+                bsSize="xsmall"
+                bsStyle="primary"
+                onClick={() => this.handleConfigModalShow(device)}
+                style={{ ...styles.panelIcons, marginRight: '15px' }}
+              >
+                <i className="fa fa-pencil" aria-hidden="true" style={{ fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
             <NovncConfigContainer
               device={device}
               handleRemoveConfig={() => this.handleRemoveConfig(device.id)}
             />
-          </OverlayTrigger>
+          </div>
         </td>
-        <td>
-          {' '}
-          {device.id}
-          {' '}
-        </td>
-        <td>
-          {' '}
-          {device.name}
-          {' '}
-        </td>
-        <td>
-          {renderTarget(device)}
-        </td>
+        <td style={{ verticalAlign: 'middle' }}>{device.name}</td>
+        <td style={{ verticalAlign: 'middle' }}>{device.id}</td>
+        <td style={{ verticalAlign: 'middle' }}>{renderTarget(device)}</td>
       </tr>
     ));
 
     return (
       <div>
-        <Panel>
-          <Panel.Heading>
-            <Panel.Title>
-              NoVNC Settings
-            </Panel.Title>
-          </Panel.Heading>
-          <Table responsive hover bordered>
-            <thead>
-              {tcolumn}
-            </thead>
-            <tbody>
-              {tbody}
-            </tbody>
+        <Panel style={styles.panelGrp}>
+          <Panel.Title style={{
+            ...styles.modalTitle, marginTop: '20px', marginLeft: '20px', marginBottom: '20px', verticalAlign: 'center'
+          }}
+          >
+            NoVNC Settings
+          </Panel.Title>
+          <Table>
+            <thead>{tcolumn}</thead>
+            <tbody>{tbody}</tbody>
           </Table>
         </Panel>
         {this.renderConfiModal()}
