@@ -43,6 +43,10 @@ class InboxActions {
     return params;
   }
 
+  checkDeviceAttachments(params) {
+    return params;
+  }
+
   prevClick() {
     return null;
   }

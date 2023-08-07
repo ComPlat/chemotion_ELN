@@ -50,21 +50,19 @@ class AttachmentContainer extends Component {
     const params = {
       type: false,
       ids: id,
-      range: 'child'
+      range: 'child',
+      isSelected,
     };
 
     if (ArrayUtils.isValNotInArray(checkedIds || [], params.ids)) {
       params.type = true;
     }
-    InboxActions.checkedIds(params);
-    InboxActions.checkedAll(params);
 
     if (sourceType === DragDropItemTypes.DATA && attachmentId) {
-      const newCheckedIds = isSelected
-        ? checkedIds.filter((checkedId) => checkedId !== attachmentId)
-        : [...checkedIds, attachmentId];
-
-      this.setState({ checkedIds: newCheckedIds });
+      InboxActions.checkDeviceAttachments(params);
+    } else {
+      InboxActions.checkedIds(params);
+      InboxActions.checkedAll(params);
     }
   }
 
