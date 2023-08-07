@@ -289,14 +289,12 @@ export default class ChemicalTab extends React.Component {
   };
 
   querySafetyPhrases = (vendor) => (
-    <div>
-      <Button
-        id="safetyPhrases-btn"
-        onClick={() => this.fetchSafetyPhrases(vendor)}
-      >
-        fetch Safety Phrases
-      </Button>
-    </div>
+    <Button
+      id="safetyPhrases-btn"
+      onClick={() => this.fetchSafetyPhrases(vendor)}
+    >
+      fetch Safety Phrases
+    </Button>
   );
 
   fetchChemical(sample) {
@@ -328,8 +326,9 @@ export default class ChemicalTab extends React.Component {
     const updateSampleProperty = (propertyName, propertyValue) => {
       if (propertyValue) {
         const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
-        const lowerBound = rangeValues[0];
-        const upperBound = rangeValues.length === 2 ? rangeValues[1] : Number.POSITIVE_INFINITY;
+        // replace hyphen with minus sign and parse
+        const lowerBound = parseFloat(rangeValues[0].replace('−', '-')) || Number.NEGATIVE_INFINITY;
+        const upperBound = rangeValues.length === 2 ? parseFloat(rangeValues[1].replace('−', '-')) : Number.POSITIVE_INFINITY;
         sample.updateRange(propertyName, lowerBound, upperBound);
       }
     };
@@ -651,9 +650,6 @@ export default class ChemicalTab extends React.Component {
           ? (
             <div>
               <i className="fa fa-spinner fa-pulse fa-fw" />
-              <span className="visually-hidden">
-                Loading...
-              </span>
             </div>
           )
           : <i className="fa fa-save" />}
@@ -685,13 +681,17 @@ export default class ChemicalTab extends React.Component {
 
   queryOption() {
     const { queryOption } = this.state;
+    const { sample } = this.props;
+    const cas = sample.xref?.cas ?? '';
     const queryOptions = [
       { label: 'Common Name', value: 'Common Name' },
       { label: 'CAS', value: 'CAS' }
     ];
+    const conditionalOverlay = 'Assign a cas number using the cas field in labels section for better search results using cas number';
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="sds-query-message">Assign a cas number using the cas field in labels section for better search results using cas number</Tooltip>}>
+      <OverlayTrigger placement="top" overlay={cas && cas !== '' ? <div /> : <Tooltip id="sds-query-message">{conditionalOverlay}</Tooltip>}>
+
         <FormGroup>
           <ControlLabel>Query SDS using</ControlLabel>
           <Select
@@ -748,7 +748,7 @@ export default class ChemicalTab extends React.Component {
         <div className="chemical-properties">
           { document.alfa_link !== undefined ? this.renderChemicalProperties('thermofischer') : this.renderChemicalProperties('merck') }
         </div>
-        <div className="safety-phrases">
+        <div className="query-safety-phrases-button">
           { document.alfa_link !== undefined ? this.querySafetyPhrases('thermofischer') : this.querySafetyPhrases('merck') }
         </div>
       </div>
@@ -783,7 +783,11 @@ export default class ChemicalTab extends React.Component {
       );
     });
 
-    return <ListGroup>{mappedSafetySheets}</ListGroup>;
+    return (
+      <div>
+        <ListGroup>{mappedSafetySheets}</ListGroup>
+      </div>
+    );
   };
 
   renderSafetyPhrases = () => {
@@ -832,8 +836,6 @@ export default class ChemicalTab extends React.Component {
                 ) : 'fetch Chemical Properties'}
             </Button>
           </OverlayTrigger>
-        </InputGroup.Button>
-        <InputGroup.Button>
           <OverlayTrigger placement="top" overlay={<Tooltip id="viewChemProp">click to view fetched chemical properties</Tooltip>}>
             <Button active className="show-properties-modal" onClick={() => this.handlePropertiesModal(vendor)}><i className="fa fa-file-text" /></Button>
           </OverlayTrigger>
@@ -1127,7 +1129,7 @@ export default class ChemicalTab extends React.Component {
     const { warningMessage } = this.state;
     return (
       <div className="text-danger">
-        { warningMessage !== '' ? warningMessage : null }
+        {warningMessage !== '' ? warningMessage : null}
       </div>
     );
   }
@@ -1139,7 +1141,7 @@ export default class ChemicalTab extends React.Component {
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
-      <table className="table table-borderless">
+      <table className="table table-borderless table-responsive">
         <tbody>
           <tr>
             <td className="chemical-table-cells">

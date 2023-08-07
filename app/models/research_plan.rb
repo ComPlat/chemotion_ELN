@@ -22,7 +22,7 @@ class ResearchPlan < ApplicationRecord
   validates :creator, :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :includes_for_list_display, ->() { includes(:attachments) }
+  scope :includes_for_list_display, -> { includes(:attachments, :comments) }
 
   after_create :create_root_container
 
@@ -31,6 +31,7 @@ class ResearchPlan < ApplicationRecord
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
+  has_many :comments, as: :commentable, dependent: :destroy
 
   has_many :research_plans_wellplates, dependent: :destroy
   has_many :wellplates, through: :research_plans_wellplates

@@ -185,6 +185,15 @@ export default class AdminFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static fetchUsersByNameType(name, type, limit = 5) {
+    return fetch(`/api/v1/admin_user/listUsers/byname.json?${new URLSearchParams({ name, type, limit })}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static updateAccount(params) {
     return fetch('/api/v1/admin_user/updateAccount/', {
       credentials: 'same-origin',
@@ -250,14 +259,6 @@ export default class AdminFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchUsersByNameType(name, type) {
-    return fetch(`/api/v1/admin/group_device/name.json?type=${type}&name=${name}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
   static createGroupDevice(params = {}) {
     return fetch('/api/v1/admin/group_device/create', {
       credentials: 'same-origin',
@@ -267,14 +268,6 @@ export default class AdminFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static fetchUserGroupByName(name) {
-    return fetch(`/api/v1/matrix/find_user.json?name=${name}`, {
-      credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });

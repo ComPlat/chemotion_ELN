@@ -24,7 +24,7 @@ module Usecases
 
       def default_description
         description = "Scan Task from #{DateTime.current}"
-        description += " for #{sample.showed_name}" if sample
+        description += " for #{sample.showed_name}" if sample && sample.showed_name.present?
 
         description
       end

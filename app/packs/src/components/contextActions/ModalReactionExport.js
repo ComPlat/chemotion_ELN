@@ -71,7 +71,7 @@ const exportSelections = (uiState, userState, e) => {
   ReportsFetcher.createDownloadFile({
     exportType: e,
     uiState: filterUIState(uiState),
-    columns: []
+    columns: {}
   }, '', 'export_reactions_from_selections');
 }
 

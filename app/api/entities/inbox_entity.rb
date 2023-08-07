@@ -34,7 +34,7 @@ module Entities
           name: container.name,
           container_type: container.container_type,
           attachments: current_attachments,
-          created_at: container.created_at,
+          created_at: I18n.l(container.created_at, format: :eln_timestamp),
           children: serialize_children(subcontainers).compact,
         }
       end

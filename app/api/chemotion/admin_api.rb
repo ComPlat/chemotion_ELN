@@ -58,7 +58,7 @@ module Chemotion
           end
         end
 
-        desc 'Sychronize chemotion deviceMetadata to DataCite'
+        desc 'Synchronize chemotion deviceMetadata to DataCite'
         params do
           requires :device_id, type: Integer, desc: 'device id'
         end
@@ -231,34 +231,6 @@ module Chemotion
           get do
             data = User.where(type: params[:type])
             present data, with: Entities::GroupDeviceEntity, root: 'list'
-          end
-        end
-
-        namespace :name do
-          desc 'Find top 3 matched user names by type'
-          params do
-            requires :type, type: String
-            requires :name, type: String
-          end
-          get do
-            if params[:name].present?
-              users = User.where(type: params[:type])
-                          .by_name(params[:name])
-                          .limit(3)
-                          .select(
-                            'first_name',
-                            'last_name',
-                            'name',
-                            'id',
-                            'name_abbreviation',
-                            'name_abbreviation as abb',
-                            'type as user_type')
-                          .map(&:attributes)
-
-              { users: users }
-            else
-              { users: [] }
-            end
           end
         end
 

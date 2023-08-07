@@ -31,7 +31,7 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
+class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include AttachmentConverter
@@ -233,6 +233,15 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attachment['mime_type'].to_s == 'application/pdf'
   end
 
+  def annotated_file_location
+    return '' unless annotated?
+
+    File.join(
+      attachment.storage.directory,
+      attachment_data&.dig('derivatives', 'annotation', 'annotated_file_location'),
+    )
+  end
+
   private
 
   def generate_key
@@ -269,7 +278,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
   end
 
-  def check_file_size # rubocop:disable Metrics/AbcSize
+  def check_file_size
     return if file_path.nil?
     return unless File.exist?(file_path)
 

@@ -2,8 +2,10 @@ import Aviator from 'aviator';
 import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from '../stores/alt/stores/UserStore';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }
@@ -459,6 +461,16 @@ const instrumentText = (analysis) => {
   return ` Instrument: ${ttlIns.length}/${analysis.children.length}`;
 };
 
+const getElementSegments = (elementName, tabs) => {
+  let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  let labels = segmentKlasses.filter(s => s.element_klass.name == elementName).map(s => s.label);
+  if (!MatrixCheck(currentUser.matrix, 'segment')) {
+    return tabs.filter((key) => !labels.includes(key));
+  }
+  return _.uniq(tabs.concat(labels));
+}
+
 export {
   rfValueFormat,
   hNmrCheckMsg,
@@ -478,4 +490,5 @@ export {
   atomCountCInNMRDescription,
   emwInStr,
   instrumentText,
+  getElementSegments
 };

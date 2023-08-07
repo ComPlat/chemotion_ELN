@@ -20,5 +20,13 @@ module Entities
     expose :data_cite_created_at, documentation: { type: 'DateTime', desc: 'created_at DataCite ' }
     expose :data_cite_updated_at, documentation: { type: 'DateTime', desc: 'updated_at DataCite' }
     expose :data_cite_version, documentation: { type: 'Integer', desc: 'version at DataCite' }
+
+    def data_cite_created_at
+      object.data_cite_created_at.present? ? I18n.l(object.data_cite_created_at, format: :eln_timestamp) : nil
+    end
+
+    def data_cite_updated_at
+      object.data_cite_updated_at.present? ? I18n.l(object.data_cite_updated_at, format: :eln_timestamp) : nil
+    end
   end
 end

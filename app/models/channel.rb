@@ -36,6 +36,9 @@ class Channel < ApplicationRecord
   DOWNLOAD_ANALYSES_ZIP = 'Download Analyses'
   DOWNLOAD_ANALYSES_ZIP_FAIL = 'Download Analyses Failure'
   CALENDAR_ENTRY = 'Calender Entry Notification'
+  IMPORT_SAMPLES_NOTIFICATION = 'Import Samples Completed'
+  COMMENT_ON_MY_COLLECTION = 'New comment on synchronized collection'
+  COMMENT_RESOLVED = 'Comment resolved in synchronized collection'
 
   class << self
     def build_message(**args)
@@ -43,6 +46,7 @@ class Channel < ApplicationRecord
       channel_subject = args[:channel_subject] # args.delete(:channel_subject)
       channel = channel_id ? find_by(id: channel_id) : find_by(subject: channel_subject)
       return unless channel
+
       data_args = args.delete(:data_args)
       message = channel.msg_template
       if message.present?
