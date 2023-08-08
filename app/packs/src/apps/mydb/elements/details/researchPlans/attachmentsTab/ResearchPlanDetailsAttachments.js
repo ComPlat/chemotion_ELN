@@ -123,11 +123,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
           (result) => {
             if (result != null) {
               attachment.preview = `data:image/png;base64,${result}`;
+              this.forceUpdate();
             }
           }
         );
       } else {
         attachment.preview = '/images/wild_card/not_available.svg';
+        this.forceUpdate();
       }
       return attachment;
     });
