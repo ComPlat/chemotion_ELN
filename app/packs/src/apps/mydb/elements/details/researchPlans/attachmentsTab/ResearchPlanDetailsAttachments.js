@@ -72,8 +72,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
       .then((result) => {
         if (result.token) {
           const url = `/editor?id=${attachment.id}&docType=${docType}
-        &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-        &only_office_token=${result.only_office_token}`;
+          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
+          &only_office_token=${result.only_office_token}`;
           window.open(url, '_blank');
 
           attachment.aasm_state = 'oo_editing';
@@ -85,7 +85,21 @@ export default class ResearchPlanDetailsAttachments extends Component {
         }
       });
   }
+  /* eslint-enable no-param-reassign */
 
+  onImport(attachment) {
+    const { researchPlan, onAttachmentImportComplete } = this.props;
+    const researchPlanId = researchPlan.id;
+    LoadingActions.start();
+    ElementActions.importTableFromSpreadsheet(
+      researchPlanId,
+      attachment.id,
+      onAttachmentImportComplete
+    );
+    LoadingActions.stop();
+  }
+
+  /* eslint-disable no-param-reassign */
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments.map((attachment) => {
@@ -106,18 +120,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     });
   }
   /* eslint-enable no-param-reassign */
-
-  onImport(attachment) {
-    const { researchPlan, onAttachmentImportComplete } = this.props;
-    const researchPlanId = researchPlan.id;
-    LoadingActions.start();
-    ElementActions.importTableFromSpreadsheet(
-      researchPlanId,
-      attachment.id,
-      onAttachmentImportComplete
-    );
-    LoadingActions.stop();
-  }
 
   isImageFile(fileName) {
     const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
@@ -145,6 +147,23 @@ export default class ResearchPlanDetailsAttachments extends Component {
         extension: result.ext,
       });
     });
+  }
+
+  showImportConfirm(attachmentId) {
+    const { showImportConfirm } = this.state;
+    showImportConfirm[attachmentId] = true;
+    this.setState({ showImportConfirm });
+  }
+
+  hideImportConfirm(attachmentId) {
+    const { showImportConfirm } = this.state;
+    showImportConfirm[attachmentId] = false;
+    this.setState({ showImportConfirm });
+  }
+
+  confirmAttachmentImport(attachment) {
+    this.onImport(attachment);
+    this.hideImportConfirm(attachment.id);
   }
 
   renderRemoveAttachmentButton(attachment) {
@@ -442,23 +461,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
       );
     }
     return true;
-  }
-
-  showImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = true;
-    this.setState({ showImportConfirm });
-  }
-
-  hideImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = false;
-    this.setState({ showImportConfirm });
-  }
-
-  confirmAttachmentImport(attachment) {
-    this.onImport(attachment);
-    this.hideImportConfirm(attachment.id);
   }
 
   render() {
