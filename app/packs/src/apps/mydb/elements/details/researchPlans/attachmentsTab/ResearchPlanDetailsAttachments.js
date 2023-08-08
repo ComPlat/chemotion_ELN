@@ -37,6 +37,35 @@ const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annota
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
+  static isImageFile(fileName) {
+    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
+    const dataType = last(fileName.split('.'));
+    return acceptedImageTypes.includes(dataType);
+  }
+
+  static renderDownloadAnnotatedImageButton(attachment) {
+    if (!ResearchPlanDetailsAttachments.isImageFile(attachment.filename)) {
+      return null;
+    }
+    return (
+      <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
+        <div className="research-plan-attachments-annotation-download">
+          <Button
+            bsSize="xsmall"
+            className="button-right"
+            bsStyle="primary"
+            disabled={attachment.isNew}
+            onClick={() => {
+              Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
+            }}
+          >
+            <i className="fa fa-download" aria-hidden="true" />
+          </Button>
+        </div>
+      </OverlayTrigger>
+    );
+  }
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
@@ -120,12 +149,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     });
   }
   /* eslint-enable no-param-reassign */
-
-  isImageFile(fileName) {
-    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
-    const dataType = last(fileName.split('.'));
-    return acceptedImageTypes.includes(dataType);
-  }
 
   documentType(filename) {
     const { extension } = this.state;
@@ -287,7 +310,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
               styleEditorBtn,
               editDisable
             )}
-            {this.renderDownloadAnnotatedImageButton(attachment)}
+            {ResearchPlanDetailsAttachments.renderDownloadAnnotatedImageButton(attachment)}
             {this.renderAnnotateImageButton(attachment)}
             {this.renderImportAttachmentButton(attachment)}
           </Col>
@@ -327,29 +350,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
         >
           <i className="fa fa-download" aria-hidden="true" />
         </Button>
-      </OverlayTrigger>
-    );
-  }
-
-  renderDownloadAnnotatedImageButton(attachment) {
-    if (!this.isImageFile(attachment.filename)) {
-      return null;
-    }
-    return (
-      <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
-        <div className="research-plan-attachments-annotation-download">
-          <Button
-            bsSize="xsmall"
-            className="button-right"
-            bsStyle="primary"
-            disabled={attachment.isNew}
-            onClick={() => {
-              Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
-            }}
-          >
-            <i className="fa fa-download" aria-hidden="true" />
-          </Button>
-        </div>
       </OverlayTrigger>
     );
   }
