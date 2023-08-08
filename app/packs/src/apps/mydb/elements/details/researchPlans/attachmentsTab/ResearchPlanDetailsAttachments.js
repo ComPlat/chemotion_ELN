@@ -56,7 +56,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
             bsStyle="primary"
             disabled={attachment.isNew}
             onClick={() => {
-              Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
+              Utils.downloadFile({
+                contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+                name: attachment.filename
+              });
             }}
           >
             <i className="fa fa-download" aria-hidden="true" />
