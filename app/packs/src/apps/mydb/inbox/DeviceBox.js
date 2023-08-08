@@ -116,12 +116,11 @@ export default class DeviceBox extends React.Component {
   handlePrevClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage - 1;
-    this.setState({
-      currentDeviceBoxPage: updatedPage,
-      checkedDeviceAll: false,
+    const params = {
       checkedDeviceIds: [],
-      checkedIds: []
-    });
+      checkedIds: [],
+    };
+    InboxActions.checkedDeviceIds(params);
     LoadingActions.start();
     InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
   };
@@ -129,12 +128,11 @@ export default class DeviceBox extends React.Component {
   handleNextClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage + 1;
-    this.setState({
-      currentDeviceBoxPage: updatedPage,
-      checkedDeviceAll: false,
+    const params = {
       checkedDeviceIds: [],
-      checkedIds: []
-    });
+      checkedIds: [],
+    };
+    InboxActions.checkedDeviceIds(params);
     LoadingActions.start();
     InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
   };
@@ -185,15 +183,17 @@ export default class DeviceBox extends React.Component {
       });
     });
 
+    const params = {
+      checkedDeviceIds: [],
+      checkedIds: [],
+    };
+    InboxActions.checkedDeviceIds(params);
+
     if (currentDeviceBoxPage > 1 && itemsDeleted === currentItemsCount) {
       this.handlePrevClick(device_box);
-    } else {
-      InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
     }
 
-    checkedDeviceIds.length = 0;
     this.toggleTooltip();
-    this.setState({ checkedDeviceAll: false, checkedIds: [], checkedDeviceIds: [] });
   }
 
   deleteDeviceBox(deviceBox) {
