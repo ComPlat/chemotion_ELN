@@ -57,7 +57,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { attachments } = this.props.attachments;
+    const { attachments } = this.props;
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
     }
@@ -134,24 +134,26 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   onImport(attachment) {
-    const researchPlanId = this.props.researchPlan.id;
+    const { researchPlan, onAttachmentImportComplete } = this.props;
+    const researchPlanId = researchPlan.id;
     LoadingActions.start();
     ElementActions.importTableFromSpreadsheet(
       researchPlanId,
       attachment.id,
-      this.props.onAttachmentImportComplete
+      onAttachmentImportComplete
     );
     LoadingActions.stop();
   }
 
   renderRemoveAttachmentButton(attachment) {
+    const { onDelete, readOnly } = this.props;
     return (
       <Button
         bsSize="xsmall"
         bsStyle="danger"
         className="button-right"
-        onClick={() => this.props.onDelete(attachment)}
-        disabled={this.props.readOnly}
+        onClick={() => onDelete(attachment)}
+        disabled={readOnly}
       >
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
@@ -159,16 +161,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
+    const { choosenAttachment, imageEditModalShown } = this.state;
+    const { onEdit } = this.props;
     return (
       <ImageAnnotationModalSVG
-        attachment={this.state.choosenAttachment}
-        isShow={this.state.imageEditModalShown}
+        attachment={choosenAttachment}
+        isShow={imageEditModalShown}
         handleSave={
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            choosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
-            this.props.onEdit(this.state.choosenAttachment);
+            onEdit(choosenAttachment);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
@@ -188,6 +192,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderListGroupItem(attachment) {
     const { attachmentEditor, extension } = this.state;
+    const { onUndoDelete } = this.props;
 
     const updateTime = new Date(attachment.updated_at);
     updateTime.setTime(updateTime.getTime() + 15 * 60 * 1000);
@@ -215,7 +220,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 bsSize="xsmall"
                 bsStyle="danger"
                 className="button-right"
-                onClick={() => this.props.onUndoDelete(attachment)}
+                onClick={() => onUndoDelete(attachment)}
               >
                 <i className="fa fa-undo" aria-hidden="true" />
               </Button>
@@ -290,13 +295,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderDownloadOriginalButton(attachment, downloadTooltip) {
+    const { onDownload } = this.props;
     return (
       <OverlayTrigger placement="top" overlay={downloadTooltip}>
         <Button
           bsSize="xsmall"
           className="button-right"
           bsStyle="primary"
-          onClick={() => this.props.onDownload(attachment)}
+          onClick={() => onDownload(attachment)}
         >
           <i className="fa fa-download" aria-hidden="true" />
         </Button>
@@ -328,12 +334,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderAttachments() {
-    const { attachments } = this.props;
+    const { attachments, researchPlan } = this.props;
     if (attachments && attachments.length > 0) {
       const filter = new ImageAttachmentFilter();
       const filteredAttachments = filter.filterAttachmentsWhichAreInBody(
-        this.props.researchPlan.body,
-        this.props.researchPlan.attachments
+        researchPlan.body,
+        researchPlan.attachments
       );
 
       return (
@@ -355,10 +361,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderDropzone() {
+    const { onDrop, readOnly } = this.props;
     return (
       <Dropzone
-        onDrop={(files) => this.props.onDrop(files)}
-        className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
+        onDrop={(files) => onDrop(files)}
+        className={`research-plan-dropzone-${readOnly ? 'disable' : 'enable'}`}
       >
         <div className="zone">Drop Files, or Click to Select.</div>
       </Dropzone>
@@ -366,9 +373,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImportAttachmentButton(attachment) {
-    const show = this.state.showImportConfirm[attachment.id];
+    const { showImportConfirm } = this.state;
+    const { researchPlan } = this.props;
+    const show = showImportConfirm[attachment.id];
     // TODO: import disabled when?
-    const importDisabled = this.props.researchPlan.changed;
+    const importDisabled = researchPlan.changed;
     const extension = last(attachment.filename.split('.'));
 
     const importTooltip = importDisabled
