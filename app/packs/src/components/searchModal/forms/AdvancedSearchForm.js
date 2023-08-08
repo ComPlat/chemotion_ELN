@@ -29,7 +29,7 @@ const AdvancedSearchForm = () => {
         link: 'OR', match: 'LIKE',
         table: advancedValues[0].table,
         element_id: advancedValues[0].element_id,
-        field: '', value: '', unit: ''
+        field: '', value: '', sub_values: [], unit: ''
       };
       searchStore.addAdvancedSearchValue(length + 1, searchValues);
     }
@@ -163,13 +163,26 @@ const AdvancedSearchForm = () => {
         let table = val.field.table || val.table;
         table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
 
-        if (val.field.sub_fields && val.field.sub_fields.length >= 1) {
+        if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
           let label = '';
+          let value = '';
+          let unit = '';
+          let match = val.match;
           val.field.sub_fields.map((sub) => {
             if (sub.type == 'label') {
               label = sub.value;
-            } else if (sub.value != '') {
-              searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, val.match, sub.value, val.unit].join(" "));
+            } else if (val.sub_values[0][sub.id]) {
+              let subContent = val.sub_values[0][sub.id];
+              if (subContent.value !== undefined) {
+                value = subContent.value;
+                unit = subContent.value_system;
+                label = sub.col_name;
+                match = '>=';
+              } else {
+                value = subContent;
+                label = label === '' ? sub.col_name : label;
+              }
+              searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, match, value, unit].join(" "));
             }
           });
         } else {

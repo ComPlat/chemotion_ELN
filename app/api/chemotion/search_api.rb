@@ -40,6 +40,7 @@ module Chemotion
             optional :unit, type: String
             requires :field, type: Hash
             requires :value, type: String
+            optional :sub_values, type: Array
           end
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
@@ -200,9 +201,9 @@ module Chemotion
         options[:joins] << segments_join if element_table == segments_alias && options[:joins].exclude?(segments_join)
         options[:joins] << "CROSS JOIN jsonb_array_elements(#{element_table}.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
 
-        if filter['field']['sub_fields'].present?
+        if filter['sub_values'].present?
           options[:field], options[:additional_condition], options[:joins] =
-            filter_values_for_generic_sub_fields(filter['field']['sub_fields'], prop, filter, options)
+            filter_values_for_generic_sub_fields(filter['sub_values'], prop, filter, options)
         else
           options[:field] = "(#{prop} ->> 'value')::TEXT"
           options[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
@@ -216,12 +217,27 @@ module Chemotion
         options[:field] = ''
         options[:additional_condition] = "(#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
 
-        sub_fields.each_with_index do |sub, j|
-          next if sub['type'] == 'label' || sub['value'] == ''
+        sub_fields.first.each_with_index do |(key, value), j|
+          next if value == ''
 
           prop_sub = "#{prop}_sub_#{j}"
-          options[:joins] << "CROSS JOIN jsonb_array_elements(#{prop} -> 'sub_fields') AS #{prop_sub}"
-          options[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = '#{sub['id']}' AND (#{prop_sub} ->> 'value')::TEXT LIKE '%#{sub['value']}%'"
+          sub_value = "%#{value}%"
+          unit = ''
+          sub_match = 'LIKE'
+          sub_fields = filter['field']['type'] == 'table' ? 'sub_values' : 'sub_fields'
+          if value['value'].present?
+            sub_value = value['value'].tr(',', '.')
+            unit = " AND replace((#{prop_sub} -> '#{key}' ->> 'value_system')::TEXT, '°', '') = '#{value['value_system'].delete('°')}'"
+            sub_match = '>='
+          end
+
+          options[:joins] << "CROSS JOIN jsonb_array_elements(#{prop} -> '#{sub_fields}') AS #{prop_sub}"
+
+          if filter['field']['type'] == 'table'
+            options[:additional_condition] += " AND (#{prop_sub} ->> '#{key}')::TEXT #{sub_match} '#{sub_value}'#{unit}"
+          else
+            options[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = '#{key}' AND (#{prop_sub} ->> 'value')::TEXT LIKE '%#{value}%'"
+          end
         end
         [options[:field], options[:additional_condition], options[:joins]]
       end

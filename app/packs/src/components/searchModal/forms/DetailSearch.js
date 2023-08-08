@@ -25,6 +25,7 @@ const DetailSearch = () => {
       label: '',
     },
     value: '',
+    sub_values: [],
     unit: ''
   }];
 
@@ -32,7 +33,6 @@ const DetailSearch = () => {
     Object.entries(layers)
       .sort((a, b) => a[1].position - b[1].position)
       .map((value) => {
-        // console.log(value);
         let label = value[1].label || '';
         let values = value[1].fields.filter((f) => { return validFieldTypes.includes(f.type) });
         let mappedValues = [];
@@ -53,7 +53,7 @@ const DetailSearch = () => {
 
   let genericFields = [];
   let genericSelectOptions = [];
-  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field'];
+  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field', 'table'];
 
   if (genericEls) {
     let currentGenericElement = genericEls.find((e) => { return e.name === selection.element_table.slice(0, -1) });
@@ -79,7 +79,7 @@ const DetailSearch = () => {
       .filter((value) => { return value[1] > 0 })
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
-        segmentKlasses.filter((s) => { 
+        segmentKlasses.filter((s) => {
           if (s.element_klass.name == selection.table.slice(0, -1) && s.label == value[0]) {
             segmentsByElement.push(s);
           }
@@ -101,8 +101,6 @@ const DetailSearch = () => {
       });
     }
   }
-
-  //console.log(genericFields, segmentFields);
 
   const textInput = (option, type, selectedValue, column, keyLabel) => {
     return (
@@ -219,13 +217,13 @@ const DetailSearch = () => {
     );
   }
 
-  const ButtonOrAddOn = (units, value, column) => {
+  const ButtonOrAddOn = (units, value, column, option, subFieldId) => {
     if (units.length > 1) {
       return (
         <InputGroup.Button>
           <Button key={units} bsStyle="success"
             dangerouslySetInnerHTML={{ __html: value }}
-            onClick={changeUnit(units, value, column)} />
+            onClick={changeUnit(units, value, column, option, subFieldId)} />
         </InputGroup.Button>
       );
     } else {
@@ -249,22 +247,31 @@ const DetailSearch = () => {
             value={selectedValue ? selectedValue[column].value : ''}
             onChange={handleFieldChanged(option, column, type)}
           />
-          {ButtonOrAddOn(units, value, column)}
+          {ButtonOrAddOn(units, value, column, option, '')}
         </InputGroup>
       </FormGroup>
     );
   }
 
-  const inputGroupInput = (option, type, column, keyLabel) => {
+  const inputGroupInput = (option, type, selectedValue, column, keyLabel) => {
     let subFields = [];
     option.sub_fields.map((field) => {
       if (field.type == 'label') {
         subFields.push(<span key={field.id} className="form-control g_input_group_label">{field.value}</span>);
       }
       if (field.type == 'text') {
-        subFields.push(<FormControl className="g_input_group" key={field.id} type={field.type} name={field.id} value={field.value} onChange={handleSubFieldChanged(field.id, option, column, type)} />);
+        let subValue = selectedValue && selectedValue[column].sub_values[0][field.id] !== undefined ? selectedValue[column].sub_values[0][field.id] : '';
+        subFields.push(
+          <FormControl
+            className="g_input_group" 
+            key={field.id}
+            type={field.type}
+            name={field.id}
+            value={subValue}
+            onChange={handleSubFieldChanged(field.id, option, column, type)}
+          />
+        );
       }
-      //console.log(option.label, field);
     });
 
     return (
@@ -277,7 +284,59 @@ const DetailSearch = () => {
     );
   }
 
+  const tableInputFields = (option, type, selectedValue, column, keyLabel) => {
+    let subFields = [];
+
+    option.sub_fields.map((field) => {
+      let condition =
+        selectedValue && selectedValue[column].sub_values !== undefined
+        && selectedValue[column].sub_values[0][field.id] !== undefined;
+      let selectedFieldValue = condition ? selectedValue[column].sub_values[0][field.id] : '';
+      let selectedUnitValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value_system : field.value_system;      
+      selectedFieldValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value : selectedFieldValue;
+      let units = optionsForSelect(field);
+      let formElement = '';
+
+      if (field.type == 'text') {
+        formElement = (
+          <FormControl
+            id={field.id}
+            type="text"
+            key={field.id}
+            value={selectedFieldValue}
+            onChange={handleTableFieldChanged(field.id, option, column, type)}
+          />
+        );
+      }
+      if (field.type == 'system-defined') {
+        formElement = (
+          <InputGroup>
+            <FormControl
+              id={field.id}
+              type="text"
+              key={field.id}
+              value={selectedFieldValue}
+              onChange={handleTableFieldChanged(field.id, option, column, type)}
+            />
+            {ButtonOrAddOn(units, selectedUnitValue, column, option, field.id)}
+          </InputGroup>
+        );
+      }
+      if (formElement) {
+        subFields.push(
+          <FormGroup key={`${column}-${keyLabel}-${type}-${field.id}`}>
+            <ControlLabel>{field.col_name}</ControlLabel>
+            {formElement}
+          </FormGroup>
+        );
+      }
+    });
+    return subFields;
+  }
+
   const componentHeadline = (label, i, className) => {
+    if (label === '') { return '' }
+
     return (
       <div className={className} key={`${label}-${i}`}>{label}</div>
     );
@@ -323,41 +382,86 @@ const DetailSearch = () => {
   }
 
   const handleSubFieldChanged = (id, option, column, type) => (e) => {
-    option.sub_fields.map((field) => {
-      if (field.id == id) {
-        field.value = e.target.value;
-      }
-    });
-    setSearchStoreValues(e.target.value, option, column, type);
+    let sub_values = { id: id, value: e.target.value };
+    setSearchStoreValues(e.target.value, option, column, type, sub_values);
+  }
+
+  const handleTableFieldChanged = (id, option, column, type) => (e) => {
+    let value = e.target.value;
+    let subValue = {};
+    let optionField = option.sub_fields.find((f) => { return f.id == id });
+    let searchValue = searchValueByStoreOrDefaultValue(column);
+
+    if (optionField.value_system) {
+      let valueSystem =
+        searchValue.sub_values.length >= 1 && searchValue.sub_values[0][id] ? searchValue.sub_values[0][id].value_system : optionField.value_system;
+      subValue = { id: id, value: { value: value, value_system: valueSystem } };
+    } else {
+      subValue = { id: id, value: value };
+    }
+    setSearchStoreValues(e.target.value, option, column, type, subValue);
   }
 
   const handleFieldChanged = (option, column, type) => (e) => {
     let value = valueByType(type, e);
-    setSearchStoreValues(value, option, column, type);
+    setSearchStoreValues(value, option, column, type, {});
   }
 
-  const setSearchStoreValues = (value, option, column, type) => {
+  const setSearchStoreValues = (value, option, column, type, subValue) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
     searchValue.field = option;
     searchValue.value = value;
+    searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, value);
     searchValue.match = matchByField(column, type);
+
     if (type == 'system-defined' && searchValue.unit === '') {
       let units = optionsForSelect(option);
       searchValue.unit = units[0].label;
     }
-    if (value === '' || value === false) {
+    let searchSubValuesLength = searchValue.sub_values.length >= 1 ? Object.keys(searchValue.sub_values[0]).length : 0;
+    let typesWithSubValues = ['input-group', 'table'];
+
+    if (((value === '' || value === false) && !typesWithSubValues.includes(type)) || (searchSubValuesLength === 0 && typesWithSubValues.includes(type) && value === '')) {
       searchStore.removeDetailSearchValue(column);
     } else {
       searchStore.addDetailSearchValue(column, searchValue);
     }
   }
 
-  const changeUnit = (units, value, column) => (e) => {
-    let activeUnitIndex = units.findIndex((f) => { return f.label === value })
-    let nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
+  const subValuesForSearchValue = (searchValue, subValue, value) => {
+    let subValues = searchValue.sub_values;
+    if (Object.keys(subValue).length === 0) { return subValues; }
 
+    if (subValues.length == 0) {
+      subValues.push({ [subValue.id]: subValue.value })
+    } else {
+      subValues[0][subValue.id] = subValue.value;
+    }
+
+    if (subValues[0][subValue.id] == '' && value == '') {
+      delete subValues[0][subValue.id];
+    }
+
+    return subValues;
+  }
+
+  const changeUnit = (units, value, column, option, subFieldId) => (e) => {
+    let activeUnitIndex = units.findIndex((f) => { return f.label.replace('°', '') === value || f.label === value });
+    let nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
+    let newUnit = units[nextUnitIndex].label;
     let searchValue = searchValueByStoreOrDefaultValue(column);
-    searchValue.unit = units[nextUnitIndex].label;
+
+    if (option.sub_fields && subFieldId) {
+      if (searchValue.sub_values && searchValue.sub_values[0][subFieldId]) {
+        searchValue.sub_values[0][subFieldId].value_system = newUnit;
+      } else if (searchValue.sub_values && !searchValue.sub_values[0][subFieldId]) {
+        searchValue.sub_values[0][subFieldId] = { value: '', value_system: newUnit };
+      } else {
+        searchValue.sub_values.push({ [subFieldId]: { value: '', value_system: newUnit } });
+      }
+    }
+
+    searchValue.unit = newUnit;
     searchStore.addDetailSearchValue(column, searchValue);
   }
 
@@ -388,7 +492,11 @@ const DetailSearch = () => {
         fields.push(systemDefinedInput(option, 'system-defined', selectedValue, column, keyLabel));
         break;
       case 'input-group':
-        fields.push(inputGroupInput(option, 'input-group', column, keyLabel));
+        fields.push(inputGroupInput(option, 'input-group', selectedValue, column, keyLabel));
+        break;
+      case 'table':
+        fields.push(componentHeadline(option.label, 'table', 'detail-search-headline'));
+        fields.push(tableInputFields(option, 'table', selectedValue, column, keyLabel));
         break;
     }
     return fields;
@@ -399,7 +507,7 @@ const DetailSearch = () => {
       if (Array.isArray(field.value)) {
         if (field.label) {
           fields.push(componentHeadline(field.label, i, 'detail-search-headline'));
-        } else if (i != 0) {
+        } else if (i != 0 && field.value[0].type !== 'table') {
           fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
         }
         
