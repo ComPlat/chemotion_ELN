@@ -63,34 +63,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
   }
 
-  editorInitial() {
-    EditorFetcher.initial().then((result) => {
-      this.setState({
-        attachmentEditor: result.installed,
-        extension: result.ext,
-      });
-    });
-  }
-
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, (o) => o.includes(ext));
-
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  isImageFile(fileName) {
-    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
-    const dataType = last(fileName.split('.'));
-    return acceptedImageTypes.includes(dataType);
-  }
-
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
@@ -143,6 +115,34 @@ export default class ResearchPlanDetailsAttachments extends Component {
       onAttachmentImportComplete
     );
     LoadingActions.stop();
+  }
+
+  isImageFile(fileName) {
+    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
+    const dataType = last(fileName.split('.'));
+    return acceptedImageTypes.includes(dataType);
+  }
+
+  documentType(filename) {
+    const { extension } = this.state;
+
+    const ext = last(filename.split('.'));
+    const docType = findKey(extension, (o) => o.includes(ext));
+
+    if (typeof docType === 'undefined' || !docType) {
+      return null;
+    }
+
+    return docType;
+  }
+
+  editorInitial() {
+    EditorFetcher.initial().then((result) => {
+      this.setState({
+        attachmentEditor: result.installed,
+        extension: result.ext,
+      });
+    });
   }
 
   renderRemoveAttachmentButton(attachment) {
