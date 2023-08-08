@@ -40,9 +40,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-    const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
-    } = props;
 
     this.state = {
       attachmentEditor: false,
@@ -60,7 +57,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.attachments !== prevProps.attachments) {
+    const { attachments } = this.props.attachments;
+    if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
     }
   }
@@ -98,21 +96,21 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const docType = this.documentType(attachment.filename);
 
     EditorFetcher.startEditing({ attachment_id: attachment.id })
-    .then((result) => {
-      if (result.token) {
-        const url = `/editor?id=${attachment.id}&docType=${docType}
+      .then((result) => {
+        if (result.token) {
+          const url = `/editor?id=${attachment.id}&docType=${docType}
         &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
         &only_office_token=${result.only_office_token}`;
-        window.open(url, '_blank');
+          window.open(url, '_blank');
 
-        attachment.aasm_state = 'oo_editing';
-        attachment.updated_at = new Date();
+          attachment.aasm_state = 'oo_editing';
+          attachment.updated_at = new Date();
 
-        this.props.onEdit(attachment);
-      } else {
-        alert('Unauthorized to edit this file.');
-      }
-    });
+          this.props.onEdit(attachment);
+        } else {
+          alert('Unauthorized to edit this file.');
+        }
+      });
   }
 
   createAttachmentPreviews() {
@@ -281,9 +279,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
           className="button-right"
           bsStyle="success"
           disabled={editDisable}
-          onClick={() => this.handleEdit(attachment)}>
+          onClick={() => this.handleEdit(attachment)}
+        >
 
-          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing}/>
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
         </Button>
       </OverlayTrigger>
 
@@ -310,21 +309,21 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return null;
     }
     return (
-    <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
-      <div className="research-plan-attachments-annotation-download">
-        <Button
-          bsSize="xsmall"
-          className="button-right"
-          bsStyle="primary"
-          disabled={attachment.isNew}
-          onClick={() =>{
-            Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
-          }}
-        >
-          <i className="fa fa-download" aria-hidden="true" />
-        </Button>
-      </div>
-    </OverlayTrigger>
+      <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
+        <div className="research-plan-attachments-annotation-download">
+          <Button
+            bsSize="xsmall"
+            className="button-right"
+            bsStyle="primary"
+            disabled={attachment.isNew}
+            onClick={() => {
+              Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
+            }}
+          >
+            <i className="fa fa-download" aria-hidden="true" />
+          </Button>
+        </div>
+      </OverlayTrigger>
     );
   }
 
