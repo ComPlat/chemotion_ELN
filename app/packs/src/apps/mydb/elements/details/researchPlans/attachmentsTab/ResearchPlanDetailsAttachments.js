@@ -63,6 +63,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
   }
 
+  /* eslint-disable no-param-reassign */
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
@@ -104,6 +105,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return attachment;
     });
   }
+  /* eslint-enable no-param-reassign */
 
   onImport(attachment) {
     const { researchPlan, onAttachmentImportComplete } = this.props;
@@ -256,7 +258,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           <Col md={8}>{attachment.filename}</Col>
           <Col md={3}>
             {this.renderRemoveAttachmentButton(attachment)}
-            {this.renderDownloadOriginalButton(attachment, downloadTooltip)}
+            {this.renderDownloadOriginalButton(attachment)}
             {this.renderEditAttachmentButton(
               attachment,
               extension,
@@ -294,7 +296,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderDownloadOriginalButton(attachment, downloadTooltip) {
+  renderDownloadOriginalButton(attachment) {
     const { onDownload } = this.props;
     return (
       <OverlayTrigger placement="top" overlay={downloadTooltip}>
