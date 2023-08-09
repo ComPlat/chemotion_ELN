@@ -49,7 +49,7 @@ describe Chemotion::VesselAPI do
         details: 'multi-neck',
         vessel_type: 'round bottom flask',
         volume_unit: 'ml',
-        volume_amount: '500',
+        volume_amount: 500,
         material_type: 'glass',
         material_details: 'other material details',
       }
@@ -70,7 +70,7 @@ describe Chemotion::VesselAPI do
         expect(parsed_json_response['vessel_template']['details']).to eq 'multi-neck'
         expect(parsed_json_response['vessel_template']['vessel_type']).to eq 'round bottom flask'
         expect(parsed_json_response['vessel_template']['volume_unit']).to eq 'ml'
-        expect(parsed_json_response['vessel_template']['volume_amount']).to eq '500'
+        expect(parsed_json_response['vessel_template']['volume_amount']).to eq 500
         expect(parsed_json_response['vessel_template']['material_type']).to eq 'glass'
         expect(parsed_json_response['vessel_template']['material_details']).to eq 'other material details'
       end

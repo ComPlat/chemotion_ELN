@@ -7,7 +7,7 @@
 #  details          :string
 #  vessel_type      :string
 #  volume_unit      :string
-#  volume_amount    :string
+#  volume_amount    :integer
 #  material_type    :string
 #  material_details :string
 #  created_at       :datetime         not null

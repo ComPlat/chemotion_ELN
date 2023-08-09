@@ -83,7 +83,7 @@ module Chemotion
         optional :details, type: String, desc: 'Other details / specifications of vessel template'
         optional :vessel_type, type: String, desc: 'Type of vessel'
         optional :volume_unit, type: String, desc: 'unit of volume'
-        optional :volume_amount, type: String, desc: 'Volume of vessel'
+        optional :volume_amount, type: Integer, desc: 'Volume of vessel'
         optional :material_type, type: String, desc: 'vessel material type'
         optional :material_details, type: String, desc: 'vessel material details'
         optional :name, type: String, desc: "Name of vessel"
@@ -105,7 +105,7 @@ module Chemotion
         optional :details, type: String, desc: 'Other details / specifications of vessel template'
         optional :vessel_type, type: String, desc: 'Vessel Type'
         optional :volume_unit, type: String, desc: 'Vessel unit of volume'
-        optional :volume_amount, type: String, desc: 'Volume of vessel'
+        optional :volume_amount, type: Integer, desc: 'Volume of vessel'
         optional :material_type, type: String, desc: 'vessel material type'
         optional :material_details, type: String, desc: 'vessel material details'
         optional :name, type: String, desc: "Name of vessel"
