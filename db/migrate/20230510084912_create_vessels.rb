@@ -5,7 +5,7 @@ class CreateVessels < ActiveRecord::Migration[6.1]
       t.string :details
       t.string :vessel_type
       t.string :volume_unit
-      t.string :volume_amount
+      t.integer :volume_amount
       t.string :material_type
       t.string :material_details
       t.timestamps

@@ -6,7 +6,7 @@ FactoryBot.define do
     details {'multi-neck'}
     vessel_type {'round bottom flask'}
     volume_unit {'ml'}
-    volume_amount {'500'}
+    volume_amount {500}
     material_type {'glass'}
     material_details {'other material details'}
   end
