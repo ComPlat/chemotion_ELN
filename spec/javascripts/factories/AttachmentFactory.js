@@ -18,7 +18,16 @@ export default class AttachmentFactory {
 
     this.factory.define('new', Attachment, {
       id : Element.buildID(),
-      is_new : true
+      is_new : true,
+      updated_at: new Date(),
+      filename: "test.png",
+      updatedAnnotation: false,
+      is_deleted: false,
+      preview: "originalPreviewData",
+      content_type: "none",
+      aasm_state: "",
+      filesize: 123456,
+      thumb: true
     });
   }
 }
