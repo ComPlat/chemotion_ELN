@@ -20,7 +20,7 @@ module Chemotion
         optional :status, type: String, values: %w[open with_missing_scan_results done], default: 'open'
       end
       get do
-        tasks = SampleTask.for(current_user).public_send(params[:status])
+        tasks = SampleTask.for(current_user).public_send(params[:status]).order(created_at: :desc)
 
         present tasks, with: Entities::SampleTaskEntity
       end
