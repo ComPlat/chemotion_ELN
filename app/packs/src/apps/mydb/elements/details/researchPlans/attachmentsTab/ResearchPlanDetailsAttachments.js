@@ -483,8 +483,40 @@ export default class ResearchPlanDetailsAttachments extends Component {
 }
 
 ResearchPlanDetailsAttachments.propTypes = {
-  researchPlan: PropTypes.object.isRequired,
-  attachments: PropTypes.array,
+  researchPlan: PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    changed: PropTypes.bool.isRequired,
+    body: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        type: PropTypes.string.isRequired,
+      })
+    ).isRequired,
+    attachments: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        aasm_state: PropTypes.string.isRequired,
+        content_type: PropTypes.string.isRequired,
+        filename: PropTypes.string.isRequired,
+        filesize: PropTypes.number.isRequired,
+        identifier: PropTypes.string.isRequired,
+        thumb: PropTypes.bool.isRequired
+      })
+    )
+  }).isRequired,
+  attachments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    aasm_state: PropTypes.string.isRequired,
+    content_type: PropTypes.string.isRequired,
+    filename: PropTypes.string.isRequired,
+    filesize: PropTypes.number.isRequired,
+    identifier: PropTypes.string.isRequired,
+    thumb: PropTypes.bool.isRequired
+  })),
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
