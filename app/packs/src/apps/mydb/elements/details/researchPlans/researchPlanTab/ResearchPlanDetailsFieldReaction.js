@@ -12,6 +12,9 @@ const spec = {
     field.value.reaction_id = monitor.getItem().element.id;
     onChange({ reaction_id: monitor.getItem().element.id }, field.id);
 
+    // set reactionDropped to true when an item is dropped
+    component.setState({ reactionDropped: true });
+
     // trigger immediate update of the state after dropping
     component.onDropReaction(monitor.getItem().element.id);
   }
@@ -37,6 +40,15 @@ const noAuth = (el) => (
   </div>
 );
 
+function elementError() {
+  return (
+    <div style={{ color: 'red', textAlign: 'left' }}>
+      <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+      <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+    </div>
+  );
+}
+
 class ResearchPlanDetailsFieldReaction extends Component {
   constructor(props) {
     super(props);
@@ -45,7 +57,6 @@ class ResearchPlanDetailsFieldReaction extends Component {
       reaction: {
         id: null
       },
-      wasReactionSet: false
     };
     this.onDropReaction = this.onDropReaction.bind(this);
   }
@@ -69,15 +80,12 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (
       idle
       && field?.value?.reaction_id
-      && (prevState.reaction?.id !== field?.value?.reaction_id
-        || (prevState.reaction?.id === null && field?.value?.reaction_id !== null))
+      && prevState.reaction?.id !== field?.value?.reaction_id
       && hasAuth(field?.value?.reaction_id)
     ) {
       this.setState(
         {
           idle: false,
-          // set wasReactionSet to true if a reaction_id exists in the field's value
-          wasReactionSet: field?.value?.reaction_id !== undefined,
         },
         this.fetch
       );
@@ -99,7 +107,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
       .catch(() => {
         // handle case when the reaction is not found
         if (reaction_id === this.state.reaction.id) {
-          this.setState({ idle: true, reaction: { id: null }, wasReactionSet: true });
+          this.setState({ idle: true, reaction: { id: null } });
         }
       });
   }
@@ -122,12 +130,9 @@ class ResearchPlanDetailsFieldReaction extends Component {
         .catch(() => {
           // handle case when the reaction is not found
           if (field?.value?.reaction_id === this.state.reaction?.id) {
-            this.setState({ idle: true, reaction: { id: null }, wasReactionSet: true });
+            this.setState({ idle: true, reaction: { id: null } });
           }
         });
-    } else if (!field?.value?.reaction_id) {
-      // if there is no reaction_id in the field's value, set the state to idle and reaction to null
-      this.setState({ idle: true, reaction: { id: null }, wasReactionSet: false });
     }
   }
 
@@ -137,22 +142,13 @@ class ResearchPlanDetailsFieldReaction extends Component {
     ElementActions.fetchReactionById(reaction?.id);
   }
 
-  static renderElementError() {
-    return (
-      <div style={{ color: 'red', textAlign: 'left' }}>
-        <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-        <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-      </div>
-    );
-  }
-
   renderReaction(reaction) {
     if (!hasAuth(reaction?.id)) {
       return noAuth(reaction);
     }
 
     if (!reaction?.id) {
-      this.renderElementError();
+      elementError();
     }
 
     const { edit } = this.props;
@@ -197,7 +193,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { reaction, wasReactionSet } = this.state;
+    const { reaction } = this.state;
 
     if (!hasAuth(reaction?.id)) {
       return noAuth(reaction);
@@ -210,8 +206,8 @@ class ResearchPlanDetailsFieldReaction extends Component {
     let content;
     if (reaction?.id) {
       content = this.renderReaction(reaction);
-    } else if (wasReactionSet) {
-      content = this.renderElementError();
+    } else if (!reaction?.id && this.props.field?.value?.reaction_id) {
+      content = elementError();
     } else {
       content = 'Drop reaction here.';
     }
@@ -224,13 +220,13 @@ class ResearchPlanDetailsFieldReaction extends Component {
   }
 
   renderStatic() {
-    const { reaction, wasReactionSet } = this.state;
+    const { reaction } = this.state;
 
     let content;
     if (reaction?.id) {
       content = this.renderReaction(reaction);
-    } else if (wasReactionSet) {
-      content = this.renderElementError();
+    } else if (!reaction?.id && this.props.field?.value?.reaction_id) {
+      content = elementError();
     } else {
       content = null;
     }

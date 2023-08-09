@@ -13,6 +13,9 @@ const spec = {
     field.value.sample_id = monitor.getItem().element.id;
     onChange({ sample_id: monitor.getItem().element.id }, field.id);
 
+    // set sampleDropped to true when an item is dropped
+    component.setState({ sampleDropped: true });
+
     // trigger immediate update of the state after dropping
     component.onDropSample(monitor.getItem().element.id);
   }
@@ -38,6 +41,15 @@ const noAuth = (el) => (
   </div>
 );
 
+function elementError() {
+  return (
+    <div style={{ color: 'red', textAlign: 'left' }}>
+      <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+      <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+    </div>
+  );
+}
+
 class ResearchPlanDetailsFieldSample extends Component {
   constructor(props) {
     super(props);
@@ -46,7 +58,6 @@ class ResearchPlanDetailsFieldSample extends Component {
       sample: {
         id: null
       },
-      wasSampleSet: false
     };
     this.onDropSample = this.onDropSample.bind(this);
   }
@@ -69,15 +80,12 @@ class ResearchPlanDetailsFieldSample extends Component {
     if (
       idle
       && field?.value?.sample_id
-      && (prevState.sample?.id !== field?.value?.sample_id
-        || (prevState.sample?.id === null && field?.value?.sample_id !== null))
+      && prevState.sample?.id !== field?.value?.sample_id
       && hasAuth(field?.value?.sample_id)
     ) {
       this.setState(
         {
           idle: false,
-          // set wasSampleSet to true if a sample_id exists in the field's value
-          wasSampleSet: field?.value?.sample_id !== undefined,
         },
         this.fetch
       );
@@ -99,7 +107,7 @@ class ResearchPlanDetailsFieldSample extends Component {
       .catch(() => {
         // handle case when the sample is not found
         if (sample_id === this.state.sample.id) {
-          this.setState({ idle: true, sample: { id: null }, wasSampleSet: true });
+          this.setState({ idle: true, sample: { id: null } });
         }
       });
   }
@@ -119,15 +127,14 @@ class ResearchPlanDetailsFieldSample extends Component {
             this.setState({ idle: true, sample });
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('Error:', error);
+
           // handle case when the sample is not found
           if (field?.value?.sample_id === this.state.sample?.id) {
-            this.setState({ idle: true, sample: { id: null }, wasSampleSet: true });
+            this.setState({ idle: true, sample: { id: null } });
           }
         });
-    } else if (!field?.value?.sample_id) {
-      // if there is no sample_id in the field's value, set the state to idle and sample to null
-      this.setState({ idle: true, sample: { id: null }, wasSampleSet: false });
     }
   }
 
@@ -137,22 +144,13 @@ class ResearchPlanDetailsFieldSample extends Component {
     ElementActions.fetchSampleById(sample?.id);
   }
 
-  static renderElementError() {
-    return (
-      <div style={{ color: 'red', textAlign: 'left' }}>
-        <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-        <span style={{ fontWeight: 'bold' }}>Element not found!</span>
-      </div>
-    );
-  }
-
   renderSample(sample) {
     if (!hasAuth(sample?.id)) {
       return noAuth(sample);
     }
 
     if (!sample?.id) {
-      this.renderElementError();
+      elementError();
     }
 
     const { edit } = this.props;
@@ -198,7 +196,7 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { sample, wasSampleSet } = this.state;
+    const { sample } = this.state;
 
     if (!hasAuth(sample?.id)) {
       return noAuth(sample);
@@ -211,8 +209,8 @@ class ResearchPlanDetailsFieldSample extends Component {
     let content;
     if (sample?.id) {
       content = this.renderSample(sample);
-    } else if (wasSampleSet) {
-      content = this.renderElementError();
+    } else if (!sample?.id && this.props.field?.value?.sample_id) {
+      content = elementError();
     } else {
       content = 'Drop sample here.';
     }
@@ -225,13 +223,13 @@ class ResearchPlanDetailsFieldSample extends Component {
   }
 
   renderStatic() {
-    const { sample, wasSampleSet } = this.state;
+    const { sample } = this.state;
 
     let content;
     if (sample?.id) {
       content = this.renderSample(sample);
-    } else if (wasSampleSet) {
-      content = this.renderElementError();
+    } else if (!sample?.id && this.props.field?.value?.sample_id) {
+      content = elementError();
     } else {
       content = null;
     }
