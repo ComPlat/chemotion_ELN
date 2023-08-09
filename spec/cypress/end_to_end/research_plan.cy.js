@@ -37,6 +37,9 @@ describe('Research Plan', () => {
     cy.get('#remove-or-delete-btn').click();
     cy.get('.open > .dropdown-menu > :nth-child(2) > a').click();
     cy.get('.btn-toolbar > .btn-warning').click();
+
+    cy.get('#tabList-tab-0').click();
+    cy.get('#tabList-tab-4').click();
     cy.get('#tabList-tab-4 > span').contains('0(0)');
   });
 });

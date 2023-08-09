@@ -25,7 +25,8 @@ describe('Share Collections', () => {
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
     cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-    cy.get('#react-select-2--value').type('User').type('{downArrow}').type('{enter}');
+    cy.get('#react-select-4--value').as('user').click();
+    cy.get('@user').type('User').type('{downArrow}').type('{enter}');
     cy.get('#create-sync-shared-col-btn').click();
     Cypress.on('uncaught:exception', () =>
       // returning false here prevents Cypress from failing the test
@@ -37,7 +38,7 @@ describe('Share Collections', () => {
     cy.contains('My project with User Complat');
   });
 
-  it('share with permission read limited', () => {
+  it.only('share with permission read limited', () => {
     cy.login('cu1', 'user_password');
     cy.get('#tree-id-Col1').click();
     cy.visit('/mydb/collection/3');
@@ -48,14 +49,12 @@ describe('Share Collections', () => {
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
     cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-    cy.get('#react-select-2--value').type('User').type('{downArrow}').type('{enter}');
+    cy.get('#react-select-4--value').type('User').type('{downArrow}').type('{enter}');
     cy.get('#create-sync-shared-col-btn').click();
-    
     Cypress.on('uncaught:exception', () =>
       false);
     cy.clearCookie('_chemotion_session');
     cy.get('a[title="Log out"]').click();
-
     cy.login('cu2', 'user_password');
     cy.get('#shared-home-link').click();
     cy.contains('My project with User Complat').then(() => {

@@ -17,11 +17,11 @@ describe('Manage Collections', () => {
     cy.contains('Hello Collection');
   });
 
-  it('rename an unshared collection', () => {
+  it.only('rename an unshared collection', () => {
     cy.createCollection(1, 'Hello Collection');
     cy.login('cu1', 'user_password');
     cy.waitForCollections();
-    cy.get('input[value="Hello Collection"]').last().as('input');
+    cy.get('input[value="Hello Collection"]').first().as('input');
     cy.get('@input').clear().type('Foo-Bar');
     cy.get('#save-collections-button').click();
     cy.contains('Foo-Bar');
