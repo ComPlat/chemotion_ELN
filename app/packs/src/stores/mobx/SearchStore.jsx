@@ -57,7 +57,8 @@ export const SearchStore = types
     search_icon: types.optional(types.enumeration("search_icon", ["right", "down"]), "down"),
     result_icon: types.optional(types.enumeration("result_icon", ["right", "down"]), "right"),
     error_message: types.optional(types.string, ""),
-    tab_current_page: types.optional(types.array(types.frozen({})), [])
+    tab_current_page: types.optional(types.array(types.frozen({})), []),
+    active_tab_key: types.optional(types.number, 0)
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
@@ -108,11 +109,13 @@ export const SearchStore = types
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.search_type = type;
+      self.active_tab_key = 0;
     },
     changeSearchElement(elementValues) {
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.search_element = elementValues;
+      self.active_tab_key = 0;
     },
     addAdvancedSearchValue(id, values) {
       self.advanced_search_values[id] = values;
@@ -178,6 +181,7 @@ export const SearchStore = types
       self.clearTabCurrentPage();
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
+      self.active_tab_key = 0;
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
@@ -202,10 +206,14 @@ export const SearchStore = types
     clearTabCurrentPage() {
       self.tab_current_page.splice(0, self.tab_current_page.length);
     },
+    changeActiveTabKey(key) {
+      self.active_tab_key = key;
+    },
     handleCancel() {
       self.hideSearchModal();
       self.hideSearchResults();
       self.clearSearchResults();
+      self.active_tab_key = 0;
     }
   }))
   .views(self => ({
@@ -223,4 +231,5 @@ export const SearchStore = types
     get searchElement() { return self.search_element },
     get advancedSearchValues() { return values(self.advanced_search_values) },
     get detailSearchValues() { return values(self.detail_search_values) },
+    get activeTabKey() { return self.active_tab_key },
   }));

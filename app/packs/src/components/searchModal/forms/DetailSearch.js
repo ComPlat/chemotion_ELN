@@ -1,9 +1,10 @@
 import React, { useContext } from 'react';
-import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup } from 'react-bootstrap'
+import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup, Tabs, Tab } from 'react-bootstrap'
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
@@ -13,7 +14,10 @@ const DetailSearch = () => {
   let selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
   const { rxnos, unitsSystem, segmentKlasses, genericEls, profile } = UserStore.getState();
-  const tabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
+  const layoutTabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
+  const currentCollection = UIStore.getState().currentCollection;
+  let tabSegment = currentCollection?.tabs_segment;
+  let tabs = tabSegment ? tabSegment[selection.table.slice(0, -1)] : layoutTabs;
 
   const defaultDetailSearchValues = [{
     link: 'AND',
@@ -521,23 +525,52 @@ const DetailSearch = () => {
     return fields;
   }
 
-  const FormElements = () => {
-    let fields = [];
+  const handleSelectTab = (e) => {
+    searchStore.changeActiveTabKey(e);
+  }
+
+  const FormElementTabs = () => {
     let options = genericFields.length >= 1 ? genericFields : fieldOptions;
-    fields = mapOptions(options, fields);
+    let tabFields = [];
+    tabFields.push(
+      <Tab
+        eventKey={0}
+        title="Properties"
+        key="properties-0"
+      >
+        {mapOptions(options, [])}
+      </Tab>
+    );
 
     if (segmentFields.length >= 1) {
       segmentFields.map((segment, i) => {
-        fields.push(componentHeadline(segment.label, i, 'detail-search-segment-headline'));
-        fields = mapOptions(segment.value, fields);
+        tabFields.push(
+          <Tab
+            eventKey={i + 1}
+            title={segment.label}
+            key={`${segment.label.toLowerCase().replace(' ', '-')}-${i + 1}`}
+          >
+            {mapOptions(segment.value, [])}
+          </Tab>
+        );
       });
     }
-    return fields;
+    return (
+      <Tabs
+        activeKey={searchStore.activeTabKey}
+        animation={false}
+        onSelect={handleSelectTab}
+        id="detail-search-form-element-tabs"
+        key="form-element-tabs"
+      >
+        {tabFields}
+      </Tabs >
+    );
   }
 
   return (
     <div className='detail-search'>
-      {FormElements()}
+      {FormElementTabs()}
     </div>
   );
 }
