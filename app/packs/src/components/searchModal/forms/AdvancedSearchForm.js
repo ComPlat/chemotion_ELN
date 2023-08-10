@@ -113,7 +113,6 @@ const AdvancedSearchForm = () => {
 
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0
-      // && elnElements.includes(value[0] + 's');
     })
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
@@ -153,38 +152,49 @@ const AdvancedSearchForm = () => {
     );
   }
 
+  const searchValuesBySubFields = (val, table) => {
+    let label = '';
+    let value = '';
+    let unit = '';
+    let match = val.match;
+    let searchValues = [];
+
+    val.field.sub_fields.map((sub) => {
+      if (sub.type == 'label') {
+        label = sub.value;
+      } else if (val.sub_values[0][sub.id]) {
+        let subContent = val.sub_values[0][sub.id];
+        if (subContent.value !== undefined) {
+          value = subContent.value;
+          unit = subContent.value_system;
+          label = sub.col_name;
+          match = '>=';
+        } else {
+          value = subContent;
+          label = label === '' ? sub.col_name : label;
+        }
+        searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, match, value, unit].join(" "));
+      } else if (val.sub_values[0][sub.key]) {
+        value = val.sub_values[0][sub.key];
+        searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${sub.label.toLowerCase()}`, val.match, value, unit].join(" "));
+      }
+    });
+    return searchValues;
+  }
+
   const searchValuesByFilters = () => {
     const storedFilter = searchStore.searchFilters;
     const filters = storedFilter.length == 0 ? [] : storedFilter[0].filters;
     let searchValues = [];
 
     if (searchStore.searchResultVisible && filters.length > 0) {
-      filters.map((val, i) => {
+      filters.map((val) => {
         let table = val.field.table || val.table;
         table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
 
         if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
-          let label = '';
-          let value = '';
-          let unit = '';
-          let match = val.match;
-          val.field.sub_fields.map((sub) => {
-            if (sub.type == 'label') {
-              label = sub.value;
-            } else if (val.sub_values[0][sub.id]) {
-              let subContent = val.sub_values[0][sub.id];
-              if (subContent.value !== undefined) {
-                value = subContent.value;
-                unit = subContent.value_system;
-                label = sub.col_name;
-                match = '>=';
-              } else {
-                value = subContent;
-                label = label === '' ? sub.col_name : label;
-              }
-              searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, match, value, unit].join(" "));
-            }
-          });
+          let values = searchValuesBySubFields(val, table);
+          searchValues.push(...values);
         } else {
           searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value, val.unit].join(" "));
         }

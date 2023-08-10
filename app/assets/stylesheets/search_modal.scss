@@ -263,10 +263,19 @@ i.fa.icon-right {
     width: 49%;
     margin-right: 1%;
   }
+  .detail-search .sub-group-with-addon-2col {
+    width: 100%;
+  }
+  .detail-search .sub-group-with-addon-2col:last-child {
+    margin-right: 0;
+  }
   @media screen and (min-width: 1023px) {
     .detail-search .form-group, .detail-search .checkbox, .detail-search .ant-select {
       width: 24%;
      margin-right: 1%;
+    }
+    .detail-search .sub-group-with-addon-2col {
+      width: 49%;
     }
   }
   .detail-search .ant-select {
@@ -336,6 +345,19 @@ i.fa.icon-right {
   .detail-search .grey-field {
     background-color: #555;
     border: 1px solid #ccc;
+  }
+  .detail-search .grouped-sub-fields {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .detail-search .subfields-with-addon-left-3 {
+    width: 32%;
+    margin-right: 1%;
+  }
+  .detail-search .subfields-with-addon-left-2 {
+    width: 49%;
+    margin-right: 1%;
   }
 }
 

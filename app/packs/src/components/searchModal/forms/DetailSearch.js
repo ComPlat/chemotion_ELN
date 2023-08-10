@@ -3,6 +3,7 @@ import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup, Tab
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
+import SampleInventoryFieldData from './SampleInventoryFieldData';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
@@ -149,7 +150,7 @@ const DetailSearch = () => {
       if (option.column && option.column == 'duration') {
         options = FieldOptions.durationOptions;
       }
-    } else if (genericOptions.length >= 1) {
+    } else if (genericOptions.length >= 1 && genericSelections[option.option_layers]) {
       Object.values(genericSelections[option.option_layers].options).forEach((option) => {
         option.value = option.label;
         options.push(option);
@@ -338,6 +339,37 @@ const DetailSearch = () => {
     return subFields;
   }
 
+  const subGroupWithAddOnFields = (option, type, selectedValue, column, keyLabel) => {
+    let subFields = [];
+
+    option.sub_fields.map((field) => {
+      let subValue = selectedValue && selectedValue[column].sub_values[0][field.key] !== undefined ? selectedValue[column].sub_values[0][field.key] : '';
+      subFields.push(
+        <FormGroup key={`${column}-${keyLabel}-${field.key}`} className={`subfields-with-addon-left-${option.sub_fields.length}`}>
+          <InputGroup>
+            <InputGroup.Addon>{field.addon}</InputGroup.Addon>
+            <FormControl
+              id={`input_${column}_${field.key}`}
+              type="text"
+              key={`${column}-${keyLabel}-${field.key}`}
+              value={subValue}
+              onChange={handleSubFieldChanged(field.key, option, column, type)}
+            />
+          </InputGroup>
+        </FormGroup>
+      );
+    });
+
+    return (
+      <FormGroup key={`${column}-${keyLabel}-${type}`} className="sub-group-with-addon-2col">
+        <ControlLabel>{option.label}</ControlLabel>
+        <FormGroup className="grouped-sub-fields">
+          {subFields}
+        </FormGroup>
+      </FormGroup>
+    );
+  }
+
   const componentHeadline = (label, i, className) => {
     if (label === '') { return '' }
 
@@ -353,6 +385,7 @@ const DetailSearch = () => {
       case 'textWithAddOn':
       case 'system-defined':
       case 'formula-field':
+      case 'subGroupWithAddOn':
         return e.target.value;
       case 'checkbox':
         return e.target.checked;
@@ -471,8 +504,7 @@ const DetailSearch = () => {
 
   const fieldsByType = (option, fields, keyLabel) => {
     let column = option.column === 'stereo' ? `${option.column}_${option.opt}` : (option.column || option.field);
-    let genericOptions = genericFields.length >= 1 ? genericFields : segmentFields;
-    column = genericOptions && option.key !== undefined ? `${column}_${option.key}` : column;
+    column = option.key !== undefined ? `${column}_${option.key}` : column;
     const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(column) != -1 });
     switch (option.type) {
       case 'text':
@@ -502,6 +534,9 @@ const DetailSearch = () => {
         fields.push(componentHeadline(option.label, 'table', 'detail-search-headline'));
         fields.push(tableInputFields(option, 'table', selectedValue, column, keyLabel));
         break;
+      case 'subGroupWithAddOn':
+        fields.push(subGroupWithAddOnFields(option, 'subGroupWithAddOn', selectedValue, column, keyLabel));
+        break;
     }
     return fields;
   }
@@ -514,7 +549,7 @@ const DetailSearch = () => {
         } else if (i != 0 && field.value[0].type !== 'table') {
           fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
         }
-        
+
         field.value.map((option) => {
           fields = fieldsByType(option, fields, field.label);
         });
@@ -529,32 +564,36 @@ const DetailSearch = () => {
     searchStore.changeActiveTabKey(e);
   }
 
+  const addTabToTabFields = (title, value, i, tabFields) => {
+    tabFields.push(
+      <Tab
+        eventKey={i}
+        title={title}
+        key={`${title.toLowerCase().replace(' ', '-')}-${i}`}
+      >
+        {mapOptions(value, [])}
+      </Tab>
+    );
+    return tabFields;
+  }
+
   const FormElementTabs = () => {
     let options = genericFields.length >= 1 ? genericFields : fieldOptions;
     let tabFields = [];
-    tabFields.push(
-      <Tab
-        eventKey={0}
-        title="Properties"
-        key="properties-0"
-      >
-        {mapOptions(options, [])}
-      </Tab>
-    );
+    let additionalFields = [];
+    let i = 0;
+    tabFields = addTabToTabFields('Properties', options, i, tabFields);
+     
+    if (segmentFields.length >= 1) { additionalFields.push(...segmentFields); }
+    if (Object.keys(tabs).includes('inventory')) { additionalFields.push(...SampleInventoryFieldData.chemicals); }
 
-    if (segmentFields.length >= 1) {
-      segmentFields.map((segment, i) => {
-        tabFields.push(
-          <Tab
-            eventKey={i + 1}
-            title={segment.label}
-            key={`${segment.label.toLowerCase().replace(' ', '-')}-${i + 1}`}
-          >
-            {mapOptions(segment.value, [])}
-          </Tab>
-        );
+    if (additionalFields.length >= 1) {
+      additionalFields.map((field) => {
+        i += 1;
+        tabFields = addTabToTabFields(field.label, field.value, i, tabFields)
       });
     }
+
     return (
       <Tabs
         activeKey={searchStore.activeTabKey}

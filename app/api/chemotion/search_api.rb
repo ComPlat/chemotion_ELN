@@ -112,7 +112,7 @@ module Chemotion
       end
 
       def whitelisted_table(table:, column:, **_)
-        return true if %w[elements segments].include?(table)
+        return true if %w[elements segments chemicals].include?(table)
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
@@ -213,11 +213,11 @@ module Chemotion
         [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
       end
 
-      def filter_values_for_generic_sub_fields(sub_fields, prop, filter, options)
+      def filter_values_for_generic_sub_fields(sub_values, prop, filter, options)
         options[:field] = ''
         options[:additional_condition] = "(#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
 
-        sub_fields.first.each_with_index do |(key, value), j|
+        sub_values.first.each_with_index do |(key, value), j|
           next if value == ''
 
           prop_sub = "#{prop}_sub_#{j}"
@@ -240,6 +240,28 @@ module Chemotion
           end
         end
         [options[:field], options[:additional_condition], options[:joins]]
+      end
+
+      def filter_chemicals_tab(filter, field_table, table, options)
+        prop = "prop_#{field_table}"
+        options[:condition_table] = ''
+
+        if options[:joins].blank? || options[:joins].exclude?('INNER JOIN chemicals ON chemicals.sample_id = samples.id')
+          options[:joins] << "INNER JOIN #{field_table} ON #{field_table}.sample_id = #{table}.id"
+          options[:joins] << "CROSS JOIN jsonb_array_elements(#{field_table}.chemical_data) AS #{prop}"
+        end
+
+        if filter['sub_values'].present?
+          filter['sub_values'].first.each_with_index do |(key, value), j|
+            first_and = j.zero? ? '' : ' AND'
+            options[:field] = ''
+            options[:additional_condition] += "#{first_and} (#{prop} ->> '#{key}')::TEXT LIKE '#{value}'"
+          end
+        else
+          options[:field] = "(#{prop} ->> '#{filter['field']['column']}')::TEXT"
+        end
+
+        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
       end
 
       def filter_values_for_advanced_search(dl = @dl)
@@ -267,9 +289,11 @@ module Chemotion
           additional_condition = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
           words = sanitize_words(filter)
           filter_match = filter['value'] == 'true' ? '=' : filter['match']
+          field_table = filter['field']['table']
 
-          generics = (filter['field']['table'].present? && filter['field']['table'] == 'segments') ||
+          generics = (field_table.present? && field_table == 'segments') ||
                      (table == 'elements' && %w[name short_label].exclude?(field))
+          chemicals_tab = field_table.present? && field_table == 'chemicals'
 
           options = {
             joins: joins, field: field, condition_table: condition_table, first_condition: first_condition,
@@ -279,6 +303,8 @@ module Chemotion
           joins, field, condition_table, first_condition, additional_condition, words =
             if generics
               filter_generic_fields(filter, table, i, options)
+            elsif chemicals_tab
+              filter_chemicals_tab(filter, field_table, table, options)
             else
               filter_special_non_generic_fields(filter, table, options)
             end

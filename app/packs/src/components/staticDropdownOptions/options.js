@@ -645,3 +645,10 @@ export const stereoRelOptions = [
   { label: 'fac', value: 'fac' },
   { label: 'mer', value: 'mer' },
 ];
+
+export const chemicalStatusOptions = [
+  { label: 'Available', value: 'Available' },
+  { label: 'Out of stock', value: 'Out of stock' },
+  { label: 'To be ordered', value: 'To be ordered' },
+  { label: 'Ordered', value: 'Ordered' }
+];
