@@ -7,16 +7,9 @@ import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
 const spec = {
-  drop(props, monitor, component) {
+  drop(props, monitor) {
     const { field, onChange } = props;
-    field.value.reaction_id = monitor.getItem().element.id;
     onChange({ reaction_id: monitor.getItem().element.id }, field.id);
-
-    // set reactionDropped to true when an item is dropped
-    component.setState({ reactionDropped: true });
-
-    // trigger immediate update of the state after dropping
-    component.onDropReaction(monitor.getItem().element.id);
   }
 };
 
@@ -27,7 +20,10 @@ const collect = (connect, monitor) => ({
 });
 
 const hasAuth = (id) => {
-  if (typeof id === 'string' && id.includes('error')) return false; return true;
+  if (typeof id === 'string' && id.includes('error')) {
+    return false;
+  }
+  return true;
 };
 
 const noAuth = (el) => (
@@ -42,9 +38,9 @@ const noAuth = (el) => (
 
 function elementError() {
   return (
-    <div style={{ color: 'red', textAlign: 'left' }}>
+    <div style={{ color: 'red', textAlign: 'center' }}>
       <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-      <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+      <span style={{ fontWeight: 'bold' }}>Internal Server Error: Reaction can not be found!</span>
     </div>
   );
 }
@@ -57,102 +53,47 @@ class ResearchPlanDetailsFieldReaction extends Component {
       reaction: {
         id: null
       },
+      error: false
     };
-    this.onDropReaction = this.onDropReaction.bind(this);
   }
 
   componentDidMount() {
     const { field } = this.props;
-    if (field?.value?.reaction_id && hasAuth(field?.value?.reaction_id) && !this.state.reaction.id) {
+    if (field && field.value && field.value.reaction_id && hasAuth(field.value.reaction_id)) {
       this.fetch();
     }
-
-    if (this.state.reactionDropped) {
-      this.onDropReaction(this.props.field?.value?.reaction_id);
-      this.setState({ reactionDropped: false });
-    }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps) {
     const { field } = this.props;
-    const { idle } = this.state;
-    // if reaction id is not the same as before or the previous state of reaction was null, fetch the new one
-    if (
-      idle
-      && field?.value?.reaction_id
-      && prevState.reaction?.id !== field?.value?.reaction_id
-      && hasAuth(field?.value?.reaction_id)
-    ) {
-      this.setState(
-        {
-          idle: false,
-        },
-        this.fetch
-      );
+    const { idle, reaction } = this.state;
+    if (idle && field.value.reaction_id !== prevProps.field.value.reaction_id && hasAuth(reaction.id)) {
+      this.setState({ idle: false }, this.fetch);
     }
-
-    if (this.state.reactionDropped) {
-      this.onDropReaction(this.props.field?.value?.reaction_id);
-      this.setState({ reactionDropped: false });
-    }
-  }
-
-  onDropReaction(reaction_id) {
-    ReactionsFetcher.fetchById(reaction_id)
-      .then((reaction) => {
-        if (reaction_id === reaction.id) {
-          this.setState({ idle: true, reaction });
-        }
-      })
-      .catch(() => {
-        // handle case when the reaction is not found
-        if (reaction_id === this.state.reaction.id) {
-          this.setState({ idle: true, reaction: { id: null } });
-        }
-      });
   }
 
   fetch() {
     const { field } = this.props;
-
-    // check if the field's reaction_id exists and if the reaction id in the state is different from the one in the field's value
-    if (
-      field?.value?.reaction_id
-      && this.state.reaction?.id !== field?.value?.reaction_id
-    ) {
-      ReactionsFetcher.fetchById(field.value.reaction_id)
-        .then((reaction) => {
-          // only update state if the fetched reaction's id is the same as the current field's reaction_id
-          if (field?.value?.reaction_id === reaction.id) {
-            this.setState({ idle: true, reaction });
-          }
-        })
-        .catch(() => {
-          // handle case when the reaction is not found
-          if (field?.value?.reaction_id === this.state.reaction?.id) {
-            this.setState({ idle: true, reaction: { id: null } });
-          }
-        });
-    }
-  }
-
-  showReaction() {
-    const { reaction } = this.state;
-    UrlSilentNavigation(reaction);
-    ElementActions.fetchReactionById(reaction?.id);
+    ReactionsFetcher.fetchById(field.value.reaction_id)
+      .then((reaction) => {
+        if (reaction && reaction.id) {
+          this.setState({ idle: true, reaction });
+        } else {
+          console.error('Fetched reaction does not contain an id or is in incorrect format:', reaction);
+          this.setState({ idle: true, error: true });
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching reaction:', error);
+        this.setState({ idle: true, error: true });
+      });
   }
 
   renderReaction(reaction) {
-    if (!hasAuth(reaction?.id)) {
+    if (!hasAuth(reaction.id)) {
       return noAuth(reaction);
     }
-
-    if (!reaction?.id) {
-      elementError();
-    }
-
     const { edit } = this.props;
-
     const link = (
       <button
         type="button"
@@ -193,25 +134,21 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { reaction } = this.state;
-
-    if (!hasAuth(reaction?.id)) {
+    const { reaction, error } = this.state;
+    if (!hasAuth(reaction.id)) {
       return noAuth(reaction);
     }
-
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
-
     let content;
-    if (reaction?.id) {
-      content = this.renderReaction(reaction);
-    } else if (!reaction?.id && this.props.field?.value?.reaction_id) {
+    if (error) {
       content = elementError();
+    } else if (reaction.id) {
+      content = this.renderReaction(reaction);
     } else {
       content = 'Drop reaction here.';
     }
-
     return connectDropTarget(
       <div className={className}>
         {content}
@@ -220,17 +157,15 @@ class ResearchPlanDetailsFieldReaction extends Component {
   }
 
   renderStatic() {
-    const { reaction } = this.state;
-
+    const { reaction, error } = this.state;
     let content;
-    if (reaction?.id) {
-      content = this.renderReaction(reaction);
-    } else if (!reaction?.id && this.props.field?.value?.reaction_id) {
+    if (error) {
       content = elementError();
+    } else if (reaction.id) {
+      content = this.renderReaction(reaction);
     } else {
       content = null;
     }
-
     return content;
   }
 
