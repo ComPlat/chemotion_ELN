@@ -268,9 +268,11 @@ module Chemotion
         requires :id, type: Integer, desc: "Sample id"
       end
       route_param :id do
-        before do
+        after_validation do
           @element_policy = ElementPolicy.new(current_user, Sample.find(params[:id]))
           error!('401 Unauthorized', 401) unless @element_policy.read?
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
 
         get do
