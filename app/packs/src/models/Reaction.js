@@ -85,7 +85,7 @@ export default class Reaction extends Element {
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
-      description: Reaction.quillDefault(),
+      description: '',
       duration: '',
       durationDisplay: DurationDefault,
       literatures: {},
@@ -284,7 +284,7 @@ export default class Reaction extends Element {
   }
 
   get description_contents() {
-    return this.description.ops.map(s => s.insert).join()
+    return this.description;
   }
 
   get observation_contents() {

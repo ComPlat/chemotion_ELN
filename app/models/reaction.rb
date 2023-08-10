@@ -51,7 +51,6 @@ class Reaction < ApplicationRecord
   include ReactionRinchi
   include Segmentable
 
-  serialize :description, Hash
   serialize :observation, Hash
 
   multisearchable against: %i[name short_label rinchi_string]

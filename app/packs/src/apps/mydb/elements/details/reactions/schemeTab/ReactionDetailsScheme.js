@@ -818,47 +818,52 @@ export default class ReactionDetailsScheme extends Component {
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
               dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              deleteMaterial={(material, materialGroup) =>
+                this.deleteMaterial(material, materialGroup)
               }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              onChange={(changeEvent) =>
+                this.handleMaterialsChange(changeEvent)
+              }
               switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
           </ListGroupItem>
-          <ListGroupItem style={minPadding} >
+          <ListGroupItem style={minPadding}>
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="reactants"
               materials={reaction.reactants}
               dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              deleteMaterial={(material, materialGroup) =>
+                this.deleteMaterial(material, materialGroup)
               }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              onChange={(changeEvent) =>
+                this.handleMaterialsChange(changeEvent)
+              }
               switchEquiv={this.switchEquiv}
               lockEquivColumn={lockEquivColumn}
               headIndex={headReactants}
             />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
-
             <MaterialGroupContainer
               reaction={reaction}
               materialGroup="products"
               materials={reaction.products}
               dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              deleteMaterial={(material, materialGroup) =>
+                this.deleteMaterial(material, materialGroup)
               }
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              onChange={(changeEvent) =>
+                this.handleMaterialsChange(changeEvent)
+              }
               switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
@@ -873,12 +878,14 @@ export default class ReactionDetailsScheme extends Component {
                   materialGroup="solvents"
                   materials={reaction.solvents}
                   dropMaterial={this.dropMaterial}
-                  deleteMaterial={
-                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+                  deleteMaterial={(material, materialGroup) =>
+                    this.deleteMaterial(material, materialGroup)
                   }
                   dropSample={this.dropSample}
                   showLoadingColumn={!!reaction.hasPolymers()}
-                  onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  onChange={(changeEvent) =>
+                    this.handleMaterialsChange(changeEvent)
+                  }
                   switchEquiv={this.switchEquiv}
                   lockEquivColumn={this.state.lockEquivColumn}
                   headIndex={0}
@@ -900,10 +907,15 @@ export default class ReactionDetailsScheme extends Component {
                 <FormControl
                   componentClass="textarea"
                   rows="4"
-                  value={reaction.conditions || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
+                  value={reaction.conditions || ""}
+                  disabled={
+                    !permitOn(reaction) ||
+                    reaction.isMethodDisabled("conditions")
+                  }
                   placeholder="Conditions..."
-                  onChange={event => this.props.onInputChange('conditions', event)}
+                  onChange={(event) =>
+                    this.props.onInputChange("conditions", event)
+                  }
                 />
               </div>
             </Collapse>
@@ -914,12 +926,16 @@ export default class ReactionDetailsScheme extends Component {
             <div className="reaction-scheme-props">
               <ReactionDetailsMainProperties
                 reaction={reaction}
-                onInputChange={(type, event) => this.props.onInputChange(type, event)}
+                onInputChange={(type, event) =>
+                  this.props.onInputChange(type, event)
+                }
               />
             </div>
             <ReactionDetailsDuration
               reaction={reaction}
-              onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              onInputChange={(type, event) =>
+                this.props.onInputChange(type, event)
+              }
             />
             <Row>
               <Col md={6}>
@@ -927,9 +943,15 @@ export default class ReactionDetailsScheme extends Component {
                   <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
                   <OlsTreeSelect
                     selectName="rxno"
-                    selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                    onSelectChange={event => this.props.onInputChange('rxno', event.trim())}
-                    selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
+                    selectedValue={
+                      (reaction.rxno && reaction.rxno.trim()) || ""
+                    }
+                    onSelectChange={(event) =>
+                      this.props.onInputChange("rxno", event.trim())
+                    }
+                    selectedDisable={
+                      !permitOn(reaction) || reaction.isMethodDisabled("rxno")
+                    }
                   />
                 </FormGroup>
               </Col>
@@ -940,6 +962,18 @@ export default class ReactionDetailsScheme extends Component {
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
                   <div className="quill-resize">
+                    {permitOn(reaction) ? (
+                      <ReactionDescriptionEditor
+                        template={reactionDescTemplate}
+                        value={reaction.description}
+                        updateTextTemplates={this.updateTextTemplates}
+                        onChange={(event) =>
+                          this.props.onInputChange('description', event)
+                        }
+                      />
+                    ) : (
+                      <p>{reaction.description}</p>
+                    )}
                     {
                       permitOn(reaction) ?
                         <ReactionDescriptionEditor
@@ -957,8 +991,10 @@ export default class ReactionDetailsScheme extends Component {
             </Row>
             <ReactionDetailsPurification
               reaction={reaction}
-              onReactionChange={r => this.onReactionChange(r)}
-              onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              onReactionChange={(r) => this.onReactionChange(r)}
+              onInputChange={(type, event) =>
+                this.props.onInputChange(type, event)
+              }
               additionQuillRef={this.additionQuillRef}
             />
           </ListGroupItem>
