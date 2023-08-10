@@ -65,10 +65,10 @@ class ResearchPlanDetailsFieldSample extends Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate() {
     const { field } = this.props;
     const { idle, sample } = this.state;
-    if (idle && field.value.sample_id !== prevProps.field.value.sample_id && hasAuth(sample.id)) {
+    if (idle && field.value.sample_id !== sample.id && hasAuth(sample.id)) {
       this.setState({ idle: false }, this.fetch);
     }
   }

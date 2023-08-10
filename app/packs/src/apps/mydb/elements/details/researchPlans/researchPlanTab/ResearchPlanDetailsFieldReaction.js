@@ -64,10 +64,10 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate() {
     const { field } = this.props;
     const { idle, reaction } = this.state;
-    if (idle && field.value.reaction_id !== prevProps.field.value.reaction_id && hasAuth(reaction.id)) {
+    if (idle && field.value.reaction_id !== reaction.id && hasAuth(reaction.id)) {
       this.setState({ idle: false }, this.fetch);
     }
   }
@@ -87,6 +87,12 @@ class ResearchPlanDetailsFieldReaction extends Component {
         console.error('Error fetching reaction:', error);
         this.setState({ idle: true, error: true });
       });
+  }
+
+  showReaction() {
+    const { reaction } = this.state;
+    UrlSilentNavigation(reaction);
+    ElementActions.fetchReactionById(reaction.id);
   }
 
   renderReaction(reaction) {
