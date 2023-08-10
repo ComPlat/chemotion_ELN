@@ -27,13 +27,15 @@ module CollectionHelpers
 
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
+   
     dl = (is_sync && SyncCollectionsUser || Collection).find_by(
       id: id.to_i, user_id: user_ids
     )&.slice(
       :permission_level,
       :sample_detail_level, :reaction_detail_level,
       :wellplate_detail_level, :screen_detail_level,
-      :researchplan_detail_level, :element_detail_level
+      :researchplan_detail_level, :element_detail_level,
+      :celllinesample_detail_level
     )&.symbolize_keys
     {
       permission_level: 0,
@@ -43,9 +45,10 @@ module CollectionHelpers
       screen_detail_level: 0,
       researchplan_detail_level: 0,
       element_detail_level: 0,
+      celllinesample_detail_level: 0,
     }.merge(dl || {})
   end
-
+ 
   # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
@@ -116,6 +119,7 @@ module CollectionHelpers
       screen_detail_level: 10,
       researchplan_detail_level: 10,
       element_detail_level: 10,
+      cellline_detail_level: 10,
     }
 
     @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
@@ -126,5 +130,7 @@ module CollectionHelpers
     @dl_sc = @dl[:screen_detail_level]
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
+    @dl_cl = @dl[:cellline_detail_level]
+    binding.pry
   end
 end
