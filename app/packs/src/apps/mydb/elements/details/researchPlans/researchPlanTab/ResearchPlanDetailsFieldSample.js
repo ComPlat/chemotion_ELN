@@ -8,16 +8,9 @@ import SampleName from 'src/components/common/SampleName';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 const spec = {
-  drop(props, monitor, component) {
+  drop(props, monitor) {
     const { field, onChange } = props;
-    field.value.sample_id = monitor.getItem().element.id;
     onChange({ sample_id: monitor.getItem().element.id }, field.id);
-
-    // set sampleDropped to true when an item is dropped
-    component.setState({ sampleDropped: true });
-
-    // trigger immediate update of the state after dropping
-    component.onDropSample(monitor.getItem().element.id);
   }
 };
 
@@ -28,7 +21,10 @@ const collect = (connect, monitor) => ({
 });
 
 const hasAuth = (id) => {
-  if (typeof id === 'string' && id.includes('error')) return false; return true;
+  if (typeof id === 'string' && id.includes('error')) {
+    return false;
+  }
+  return true;
 };
 
 const noAuth = (el) => (
@@ -43,9 +39,9 @@ const noAuth = (el) => (
 
 function elementError() {
   return (
-    <div style={{ color: 'red', textAlign: 'left' }}>
+    <div style={{ color: 'red', textAlign: 'center' }}>
       <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
-      <span style={{ fontWeight: 'bold' }}>Element not found!</span>
+      <span style={{ fontWeight: 'bold' }}>Internal Server Error: Sample can not be found!</span>
     </div>
   );
 }
@@ -58,103 +54,53 @@ class ResearchPlanDetailsFieldSample extends Component {
       sample: {
         id: null
       },
+      error: false
     };
-    this.onDropSample = this.onDropSample.bind(this);
   }
 
   componentDidMount() {
     const { field } = this.props;
-    if (field?.value?.sample_id && hasAuth(field?.value?.sample_id) && !this.state.sample.id) {
+    if (field && field.value && field.value.sample_id && hasAuth(field.value.sample_id)) {
       this.fetch();
     }
-
-    if (this.state.sampleDropped) {
-      this.onDropSample(this.props.field?.value?.sample_id);
-      this.setState({ sampleDropped: false });
-    }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps) {
     const { field } = this.props;
-    const { idle } = this.state;
-    if (
-      idle
-      && field?.value?.sample_id
-      && prevState.sample?.id !== field?.value?.sample_id
-      && hasAuth(field?.value?.sample_id)
-    ) {
-      this.setState(
-        {
-          idle: false,
-        },
-        this.fetch
-      );
+    const { idle, sample } = this.state;
+    if (idle && field.value.sample_id !== prevProps.field.value.sample_id && hasAuth(sample.id)) {
+      this.setState({ idle: false }, this.fetch);
     }
-
-    if (this.state.sampleDropped) {
-      this.onDropSample(this.props.field?.value?.sample_id);
-      this.setState({ sampleDropped: false });
-    }
-  }
-
-  onDropSample(sample_id) {
-    SamplesFetcher.fetchById(sample_id)
-      .then((sample) => {
-        if (sample_id === sample.id) {
-          this.setState({ idle: true, sample });
-        }
-      })
-      .catch(() => {
-        // handle case when the sample is not found
-        if (sample_id === this.state.sample.id) {
-          this.setState({ idle: true, sample: { id: null } });
-        }
-      });
   }
 
   fetch() {
     const { field } = this.props;
-
-    // check if the field's sample_id exists and if the sample id in the state is different from the one in the field's value
-    if (
-      field?.value?.sample_id
-      && this.state.sample?.id !== field?.value?.sample_id
-    ) {
-      SamplesFetcher.fetchById(field.value.sample_id)
-        .then((sample) => {
-          // only update state if the fetched sample's id is the same as the current field's sample_id
-          if (field?.value?.sample_id === sample.id) {
-            this.setState({ idle: true, sample });
-          }
-        })
-        .catch((error) => {
-          console.log('Error:', error);
-
-          // handle case when the sample is not found
-          if (field?.value?.sample_id === this.state.sample?.id) {
-            this.setState({ idle: true, sample: { id: null } });
-          }
-        });
-    }
+    SamplesFetcher.fetchById(field.value.sample_id)
+      .then((sample) => {
+        if (sample && sample.id) {
+          this.setState({ idle: true, sample });
+        } else {
+          console.error('Fetched sample does not contain an id or is in incorrect format:', sample);
+          this.setState({ idle: true, error: true });
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching sample:', error);
+        this.setState({ idle: true, error: true });
+      });
   }
 
   showSample() {
     const { sample } = this.state;
     UrlSilentNavigation(sample);
-    ElementActions.fetchSampleById(sample?.id);
+    ElementActions.fetchSampleById(sample.id);
   }
 
   renderSample(sample) {
-    if (!hasAuth(sample?.id)) {
+    if (!hasAuth(sample.id)) {
       return noAuth(sample);
     }
-
-    if (!sample?.id) {
-      elementError();
-    }
-
     const { edit } = this.props;
-
     const link = (
       <button
         type="button"
@@ -196,25 +142,21 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { sample } = this.state;
-
-    if (!hasAuth(sample?.id)) {
+    const { sample, error } = this.state;
+    if (!hasAuth(sample.id)) {
       return noAuth(sample);
     }
-
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
-
     let content;
-    if (sample?.id) {
-      content = this.renderSample(sample);
-    } else if (!sample?.id && this.props.field?.value?.sample_id) {
+    if (error) {
       content = elementError();
+    } else if (sample.id) {
+      content = this.renderSample(sample);
     } else {
       content = 'Drop sample here.';
     }
-
     return connectDropTarget(
       <div className={className}>
         {content}
@@ -223,17 +165,15 @@ class ResearchPlanDetailsFieldSample extends Component {
   }
 
   renderStatic() {
-    const { sample } = this.state;
-
+    const { sample, error } = this.state;
     let content;
-    if (sample?.id) {
-      content = this.renderSample(sample);
-    } else if (!sample?.id && this.props.field?.value?.sample_id) {
+    if (error) {
       content = elementError();
+    } else if (sample.id) {
+      content = this.renderSample(sample);
     } else {
       content = null;
     }
-
     return content;
   }
 
