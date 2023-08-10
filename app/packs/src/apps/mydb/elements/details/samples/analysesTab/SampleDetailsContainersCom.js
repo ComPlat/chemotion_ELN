@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { PanelGroup, Panel } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -42,31 +43,44 @@ function RndOrder({
 }) {
   return (
     <div>
-      <p>
+      <p style={{
+        position: 'sticky',
+        top: '0px',
+        zIndex: 1000,
+        backgroundColor: 'white',
+
+      }}
+      >
         {AnalysisModeBtn(mode, toggleMode, isDisabled)}
         {addButton()}
       </p>
-      {orderContainers.map((container, i) => {
-        const id = container.id || `fake_${i}`;
-        return (
-          <ContainerRow
-            sample={sample}
-            mode={mode}
-            container={container}
-            readOnly={readOnly}
-            isDisabled={isDisabled}
-            key={`${id}CRowOrder`}
-            addButton={addButton}
-            handleMove={handleMove}
-            handleRemove={handleRemove}
-            handleSubmit={handleSubmit}
-            handleAccordionOpen={handleAccordionOpen}
-            handleUndo={handleUndo}
-            toggleAddToReport={toggleAddToReport}
-          />
-        );
-      })}
-      <p>{addButton()}</p>
+      <div style={{
+        position: 'relative',
+        height: '600px',
+        overflowY: 'scroll'
+      }}
+      >
+        {orderContainers.map((container, i) => {
+          const id = container.id || `fake_${i}`;
+          return (
+            <ContainerRow
+              sample={sample}
+              mode={mode}
+              container={container}
+              readOnly={readOnly}
+              isDisabled={isDisabled}
+              key={`${id}CRowOrder`}
+              addButton={addButton}
+              handleMove={handleMove}
+              handleRemove={handleRemove}
+              handleSubmit={handleSubmit}
+              handleAccordionOpen={handleAccordionOpen}
+              handleUndo={handleUndo}
+              toggleAddToReport={toggleAddToReport}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -111,7 +125,14 @@ function RndEdit({
 
   return (
     <div>
-      <p>
+      <p style={{
+        position: 'sticky',
+        top: '0px',
+        zIndex: 1000,
+        backgroundColor: 'white',
+
+      }}
+      >
         {AnalysisModeBtn(mode, toggleMode, isDisabled)}
         {addButton()}
       </p>
@@ -121,6 +142,11 @@ function RndEdit({
         activeKey={activeAnalysis}
         onSelect={panelOnSelect}
         accordion
+        style={{
+          position: 'relative',
+          height: '600px',
+          overflowY: 'scroll'
+        }}
       >
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
