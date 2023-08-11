@@ -10,13 +10,16 @@ class CelllineSample < ApplicationRecord
   belongs_to :cellline_material
   belongs_to :creator, class_name: 'User', foreign_key: 'user_id'
 
-  scope :by_sample_name, lambda { |query|
-                           where('name ILIKE ?', "%#{sanitize_sql_like(query)}%")
-                         }
+  scope :by_sample_name, -> (query,collection_id) {
+    joins(:collections).where('collections.id = ?', collection_id).
+    where('name ILIKE ?', "%#{sanitize_sql_like(query)}%")
+}
 
-  scope :by_material_name, lambda { |query|
-    joins(:cellline_material)
-      .where('cellline_materials.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
+  scope :by_material_name, -> (query,collection_id) {
+    joins(:cellline_material).
+    joins(:collections).
+    where('collections.id=?', collection_id).
+    where('cellline_materials.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
 
   include Taggable

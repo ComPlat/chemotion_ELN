@@ -26,10 +26,10 @@ module Chemotion
       end
 
       def search_for_celllines 
-        material_ids = CelllineSample.by_material_name(params[:query]).map{|cl|cl.cellline_material_id}.uniq
+        material_ids = CelllineSample.by_material_name(params[:query],@params['collection_id']).map{|cl|cl.cellline_material_id}.uniq
        { 
         cell_line_material_name: CelllineMaterial.where(id: material_ids).pluck(:name).uniq,
-        cell_line_sample_name: CelllineSample.by_sample_name(params[:query]).pluck(:name)
+        cell_line_sample_name: CelllineSample.by_sample_name(params[:query],@params['collection_id']).pluck(:name)
        }
       end
 
@@ -132,6 +132,8 @@ module Chemotion
             conditions: conditions,
             requirements: requirements
           }
+        when 'cell_lines'
+          dl_cl.positive? ? search_for_celllines(): [];
         else
           element_short_label = dl_e.positive? && search_by_element_short_label.call(Element, qry) || []
           sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
@@ -187,7 +189,7 @@ module Chemotion
         set_var
       end
 
-      route_param :element_type, type: String, values: %w[all samples reactions wellplates screens] do
+      route_param :element_type, type: String, values: %w[all samples reactions wellplates screens cell_lines] do
         desc 'Return all suggestions for AutoCompleteInput'
         params do
           use :suggestion_params
