@@ -9,6 +9,7 @@ module Usecases
       end
 
       def execute!
+        check_parameter
         @vessel_template = find_vessel_template || create_vessel_template
         @vessel = create_vessel(@vessel_template)
 
@@ -51,6 +52,22 @@ module Usecases
           name: @params[:name],
           description: @params[:description],
         )
+      end
+
+      def check_parameter
+        raise 'volume_amount not valid' unless check_scalar_value(@params[:volume_amount])
+        raise 'template_name not valid' unless check_string_value(@params[:template_name])
+        raise 'volume_unit not valid' unless check_string_value(@params[:volume_unit])
+        raise 'vessel_type not valid' unless check_string_value(@params[:vessel_type])
+        raise 'material_type not valid' unless check_string_value(@params[:material_type])
+      end
+
+      def check_scalar_value(value)
+        value.instance_of?(Integer) && value >= 0
+      end
+
+      def check_string_value(value)
+        value.instance_of?(String) && !value.empty?
       end
     end
   end

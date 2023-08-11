@@ -14,7 +14,7 @@ RSpec.describe Usecases::Vessels::Create do
     details: 'multi-neck',
     vessel_type: 'round bottom flask',
     volume_unit: 'ml',
-    volume_amount: '500',
+    volume_amount: 500,
     material_type: 'glass',
     material_details: 'other material details',
     name: 'Vessel 1', 
@@ -23,6 +23,57 @@ RSpec.describe Usecases::Vessels::Create do
   end
 
   describe 'execute!' do
+    context 'when input is not valid' do
+      context 'when volume amount is negative' do
+        before do
+          params[:volume_amount] = -1
+        end
+
+        it 'error message' do
+          expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
+        end
+      end
+
+      context 'when amount present but deleted' do
+        before do
+          params.delete(:volume_amount)
+        end
+        
+        it 'error message' do
+          expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
+        end
+      end
+
+      context 'when amount is not an integer' do
+        before do
+          params[:volume_amount] = 'abc'
+        end
+
+        it 'error message' do
+          expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
+        end
+      end
+
+      context 'when vessel template name is not present' do
+        before do
+          params[:template_name] = []
+        end
+
+        it 'error message' do
+          expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
+        end
+      end
+
+      context 'when vessel template name is not a string' do
+        before do
+          params[:template_name] = 1
+        end
+
+        it 'error message' do
+          expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
+        end
+      end
+    end  
     context 'when vessel template already exists' do
       let(:loaded_vessel) { Vessel.find(vessel.id) }
       let(:loaded_vessel_template) { VesselTemplate.find(loaded_vessel.vessel_template_id) }
@@ -44,7 +95,7 @@ RSpec.describe Usecases::Vessels::Create do
         expect(loaded_vessel_template.details).to eq('multi-neck')
         expect(loaded_vessel_template.vessel_type).to eq('round bottom flask')
         expect(loaded_vessel_template.volume_unit).to eq('ml')
-        expect(loaded_vessel_template.volume_amount).to eq('500')
+        expect(loaded_vessel_template.volume_amount).to eq(500)
         expect(loaded_vessel_template.material_type).to eq('glass')
         expect(loaded_vessel_template.material_details).to eq('other material details')
       end
@@ -70,7 +121,7 @@ RSpec.describe Usecases::Vessels::Create do
         expect(loaded_vessel_template.details).to eq('multi-neck')
         expect(loaded_vessel_template.vessel_type).to eq('round bottom flask')
         expect(loaded_vessel_template.volume_unit).to eq('ml')
-        expect(loaded_vessel_template.volume_amount).to eq('500')
+        expect(loaded_vessel_template.volume_amount).to eq(500)
         expect(loaded_vessel_template.material_type).to eq('glass')
         expect(loaded_vessel_template.material_details).to eq('other material details')
       end
