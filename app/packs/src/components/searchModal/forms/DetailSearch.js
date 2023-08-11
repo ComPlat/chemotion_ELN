@@ -585,7 +585,9 @@ const DetailSearch = () => {
     tabFields = addTabToTabFields('Properties', options, i, tabFields);
      
     if (segmentFields.length >= 1) { additionalFields.push(...segmentFields); }
-    if (Object.keys(tabs).includes('inventory')) { additionalFields.push(...SampleInventoryFieldData.chemicals); }
+    if (tabs !== undefined && Object.keys(tabs).includes('inventory')) {
+      additionalFields.push(...SampleInventoryFieldData.chemicals);
+    }
 
     if (additionalFields.length >= 1) {
       additionalFields.map((field) => {
