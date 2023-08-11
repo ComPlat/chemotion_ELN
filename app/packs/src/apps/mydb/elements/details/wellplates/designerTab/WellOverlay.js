@@ -200,15 +200,25 @@ function WellOverlay({
       onHide={() => handleClose()}
     >
       <Popover title={title(handleClose)} id={`wellpop${well.id}`}>
-        {content(
-          well,
-          readoutTitles,
-          removeSampleFromWell,
-          handleWellLabel,
-          handleColorPicker,
-          selectedColor,
-          saveColorCode
-        )}
+        <div style={{
+          maxHeight: '500px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingRight: '10px',
+          marginRight: '-10px',
+          boxSizing: 'border-box'
+        }}
+        >
+          {content(
+            well,
+            readoutTitles,
+            removeSampleFromWell,
+            handleWellLabel,
+            handleColorPicker,
+            selectedColor,
+            saveColorCode
+          )}
+        </div>
       </Popover>
     </Overlay>
   );
