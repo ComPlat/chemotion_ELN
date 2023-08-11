@@ -131,6 +131,5 @@ module CollectionHelpers
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:cellline_detail_level]
-    binding.pry
   end
 end

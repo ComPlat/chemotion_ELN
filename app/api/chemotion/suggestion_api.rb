@@ -25,6 +25,14 @@ module Chemotion
         suggestions
       end
 
+      def search_for_celllines 
+        material_ids = CelllineSample.by_material_name(params[:query]).map{|cl|cl.cellline_material_id}.uniq
+       { 
+        cell_line_material_name: CelllineMaterial.where(id: material_ids).pluck(:name).uniq,
+        cell_line_sample_name: CelllineSample.by_sample_name(params[:query]).pluck(:name)
+       }
+      end
+
       def search_possibilities_by_type_user_and_collection(type)
         collection_id = @c_id
         dl = @dl
@@ -33,7 +41,7 @@ module Chemotion
         dl_wp = dl[:wellplate_detail_level]
         dl_sc = dl[:screen_detail_level]
         dl_e = dl[:element_detail_level]
-
+        dl_cl = dl[:celllinesample_detail_level]
         d_for = proc do |klass|
           klass.by_collection_id(collection_id)
         end
@@ -147,6 +155,7 @@ module Chemotion
           screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
           conditions = dl_sc > -1 && search_by_field.call(Screen, :conditions, qry) || []
           requirements = dl_sc > -1 && search_by_field.call(Screen, :requirements, qry) || []
+          cell_line_infos = dl_cl.positive? ? search_for_celllines(): [];
 
           {
             element_short_label: element_short_label,
@@ -168,7 +177,7 @@ module Chemotion
             screen_name: screen_name,
             conditions: conditions,
             requirements: requirements
-          }
+          }.merge(cell_line_infos)
         end
       end
     end
