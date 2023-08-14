@@ -4,6 +4,7 @@ import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
 import SampleInventoryFieldData from './SampleInventoryFieldData';
+import AnalysesFieldData from './AnalysesFieldData';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
@@ -14,7 +15,7 @@ const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
   let selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
-  const { rxnos, unitsSystem, segmentKlasses, genericEls, profile } = UserStore.getState();
+  const { rxnos, chmos, unitsSystem, segmentKlasses, genericEls, profile } = UserStore.getState();
   const layoutTabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
   const currentCollection = UIStore.getState().currentCollection;
   let tabSegment = currentCollection?.tabs_segment;
@@ -184,19 +185,19 @@ const DetailSearch = () => {
     return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;
   };
 
-  const rxnoInput = (option, type, selectedValue) => {
-    let options = rxnos;
+  const rxnoChmosInput = (option, type, selectedValue, column) => {
+    let options = type == 'chmos' ? chmos : rxnos;
     if (options[0].value !== '') { options.unshift({ search: '', title: '', value: '', is_enabled: true }); }
     return (
       <FormGroup key={`${option.column}-${option.label}-${type}`}>
         <ControlLabel>{option.label}</ControlLabel>
         <TreeSelect
           key={option.column}
-          value={selectedValue ? selectedValue[option.column].value : ''}
+          value={selectedValue ? selectedValue[column].value : ''}
           treeData={options}
           placeholder="Select type"
           dropdownStyle={{ maxHeight: '250px' }}
-          onChange={handleFieldChanged(option, option.column, type)}
+          onChange={handleFieldChanged(option, column, type)}
           filterTreeNode={filterTreeNode}
         />
       </FormGroup>
@@ -522,7 +523,8 @@ const DetailSearch = () => {
         fields.push(textWithAddOnInput(option, 'textWithAddOn', selectedValue, keyLabel));
         break;
       case 'rxnos':
-        fields.push(rxnoInput(option, 'rxnos', selectedValue));
+      case 'chmos':
+        fields.push(rxnoChmosInput(option, option.type, selectedValue, column));
         break;
       case 'system-defined':
         fields.push(systemDefinedInput(option, 'system-defined', selectedValue, column, keyLabel));
@@ -587,6 +589,9 @@ const DetailSearch = () => {
     if (segmentFields.length >= 1) { additionalFields.push(...segmentFields); }
     if (tabs !== undefined && Object.keys(tabs).includes('inventory')) {
       additionalFields.push(...SampleInventoryFieldData.chemicals);
+    }
+    if (tabs !== undefined && Object.keys(tabs).includes('analyses')) {
+      additionalFields.push(...AnalysesFieldData.containers);
     }
 
     if (additionalFields.length >= 1) {
