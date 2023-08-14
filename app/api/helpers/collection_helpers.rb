@@ -27,7 +27,6 @@ module CollectionHelpers
 
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
-   
     dl = (is_sync && SyncCollectionsUser || Collection).find_by(
       id: id.to_i, user_id: user_ids
     )&.slice(
@@ -119,7 +118,7 @@ module CollectionHelpers
       screen_detail_level: 10,
       researchplan_detail_level: 10,
       element_detail_level: 10,
-      cellline_detail_level: 10,
+      celllinesample_detail_level: 10,
     }
 
     @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
@@ -130,6 +129,6 @@ module CollectionHelpers
     @dl_sc = @dl[:screen_detail_level]
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
-    @dl_cl = @dl[:cellline_detail_level]
+    @dl_cl = @dl[:celllinesample_detail_level]
   end
 end
