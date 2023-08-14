@@ -102,4 +102,34 @@ describe Chemotion::VesselAPI do
       end
     end
   end
+
+  describe 'DELETE /api/v1/vessels' do
+    context 'with correct parameters' do
+      let(:vessel) { create(:vessel) }
+      let(:collection) { create(:collection) }
+
+      let(:params) do
+      {
+        name: 'test',
+        template_name: 'Vessel Template 1',
+        details: 'multi-neck',
+        vessel_type: 'round bottom flask',
+        volume_unit: 'ml',
+        volume_amount: 500,
+        material_type: 'glass',
+        material_details: 'other material details',
+      }
+      end 
+
+      before do
+        CollectionsVessel.create(collection: collection, vessel: vessel)
+        delete "/api/v1/vessels/#{vessel.id}"
+      end
+
+      it 'is able to delete vessel' do
+        v = Vessel.find_by(name: 'test')
+        expect(v).to be_nil
+      end
+    end
+  end
 end
