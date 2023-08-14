@@ -24,8 +24,7 @@ describe Chemotion::VesselAPI do
       end
 
       it 'returns correct vessel' do
-        # expect(parsed_json_response['']).to be 
-        # add test values
+        expect(parsed_json_response['name']).to eq 'Vessel 1'
       end
     end
 
@@ -34,8 +33,12 @@ describe Chemotion::VesselAPI do
         get "/api/v1/vessels/-1"
       end
 
-      it 'returns correct status (http 401)' do
-        expect(response).to have_http_status :unauthorized
+      it 'returns correct status (http 400)' do
+        expect(response).to have_http_status :bad_request
+      end
+
+      it 'correct error message' do
+        expect(parsed_json_response['error']).to eq 'id not valid'
       end
     end
   end
@@ -59,7 +62,7 @@ describe Chemotion::VesselAPI do
         post '/api/v1/vessels/', params: params, as: :json
       end
 
-      it 'returns correct status code 201' do
+      it 'returns correct status (http 201)' do
         expect(response).to have_http_status :created
       end
 
@@ -76,10 +79,13 @@ describe Chemotion::VesselAPI do
       end
     end
 
-    context 'with incorrect parameters' do
+    context 'with incorrect parameters (no volume or material information)' do
       let(:collection) { Collection.first }
-      let(:params) do {
-
+      let(:params) do 
+      {
+        collection_id: collection.id,
+        template_name: 'Vessel Template 1',
+        vessel_type: 'round bottom flask',
       }
       end 
 
@@ -87,7 +93,11 @@ describe Chemotion::VesselAPI do
         post '/api/v1/vessels/', params: params, as: :json
       end
 
-      it 'returns correct status code 400' do
+      it 'correct error message' do
+        expect(parsed_json_response['error']).to eq 'volume_amount not valid'
+      end
+
+      it 'returns correct status (http 400)' do
         expect(response).to have_http_status :bad_request
       end
     end
