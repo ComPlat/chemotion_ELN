@@ -29,7 +29,7 @@ describe('Synchronize Collections', () => {
     });
   });
 
-  it.only('sync collection with write permission', () => {
+  it('sync collection with write permission', () => {
     cy.login('cu1', 'user_password');
     cy.settingPermission('Write');
     cy.login('cu2', 'user_password');

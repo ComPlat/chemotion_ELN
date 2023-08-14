@@ -38,7 +38,7 @@ describe('Share Collections', () => {
     cy.contains('My project with User Complat');
   });
 
-  it.only('share with permission read limited', () => {
+  it('share with permission read limited', () => {
     cy.login('cu1', 'user_password');
     cy.get('#tree-id-Col1').click();
     cy.visit('/mydb/collection/3');

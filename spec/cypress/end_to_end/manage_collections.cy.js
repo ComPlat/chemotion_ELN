@@ -17,7 +17,7 @@ describe('Manage Collections', () => {
     cy.contains('Hello Collection');
   });
 
-  it.only('rename an unshared collection', () => {
+  it('rename an unshared collection', () => {
     cy.createCollection(1, 'Hello Collection');
     cy.login('cu1', 'user_password');
     cy.waitForCollections();

@@ -20,7 +20,7 @@ describe('Research Plan', () => {
     cy.login('cu1', 'user_password');
     cy.get('#tree-id-Col1').click();
     cy.visit('/mydb/collection/3');
-    cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
+    cy.intercept('GET', '/api/v1/collections/roots.json');
     cy.intercept('GET', '/api/v1/collections/*').as('req');
     cy.wait('@req');
     cy.get('#create-split-button').click().then(() => {
