@@ -1,5 +1,3 @@
-import 'whatwg-fetch';
-
 export default class SuggestionsFetcher {
   static fetchSuggestionsForCurrentUser(elementType, query, collectId, isSync = false) {
     const urlParams=new URLSearchParams({
