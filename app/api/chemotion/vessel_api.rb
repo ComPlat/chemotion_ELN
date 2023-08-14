@@ -72,7 +72,12 @@ module Chemotion
       end
 
       get ':id' do
-        vessel = Usecases::Vessels::Load.new(params, current_user).execute!
+        use_case = Usecases::Vessels::Load.new(params[:id], current_user) 
+        begin
+          vessel = use_case.execute!
+        rescue StandardError => e
+          error!(e, 400)
+        end
         return present vessel, with: Entities::VesselEntity
       end
 
@@ -93,7 +98,11 @@ module Chemotion
       post do
         error!('401 unauthorised', 401) unless current_user.collections.find(params[:collection_id])
         use_case = Usecases::Vessels::Create.new(params, current_user)
-        vessel = use_case.execute!
+        begin
+          vessel = use_case.execute!
+        rescue StandardError => e
+          error!(e,400)
+        end
         return present vessel, with: Entities::VesselEntity
       end
 
@@ -114,7 +123,11 @@ module Chemotion
 
       put do
         use_case = Usecases::Vessels::Update.new(params, current_user)
-        vessel = use_case.execute!
+        begin
+          vessel = use_case.execute!
+        rescue StandardError => e
+          error!(e,400)
+        end
         return present vessel, with: Entities::VesselEntity
       end
 
