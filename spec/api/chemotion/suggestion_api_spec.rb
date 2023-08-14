@@ -67,7 +67,7 @@ describe Chemotion::SuggestionAPI do
       get '/api/v1/suggestions/all', params: params
     end
 
-    context 'when search term matches one cell line by the material name' do
+    context 'when search term matches two cell line samples with the same material name' do
       let(:query) { 'name-001' }
 
       it 'status code is success' do
