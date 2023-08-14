@@ -276,7 +276,7 @@ module Chemotion
         end
 
         options[:field] =
-          if %w[name description].include?(filter['field']['column'])
+          if %w[name description plain_text_content].include?(filter['field']['column'])
             "children.#{filter['field']['column']}"
           else
             "children.extended_metadata -> '#{filter['field']['column']}'"

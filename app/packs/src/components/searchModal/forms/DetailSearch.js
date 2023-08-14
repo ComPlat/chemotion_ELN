@@ -19,7 +19,13 @@ const DetailSearch = () => {
   const layoutTabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
   const currentCollection = UIStore.getState().currentCollection;
   let tabSegment = currentCollection?.tabs_segment;
-  let tabs = tabSegment ? tabSegment[selection.table.slice(0, -1)] : layoutTabs;
+  let tabs = tabSegment && tabSegment[selection.table.slice(0, -1)] ? tabSegment[selection.table.slice(0, -1)] : layoutTabs;
+  let genericFields = [];
+  let genericSelectOptions = [];
+  let fieldsByTab = [];
+  let inventoryData = SampleInventoryFieldData.chemicals;
+  let analysesData = AnalysesFieldData.containers;
+  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field', 'table'];
 
   const defaultDetailSearchValues = [{
     link: 'AND',
@@ -57,9 +63,18 @@ const DetailSearch = () => {
       });
   }
 
-  let genericFields = [];
-  let genericSelectOptions = [];
-  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field', 'table'];
+  const pushSegmentToSegmentField = (segment) => {
+    let layers = segment.properties_template.layers;
+    let options = segment.properties_template.select_options;
+    if (options) {
+      Object.assign(genericSelectOptions, options);
+    }
+    if (layers) {
+      let segments = [];
+      addGenericFieldsByLayers(layers, segments, segment);
+      fieldsByTab.push({ label: segment.label, value: segments });
+    }
+  }
 
   if (genericEls) {
     let currentGenericElement = genericEls.find((e) => { return e.name === selection.element_table.slice(0, -1) });
@@ -72,40 +87,33 @@ const DetailSearch = () => {
 
       fieldOptions.map((o) => { genericFields.push(o) });
       addGenericFieldsByLayers(layers, genericFields, {});
+      fieldsByTab.push({ label: 'Properties', value: genericFields });
+      fieldsByTab.push(...analysesData);
     }
   }
 
-  let segmentFields = [];
-  let segmentSelectOptions = [];
-
-  if (segmentKlasses && tabs) {
-    let segmentsByElement = [];
-
+  if (tabs) {
     Object.entries(tabs)
       .filter((value) => { return value[1] > 0 })
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
-        segmentKlasses.filter((s) => {
-          if (s.element_klass.name == selection.table.slice(0, -1) && s.label == value[0]) {
-            segmentsByElement.push(s);
-          }
-        });
-      });
-
-    if (segmentsByElement) {
-      segmentsByElement.map((segment) => {
-        let layers = segment.properties_template.layers;
-        let options = segment.properties_template.select_options;
-        if (options) {
-          Object.assign(segmentSelectOptions, options);
+        if (['properties', 'research_plan'].includes(value[0])) {
+          fieldsByTab.push({ label: 'Properties', value: fieldOptions });
         }
-        if (layers) {
-          let segments = [];
-          addGenericFieldsByLayers(layers, segments, segment);
-          segmentFields.push({ label: segment.label, value: segments });
+        if (value[0] === 'analyses') {
+          fieldsByTab.push(...analysesData);
+        }
+        if (value[0] === 'inventory') {
+          fieldsByTab.push(...inventoryData);
+        }
+        if (segmentKlasses) {
+          segmentKlasses.filter((s) => {
+            if (s.element_klass.name == selection.table.slice(0, -1) && s.label == value[0]) {
+              pushSegmentToSegmentField(s);
+            }
+          });
         }
       });
-    }
   }
 
   const textInput = (option, type, selectedValue, column, keyLabel) => {
@@ -138,11 +146,9 @@ const DetailSearch = () => {
   const optionsForSelect = (option) => {
     let options = [];
     let genericOptions = [];
-    let genericSelections = [];
 
     if (option.field !== undefined) {
-      genericOptions = genericFields.length >= 1 ? genericFields : segmentFields;
-      genericSelections = Object.keys(genericSelectOptions).length >= 1 ? genericSelectOptions : segmentSelectOptions;
+      genericOptions = genericFields.length >= 1 ? genericFields : fieldsByTab;
     }
 
     if (option.type == 'system-defined') {
@@ -151,8 +157,8 @@ const DetailSearch = () => {
       if (option.column && option.column == 'duration') {
         options = FieldOptions.durationOptions;
       }
-    } else if (genericOptions.length >= 1 && genericSelections[option.option_layers]) {
-      Object.values(genericSelections[option.option_layers].options).forEach((option) => {
+    } else if (genericOptions.length >= 1 && genericSelectOptions[option.option_layers]) {
+      Object.values(genericSelectOptions[option.option_layers].options).forEach((option) => {
         option.value = option.label;
         options.push(option);
       });
@@ -580,24 +586,11 @@ const DetailSearch = () => {
   }
 
   const FormElementTabs = () => {
-    let options = genericFields.length >= 1 ? genericFields : fieldOptions;
     let tabFields = [];
-    let additionalFields = [];
-    let i = 0;
-    tabFields = addTabToTabFields('Properties', options, i, tabFields);
-     
-    if (segmentFields.length >= 1) { additionalFields.push(...segmentFields); }
-    if (tabs !== undefined && Object.keys(tabs).includes('inventory')) {
-      additionalFields.push(...SampleInventoryFieldData.chemicals);
-    }
-    if (tabs !== undefined && Object.keys(tabs).includes('analyses')) {
-      additionalFields.push(...AnalysesFieldData.containers);
-    }
 
-    if (additionalFields.length >= 1) {
-      additionalFields.map((field) => {
-        i += 1;
-        tabFields = addTabToTabFields(field.label, field.value, i, tabFields)
+    if (fieldsByTab.length >= 1) {
+      fieldsByTab.map((field, i) => {
+        addTabToTabFields(field.label, field.value, i, tabFields)
       });
     }
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: containers
@@ -26,24 +28,26 @@ class Container < ApplicationRecord
   belongs_to :containable, polymorphic: true, optional: true
   has_many :attachments, as: :attachable
 
+  before_save :content_to_plain_text
   # TODO: dependent destroy for attachments should be implemented when attachment get paranoidized instead of this DJ
   before_destroy :delete_attachment
   before_destroy :destroy_datasetable
 
   has_closure_tree
 
-  scope :analyses_for_root, ->(root_id) {
+  scope :analyses_for_root, lambda { |root_id|
     where(container_type: 'analysis').joins(
-      "inner join container_hierarchies ch on ch.generations = 2 and ch.ancestor_id = #{root_id} and ch.descendant_id = containers.id "
+      "inner join container_hierarchies ch on ch.generations = 2
+      and ch.ancestor_id = #{root_id} and ch.descendant_id = containers.id ",
     )
   }
 
   def analyses
-    Container.analyses_for_root(self.id)
+    Container.analyses_for_root(id)
   end
 
   def root_element
-    self.root.containable
+    root.containable
   end
 
   def self.create_root_container(**args)
@@ -56,11 +60,17 @@ class Container < ApplicationRecord
 
   def delete_attachment
     if Rails.env.production?
-      attachments.each { |attachment|
+      attachments.each do |attachment|
         attachment.delay(run_at: 96.hours.from_now, queue: 'attachment_deletion').destroy!
-      }
+      end
     else
       attachments.each(&:destroy!)
     end
+  end
+
+  def content_to_plain_text
+    return unless extended_metadata_changed?
+
+    self.plain_text_content = Chemotion::QuillToPlainText.new.convert(extended_metadata['content'])
   end
 end

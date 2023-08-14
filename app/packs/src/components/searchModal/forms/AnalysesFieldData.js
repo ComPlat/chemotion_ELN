@@ -29,7 +29,7 @@ export default {
               type: 'chmos',
             },
             {
-              column: 'content',
+              column: 'plain_text_content',
               label: 'Content',
               key: 'analyses',
               table: 'containers',
