@@ -26,10 +26,13 @@ module Chemotion
       end
 
       def search_for_celllines 
-        material_ids = CelllineSample.by_material_name(params[:query],@params['collection_id']).map{|cl|cl.cellline_material_id}.uniq
+        collection_id = @params['collection_id']
+        query = params[:query]
+
+        material_ids = CelllineSample.by_material_name(query,collection_id).map{|cl|cl.cellline_material_id}.uniq
        { 
         cell_line_material_name: CelllineMaterial.where(id: material_ids).pluck(:name).uniq,
-        cell_line_sample_name: CelllineSample.by_sample_name(params[:query],@params['collection_id']).pluck(:name)
+        cell_line_sample_name: CelllineSample.by_sample_name(query,collection_id).pluck(:name)
        }
       end
 
@@ -42,6 +45,7 @@ module Chemotion
         dl_sc = dl[:screen_detail_level]
         dl_e = dl[:element_detail_level]
         dl_cl = dl[:celllinesample_detail_level]
+
         d_for = proc do |klass|
           klass.by_collection_id(collection_id)
         end
@@ -133,7 +137,7 @@ module Chemotion
             requirements: requirements
           }
         when 'cell_lines'
-          dl_cl.positive? ? search_for_celllines(): [];
+          search_for_celllines()
         else
           element_short_label = dl_e.positive? && search_by_element_short_label.call(Element, qry) || []
           sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
@@ -157,7 +161,7 @@ module Chemotion
           screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
           conditions = dl_sc > -1 && search_by_field.call(Screen, :conditions, qry) || []
           requirements = dl_sc > -1 && search_by_field.call(Screen, :requirements, qry) || []
-          cell_line_infos = dl_cl.positive? ? search_for_celllines(): [];
+          cell_line_infos =  search_for_celllines()
 
           {
             element_short_label: element_short_label,
