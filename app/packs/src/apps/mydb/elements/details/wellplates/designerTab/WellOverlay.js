@@ -1,10 +1,19 @@
 import React from 'react';
-import { Button, Popover, Overlay, ControlLabel, FormGroup, FormControl, Col, InputGroup, ButtonGroup } from 'react-bootstrap';
+import {
+  Button, Popover, Overlay, ControlLabel, FormGroup, FormControl, Col, InputGroup, ButtonGroup
+} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
+import Aviator from 'aviator';
+
+const handleSampleClick = (sample) => {
+  const { params, uri } = Aviator.getCurrentRequest();
+  Aviator.navigate(`${uri}/sample/${sample.id}`, { silent: true });
+  wellplateShowSample({ params: { ...params, sampleID: sample.id } });
+};
 
 const sampleName = (sample) => { /* eslint-disable camelcase */
   if (sample) {
@@ -14,7 +23,6 @@ const sampleName = (sample) => { /* eslint-disable camelcase */
       return sampleNameLabel;
     }
     return (
-      // TODO: FIXME: Uncaught ReferenceError: handleSampleClick is not defined
       <a onClick={() => handleSampleClick(sample)} style={{ cursor: 'pointer' }}>
         {sampleNameLabel}
       </a>
@@ -23,15 +31,10 @@ const sampleName = (sample) => { /* eslint-disable camelcase */
   return (<div />);
 }; /* eslint-enable */
 
-const handleSampleClick = (sample) => {
-  const { params, uri } = Aviator.getCurrentRequest();
-  Aviator.navigate(`${uri}/sample/${sample.id}`, { silent: true });
-  wellplateShowSample({ params: { ...params, sampleID: sample.id } });
-}
-
 const renderWellContent = (well, removeSampleFromWell) => {
   const { sample } = well;
-  let svg, moleculeName, removeButton = '';
+  let svg; let moleculeName; let
+    removeButton = '';
 
   const svgContainerStyle = {
     borderRadius: '50%',
@@ -47,7 +50,7 @@ const renderWellContent = (well, removeSampleFromWell) => {
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
       <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
-        <i className="fa fa-trash-o"/>
+        <i className="fa fa-trash-o" />
       </Button>
     );
   }
@@ -57,28 +60,35 @@ const renderWellContent = (well, removeSampleFromWell) => {
         {svg}
       </div>
       <div className="wellplate-overlay">
-        {sampleName(sample)}<br />
-        {moleculeName}<br />
+        {sampleName(sample)}
+        <br />
+        {moleculeName}
+        <br />
       </div>
       <div>
         {removeButton}
       </div>
     </div>
   );
-}
+};
 
-const sampleImportedReadout = sample => (sample ? sample.imported_readout : '');
+const sampleImportedReadout = (sample) => (sample ? sample.imported_readout : '');
 
 const content = (
-  well, readoutTitles, removeSampleFromWell, handleWellLabel, handleColorPicker,
-  selectedColor, saveColorCode
+  well,
+  readoutTitles,
+  removeSampleFromWell,
+  handleWellLabel,
+  handleColorPicker,
+  selectedColor,
+  saveColorCode
 ) => {
   const { sample, readouts } = well;
   const bcStyle = {
     backgroundColor: selectedColor || well.color_code
   };
   const wellLabels = well.label ? well.label.split(',') : [];
-  const isDisable = () => wellLabels.some(item => item === 'Molecular structure');
+  const isDisable = () => wellLabels.some((item) => item === 'Molecular structure');
 
   const labels = [{
     label: 'Name',
@@ -91,7 +101,7 @@ const content = (
   }, {
     label: 'Molecular structure',
     value: 'Molecular structure',
-    disabled: (wellLabels.some(item => item !== 'Molecular structure'))
+    disabled: (wellLabels.some((item) => item !== 'Molecular structure'))
   }];
 
   return (
@@ -105,7 +115,7 @@ const content = (
           multi
           options={labels}
           value={well.label}
-          onChange={e => handleWellLabel(e)}
+          onChange={(e) => handleWellLabel(e)}
           style={{ top: '2px', bottom: '2px' }}
         />
         <FormGroup>
@@ -134,7 +144,12 @@ const content = (
           />
         </FormGroup>
         <FormGroup>
-          <Col style={{ marginTop: '7px', marginLeft: '-15px' }} class="row row-no-gutters" componentClass={ControlLabel} sm={3}>
+          <Col
+            style={{ marginTop: '7px', marginLeft: '-15px' }}
+            class="row row-no-gutters"
+            componentClass={ControlLabel}
+            sm={3}
+          >
             Select&nbsp;Color
           </Col>
           <Col sm={9} style={{ marginLeft: '35px', width: '65%' }}>
@@ -150,7 +165,7 @@ const content = (
           </Col>
         </FormGroup>
         <FormGroup controlId="formHorizontalPicker" style={{ marginTop: '60px' }}>
-          <CirclePicker circleSize={17} width="100%" onChangeComplete={e => handleColorPicker(e)} />
+          <CirclePicker circleSize={17} width="100%" onChangeComplete={(e) => handleColorPicker(e)} />
         </FormGroup>
         <ButtonGroup style={{ bottom: '5x' }}>
           <Button style={{ left: '80px' }} onClick={saveColorCode}>Save</Button>
@@ -160,39 +175,54 @@ const content = (
   );
 };
 
-const title = (handleClose) => {
-  return (
-    <div>
-      Well Details
-      <span className='pull-right' style={{ marginRight: -8, marginTop: -3 }}>
-        <Button bsSize='xsmall' onClick={() => handleClose()}>
-          <i className="fa fa-times"></i>
-        </Button>
-      </span>
-    </div>
-  )
-}
+const title = (handleClose) => (
+  <div>
+    Well Details
+    <span className="pull-right" style={{ marginRight: -8, marginTop: -3 }}>
+      <Button bsSize="xsmall" onClick={() => handleClose()}>
+        <i className="fa fa-times" />
+      </Button>
+    </span>
+  </div>
+);
 
-const WellOverlay = ({
+function WellOverlay({
   show, well, readoutTitles, placement, target, handleClose, removeSampleFromWell, handleWellLabel,
   handleColorPicker, selectedColor, saveColorCode
-}) => (
-  <Overlay
-    rootClose
-    show={show}
-    target={target}
-    placement={placement}
-    style={{ position: 'sticky', top: 0, overflow: 'scroll' }}
-    onHide={() => handleClose()}
-  >
-    <Popover title={title(handleClose)} id={`wellpop${well.id}`}>
-      {content(
-        well, readoutTitles, removeSampleFromWell, handleWellLabel, handleColorPicker,
-        selectedColor, saveColorCode
-      )}
-    </Popover>
-  </Overlay>
-);
+}) {
+  return (
+    <Overlay
+      rootClose
+      show={show}
+      target={target}
+      placement={placement}
+      style={{ position: 'sticky', top: 0, overflow: 'scroll' }}
+      onHide={() => handleClose()}
+    >
+      <Popover title={title(handleClose)} id={`wellpop${well.id}`}>
+        <div style={{
+          maxHeight: '500px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingRight: '10px',
+          marginRight: '-10px',
+          boxSizing: 'border-box'
+        }}
+        >
+          {content(
+            well,
+            readoutTitles,
+            removeSampleFromWell,
+            handleWellLabel,
+            handleColorPicker,
+            selectedColor,
+            saveColorCode
+          )}
+        </div>
+      </Popover>
+    </Overlay>
+  );
+}
 
 WellOverlay.propTypes = {
   show: PropTypes.bool.isRequired,
