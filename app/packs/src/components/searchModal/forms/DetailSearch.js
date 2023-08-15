@@ -5,6 +5,7 @@ import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
 import SampleInventoryFieldData from './SampleInventoryFieldData';
 import AnalysesFieldData from './AnalysesFieldData';
+import MeasurementFieldData from './MeasurementFieldData';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
@@ -25,6 +26,7 @@ const DetailSearch = () => {
   let fieldsByTab = [];
   let inventoryData = SampleInventoryFieldData.chemicals;
   let analysesData = AnalysesFieldData.containers;
+  let measurementData = MeasurementFieldData.measurements;
   let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field', 'table'];
 
   const defaultDetailSearchValues = [{
@@ -105,6 +107,9 @@ const DetailSearch = () => {
         }
         if (value[0] === 'inventory') {
           fieldsByTab.push(...inventoryData);
+        }
+        if (value[0] === 'measurements') {
+          fieldsByTab.push(...measurementData);
         }
         if (segmentKlasses) {
           segmentKlasses.filter((s) => {
@@ -414,7 +419,10 @@ const DetailSearch = () => {
       case 'temperature':
       case 'duration':
       case 'purity':
+      case 'value_measurement':
         return '>=';
+      case 'unit_measurement':
+        return '=';
       default:
         return type == 'system-defined' ? '>=' : 'LIKE';
     }

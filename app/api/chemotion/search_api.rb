@@ -112,7 +112,7 @@ module Chemotion
       end
 
       def whitelisted_table(table:, column:, **_)
-        return true if %w[elements segments chemicals containers].include?(table)
+        return true if %w[elements segments chemicals containers measurements].include?(table)
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
@@ -149,7 +149,8 @@ module Chemotion
         return [filter['value'].to_f] if sanitize_float_fields(filter)
 
         no_sanitizing_columns = %w[temperature duration]
-        sanitize = filter['match'] != '=' && no_sanitizing_columns.exclude?(filter['field']['column'])
+        no_sanitizing_matches = ['=', '>=']
+        sanitize = no_sanitizing_matches.exclude?(filter['match']) && no_sanitizing_columns.exclude?(filter['field']['column'])
         words = filter['value'].split(/(\r)?\n/).map!(&:strip)
         words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitize
         words
@@ -285,6 +286,19 @@ module Chemotion
         [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
       end
 
+      def filter_measurements_tab(filter, field_table, table, options)
+        prop = "prop_#{field_table}"
+        options[:condition_table] = ''
+        options[:field] = "#{prop}.#{filter['field']['column']}"
+        field_table_inner_join = "INNER JOIN #{field_table} AS #{prop} ON #{prop}.sample_id = #{table}.id"
+
+        if options[:joins].blank? || options[:joins].exclude?(field_table_inner_join)
+          options[:joins] << field_table_inner_join
+        end
+
+        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
+      end
+
       def filter_values_for_advanced_search(dl = @dl)
         query = ''
         cond_val = []
@@ -316,6 +330,7 @@ module Chemotion
                      (table == 'elements' && %w[name short_label].exclude?(field))
           chemicals_tab = field_table.present? && field_table == 'chemicals'
           analyses_tab = field_table.present? && field_table == 'containers'
+          measurements_tab = field_table.present? && field_table == 'measurements'
 
           options = {
             joins: joins, field: field, condition_table: condition_table, first_condition: first_condition,
@@ -329,6 +344,8 @@ module Chemotion
               filter_chemicals_tab(filter, field_table, table, options)
             elsif analyses_tab
               filter_analyses_tab(filter, field_table, table, model_name, options)
+            elsif measurements_tab
+              filter_measurements_tab(filter, field_table, table, options)
             else
               filter_special_non_generic_fields(filter, table, options)
             end
