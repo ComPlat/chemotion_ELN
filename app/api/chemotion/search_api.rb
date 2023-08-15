@@ -208,6 +208,7 @@ module Chemotion
         samples_data = serialize_samples(sample_ids, page, search_by_method, molecule_sort)
         screen_ids = elements.fetch(:screen_ids, [])
         wellplate_ids = elements.fetch(:wellplate_ids, [])
+        cell_line_ids = elements.fetch(:cell_line_ids, [])
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
@@ -222,6 +223,11 @@ module Chemotion
         paginated_screen_ids = Kaminari.paginate_array(screen_ids).page(page).per(page_size)
         serialized_screens = Screen.find(paginated_screen_ids).map do |screen|
           Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
+        end
+
+        paginated_cell_line_ids = Kaminari.paginate_array(cell_line_ids).page(page).per(page_size)
+        serialized_cell_lines = CelllineSample.find(paginated_cell_line_ids).map do |cell_line|
+          Entities::CellLineSampleEntity.represent(cell_line, displayed_in_list: true).serializable_hash
         end
 
         result = {
@@ -256,6 +262,14 @@ module Chemotion
             pages: pages(screen_ids.size),
             perPage: page_size,
             ids: screen_ids
+          },
+          cell_lines: {
+            elements: serialized_cell_lines,
+            totalElements: cell_line_ids.size,
+            page: page,
+            pages: pages(cell_line_ids.size),
+            perPage: page_size,
+            ids: cell_line_ids
           }
         }
 
@@ -337,6 +351,12 @@ module Chemotion
                   advanced_search(c_id)
                 when 'elements'
                   elements_search(c_id)
+                when 'cell_line_material_name'
+                    query = @params["selection"]["name"]
+                    CelllineSample.by_material_name(query,c_id)
+                when 'cell_line_sample_name'
+                    
+                    a = 1
                 end
 
         if search_method == 'advanced' && molecule_sort == false
@@ -366,6 +386,7 @@ module Chemotion
         user_wellplates = Wellplate.by_collection_id(collection_id)
         user_screens = Screen.by_collection_id(collection_id)
         user_elements = Element.by_collection_id(collection_id)
+        user_cell_lines = CelllineSample.by_collection_id(collection_id)
 
         case scope&.first
         when Sample
@@ -411,6 +432,8 @@ module Chemotion
             user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
           ).uniq
           elements[:element_ids] = (scope&.element_ids).uniq
+        when CelllineSample
+          elements[:cell_line_ids] = scope&.ids
         end
         elements
       end
