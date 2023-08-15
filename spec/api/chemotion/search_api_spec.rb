@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 require 'rails_helper'
 
 describe Chemotion::SearchAPI do
@@ -18,6 +19,7 @@ describe Chemotion::SearchAPI do
   let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: other_user) }
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
+  let!(:cell_line) { create(:cellline_sample, name: 'cellline-search-example', collections: [collection]) }
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
@@ -41,29 +43,38 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/all' do
     let(:url) { '/api/v1/search/all' }
+    let(:search_method) { 'substring' }
+    let(:result) { JSON.parse(response.body) }
     let(:params) do
       {
         selection: {
           elementType: :all,
           name: search_term,
-          search_by_method: :substring
+          search_by_method: search_method,
         },
-        collection_id: collection.id
+        collection_id: collection.id,
       }
     end
 
     context 'when searching a sample in correct collection' do
       let(:search_term) { 'SampleA' }
 
-      it 'returns the sample and all other objects referencing the sample from the requested collection' do
-        result = JSON.parse(response.body)
-
-        expect(result.dig('reactions', 'totalElements')).to eq 1
-        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+      it 'returns the sample' do
         expect(result.dig('samples', 'totalElements')).to eq 1
         expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+      end
+
+      it 'returns referenced reaction of sample' do
+        expect(result.dig('reactions', 'totalElements')).to eq 1
+        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+      end
+
+      it 'returns referenced screen of sample' do
         expect(result.dig('screens', 'totalElements')).to eq 1
         expect(result.dig('screens', 'ids')).to eq [screen.id]
+      end
+
+      it 'returns referenced wellplate of sample' do
         expect(result.dig('wellplates', 'totalElements')).to eq 1
         expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
       end
@@ -80,21 +91,30 @@ describe Chemotion::SearchAPI do
           selection: {
             elementType: :samples,
             name: search_term,
-            search_by_method: :substring
+            search_by_method: :substring,
           },
-          collection_id: collection.id
+          collection_id: collection.id,
         }
       end
 
-      it 'returns the sample and all other objects referencing the sample from the requested collection' do
+      it 'returns the sample' do
         result = JSON.parse(response.body)
 
-        expect(result.dig('reactions', 'totalElements')).to eq 1
-        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
         expect(result.dig('samples', 'totalElements')).to eq 1
         expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+      end
+
+      it 'returns referenced reaction of sample' do
+        expect(result.dig('reactions', 'totalElements')).to eq 1
+        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+      end
+
+      it 'returns screen reaction of sample' do
         expect(result.dig('screens', 'totalElements')).to eq 1
         expect(result.dig('screens', 'ids')).to eq [screen.id]
+      end
+
+      it 'returns wellplate reaction of sample' do
         expect(result.dig('wellplates', 'totalElements')).to eq 1
         expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
       end
@@ -113,3 +133,4 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers
