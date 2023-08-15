@@ -34,7 +34,7 @@ RSpec.describe Usecases::Vessels::Create do
         end
       end
 
-      context 'when amount present but deleted' do
+      context 'when amount is not present' do
         before do
           params.delete(:volume_amount)
         end
@@ -89,7 +89,7 @@ RSpec.describe Usecases::Vessels::Create do
         expect(loaded_vessel.description).to eq('description of Vessel 1')
       end
 
-      it 'new vessel template not saved' do
+      it 'existing vessel template used' do
         expect(loaded_vessel_template).not_to be_nil
         expect(loaded_vessel_template.name).to eq('Vessel Template 1')
         expect(loaded_vessel_template.details).to eq('multi-neck')

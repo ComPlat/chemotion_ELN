@@ -10,7 +10,7 @@ module Usecases
 
       def execute!
         raise 'user is not valid' unless @current_user&.vessels
-        raise 'id not valid' unless @id.is_a?(Numeric) && @id.positive?
+        raise 'id is not valid' unless @id.is_a?(Numeric) && @id.positive?
 
         begin
           vessel = @current_user.vessels.find(@id)
