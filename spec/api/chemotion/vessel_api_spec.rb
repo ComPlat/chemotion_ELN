@@ -132,4 +132,38 @@ describe Chemotion::VesselAPI do
       end
     end
   end
+
+  describe 'PUT /api/v1/vessels' do
+    context 'update name' do
+      let(:vessel) { create(:vessel) }
+      let(:user) { create(:user) }
+      let(:collection) { create(:collection) }
+
+      let(:params) do
+        {
+          vessel_id: vessel.id,
+          template_name: 'Vessel Template 1',
+          details: 'multi-neck',
+          vessel_type: 'round bottom flask',
+          volume_unit: 'ml',
+          volume_amount: 500,
+          material_type: 'glass',
+          material_details: 'other material details',
+          name: 'update test name'
+        }
+      end
+
+      before do
+        CollectionsVessel.create(collection: collection, vessel: vessel,)
+        user.collections << collection
+        user.save
+
+        put "/api/v1/vessels/", params: params
+      end
+
+      it 'is able to update vessel name' do
+        expect(parsed_json_response['name']).to eq('update test name')
+      end
+    end
+  end
 end
