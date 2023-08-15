@@ -66,6 +66,16 @@ describe Chemotion::SearchAPI do
       end
     end
 
+    context 'when searching a cell line sample in correct collection by cell line sample name' do
+      let(:search_term) { 'cellline-search-example' }
+      let(:search_method) { 'cell_line_sample_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+
     context 'when searching a sample in correct collection' do
       let(:search_term) { 'SampleA' }
 
