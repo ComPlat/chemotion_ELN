@@ -10,7 +10,7 @@ describe Chemotion::VesselAPI do
     let(:user) { create(:user) }
     let(:collection) { create(:collection) }
 
-    context 'vessel exists' do
+    context 'when vessel exists' do
       before do
         CollectionsVessel.create(collection: collection, vessel: vessel)
         user.collections << collection
@@ -28,7 +28,7 @@ describe Chemotion::VesselAPI do
       end
     end
 
-    context 'vessel does not exist' do
+    context 'when vessel does not exist' do
       before do
         get '/api/v1/vessels/-1'
       end
@@ -135,7 +135,7 @@ describe Chemotion::VesselAPI do
   end
 
   describe 'PUT /api/v1/vessels' do
-    context 'update name with correct parameters' do
+    context 'when updating name with correct parameters' do
       let(:vessel) { create(:vessel) }
       let(:user) { create(:user) }
       let(:collection) { create(:collection) }

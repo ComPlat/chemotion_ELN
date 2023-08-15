@@ -24,55 +24,53 @@ RSpec.describe Usecases::Vessels::Create do
   end
 
   describe 'execute!' do
-    context 'when input is not valid' do
-      context 'when volume amount is negative' do
-        before do
-          params[:volume_amount] = -1
-        end
-
-        it 'error message' do
-          expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
-        end
+    context 'when volume amount is negative' do
+      before do
+        params[:volume_amount] = -1
       end
 
-      context 'when amount is not present' do
-        before do
-          params.delete(:volume_amount)
-        end
+      it 'error message' do
+        expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
+      end
+    end
 
-        it 'error message' do
-          expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
-        end
+    context 'when amount is not present' do
+      before do
+        params.delete(:volume_amount)
       end
 
-      context 'when amount is not an integer' do
-        before do
-          params[:volume_amount] = 'abc'
-        end
+      it 'error message' do
+        expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
+      end
+    end
 
-        it 'error message' do
-          expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
-        end
+    context 'when amount is not an integer' do
+      before do
+        params[:volume_amount] = 'abc'
       end
 
-      context 'when vessel template name is not present' do
-        before do
-          params[:template_name] = []
-        end
+      it 'error message' do
+        expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
+      end
+    end
 
-        it 'error message' do
-          expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
-        end
+    context 'when vessel template name is not present' do
+      before do
+        params[:template_name] = []
       end
 
-      context 'when vessel template name is not a string' do
-        before do
-          params[:template_name] = 1
-        end
+      it 'error message' do
+        expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
+      end
+    end
 
-        it 'error message' do
-          expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
-        end
+    context 'when vessel template name is not a string' do
+      before do
+        params[:template_name] = 1
+      end
+
+      it 'error message' do
+        expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
       end
     end
 

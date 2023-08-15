@@ -273,7 +273,7 @@ class User < ApplicationRecord
           'wellplate' => 3,
           'screen' => 4,
           'research_plan' => 5,
-          'vessel' => 6
+          'vessel' => 6,
         }) if (data['layout'].nil?)
         self.profile.update_columns(data: data)
       end
