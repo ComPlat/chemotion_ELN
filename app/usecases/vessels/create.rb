@@ -47,7 +47,7 @@ module Usecases
 
       def create_vessel(template)
         Vessel.create(
-          vessel_template: @vessel_template,
+          vessel_template: template,
           creator: @current_user,
           name: @params[:name],
           description: @params[:description],

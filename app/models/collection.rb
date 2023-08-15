@@ -48,10 +48,10 @@ class Collection < ApplicationRecord
   has_many :wellplates, through: :collections_wellplates
   has_many :screens, through: :collections_screens
   has_many :research_plans, through: :collections_research_plans
-  has_many  :vessels, through: :collections_vessels
+  has_many :vessels, through: :collections_vessels
   has_many :elements, through: :collections_elements
 
-  has_many :sync_collections_users, foreign_key: :collection_id, dependent: :destroy, inverse_of: :collection
+  has_many :sync_collections_users, dependent: :destroy, inverse_of: :collection
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   has_one :metadata
