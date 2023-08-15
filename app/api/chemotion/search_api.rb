@@ -112,7 +112,7 @@ module Chemotion
       end
 
       def whitelisted_table(table:, column:, **_)
-        return true if %w[elements segments chemicals containers measurements].include?(table)
+        return true if %w[elements segments chemicals containers measurements molecules].include?(table)
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
@@ -187,6 +187,13 @@ module Chemotion
         when 'purification', 'dangerous_products'
           options[:field] = "(#{table}.#{filter['field']['column']})::TEXT"
           options[:condition_table] = ''
+        when 'iupac_name'
+          options[:field] = "#{filter['field']['table']}.#{filter['field']['column']}"
+          options[:condition_table] = ''
+        when 'xref'
+          options[:field] = "xref ->> '#{filter['field']['opt']}'"
+        when 'stereo'
+          options[:field] = "stereo ->> '#{filter['field']['opt']}'"
         end
         [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
       end
@@ -319,8 +326,6 @@ module Chemotion
           additional_condition = ''
 
           field = filter['field']['column']
-          field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
-          field = "stereo ->> '#{filter['field']['opt']}'" if field.include?('stereo')
           additional_condition = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
           words = sanitize_words(filter)
           filter_match = filter['value'] == 'true' ? '=' : filter['match']

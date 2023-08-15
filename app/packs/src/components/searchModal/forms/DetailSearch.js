@@ -517,10 +517,11 @@ const DetailSearch = () => {
     searchStore.addDetailSearchValue(column, searchValue);
   }
 
-  const fieldsByType = (option, fields, keyLabel) => {
-    let column = option.column === 'stereo' ? `${option.column}_${option.opt}` : (option.column || option.field);
+  const fieldsByType = (option, fields, keyLabel, i) => {
+    let column = ['stereo', 'xref'].includes(option.column) ? `${option.column}_${option.opt}` : (option.column || option.field);
     column = option.key !== undefined ? `${column}_${option.key}` : column;
     const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(column) != -1 });
+
     switch (option.type) {
       case 'text':
       case 'textarea':
@@ -553,6 +554,15 @@ const DetailSearch = () => {
       case 'subGroupWithAddOn':
         fields.push(subGroupWithAddOnFields(option, 'subGroupWithAddOn', selectedValue, column, keyLabel));
         break;
+      case 'spacer':
+        fields.push(<div class="form-group"></div>);
+        break;
+      case 'headline':
+        fields.push(componentHeadline(option.label, 'headline', 'detail-search-headline'));
+        break;
+      case 'hr':
+        fields.push(<hr className='generic-spacer' key={`spacer-${i}`} />);
+        break;
     }
     return fields;
   }
@@ -567,10 +577,10 @@ const DetailSearch = () => {
         }
 
         field.value.map((option) => {
-          fields = fieldsByType(option, fields, field.label);
+          fields = fieldsByType(option, fields, field.label, i);
         });
       } else {
-        fields = fieldsByType(field.value, fields, selection.table);
+        fields = fieldsByType(field.value, fields, selection.table, i);
       }
     });
     return fields;

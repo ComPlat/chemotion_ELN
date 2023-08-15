@@ -3,58 +3,13 @@ export default {
     samples: [
       {
         value: {
-          column: 'name',
-          label: 'Name',
+          column: 'iupac_name',
+          label: 'Molecule',
           type: 'text',
-          advanced: true,
-        },
-        label: 'Name'
-      },
-      {
-        value: {
-          column: 'short_label',
-          label: 'Short Label',
-          type: 'text',
-          advanced: true,
-        },
-        label: 'Short Label'
-      },
-      {
-        value: {
-          column: 'is_top_secret',
-          label: 'Top secret',
-          type: 'checkbox',
           advanced: false,
+          table: 'molecules',
         },
-        label: 'Top secret'
-      },
-      {
-        value: {
-          column: 'decoupled',
-          label: 'Decoupled',
-          type: 'checkbox',
-          advanced: false,
-        },
-        label: 'Decoupled'
-      },
-      {
-        value: {
-          column: 'external_label',
-          label: 'External Label',
-          type: 'text',
-          advanced: true,
-        },
-        label: 'External Label'
-      },
-      {
-        value: {
-          column: 'xref',
-          opt: 'cas',
-          label: 'CAS',
-          type: 'text',
-          advanced: true,
-        },
-        label: 'CAS'
+        label: 'Molecule'
       },
       {
         value: {
@@ -80,23 +35,50 @@ export default {
       },
       {
         value: {
-          column: 'boiling_point',
-          label: 'Boiling point',
-          type: 'textWithAddOn',
-          addon: '°C',
-          advanced: false,
+          column: 'xref',
+          opt: 'cas',
+          label: 'CAS',
+          type: 'text',
+          advanced: true,
         },
-        label: 'Boiling point'
+        label: 'CAS'
       },
       {
         value: {
-          column: 'melting_point',
-          label: 'Melting point',
-          type: 'textWithAddOn',
-          addon: '°C',
+          column: 'name',
+          label: 'Name',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Name'
+      },
+      {
+        value: {
+          column: 'short_label',
+          label: 'Short Label',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Short Label'
+      },
+      {
+        value: {
+          column: 'external_label',
+          label: 'External Label',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'External Label'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'inventory_label',
+          label: 'Inventory label',
+          type: 'text',
           advanced: false,
         },
-        label: 'Melting point'
+        label: 'Inventory label'
       },
       {
         value: {
@@ -136,6 +118,96 @@ export default {
           advanced: false,
         },
         label: 'Purity / Concentration'
+      },
+      {
+        value: {
+          type: 'headline',
+          label: 'Properties',
+        },
+        label: 'Properties',
+      },
+      {
+        value: {
+          column: 'boiling_point',
+          label: 'Boiling point',
+          type: 'textWithAddOn',
+          addon: '°C',
+          advanced: false,
+        },
+        label: 'Boiling point'
+      },
+      {
+        value: {
+          column: 'melting_point',
+          label: 'Melting point',
+          type: 'textWithAddOn',
+          addon: '°C',
+          advanced: false,
+        },
+        label: 'Melting point'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'flash_point',
+          label: 'Flash Point',
+          type: 'system-defined',
+          option_layers: 'temperature',
+          advanced: false,
+        },
+        label: 'Flash Point'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'refractive_index',
+          label: 'Refractive Index',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Refractive Index'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'form',
+          label: 'Form',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Form'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'color',
+          label: 'Color',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Color'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'solubility',
+          label: 'Solubility',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Solubility'
+      },
+      {
+        value: {
+          type: 'spacer',
+        },
+        label: '',
+      },
+      {
+        value: {
+          type: 'hr',
+        },
+        label: '',
       },
       {
         value: {
