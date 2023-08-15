@@ -20,7 +20,7 @@ module Chemotion
             # polymer_type
           #]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements cell_lines
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -452,6 +452,39 @@ module Chemotion
           scope = elements_search(@c_id)
           return unless scope
           elements_ids = elements_by_scope(scope)
+
+          serialization_by_elements_and_page(
+            elements_ids,
+            params[:page],
+            params[:molecule_sort]
+          )
+        end
+      end
+
+      namespace :cell_lines do
+        desc "Return all matched cell lines and associations for substring query"
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          query = @params[:selection][:name]
+          collection_id = @params[:collection_id]
+        cell_lines =
+            case search_by_method
+            when 'cell_line_material_name'
+              CelllineSample.by_material_name(query,collection_id)
+            when 'cell_line_sample_name'
+              CelllineSample.by_sample_name(query,collection_id )
+            end
+
+       
+          return unless cell_lines
+          elements_ids = elements_by_scope(cell_lines)
 
           serialization_by_elements_and_page(
             elements_ids,
