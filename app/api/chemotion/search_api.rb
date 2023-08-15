@@ -352,11 +352,9 @@ module Chemotion
                 when 'elements'
                   elements_search(c_id)
                 when 'cell_line_material_name'
-                    query = @params["selection"]["name"]
-                    CelllineSample.by_material_name(query,c_id)
+                  CelllineSample.by_material_name(arg,c_id)
                 when 'cell_line_sample_name'
-                    
-                    a = 1
+                  CelllineSample.by_sample_name(arg,c_id )
                 end
 
         if search_method == 'advanced' && molecule_sort == false
