@@ -12,13 +12,13 @@ describe Chemotion::VesselAPI do
 
     context 'vessel exists' do
       before do
-        CollectionsVessel.create(collection: collection, vessel: vessel,)
+        CollectionsVessel.create(collection: collection, vessel: vessel)
         user.collections << collection
         user.save
 
         get "/api/v1/vessels/#{vessel.id}"
       end
-      
+
       it 'return correct status (http 200)' do
         expect(response).to have_http_status :ok
       end
@@ -30,7 +30,7 @@ describe Chemotion::VesselAPI do
 
     context 'vessel does not exist' do
       before do
-        get "/api/v1/vessels/-1"
+        get '/api/v1/vessels/-1'
       end
 
       it 'returns correct status (http 400)' do
@@ -46,17 +46,18 @@ describe Chemotion::VesselAPI do
   describe 'POST /api/v1/vessels/' do
     context 'with correct parameters' do
       let(:collection) { Collection.first }
-      let(:params) do {
-        collection_id: collection.id,
-        template_name: 'Vessel Template 1',
-        details: 'multi-neck',
-        vessel_type: 'round bottom flask',
-        volume_unit: 'ml',
-        volume_amount: 500,
-        material_type: 'glass',
-        material_details: 'other material details',
-      }
-      end 
+      let(:params) do
+        {
+          collection_id: collection.id,
+          template_name: 'Vessel Template 1',
+          details: 'multi-neck',
+          vessel_type: 'round bottom flask',
+          volume_unit: 'ml',
+          volume_amount: 500,
+          material_type: 'glass',
+          material_details: 'other material details',
+        }
+      end
 
       before do
         post '/api/v1/vessels/', params: params, as: :json
@@ -81,13 +82,13 @@ describe Chemotion::VesselAPI do
 
     context 'with incorrect parameters (no volume or material information)' do
       let(:collection) { Collection.first }
-      let(:params) do 
-      {
-        collection_id: collection.id,
-        template_name: 'Vessel Template 1',
-        vessel_type: 'round bottom flask',
-      }
-      end 
+      let(:params) do
+        {
+          collection_id: collection.id,
+          template_name: 'Vessel Template 1',
+          vessel_type: 'round bottom flask',
+        }
+      end
 
       before do
         post '/api/v1/vessels/', params: params, as: :json
@@ -109,17 +110,17 @@ describe Chemotion::VesselAPI do
       let(:collection) { create(:collection) }
 
       let(:params) do
-      {
-        name: 'test',
-        template_name: 'Vessel Template 1',
-        details: 'multi-neck',
-        vessel_type: 'round bottom flask',
-        volume_unit: 'ml',
-        volume_amount: 500,
-        material_type: 'glass',
-        material_details: 'other material details',
-      }
-      end 
+        {
+          name: 'test',
+          template_name: 'Vessel Template 1',
+          details: 'multi-neck',
+          vessel_type: 'round bottom flask',
+          volume_unit: 'ml',
+          volume_amount: 500,
+          material_type: 'glass',
+          material_details: 'other material details',
+        }
+      end
 
       before do
         CollectionsVessel.create(collection: collection, vessel: vessel)
@@ -149,16 +150,16 @@ describe Chemotion::VesselAPI do
           volume_amount: 500,
           material_type: 'glass',
           material_details: 'other material details',
-          name: 'update test name'
+          name: 'update test name',
         }
       end
 
       before do
-        CollectionsVessel.create(collection: collection, vessel: vessel,)
+        CollectionsVessel.create(collection: collection, vessel: vessel)
         user.collections << collection
         user.save
 
-        put "/api/v1/vessels/", params: params
+        put '/api/v1/vessels/', params: params
       end
 
       it 'is able to update vessel name' do

@@ -5,21 +5,22 @@ require 'spec_helper'
 RSpec.describe Usecases::Vessels::Create do
   let(:user) { create(:user) }
   let(:vessel) { use_case.execute! }
-  let(:use_case) { described_class.new(params,user) }
+  let(:use_case) { described_class.new(params, user) }
   let(:collection) { create(:collection) }
 
-  let(:params) do {
-    collection_id: collection.id,
-    template_name: 'Vessel Template 1',
-    details: 'multi-neck',
-    vessel_type: 'round bottom flask',
-    volume_unit: 'ml',
-    volume_amount: 500,
-    material_type: 'glass',
-    material_details: 'other material details',
-    name: 'Vessel 1', 
-    description: 'description of Vessel 1',
-  }
+  let(:params) do
+    {
+      collection_id: collection.id,
+      template_name: 'Vessel Template 1',
+      details: 'multi-neck',
+      vessel_type: 'round bottom flask',
+      volume_unit: 'ml',
+      volume_amount: 500,
+      material_type: 'glass',
+      material_details: 'other material details',
+      name: 'Vessel 1',
+      description: 'description of Vessel 1',
+    }
   end
 
   describe 'execute!' do
@@ -38,7 +39,7 @@ RSpec.describe Usecases::Vessels::Create do
         before do
           params.delete(:volume_amount)
         end
-        
+
         it 'error message' do
           expect { vessel }.to raise_error(RuntimeError, 'volume_amount not valid')
         end
@@ -73,7 +74,8 @@ RSpec.describe Usecases::Vessels::Create do
           expect { vessel }.to raise_error(RuntimeError, 'template_name not valid')
         end
       end
-    end  
+    end
+
     context 'when vessel template already exists' do
       let(:loaded_vessel) { Vessel.find(vessel.id) }
       let(:loaded_vessel_template) { VesselTemplate.find(loaded_vessel.vessel_template_id) }
@@ -101,7 +103,7 @@ RSpec.describe Usecases::Vessels::Create do
       end
 
       it 'no new vessel template created, old one was used' do
-        expect{ vessel }.not_to change(VesselTemplate, :count)
+        expect { vessel }.not_to change(VesselTemplate, :count)
       end
     end
 

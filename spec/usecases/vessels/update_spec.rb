@@ -4,22 +4,22 @@ require 'spec_helper'
 
 RSpec.describe Usecases::Vessels::Update do
   let(:user) { create(:user) }
-  let(:use_case) { described_class.new(params,user) }
+  let(:use_case) { described_class.new(params, user) }
   let(:vessel) { use_case.execute! }
   let(:collection) { create(:collection) }
   let(:original_vessel) { create(:vessel) }
   let(:params) do
-  {
-    vessel_id: original_vessel.id,
-    volume_amount: -4
-  }
+    {
+      vessel_id: original_vessel.id,
+      volume_amount: -4,
+    }
   end
-  
+
   describe 'execute!' do
     before do
       CollectionsVessel.create(
         collection: collection,
-        vessel: original_vessel
+        vessel: original_vessel,
       )
       user.collections << collection
       user.save
@@ -32,14 +32,15 @@ RSpec.describe Usecases::Vessels::Update do
     end
 
     context 'when vessel template was not changed' do
-      let(:params) do{
-        template_name: 'Vessel Template 1',
-        vessel_type: 'round bottom flask',
-        material_type: 'glass',
-        volume_unit: original_vessel.vessel_template.volume_unit,
-        volume_amount: 50,
-        vessel_id: original_vessel.id
-      }
+      let(:params) do
+        {
+          template_name: 'Vessel Template 1',
+          vessel_type: 'round bottom flask',
+          material_type: 'glass',
+          volume_unit: original_vessel.vessel_template.volume_unit,
+          volume_amount: 50,
+          vessel_id: original_vessel.id,
+        }
       end
 
       it 'vessel has changed' do
@@ -54,15 +55,15 @@ RSpec.describe Usecases::Vessels::Update do
     end
 
     context 'when vessel template was changed' do
-
-      let(:params) do{
-        template_name: 'Vessel Template 2',
-        vessel_type: 'round bottom flask',
-        material_type: 'glass',
-        volume_unit: original_vessel.vessel_template.volume_unit,
-        volume_amount: 50,
-        vessel_id: original_vessel.id
-      }
+      let(:params) do
+        {
+          template_name: 'Vessel Template 2',
+          vessel_type: 'round bottom flask',
+          material_type: 'glass',
+          volume_unit: original_vessel.vessel_template.volume_unit,
+          volume_amount: 50,
+          vessel_id: original_vessel.id,
+        }
       end
 
       it 'vessel has changed' do

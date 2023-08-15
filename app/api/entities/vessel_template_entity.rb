@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Entities
   class VesselTemplateEntity < Grape::Entity
     expose :id

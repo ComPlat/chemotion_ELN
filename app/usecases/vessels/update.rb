@@ -32,7 +32,7 @@ module Usecases
           volume_amount: @params[:volume_amount] || @template.volume_amount,
           material_type: @params[:material_type] || @template.material_type,
           material_details: @params[:material_details] || @template.material_details,
-          )
+        )
       end
 
       def create_vessel_template
@@ -44,7 +44,7 @@ module Usecases
           volume_amount: @params[:volume_amount] || @template.volume_amount,
           material_type: @params[:material_type] || @template.material_type,
           material_details: @params[:material_details] || @template.material_details,
-          )
+        )
       end
 
       def update_vessel_properties

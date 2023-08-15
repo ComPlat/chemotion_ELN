@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateVessels < ActiveRecord::Migration[6.1]
   def change
     create_table :vessel_templates do |t|
@@ -11,7 +13,7 @@ class CreateVessels < ActiveRecord::Migration[6.1]
       t.timestamps
       t.datetime :deleted_at
     end
-    
+
     create_table :vessels do |t|
       t.bigint :vessel_template_id
       t.bigint :user_id
@@ -29,7 +31,7 @@ class CreateVessels < ActiveRecord::Migration[6.1]
       t.datetime :deleted_at
       t.index :collection_id
       t.index :deleted_at
-      t.index [:vessel_id, :collection_id], unique: true
+      t.index %i[vessel_id collection_id], unique: true
     end
   end
 end

@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-RSpec.describe VesselTemplate, type: :model do
+RSpec.describe VesselTemplate do
   let(:user) { create(:user) }
   let(:collection) { create(:collection) }
   let(:template) { create(:vessel_template) }
@@ -14,7 +16,7 @@ RSpec.describe VesselTemplate, type: :model do
 
   describe 'deletion' do
     before { template.destroy! }
-    
+
     it 'soft deletes template' do
       expect(template.deleted_at).not_to be_nil
     end

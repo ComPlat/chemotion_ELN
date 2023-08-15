@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: vessels
@@ -20,9 +22,8 @@ class Vessel < ApplicationRecord
   acts_as_paranoid
 
   belongs_to :vessel_template
-  belongs_to :creator, class_name: "User", foreign_key: "user_id"
+  belongs_to :creator, class_name: 'User', foreign_key: 'user_id'
 
   has_many :collections_vessels, dependent: :destroy
   has_many :collections, through: :collections_vessels
-
 end

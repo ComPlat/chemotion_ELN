@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: collections_vessels
@@ -18,7 +20,7 @@ class CollectionsVessel < ApplicationRecord
 
   belongs_to :collection
   belongs_to :vessel
-  
+
   include Tagging
   include Collecting
 

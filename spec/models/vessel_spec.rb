@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-RSpec.describe Vessel, type: :model do
+RSpec.describe Vessel do
   let(:user) { create(:user) }
   let(:collection) { create(:collection) }
   let(:template) { create(:vessel_template) }
@@ -20,6 +22,7 @@ RSpec.describe Vessel, type: :model do
 
   describe 'deletion' do
     before { vessel.destroy! }
+
     it 'destroys associations properly' do
       expect(CollectionsVessel.find_by(vessel_id: vessel.id)).to be_nil
     end

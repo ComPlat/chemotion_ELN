@@ -11,7 +11,7 @@ RSpec.describe CollectionsVessel, type: :model do
   let(:v3) { create(:vessel) }
   let(:v4) { create(:vessel) }
 
-  describe 'delete_in_collection, ' do
+  describe 'delete_in_collection,' do
     before do
       described_class.create!(collection_id: c1.id, vessel_id: v1.id)
       described_class.create!(collection_id: c1.id, vessel_id: v2.id)
@@ -35,7 +35,7 @@ RSpec.describe CollectionsVessel, type: :model do
     end
   end
 
-  describe 'insert_in_collection, ' do
+  describe 'insert_in_collection,' do
     before do
       described_class.create!(collection_id: c1.id, vessel_id: v2.id)
       described_class.create!(collection_id: c1.id, vessel_id: v3.id, deleted_at: Time.now)
@@ -47,6 +47,7 @@ RSpec.describe CollectionsVessel, type: :model do
       c1.reload
       expect(c1.vessels).to match_array [v1, v2, v3, v4]
     end
+
     it 'creates with int args' do
       described_class.insert_in_collection(v1.id, c2.id)
       c2.reload
