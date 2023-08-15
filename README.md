@@ -14,17 +14,21 @@ An **Electronic Lab Notebook** for chemists!
 
 ---
 
-## Sponsors
+## Acknowledgments
 
 This project has been funded by the **[DFG]**.
 
 [![DFG Logo]][DFG]
 
+
+Funded by the [Deutsche Forschungsgemeinschaft (DFG, German Research Foundation)](https://www.dfg.de/) under the [National Research Data Infrastructure – NFDI4Chem](https://nfdi4chem.de/) – Projektnummer **441958208** since 2020.
+
+
 ---
 
 ## License
 
-**Copyright © `2015` - `2022` [Nicole Jung]** <br>
+**Copyright © `2015` - `2023` [Nicole Jung]** <br>
 of the **[Karlsruhe Institute of Technology]**.
 
 > This program is free software:
