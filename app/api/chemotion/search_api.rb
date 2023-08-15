@@ -194,6 +194,11 @@ module Chemotion
           options[:field] = "xref ->> '#{filter['field']['opt']}'"
         when 'stereo'
           options[:field] = "stereo ->> '#{filter['field']['opt']}'"
+        when 'solvent'
+          joins_exists = options[:joins].exclude?('CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent')
+          options[:joins] << 'CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent' if joins_exists
+          options[:field] = "(prop_solvent ->> '#{filter['field']['opt']}')::TEXT"
+          options[:condition_table] = ''
         end
         [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
       end
@@ -254,7 +259,7 @@ module Chemotion
         prop = "prop_#{field_table}"
         options[:condition_table] = ''
 
-        if options[:joins].blank? || options[:joins].exclude?('INNER JOIN chemicals ON chemicals.sample_id = samples.id')
+        if options[:joins].exclude?('INNER JOIN chemicals ON chemicals.sample_id = samples.id')
           options[:joins] << "INNER JOIN #{field_table} ON #{field_table}.sample_id = #{table}.id"
           options[:joins] << "CROSS JOIN jsonb_array_elements(#{field_table}.chemical_data) AS #{prop}"
         end
@@ -277,7 +282,7 @@ module Chemotion
         options[:condition_table] = ''
         field_table_inner_join = "INNER JOIN #{field_table} AS #{prop} ON #{prop}.containable_type = '#{model_name}' AND #{prop}.containable_id = #{table}.id"
 
-        if options[:joins].blank? || options[:joins].exclude?(field_table_inner_join)
+        if options[:joins].exclude?(field_table_inner_join)
           options[:joins] << field_table_inner_join
           options[:joins] << "INNER JOIN #{field_table} AS analysis ON analysis.parent_id = #{prop}.id"
           options[:joins] << "INNER JOIN #{field_table} AS children ON children.parent_id = analysis.id"
@@ -294,14 +299,10 @@ module Chemotion
       end
 
       def filter_measurements_tab(filter, field_table, table, options)
-        prop = "prop_#{field_table}"
         options[:condition_table] = ''
-        options[:field] = "#{prop}.#{filter['field']['column']}"
-        field_table_inner_join = "INNER JOIN #{field_table} AS #{prop} ON #{prop}.sample_id = #{table}.id"
-
-        if options[:joins].blank? || options[:joins].exclude?(field_table_inner_join)
-          options[:joins] << field_table_inner_join
-        end
+        options[:field] = "#{field_table}.#{filter['field']['column']}"
+        field_table_inner_join = "INNER JOIN #{field_table} ON #{field_table}.sample_id = #{table}.id"
+        options[:joins] << field_table_inner_join if options[:joins].exclude?(field_table_inner_join)
 
         [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
       end

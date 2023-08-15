@@ -199,6 +199,33 @@ export default {
       },
       {
         value: {
+          type: 'headline',
+          label: 'Solvents',
+        },
+        label: 'Solvents',
+      },
+      {
+        value: {
+          column: 'solvent',
+          opt: 'label',
+          label: 'Label',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Label'
+      },
+      {
+        value: {
+          column: 'solvent',
+          opt: 'ratio',
+          label: 'Ratio',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Ratio'
+      },
+      {
+        value: {
           type: 'spacer',
         },
         label: '',

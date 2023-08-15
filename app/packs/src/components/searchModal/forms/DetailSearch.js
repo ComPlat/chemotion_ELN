@@ -420,6 +420,7 @@ const DetailSearch = () => {
       case 'duration':
       case 'purity':
       case 'value_measurement':
+      case 'solvent_ratio':
         return '>=';
       case 'unit_measurement':
         return '=';
@@ -518,7 +519,8 @@ const DetailSearch = () => {
   }
 
   const fieldsByType = (option, fields, keyLabel, i) => {
-    let column = ['stereo', 'xref'].includes(option.column) ? `${option.column}_${option.opt}` : (option.column || option.field);
+    let multi_fields = ['stereo', 'xref', 'solvent'];
+    let column = multi_fields.includes(option.column) ? `${option.column}_${option.opt}` : (option.column || option.field);
     column = option.key !== undefined ? `${column}_${option.key}` : column;
     const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(column) != -1 });
 
@@ -595,7 +597,7 @@ const DetailSearch = () => {
       <Tab
         eventKey={i}
         title={title}
-        key={`${title.toLowerCase().replace(' ', '-')}-${i}`}
+        key={`${title.toLowerCase().replace(' ', '-')}-${i}-${value}`}
       >
         {mapOptions(value, [])}
       </Tab>
