@@ -33,7 +33,7 @@ RSpec.describe Usecases::Vessels::Load do
       let(:id) { -1 }
 
       it 'returned value is empty' do
-        expect { loaded_vessel }.to raise_error(RuntimeError, 'id not valid')
+        expect { loaded_vessel }.to raise_error(RuntimeError, 'id is not valid')
       end
     end
 
