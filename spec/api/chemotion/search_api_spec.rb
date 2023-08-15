@@ -56,6 +56,16 @@ describe Chemotion::SearchAPI do
       }
     end
 
+    context 'when searching a cell line sample in correct collection by cell line material name' do
+      let(:search_term) { 'name-001' }
+      let(:search_method) { 'cell_line_material_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+
     context 'when searching a sample in correct collection' do
       let(:search_term) { 'SampleA' }
 
@@ -86,6 +96,7 @@ describe Chemotion::SearchAPI do
 
     context 'when searching a sample in correct collection' do
       let(:search_term) { 'SampleA' }
+      let(:result) { JSON.parse(response.body) }
       let(:params) do
         {
           selection: {
@@ -98,8 +109,6 @@ describe Chemotion::SearchAPI do
       end
 
       it 'returns the sample' do
-        result = JSON.parse(response.body)
-
         expect(result.dig('samples', 'totalElements')).to eq 1
         expect(result.dig('samples', 'ids')).to eq [sample_a.id]
       end
