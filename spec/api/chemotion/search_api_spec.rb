@@ -19,7 +19,7 @@ describe Chemotion::SearchAPI do
   let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: other_user) }
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
-  let!(:cell_line) { create(:cellline_sample, name: 'cellline-search-example', collections: [collection]) }
+  let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
@@ -39,6 +39,41 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/elements' do
     pending 'TODO: Add missing spec'
+  end
+
+  describe 'POST /api/v1/search/cell_lines' do
+    let(:url) { '/api/v1/search/cell_lines' }
+    let(:result) { JSON.parse(response.body) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :cell_lines,
+          name: search_term,
+          search_by_method: search_method,
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    context 'when searching a cell line sample in correct collection by cell line material name' do
+      let(:search_term) { 'name-001' }
+      let(:search_method) { 'cell_line_material_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+
+    context 'when searching a cell line sample in correct collection by cell line sample name' do
+      let(:search_term) { 'other' }
+      let(:search_method) { 'cell_line_sample_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
   end
 
   describe 'POST /api/v1/search/all' do
