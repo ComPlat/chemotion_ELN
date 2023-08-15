@@ -38,7 +38,7 @@ describe Chemotion::VesselAPI do
       end
 
       it 'correct error message' do
-        expect(parsed_json_response['error']).to eq 'id not valid'
+        expect(parsed_json_response['error']).to eq 'id is not valid'
       end
     end
   end
@@ -80,7 +80,7 @@ describe Chemotion::VesselAPI do
       end
     end
 
-    context 'with incorrect parameters (no volume or material information)' do
+    context 'with incorrect parameters (missing volume or material information)' do
       let(:collection) { Collection.first }
       let(:params) do
         {
@@ -94,8 +94,8 @@ describe Chemotion::VesselAPI do
         post '/api/v1/vessels/', params: params, as: :json
       end
 
-      it 'correct error message' do
-        expect(parsed_json_response['error']).to eq 'volume_amount not valid'
+      it 'correct error messages' do
+        expect(parsed_json_response['error']).to eq 'volume_unit is missing, volume_amount is missing, material_type is missing'
       end
 
       it 'returns correct status (http 400)' do
@@ -135,7 +135,7 @@ describe Chemotion::VesselAPI do
   end
 
   describe 'PUT /api/v1/vessels' do
-    context 'update name' do
+    context 'update name with correct parameters' do
       let(:vessel) { create(:vessel) }
       let(:user) { create(:user) }
       let(:collection) { create(:collection) }
