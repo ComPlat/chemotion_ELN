@@ -22,15 +22,15 @@ RSpec.describe CollectionsVessel do
     it 'soft-deletes with arr args' do
       described_class.delete_in_collection([vessel1.id, vessel3.id, vessel4.id], [collection1.id])
       collection1.reload
-      expect(collection1.vessels).contain_exactly [vessel2]
-      expect(collection2.vessels).contain_exactly [vessel1, vessel4]
+      expect(collection1.vessels).to match_array [vessel2]
+      expect(collection2.vessels).to match_array [vessel1, vessel4]
     end
 
     it 'soft-deletes with int args' do
       described_class.delete_in_collection(vessel1, collection1.id)
       collection1.reload
-      expect(collection1.vessels).contain_exactly [vessel2]
-      expect(collection2.vessels).contain_exactly [vessel1, vessel4]
+      expect(collection1.vessels).to match_array [vessel2]
+      expect(collection2.vessels).to match_array [vessel1, vessel4]
     end
   end
 
@@ -44,13 +44,13 @@ RSpec.describe CollectionsVessel do
     it 'creates with arr args' do
       described_class.insert_in_collection([vessel1.id, vessel3.id, vessel4.id], [collection1.id])
       collection1.reload
-      expect(collection1.vessels).contain_exactly [vessel1, vessel2, vessel3, vessel4]
+      expect(collection1.vessels).to match_array [vessel1, vessel2, vessel3, vessel4]
     end
 
     it 'creates with int args' do
       described_class.insert_in_collection(vessel1.id, collection2.id)
       collection2.reload
-      expect(collection2.vessels).contain_exactly [vessel1]
+      expect(collection2.vessels).to match_array [vessel1]
     end
   end
 end
