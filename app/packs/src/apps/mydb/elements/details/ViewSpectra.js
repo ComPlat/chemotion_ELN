@@ -338,7 +338,7 @@ class ViewSpectra extends React.Component {
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '19F'].indexOf(layout) >= 0 && isMpy) {
+    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
@@ -533,7 +533,7 @@ class ViewSpectra extends React.Component {
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
     ] : [];
-    const isNmr = updatable && ['1H', '13C', '19F'].indexOf(et.layout) >= 0;
+    const isNmr = updatable && ['1H', '13C', '15N', '19F', '29Si', '31P'].includes(et.layout);
     if (isNmr) {
       baseOps = [
         ...baseOps,
