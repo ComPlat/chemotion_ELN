@@ -1,0 +1,24 @@
+{
+    "sqltools.connections": [
+        {
+          "previewLimit": 50,
+          "server": "postgres",
+          "port": 5432,
+          "driver": "PostgreSQL",
+          "name": "development",
+          "database": "chemotion_dev",
+          "username": "postgres",
+          "password": ""
+        },
+        {
+          "previewLimit": 50,
+          "server": "postgres",
+          "port": 5432,
+          "driver": "PostgreSQL",
+          "name": "test",
+          "database": "chemotion_test",
+          "username": "postgres",
+          "password": ""
+        }
+      ],
+}
