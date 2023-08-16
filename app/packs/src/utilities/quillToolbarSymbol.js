@@ -1,6 +1,6 @@
 import React from 'react';
 
-const minusRender = name => (
+const minusRender = (name) => (
   <span key={`${name}_key`} id={`${name}_id`} style={{ marginRight: '10px', cursor: 'pointer' }}>
     <i className="fa fa-minus" />
   </span>
@@ -368,6 +368,22 @@ const opsMSTail = () => (
   []
 );
 
+const opsDLSIntensityHead = () => (
+  [
+    { insert: 'DLS: ' },
+  ]
+);
+
+const opsEmmissionHead = () => (
+  [
+    { insert: 'Emission: ' },
+  ]
+);
+
+const opsCommonHead = () => (
+  []
+);
+
 const SpectraOps = {
   PLAIN: { head: [], tail: [] },
   '1H': { head: ops1HHead, tail: opsCommonTail },
@@ -381,6 +397,9 @@ const SpectraOps = {
   'UV/VIS': { head: opsUVVISHead, tail: opsUVVISTail },
   'HPLC UV/VIS': { head: opsHPLCUVVISHead, tail: opsHPLCUVVISTail },
   MS: { head: opsMSHead, tail: opsMSTail },
+  Emissions: { head: opsEmmissionHead, tail: opsCommonTail },
+  'DLS ACF': { head: opsCommonHead, tail: opsCommonTail },
+  'DLS intensity': { head: opsDLSIntensityHead, tail: opsCommonTail },
 };
 
 const reactionAnalysesMacros = {

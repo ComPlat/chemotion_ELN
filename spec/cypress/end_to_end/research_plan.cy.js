@@ -20,7 +20,7 @@ describe('Research Plan', () => {
     cy.login('cu1', 'user_password');
     cy.get('#tree-id-Col1').click();
     cy.visit('/mydb/collection/3');
-    cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
+    cy.intercept('GET', '/api/v1/collections/roots.json');
     cy.intercept('GET', '/api/v1/collections/*').as('req');
     cy.wait('@req');
     cy.get('#create-split-button').click().then(() => {
@@ -37,6 +37,9 @@ describe('Research Plan', () => {
     cy.get('#remove-or-delete-btn').click();
     cy.get('.open > .dropdown-menu > :nth-child(2) > a').click();
     cy.get('.btn-toolbar > .btn-warning').click();
+
+    cy.get('#tabList-tab-0').click();
+    cy.get('#tabList-tab-4').click();
     cy.get('#tabList-tab-4 > span').contains('0(0)');
   });
 });

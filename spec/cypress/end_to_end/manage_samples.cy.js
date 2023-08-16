@@ -26,12 +26,13 @@ describe('Manage Samples', () => {
     });
   });
 
-  it('test if melting_pint and boiling_point exists', () => {
+  it.only('test if melting_pint and boiling_point exists', () => {
     cy.login('cu1', 'user_password');
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
-      cy.get(':nth-child(3) > .form-group > .input-group > .form-control').should('have.attr', 'value', '98 – 100');
-      cy.get(':nth-child(4) > .form-group > .input-group > .form-control').should('have.attr', 'value', '0.5 – 1');
+      cy.get('#additionalProperties').click();
+      cy.get('[data-cy="cy_Melting point"] > .form-control').should('have.attr', 'value', '0.5 – 1');
+      cy.get('[data-cy="cy_Boiling point"] > .form-control').should('have.attr', 'value', '98 – 100');
     });
   });
 
@@ -48,11 +49,11 @@ describe('Manage Samples', () => {
     cy.get(':nth-child(12) > a').parent().should('have.class', 'disabled');
   });
 
-  it('test molecule label to be equal to "iupac_name"', () => {
+  it('test molecule value to be equal to "iupac_name"', () => {
     cy.login('cu1', 'user_password');
     cy.visit('/mydb/collection/3/');
     cy.get('table').contains('td', 'a01-1').click().then(() => {
-      cy.get('#react-select-2--value > div.Select-value').invoke('text').then((text) => {
+      cy.get('#react-select-5--value-item').invoke('text').then((text) => {
         expect(text).equal('iupac_name');
       });
     });

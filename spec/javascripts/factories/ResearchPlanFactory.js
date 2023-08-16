@@ -27,6 +27,7 @@ export default class ResearchPlanFactory {
       changed: true,
       can_update: true,
       attachments: [],
+      title: "test_research_plan",
       wellplates: [],
       segments: [],
     });
@@ -37,6 +38,12 @@ export default class ResearchPlanFactory {
         type: "no-image",
         value: {}
       }],
+      changed: false,
+      attachments : [ AttachmentFactory.build("new")]
+
+    });
+    this.factory.extend("empty", "with attachment_not_in_body",{
+      body: [],
       changed: false,
       attachments : [ AttachmentFactory.build("new")]
 
