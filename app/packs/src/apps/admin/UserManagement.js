@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Panel, Table, Button, Modal, FormGroup,
+  Panel, Table, Modal, FormGroup,
   ControlLabel, Form, Col, FormControl,
   Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
@@ -9,8 +9,8 @@ import { CSVReader } from 'react-papaparse';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
-
 import styles from 'Styles';
+import Button from 'ui/button';
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -577,7 +577,7 @@ export default class UserManagement extends React.Component {
                 />
               </FormGroup>
               <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button bsStyle="primary" onClick={() => this.messageSend()} style={styles.modalBtn}>
+                <Button variant="primary" onClick={() => this.messageSend()} option="modalBtn">
                   Send&nbsp;
                   <i className="fa fa-paper-plane" />
                 </Button>
@@ -679,7 +679,7 @@ export default class UserManagement extends React.Component {
                 </FormGroup>
                 <FormGroup style={{ marginRight: '15px', display: 'flex', justifyContent: 'flex-end' }}>
                   <Col>
-                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()} style={styles.modalBtn}>
+                    <Button variant="primary" onClick={() => this.handleCreateNewUser()} option="modalBtn">
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -741,7 +741,7 @@ export default class UserManagement extends React.Component {
                   </CSVReader>
                 </FormGroup>
                 <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button bsStyle="primary" onClick={() => this.handleUploadUsers()} style={styles.modalBtn}>
+                  <Button variant="primary" onClick={() => this.handleUploadUsers()} option="modalBtn">
                     Upload users&nbsp;
                     <i className="fa fa-upload" />
                   </Button>
@@ -841,9 +841,9 @@ export default class UserManagement extends React.Component {
                   <FormGroup style={{ marginRight: '20px', display: 'flex', justifyContent: 'flex-end' }}>
                     <Button
                       size="lg"
-                      bsStyle="warning"
+                      variant="warning"
                       onClick={() => this.handleUpdateUser(user)}
-                      style={styles.modalBtn}
+                      option="modalBtn"
                     >
                       Update&nbsp;&nbsp;
                       <i className="fa fa-floppy-o" />
@@ -864,9 +864,9 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="top" overlay={confirmUserTooltip}>
             <Button
-              bsStyle="info"
+              variant="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
-              style={styles.panelIcons}
+              option="panelIcon"
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -881,9 +881,9 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
             <Button
-              bsStyle="warning"
+              variant="warning"
               onClick={() => this.handleReConfirmUserAccount(userId)}
-              style={styles.panelIcons}
+              option="panelIcon"
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -924,9 +924,9 @@ export default class UserManagement extends React.Component {
           <div style={{ display: 'flex' }}>
             <OverlayTrigger placement="top" overlay={editTooltip}>
               <Button
-                bsStyle="info"
+                variant="info"
                 onClick={() => this.handleEditUserShow(g)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className="fa fa-user" />
               </Button>
@@ -934,9 +934,9 @@ export default class UserManagement extends React.Component {
           &nbsp;
             <OverlayTrigger placement="top" overlay={resetPasswordTooltip}>
               <Button
-                bsStyle="success"
+                variant="success"
                 onClick={() => this.handleResetPassword(g.id, true)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className="fa fa-key" />
               </Button>
@@ -944,9 +944,9 @@ export default class UserManagement extends React.Component {
           &nbsp;
             <OverlayTrigger placement="top" overlay={resetPasswordInstructionsTooltip}>
               <Button
-                bsStyle="primary"
+                variant="primary"
                 onClick={() => this.handleResetPassword(g.id, false)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className="fa fa-key" />
               </Button>
@@ -954,9 +954,9 @@ export default class UserManagement extends React.Component {
           &nbsp;
             <OverlayTrigger placement="top" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
               <Button
-                bsStyle={g.locked_at === null ? 'default' : 'warning'}
+                variant={g.locked_at === null ? 'default' : 'warning'}
                 onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
               </Button>
@@ -968,9 +968,9 @@ export default class UserManagement extends React.Component {
                 ? converterEnableTooltip : converterDisableTooltip}
             >
               <Button
-                bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+                variant={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
                 onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className="fa fa-hourglass-half" aria-hidden="true" />
               </Button>
@@ -982,10 +982,10 @@ export default class UserManagement extends React.Component {
                 ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
             >
               <Button
-                bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false)
+                variant={(g.is_templates_moderator === null || g.is_templates_moderator === false)
                   ? 'default' : 'success'}
                 onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className="fa fa-book" aria-hidden="true" />
               </Button>
@@ -997,9 +997,9 @@ export default class UserManagement extends React.Component {
                 ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
             >
               <Button
-                bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
+                variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
                 onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i className="icon-sample" aria-hidden="true" />
               </Button>
@@ -1010,9 +1010,9 @@ export default class UserManagement extends React.Component {
               overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
             >
               <Button
-                bsStyle={g.account_active === true ? 'default' : 'danger'}
+                variant={g.account_active === true ? 'default' : 'danger'}
                 onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
-                style={styles.panelIcons}
+                option="panelIcon"
               >
                 <i
                   className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'}
@@ -1083,20 +1083,22 @@ export default class UserManagement extends React.Component {
             <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Send Message</Tooltip>}>
               <Button
                 size="sm"
-                bsStyle="warning"
+                variant="warning"
                 onClick={() => this.handleMsgShow()}
-                style={{ ...styles.amazingBtn, marginLeft: '15px', marginTop: '-3px' }}
+                option="mainBtn"
+                style={{ marginLeft: '15px', marginTop: '-3px' }}
               >
                 <i className="fa fa-paper-plane" style={{ color: 'white', fontSize: '16px' }} />
               </Button>
             </OverlayTrigger>
             <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>New User</Tooltip>}>
               <Button
-                bsStyle="primary"
+                variant="primary"
                 size="sm"
                 onClick={() => this.handleNewUserShow()}
+                option="mainBtn"
                 data-cy="create-user"
-                style={{ ...styles.amazingBtn, marginTop: '-3px' }}
+                style={{ marginTop: '-3px' }}
               >
                 <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
               </Button>
