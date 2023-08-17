@@ -10,7 +10,7 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import styles from 'Styles';
-import Button from 'ui/button';
+import Button from 'ui/Button';
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -841,7 +841,7 @@ export default class UserManagement extends React.Component {
                   <FormGroup style={{ marginRight: '20px', display: 'flex', justifyContent: 'flex-end' }}>
                     <Button
                       size="lg"
-                      variant="warning"
+                      variant="primary"
                       onClick={() => this.handleUpdateUser(user)}
                       option="modalBtn"
                     >
@@ -881,7 +881,7 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
             <Button
-              variant="warning"
+              variant="primary"
               onClick={() => this.handleReConfirmUserAccount(userId)}
               option="panelIcon"
             >
@@ -924,24 +924,22 @@ export default class UserManagement extends React.Component {
           <div style={{ display: 'flex' }}>
             <OverlayTrigger placement="top" overlay={editTooltip}>
               <Button
-                variant="info"
+                variant="secondary"
                 onClick={() => this.handleEditUserShow(g)}
                 option="panelIcon"
               >
                 <i className="fa fa-user" />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger placement="top" overlay={resetPasswordTooltip}>
               <Button
-                variant="success"
+                variant="secondary"
                 onClick={() => this.handleResetPassword(g.id, true)}
                 option="panelIcon"
               >
                 <i className="fa fa-key" />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger placement="top" overlay={resetPasswordInstructionsTooltip}>
               <Button
                 variant="primary"
@@ -951,31 +949,28 @@ export default class UserManagement extends React.Component {
                 <i className="fa fa-key" />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger placement="top" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
               <Button
-                variant={g.locked_at === null ? 'default' : 'warning'}
+                variant={g.locked_at === null ? 'secondary' : 'primary'}
                 onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
                 option="panelIcon"
               >
                 <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger
               placement="top"
               overlay={(g.converter_admin === null || g.converter_admin === false)
                 ? converterEnableTooltip : converterDisableTooltip}
             >
               <Button
-                variant={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+                variant={(g.converter_admin === null || g.converter_admin === false) ? 'secondary' : 'primary'}
                 onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
                 option="panelIcon"
               >
                 <i className="fa fa-hourglass-half" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger
               placement="top"
               overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false)
@@ -983,34 +978,32 @@ export default class UserManagement extends React.Component {
             >
               <Button
                 variant={(g.is_templates_moderator === null || g.is_templates_moderator === false)
-                  ? 'default' : 'success'}
+                  ? 'secondary' : 'primary'}
                 onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
                 option="panelIcon"
               >
                 <i className="fa fa-book" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger
               placement="top"
               overlay={(g.molecule_editor == null || g.molecule_editor === false)
                 ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
             >
               <Button
-                variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
+                variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'secondary' : 'primary'}
                 onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
                 option="panelIcon"
               >
                 <i className="icon-sample" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             <OverlayTrigger
               placement="top"
               overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
             >
               <Button
-                variant={g.account_active === true ? 'default' : 'danger'}
+                variant={g.account_active === true ? 'secondary' : 'primary'}
                 onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
                 option="panelIcon"
               >
@@ -1020,7 +1013,6 @@ export default class UserManagement extends React.Component {
                 />
               </Button>
             </OverlayTrigger>
-          &nbsp;
             {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
             {renderReConfirmButton(g.unconfirmed_email, g.id)}
           </div>
@@ -1083,12 +1075,12 @@ export default class UserManagement extends React.Component {
             <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Send Message</Tooltip>}>
               <Button
                 size="sm"
-                variant="warning"
+                variant="primary"
                 onClick={() => this.handleMsgShow()}
                 option="mainBtn"
                 style={{ marginLeft: '15px', marginTop: '-3px' }}
               >
-                <i className="fa fa-paper-plane" style={{ color: 'white', fontSize: '16px' }} />
+                <i className="fa fa-paper-plane" />
               </Button>
             </OverlayTrigger>
             <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>New User</Tooltip>}>
@@ -1100,7 +1092,7 @@ export default class UserManagement extends React.Component {
                 data-cy="create-user"
                 style={{ marginTop: '-3px' }}
               >
-                <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
+                <i className="fa fa-plus" />
               </Button>
             </OverlayTrigger>
           </Panel.Title>
