@@ -34,6 +34,12 @@ export default class DeviceBox extends React.Component {
   componentDidMount() {
     const { device_box, deviceBoxVisible } = this.props;
     const { currentDeviceBoxPage } = this.state;
+    if (deviceBoxVisible) {
+      if (Array.isArray(device_box.children) && !device_box.children.length) {
+        LoadingActions.start();
+        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
+      }
+    }
     this.setState({ visible: deviceBoxVisible });
     InboxStore.listen(this.onChange);
   }
@@ -110,12 +116,18 @@ export default class DeviceBox extends React.Component {
   }
 
   onChange(state) {
-    this.setState(state);
+    const { checkedDeviceAll, checkedDeviceIds, checkedIds } = state;
+    this.setState({
+      checkedDeviceAll,
+      checkedDeviceIds,
+      checkedIds,
+    });
   }
 
   handlePrevClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage - 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
     const params = {
       checkedDeviceIds: [],
       checkedIds: [],
@@ -128,6 +140,7 @@ export default class DeviceBox extends React.Component {
   handleNextClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage + 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
     const params = {
       checkedDeviceIds: [],
       checkedIds: [],
