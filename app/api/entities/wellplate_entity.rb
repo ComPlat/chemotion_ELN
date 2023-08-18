@@ -11,6 +11,7 @@ module Entities
       expose! :type
       expose! :wells,                                using: 'Entities::WellEntity'
       expose! :comment_count
+      expose! :can_update,      unless: :displayed_in_list
     end
 
     with_options(anonymize_below: 10) do
@@ -55,6 +56,10 @@ module Entities
 
     def comment_count
       object.comments.count
+    end
+
+    def can_update
+      options[:policy].try(:update?) || false
     end
   end
 end

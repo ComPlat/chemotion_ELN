@@ -388,7 +388,7 @@ describe Chemotion::SampleAPI do
 
     context 'when collection_id is given and no samples found' do
       it 'returns no samples' do
-        allow(Collection).to receive(:belongs_to_or_shared_by).and_raise(ActiveRecord::RecordNotFound)
+        allow(Collection).to receive(:belongs_to_current_user).and_raise(ActiveRecord::RecordNotFound)
         get '/api/v1/samples', params: { collection_id: personal_collection.id }
         expect(JSON.parse(response.body)['samples'].size).to eq(0)
       end

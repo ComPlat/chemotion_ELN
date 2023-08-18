@@ -1,14 +1,10 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
+import { AviatorNavigation } from 'src/utilities/routesUtils';
 
 const linkSample = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const collectionUrl = (!isNaN(id)) ?
-    `${currentCollection.id}/${type}/${id}` : `${currentCollection.id}/${type}`;
-  Aviator.navigate(isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
+  AviatorNavigation({ element: { type, id } });
 };
 
 const DropLinkRenderer = (props) => {

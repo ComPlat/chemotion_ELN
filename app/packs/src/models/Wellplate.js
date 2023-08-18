@@ -22,7 +22,8 @@ export default class Wellplate extends Element {
         readout_titles: [],
         container: Container.init(),
         segments: [],
-        attachments: []
+        attachments: [],
+        can_update: true
       }
     )
   }
@@ -51,6 +52,7 @@ export default class Wellplate extends Element {
         container: Container.init(),
         segments: [],
         attachments: [],
+        can_update: true
       }
     )
   }

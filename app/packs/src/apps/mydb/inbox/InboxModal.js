@@ -81,12 +81,6 @@ export default class InboxModal extends React.Component {
     InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
-  }
-
   renderPagination = () => {
     const { currentPage, totalPages } = this.state;
 

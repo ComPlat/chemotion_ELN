@@ -381,7 +381,7 @@ export default class WellplateDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>
               Close
             </Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+            <Button bsStyle="warning" disabled={!wellplate.can_update} onClick={() => this.handleSubmit()}>
               {submitLabel}
             </Button>
             {exportButton}

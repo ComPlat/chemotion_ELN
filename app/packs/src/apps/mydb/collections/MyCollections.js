@@ -36,7 +36,7 @@ export default class MyCollections extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchUnsharedCollectionRoots()
+    CollectionActions.fetchMyCollections()
   }
 
   componentWillUnmount() {
@@ -44,13 +44,13 @@ export default class MyCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
+    const { myCollectionTree } = state;
 
     this.setState({
       tree: {
         label: 'My Collections',
         id: -1,
-        children: children
+        children: myCollectionTree
       }
     });
   }
@@ -108,7 +108,7 @@ export default class MyCollections extends React.Component {
       deleted_ids: this.state.deleted_ids
     }
 
-    CollectionActions.bulkUpdateUnsharedCollections(params);
+    CollectionActions.bulkUpdateCollections(params);
   }
 
   actions(node) {
@@ -128,7 +128,7 @@ export default class MyCollections extends React.Component {
             bsSize="xsmall"
             bsStyle="primary"
             disabled={node.isNew === true}
-            onClick={() => this.doSync(node, 'CreateSync')}
+            onClick={() => this.doShare(node, 'Share')}
           >
             <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
@@ -149,30 +149,28 @@ export default class MyCollections extends React.Component {
   }
 
   renderSync(node) {
-    let syncOut = node.sync_collections_users;
+    let collectionAcls = node.collection_acls;
     let users = [];
 
-    if (syncOut) {
-      users = syncOut.map((collection, ind) => {
+    if (collectionAcls) {
+      users = collectionAcls.map((collection, ind) => {
         return (
           <div className="node">
             <span key={ind} className="collection-sync-info">
-              <UserInfoIcon type={collection.type} /> {collection.name}
+              <UserInfoIcon type={collection.user.type} /> {collection.user.name}
               &nbsp; <PermissionIcons pl={collection.permission_level} />
             </span>
             <ButtonGroup className="actions">
               <Button bsSize="xsmall" bsStyle="primary"
-                onClick={() => this.doSync(collection, 'EditSync')}>
+                onClick={() => this.doShare(collection, 'Edit Share')}>
                 <i className="fa fa-share-alt">edit</i>
               </Button>
               <Button bsSize="xsmall" bsStyle="danger"
-                onClick={() => CollectionActions.deleteSync({ id: collection.id, is_syncd: false })}
+                onClick={() => CollectionActions.deleteShare({ id: collection.id })}
               >
                 <i className="fa fa-share-alt" /> <i className="fa fa-trash-o"></i>
               </Button>
             </ButtonGroup>
-
-
           </div>
         )
       })
@@ -182,15 +180,15 @@ export default class MyCollections extends React.Component {
     )
   }
 
-  doSync(node, action) {
+  doShare(node, action) {
     let { modalProps, active } = this.state
-    modalProps.title = action == "CreateSync"
-      ? "Synchronize '" + node.label + "'"
-      : "Edit Synchronization"
+    modalProps.title = action == "Share"
+      ? "Share '" + node.label + "'"
+      : "Edit '" + node.label + "'"
     modalProps.show = true
     modalProps.action = action
     modalProps.collection = node
-    modalProps.selectUsers = action == "CreateSync"
+    modalProps.selectUsers = action == "Share"
       ? true
       : false
     active = node
@@ -352,6 +350,7 @@ export default class MyCollections extends React.Component {
               sampleDetailLevel={mPsC.sample_detail_level} reactionDetailLevel={mPsC.reaction_detail_level}
               wellplateDetailLevel={mPsC.wellplate_detail_level} screenDetailLevel={mPsC.screen_detail_level}
               selectUsers={mPs.selectUsers}
+              label={mPsC.label}
               collAction={mPs.action} />
           </Modal.Body>
         </Modal>
