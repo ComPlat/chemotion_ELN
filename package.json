@@ -14,6 +14,7 @@
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.2",
     "@complat/chemotion-converter-client": "~0.12.0",
+    "@complat/chemotion-reaction-svg-composer": "^1.0.0",
     "@complat/react-spectra-editor": "1.3.2",
     "@novnc/novnc": "^1.2.0",
     "@rails/ujs": "^6.1.3-1",
