@@ -2,15 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import { DropTarget } from 'react-dnd';
-import Aviator from 'aviator';
+import { AviatorNavigation } from 'src/utilities/routesUtils';
 import { Tooltip, OverlayTrigger, Popover } from 'react-bootstrap';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 const handleSampleClick = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  if (!isNaN(id)) type += `/${id}`;
-  const collectionUrl = `${currentCollection.id}/${type}`;
-  Aviator.navigate(isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`);
+  AviatorNavigation({ element: { type, id } });
 };
 
 const show = (opt, iconClass) => {

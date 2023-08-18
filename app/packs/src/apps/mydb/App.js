@@ -13,6 +13,7 @@ import ProgressModal from 'src/components/common/ProgressModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import Calendar from 'src/components/calendar/Calendar';
 
 class App extends Component {
@@ -40,6 +41,7 @@ class App extends Component {
     UserActions.fetchDatasetKlasses();
     UserActions.fetchUnitsSystem();
     UserActions.fetchEditors();
+    CollectionActions.fetchMyCollections();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
   }

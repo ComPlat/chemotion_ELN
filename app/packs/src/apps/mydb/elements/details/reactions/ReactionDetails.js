@@ -258,14 +258,11 @@ export default class ReactionDetails extends Component {
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
 
     const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
       <CopyElementModal
         element={reaction}
-        defCol={defCol}
+        defCol={currentCollection?.defCol()}
       />
     ) : null;
 

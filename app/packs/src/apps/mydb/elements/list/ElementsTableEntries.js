@@ -14,7 +14,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { elementShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CommentIcon from 'src/components/comments/CommentIcon';
@@ -54,23 +54,15 @@ export function reactionRole(element) {
 }
 
 function showDetails(element) {
-  const { currentCollection, isSync } = UIStore.getState();
   const { id, type } = element;
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/${type}/${id}`
-    : `/collection/${currentCollection.id}/${type}/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  const e = { type, params: { collectionID: currentCollection.id } };
+  AviatorNavigation({ element, silent: true });
+  const e = { type, params: {} };
   e.params[`${type}ID`] = id;
-
   const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
   if (genericEls.find((el) => el.name === type)) {
     e.klassType = 'GenericEl';
   }
-
   elementShowOrNew(e);
-
-  return null;
 }
 
 function sampleAnalysesLabels(element) {
@@ -227,6 +219,20 @@ export default class ElementsTableEntries extends Component {
       research_plan: ['screen']
     };
     return type && currentElement && targets[type].includes(currentElement.type);
+  }
+
+  showDetails(element) {
+    const { id, type } = element;
+    AviatorNavigation({ element, silent: true });
+    const e = { type, params: { } };
+    e.params[`${type}ID`] = id;
+
+    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+    if (genericEls.find(el => el.name == type)) {
+      e.klassType = 'GenericEl';
+    }
+
+    elementShowOrNew(e);
   }
 
   dragHandle(element) {

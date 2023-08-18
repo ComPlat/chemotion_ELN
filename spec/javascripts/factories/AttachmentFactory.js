@@ -17,8 +17,8 @@ export default class AttachmentFactory {
     this.factory = factory;
 
     this.factory.define('new', Attachment, {
-      id : Element.buildID(),
-      is_new : true,
+      id: Element.buildID(),
+      is_new: true,
       updated_at: new Date(),
       filename: "test.png",
       updatedAnnotation: false,

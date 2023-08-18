@@ -30,6 +30,7 @@ export default class ManagingModalSharing extends React.Component {
       wellplateDetailLevel: props.wellplateDetailLevel,
       screenDetailLevel: props.screenDetailLevel,
       elementDetailLevel: props.elementDetailLevel,
+      label: props.label,
       selectedUsers: null,
     }
 
@@ -186,50 +187,52 @@ export default class ManagingModalSharing extends React.Component {
 
   handleSharing() {
     const {
-      permissionLevel, sampleDetailLevel, reactionDetailLevel,
+      permissionLevel, sampleDetailLevel, reactionDetailLevel, label,
       wellplateDetailLevel, screenDetailLevel, elementDetailLevel
     } = this.state;
 
     const params = {
       id: this.props.collectionId,
-      collection_attributes: {
+      current_collection: {
         permission_level: permissionLevel,
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel,
         screen_detail_level: screenDetailLevel,
-        element_detail_level: elementDetailLevel
-      },
+        element_detail_level: elementDetailLevel,
+        label: label
+      }
     };
 
     if (this.props.collAction === "Create") {
       const userIds = this.state.selectedUsers;
       const uiState = UIStore.getState();
-      const currentCollection = uiState.currentCollection;
-      const filterParams =
+      let currentCollection = uiState.currentCollection;
+      let filterParams =
         this.isSelectionEmpty(uiState)
           ? this.filterParamsWholeCollection(uiState)
           : this.filterParamsFromUIState(uiState);
+      filterParams = {...filterParams, currentCollection };
+
       const fullParams = {
-        ...params,
-        elements_filter: filterParams,
+        ui_state: filterParams,
         user_ids: userIds,
-        currentCollection
+        new_label: label
       };
-      CollectionActions.createSharedCollections(fullParams);
+      CollectionActions.createSelectedSharedCollections(fullParams);
     }
 
     if (this.props.collAction === 'Update') { CollectionActions.updateSharedCollection(params); }
 
-    if (this.props.collAction === 'EditSync') { CollectionActions.editSync(params); }
+    if (this.props.collAction === 'Edit Share') { CollectionActions.editShare(params); }
 
-    if (this.props.collAction === 'CreateSync') {
+    if (this.props.collAction === 'Share') {
       const userIds = this.state.selectedUsers;
       const fullParams = {
         ...params,
         user_ids: userIds,
       };
-      CollectionActions.createSync(fullParams);
+      CollectionActions.createSharedCollections(fullParams);
     }
 
     this.props.onHide();
@@ -266,7 +269,14 @@ export default class ManagingModalSharing extends React.Component {
     });
   }
 
-  handleDLChange(e, elementType) {
+  handleLabelChange(e) {
+    let val = e.target.value;
+    this.setState({
+      label: val
+    });
+  }
+
+  handleDLChange(e,elementType){
     let val = e.target.value
     let state = {}
     state[elementType + 'DetailLevel'] = val
@@ -402,9 +412,16 @@ export default class ManagingModalSharing extends React.Component {
             <option value='10'>Everything</option>
           </FormControl>
         </FormGroup>
+        <FormGroup controlId="label">
+          <ControlLabel>Label</ControlLabel>
+          <FormControl id="label" type="text" placeholder="Label" name="label"
+             value={this.state.label || ''}
+             onChange={(e) => { this.handleLabelChange(e); }}
+          />
+        </FormGroup>
         {this.selectUsers()}
         <br />
-        <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
+        <Button id="create-sync-shared-col-btn" bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Collection</Button>
       </div>
     )
   }

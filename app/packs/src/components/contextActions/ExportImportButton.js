@@ -11,10 +11,11 @@ import ModalReactionExport from 'src/components/contextActions/ModalReactionExpo
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
-import { elementShowOrNew } from 'src/utilities/routesUtils.js'
+import { elementShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
-  const showRadar = UIStore.getState().hasRadar? (
+  const { currentCollection, hasRadar } = UIStore.getState();
+  const showRadar = hasRadar ? (
     <>
       <MenuItem divider />
       <MenuItem onSelect={() => editMetadataFunction()}
@@ -27,7 +28,7 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
       Publish current collection via RADAR
     </MenuItem>
     </>
-  ): <span />;
+  ) : <span />;
 
   return (
     <Dropdown id='export-dropdown'>
@@ -44,7 +45,7 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
           Export reactions from selection
         </MenuItem>
         <MenuItem divider />
-        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
+        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled || !currentCollection?.canCreateElement()}
           title='Import from spreadsheet or sdf'>
           Import samples to collection
         </MenuItem>
@@ -149,17 +150,13 @@ const importCollectionFunction = (updateModalProps) => {
 };
 
 const editMetadataFunction = () => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/metadata`
-      : `/collection/${currentCollection.id}/metadata`;
-    Aviator.navigate(uri, { silent: true} );
-
-    elementShowOrNew({
-      type: 'metadata',
-      params: { collectionID: currentCollection.id }
-    });
-}
+  const { currentCollection } = UIStore.getState();
+  AviatorNavigation({ element: { type: 'metadata' }, silent: true });
+  elementShowOrNew({
+    type: 'metadata',
+    params: { collectionID: currentCollection.id }
+  });
+};
 
 const exportCollectionToRadarFunction = (updateModalProps) => {
   const title = "Publish current collection via RADAR";

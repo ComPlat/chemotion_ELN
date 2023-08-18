@@ -1,190 +1,265 @@
 import alt from 'src/stores/alt/alt';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-
+import Collection from 'src/models/Collection';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 class CollectionStore {
   constructor() {
     this.state = {
-      genericEls: [],
-      unsharedRoots: [],
-      sharedRoots: [],
-      remoteRoots: [],
-      lockedRoots: [],
-      syncInRoots: [],
       visibleRootsIds: [],
+      myCollectionTree: [],
+      lockedCollectionTree: [],
+      sharedCollectionTree: [],
+      collectionMap: {},
     };
-
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
-      //handleFetchGenericEls: CollectionActions.fetchGenericEls,
-      handleFetchLockedCollectionRoots: CollectionActions.fetchLockedCollectionRoots,
-      handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
-      handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
-      handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
-      handleFetchSyncInCollectionRoots: CollectionActions.fetchSyncInCollectionRoots,
-      handleCreateSharedCollections: CollectionActions.createSharedCollections,
-      handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
+      handleFetchMyCollections: CollectionActions.fetchMyCollections,
+      // handleCreateSharedCollectionAcls: CollectionActions.createSharedCollectionAcls,
+      handleBulkUpdateCollections: CollectionActions.bulkUpdateCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
-      handleCreateUnsharedCollection: [
-        CollectionActions.createUnsharedCollection,
-        CollectionActions.createSync,
-        CollectionActions.editSync,
-        CollectionActions.deleteSync
+      handleRefreshMyCollection: [
+        CollectionActions.createSharedCollections,
+        CollectionActions.createSelectedSharedCollections,
+        CollectionActions.editShare,
+        CollectionActions.deleteShare
       ],
-      handleRejectSharedCollection: CollectionActions.rejectShared,
-      handleRejectSyncdCollection: CollectionActions.rejectSync,
-      handleUpdateCollectrionTree: CollectionActions.updateCollectrionTree
+      handleUpdateCollectionTree: CollectionActions.updateCollectionTree
     })
+    this.exportPublicMethods({
+      findAllCollectionId: this.findAllCollectionId,
+      findCollectionById: this.findCollectionById,
+      flattenCollectionOptions: this.flattenCollectionOptions,
+      formatedCollectionOptions: this.formatedCollectionOptions,
+    });
+
   }
 
   handleTakeOwnership() {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-    CollectionActions.fetchSyncInCollectionRoots();
+    CollectionActions.fetchMyCollections();
   }
 
-  //handleFetchGenericEls(result) {
-  //  console.log(result);
-  //  this.state.genericEls = result.genericEls;
-  //}
+  handleFetchMyCollections(results) {
+    if (!results || !Array.isArray(results.collections)) {
+      return;
+    }
+    const { collections, shared } = results;
+    const collectionObjects = CollectionStore.collectionsToObjects(collections);
+    const sharedObjects = CollectionStore.collectionsToObjects(shared || []);
+    const { myCollections, myLockedCollections } = CollectionStore.filterLockedCollections(
+      collectionObjects
+    );
 
-  handleFetchLockedCollectionRoots(results) {
-    this.state.lockedRoots = results.collections;
+    const myCollectionTree = CollectionStore.buildNestedStructure(myCollections);
+    const sharedCollectionTree = CollectionStore.buildNestedStructure(sharedObjects || []);
+    const lockedCollectionTree = CollectionStore.buildNestedStructure(myLockedCollections);
+    const collectionMap = CollectionStore.collectionsToMap(
+      [...collectionObjects, ...sharedObjects]
+    );
+
+
+    this.setState({
+      myCollectionTree,
+      lockedCollectionTree,
+      sharedCollectionTree,
+      collectionMap,
+    });
+    const { pendingCollectionId } = UIStore.getState();
+    if (pendingCollectionId) {
+      UIActions.selectCollection.defer({ id: pendingCollectionId });
+    }
   }
 
-  handleFetchUnsharedCollectionRoots(results) {
-    this.state.unsharedRoots = results.collections;
+  handleCreateSharedCollectionAcls() {
+    CollectionActions.fetchMyCollections();
   }
 
-  handleFetchSharedCollectionRoots(results) {
-    this.state.sharedRoots = results.collections;
-  }
-
-  handleFetchRemoteCollectionRoots(results) {
-    this.state.remoteRoots = results.collections;
-  }
-
-  handleFetchSyncInCollectionRoots(results) {
-    this.state.syncInRoots = results.syncCollections;
-  }
-  handleCreateSharedCollections() {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
-
-  handleBulkUpdateUnsharedCollections() {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
+  handleBulkUpdateCollections() {
+    CollectionActions.fetchMyCollections();
   }
 
   handleUpdateSharedCollection() {
-    CollectionActions.fetchSharedCollectionRoots();
+    // CollectionActions.fetchSharedCollectionRoots();
   }
 
-  handleCreateUnsharedCollection(results) {
-    CollectionActions.fetchUnsharedCollectionRoots();
+  handleRefreshMyCollection() {
+    CollectionActions.fetchMyCollections();
   }
 
-  handleUpdateCollectrionTree(visibleRootsIds) {
+  handleUpdateCollectionTree(visibleRootsIds) {
     this.state.visibleRootsIds = visibleRootsIds
   }
 
-  handleRejectSharedCollection(results) {
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
-  handleRejectSyncdCollection(results) {
-    CollectionActions.fetchSyncInCollectionRoots();
+  findAllCollectionId() {
+    const { lockedCollectionTree } = this.state;
+    return lockedCollectionTree.find((collection) => (collection.label === 'All'))?.id;
   }
 
-  // 'repository' methods; returns a promise
-  static findById(collectionId) {
-    let state = this.state;
-    let roots = state.unsharedRoots.concat(state.sharedRoots).concat(state.remoteRoots).concat(state.lockedRoots);
-
-    let foundCollection = roots.filter((root) => {
-      return root.id == collectionId;
-    }).pop();
-
-    let promise;
-
-    // if not loaded already fetch collection from backend
-    if (!foundCollection) {
-      // TODO maybe move to CollectionsFetcher
-      promise = fetch('/api/v1/collections/' + collectionId, {
-        credentials: 'same-origin',
-        method: 'GET'
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
-      promise = new Promise((resolve) => {
-        resolve({ collection: foundCollection });
-      });
+  findCollectionById(id) {
+    const { collectionMap } = this.state;
+    if (id === 'all') {
+      return collectionMap[this.findAllCollectionId()];
     }
-    return promise;
-  }
-  static findBySId(collectionId) {
-    let roots = this.state.syncInRoots;
-    let foundCollection = roots.filter((root) => {
-      return root.id == collectionId;
-    }).pop();
-    let promise;
-    if (!foundCollection) {
-      promise = fetch('/api/v1/syncCollections/' + collectionId, {
-        credentials: 'same-origin',
-        method: 'GET'
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
-      promise = new Promise((resolve) => {
-        resolve({ collection: foundCollection });
-      });
-    }
-    return promise;
+    return collectionMap[id];
   }
 
+  flattenCollectionOptions(args = {}) {
+    const { 
+      includeAll = true, // include the All collection
+      onlyOwned = false, // only include collections owned by the current user
+      permissionLevel = 0, // only include collections with perm level higher than the one specified
+      removeExcludedOptions = false, // filter out excluded options instead
+      // of adding disabled property
+    } = args;
+    const {
+      lockedCollectionTree, myCollectionTree, sharedCollectionTree
+    } = this.state;
 
-  static findAllCollection() {
-    let state = this.state;
-    let roots = state.lockedRoots;
+    // Flatten the collection trees
+    const flattenLockedTree = CollectionStore.flattenCollectionTree(lockedCollectionTree);
+    const flattenCollectionTree = CollectionStore.flattenCollectionTree(myCollectionTree);
+    const flattenSharedCollectionTree = CollectionStore.flattenCollectionTree(sharedCollectionTree);
 
-    let foundCollection = roots.filter((root) => {
-      return root.label == 'All';
-    }).pop();
-
-    let promise;
-
-    // if not loaded already fetch collection from backend
-    if (!foundCollection) {
-      promise = fetch('/api/v1/collections/all/', {
-        credentials: 'same-origin',
-        method: 'GET'
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
-      promise = new Promise((resolve) => {
-        resolve({ collection: foundCollection });
-      });
+    let filteredSharedCollectionList = [];
+    // filter out the All collection
+    if (!includeAll) {
+      if (removeExcludedOptions) {
+        flattenLockedTree.shift();
+      } else {
+        flattenLockedTree.forEach((collection) => {
+          collection.disabled = collection.allCollection();
+        });
+      }
     }
-    return promise;
+    // filter out the collections with permission level lower than the one specified
+    if (permissionLevel > 0) {
+      if (removeExcludedOptions) {
+        filteredSharedCollectionList = flattenSharedCollectionTree.filter(
+          (collection) => collection.hasPermissionLevel(permissionLevel)
+        );
+      } else {
+        flattenSharedCollectionTree.forEach((collection) => {
+          collection.disabled = !collection.hasPermissionLevel(permissionLevel);
+        });
+        filteredSharedCollectionList = flattenSharedCollectionTree;
+      }
+    }
+
+    if (onlyOwned) { filteredSharedCollectionList = []; }
+
+    // Add a first property to the first element of each collection list
+    if (flattenCollectionTree.length > 0) {
+      flattenCollectionTree[0].first = true;
+    }
+    if (filteredSharedCollectionList.length > 0) {
+      filteredSharedCollectionList[0].first = true;
+    }
+
+    // Return the flattened collection tree list
+    return [
+      ...flattenLockedTree,
+      ...flattenCollectionTree,
+      ...filteredSharedCollectionList,
+    ];
+  }
+
+  // TODO: move the formatting to a more suitable place
+  formatedCollectionOptions(args = {}) {
+    return this.flattenCollectionOptions(args).map((collection) => {
+      const indent = '\u00A0'.repeat(collection.depth * 3 + 1);
+
+      const className = collection.first ? 'separator' : '';
+
+      return {
+        value: collection.id,
+        label: indent + collection.label,
+        className,
+        disabled: collection.disabled,
+      };
+    });
+  }
+
+  static collectionsToObjects(collections) {
+    const { currentUser } = UserStore.getState();
+    return collections.map(collection => {
+      collection.currentUser = currentUser;
+      return new Collection(collection);
+    });
+  }
+
+  static filterLockedCollections(collections) {
+    const myLockedCollections = collections.filter(collection => collection.is_locked);
+    const myCollections = collections.filter(collection => !collection.is_locked);
+    return { myCollections, myLockedCollections };
+  }
+
+  static collectionsToMap(collections) {
+    // Create a map of collections using their ids as keys
+    // add a children property to each collection
+    const collectionMap = {};
+    collections.forEach((collection) => {
+      collectionMap[collection.id] = collection;
+    });
+    return collectionMap;
+  }
+
+  static buildNestedStructure(collections) {
+    const rootCollections = [];
+    const collectionMap = CollectionStore.collectionsToMap(collections);
+    // Iterate over the collections and build the nested structure
+    collections.forEach((collection) => {
+      const { ancestry } = collection;
+      const parentIds = (ancestry || '').split('/').filter((id) => id !== '');
+      if (parentIds.length === 0) {
+        rootCollections.push(collection);
+      } else {
+        let parentCollection = null;
+
+        for (let i = parentIds.length - 1; i >= 0; i--) {
+          const parentId = parentIds[i];
+          const currentParent = collectionMap[parentId];
+          if (currentParent) {
+            parentCollection = currentParent;
+            break;
+          } else {
+            parentIds.splice(i, 1); // Remove missing parent from ancestry
+          }
+        }
+
+        if (parentCollection) {
+          parentCollection.children.push(collection);
+        } else {
+          rootCollections.push(collection);
+        }
+      }
+    });
+
+    CollectionStore.sortCollections(rootCollections);
+    return rootCollections;
+  }
+
+  static sortCollections(collections) {
+    collections.sort((a, b) => a.position - b.position);
+
+    collections.forEach((collection) => {
+      if (collection.children.length > 0) {
+        CollectionStore.sortCollections(collection.children);
+      }
+    });
+  }
+
+  static flattenCollectionTree(collectionTree) {
+    const flattened = [];
+    collectionTree.forEach((collection) => {
+      flattened.push(collection);
+      if (collection.children.length > 0) {
+        flattened.push(...CollectionStore.flattenCollectionTree(collection.children));
+      }
+    });
+    return flattened;
   }
 }
 

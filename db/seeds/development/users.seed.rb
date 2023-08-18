@@ -150,7 +150,7 @@ Person.find_each do |u|
                                          show_yield: true)
 
     reaction_svg = composer.compose_reaction_svg
-    
+
     attributes = {
       name: Faker::Book.title,
       short_label: Faker::Book.title,
@@ -166,3 +166,32 @@ Person.find_each do |u|
     reaction.save!
   end
 end
+
+# create shared between between User1 and User2
+user1 = User.find_by(first_name: 'User1')
+user2 = User.find_by(first_name: 'User2')
+collection = user1.collections.first
+params = {collection_attributes: {
+            permission_level: 3, sample_detail_level: 10, reaction_detail_level: 10, wellplate_detail_level: 10, screen_detail_level: 10, element_detail_level: 10, label: "shared params"},
+          elements_filter: {sample: {all: false, included_ids: [collection.samples.first.id], excluded_ids: [], collection_id: collection.id, checkedAll: false, checkedIds: [], uncheckedIds: []}},
+          user_ids:[{value:user2.id, name:user2.name, label:user2.initials}],
+          currentCollection: { id: collection.id, label: collection.label, permission_level: 0, reaction_detail_level: 10, sample_detail_level: 10,
+                               screen_detail_level: 10, wellplate_detail_level: 10, element_detail_level: 10, is_shared: false, is_remoted: nil }}
+@cid = (Collection.find_by(id: collection.id.to_i, user_id: user1.id) || Collection.find_by(id: collection.id.to_i, shared_by_id: user1.id))&.id.to_i
+samples = [collection.samples.first]
+@sample_ids = samples.pluck(:id)
+
+uids = params[:user_ids].map do |user_id|
+  val = user_id[:value].to_s.downcase
+  if val =~ /^[0-9]+$/
+    val.to_i
+  else
+    User.where(email: val).pluck :id
+  end
+end.flatten.compact.uniq
+
+Usecases::Sharing::ShareWithUsers.new(
+  user_ids: uids,
+  sample_ids: @sample_ids,
+  collection_attributes: params[:collection_attributes].merge(user_id: user1.id)
+).execute!

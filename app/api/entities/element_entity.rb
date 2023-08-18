@@ -14,6 +14,7 @@ module Entities
       expose! :short_label
       expose! :type
       expose! :uuid
+      expose! :can_update,      unless: :displayed_in_list
     end
 
     with_options(anonymize_below: 10) do
@@ -100,6 +101,10 @@ module Entities
 
     def can_copy
       true
+    end
+
+    def can_update
+      options[:policy].try(:update?) || false
     end
   end
 end

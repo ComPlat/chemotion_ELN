@@ -53,7 +53,7 @@ describe Chemotion::ScreenAPI do
 
       context 'when no screens found' do
         it 'returns no screens' do
-          allow(Collection).to receive(:belongs_to_or_shared_by).and_raise(ActiveRecord::RecordNotFound)
+          allow(Collection).to receive(:belongs_to_current_user).and_raise(ActiveRecord::RecordNotFound)
           get '/api/v1/screens', params: params, headers: request_headers
           expect(JSON.parse(response.body)['screens'].size).to eq(0)
         end

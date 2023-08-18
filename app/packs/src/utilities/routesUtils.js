@@ -1,3 +1,4 @@
+import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -7,6 +8,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions'
 
+
 const collectionShow = (e) => {
   UIActions.showElements.defer();
   UserActions.fetchCurrentUser();
@@ -15,35 +17,27 @@ const collectionShow = (e) => {
     UserActions.fetchProfile();
   }
   const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  if (collectionId === 'all') {
-    collectionPromise = CollectionStore.findAllCollection();
+  const { currentSearchSelection } = uiState;
+  const id = e.params?.collectionID;
+
+  if (currentSearchSelection) {
+    UIActions.selectCollectionWithoutUpdating({ id });
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection: currentSearchSelection,
+      collectionId: id
+    });
   } else {
-    collectionPromise = CollectionStore.findById(collectionId);
+    UIActions.selectCollection.defer({ id });
   }
 
-  collectionPromise.then((result) => {
-    const collection = result.collection;
-
-    if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection({
-        selection: currentSearchSelection,
-        collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me });
-    } else {
-      UIActions.selectCollection(collection);
-    }
-
-    // if (!e.params['sampleID'] && !e.params['reactionID'] &&
-        // !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    // }
+  [
+    'sample',
+    'reaction',
+    'wellplate',
+    'screen',
+    'research_plan'
+  ].forEach((type) => {
+    UIActions.uncheckAllElements.defer({ type, range: 'all' });
   });
 };
 
@@ -51,40 +45,6 @@ const collectionShowCollectionManagement = () => {
   UIActions.showCollectionManagement();
 };
 
-const scollectionShow = (e) => {
-  UIActions.showElements();
-  UserActions.fetchCurrentUser();
-  const { profile } = UserStore.getState();
-  if (!profile) {
-    UserActions.fetchProfile();
-  }
-  const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  collectionPromise = CollectionStore.findBySId(collectionId);
-
-  collectionPromise.then((result) => {
-    const collection = result.sync_collections_user;
-
-    if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection({
-        selection: currentSearchSelection,
-        collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me });
-    } else {
-      UIActions.selectSyncCollection(collection);
-    }
-
-    // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    // }
-  });
-};
 
 const reportShowReport = () => {
   ElementActions.showReportContainer();
@@ -268,9 +228,44 @@ const elementShowOrNew = (e) => {
   return null;
 };
 
+
+const buildPathForElement = (element) => {
+  if (!element) { return ''; }
+  const { id, isNew, type } = element;
+  if (!type) { return ''; }
+  if (!isNew && !id) { return `/${type}`; }
+  return `/${type}/${isNew ? 'new' : id}`;
+};
+
+const buildPathForCollection = (collection) => {
+  const { id, is_locked, label } = collection || {};
+  if (is_locked && label === 'All') {
+    return '/collection/all';
+  }
+  if (id) {
+    return `/collection/${id}`;
+  }
+  return '/collection/none';
+};
+
+const buildPathForCollectionAndElement = (collection, element) => `${buildPathForCollection(collection)}${buildPathForElement(element)}`;
+
+const AviatorNavigation = (args) => {
+  const { collection, element, silent } = args;
+  const { currentCollection } = UIStore.getState();
+  const { currentElement } = ElementStore.getState();
+  Aviator.navigate(
+    buildPathForCollectionAndElement(collection || currentCollection, element || currentElement),
+    { silent }
+  );
+};
+
+const UrlSilentNavigation = (element) => {
+  AviatorNavigation({ element, silent: true });
+};
+
 export {
   collectionShow,
-  scollectionShow,
   collectionShowCollectionManagement,
   reportShowReport,
   sampleShowOrNew,
@@ -287,5 +282,8 @@ export {
   metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  buildPathForCollectionAndElement,
+  AviatorNavigation,
+  UrlSilentNavigation,
 };

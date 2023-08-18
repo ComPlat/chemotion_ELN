@@ -314,7 +314,17 @@ export default class GenericElDetails extends Component {
 
   elementalPropertiesItem(genericEl) {
     const options = [];
-    const defaultName = <GenProperties key={`${genericEl.id}_elementalPropertiesItem`} label="" description={genericEl.description || ''} value={genericEl.name || ''} type="text" onChange={event => this.handleInputChange(event, 'name', '')} isEditable readOnly={false} isRequired />;
+    const defaultName =
+      <GenProperties
+        key={`${genericEl.id}_elementalPropertiesItem`}
+        label="" description={genericEl.description || ''}
+        value={genericEl.name || ''}
+        type="text"
+        onChange={event => this.handleInputChange(event, 'name', '')}
+        isEditable
+        readOnly={!genericEl.can_update}
+        isRequired
+      />;
     options.push(defaultName);
     const layersLayout = LayersLayout(
       genericEl.properties.layers,
@@ -401,10 +411,10 @@ export default class GenericElDetails extends Component {
   header(genericEl) {
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+
     const copyBtn = (genericEl.can_copy && !genericEl.isNew) ? (
-      <CopyElementModal element={genericEl} defCol={defCol} />
+      <CopyElementModal element={genericEl} defCol={currentCollection?.defCol()} />
     ) : null;
     const saveBtnDisplay = genericEl.changed ? '' : 'none';
     const datetp = formatTimeStampsOfElement(genericEl || {});

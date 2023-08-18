@@ -10,14 +10,11 @@ module ParamsHelpers
     optional :included_ids, type: Array, default: []
     optional :excluded_ids, type: Array, default: []
     optional :collection_id, type: Integer
-    optional :is_sync_to_me, type: Boolean, default: false
   end
 
   params :main_ui_state_params do
     requires :currentCollection, type: Hash do
       requires :id, type: Integer
-      optional :is_sync_to_me, type: Boolean, default: false
-      optional :is_shared, type: Boolean, default: false
     end
     optional :sample, type: Hash do
       use :ui_state_params

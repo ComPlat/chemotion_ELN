@@ -446,7 +446,7 @@ export default class ScreenDetails extends Component {
           </Tabs>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+            <Button bsStyle="warning" disabled={!screen.can_update} onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
           <CommentModal element={screen} />
         </Panel.Body>

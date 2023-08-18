@@ -3,17 +3,20 @@ import PropTypes from 'prop-types';
 import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import Select from 'react-select'
+import Select from 'react-select';
+
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
-    const options = this.collectionOptions();
+    const options = CollectionStore.formatedCollectionOptions(
+      { includeAll: false, onlyOwned: true }
+    );
     this.state = {
       newLabel: null,
-      options: options,
+      options,
       selected: null,
-    }
+    };
     this.onSelectChange = this.onSelectChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -25,84 +28,51 @@ export default class ManagingModalCollectionActions extends React.Component {
     });
   }
 
-  writableColls(colls) {
-    return colls.map(coll => {
-      return coll.permission_level >= 1 ? coll : null;
-    }).filter(r => r != null);
+  selectedIsCurrentCollection() {
+    const { selected } = this.state;
+    const { currentCollection } = UIStore.getState();
+
+    return selected === currentCollection?.id;
   }
 
-  collectionEntries() {
-    const cState = CollectionStore.getState();
-    const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
-    let cShared = [];
-    let cSynced = [];
-    if (this.props.listSharedCollections) {
-      cState.sharedRoots.map(sharedR => cShared = [...cShared, ...sharedR.children]);
-      cState.syncInRoots.map(syncInR => cSynced = [...cSynced, ...syncInR.children]);
-      cSynced = this.writableColls(cSynced);
-    }
-
-    if (cShared.length > 0) { cShared[0] = Object.assign(cShared[0], { first: true }); }
-    if (cSynced.length > 0) { cSynced[0] = Object.assign(cSynced[0], { first: true }); }
-
-    const cAll = [...cUnshared, ...cShared, ...cSynced];
-    let cAllTree = [];
-    this.makeTree(cAllTree, cAll, 0);
-    return cAllTree;
+  collectionIsToBeCreated() {
+    const { newLabel } = this.state;
+    return newLabel && newLabel.length > 0;
   }
 
-  makeTree(tree, collections, depth) {
-    collections.forEach((collection, index) => {
-      tree.push({
-        id: collection.id,
-        label: collection.label,
-        depth: depth,
-        first: collection.first,
-        is_shared: collection.is_shared,
-        is_sync_to_me: collection.is_sync_to_me
-      });
-      if (collection.children && collection.children.length > 0) {
-        this.makeTree(tree, collection.children, depth + 1)
-      }
-    });
+  collectionIsSelected() {
+    const { selected } = this.state;
+    return !!selected;
   }
 
-  collectionOptions() {
-    const cAllTree = this.collectionEntries();
-    if (cAllTree.length === 0) return [];
-    const options = cAllTree.map(leaf => {
-      const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
-      const className = leaf.first ? "separator" : "";
-      return {
-        value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
-        label: indent + leaf.label,
-        className: className
-      };
-    });
-    return options;
+  validSubmit() {
+    return (this.collectionIsSelected() && !this.selectedIsCurrentCollection())
+      || this.collectionIsToBeCreated();
   }
 
   handleSubmit() {
-    const { selected, newLabel } = this.state;
-    const collection_id = selected && parseInt(selected.split("-")[0]);
-    const is_sync_to_me = selected && selected.split("-")[1] == "is_sync_to_me";
+    const { selected, newLabel, selectedUsers } = this.state;
     const ui_state = UIStore.getState();
-
     this.props.action({
-      ui_state, collection_id, is_sync_to_me, newLabel
+      ui_state,
+      collection_id: selected,
+      newLabel,
+      user_ids: selectedUsers
     });
     this.props.onHide();
   }
 
   submitButton() {
-    const { newLabel, selected } = this.state
+    const { newLabel } = this.state;
     const l = newLabel && newLabel.length
     return l && l > 0 ? (
       <Button bsStyle="warning" onClick={this.handleSubmit}>
-        Create collection &lsquo;{newLabel}&rsquo; and Submit
+        Create collection &lsquo;
+        {newLabel}
+        &rsquo; and Submit
       </Button>
     ) : (
-      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
+      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!this.validSubmit()}>
         Submit
       </Button>
     );
@@ -136,6 +106,7 @@ export default class ManagingModalCollectionActions extends React.Component {
           />
         </FormGroup>
         {this.submitButton()}
+        {(this.selectedIsCurrentCollection() && !this.collectionIsToBeCreated()) ? 'You cannot submit to the current collection' : ''}
       </div>
     )
   }

@@ -19,13 +19,14 @@ module Chemotion
         end
 
         post do
-          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          collection = fetch_collection_w_current_user(params[:currentCollection][:id])
+
           sel, has_sel = {}, {}
           API::ELEMENTS.each do |element|
             ui_state = params[element]
             if ui_state && (ui_state[:checkedAll] || ui_state[:checkedIds].present?)
               element_klass = element.classify.constantize
-              sel[element] = element_klass.by_collection_id(cid).by_ui_state(params[:sample])
+              sel[element] = element_klass.by_collection_id(collection.id).by_ui_state(params[:sample])
                                                 .for_user_n_groups(user_ids)
             end
             has_sel[element] = sel[element].present?
@@ -37,7 +38,7 @@ module Chemotion
 
           deletion_allowed = true
           sharing_allowed = true
-          if (params[:currentCollection][:is_sync_to_me] || params[:currentCollection][:is_shared])
+          unless collection.owned_by?(current_user)
             deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy? : true
             deletion_allowed = deletion_allowed && (has_sel['reaction'] ? ElementsPolicy.new(current_user, sel['reaction']).destroy? : true)
             deletion_allowed = deletion_allowed && (has_sel['wellplate'] ? ElementsPolicy.new(current_user, sel['wellplate']).destroy? : true)

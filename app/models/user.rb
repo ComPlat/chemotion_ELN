@@ -73,6 +73,7 @@ class User < ApplicationRecord
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
+  has_many :access_control_lists, foreign_key: :collection_id, dependent: :destroy
   has_many :sync_out_collections_users, foreign_key: :shared_by_id, class_name: 'SyncCollectionsUser'
   has_many :sync_in_collections_users,  foreign_key: :user_id, class_name: 'SyncCollectionsUser'
   has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
@@ -297,6 +298,14 @@ class User < ApplicationRecord
     SyncCollectionsUser.where('user_id IN (?) ', [id] + group_ids)
   end
 
+  def all_acl_collection_users
+    CollectionAcl.where('user_id = ?', id)
+  end
+
+  def acl_collection_by_id(col_id)
+    Collection.joins(:collection_acls)
+              .find_by('collection_acls.user_id = ? and collection_acls.collection_id = ?', id, col_id)
+  end
   def current_affiliations
     Affiliation.joins(
       'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id'

@@ -20,7 +20,6 @@ export default class SharedWithMeCollections extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchRemoteCollectionRoots()
   }
 
   componentWillUnmount() {
@@ -28,21 +27,7 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.remoteRoots.length > 0 ? state.remoteRoots : [{}];
-
-    children.map((child) => {
-      if (child.is_locked) {
-        let label = '';
-        if (child.shared_by != null) {
-          label = `by ${child.shared_by.initials} (${child.shared_by.name})`;
-        }
-        if (child.shared_to != null) {
-          label += ` with ${child.shared_to.initials} (${child.shared_to.name})`;
-        }
-        child.label = label;
-      }
-      return child;
-    });
+    let children = state.sharedCollectionTree.length > 0 ? state.sharedCollectionTree : [{}];
 
     this.setState({
       tree: {
@@ -76,11 +61,13 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   actions(node) {
+    const acls = node?.collection_acls || [];
+    const id = acls[0]?.id;
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         delete collection: <br /> {node.label} ?<br />
         <ButtonGroup>
-          <Button bsStyle="danger" bsSize="xsmall" onClick={() => CollectionActions.rejectShared({ id: node.id })}>
+          <Button bsStyle="danger" bsSize="xsmall" onClick={() => CollectionActions.deleteShare({ id })}>
           Yes
           </Button>
           <Button bsStyle="warning" bsSize="xsmall" onClick={this.handleClick} >

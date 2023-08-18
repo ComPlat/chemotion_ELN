@@ -231,12 +231,11 @@ export default class AutoCompleteInput extends React.Component {
       this.setState({
         value: ''
       })
-      let {currentCollection, isSync} = UIStore.getState();
-      currentCollection['clearSearch'] = true
-      isSync ? UIActions.selectSyncCollection(currentCollection)
-        : UIActions.selectCollection(currentCollection);
+      let { currentCollection } = UIStore.getState();
+      currentCollection['clearSearch'] = true;
+      UIActions.selectCollection(currentCollection);
 
-      return 0
+      return 0;
     }
 
     let selection = {name: value, search_by_method: 'substring'}

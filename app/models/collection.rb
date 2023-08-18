@@ -50,6 +50,7 @@ class Collection < ApplicationRecord
   has_many :elements, through: :collections_elements
 
   has_many :sync_collections_users, foreign_key: :collection_id, dependent: :destroy, inverse_of: :collection
+  has_many :collection_acls, foreign_key: :collection_id, dependent: :destroy
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   has_one :metadata
@@ -60,17 +61,16 @@ class Collection < ApplicationRecord
 
   scope :ordered, -> { order('position ASC') }
   scope :unshared, -> { where(is_shared: false) }
-  scope :synchronized, -> { where(is_synchronized: true) }
-  scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
-  scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
-  scope :belongs_to_or_shared_by, ->(user_id, with_group = false) do
-    if with_group.present?
-      where(
-        'user_id = ? OR shared_by_id = ? OR (user_id IN (?) AND is_locked = false)',
-        user_id, user_id, with_group
-      )
+  # scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  scope :shared, ->(user_id) { where('is_shared = ?', true) }
+  scope :owned_by, ->(user_id) { where(user_id: user_id) }
+
+  scope :with_collections_acls, -> { joins('left join collection_acls acls on acls.collection_id = collections.id') }
+  scope :shared_with, ->(user_id, with_permission = nil) do
+    if with_permission
+      joins(:collection_acls).where(collection_acls: { user_id: user_id, permission_level: with_permission })
     else
-      where('user_id = ? OR shared_by_id = ?', user_id, user_id)
+      joins(:collection_acls).where(collection_acls: { user_id: user_id })
     end
   end
 
@@ -143,6 +143,19 @@ class Collection < ApplicationRecord
 
   def self.reject_shared(user_id, collection_id)
     Collection.where(id: collection_id, user_id: user_id, is_shared: true)
-              .each(&:destroy)
+              .find_each(&:destroy)
+  end
+
+  def owned_by?(user_ids_or_user)
+    case user_ids_or_user
+    when Array
+      user_ids_or_user.include?(user_id)
+    when Integer
+      user_ids_or_user == user_id
+    when User
+      user_ids_or_user.id == user_id
+    else
+      false
+    end
   end
 end

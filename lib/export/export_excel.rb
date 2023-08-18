@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'export_table'
 
 module Export
@@ -56,15 +58,12 @@ module Export
       return if samples.nil? # || samples.count.zero?
       generate_headers(table, [], selected_columns)
       sheet = @xfile.workbook.add_worksheet(name: table.to_s) #do |sheet|
-      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
-      light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
+      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => 'FF777777', :edges => [:bottom] })
+      light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => 'FFCCCCCC', :edges => [:top] })
       sheet.add_row(@headers, style: grey) # Add header
-      image_width = DEFAULT_ROW_WIDTH
-      row_height = DEFAULT_ROW_HEIGHT
-      row_image_width = DEFAULT_ROW_WIDTH
       row_length = @headers.size
       samples.each_with_index do |sample, row|
-        if (sample['shared_sync'] == 'f' || sample['shared_sync'] == false || sample['dl_s'] = 10)
+        if (sample['acl_id'].nil? || sample['dl_s'] == 10)
           data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
           data[row_length - 1] = nil
           analyses = prepare_sample_analysis_data(sample)
@@ -112,10 +111,10 @@ module Export
       output = output.join("\n")
       output
     end
-    
-    def filter_with_permission_and_detail_level(sample)
+
+    def filter_with_permission_and_detail_level(sample) # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       # return all data if sample in own collection
-      if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
+      if sample['acl_id'].nil?
         headers = @headers
         reference_values = ['melting pt', 'boiling pt']
         data = headers.map do |column|
@@ -149,6 +148,7 @@ module Export
       sample_svg_path = sample['image'].presence
       molecule_svg_path = sample['m_image'].presence
       return nil unless (svg_file_name = sample_svg_path || molecule_svg_path)
+
       file_path = File.join(
         Rails.root, 'public', 'images', sample_svg_path ? 'samples' : 'molecules', svg_file_name
       )

@@ -12,8 +12,8 @@ export default class GenericElsFetcher {
     });
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'generic_elements', GenericEl);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'generic_elements', GenericEl);
   }
 
   static fetchById(id) {

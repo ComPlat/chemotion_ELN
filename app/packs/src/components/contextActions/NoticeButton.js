@@ -70,11 +70,11 @@ const handleNotification = (nots, act, needCallback = true) => {
       const { currentPage, itemsPerPage } = InboxStore.getState();
 
       switch (n.content.action) {
-        case 'CollectionActions.fetchRemoteCollectionRoots':
-          CollectionActions.fetchRemoteCollectionRoots();
+        case 'CollectionActions.fetchMyCollections':
+          CollectionActions.fetchMyCollections();
           break;
-        case 'CollectionActions.fetchSyncInCollectionRoots':
-          CollectionActions.fetchSyncInCollectionRoots();
+        case 'CollectionActions.createSharedCollections':
+          CollectionActions.fetchMyCollections();
           break;
         case 'InboxActions.fetchInbox':
           InboxActions.fetchInbox({ currentPage, itemsPerPage });
@@ -86,11 +86,7 @@ const handleNotification = (nots, act, needCallback = true) => {
           ElementActions.refreshComputedProp(n.content.cprop);
           break;
         case 'RefreshChemotionCollection':
-          CollectionActions.fetchUnsharedCollectionRoots();
-          break;
-        case 'CollectionActions.fetchUnsharedCollectionRoots':
-          CollectionActions.fetchUnsharedCollectionRoots();
-          CollectionActions.fetchSyncInCollectionRoots();
+          CollectionActions.fetchMyCollections();
           break;
         case 'ElementActions.fetchResearchPlanById':
           ElementActions.fetchResearchPlanById(
