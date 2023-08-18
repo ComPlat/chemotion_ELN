@@ -15,3 +15,4 @@ var StructureEditorUserSetting = require('src/components/structureEditor/UserSet
 var LoginOptions = require('src/apps/omniauthCredential/LoginOptions');
 var ConverterAdmin = require('../src/apps/converter/ConverterAdmin');
 var mydb = require('src/apps/mydb');
+var demo = require('src/apps/demo');
