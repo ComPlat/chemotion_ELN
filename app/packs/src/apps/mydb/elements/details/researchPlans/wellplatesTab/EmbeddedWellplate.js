@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon } from 'react-bootstrap';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { wellplateShowOrNew } from 'src/utilities/routesUtils';
+import { wellplateShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
@@ -22,11 +20,9 @@ export default class EmbeddedWellplate extends Component {
   }
 
   openWellplate() {
-    const { currentCollection, isSync } = UIStore.getState();
-    const wellplateID = this.props.wellplate.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
-    Aviator.navigate(uri, { silent: true });
-    wellplateShowOrNew({ params: { wellplateID } });
+    const { wellplate } = this.props;
+    AviatorNavigation({ element: wellplate, silent: true })
+    wellplateShowOrNew({ params: { wellplateID: wellplate.id } });
   }
 
   showImportConfirm() {

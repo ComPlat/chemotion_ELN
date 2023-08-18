@@ -5,17 +5,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import Utils from 'src/utilities/Functions';
 
 class CollectionActions {
-  fetchGenericEls() {
-    return (dispatch) => {
-      UsersFetcher.fetchElementKlasses()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
   takeOwnership(params) {
     return (dispatch) => {
       CollectionsFetcher.takeOwnership(params)
@@ -27,65 +16,23 @@ class CollectionActions {
     };
   }
 
+  fetchMyCollections() {
+    return (dispatch) => {
+      CollectionsFetcher.fetchMyCollections()
+        .then((roots) => {
+          dispatch(roots);
+        }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+
   // TODO #2...centralized error handling maybe ErrorActions?
-  fetchLockedCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchLockedRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
 
-  fetchUnsharedCollectionRoots() {
+  createSelectedSharedCollections(params) {
     return (dispatch) => {
-      CollectionsFetcher.fetchUnsharedRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchSharedCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchSharedRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchRemoteCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchRemoteRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  fetchSyncInCollectionRoots() {
-    return (dispatch) => {
-      CollectionsFetcher.fetchSyncRemoteRoots()
-        .then((roots) => {
-          dispatch(roots);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  createSharedCollections(params) {
-    return (dispatch) => {
-      CollectionsFetcher.createSharedCollections(params)
+      CollectionsFetcher.createSelectedSharedCollections(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -100,8 +47,8 @@ class CollectionActions {
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+        console.log(errorMessage);
+      });
     };
   }
 
@@ -111,14 +58,14 @@ class CollectionActions {
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+        console.log(errorMessage);
+      });
     };
   }
 
-  bulkUpdateUnsharedCollections(params) {
+  bulkUpdateCollections(params) {
     return (dispatch) => {
-      CollectionsFetcher.bulkUpdateUnsharedCollections(params)
+      CollectionsFetcher.bulkUpdateCollections(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -138,9 +85,9 @@ class CollectionActions {
     };
   }
 
-  createUnsharedCollection(params) {
+  createSharedCollections(params) {
     return (dispatch) => {
-      CollectionsFetcher.createUnsharedCollection(params)
+      CollectionsFetcher.createSharedCollections(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -149,9 +96,9 @@ class CollectionActions {
     };
   }
 
-  createSync(params) {
+  editShare(params) {
     return (dispatch) => {
-      CollectionsFetcher.createSync(params)
+      CollectionsFetcher.editShare(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -160,39 +107,9 @@ class CollectionActions {
     };
   }
 
-  editSync(params) {
+  deleteShare(params) {
     return (dispatch) => {
-      CollectionsFetcher.editSync(params)
-        .then(() => {
-          dispatch();
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-  deleteSync(params) {
-    return (dispatch) => {
-      CollectionsFetcher.deleteSync(params)
-        .then(() => {
-          dispatch();
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-  rejectSync(params) {
-    return (dispatch) => {
-      CollectionsFetcher.deleteSync(params)
-        .then(() => {
-          dispatch();
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-  rejectShared(params) {
-    return (dispatch) => {
-      CollectionsFetcher.rejectShared(params)
+      CollectionsFetcher.deleteShare(params)
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -201,7 +118,7 @@ class CollectionActions {
     };
   }
 
-  updateCollectrionTree(visibleRootsIds) {
+  updateCollectionTree(visibleRootsIds) {
     return visibleRootsIds
   }
 

@@ -519,6 +519,13 @@ export default class ResearchPlanDetails extends Component {
   render() {
     const { researchPlan, update, visible } = this.state;
 
+    let btnMode = <Button bsSize="xs" bsStyle="success" disabled={!researchPlan.can_update} onClick={() => this.handleSwitchMode('edit')}>
+                    click to edit
+                  </Button>;
+    if (researchPlan.mode !== 'view') {
+      btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
+    }
+
     const tabContentsMap = {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>

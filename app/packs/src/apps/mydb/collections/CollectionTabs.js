@@ -46,7 +46,6 @@ export default class CollectionTabs extends React.Component {
     CollectionStore.listen(this.onStoreChange);
     UserStore.listen(this.onUserStoreChange);
     UserActions.fetchProfile();
-    CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {

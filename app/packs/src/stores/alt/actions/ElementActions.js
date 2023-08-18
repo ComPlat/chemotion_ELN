@@ -202,9 +202,9 @@ class ElementActions {
   }
 
   // -- Generic --
-  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
+  fetchGenericElsByCollectionId(id, queryParams = {},  elementType) {
     return (dispatch) => {
-      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      GenericElsFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => { dispatch({ result, type: elementType }); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
@@ -242,10 +242,9 @@ class ElementActions {
     };
   }
 
-  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
-    moleculeSort = false) {
+  fetchSamplesByCollectionId(id, queryParams = {}, moleculeSort = false) {
     return (dispatch) => {
-      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
+      SamplesFetcher.fetchByCollectionId(id, queryParams, moleculeSort)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -254,9 +253,9 @@ class ElementActions {
     };
   }
 
-  fetchReactionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchReactionsByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ReactionsFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -265,9 +264,9 @@ class ElementActions {
     };
   }
 
-  fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchWellplatesByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      WellplatesFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -276,9 +275,9 @@ class ElementActions {
     };
   }
 
-  fetchScreensByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchScreensByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ScreensFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -288,9 +287,9 @@ class ElementActions {
   }
 
 
-  fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchResearchPlansByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ResearchPlansFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -881,7 +880,7 @@ class ElementActions {
 
   updateElementsCollection(params) {
     return (dispatch) => {
-      CollectionsFetcher.updateElementsCollection(params)
+      CollectionsFetcher.moveOrAssignElementsCollection(params, 'move')
         .then(() => { dispatch(); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
@@ -889,7 +888,7 @@ class ElementActions {
 
   assignElementsCollection(params) {
     return (dispatch) => {
-      CollectionsFetcher.assignElementsCollection(params)
+      CollectionsFetcher.moveOrAssignElementsCollection(params, 'assign')
         .then(() => { dispatch(); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };

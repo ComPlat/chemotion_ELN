@@ -51,16 +51,16 @@ RSpec.describe Collection, type: :model do
       end
     end
 
-    describe 'belongs_to_or_shared_by (without group)' do
+    describe 'belongs_to_current_user (without group)' do
       it 'returns collections owned or shared by a user' do
-        expect(described_class.belongs_to_or_shared_by(3)).to match_array [collection_3, collection_4]
+        expect(described_class.belongs_to_current_user(3)).to match_array [collection_3, collection_4]
       end
     end
 
-    describe 'belongs_to_or_shared_by (with a group)' do
+    describe 'belongs_to_current_user (with a group)' do
       it 'returns own collections and unlocked collections owned through a group ' do
         p1.collections.where(label: ['chemotion-repository.net', 'All']).destroy_all
-        expect(described_class.belongs_to_or_shared_by(p1.id, [g1.id])).to match_array [collection_5]
+        expect(described_class.belongs_to_current_user(p1.id, [g1.id])).to match_array [collection_5]
       end
     end
   end
