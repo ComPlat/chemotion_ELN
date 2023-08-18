@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import { ReactionRenderer, DisplayMatrix } from 'chemotion_reaction_rendering';
+import { ReactionRenderer, DisplayMatrix } from '@complat/chemotion-reaction-svg-composer';
 
 export default class ReactionSvgFetcher {
 

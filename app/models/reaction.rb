@@ -235,12 +235,8 @@ class Reaction < ApplicationRecord
         end
       end
       begin
-        composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
-                                                    duration: duration,
-                                                    solvents: solvents_in_svg,
-                                                    conditions: conditions,
-                                                    show_yield: true)
-        self.reaction_svg_file = composer.compose_reaction_svg_and_save
+        svg = Chemotion::ReactionSvgComposer.new.svg(JSON.generate(self))
+        self.reaction_svg_file = svg
       rescue StandardError => _e
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
       end
