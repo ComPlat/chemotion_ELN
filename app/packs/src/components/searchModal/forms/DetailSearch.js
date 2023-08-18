@@ -557,7 +557,7 @@ const DetailSearch = () => {
         fields.push(subGroupWithAddOnFields(option, 'subGroupWithAddOn', selectedValue, column, keyLabel));
         break;
       case 'spacer':
-        fields.push(<div class="form-group"></div>);
+        fields.push(<div class="form-group" key={`empty-column-${i}`}></div>);
         break;
       case 'headline':
         fields.push(componentHeadline(option.label, 'headline', 'detail-search-headline'));
@@ -597,7 +597,7 @@ const DetailSearch = () => {
       <Tab
         eventKey={i}
         title={title}
-        key={`${title.toLowerCase().replace(' ', '-')}-${i}-${value}`}
+        key={`tab-${title.toLowerCase().replace(' ', '-')}-${i}`}
       >
         {mapOptions(value, [])}
       </Tab>

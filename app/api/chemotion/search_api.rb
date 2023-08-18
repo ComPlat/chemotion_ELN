@@ -24,7 +24,7 @@ module Chemotion
           #  polymer_type
           # ]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements by_ids
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements by_ids advanced
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -128,255 +128,18 @@ module Chemotion
         false
       end
 
-      def duration_interval_by_unit(unit)
-        case unit
-        when 'Minute(s)' then 60
-        when 'Second(s)' then 1
-        when 'Week(s)' then 604_800
-        when 'Day(s)' then 86_400
-        else
-          3600
-        end
-      end
-
-      def sanitize_float_fields(filter)
-        fields = %w[boiling_point melting_point density molarity_value target_amount_value purity]
-        fields.include?(filter['field']['column']) && filter['field']['table'] != 'segments'
-      end
-
-      def sanitize_words(filter)
-        return [filter['value']] if filter['value'] == 'true'
-        return [filter['value'].to_f] if sanitize_float_fields(filter)
-
-        no_sanitizing_columns = %w[temperature duration]
-        no_sanitizing_matches = ['=', '>=']
-        sanitize = no_sanitizing_matches.exclude?(filter['match']) && no_sanitizing_columns.exclude?(filter['field']['column'])
-        words = filter['value'].split(/(\r)?\n/).map!(&:strip)
-        words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitize
-        words
-      end
-
-      def filter_special_non_generic_fields(filter, table, options)
-        case filter['field']['column']
-        when 'body'
-          options[:joins] << 'CROSS JOIN jsonb_array_elements(body) AS element'
-          options[:joins] << "CROSS JOIN jsonb_array_elements(element -> 'value' -> 'ops') AS ops"
-          options[:field] = "(ops ->> 'insert')::TEXT"
-          options[:condition_table] = ''
-        when 'content'
-          options[:joins] << "INNER JOIN private_notes ON private_notes.noteable_type = '#{options[:model_name]}' AND private_notes.noteable_id = #{table}.id"
-          options[:condition_table] = 'private_notes.'
-        when 'temperature'
-          options[:field] = "(#{table}.temperature ->> 'userText')::FLOAT"
-          options[:first_condition] = "(#{table}.temperature ->> 'userText')::TEXT != ''"
-          options[:first_condition] += " AND (#{table}.temperature ->> 'valueUnit')::TEXT != '' AND "
-          options[:additional_condition] = "AND (#{table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
-          options[:words][0] = options[:words].first.to_f
-          options[:condition_table] = ''
-        when 'duration'
-          options[:field] = "(EXTRACT(epoch FROM #{table}.duration::interval)/#{duration_interval_by_unit(filter['unit'])})::INT"
-          options[:first_condition] = "#{table}.duration IS NOT NULL AND #{table}.duration != '' AND "
-          options[:words][0] = options[:words].first.to_i
-          options[:condition_table] = ''
-        when 'target_amount_value'
-          options[:additional_condition] = "AND #{table}.target_amount_unit = '#{filter['unit']}'"
-        when 'readout_titles'
-          options[:joins] << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
-          options[:field] = 'titles::TEXT'
-          options[:condition_table] = ''
-        when 'purification', 'dangerous_products'
-          options[:field] = "(#{table}.#{filter['field']['column']})::TEXT"
-          options[:condition_table] = ''
-        when 'iupac_name'
-          options[:field] = "#{filter['field']['table']}.#{filter['field']['column']}"
-          options[:condition_table] = ''
-        when 'xref'
-          options[:field] = "xref ->> '#{filter['field']['opt']}'"
-        when 'stereo'
-          options[:field] = "stereo ->> '#{filter['field']['opt']}'"
-        when 'solvent'
-          joins_exists = options[:joins].exclude?('CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent')
-          options[:joins] << 'CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent' if joins_exists
-          options[:field] = "(prop_solvent ->> '#{filter['field']['opt']}')::TEXT"
-          options[:condition_table] = ''
-        end
-        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
-      end
-
-      def filter_generic_fields(filter, table, i, options)
-        key = filter['field']['key']
-        prop = "prop_#{key}_#{i}"
-        segments_alias = "segments_#{filter['field']['element_id']}"
-        element_table = table == 'elements' ? 'elements' : segments_alias
-        segments_join = "INNER JOIN segments AS #{segments_alias} ON #{segments_alias}.element_type = '#{options[:model_name]}'"
-        segments_join += " AND #{segments_alias}.element_id = #{table}.id AND #{segments_alias}.segment_klass_id = #{filter['field']['element_id']}"
-
-        options[:joins] << segments_join if element_table == segments_alias && options[:joins].exclude?(segments_join)
-        options[:joins] << "CROSS JOIN jsonb_array_elements(#{element_table}.properties -> 'layers' -> '#{key}' -> 'fields') AS #{prop}"
-
-        if filter['sub_values'].present?
-          options[:field], options[:additional_condition], options[:joins] =
-            filter_values_for_generic_sub_fields(filter['sub_values'], prop, filter, options)
-        else
-          options[:field] = "(#{prop} ->> 'value')::TEXT"
-          options[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
-        end
-
-        options[:condition_table] = ''
-        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
-      end
-
-      def filter_values_for_generic_sub_fields(sub_values, prop, filter, options)
-        options[:field] = ''
-        options[:additional_condition] = "(#{prop} ->> 'field')::TEXT = '#{filter['field']['column']}'"
-
-        sub_values.first.each_with_index do |(key, value), j|
-          next if value == ''
-
-          prop_sub = "#{prop}_sub_#{j}"
-          sub_value = "%#{value}%"
-          unit = ''
-          sub_match = 'LIKE'
-          sub_fields = filter['field']['type'] == 'table' ? 'sub_values' : 'sub_fields'
-          if value['value'].present?
-            sub_value = value['value'].tr(',', '.')
-            unit = " AND replace((#{prop_sub} -> '#{key}' ->> 'value_system')::TEXT, '°', '') = '#{value['value_system'].delete('°')}'"
-            sub_match = '>='
-          end
-
-          options[:joins] << "CROSS JOIN jsonb_array_elements(#{prop} -> '#{sub_fields}') AS #{prop_sub}"
-
-          if filter['field']['type'] == 'table'
-            options[:additional_condition] += " AND (#{prop_sub} ->> '#{key}')::TEXT #{sub_match} '#{sub_value}'#{unit}"
-          else
-            options[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = '#{key}' AND (#{prop_sub} ->> 'value')::TEXT LIKE '%#{value}%'"
-          end
-        end
-        [options[:field], options[:additional_condition], options[:joins]]
-      end
-
-      def filter_chemicals_tab(filter, field_table, table, options)
-        prop = "prop_#{field_table}"
-        options[:condition_table] = ''
-
-        if options[:joins].exclude?('INNER JOIN chemicals ON chemicals.sample_id = samples.id')
-          options[:joins] << "INNER JOIN #{field_table} ON #{field_table}.sample_id = #{table}.id"
-          options[:joins] << "CROSS JOIN jsonb_array_elements(#{field_table}.chemical_data) AS #{prop}"
-        end
-
-        if filter['sub_values'].present?
-          filter['sub_values'].first.each_with_index do |(key, value), j|
-            first_and = j.zero? ? '' : ' AND'
-            options[:field] = ''
-            options[:additional_condition] += "#{first_and} (#{prop} ->> '#{key}')::TEXT LIKE '#{value}'"
-          end
-        else
-          options[:field] = "(#{prop} ->> '#{filter['field']['column']}')::TEXT"
-        end
-
-        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
-      end
-
-      def filter_analyses_tab(filter, field_table, table, model_name, options)
-        prop = "prop_#{field_table}"
-        options[:condition_table] = ''
-        field_table_inner_join = "INNER JOIN #{field_table} AS #{prop} ON #{prop}.containable_type = '#{model_name}' AND #{prop}.containable_id = #{table}.id"
-
-        if options[:joins].exclude?(field_table_inner_join)
-          options[:joins] << field_table_inner_join
-          options[:joins] << "INNER JOIN #{field_table} AS analysis ON analysis.parent_id = #{prop}.id"
-          options[:joins] << "INNER JOIN #{field_table} AS children ON children.parent_id = analysis.id"
-        end
-
-        options[:field] =
-          if %w[name description plain_text_content].include?(filter['field']['column'])
-            "children.#{filter['field']['column']}"
-          else
-            "children.extended_metadata -> '#{filter['field']['column']}'"
-          end
-
-        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
-      end
-
-      def filter_measurements_tab(filter, field_table, table, options)
-        options[:condition_table] = ''
-        options[:field] = "#{field_table}.#{filter['field']['column']}"
-        field_table_inner_join = "INNER JOIN #{field_table} ON #{field_table}.sample_id = #{table}.id"
-        options[:joins] << field_table_inner_join if options[:joins].exclude?(field_table_inner_join)
-
-        [options[:joins], options[:field], options[:condition_table], options[:first_condition], options[:additional_condition], options[:words]]
-      end
-
-      def filter_values_for_advanced_search(dl = @dl)
-        query = ''
-        cond_val = []
-        model_name = ''
-        joins = []
-
-        adv_params.each_with_index do |filter, i|
-          filter['field']['table'] = filter['field']['table'] || filter['table']
-          filter['field']['column'] = filter['field']['column'] || filter['field']['field']
-          adv_field = filter['field'].to_h.merge(dl).symbolize_keys
-          next unless whitelisted_table(**adv_field)
-          next unless filter_with_detail_level(**adv_field)
-
-          table = filter['table']
-          condition_table = "#{table}."
-          model_name = table.singularize.camelize.constantize
-          first_condition = ''
-          additional_condition = ''
-
-          field = filter['field']['column']
-          additional_condition = "AND element_klass_id = #{filter['element_id']}" if table == 'elements' && filter['element_id'] != 0
-          words = sanitize_words(filter)
-          filter_match = filter['value'] == 'true' ? '=' : filter['match']
-          field_table = filter['field']['table']
-
-          generics = (field_table.present? && field_table == 'segments') ||
-                     (table == 'elements' && %w[name short_label].exclude?(field))
-          chemicals_tab = field_table.present? && field_table == 'chemicals'
-          analyses_tab = field_table.present? && field_table == 'containers'
-          measurements_tab = field_table.present? && field_table == 'measurements'
-
-          options = {
-            joins: joins, field: field, condition_table: condition_table, first_condition: first_condition,
-            additional_condition: additional_condition, words: words, model_name: model_name
-          }
-
-          joins, field, condition_table, first_condition, additional_condition, words =
-            if generics
-              filter_generic_fields(filter, table, i, options)
-            elsif chemicals_tab
-              filter_chemicals_tab(filter, field_table, table, options)
-            elsif analyses_tab
-              filter_analyses_tab(filter, field_table, table, model_name, options)
-            elsif measurements_tab
-              filter_measurements_tab(filter, field_table, table, options)
-            else
-              filter_special_non_generic_fields(filter, table, options)
-            end
-
-          conditions =
-            if field.blank?
-              words.collect { "#{first_condition}#{additional_condition}" }.join(' OR ')
-            else
-              words.collect { "#{first_condition}#{condition_table}#{field} #{filter_match} ? #{additional_condition}" }.join(' OR ')
-            end
-
-          query = "#{query} #{filter['link']} (#{conditions}) "
-          cond_val += words if field.present?
-        end
-        [query, cond_val, model_name, joins]
-      end
-
       def advanced_search(c_id = @c_id, dl = @dl)
-        query, cond_val, model_name, joins = filter_values_for_advanced_search(dl)
-        query_cond = cond_val.present? ? [query] + cond_val : query
-        scope = model_name.by_collection_id(c_id.to_i)
-                          .where(query_cond)
-                          .joins(joins.join(' '))
-        scope = order_by_molecule(scope) if model_name == Sample
-        scope = scope.group("#{model_name.table_name}.id") if %w[ResearchPlan Wellplate].include?(model_name.to_s)
+        conditions = Usecases::Search::ConditionsForAdvancedSearch.new(
+          detail_levels: dl,
+          params: params[:selection][:advanced_params],
+        ).filter!
+
+        query_cond = conditions[:value].present? ? [conditions[:query]] + conditions[:value] : conditions[:query]
+        scope = conditions[:model_name].by_collection_id(c_id.to_i)
+                                       .where(query_cond)
+                                       .joins(conditions[:joins].join(' '))
+        scope = order_by_molecule(scope) if conditions[:model_name] == Sample
+        scope = scope.group("#{conditions[:model_name].table_name}.id") if %w[ResearchPlan Wellplate].include?(conditions[:model_name].to_s)
         scope
       end
 
@@ -456,7 +219,6 @@ module Chemotion
       end
 
       def serialized_scope_for_result_by_id(scope)
-        # TODO: generic elements
         serialized_scope = []
         scope.map do |s|
           serialized_scope =
@@ -687,8 +449,6 @@ module Chemotion
                   sample_structure_search
                 when 'advanced'
                   advanced_search(c_id)
-                when 'elements'
-                  elements_search(c_id)
                 end
 
         if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
@@ -738,8 +498,8 @@ module Chemotion
           elements[:wellplate_ids] = user_wellplates.by_screen_ids(elements[:screen_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
-          # elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
-          # elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when ResearchPlan
           elements[:research_plan_ids] = scope&.ids
           sample_ids = ResearchPlan.sample_ids_by_research_plan_ids(elements[:research_plan_ids])
@@ -747,8 +507,6 @@ module Chemotion
           elements[:sample_ids] = sample_ids.map(&:sample_id).uniq
           elements[:reaction_ids] = reaction_ids.map(&:reaction_id).uniq
           elements[:wellplate_ids] = ResearchPlansWellplate.get_wellplates(elements[:research_plan_ids]).uniq
-          # elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
-          # elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Labimotion::Element
           elements[:element_ids] = scope&.ids
           sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
@@ -778,30 +536,6 @@ module Chemotion
     end
 
     resource :search do
-      namespace :elements do
-        desc 'Return all matched elements and associations for substring query'
-        params do
-          use :search_params
-        end
-
-        after_validation do
-          set_var
-        end
-
-        post do
-          scope = elements_search(@c_id)
-          return unless scope
-
-          elements_ids = elements_by_scope(scope)
-
-          serialization_by_elements_and_page(
-            elements_ids,
-            params[:page],
-            params[:molecule_sort],
-          )
-        end
-      end
-
       namespace :all do
         desc 'Return all matched elements and associations for substring query'
         params do
@@ -822,6 +556,32 @@ module Chemotion
             params[:page],
             params[:molecule_sort],
           )
+        end
+      end
+
+      namespace :advanced do
+        desc 'Return all matched elements and associations for advanced / detail search'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          conditions =
+            Usecases::Search::ConditionsForAdvancedSearch.new(
+              detail_levels: @dl,
+              params: params[:selection][:advanced_params],
+            ).filter!
+
+          Usecases::Search::AdvancedSearch.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+            conditions: conditions,
+          ).perform!
         end
       end
 
