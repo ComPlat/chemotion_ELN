@@ -152,6 +152,29 @@ const AdvancedSearchForm = () => {
     );
   }
 
+  const SwitchToAdvancedOrDetailSearch = () => {
+    let advancedOrDetail = searchStore.searchType == 'advanced' ? false : true;
+    let activeClass = advancedOrDetail == true ? ' active' : '';
+    return (
+      <>
+        <input
+          checked={advancedOrDetail}
+          className="advanced-detail-switch"
+          onChange={(e) => searchStore.changeSearchType(e)}
+          id={`advanced-detail-switch-new`}
+          type="checkbox"
+        />
+        <label
+          className={`advanced-detail-switch-label${activeClass}`}
+          htmlFor={`advanced-detail-switch-new`}
+        >
+          {searchStore.searchType.charAt(0).toUpperCase() + searchStore.searchType.slice(1)}
+          <span className="advanced-detail-switch-button" />
+        </label>
+      </>
+    );
+  }
+
   const searchValuesBySubFields = (val, table) => {
     let label = '';
     let value = '';
@@ -238,25 +261,7 @@ const AdvancedSearchForm = () => {
           <Panel.Body>
             <div className="advanced-search">
               <SelectSearchTable />
-              <ToggleButtonGroup
-                type="radio"
-                name="types"
-                key="toggleTypes"
-                value={searchStore.searchType}
-                onChange={(e) => searchStore.changeSearchType(e)}
-                defaultValue="advanced"
-                className="vertical-buttons">
-                <ToggleButton
-                  key="detail"
-                  value="detail">
-                  Detail
-                </ToggleButton>
-                <ToggleButton
-                  key="advanced"
-                  value="advanced">
-                  Advanced
-                </ToggleButton>
-              </ToggleButtonGroup>
+              <SwitchToAdvancedOrDetailSearch />
               <div className="scrollable-content">
                 {showErrorMessage(searchStore)}
                 {

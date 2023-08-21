@@ -159,14 +159,15 @@ i.fa.icon-right {
 
 .advanced-search {
   margin-bottom: 39px;
-  padding-left: 32px;
+  padding-left: 4px;
   height: 49vh;
   position: relative;
 
   .scrollable-content {
+    clear: both;
     overflow-y: auto;
     height: calc(49vh - 65px);
-    margin-top: -10px;
+    margin-top: 23px;
     .alert {
       margin-left: 15px;
     }
@@ -255,6 +256,53 @@ i.fa.icon-right {
     color: #347ab8;
     border-bottom: none;
   }
+
+  .advanced-detail-switch {
+    height: 0;
+    width: 0;
+    visibility: hidden;
+  }
+
+  .advanced-detail-switch-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    width: 115px;
+    height: 30px;
+    position: relative;
+    float: right;
+    margin-top: -40px;
+    margin-bottom: 25px;
+    margin-right: 6px;
+    padding: 0 34px 0 17px;
+    color: #347ab8;
+    background-color: #b7e2ef;
+    font-weight: normal;
+    border-radius: 100px;
+  }
+
+  .advanced-detail-switch-label.active {
+    padding: 0 17px 0 36px;
+  }
+
+  .advanced-detail-switch-label .advanced-detail-switch-button {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 26px;
+    transition: right 2s;
+    background: #fff;
+    box-shadow: 0 0 2px 0 rgba(10, 10, 10, 0.29);
+  }
+
+  .advanced-detail-switch-label.active .advanced-detail-switch-button {
+    right: calc(115px - 28px);
+  }
+
   .detail-search {
     overflow: visible !important;
     margin-left: 15px;

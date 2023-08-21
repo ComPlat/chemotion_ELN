@@ -105,10 +105,10 @@ export const SearchStore = types
       self.clearSearchResults();
       self.showMinimizedSearchModal();
     },
-    changeSearchType(type) {
+    changeSearchType(e) {
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
-      self.search_type = type;
+      self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
       self.active_tab_key = 0;
     },
     changeSearchElement(elementValues) {

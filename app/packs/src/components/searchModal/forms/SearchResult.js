@@ -22,7 +22,6 @@ const SearchResult = ({ handleClear }) => {
       const visible = [];
 
       Object.entries(profile.data.layout).filter((value) => {
-        // value[0] != 'research_plan' && 
         return value[1] > 0;
       })
         .sort((a, b) => a[1] - b[1])
