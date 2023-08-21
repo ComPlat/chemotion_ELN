@@ -236,7 +236,7 @@ class Reaction < ApplicationRecord
         end
       end
       begin
-        svg = Chemotion::ReactionSvgComposer.new.svg(Entities::ReactionEntity.represent(self).to_json)
+        svg = Chemotion::ReactionSvgComposer.new.svg(self)
         self.reaction_svg_file = svg
       rescue StandardError => _e
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
