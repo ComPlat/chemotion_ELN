@@ -345,6 +345,7 @@ i.fa.icon-right {
     border-bottom: 1px solid rgba(0, 0, 0, 0.5);
     padding-bottom: 3px;
     margin-bottom: 15px;
+    margin-top: 3px;
   }
   .detail-search-headline {
     background-color: #f5f5f5;
@@ -367,18 +368,21 @@ i.fa.icon-right {
     color: rgba(0, 0, 0, 0.6);
     margin-top: 20px;
   }
-  .detail-search .css-yk16xz-control {
-    height: 34px;
-  }
-  .detail-search .css-yk16xz-control, .detail-search .css-1pahdxg-control {
+  .css-yk16xz-control, .css-1pahdxg-control {
     min-height: 34px;
     height: 34px;
   }
-  .detail-search .css-1wa3eu0-placeholder, .detail-search .css-1uccc91-singleValue {
+  .css-1wa3eu0-placeholder, .css-1uccc91-singleValue {
     top: 42%;
   }
-  .detail-search ul.ant-select-tree li .ant-select-tree-node-content-wrapper, .detail-search .react-select-4-option-0 {
+  .css-26l3qy-menu {
+    margin-top: 0;
+  }
+  ul.ant-select-tree li .ant-select-tree-node-content-wrapper, .react-select-4-option-0 {
     display: block;
+    height: 17px;
+  }
+  .detail-search ul.ant-select-tree li:first-child span.ant-select-tree-node-content-wrapper {
     height: 17px;
   }
   .detail-search .css-26l3qy-menu {
@@ -386,7 +390,7 @@ i.fa.icon-right {
   }
   .detail-search hr.generic-spacer {
     border-top: 1px solid rgba(0, 0, 0, 0.5);
-    margin-top: 0;
+    margin-top: 3px;
     margin-bottom: 15px;
     flex-basis: 100%;
   }
