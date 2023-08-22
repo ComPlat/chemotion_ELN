@@ -68,5 +68,6 @@ export const SampleTasksStore = types
     get inboxVisible() { return self.inbox_visible },
     sampleTaskForSample(sampleId) {
       return values(self.sample_tasks).find(task => task.sample_id == sampleId)
-    }
+    },
+    get sortedSampleTasks() { return values(self.sample_tasks).sort((taskA, taskB) => taskB.id - taskA.id) },
   }));
