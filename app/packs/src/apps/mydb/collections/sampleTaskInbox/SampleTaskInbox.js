@@ -60,11 +60,9 @@ const SampleTaskInbox = ({}) => {
   }
 
   const openSampleTasks = () => {
-    let sampleTasks = values(sampleTasksStore.sample_tasks);
-
-    return sampleTasks.toSorted(
-      (taskA, taskB) => { return taskB.id - taskA.id } // sort descending by task id to override Map sorting by insert order
-    ).map(sampleTask => (<SampleTaskCard sampleTask={sampleTask} key={`sampleTask_${sampleTask.id}`} />));
+    return sampleTasksStore.sortedSampleTasks.map(
+      sampleTask => (<SampleTaskCard sampleTask={sampleTask} key={`sampleTask_${sampleTask.id}`} />)
+    );
   }
 
   const sampleDropzone = (dropRef, text) => {
