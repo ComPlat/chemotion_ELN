@@ -143,111 +143,6 @@ module Chemotion
         scope
       end
 
-      def ids_by_params
-        return id_params[:ids] if !id_params[:with_filter] || list_filter_params.present? || params[:molecule_sort]
-
-        start_number = params[:page].to_i > pages(id_params[:total_elements]) ? 0 : params[:page_size].to_i * (params[:page].to_i - 1)
-        id_params[:ids][start_number, start_number + params[:page_size].to_i]
-      end
-
-      def search_by_ids(c_id = @c_id)
-        model = id_params[:model_name].camelize.constantize
-        scope =
-          if id_params[:model_name] == 'sample'
-            search_by_ids_for_sample(c_id, model, ids_by_params)
-          else
-            model
-              .by_collection_id(c_id.to_i)
-              .where(id: ids_by_params)
-              .page(params[:page]).per(page_size)
-          end
-        search_filter_scope(scope)
-      end
-
-      def search_filter_scope(scope)
-        return scope if list_filter_params.blank?
-
-        from = list_filter_params[:from_date]
-        to = list_filter_params[:to_date]
-        by_created_at = list_filter_params[:filter_created_at] || false
-
-        scope = scope.where("#{id_params[:model_name].pluralize}.created_at >= ?", Time.zone.at(from.to_time)) if from && by_created_at
-        scope = scope.where("#{id_params[:model_name].pluralize}.created_at <= ?", Time.zone.at(to.to_time) + 1.day) if to && by_created_at
-        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at >= ?", Time.zone.at(from.to_time)) if from && !by_created_at
-        scope = scope.where("#{id_params[:model_name].pluralize}.updated_at <= ?", Time.zone.at(to.to_time) + 1.day) if to && !by_created_at
-        id_params[:total_elements] = scope.size
-
-        scope
-      end
-
-      def search_by_ids_for_sample(c_id, model, ids)
-        scope =
-          model.includes_for_list_display
-               .by_collection_id(c_id.to_i)
-               .where(id: ids)
-        scope = scope.product_only if list_filter_params.present? && list_filter_params[:product_only]
-        order_by_samples_filter(scope, ids)
-      end
-
-      def order_by_samples_filter(scope, ids)
-        scope =
-          if params[:molecule_sort]
-            order_by_molecule(scope)
-          else
-            scope.order('samples.updated_at ASC')
-          end
-        scope = scope.page(params[:page]).per(page_size) if ids.length > page_size
-        scope
-      end
-
-      def serialize_result_by_ids(scope)
-        result = {}
-        pages = pages(id_params[:total_elements])
-        page = params[:page] > pages ? 1 : params[:page]
-        scope = scope.page(page).per(page_size) if page != params[:page] || list_filter_params.present?
-        serialized_scope = serialized_scope_for_result_by_id(scope)
-
-        result[id_params[:model_name].pluralize] = {
-          elements: serialized_scope,
-          ids: id_params[:ids],
-          page: page,
-          perPage: page_size,
-          pages: pages,
-          totalElements: id_params[:total_elements],
-        }
-        result
-      end
-
-      def serialized_scope_for_result_by_id(scope)
-        serialized_scope = []
-        scope.map do |s|
-          serialized_scope =
-            if id_params[:model_name] == 'sample'
-              serialized_result_by_id_for_sample(s, serialized_scope)
-            else
-              serialized_result_by_id(s, serialized_scope)
-            end
-        end
-        serialized_scope.sort_by! { |object| id_params['ids'].index object[:id] }
-      end
-
-      def serialized_result_by_id_for_sample(sample, serialized_scope)
-        detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
-        serialized = Entities::SampleEntity.represent(
-          sample,
-          detail_levels: detail_levels,
-          displayed_in_list: true,
-        ).serializable_hash
-        serialized_scope.push(serialized)
-      end
-
-      def serialized_result_by_id(element, serialized_scope)
-        entities = "Entities::#{id_params[:model_name].capitalize}Entity".constantize
-        serialized =
-          entities.represent(element, displayed_in_list: true).serializable_hash
-        serialized_scope.push(serialized)
-      end
-
       def serialize_samples(sample_ids, page, molecule_sort)
         return { data: [], size: 0 } if sample_ids.empty?
 
@@ -596,10 +491,11 @@ module Chemotion
         end
 
         post do
-          scope = search_by_ids(@c_id)
-          return unless scope
-
-          serialize_result_by_ids(scope)
+          Usecases::Search::ByIds.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+          ).perform!
         end
       end
 

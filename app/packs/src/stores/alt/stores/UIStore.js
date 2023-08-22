@@ -372,6 +372,8 @@ class UIStore {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
         if (productOnly && key != 'samples') { return }
         let filterParams = {};
+        const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+        let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
 
         if (fromDate || toDate || productOnly) {
           filterParams = {
@@ -387,7 +389,7 @@ class UIStore {
         const selection = {
           elementType: 'by_ids',
           id_params: {
-            model_name: key.slice(0, -1),
+            model_name: modelName,
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
             with_filter: with_filter,

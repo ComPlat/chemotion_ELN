@@ -1085,6 +1085,8 @@ class ElementStore {
     const { moleculeSort } = this.state;
     const { page } = uiState[type];
     let filterParams = {};
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    let modelName = !elnElements.includes(type) ? 'element' : type;
 
     if (fromDate || toDate || productOnly) {
       filterParams = {
@@ -1098,7 +1100,7 @@ class ElementStore {
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: `${type}`,
+        model_name: `${modelName}`,
         ids: currentSearchByID[`${type}s`].ids,
         total_elements: currentSearchByID[`${type}s`].totalElements,
         with_filter: true,

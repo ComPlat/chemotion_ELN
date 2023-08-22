@@ -3,6 +3,7 @@
 module Usecases
   module Search
     class AdvancedSearch
+      require_relative 'shared_methods'
       attr_reader :collection_id, :params, :conditions, :user
 
       def initialize(collection_id:, user:, params: {}, conditions: [])
@@ -10,6 +11,7 @@ module Usecases
         @collection_id = collection_id
         @conditions = conditions
         @user = user
+        @shared_methods = SharedMethods.new
 
         @elements = {
           sample_ids: [],
@@ -30,14 +32,14 @@ module Usecases
       end
 
       def perform!
-        scope = basic_query
+        scope = basic_scope
         elements_by_scope(scope)
         serialization_by_elements_and_page
       end
 
       private
 
-      def basic_query
+      def basic_scope
         query_with_condition =
           @conditions[:value].present? ? [@conditions[:query]] + @conditions[:value] : @conditions[:query]
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
@@ -45,16 +47,9 @@ module Usecases
         scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)
                                         .where(query_with_condition)
                                         .joins(@conditions[:joins].join(' '))
-        scope = order_by_molecule(scope) if @conditions[:model_name] == Sample
+        scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
         scope.pluck(:id)
-      end
-
-      def order_by_molecule(scope)
-        scope.includes(:molecule)
-             .joins(:molecule)
-             .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
-             .order('molecules.sum_formular')
       end
 
       def elements_by_scope(scope)
@@ -123,7 +118,7 @@ module Usecases
               ids: element.last,
               page: @params[:page],
               perPage: @params[:per_page],
-              pages: pages(element.last.size),
+              pages: @shared_methods.pages(element.last.size, @params[:per_page]),
               totalElements: element.last.size,
             }
           end
@@ -171,7 +166,7 @@ module Usecases
             ids: element_ids_for_klass,
             page: @params[:page],
             perPage: @params[:per_page],
-            pages: pages(element_ids_for_klass.size),
+            pages: @shared_methods.pages(element_ids_for_klass.size, @params[:per_page]),
             totalElements: element_ids_for_klass.size,
           }
         end
@@ -184,10 +179,6 @@ module Usecases
         model_name.constantize.find(paginated_ids).map do |model|
           entities.represent(model, displayed_in_list: true).serializable_hash
         end
-      end
-
-      def pages(total_elements)
-        total_elements.fdiv(@params[:per_page]).ceil
       end
     end
   end
