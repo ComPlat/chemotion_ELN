@@ -22,7 +22,6 @@ const KetcherRailsform = () => {
   const editor = new StructureEditor({ ...ketcherStructure, id: 'ketcher' });
 
   const defaultValues = [{
-    elementType: 'all',
     queryMolfile: null,
     searchType: 'sub',
     tanimotoThreshold: 0.7 
@@ -75,7 +74,7 @@ const KetcherRailsform = () => {
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
 
     const selection = {
-      elementType: changedValues[0].elementType,
+      elementType: 'structure',
       molfile,
       search_type: changedValues[0].searchType,
       tanimoto_threshold: tanimoto,

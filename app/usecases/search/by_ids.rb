@@ -12,7 +12,7 @@ module Usecases
         @id_params = @params[:selection][:id_params]
         @collection_id = collection_id
         @user = user
-        @shared_methods = SharedMethods.new
+        @shared_methods = SharedMethods.new(params: @params, user: @user)
 
         @model_name = @id_params[:model_name].camelize.constantize
         @from = @filter_params[:from_date]

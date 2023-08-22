@@ -24,7 +24,7 @@ module Chemotion
           #  polymer_type
           # ]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements by_ids advanced
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements by_ids advanced structure
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -451,6 +451,26 @@ module Chemotion
             params[:page],
             params[:molecule_sort],
           )
+        end
+      end
+
+      namespace :structure do
+        desc 'Return all matched elements and associations for structure search'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          Usecases::Search::StructureSearch.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+            detail_levels: @dl,
+          ).perform!
         end
       end
 
