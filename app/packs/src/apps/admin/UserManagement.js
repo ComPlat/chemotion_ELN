@@ -577,7 +577,7 @@ export default class UserManagement extends React.Component {
                 />
               </FormGroup>
               <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button variant="primary" onClick={() => this.messageSend()} option="modalBtn">
+                <Button variant="primary" onClick={() => this.messageSend()} option="modal">
                   Send&nbsp;
                   <i className="fa fa-paper-plane" />
                 </Button>
@@ -679,7 +679,7 @@ export default class UserManagement extends React.Component {
                 </FormGroup>
                 <FormGroup style={{ marginRight: '15px', display: 'flex', justifyContent: 'flex-end' }}>
                   <Col>
-                    <Button variant="primary" onClick={() => this.handleCreateNewUser()} option="modalBtn">
+                    <Button variant="primary" onClick={() => this.handleCreateNewUser()} option="modal">
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -741,7 +741,7 @@ export default class UserManagement extends React.Component {
                   </CSVReader>
                 </FormGroup>
                 <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button variant="primary" onClick={() => this.handleUploadUsers()} option="modalBtn">
+                  <Button variant="primary" onClick={() => this.handleUploadUsers()} option="modal">
                     Upload users&nbsp;
                     <i className="fa fa-upload" />
                   </Button>
@@ -843,7 +843,7 @@ export default class UserManagement extends React.Component {
                       size="lg"
                       variant="primary"
                       onClick={() => this.handleUpdateUser(user)}
-                      option="modalBtn"
+                      option="modal"
                     >
                       Update&nbsp;&nbsp;
                       <i className="fa fa-floppy-o" />
@@ -866,7 +866,7 @@ export default class UserManagement extends React.Component {
             <Button
               variant="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
-              option="panelIcon"
+              option="panel"
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -883,7 +883,7 @@ export default class UserManagement extends React.Component {
             <Button
               variant="primary"
               onClick={() => this.handleReConfirmUserAccount(userId)}
-              option="panelIcon"
+              option="panel"
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -926,7 +926,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant="secondary"
                 onClick={() => this.handleEditUserShow(g)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className="fa fa-user" />
               </Button>
@@ -935,7 +936,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant="secondary"
                 onClick={() => this.handleResetPassword(g.id, true)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className="fa fa-key" />
               </Button>
@@ -944,7 +946,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant="primary"
                 onClick={() => this.handleResetPassword(g.id, false)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className="fa fa-key" />
               </Button>
@@ -953,7 +956,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant={g.locked_at === null ? 'secondary' : 'primary'}
                 onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
               </Button>
@@ -966,7 +970,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant={(g.converter_admin === null || g.converter_admin === false) ? 'secondary' : 'primary'}
                 onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className="fa fa-hourglass-half" aria-hidden="true" />
               </Button>
@@ -980,7 +985,8 @@ export default class UserManagement extends React.Component {
                 variant={(g.is_templates_moderator === null || g.is_templates_moderator === false)
                   ? 'secondary' : 'primary'}
                 onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className="fa fa-book" aria-hidden="true" />
               </Button>
@@ -993,7 +999,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'secondary' : 'primary'}
                 onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i className="icon-sample" aria-hidden="true" />
               </Button>
@@ -1005,7 +1012,8 @@ export default class UserManagement extends React.Component {
               <Button
                 variant={g.account_active === true ? 'secondary' : 'primary'}
                 onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
-                option="panelIcon"
+                option="panel"
+                square
               >
                 <i
                   className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'}
@@ -1077,7 +1085,8 @@ export default class UserManagement extends React.Component {
                 size="sm"
                 variant="primary"
                 onClick={() => this.handleMsgShow()}
-                option="mainBtn"
+                option="main"
+                square
                 style={{ marginLeft: '15px', marginTop: '-3px' }}
               >
                 <i className="fa fa-paper-plane" />
@@ -1088,7 +1097,8 @@ export default class UserManagement extends React.Component {
                 variant="primary"
                 size="sm"
                 onClick={() => this.handleNewUserShow()}
-                option="mainBtn"
+                option="main"
+                square
                 data-cy="create-user"
                 style={{ marginTop: '-3px' }}
               >
