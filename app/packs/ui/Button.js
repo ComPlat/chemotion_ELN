@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 function Button(props) {
   const {
-    variant, children, option, square, ...otherProps
+    variant, children, option, square, type, onClick
   } = props;
 
   const btnClassNames = [
@@ -15,8 +15,10 @@ function Button(props) {
 
   return (
     <button
+      // eslint-disable-next-line react/button-has-type
+      type={type}
       className={btnClassNames}
-      {...otherProps}
+      onClick={onClick}
     >
       {children}
     </button>
@@ -29,6 +31,7 @@ Button.propTypes = {
   children: PropTypes.node,
   onClick: PropTypes.func,
   square: PropTypes.bool,
+  type: PropTypes.oneOf(['submit', 'reset', 'button']),
 };
 
 Button.defaultProps = {
@@ -37,6 +40,7 @@ Button.defaultProps = {
   onClick: () => {},
   children: null,
   square: false,
+  type: 'button',
 };
 
 export default Button;
