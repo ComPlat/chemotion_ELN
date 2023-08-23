@@ -70,12 +70,12 @@ class Molecule < ApplicationRecord
     where('cano_smiles ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
 
-  scope :with_reactions, -> {
-    joins(:samples).joins("inner join reactions_samples rs on rs.sample_id = samples.id" ).uniq
+  scope :with_reactions, lambda {
+    joins(:samples).joins('inner join reactions_samples rs on rs.sample_id = samples.id')
   }
 
-  scope :with_wellplates, -> {
-    joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
+  scope :with_wellplates, lambda {
+    joins(:samples).joins('inner join wells w on w.sample_id = samples.id')
   }
 
   def self.find_or_create_dummy
