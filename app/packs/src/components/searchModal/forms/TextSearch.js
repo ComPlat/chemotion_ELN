@@ -9,7 +9,7 @@ import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const AdvancedSearchForm = () => {
+const TextSearch = () => {
   const elnElements = ['samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
   const genericElements = UserStore.getState().genericEls || [];
   const searchStore = useContext(StoreContext).search;
@@ -313,4 +313,4 @@ const AdvancedSearchForm = () => {
   );
 }
 
-export default observer(AdvancedSearchForm);
+export default observer(TextSearch);

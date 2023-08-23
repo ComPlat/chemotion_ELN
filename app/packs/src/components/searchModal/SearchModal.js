@@ -1,15 +1,15 @@
-import React, { Suspense, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Button, ButtonGroup, Modal } from 'react-bootstrap';
 import Draggable from "react-draggable";
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import AdvancedSearchForm from './forms/AdvancedSearchForm';
+import TextSearch from './forms/TextSearch';
 import KetcherRailsForm from './forms/KetcherRailsForm';
 import NoFormSelected from './forms/NoFormSelected';
 
 const Components = {
-  advanced: AdvancedSearchForm,
+  advanced: TextSearch,
   ketcher: KetcherRailsForm,
   empty: NoFormSelected
 }

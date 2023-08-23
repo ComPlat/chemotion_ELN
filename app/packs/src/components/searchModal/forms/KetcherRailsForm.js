@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -21,38 +21,29 @@ const KetcherRailsform = () => {
   }
   const editor = new StructureEditor({ ...ketcherStructure, id: 'ketcher' });
 
-  const defaultValues = [{
-    queryMolfile: null,
-    searchType: 'sub',
-    tanimotoThreshold: 0.7 
-  }];
-  const [changedValues, setChangedValues] = useState(defaultValues);
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
  
   const handleSearchTypeChange = (e) => {
-    changedValues[0].searchType = e.target.value;
-    setChangedValues((a) => [...a]);
+    searchStore.changeKetcherRailsValue('searchType', e.target.value);
   }
 
   const handleTanimotoChange = (e) => {
     const val = e.target && e.target.value;
     if (!isNaN(val - val)) {
-      changedValues[0].tanimotoThreshold = e.target.value;
-      setChangedValues((a) => [...a]);
+      searchStore.changeKetcherRailsValue('tanimotoThreshold', e.target.value);
     }
   }
 
   const handleSave = () => {
     const structure = editor.structureDef;
-    const { molfile, info } = structure;
+    const { molfile } = structure;
     handleStructureEditorSave(molfile);
   }
 
   const handleStructureEditorSave = (molfile) => {
     if (molfile) {
-      changedValues[0].queryMolfile = molfile;
-      setChangedValues((a) => [...a]);
+      searchStore.changeKetcherRailsValue('queryMolfile', molfile);
     }
     searchStore.changeErrorMessage("Please add a drawing. The drawing is empty");
     //// Check if blank molfile
@@ -70,13 +61,13 @@ const KetcherRailsform = () => {
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
-    let tanimoto = changedValues[0].tanimotoThreshold;
+    let tanimoto = searchStore.ketcherRailsValues.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
 
     const selection = {
       elementType: 'structure',
       molfile,
-      search_type: changedValues[0].searchType,
+      search_type: searchStore.ketcherRailsValues.searchType,
       tanimoto_threshold: tanimoto,
       page_size: uiState.number_of_results,
       search_by_method: 'structure',
@@ -91,13 +82,13 @@ const KetcherRailsform = () => {
 
   const handleClear = () => {
     searchStore.clearSearchResults();
-    setChangedValues(defaultValues);
+
     const iframe = document.querySelector('#ketcher').contentWindow;
     iframe.document.querySelector('#new').click();
   }
 
   const searchValuesByMolfile = () => {
-    searchStore.changeSearchValues([changedValues[0].queryMolfile]);
+    searchStore.changeSearchValues([searchStore.ketcherRailsValues.queryMolfile]);
   }
 
   return (
@@ -140,7 +131,7 @@ const KetcherRailsform = () => {
                   <Form inline>
                     <Radio
                       value="similar"
-                      checked={changedValues[0].searchType === 'similar'}
+                      checked={searchStore.ketcherRailsValues.searchType === 'similar'}
                       onChange={handleSearchTypeChange}
                     >
                       &nbsp; Similarity Search &nbsp;
@@ -149,7 +140,7 @@ const KetcherRailsform = () => {
                     <FormControl
                       style={{ width: '40%' }}
                       type="text"
-                      value={changedValues[0].tanimotoThreshold}
+                      value={searchStore.ketcherRailsValues.tanimotoThreshold}
                       onChange={handleTanimotoChange}
                     />
                   </Form>
@@ -157,7 +148,7 @@ const KetcherRailsform = () => {
                 <Col sm={4} md={2}>
                   <Radio
                     value="sub"
-                    checked={changedValues[0].searchType === 'sub'}
+                    checked={searchStore.ketcherRailsValues.searchType === 'sub'}
                     onChange={handleSearchTypeChange}
                   >
                     Substructure Search

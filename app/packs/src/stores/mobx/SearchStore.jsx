@@ -32,6 +32,12 @@ const defaultSearchValues = [{
   unit: ''
 }];
 
+const defaultKetcherValues = {
+  queryMolfile: null,
+  searchType: 'sub',
+  tanimotoThreshold: 0.7 
+};
+
 const searchElementValues = {
   table: 'samples',
   element_id: 0,
@@ -47,6 +53,7 @@ export const SearchStore = types
     search_element: types.optional(types.frozen({}), searchElementValues),
     advanced_search_values: types.optional(types.array(types.frozen({})), defaultSearchValues),
     detail_search_values: types.optional(types.array(types.frozen({})), []),
+    ketcher_rails_values: types.optional(types.frozen({}), defaultKetcherValues),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
     search_result_panel_visible: types.optional(types.boolean, false),
@@ -137,6 +144,14 @@ export const SearchStore = types
         self.detail_search_values.splice(index, 1);
       }
     },
+    changeKetcherRailsValue(key, value) {
+      let ketcherValues = { ...self.ketcher_rails_values };
+      ketcherValues[key] = value;
+      self.ketcher_rails_values = ketcherValues;
+    },
+    resetKetcherRailsValues() {
+      self.ketcher_rails_values = defaultKetcherValues;
+    },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
         id: `${key}-${result.page || 1}`,
@@ -182,6 +197,7 @@ export const SearchStore = types
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.active_tab_key = 0;
+      self.resetKetcherRailsValues();
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
@@ -231,5 +247,6 @@ export const SearchStore = types
     get searchElement() { return self.search_element },
     get advancedSearchValues() { return values(self.advanced_search_values) },
     get detailSearchValues() { return values(self.detail_search_values) },
+    get ketcherRailsValues() { return self.ketcher_rails_values },
     get activeTabKey() { return self.active_tab_key },
   }));
