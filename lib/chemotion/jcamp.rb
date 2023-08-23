@@ -203,13 +203,13 @@ module Chemotion
     # Combine multiple jcamps in one image
     module CombineImg
       include HTTParty
-      
+
       def self.stub_request(files, curve_idx, list_file_names)
         response = nil
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/combine_images"
 
-        files_to_read = files.map{|fname| File.open(fname) }
+        files_to_read = files.map{ |fname| File.open(fname) }
         begin
           response = HTTParty.post(
             api_endpoint,
@@ -333,13 +333,13 @@ module Chemotion
           response = nil
           url = Rails.configuration.spectra.chemspectra.url
           api_endpoint = "#{url}/predict/ms"
-          
+
           File.open(molfile.path, 'r') do |f_molfile|
             File.open(spectrum.path, 'r') do |f_spectrum|
               body = build_body(f_molfile, f_spectrum)
               response = HTTParty.post(
                 api_endpoint,
-                body: body
+                body: body,
               )
             end
           end
@@ -380,7 +380,7 @@ module Chemotion
         response = nil
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/zip_jcamp_n_img"
-        
+
         File.open(file_path, 'r') do |file|
           File.open(mol_path, 'r') do |molfile|
             body = build_body(file, molfile)
@@ -416,14 +416,14 @@ module Chemotion
         response = nil
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/nmrium"
-        
+
         File.open(path, 'r') do |f|
           response = HTTParty.post(
             api_endpoint,
             body: {
               multipart: true,
-              file: f
-            }
+              file: f,
+            },
           )
         end
         response
