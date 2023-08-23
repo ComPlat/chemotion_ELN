@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unused-state */
+/* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import {
   Panel, Table, Modal, FormGroup,
@@ -24,7 +26,7 @@ const loadUserByName = (input) => {
     });
 };
 
-const validateEmail = (mail) => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
+const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(mail));
 const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
 const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
 const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
@@ -120,14 +122,6 @@ export default class UserManagement extends React.Component {
   componentWillUnmount() {
   }
 
-  showAlertModal(message) {
-    this.setState({ alertModalShow: true, alertModalMessage: message });
-  }
-
-  hideAlertModal() {
-    this.setState({ alertModalShow: false, alertModalMessage: '' });
-  }
-
   handleMsgShow() {
     this.setState({
       showMsgModal: true
@@ -198,7 +192,7 @@ export default class UserManagement extends React.Component {
 
   handleEnableDisableAccount(id, lockedAt) {
     AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
         this.showAlertModal(message);
@@ -207,7 +201,7 @@ export default class UserManagement extends React.Component {
 
   handleConverterAdmin(id, isConverterAdmin) {
     AdminFetcher.updateAccount({ user_id: id, converter_admin: !isConverterAdmin })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = isConverterAdmin === true
           ? 'Disabled Converter profiles editing for this user.' : 'Enabled Converter profiles editing for this user.';
@@ -217,7 +211,7 @@ export default class UserManagement extends React.Component {
 
   handleTemplatesModerator(id, isTemplatesModerator) {
     AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = isTemplatesModerator === true
           ? 'Disabled Ketcher template editing for this user.' : 'Enabled Ketcher template editing for this user.';
@@ -227,7 +221,7 @@ export default class UserManagement extends React.Component {
 
   handleMoleculesModerator(id, isMoleculesEditor) {
     AdminFetcher.updateAccount({ user_id: id, molecule_editor: !isMoleculesEditor })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = isMoleculesEditor === true
           ? 'Disabled editing the representation of the global molecules for this user.'
@@ -238,7 +232,7 @@ export default class UserManagement extends React.Component {
 
   handleActiveInActiveAccount(id, isActive) {
     AdminFetcher.updateAccount({ user_id: id, account_active: !isActive })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = isActive === true ? 'User is inactive!' : 'User is active!';
         this.showAlertModal(message);
@@ -311,17 +305,17 @@ export default class UserManagement extends React.Component {
       return false;
     }
     this.newUsers = data;
-    for (let i = 0; i < this.newUsers.length; i++) {
+    for (let i = 0; i < this.newUsers.length; i += 1) {
       this.newUsers[i].data.row = i + 1;
     }
   };
 
-  handleOnErrorUserFile = (err, file, inputElem, reason) => {
+  handleOnErrorUserFile = (err) => {
     console.log(err);
     this.newUsers = null;
   };
 
-  handleOnRemoveUserFile = (data) => {
+  handleOnRemoveUserFile = () => {
     this.newUsers = null;
   };
 
@@ -373,6 +367,14 @@ export default class UserManagement extends React.Component {
         return true;
       });
     return true;
+  }
+
+  showAlertModal(message) {
+    this.setState({ alertModalShow: true, alertModalMessage: message });
+  }
+
+  hideAlertModal() {
+    this.setState({ alertModalShow: false, alertModalMessage: '' });
   }
 
   createNewUserFromFile(newUser) {
@@ -456,11 +458,12 @@ export default class UserManagement extends React.Component {
 
     const sortedUserEmails = this.newUsers.map((user) => user.data.email).sort();
     const duplicateUserEmails = new Set();
-    for (let i = 0; i < sortedUserEmails.length - 1; i++) {
-      if (sortedUserEmails[i + 1] == sortedUserEmails[i]) {
+    for (let i = 0; i < sortedUserEmails.length - 1; i += 1) {
+      if (sortedUserEmails[i + 1] === sortedUserEmails[i]) {
         duplicateUserEmails.add(sortedUserEmails[i]);
       }
     }
+
     if (duplicateUserEmails.size) {
       this.setState({
         processingSummaryUserFile: `The file contains duplicate user emails:
@@ -527,7 +530,7 @@ export default class UserManagement extends React.Component {
             user_ids: userIds
           };
           MessagesFetcher.createMessage(params)
-            .then((result) => {
+            .then(() => {
               this.myMessage.value = '';
               this.setState({
                 selectedUsers: null
@@ -876,10 +879,10 @@ export default class UserManagement extends React.Component {
       return <span />;
     };
 
-    const renderReConfirmButton = (unconfirmed_email, userId) => {
-      if (unconfirmed_email) {
+    const renderReConfirmButton = (unconfirmedEmail, userId) => {
+      if (unconfirmedEmail) {
         return (
-          <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
+          <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmedEmail)}>
             <Button
               variant="primary"
               onClick={() => this.handleReConfirmUserAccount(userId)}
