@@ -189,7 +189,7 @@ const BuildSpectraComparedSelection = (sample) => {
     return false;
   };
 
-  const listComparible = sample.getAnalysisContainersCompareable();
+  const listComparible = sample.getAnalysisContainersComparable();
   const menuItems = Object.keys(listComparible).map((layout) => {
     const listAics = listComparible[layout].map((aic)=> {
       const { children } = aic;

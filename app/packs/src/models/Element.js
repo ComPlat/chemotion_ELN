@@ -3,18 +3,17 @@ import sha256 from 'sha256';
 import _ from 'lodash';
 
 export default class Element {
-
   constructor(args) {
     Object.assign(this, args);
-    if(!this.id) {
+    if (!this.id) {
       this.id = Element.buildID();
-      this.is_new = true
+      this.is_new = true;
     }
     this.updateChecksum();
   }
 
   isMethodDisabled(m) {
-    return this[m] == '***'
+    return this[m] == '***';
   }
 
   static buildID() {
@@ -37,11 +36,11 @@ export default class Element {
   }
 
   get getChecksum() {
-    return this._checksum
+    return this._checksum;
   }
 
   get isNew() {
-    return this.is_new == true
+    return this.is_new == true;
   }
 
   set isNew(boolean) {
@@ -54,14 +53,14 @@ export default class Element {
 
   updateChecksum(cs) {
     if (cs) {
-      this._checksum = cs
+      this._checksum = cs;
     } else {
       this._checksum = this.checksum();
     }
   }
 
   buildCopy() {
-    return new this.constructor(_.omit(this, 'id'))
+    return new this.constructor(_.omit(this, 'id'));
   }
 
   clone() {
@@ -84,10 +83,10 @@ export default class Element {
       type: this.type,
       is_new: this.isNew || false,
       collection_id: this.collection_id
-    }
+    };
     _.merge(params, extraParams);
     let paramsWithoutNullEntries = _.omit(params, _.isNull);
-    let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***'})
+    let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***'; });
     return cleanParams;
   }
 
@@ -122,23 +121,20 @@ export default class Element {
     });
     return target;
   }
-  
-  getAnalysisContainersCompareable() {
-    let result = {};
+
+  getAnalysisContainersComparable() {
+    const result = {};
     const analysisContainers = this.analysisContainers();
     analysisContainers.forEach((aic) => {
-      const mKind = aic.extended_metadata.kind;
-      const kind = (mKind && mKind !== '') ? (mKind.split('|')[1].trim().split(' (')) : undefined;
-      let layout = kind !== undefined ? kind[kind.length-1] : undefined;
-      if (layout !== undefined) {
-        layout = layout.replace(')', '');
+      const { extended_metadata } = aic;
+      const layout = (extended_metadata && extended_metadata.kind) ? extended_metadata.kind : '';
+      if (layout !== '') {
         let listAics = result[layout] ? result[layout] : [];
         const dts = aic.children.filter(el => ~el.container_type.indexOf('dataset'));
-        const aicWithDataset = Object.assign({}, aic, { children: dts});
+        const aicWithDataset = Object.assign({}, aic, { children: dts });
         listAics.push(aicWithDataset);
         result[layout] = listAics;
       }
-
     });
     return result;
   }
