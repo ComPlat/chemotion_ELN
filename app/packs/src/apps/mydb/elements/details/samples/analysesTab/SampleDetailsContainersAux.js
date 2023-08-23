@@ -454,6 +454,19 @@ const HeaderNormal = ({
   }
 
   const { analyses_compared } = container.extended_metadata;
+  const { comparable_info } = container;
+  let is_comparison = false;
+  let layout = '';
+  let list_attachments = [];
+  let list_analyses = [];
+  let list_dataset = [];
+  if (comparable_info) {
+    is_comparison = comparable_info.is_comparison;
+    layout = comparable_info.layout;
+    list_attachments = comparable_info.list_attachments;
+    list_analyses = comparable_info.list_analyses;
+    list_dataset = comparable_info.list_dataset;
+  }
   
   return (
     <div
@@ -484,17 +497,14 @@ const HeaderNormal = ({
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
           {
-            container.extended_metadata.is_comparison ? (
+            is_comparison ? (
               <>
-                <div className="sub-title">Layout: 
-                {
-                  (analyses_compared && analyses_compared.length > 0) ? analyses_compared[0].layout : ''
-                }
-                </div>
+                <div className="sub-title">Layout: { layout }</div>
                 <div className="desc sub-title">Spectra: 
                 {
-                  (analyses_compared && analyses_compared.length > 0) ? analyses_compared.map((spectra) => (
-                    <p>{`-File: ${spectra.file.name}, dataset: ${spectra.dataset.name}, analysis: ${spectra.analysis.name}`}</p>
+                  (list_attachments && list_attachments.length > 0) ? list_attachments.map((spectra, idx) => (
+                    // <p>{`-File: ${spectra.file.name}, dataset: ${spectra.dataset.name}, analysis: ${spectra.analysis.name}`}</p>
+                    <p>{`-File: ${spectra.filename}, dataset: ${list_dataset[idx].name}, analysis: ${list_analyses[idx].name}`}</p>
                   )) : ''
                 }
                 </div>

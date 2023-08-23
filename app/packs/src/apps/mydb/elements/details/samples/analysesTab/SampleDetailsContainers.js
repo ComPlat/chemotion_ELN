@@ -103,10 +103,10 @@ export default class SampleDetailsContainers extends Component {
   }
 
   buildEmptyAnalyContainer(isComparispon) {
-    const newContainer = Container.buildEmpty();
-    newContainer.container_type = "analysis";
-    newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
+    const newContainer = Container.buildAnalysis();
+    // newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
     newContainer.extended_metadata.is_comparison = isComparispon;
+    // newContainer.
     return newContainer;
   }
 

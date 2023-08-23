@@ -18,14 +18,26 @@ function RndNotAvailable() {
   );
 }
 
-function RndNoAnalyses({ addButton }) {
+function RndNoAnalyses({ sample,
+  mode,
+  readOnly,
+  isDisabled,
+  handleRemove,
+  handleSubmit,
+  handleMove,
+  handleUndo,
+  handleAccordionOpen,
+  toggleAddToReport,
+  toggleMode,
+  orderContainers,
+  addButton}) {
   return (
     <div>
       <p>
         {AnalysisModeBtn(mode, toggleMode, isDisabled)}
         {addButton()}
       </p>
-      {
+      {/* {
         orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
           return (
@@ -46,8 +58,8 @@ function RndNoAnalyses({ addButton }) {
             />
           );
         })
-      }
-      <p>{addButton()}</p>
+      } */}
+      {/* <p>{addButton()}</p> */}
       <p className="noAnalyses-warning">There are currently no Analyses.</p>
     </div>
   );
