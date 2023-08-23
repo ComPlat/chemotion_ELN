@@ -15,9 +15,11 @@ module Usecases
         @shared_methods = SharedMethods.new(params: @params, user: @user)
 
         @model_name = @id_params[:model_name].camelize.constantize
-        @from = @filter_params[:from_date]
-        @to = @filter_params[:to_date]
-        @by_created_at = @filter_params[:filter_created_at] || false
+        if @filter_params
+          @from = @filter_params[:from_date]
+          @to = @filter_params[:to_date]
+          @by_created_at = @filter_params[:filter_created_at] || false
+        end
         @total_elements = @id_params[:total_elements]
         @result = {}
       end
@@ -54,7 +56,7 @@ module Usecases
           else
             scope.order('samples.updated_at ASC')
           end
-        scope = scope.page(@params[:page]).per(@params[:page_size]) if ids.length > @params[:page_size]
+        scope = scope.page(@params[:page]).per(@params[:page_size]) if ids.size > @params[:page_size].to_i
         scope
       end
 
@@ -68,7 +70,7 @@ module Usecases
         return @id_params[:ids] if !@id_params[:with_filter] || @filter_params.present? || @params[:molecule_sort]
 
         start_number =
-          if @params[:page].to_i > @shared_methods.pages(@id_params[:total_elements])
+          if @params[:page].to_i > @shared_methods.pages(@id_params[:total_elements], @params[:per_page].to_i)
             0
           else
             @params[:page_size].to_i * (@params[:page].to_i - 1)
@@ -88,7 +90,7 @@ module Usecases
       end
 
       def serialize_result_by_ids(scope)
-        pages = @shared_methods.pages(@total_elements, @params[:page_size])
+        pages = @shared_methods.pages(@total_elements, @params[:page_size].to_i)
         page = @params[:page] > pages ? 1 : @params[:page]
         scope = scope.page(page).per(@params[:page_size]) if page != @params[:page] || @filter_params.present?
         serialized_scope = serialized_scope_for_result_by_id(scope)

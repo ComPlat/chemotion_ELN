@@ -35,7 +35,7 @@ const KetcherRailsform = () => {
     }
   }
 
-  const handleSave = () => {
+  const handleSearch = () => {
     const structure = editor.structureDef;
     const { molfile } = structure;
     handleStructureEditorSave(molfile);
@@ -74,7 +74,7 @@ const KetcherRailsform = () => {
       structure_search: true
     };
     searchStore.loadSearchResults({
-      selection, collectionId, isSync
+      selection, collectionId, isSync, moleculeSort: true
     });
     searchStore.clearSearchAndTabResults();
     searchValuesByMolfile();
@@ -122,7 +122,7 @@ const KetcherRailsform = () => {
                     <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
                       Cancel
                     </Button>
-                    <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
+                    <Button bsStyle="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
                       Search
                     </Button>
                   </ButtonToolbar>

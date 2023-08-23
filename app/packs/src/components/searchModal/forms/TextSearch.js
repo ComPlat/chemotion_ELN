@@ -59,7 +59,7 @@ const TextSearch = () => {
     return storedFilter.length == 0 ? [] : storedFilter[0].filters;
   }
 
-  const handleSave = () => {
+  const handleSearch = () => {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
@@ -81,6 +81,7 @@ const TextSearch = () => {
         selection,
         collectionId: collectionId,
         isSync: uiState.isSync,
+        moleculeSort: true,
       });
       searchStore.clearSearchAndTabResults();
       searchValuesByFilters();
@@ -282,7 +283,7 @@ const TextSearch = () => {
               <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
-              <Button bsStyle="primary" onClick={handleSave} style={{ marginRight: '20px' }} >
+              <Button bsStyle="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
                 Search
               </Button>
             </ButtonToolbar>

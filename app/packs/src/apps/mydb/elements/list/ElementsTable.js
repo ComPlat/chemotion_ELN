@@ -100,6 +100,7 @@ export default class ElementsTable extends React.Component {
       || fromDate || toDate || productOnly !== currentStateProductOnly
       || isSearchResult !== searchResult
     );
+    const moleculeSort = isSearchResult ? true : ElementStore.getState().moleculeSort;
 
     if (stateChange) {
       this.setState({
@@ -115,7 +116,7 @@ export default class ElementsTable extends React.Component {
         },
         productOnly,
         searchResult: isSearchResult,
-        moleculeSort: ElementStore.getState().moleculeSort
+        moleculeSort: moleculeSort
       });
     }
   }

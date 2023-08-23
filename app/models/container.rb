@@ -70,6 +70,7 @@ class Container < ApplicationRecord
 
   def content_to_plain_text
     return unless extended_metadata_changed?
+    return if extended_metadata.blank? || (extended_metadata.present? && extended_metadata['content'].blank?)
 
     self.plain_text_content = Chemotion::QuillToPlainText.new.convert(extended_metadata['content'])
   end
