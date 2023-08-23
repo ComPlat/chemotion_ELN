@@ -7,8 +7,7 @@ FROM --platform=linux/amd64 ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.7.7
-ARG VNODE=14.21.3
-ARG VNODENEXT=16.16.0
+ARG VNODE=18.17.1
 ARG ASDF_BRANCH=v0.11.3
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
@@ -56,7 +55,6 @@ ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:/usr/loca
 
 RUN asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 RUN asdf install nodejs $VNODE
-RUN asdf install nodejs $VNODENEXT
 RUN asdf global nodejs $VNODE
 
 RUN asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
