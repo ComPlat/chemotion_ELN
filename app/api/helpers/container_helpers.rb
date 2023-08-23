@@ -122,4 +122,37 @@ module ContainerHelpers
       true
     end
   end
-end # module
+
+  def comparable_info(object)
+    return unless object.container_type == 'analysis'
+
+    is_comparison = object.extended_metadata['is_comparison'].present? && object.extended_metadata['is_comparison'] == 'true'
+
+    list_attachments = []
+    list_dataset = []
+    list_analyses = []
+    layout = ''
+    if object.extended_metadata['analyses_compared'].present?
+      analyses_compared = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':'))
+      analyses_compared.each do |attachment_info|
+        layout = attachment_info["layout"]
+        attachment = attachment_info["file"]["id"]
+        dataset = attachment_info["dataset"]["id"]
+        analyis = attachment_info["analysis"]["id"]
+        list_attachments.push(attachment)
+        list_dataset.push(dataset)
+        list_analyses.push(analyis)
+      end
+    end
+
+    {
+      is_comparison: is_comparison,
+      list_attachments: list_attachments,
+      list_dataset: list_dataset,
+      list_analyses: list_analyses,
+      layout: layout
+    }
+    
+  end
+
+end #module
