@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 function Button(props) {
   const {
-    variant, children, option, square, type, onClick
+    variant, children, option, square, type, onClick, ...otherProps
   } = props;
 
   const btnClassNames = [
@@ -19,6 +19,7 @@ function Button(props) {
       type={type}
       className={btnClassNames}
       onClick={onClick}
+      {...otherProps}
     >
       {children}
     </button>
@@ -30,7 +31,7 @@ Button.propTypes = {
   option: PropTypes.oneOf(['main', 'panel', 'modal', 'popover']),
   children: PropTypes.node,
   onClick: PropTypes.func,
-  square: PropTypes.bool,
+  square: PropTypes.bool, // this will make the width=height for buttons that only have icons
   type: PropTypes.oneOf(['submit', 'reset', 'button']),
 };
 
