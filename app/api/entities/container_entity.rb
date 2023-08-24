@@ -40,9 +40,6 @@ module Entities
         if object.extended_metadata['is_comparison'].present?
           metadata[:is_comparison] = object.extended_metadata['is_comparison'] == 'true'
         end
-        # if object.extended_metadata['analyses_compared'].present?
-        #   binding.pry
-        # end
         metadata[:analyses_compared] = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':')) if object.extended_metadata['analyses_compared'].present?
       end
     end
@@ -115,7 +112,7 @@ module Entities
           attachment = Attachment.find_by(id: attachment_info["file"]["id"])
           dataset = Container.find_by(id: attachment_info["dataset"]["id"])
           analyis = Container.find_by(id: attachment_info["analysis"]["id"])
-          list_attachments.push(attachment)
+          list_attachments.push(attachment) if attachment.nil? == false
           list_dataset.push(dataset)
           list_analyses.push(analyis)
         end

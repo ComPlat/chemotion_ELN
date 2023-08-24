@@ -481,29 +481,32 @@ module Chemotion
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
-        
-        #TODO: WIP
+
+        # TODO: WIP
         sample = Sample.find_by(id: params[:sample_id])
-        sample.analyses.each do |analysis|
+        sample_analyses = sample.analyses
+        sample_analyses.each do |analysis|
           comparable_info = comparable_info(analysis)
           next unless comparable_info[:is_comparison] == true
 
           comparable_info[:list_attachments].each do |old_att_id|
             # binding.pry
             next unless old_att_id == params[:attachment_id]
+
             analyses_compared = JSON.parse(analysis.extended_metadata['analyses_compared'].gsub('=>', ':'))
             analyses_compared.each_with_index do |value, idx|
-              next unless value["file"]["id"] == old_att_id
-              value["file"]["id"] = jcamp_att.id
-              value["file"]["name"] = jcamp_att.filename
+              next unless value['file']['id'] == old_att_id
+
+              value['file']['id'] = jcamp_att.id
+              value['file']['name'] = jcamp_att.filename
               analyses_compared[idx] = value
             end
-            analysis.extended_metadata['analyses_compared'] = analyses_compared.to_s
-            update_datamodel(analysis)
+            analysis.extended_metadata['analyses_compared'] = analyses_compared.to_json
           end
-          
+
+          analysis.save!
         end
-        #END TODO: WIP
+        # END TODO
         { files: [raw_file_obj(jcamp_att)] }
       end
 
