@@ -39,7 +39,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
 
 const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = null ) => {
   let layoutKeys = Object.keys(layout);
-  let segmentAvailableTabs = getElementSegments(element, layoutKeys);
+  let segmentAvailableTabs = availableTabs ? [] : getElementSegments(element, layoutKeys);
   availableTabs = [...availableTabs, ...segmentAvailableTabs];
   return getVisibilityList(layout, availableTabs, addInventoryTab);
 };

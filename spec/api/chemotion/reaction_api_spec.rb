@@ -138,13 +138,13 @@ describe Chemotion::ReactionAPI do
       end
 
       it 'returns sorted reactions by updated_at' do
-        get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'updated_at' }
+        get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'created_at' }
 
         expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
           [
             reaction3.id,
-            reaction1.id,
             reaction2.id,
+            reaction1.id,
           ],
         )
       end

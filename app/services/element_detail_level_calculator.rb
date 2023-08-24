@@ -20,11 +20,11 @@ class ElementDetailLevelCalculator
 
   private
 
-  def calculate_detail_levels
+  def calculate_detail_levels # rubocop:disable Metrics/AbcSize
     detail_levels = Hash.new(0)
     all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
 
-    detail_levels[Element] = all_collections_detail_levels.pluck(:element_detail_level).max || 0
+    detail_levels[Labimotion::Element] = all_collections_detail_levels.pluck(:element_detail_level).max || 0
     detail_levels[Reaction] = all_collections_detail_levels.pluck(:reaction_detail_level).max || 0
     detail_levels[ResearchPlan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
     detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0

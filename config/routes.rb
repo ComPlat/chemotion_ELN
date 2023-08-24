@@ -1,7 +1,7 @@
 # rubocop:disable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment
 #
 Rails.application.routes.draw do
-  post "/graphql", to: "graphql#execute" unless Rails.env.production?
+  post '/graphql', to: 'graphql#execute' unless Rails.env.production?
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
     devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }, skip: [:registrations]
@@ -16,15 +16,14 @@ Rails.application.routes.draw do
     devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }
   end
 
-  authenticated :user, lambda {|u| u.type == "Admin"} do
+  authenticated :user, ->(u) { u.type == 'Admin' } do
     root to: 'pages#admin', as: :admin_root
     get 'admin', to: 'pages#admin'
     get 'mydb/*any', to: 'pages#admin'
     get 'mydb', to: 'pages#admin'
   end
 
-
-  authenticated :user, lambda {|u| u.type == "Group"} do
+  authenticated :user, ->(u) { u.type == 'Group' } do
     root to: 'pages#cnc', as: :group_root
     get 'group', to: 'pages#cnc'
     get 'mydb/*any', to: 'pages#cnc'
@@ -49,6 +48,9 @@ Rails.application.routes.draw do
     get 'mydb', to: 'pages#welcome'
     get 'molecule_moderator', to: 'pages#molecule_moderator'
     get 'converter_admin', to: 'pages#converter_admin'
+    get 'generic_elements_admin', to: 'pages#gea'
+    get 'generic_segments_admin', to: 'pages#gsa'
+    get 'generic_datasets_admin', to: 'pages#gda'
   end
 
   # Standalone page for ChemScanner

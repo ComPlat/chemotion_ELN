@@ -64,7 +64,7 @@ class Sample < ApplicationRecord
   include AnalysisCodes
   include UnitConvertable
   include Taggable
-  include Segmentable
+  include Labimotion::Segmentable
 
   STEREO_ABS = ['any', 'rac', 'meso', 'delta', 'lambda', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)', '(Ra)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze
@@ -182,7 +182,7 @@ class Sample < ApplicationRecord
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
-  has_many :elements_samples, dependent: :destroy
+  has_many :elements_samples, dependent: :destroy, class_name: 'Labimotion::ElementsSample'
 
   has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
@@ -346,7 +346,7 @@ class Sample < ApplicationRecord
   # rubocop:disable Style/MethodDefParentheses
   # rubocop:disable Style/OptionalBooleanParameter
   # rubocop:disable Layout/TrailingWhitespace
-  def create_subsample user, collection_ids, copy_ea = false, type = nil 
+  def create_subsample user, collection_ids, copy_ea = false, type = nil
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?

@@ -15,9 +15,9 @@ export default class UsersFetcher {
   }
 
   static fetchElementKlassNames(genericOnly = true) {
-    let api = '/api/v1/public/element_klasses_name.json';
+    let api = '/api/v1/labimotion_hub/element_klasses_name.json';
     if (genericOnly) {
-      api = '/api/v1/public/element_klasses_name.json?generic_only=true';
+      api = '/api/v1/labimotion_hub/element_klasses_name.json?generic_only=true';
     }
 
     return fetch(api, {

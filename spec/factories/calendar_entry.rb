@@ -30,7 +30,7 @@ FactoryBot.define do
     end
 
     trait :element do
-      eventable { Element.create(element_klass: ElementKlass.create, creator: create(:person)) }
+      eventable { Labimotion::Element.create(element_klass: Labimotion::ElementKlass.create, creator: create(:person)) }
     end
 
     trait :start_after_end do

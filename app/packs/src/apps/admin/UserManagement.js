@@ -5,6 +5,7 @@ import { CSVReader } from 'react-papaparse';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -64,6 +65,7 @@ export default class UserManagement extends React.Component {
       showMsgModal: false,
       showNewUserModal: false,
       showEditUserModal: false,
+      showGenericAdminModal: false,
       messageNewUserModal: '',
       messageEditUserModal: '',
       processingSummaryUserFile: '',
@@ -79,6 +81,8 @@ export default class UserManagement extends React.Component {
     this.handleEditUserShow = this.handleEditUserShow.bind(this);
     this.handleEditUserClose = this.handleEditUserClose.bind(this);
     this.handleUpdateUser = this.handleUpdateUser.bind(this);
+    this.handleGenericAdminModal = this.handleGenericAdminModal.bind(this);
+    this.handleGenericAdminModalCb = this.handleGenericAdminModalCb.bind(this);
   }
 
   componentDidMount() {
@@ -127,6 +131,21 @@ export default class UserManagement extends React.Component {
       messageEditUserModal: '',
       user: {}
     });
+  }
+
+  handleGenericAdminModalCb(user) {
+    AdminFetcher.fetchUsers()
+      .then((result) => {
+        let updated = result.users.find(u => u.id === user.id);
+        updated = updated || user;
+        this.setState({
+          users: result.users, user: updated
+        });
+      });
+  }
+
+  handleGenericAdminModal(show, user = {}) {
+    this.setState({ showGenericAdminModal: show, user });
   }
 
   handleFetchUsers() {
@@ -759,6 +778,18 @@ export default class UserManagement extends React.Component {
     );
   }
 
+  renderGenericAdminModal() {
+    const { user, showGenericAdminModal } = this.state;
+    if (showGenericAdminModal) {
+      return (<GenericAdminModal
+        user={user}
+        fnShowModal={this.handleGenericAdminModal}
+        fnCb={this.handleGenericAdminModalCb}
+      />);
+    }
+    return null;
+  }
+
   render() {
     const renderConfirmButton = (show, userId) => {
       if (show) {
@@ -885,6 +916,16 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
+              onClick={() => this.handleGenericAdminModal(true, g)}
+            >
+              <i className="fa fa-empire" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
           <OverlayTrigger placement="bottom" overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}>
             <Button
               bsSize="xsmall"
@@ -931,6 +972,7 @@ export default class UserManagement extends React.Component {
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
+        { this.renderGenericAdminModal() }
       </div>
     );
   }

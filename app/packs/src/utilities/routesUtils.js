@@ -5,7 +5,8 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import DetailActions from 'src/stores/alt/actions/DetailActions'
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import { elementNames } from 'src/apps/generic/Utils';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -43,6 +44,7 @@ const collectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
     // }
   });
 };
@@ -82,6 +84,8 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
+
     // }
   });
 };

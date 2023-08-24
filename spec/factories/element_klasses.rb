@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :element_klass do
+  factory :element_klass, class: 'Labimotion::ElementKlass' do
     name { 'Test Name' }
     label { 'test' }
     desc { 'Lorem ipsum dolor sit amet' }

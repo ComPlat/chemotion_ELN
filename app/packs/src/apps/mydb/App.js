@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Col, Grid, Row } from 'react-bootstrap';
-
+import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
 import Elements from 'src/apps/mydb/elements/Elements';
@@ -19,6 +19,8 @@ class App extends Component {
   constructor(_props) {
     super();
     this.state = {
+      showGenericWorkflow: false,
+      propGenericWorkflow: false,
       showCollectionManagement: false,
       indicatorClassName: 'fa fa-chevron-circle-left',
       showCollectionTree: true,
@@ -58,6 +60,10 @@ class App extends Component {
 
     if (this.state.klasses !== state.klasses) {
       this.setState({ klasses: state.klasses });
+    }
+    if (this.state.showGenericWorkflow !== state.showGenericWorkflow ||
+      this.state.propGenericWorkflow !== state.propGenericWorkflow) {
+      this.setState({ showGenericWorkflow: state.showGenericWorkflow, propGenericWorkflow: state.propGenericWorkflow });
     }
   }
 
@@ -119,7 +125,7 @@ class App extends Component {
   }
 
   render() {
-    const { showCollectionTree } = this.state;
+    const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
       <Grid fluid>
         <Row className="card-navigation">
@@ -134,6 +140,11 @@ class App extends Component {
           <LoadingModal />
           <ProgressModal />
         </Row>
+        <FlowViewerModal
+          show={showGenericWorkflow || false}
+          data={propGenericWorkflow || {}}
+          fnHide={() => UIActions.showGenericWorkflowModal(false)}
+        />
         <InboxModal showCollectionTree={showCollectionTree} />
         <Calendar />
       </Grid>

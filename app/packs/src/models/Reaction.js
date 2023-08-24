@@ -446,9 +446,11 @@ export default class Reaction extends Element {
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id) {
+    const target = Segment.buildCopy(reaction.segments);
     const params = {
       collection_id,
       role: 'parts',
+      segments: target,
       timestamp_start: '',
       timestamp_stop: '',
       rf_value: 0.00,

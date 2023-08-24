@@ -1,4 +1,8 @@
-const previewContainerImage = (container, noAttSvg = '/images/wild_card/no_attachment.svg', noAvaSvg = '/images/wild_card/not_available.svg') => {
+const previewContainerImage = (
+  container,
+  noAttSvg = '/images/wild_card/no_attachment.svg',
+  noAvaSvg = '/images/wild_card/not_available.svg'
+) => {
   const rawImg = (container.preview_img || {}).preview;
   switch (rawImg) {
     case null:
@@ -11,7 +15,10 @@ const previewContainerImage = (container, noAttSvg = '/images/wild_card/no_attac
   }
 };
 
-const previewAttachmentImage = (attachment, noAvaSvg = '/images/wild_card/not_available.svg') => {
+const previewAttachmentImage = (
+  attachment,
+  noAvaSvg = '/images/wild_card/not_available.svg'
+) => {
   if (attachment.thumb) {
     return `/images/thumbnail/${attachment.identifier}`;
   }

@@ -56,7 +56,7 @@ module Taggable
 
   # Populate Collections tag
   def collection_tag
-    klass = "collections_#{self.class.name.underscore.pluralize}"
+    klass = Labimotion::Utils.col_by_element(self.class.name).underscore.pluralize
     return unless respond_to?(klass)
     cols = []
     send(klass).each do |cc|
