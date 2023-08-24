@@ -35,6 +35,12 @@ FactoryBot.define do
       aasm_state { :edited }
     end
 
+    trait :with_spectra_file_failure do
+      filename { 'spectra_file.jdx' }
+      file_path { Rails.root.join('spec/fixtures/spectra_file.jdx') }
+      aasm_state { :failure }
+    end
+
     trait :with_json_file do
       filename { 'upload.json' }
       file_path { Rails.root.join('spec/fixtures/upload.json') }

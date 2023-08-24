@@ -428,7 +428,40 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
-    pending 'not yet implemented'
+    let(:user) { create(:person) }
+    let(:container) { create(:container, containable: user) }
+    let(:original_attachment) { create(:attachment, :with_spectra_file_failure, attachable: container) }
+    let(:generated_attachment) { create(:attachment, :with_spectra_file, attachable: container) }
+    let(:spectrum_params) { { original: [], generated: [] } }
+
+    let(:execute_request) { post '/api/v1/attachments/regenerate_spectrum', params: spectrum_params }
+
+    context 'when regenerate without any file content' do
+      before do
+        execute_request
+      end
+
+      it 'returns statuscode 201' do
+        expect(response).to have_http_status(:created)
+      end
+    end
+
+    context 'when regenerate with file id' do
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        spectrum_params[:generated] = [generated_attachment.id]
+        execute_request
+      end
+
+      it 'returns statuscode 201' do
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'old files have been deleted' do
+        atts = Attachment.where(filename: original_attachment.filename)
+        expect(atts.length).to eq(1)
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/save_spectrum' do

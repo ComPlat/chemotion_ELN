@@ -37,6 +37,13 @@ module Chemotion
       def upload_chunk_error_message
         { ok: false, statusText: 'File key is not valid' }
       end
+
+      def remove_duplicated(att)
+        old_att = Attachment.find_by(filename: att.filename, attachable_id: att.attachable_id)
+        return unless old_att.id != att.id
+
+        old_att&.destroy
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |_error|
@@ -377,6 +384,8 @@ module Chemotion
         Attachment.where(id: pm[:original]).each do |att|
           next unless writable?(att)
 
+          remove_duplicated(att)
+
           att.set_regenerating
           att.save
         end
@@ -399,6 +408,8 @@ module Chemotion
 
         Attachment.where(id: pm[:edited]).each do |att|
           next unless writable?(att)
+
+          remove_duplicated(att)
 
           # TODO: do not use abs_path
           result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
