@@ -70,20 +70,21 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   componentDidMount() {
-    if (this.props.literatures && this.props.literatures.size > 0) {
-      const sortedIds = groupByCitation(this.props.literatures);
+    const { literatures, element } = this.props;
+    if (literatures && literatures.size > 0) {
+      const sortedIds = groupByCitation(literatures);
       this.setState((prevState) => ({
         ...prevState,
-        literatures: this.props.literatures,
+        literatures,
         sortedIds,
         sorting: 'literature_id'
       }));
     } else {
-      LiteraturesFetcher.fetchElementReferences(this.props.element).then((literatures) => {
-        const sortedIds = groupByCitation(literatures);
+      LiteraturesFetcher.fetchElementReferences(element).then((fetchedLiterature) => {
+        const sortedIds = groupByCitation(fetchedLiterature);
         this.setState((prevState) => ({
           ...prevState,
-          literatures,
+          fetchedLiterature,
           sortedIds,
           sorting: 'literature_id'
         }));
@@ -198,12 +199,13 @@ export default class DetailsTabLiteratures extends Component {
 
   fetchMetadata() {
     const { element } = this.props;
+    const { literature } = this.state;
     if (!checkElementStatus(element)) { return; }
-    const { doi_isbn } = this.state.literature;
-    if (doiValid(doi_isbn)) {
-      this.fetchDOIMetadata(doi_isbn);
+
+    if (doiValid(literature.doi_isbn)) {
+      this.fetchDOIMetadata(literature.doi_isbn);
     } else {
-      this.fetchISBNMetadata(doi_isbn);
+      this.fetchISBNMetadata(literature.doi_isbn);
     }
   }
 
@@ -224,7 +226,8 @@ export default class DetailsTabLiteratures extends Component {
             refs: { citation, bibtex: citation.format('bibtex'), bibliography: json.format('bibliography') }
           }
         }));
-        this.handleLiteratureAdd(this.state.literature);
+        const { literature } = this.state;
+        this.handleLiteratureAdd(literature);
       }
     }).catch((errorMessage) => {
       NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
@@ -250,7 +253,8 @@ export default class DetailsTabLiteratures extends Component {
             refs: { citation: json, bibtex: json.format('bibtex'), bibliography: json.format('bibliography') }
           }
         }));
-        this.handleLiteratureAdd(this.state.literature);
+        const { literature } = this.state;
+        this.handleLiteratureAdd(literature);
       }
     }).catch((errorMessage) => {
       NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`));
