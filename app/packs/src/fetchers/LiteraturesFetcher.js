@@ -49,18 +49,16 @@ export default class LiteraturesFetcher {
       element_id: id
     });
 
-    return fetch(`/api/v1/literatures?${urlParams}`, {
+    const requestParams = {
       credentials: 'same-origin',
       method: 'delete',
       headers: {
         Accept: 'application/json',
       },
-    }).then((response) => {
-      if (response.status === 200) {
-        return {};
-      }
-      return response.json();
-    })
+    };
+
+    return fetch(`/api/v1/literatures?${urlParams}`, requestParams)
+      .then((response) => (response.status === 200 ? {} : response.json()))
       .then((json) => { if (json.error) { throw json; } })
       .catch((errorMessage) => { throw errorMessage; });
   }
