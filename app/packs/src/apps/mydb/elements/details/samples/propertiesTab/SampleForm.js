@@ -4,8 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem, Collapse,
-  ButtonGroup
+  Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -24,7 +23,6 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
-      openAdditionalProperties: false,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -192,7 +190,7 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.abs : 'any';
 
     return (
-      <FormGroup style={{ width: '50%', paddingRight: '10px' }}>
+      <FormGroup style={{ width: '100%', paddingRight: '10px' }}>
         <ControlLabel>Stereo Abs</ControlLabel>
         <Select
           name="stereoAbs"
@@ -226,7 +224,7 @@ export default class SampleForm extends React.Component {
     const value = sample.stereo ? sample.stereo.rel : 'any';
 
     return (
-      <FormGroup style={{ width: '50%' }}>
+      <FormGroup style={{ width: '100%' }}>
         <ControlLabel>Stereo Rel</ControlLabel>
         <Select
           name="stereoRel"
@@ -595,97 +593,71 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  additionalPropertiesCollapseBtn() {
-    const { openAdditionalProperties } = this.state;
-    const arrow = openAdditionalProperties
-      ? <i className="fa fa-angle-double-up" />
-      : <i className="fa fa-angle-double-down" />;
-    return (
-      <ButtonGroup vertical block>
-        <Button
-          id="additionalProperties"
-          bsSize="xsmall"
-          style={{ backgroundColor: '#ddd' }}
-          onClick={() => this.setState({ openAdditionalProperties: !openAdditionalProperties })}
-        >
-          {arrow}
-          &nbsp; Properties
-        </Button>
-      </ButtonGroup>
-    );
-  }
-
   additionalProperties(sample) {
-    const { openAdditionalProperties } = this.state;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const minPadding = { padding: '4px 4px 4px 4px' };
+
     return (
       <ListGroup fill="true">
-        <ListGroupItem
-          style={minPadding}
-        >
-          <div>
-            {this.additionalPropertiesCollapseBtn()}
+        <h5 style={{ fontWeight: 'bold' }}>Additional Properties:</h5>
+        <ListGroupItem style={minPadding}>
+          <div className="properties-form" style={{ width: '100%' }}>
+            <table width="100%">
+              <tbody>
+                <tr>
+                  <td colSpan="3">
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ width: '33%' }}>
+                        <TextRangeWithAddon
+                          field="melting_point"
+                          label="Melting point"
+                          addon="°C"
+                          value={sample.melting_point_display}
+                          disabled={polyDisabled}
+                          onChange={this.handleRangeChanged}
+                          tipOnText="Use space-separated value to input a Temperature range"
+                        />
+                      </div>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        <TextRangeWithAddon
+                          field="boiling_point"
+                          label="Boiling point"
+                          addon="°C"
+                          value={sample.boiling_point_display}
+                          disabled={polyDisabled}
+                          onChange={this.handleRangeChanged}
+                          tipOnText="Use space-separated value to input a Temperature range"
+                        />
+                      </div>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        {this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ width: '24.5%' }}>
+                        {this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}
+                      </div>
+                      <div style={{ width: '24.5%' }}>
+                        {this.textInput(sample, 'xref_form', 'Form')}
+                      </div>
+                      <div style={{ width: '24.5%' }}>
+                        {this.textInput(sample, 'xref_color', 'Color')}
+                      </div>
+                      <div style={{ width: '24.5%' }}>
+                        {this.textInput(sample, 'xref_solubility', 'Solubility ')}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <Collapse in={openAdditionalProperties}>
-            <div className="properties-form" style={{ width: '100%', marginTop: '15px' }}>
-              <table width="100%">
-                <tbody>
-                  <tr>
-                    <td colSpan="3">
-                      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
-                        <div style={{ width: '35%' }}>
-                          <TextRangeWithAddon
-                            field="melting_point"
-                            label="Melting point"
-                            addon="°C"
-                            value={sample.melting_point_display}
-                            disabled={polyDisabled}
-                            onChange={this.handleRangeChanged}
-                            tipOnText="Use space-separated value to input a Temperature range"
-                          />
-                        </div>
-                        <div style={{ width: '35%', paddingLeft: '5px' }}>
-                          <TextRangeWithAddon
-                            field="boiling_point"
-                            label="Boiling point"
-                            addon="°C"
-                            value={sample.boiling_point_display}
-                            disabled={polyDisabled}
-                            onChange={this.handleRangeChanged}
-                            tipOnText="Use space-separated value to input a Temperature range"
-                          />
-                        </div>
-                        <div style={{ width: '28%', paddingLeft: '5px' }}>
-                          {this.inputWithUnit(sample, 'xref_flash_point', 'Flash Point')}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan="4">
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <div style={{ width: '24.5%' }}>
-                          {this.textInput(sample, 'xref_refractive_index', 'Refractive Index ')}
-                        </div>
-                        <div style={{ width: '24.5%' }}>
-                          {this.textInput(sample, 'xref_form', 'Form')}
-                        </div>
-                        <div style={{ width: '24.5%' }}>
-                          {this.textInput(sample, 'xref_color', 'Color')}
-                        </div>
-                        <div style={{ width: '24.5%' }}>
-                          {this.textInput(sample, 'xref_solubility', 'Solubility ')}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </Collapse>
         </ListGroupItem>
       </ListGroup>
     );
@@ -699,50 +671,55 @@ export default class SampleForm extends React.Component {
     const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const densityBlocked = isDisabled ? true : !molarityBlocked;
     const { enableSampleDecoupled } = this.props;
+    const minPadding = { padding: '4px 4px 4px 4px' };
 
     return (
       <Table responsive className="sample-form">
         <tbody>
-          <tr>
-            <td colSpan="4">
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '87%', display: 'flex' }}>
-                  {this.moleculeInput()}
-                  {this.stereoAbsInput()}
-                  {this.stereoRelInput()}
-                </div>
-                {/* <div style={{ paddingLeft: '10px' }} className="top-secret-checkbox">
+          <ListGroup fill="true">
+            <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
+            <ListGroupItem style={minPadding}>
+              <div className="properties-form" style={{ width: '100%' }}>
+                <tr>
+                  <td colSpan="4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ width: '100%', display: 'flex' }}>
+                        {this.moleculeInput()}
+                        {this.stereoAbsInput()}
+                        {this.stereoRelInput()}
+                      </div>
+                      {/* <div style={{ paddingLeft: '10px' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}
                 </div> */}
-                {
+                      {
                   enableSampleDecoupled ? (
                     <div className="decoupled-checkbox">{this.decoupledCheckbox(sample)}</div>
                   ) : null
                 }
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="4">
-              <div className="name-form">
-                <div style={{ width: '33%' }}>
-                  {this.textInput(sample, 'name', 'Name')}
-                </div>
-                <div style={{ width: '33%', paddingLeft: '5px' }}>
-                  {this.textInput(sample, 'external_label', 'External label')}
-                </div>
-                <div style={{ width: '33%', paddingLeft: '5px' }}>
-                  {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                </div>
-                {/* <div style={{ width: '40%' }}>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="4">
+                    <div className="name-form">
+                      <div style={{ width: '33%' }}>
+                        {this.textInput(sample, 'name', 'Name')}
+                      </div>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        {this.textInput(sample, 'external_label', 'External label')}
+                      </div>
+                      <div style={{ width: '33%', paddingLeft: '5px' }}>
+                        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                      </div>
+                      {/* <div style={{ width: '40%' }}>
                   <label htmlFor="solventInput">Solvent</label>
                   {this.sampleSolvent(sample)}
                 </div> */}
-              </div>
-            </td>
-          </tr>
+                    </div>
+                  </td>
+                </tr>
 
-          {sample.decoupled
+                {sample.decoupled
             && (
             <tr>
               {
@@ -756,51 +733,54 @@ export default class SampleForm extends React.Component {
             </tr>
             )}
 
-          <tr className="visible-hd">
-            <td colSpan="6">
-              <table>
-                <tbody>
-                  <tr>
-                    <td style={{ width: '3%' }}>
-                      <div style={{ marginBottom: '15px' }}>
-                        {/* eslint-disable-next-line jsx-a11y/label-has-for */}
-                        <label style={{ height: '14px' }} />
-                        <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
-                          {this.infoButton()}
-                        </InputGroup.Button>
-                      </div>
-                    </td>
-                    {this.sampleAmount(sample)}
-                    <td style={{ width: '47%' }}>
-                      <div className="name-form" style={{ marginBottom: '15px' }}>
-                        <Tabs
-                          style={{ width: '60%' }}
-                          id="tab-density-molarity"
-                          defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
-                        >
-                          <Tab eventKey="density" title="Density">
-                            {
+                <tr className="visible-hd">
+                  <td colSpan="6">
+                    <table>
+                      <tbody>
+                        <tr>
+                          <td style={{ width: '3%' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                              {/* eslint-disable-next-line jsx-a11y/label-has-for */}
+                              <label style={{ height: '14px' }} />
+                              <InputGroup.Button id="email" name="email" type="email" placeholder="Email Address">
+                                {this.infoButton()}
+                              </InputGroup.Button>
+                            </div>
+                          </td>
+                          {this.sampleAmount(sample)}
+                          <td style={{ width: '47%' }}>
+                            <div className="name-form" style={{ marginBottom: '15px' }}>
+                              <Tabs
+                                style={{ width: '60%' }}
+                                id="tab-density-molarity"
+                                defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
+                              >
+                                <Tab eventKey="density" title="Density">
+                                  {
                               this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
                             }
-                          </Tab>
-                          <Tab eventKey="molarity" title="Molarity">
-                            {
+                                </Tab>
+                                <Tab eventKey="molarity" title="Molarity">
+                                  {
                               this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
                             }
-                          </Tab>
-                        </Tabs>
-                        <div style={{ width: '40%', paddingLeft: '5px' }}>
-                          {
-                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity`+`/Concentration', '', isDisabled)
+                                </Tab>
+                              </Tabs>
+                              <div style={{ width: '40%', paddingLeft: '5px' }}>
+                                {
+                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
                           }
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </div>
+            </ListGroupItem>
+          </ListGroup>
           <tr>
             {this.additionalProperties(sample)}
           </tr>

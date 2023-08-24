@@ -35,10 +35,6 @@ const collect = (connect, monitor) => ({
 });
 
 class SampleDetailsSolventsDnd extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
     const {
       sample,
@@ -47,7 +43,7 @@ class SampleDetailsSolventsDnd extends React.Component {
       isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
     } = this.props;
     const style = {
-      padding: '2px 5px',
+      padding: '0px 0px',
     };
     if (isOver && canDrop) {
       style.borderStyle = 'dashed';

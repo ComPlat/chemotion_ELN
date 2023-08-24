@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormControl } from 'react-bootstrap';
+import {
+  Button, FormControl, ListGroup, ListGroupItem
+} from 'react-bootstrap';
 import Molecule from 'src/models/Molecule';
 import VirtualizedSelect from 'react-virtualized-select';
 import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
@@ -25,11 +27,8 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
   // onChangeRatio
   return (
     <tr>
-      <th width="5%" />
-      <td width="50%">
+      <td>
         <FormControl
-          bsClass="bs-form--compact form-control"
-          bsSize="small"
           type="text"
           name="solvent_label"
           value={solvent.label}
@@ -37,10 +36,8 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
           disabled
         />
       </td>
-      <td width="26%">
+      <td>
         <FormControl
-          bsClass="bs-form--compact form-control"
-          bsSize="small"
           type="number"
           name="solvent_ratio"
           value={solvent.ratio}
@@ -50,10 +47,16 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
       <td>
         <Button
           bsStyle="danger"
-          bsSize="small"
           onClick={() => deleteSolvent(solvent)}
+          style={{
+            width: '30px',
+            height: '30px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <i className="fa fa-trash-o" />
+          <i className="fa fa-trash-o fa-lg" />
         </Button>
       </td>
     </tr>
@@ -65,6 +68,7 @@ function SampleSolventGroup({
 }) {
   const contents = [];
   const sampleSolvents = sample.solvent;
+  const minPadding = { padding: '4px 4px 4px 4px' };
 
   if (sampleSolvents && sampleSolvents.length > 0) {
     let key = -1;
@@ -107,10 +111,10 @@ function SampleSolventGroup({
   return (
     <div>
       <table width="100%" className="reaction-scheme">
-        <thead>
-          <tr>
-            <th width="5%" />
-            <th width="95%">
+        <ListGroup fill="true">
+          <h5 style={{ fontWeight: 'bold' }}>Solvents:</h5>
+          <ListGroupItem style={minPadding}>
+            <div className="properties-form" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
               <VirtualizedSelect
                 className="solvents-select"
                 name="default solvents"
@@ -118,23 +122,17 @@ function SampleSolventGroup({
                 options={solventOptions}
                 placeholder="Select solvents or drag-n-drop molecules from the sample list"
                 onChange={createDefaultSolvents}
+                style={{
+                  width: '100%', marginBottom: '10px', overflow: 'auto'
+                }}
+
               />
-            </th>
-          </tr>
-        </thead>
-      </table>
-      <table width="100%" className="reaction-scheme">
-        <thead>
-          <tr>
-            <th width="5%" />
-            <th width="50%">Label</th>
-            <th width="26%">Ratio</th>
-            <th width="3%" />
-          </tr>
-        </thead>
-        <tbody>
-          {contents.map((item) => item)}
-        </tbody>
+              <td style={{ width: '50%', fontWeight: 'bold' }}>Label:</td>
+              <td style={{ width: '50%', fontWeight: 'bold' }}>Ratio:</td>
+              {contents.map((item) => item)}
+            </div>
+          </ListGroupItem>
+        </ListGroup>
       </table>
     </div>
   );

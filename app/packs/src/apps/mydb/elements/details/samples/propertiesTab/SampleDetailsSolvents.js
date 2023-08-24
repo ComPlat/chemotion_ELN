@@ -1,8 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  ListGroup, ListGroupItem, Collapse, Button, ButtonGroup
-} from 'react-bootstrap';
 import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
 import SampleDetailsSolventsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolventsDnd';
@@ -13,7 +10,6 @@ export default class SampleDetailsSolvents extends React.Component {
 
     const { sample } = props;
     this.state = {
-      open: false,
       sample
     };
 
@@ -49,32 +45,10 @@ export default class SampleDetailsSolvents extends React.Component {
     this.props.onChange(sample);
   }
 
-  solventCollapseBtn() {
-    const { open } = this.state;
-    const arrow = open
-      ? <i className="fa fa-angle-double-up" />
-      : <i className="fa fa-angle-double-down" />;
-    return (
-      <ButtonGroup vertical block>
-        <Button
-          id="Solvents"
-          bsSize="xsmall"
-          style={{ backgroundColor: '#ddd' }}
-          onClick={() => this.setState({ open: !open })}
-        >
-          {arrow}
-          {' '}
-      &nbsp; Solvents
-        </Button>
-      </ButtonGroup>
-    );
-  }
-
   render() {
     const {
       sample, isOver, canDrop
     } = this.props;
-    const minPadding = { padding: '4px 4px 4px 4px' };
     const style = {
       padding: '2px 5px',
     };
@@ -85,23 +59,12 @@ export default class SampleDetailsSolvents extends React.Component {
       style.borderStyle = 'dashed';
     }
     return (
-      <div>
-        <ListGroup fill="true">
-          <ListGroupItem style={minPadding}>
-            {this.solventCollapseBtn()}
-            <Collapse in={this.state.open}>
-              <div>
-                <SampleDetailsSolventsDnd
-                  sample={sample}
-                  dropSample={this.dropSample}
-                  deleteSolvent={this.deleteSolvent}
-                  onChangeSolvent={(changeEvent) => this.onChangeSolvent(changeEvent)}
-                />
-              </div>
-            </Collapse>
-          </ListGroupItem>
-        </ListGroup>
-      </div>
+      <SampleDetailsSolventsDnd
+        sample={sample}
+        dropSample={this.dropSample}
+        deleteSolvent={this.deleteSolvent}
+        onChangeSolvent={(changeEvent) => this.onChangeSolvent(changeEvent)}
+      />
     );
   }
 }
