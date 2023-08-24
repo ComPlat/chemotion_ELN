@@ -1338,7 +1338,7 @@ export default class SampleDetails extends React.Component {
           <div
             className={className}
             onClick={this.showStructureEditor.bind(this)}
-            onKeyPress={this.handleKeyPress.bind(this)}
+            onKeyPress
             role="button"
             tabIndex="0"
 

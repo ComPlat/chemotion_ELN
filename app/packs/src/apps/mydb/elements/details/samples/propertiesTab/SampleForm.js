@@ -75,7 +75,6 @@ export default class SampleForm extends React.Component {
     });
   }
 
-
   structureEditorButton(isDisabled) {
     return (
       <Button
@@ -107,7 +106,7 @@ export default class SampleForm extends React.Component {
       Information mirrored to the reaction table describing the content of pure
       compound or amount of pure compound in a given solution
     </Tooltip>
-  )
+  );
 
   // Input components of sample details should be disabled if detail level
   // does not allow to read their content
@@ -117,7 +116,7 @@ export default class SampleForm extends React.Component {
         <Checkbox
           inputRef={(ref) => { this.topSecretInput = ref; }}
           checked={sample.is_top_secret}
-          onChange={e => this.handleFieldChanged('is_top_secret', e.target.checked)}
+          onChange={(e) => this.handleFieldChanged('is_top_secret', e.target.checked)}
         >
           Top secret
         </Checkbox>
@@ -133,7 +132,7 @@ export default class SampleForm extends React.Component {
         <Checkbox
           inputRef={(ref) => { this.decoupledInput = ref; }}
           checked={sample.decoupled}
-          onChange={e => this.handleFieldChanged('decoupled', e.target.checked)}
+          onChange={(e) => this.handleFieldChanged('decoupled', e.target.checked)}
         >
           Decoupled
         </Checkbox>
@@ -374,7 +373,7 @@ export default class SampleForm extends React.Component {
         options={solventOptions}
         value={sample.solvent}
         disabled={!sample.can_update}
-        onChange={e => this.handleFieldChanged('solvent', e)}
+        onChange={(e) => this.handleFieldChanged('solvent', e)}
       />
     );
   }
@@ -383,9 +382,15 @@ export default class SampleForm extends React.Component {
     if (!sample.contains_residues) return false;
 
     return this.numInput(
-      sample, 'defined_part_amount', 'g',
-      ['m', 'n'], 4, 'Attached', 'attachedAmountMg',
-      true, 'Weight of the defined part'
+      sample,
+      'defined_part_amount',
+      'g',
+      ['m', 'n'],
+      4,
+      'Attached',
+      'attachedAmountMg',
+      true,
+      'Weight of the defined part'
     );
   }
 
@@ -394,24 +399,53 @@ export default class SampleForm extends React.Component {
   }
 
   numInput(
-    sample, field, unit, prefixes, precision, label, ref = '',
-    disabled = false, title = '', block = false, notApplicable = false
+    sample,
+    field,
+    unit,
+    prefixes,
+    precision,
+    label,
+    ref = '',
+    disabled = false,
+    title = '',
+    block = false,
+    notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
-    let metric = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
-    if(sample){
-      switch(field) {
-        case 'amount_g':
-          metric = (sample.metrics && sample.metrics.length > 2 && metricPrefixes.indexOf(sample.metrics[0]) > -1) ? sample.metrics[0] : 'm';
+    let metric;
+    if (unit === 'l') {
+      metric = prefixes[1];
+    } else if (unit === 'mol') {
+      metric = prefixes[2];
+    } else {
+      metric = prefixes[0];
+    }
+    if (sample) {
+      switch (field) {
+        case 'amount_g': {
+          const isAmountGValid = sample.metrics && sample.metrics.length > 2;
+          const prefixAmountG = isAmountGValid ? sample.metrics[0] : 'm';
+          metric = metricPrefixes.indexOf(prefixAmountG) > -1 ? prefixAmountG : 'm';
           break;
-        case 'amount_mol':
-          metric = (sample.metrics && sample.metrics.length > 2 && metricPrefixes.indexOf(sample.metrics[2]) > -1) ? sample.metrics[2] : 'm';
+        }
+        case 'amount_mol': {
+          const isAmountMolValid = sample.metrics && sample.metrics.length > 2;
+          const prefixAmountMol = isAmountMolValid ? sample.metrics[2] : 'm';
+          metric = metricPrefixes.indexOf(prefixAmountMol) > -1 ? prefixAmountMol : 'm';
           break;
-          case 'amount_l':
-            metric = (sample.metrics && sample.metrics.length > 3 && metricPrefixes.indexOf(sample.metrics[3]) > -1) ? sample.metrics[3] : 'm';
-            break;
+        }
+        case 'amount_l': {
+          const isAmountLValid = sample.metrics && sample.metrics.length > 3;
+          const prefixAmountL = isAmountLValid ? sample.metrics[3] : 'm';
+          metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
+          break;
+        }
+        default:
+          console.warn(`Unknown field: ${field}`);
+          metric = 'm';
+          break;
       }
     }
 
@@ -429,8 +463,8 @@ export default class SampleForm extends React.Component {
           disabled={disabled}
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
-          onChange={e => this.handleFieldChanged(field, e)}
-          onMetricsChange={e => this.handleMetricsChange(e)}
+          onChange={(e) => this.handleFieldChanged(field, e)}
+          onMetricsChange={(e) => this.handleMetricsChange(e)}
           id={`numInput_${field}`}
         />
       </td>
@@ -438,13 +472,29 @@ export default class SampleForm extends React.Component {
   }
 
   numInputWithoutTable(
-    sample, field, unit, prefixes, precision, label, ref = '',
-    disabled = false, title = '', block = false, notApplicable = false
+    sample,
+    field,
+    unit,
+    prefixes,
+    precision,
+    label,
+    ref = '',
+    disabled = false,
+    title = '',
+    block = false,
+    notApplicable = false
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
 
-    const mpx = unit === 'l' ? prefixes[1] : unit === 'mol' ? prefixes[2] : prefixes[0];
+    let mpx;
+    if (unit === 'l') {
+      mpx = prefixes[1];
+    } else if (unit === 'mol') {
+      mpx = prefixes[2];
+    } else {
+      mpx = prefixes[0];
+    }
     return (
       <NumeralInputWithUnitsCompo
         key={field + sample.id.toString()}
@@ -459,7 +509,7 @@ export default class SampleForm extends React.Component {
         disabled={disabled}
         block={block}
         bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
-        onChange={e => this.handleFieldChanged(field, e)}
+        onChange={(e) => this.handleFieldChanged(field, e)}
       />
     );
   }
@@ -475,21 +525,42 @@ export default class SampleForm extends React.Component {
       //     4, 'Amount', 'massMgInput', isDisabled, ''));
       // } else {
       content.push(this.numInput(
-        sample, 'amount_g', 'g', ['m', 'n', 'u' ],
-        4, 'Amount', 'massMgInput', isDisabled, ''
+        sample,
+        'amount_g',
+        'g',
+        ['m', 'n', 'u'],
+        4,
+        'Amount',
+        'massMgInput',
+        isDisabled,
+        ''
       ));
 
       if (!sample.contains_residues) {
         content.push(this.numInput(
-          sample, 'amount_l', 'l',
-          ['m', 'u', 'n'], 5, '\u202F', 'l',
-          isDisabled, '', volumeBlocked
+          sample,
+          'amount_l',
+          'l',
+          ['m', 'u', 'n'],
+          5,
+          '\u202F',
+          'l',
+          isDisabled,
+          '',
+          volumeBlocked
         ));
       }
 
       content.push(this.numInput(
-        sample, 'amount_mol', 'mol',
-        ['m', 'n'], 4, '\u202F', 'amountInput', isDisabled, ''
+        sample,
+        'amount_mol',
+        'mol',
+        ['m', 'n'],
+        4,
+        '\u202F',
+        'amountInput',
+        isDisabled,
+        ''
       ));
 
       if (sample.contains_residues) {
@@ -516,7 +587,7 @@ export default class SampleForm extends React.Component {
           ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
-          onChange={e => this.handleFieldChanged('description', e.target.value)}
+          onChange={(e) => this.handleFieldChanged('description', e.target.value)}
           rows={2}
           disabled={!sample.can_update}
         />
@@ -671,7 +742,8 @@ export default class SampleForm extends React.Component {
             </td>
           </tr>
 
-          {sample.decoupled &&
+          {sample.decoupled
+            && (
             <tr>
               {
                 this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
@@ -682,7 +754,7 @@ export default class SampleForm extends React.Component {
                 }
               </td>
             </tr>
-          }
+            )}
 
           <tr className="visible-hd">
             <td colSpan="6">
@@ -701,7 +773,11 @@ export default class SampleForm extends React.Component {
                     {this.sampleAmount(sample)}
                     <td style={{ width: '47%' }}>
                       <div className="name-form" style={{ marginBottom: '15px' }}>
-                        <Tabs style={{ width: '60%' }} id="tab-density-molarity" defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}>
+                        <Tabs
+                          style={{ width: '60%' }}
+                          id="tab-density-molarity"
+                          defaultActiveKey={sample.molarity_value !== 0 ? 'molarity' : 'density'}
+                        >
                           <Tab eventKey="density" title="Density">
                             {
                               this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
@@ -715,7 +791,7 @@ export default class SampleForm extends React.Component {
                         </Tabs>
                         <div style={{ width: '40%', paddingLeft: '5px' }}>
                           {
-                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                            this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity`+`/Concentration', '', isDisabled)
                           }
                         </div>
                       </div>

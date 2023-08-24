@@ -7,7 +7,6 @@ import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
 import SampleDetailsSolventsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolventsDnd';
 
-
 export default class SampleDetailsSolvents extends React.Component {
   constructor(props) {
     super(props);
@@ -15,7 +14,7 @@ export default class SampleDetailsSolvents extends React.Component {
     const { sample } = props;
     this.state = {
       open: false,
-      sample: sample
+      sample
     };
 
     this.dropSample = this.dropSample.bind(this);
@@ -62,7 +61,10 @@ export default class SampleDetailsSolvents extends React.Component {
           bsSize="xsmall"
           style={{ backgroundColor: '#ddd' }}
           onClick={() => this.setState({ open: !open })}
-        >{arrow} &nbsp; Solvents
+        >
+          {arrow}
+          {' '}
+      &nbsp; Solvents
         </Button>
       </ButtonGroup>
     );
@@ -93,7 +95,7 @@ export default class SampleDetailsSolvents extends React.Component {
                   sample={sample}
                   dropSample={this.dropSample}
                   deleteSolvent={this.deleteSolvent}
-                  onChangeSolvent={changeEvent => this.onChangeSolvent(changeEvent)}
+                  onChangeSolvent={(changeEvent) => this.onChangeSolvent(changeEvent)}
                 />
               </div>
             </Collapse>

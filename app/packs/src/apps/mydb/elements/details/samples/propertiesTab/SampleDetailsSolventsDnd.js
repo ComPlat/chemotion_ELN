@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import Sample from 'src/models/Sample';
-import { SampleSolventGroup } from './SampleSolventGroup';
+import { SampleSolventGroup } from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
 
 const target = {
   drop(tagProps, monitor) {
@@ -63,7 +63,7 @@ class SampleDetailsSolventsDnd extends React.Component {
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
           headIndex={headIndex ?? 0}
-          materialGroup={materialGroup ?? ""}
+          materialGroup={materialGroup ?? ''}
           deleteMaterial={deleteMaterial ?? (() => true)}
           onChange={onChange ?? (() => true)}
           addDefaultSolvent={addDefaultSolvent ?? (() => true)}
@@ -90,4 +90,4 @@ SampleDetailsSolventsDnd.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
   deleteSolvent: PropTypes.func.isRequired,
-}
+};
