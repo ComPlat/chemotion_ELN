@@ -42,7 +42,14 @@ export default class LiteraturesFetcher {
     const { element, literature } = params;
     const { type, id } = element;
     const refId = literature.literal_id;
-    return fetch(`/api/v1/literatures?id=${refId}&element_type=${type}&element_id=${id}`, {
+
+    const urlParams = new URLSearchParams({
+      id: refId,
+      element_type: type,
+      element_id: id
+    });
+
+    return fetch(`/api/v1/literatures?${urlParams}`, {
       credentials: 'same-origin',
       method: 'delete',
       headers: {
