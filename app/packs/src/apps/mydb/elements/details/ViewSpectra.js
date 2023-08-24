@@ -294,6 +294,7 @@ class ViewSpectra extends React.Component {
       });
     }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
     let couplings = [].concat(...macs.map((m) => {
+      m.js.sort((a, b) => (isAscend ? a - b : b - a));
       const c = m.center;
       const type = m.mpyType;
       const it = Math.round(m.area);
