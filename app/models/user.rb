@@ -52,6 +52,8 @@
 # rubocop: disable Metrics/ClassLength
 # rubocop: disable Metrics/MethodLength
 # rubocop: disable Metrics/AbcSize
+# rubocop: disable Metrics/CyclomaticComplexity
+# rubocop: disable Performance/RedundantMerge
 
 class User < ApplicationRecord
   attr_writer :login
@@ -509,3 +511,5 @@ end
 # rubocop: enable Metrics/ClassLength
 # rubocop: enable Metrics/MethodLength
 # rubocop: enable Metrics/AbcSize
+# rubocop: enable Metrics/CyclomaticComplexity
+# rubocop: enable Performance/RedundantMerge

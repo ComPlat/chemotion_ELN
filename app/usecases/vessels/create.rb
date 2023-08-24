@@ -45,6 +45,7 @@ module Usecases
         )
       end
 
+      # rubocop: disable Lint/UnusedMethodArgument
       def create_vessel(template)
         Vessel.create(
           vessel_template: template,
@@ -53,6 +54,7 @@ module Usecases
           description: @params[:description],
         )
       end
+      # rubocop: enable Lint/UnusedMethodArgument
 
       def check_parameter
         raise 'volume_amount not valid' unless check_scalar_value(@params[:volume_amount])

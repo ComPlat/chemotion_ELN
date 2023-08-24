@@ -38,7 +38,7 @@ module Chemotion
                   end
                 else
                   # All collection of current_user
-                  Vessel.none.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                  Vessel.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
         from = params[:from_date]

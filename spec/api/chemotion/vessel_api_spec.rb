@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# rubocop: disable RSpec/MultipleExpectations
+# rubocop: disable Layout/LineLength
+
 require 'rails_helper'
 
 describe Chemotion::VesselAPI do
@@ -168,3 +171,6 @@ describe Chemotion::VesselAPI do
     end
   end
 end
+
+# rubocop: enable RSpec/MultipleExpectations
+# rubocop: enable Layout/LineLength

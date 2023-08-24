@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop: disable RSpec/MultipleExpectations
+
 require 'spec_helper'
 
 RSpec.describe Usecases::Vessels::Create do
@@ -132,3 +134,5 @@ RSpec.describe Usecases::Vessels::Create do
     end
   end
 end
+
+# rubocop: enable RSpec/MultipleExpectations

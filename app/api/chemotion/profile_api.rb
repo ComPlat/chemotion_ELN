@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# rubocop: disable Layout/LineLength
+
 module Chemotion
 
   class ProfileLayoutHash < Grape::Validations::Validators::Base
@@ -111,3 +114,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop: enable Layout/LineLength

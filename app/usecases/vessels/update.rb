@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop: disable Metrics/CyclomaticComplexity
+
 module Usecases
   module Vessels
     class Update
@@ -82,3 +84,5 @@ module Usecases
     end
   end
 end
+
+# rubocop: enable Metrics/CyclomaticComplexity

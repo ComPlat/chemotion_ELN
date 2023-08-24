@@ -204,6 +204,15 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
   end
 
+  create_table "collections_vessels", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "vessel_id"
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_vessels_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_vessels_on_deleted_at"
+    t.index ["vessel_id", "collection_id"], name: "index_collections_vessels_on_vessel_id_and_collection_id", unique: true
+  end
+
   create_table "collections_wellplates", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "wellplate_id"
@@ -1212,7 +1221,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.datetime "deleted_at"
-    t.hstore "counters", default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
+    t.hstore "counters", default: {"samples"=>"0", "vessels"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
     t.string "name_abbreviation", limit: 12
     t.string "type", default: "Person"
     t.string "reaction_name_prefix", limit: 3, default: "R"
@@ -1253,6 +1262,31 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.integer "group_id"
     t.index ["group_id"], name: "index_users_groups_on_group_id"
     t.index ["user_id"], name: "index_users_groups_on_user_id"
+  end
+
+  create_table "vessel_templates", force: :cascade do |t|
+    t.string "name"
+    t.string "details"
+    t.string "vessel_type"
+    t.string "volume_unit"
+    t.string "volume_amount"
+    t.string "material_type"
+    t.string "material_details"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "vessels", force: :cascade do |t|
+    t.bigint "vessel_template_id"
+    t.bigint "user_id"
+    t.string "name"
+    t.string "short_label"
+    t.string "description"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
   end
 
   create_table "wellplates", id: :serial, force: :cascade do |t|
