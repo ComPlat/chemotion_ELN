@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: molecules
@@ -28,6 +30,8 @@
 #  index_molecules_on_deleted_at               (deleted_at)
 #  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
 #
+
+# rubocop:disable Metrics/ClassLength
 
 class Molecule < ApplicationRecord
   acts_as_paranoid
@@ -294,3 +298,4 @@ private
     Rails.public_path.join('images', 'molecules', svg_file_name)
   end
 end
+# rubocop:enable Metrics/ClassLength

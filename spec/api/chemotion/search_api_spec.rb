@@ -2,6 +2,8 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations
+
 describe Chemotion::SearchAPI do
   include_context 'api request authorization context'
 
@@ -46,9 +48,9 @@ describe Chemotion::SearchAPI do
         selection: {
           elementType: :all,
           name: search_term,
-          search_by_method: :substring
+          search_by_method: :substring,
         },
-        collection_id: collection.id
+        collection_id: collection.id,
       }
     end
 
@@ -206,9 +208,9 @@ describe Chemotion::SearchAPI do
           selection: {
             elementType: :samples,
             name: search_term,
-            search_by_method: :substring
+            search_by_method: :substring,
           },
-          collection_id: collection.id
+          collection_id: collection.id,
         }
       end
 
@@ -239,3 +241,4 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations
