@@ -1,18 +1,13 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  ListGroup, ListGroupItem, Button, Row, Col
-} from 'react-bootstrap';
+import { ListGroup, ListGroupItem, Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import Immutable from 'immutable';
-import {
-  Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType
-} from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
+import { Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
-import CellLine from 'src/models/cellLine/CellLine';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -24,27 +19,16 @@ import { CitationTypeMap } from 'src/apps/mydb/elements/details/literature/Citat
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
 
-const notification = (message) => ({
-  title: 'Add Literature',
-  message,
-  level: 'error',
-  dismissible: 'button',
-  autoDismiss: 5,
-  position: 'tr',
-  uid: uuid.v4()
+const notification = message => ({
+  title: 'Add Literature', message, level: 'error', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
+
 const warningNotification = (message) => ({
-  title: '',
-  message,
-  level: 'warning',
-  dismissible: 'button',
-  autoDismiss: 5,
-  position: 'tr',
-  uid: uuid.v4()
+  title: '', message, level: 'warning', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
 
 const checkElementStatus = (element) => {
-  const type = element.type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   if (element.isNew) {
     NotificationActions.add(notification(`Create ${type} first.`));
     return false;
@@ -70,27 +54,24 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   componentDidMount() {
-    const { literatures, element } = this.props;
-
-    if (literatures && literatures.size > 0) {
-      const sortedIds = groupByCitation(literatures);
-      this.setState((prevState) => ({
+    if (this.props.literatures && this.props.literatures.size > 0) {
+      const sortedIds = groupByCitation(this.props.literatures);
+      this.setState(prevState => ({
         ...prevState,
-        literatures,
+        literatures: this.props.literatures,
         sortedIds,
         sorting: 'literature_id'
       }));
     } else {
-      LiteraturesFetcher.fetchElementReferences(element)
-        .then((fetchedLiterature) => {
-          const sortedIds = groupByCitation(fetchedLiterature);
-          this.setState((prevState) => ({
-            ...prevState,
-            fetchedLiterature,
-            sortedIds,
-            sorting: 'literature_id'
-          }));
-        });
+      LiteraturesFetcher.fetchElementReferences(this.props.element).then((literatures) => {
+        const sortedIds = groupByCitation(literatures);
+        this.setState(prevState => ({
+          ...prevState,
+          literatures,
+          sortedIds,
+          sorting: 'literature_id'
+        }));
+      });
     }
   }
 
@@ -98,7 +79,7 @@ export default class DetailsTabLiteratures extends Component {
     const { literature } = this.state;
     const { value } = event.target;
     literature[type] = value;
-    this.setState((prevState) => ({ ...prevState, literature }));
+    this.setState(prevState => ({ ...prevState, literature }));
   }
 
   handleTypeUpdate(updId, rType) {
@@ -110,22 +91,15 @@ export default class DetailsTabLiteratures extends Component {
     };
     LiteraturesFetcher.updateReferenceType(params)
       .then((literatures) => {
-        this.setState(
-          {
-            literatures,
-            sortedIds: groupByCitation(literatures),
-            sorting: 'literature_id'
-          },
-          LoadingActions.stop()
-        );
+        this.setState({ literatures, sortedIds: groupByCitation(literatures), sorting: 'literature_id' }, LoadingActions.stop());
       });
   }
 
   handleLiteratureRemove(literature) {
     const { element } = this.props;
     if (!checkElementStatus(element)) { return; }
-    if (Number.isNaN(element.id) && element.type === 'reaction') {
-      this.setState((prevState) => ({
+    if (isNaN(element.id) && element.type === 'reaction') {
+      this.setState(prevState => ({
         ...prevState,
         literatures: prevState.literatures.delete(literature.literal_id),
         sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
@@ -139,13 +113,13 @@ export default class DetailsTabLiteratures extends Component {
     } else {
       LiteraturesFetcher.deleteElementReference({ element, literature })
         .then(() => {
-          this.setState((prevState) => ({
+          this.setState(prevState => ({
             ...prevState,
             literatures: prevState.literatures.delete(literature.literal_id),
             sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
           }));
         })
-        .then(() => { NotificationActions.add(warningNotification('Literature entry successfully removed')); })
+        .then(()=>{NotificationActions.add(warningNotification("Literature entry successfully removed"))})
         .catch((errorMessage) => {
           NotificationActions.add(notification(errorMessage.error));
         });
@@ -169,7 +143,7 @@ export default class DetailsTabLiteratures extends Component {
       };
       const objliterature = new Literature(newlit);
       element.literatures = element.literatures.set(objliterature.id, objliterature);
-      this.setState((prevState) => ({
+      this.setState(prevState => ({
         ...prevState,
         literature: Literature.buildEmpty(),
         literatures: prevState.literatures.set(objliterature.id, objliterature),
@@ -201,13 +175,12 @@ export default class DetailsTabLiteratures extends Component {
 
   fetchMetadata() {
     const { element } = this.props;
-    const { literature } = this.state;
     if (!checkElementStatus(element)) { return; }
-
-    if (doiValid(literature.doi_isbn)) {
-      this.fetchDOIMetadata(literature.doi_isbn);
+    const { doi_isbn } = this.state.literature;
+    if (doiValid(doi_isbn)) {
+      this.fetchDOIMetadata(doi_isbn);
     } else {
-      this.fetchISBNMetadata(literature.doi_isbn);
+      this.fetchISBNMetadata(doi_isbn);
     }
   }
 
@@ -218,7 +191,7 @@ export default class DetailsTabLiteratures extends Component {
       if (json.data && json.data.length > 0) {
         const data = json.data[0];
         const citation = new Cite(data);
-        this.setState((prevState) => ({
+        this.setState(prevState => ({
           ...prevState,
           literature: {
             ...prevState.literature,
@@ -243,7 +216,7 @@ export default class DetailsTabLiteratures extends Component {
     Cite.async(isbn).then((json) => {
       if (json.data && json.data.length > 0) {
         const data = json.data[0];
-        this.setState((prevState) => ({
+        this.setState(prevState => ({
           ...prevState,
           literature: {
             ...prevState.literature,
@@ -266,19 +239,12 @@ export default class DetailsTabLiteratures extends Component {
   render() {
     const { literature, literatures, sortedIds } = this.state;
     const { currentUser } = UserStore.getState();
-    const isNoDoiEntry = !doiValid(literature.doi_isbn || '');
-    const isNoIsbnEntry = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
     return (
       <ListGroup fill="true">
         <ListGroupItem style={{ border: 'unset' }}>
           <Row>
             <Col md={8} style={{ paddingRight: 0 }}>
-              <LiteratureInput
-                handleInputChange={this.handleInputChange}
-                literature={literature}
-                field="doi_isbn"
-                placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..."
-              />
+              <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="doi_isbn" placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..." />
             </Col>
             <Col md={3} style={{ paddingRight: 0 }}>
               <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
@@ -290,7 +256,7 @@ export default class DetailsTabLiteratures extends Component {
                 style={{ marginTop: 2 }}
                 onClick={this.fetchMetadata}
                 title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
-                disabled={isNoDoiEntry && isNoIsbnEntry}
+                disabled={!(doiValid(literature.doi_isbn || '') || /^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''))}
               >
                 <i className="fa fa-plus" aria-hidden="true" />
               </Button>
@@ -299,20 +265,10 @@ export default class DetailsTabLiteratures extends Component {
               <Citation literature={literature} />
             </Col>
             <Col md={7} style={{ paddingRight: 0 }}>
-              <LiteratureInput
-                handleInputChange={this.handleInputChange}
-                literature={literature}
-                field="title"
-                placeholder="Title..."
-              />
+              <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="title" placeholder="Title..." />
             </Col>
             <Col md={4} style={{ paddingRight: 0 }}>
-              <LiteratureInput
-                handleInputChange={this.handleInputChange}
-                literature={literature}
-                field="url"
-                placeholder="URL..."
-              />
+              <LiteratureInput handleInputChange={this.handleInputChange} literature={literature} field="url" placeholder="URL..." />
             </Col>
             <Col md={1}>
               <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
@@ -321,19 +277,7 @@ export default class DetailsTabLiteratures extends Component {
         </ListGroupItem>
         <ListGroupItem style={{ border: 'unset' }}>
           {
-            Object.keys(CitationTypeMap).map(
-              (e) => (
-                <CitationPanel
-                  key={`_citation_panel_${e}`}
-                  title={e}
-                  fnDelete={this.handleLiteratureRemove}
-                  sortedIds={sortedIds}
-                  rows={literatures}
-                  uid={currentUser && currentUser.id}
-                  fnUpdate={this.handleTypeUpdate}
-                />
-              )
-            )
+            Object.keys(CitationTypeMap).map(e => <CitationPanel key={`_citation_panel_${e}`} title={e} fnDelete={this.handleLiteratureRemove} sortedIds={sortedIds} rows={literatures} uid={currentUser && currentUser.id} fnUpdate={this.handleTypeUpdate} />)
           }
         </ListGroupItem>
       </ListGroup>
@@ -345,7 +289,6 @@ DetailsTabLiteratures.propTypes = {
   element: PropTypes.oneOfType([
     PropTypes.instanceOf(ResearchPlan),
     PropTypes.instanceOf(Reaction),
-    PropTypes.instanceOf(CellLine),
     PropTypes.instanceOf(Sample)
   ]).isRequired,
   literatures: PropTypes.array
