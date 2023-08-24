@@ -48,7 +48,13 @@ export default class LiteraturesFetcher {
       headers: {
         Accept: 'application/json',
       },
-    }).then(response => response.json())
+    }).then(response => {
+      if (response.status==200){
+        return {}
+      }
+      else{
+        return response.json()}
+      })
       .then((json) => { if (json.error) { throw json; } })
       .catch((errorMessage) => { throw errorMessage; });
   }

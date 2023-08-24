@@ -124,15 +124,18 @@ module Chemotion
       end
 
       delete do
-        Literal.find_by(
+        literal = Literal.find_by(
           id: params[:id],
           # user_id: current_user.id,
           element_type: @element_klass,
           element_id: params[:element_id],
           category: 'detail'
-        )&.destroy!
+        )
 
-        {}
+        error!('Literal not found', 400) if !literal
+        
+        literal.destroy!
+        status 200
       end
 
       namespace :collection do
