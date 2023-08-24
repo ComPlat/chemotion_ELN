@@ -18,8 +18,8 @@ describe Chemotion::LiteratureAPI do
         ref: {
           is_new: true,
           title: 'testpost',
-          url: 'test'
-        }
+          url: 'test',
+        },
       }
     end
 
@@ -34,7 +34,7 @@ describe Chemotion::LiteratureAPI do
         end
 
         it 'responds 200' do
-          expect(response.status).to be 200
+          expect(response).to have_http_status :ok
         end
 
         it 'is able to get literatures by reaction Id' do
@@ -42,12 +42,12 @@ describe Chemotion::LiteratureAPI do
           expect(literatures.first.symbolize_keys).to include(
             id: l1.id,
             title: l1.title,
-            url: l1.url
+            url: l1.url,
           )
           expect(literatures.last.symbolize_keys).to include(
             id: l2.id,
             title: l2.title,
-            url: l2.url
+            url: l2.url,
           )
         end
       end
@@ -58,7 +58,7 @@ describe Chemotion::LiteratureAPI do
         before { post '/api/v1/literatures', params: params }
 
         it 'responds 201' do
-          expect(response.status).to be 201
+          expect(response).to have_http_status :created
         end
 
         it 'is able to create a new literature' do
@@ -68,26 +68,32 @@ describe Chemotion::LiteratureAPI do
       end
     end
 
-    # describe 'DELETE /api/v1/literatures' do
-    #   context 'with valid parameters' do
-    #
-    #     let!(:params) {
-    #       {
-    #         reaction_id: r1.id,
-    #         title: 'testdelete',
-    #         url: 'test'
-    #       }
-    #     }
-    #
-    #     it 'should be able to delete a literature' do
-    #       post '/api/v1/literatures', params
-    #       l = Literature.find_by(title: 'testdelete')
-    #       expect(l).to_not be_nil
-    #       delete '/api/v1/literatures', { id: l.id }
-    #       l = Literature.find_by(title: 'testdelte')
-    #       expect(l).to be_nil
-    #     end
-    #   end
-    # end
+    describe 'DELETE /api/v1/literatures' do
+      let!(:element_id) { -1 }
+      let(:params) do
+        {
+          element_id: element_id,
+          element_type: 'reaction',
+          id: literal.id,
+        }
+      end
+
+      context 'with valid parameter' do
+        let!(:literal)    { create(:literal, literature: l1, element: r1, user: user) }
+        let!(:element_id) { r1.id }
+
+        before do
+          delete '/api/v1/literatures', params: params
+        end
+
+        it 'response status code is 200' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'literal was removed' do
+          expect(Literal.find_by(id: literal.id)).to be_nil
+        end
+      end
+    end
   end
 end
