@@ -121,7 +121,7 @@ export default class UnsortedBox extends React.Component {
   }
 
   deleteCheckedAttachment(unsortedBox) {
-    const { checkedIds, currentUnsortedBoxPage, dataItemsPerPage, unsorted_box } = this.state;
+    const { checkedIds, currentUnsortedBoxPage, dataItemsPerPage } = this.state;
     const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
     const endIndex = startIndex + dataItemsPerPage;
     const currentItems = unsortedBox.slice(startIndex, endIndex);
@@ -139,7 +139,7 @@ export default class UnsortedBox extends React.Component {
     if (currentUnsortedBoxPage > 1 && itemsDeleted === currentItemsCount) {
       InboxActions.prevClick();
     } else {
-      InboxActions.fetchInboxContainer(-1, currentUnsortedBoxPage);
+      InboxActions.fetchInboxUnsorted();
     }
     checkedIds.length = 0;
     this.toggleTooltip();
@@ -184,8 +184,10 @@ export default class UnsortedBox extends React.Component {
         </i>
         {this.state.deletingTooltip ? (
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-            Delete this attachment?
-            <ButtonGroup>
+            {`Delete ${checkedIds.length} attachment${checkedIds.length > 1 ? 's' : ''}?`}
+            <ButtonGroup
+              style={{ marginLeft: '5px' }}
+            >
               <Button
                 bsStyle="danger"
                 bsSize="xsmall"

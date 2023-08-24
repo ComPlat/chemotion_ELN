@@ -89,8 +89,10 @@ class DatasetContainer extends Component {
             <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} style={{ cursor: "pointer" }}>&nbsp;</i>
             {deletingTooltip ? (
               <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-                Delete {attCount} attachment{attCount > 1 ? 's' : null}?
-                <ButtonGroup>
+                {`Delete ${attCount} attachment${attCount > 1 ? 's' : ''}?`}
+                <ButtonGroup
+                  style={{ marginLeft: '5px' }}
+                >
                   <Button
                     bsStyle="danger"
                     bsSize="xsmall"

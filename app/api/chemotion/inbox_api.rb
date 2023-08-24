@@ -29,7 +29,7 @@ module Chemotion
           end
 
           inbox_service = InboxService.new(current_user.container)
-          present inbox_service.to_hash(device_boxes)
+          present inbox_service.to_hash(device_boxes, true)
         end
       end
 
@@ -48,6 +48,12 @@ module Chemotion
                                           dataset_page: params[:dataset_page],
                                           root: :inbox)
         end
+      end
+
+      desc 'Returns unlinked attachments for inbox'
+      get 'unlinked_attachments' do
+        inbox_service = InboxService.new(current_user.container)
+        present inbox_service.to_hash(nil, false)
       end
 
       resource :samples do

@@ -216,8 +216,8 @@ export default class CollectionTree extends React.Component {
         >
           {boxes}
           {inbox.children && inbox.children.length >= itemsPerPage ? (
-            <div className="title" key="more" style={{ textAlign: 'center' }}>
-              <i className="fa fa-ellipsis-h" aria-hidden="true" />
+            <div className="title" key="more" style={{ textAlign: 'center', overflow: 'hidden' }}>
+              <Button className="btn-default" style={{ width: '100%' }}>Show more</Button>
             </div>
           ) : ''}
         </div>

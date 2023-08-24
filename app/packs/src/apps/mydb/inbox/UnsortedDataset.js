@@ -64,11 +64,10 @@ export default class UnsortedDataset extends React.Component {
   handleSave() {
     const { datasetContainer } = this.state;
     const { onModalHide } = this.props;
-    const { currentPage, itemsPerPage } = InboxStore.getState();
     LoadingActions.start();
     return AttachmentFetcher.uploadToInbox(datasetContainer.attachments
       .filter(f => f.is_new && !f.is_deleted))()
-      .then(() => { onModalHide(); InboxActions.fetchInbox({ currentPage, itemsPerPage }); });
+      .then(() => { onModalHide(); InboxActions.fetchInboxUnsorted(); });
   }
 
   listGroupItem(attachment) {

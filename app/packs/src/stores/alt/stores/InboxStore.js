@@ -62,6 +62,7 @@ class InboxStore {
       handleSetPagination: InboxActions.setInboxPagination,
       setInboxVisible: InboxActions.setInboxVisible,
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
+      handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
     });
   }
 
@@ -87,6 +88,17 @@ class InboxStore {
 
     this.sync();
     this.countAttachments();
+  }
+
+  handleFetchInboxUnsorted(payload) {
+    this.setState((prevState) => ({
+      inbox: {
+        ...prevState.inbox,
+        unlinked_attachments: payload.unlinked_attachments,
+        inbox_count: payload.inbox_count,
+      },
+      currentUnsortedBoxPage: 1,
+    }));
   }
 
   handleFetchInboxCount(result) {
