@@ -31,6 +31,9 @@ export default class InboxModal extends React.Component {
 
     this.onChange = this.onChange.bind(this);
     this.onClickInbox = this.onClickInbox.bind(this);
+    this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleMouseUp = this.handleMouseUp.bind(this);
   }
 
   componentDidMount() {
@@ -80,6 +83,26 @@ export default class InboxModal extends React.Component {
     LoadingActions.start();
     InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
+
+  handleMouseDown = (e) => {
+    e.preventDefault();
+
+    document.addEventListener('mousemove', this.handleMouseMove);
+    document.addEventListener('mouseup', this.handleMouseUp);
+  };
+
+  handleMouseMove = (e) => {
+    // Update the position of the div based on the mouse movement
+    const div = document.getElementById('draggableInbox');
+    div.style.left = `${e.clientX}px`;
+    div.style.top = `${e.clientY}px`;
+  };
+
+  handleMouseUp = () => {
+    // Remove the event listeners when the dragging is finished
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.handleMouseUp);
+  };
 
   lockedSubtrees() {
     const roots = this.state.lockedRoots;
@@ -179,7 +202,11 @@ export default class InboxModal extends React.Component {
             style={{ zIndex: 10, position: 'absolute', top: '70px', left: '10px' }}
           >
             <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
-              <Panel.Heading className="cursor handle">
+              <Panel.Heading
+                className="cursor handle draggable"
+                id="draggableInbox"
+                onMouseDown={this.handleMouseDown}
+              >
                 <button
                   type="button"
                   className="btn-inbox"
