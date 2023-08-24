@@ -456,6 +456,8 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
+    labimotion (1.0.1)
+      rails (~> 6.1.7)
     latex-decode (0.4.0)
     launchy (2.5.0)
       addressable (~> 2.7)
@@ -917,6 +919,7 @@ DEPENDENCIES
   kaminari
   kaminari-grape
   ketcherails!
+  labimotion (= 1.0.1)
   launchy
   listen
   memory_profiler
@@ -990,4 +993,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   2.1.4
+   2.2.29

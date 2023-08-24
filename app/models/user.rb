@@ -314,6 +314,10 @@ class User < ApplicationRecord
     profile&.data&.fetch('molecule_editor', false)
   end
 
+  def generic_admin
+    profile&.data&.fetch('generic_admin', {})
+  end
+
   def converter_admin
     profile&.data&.fetch('converter_admin', false)
   end

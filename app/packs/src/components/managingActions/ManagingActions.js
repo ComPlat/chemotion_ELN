@@ -14,7 +14,7 @@ import ManagingModalDelete from 'src/components/managingActions/ManagingModalDel
 import ManagingModalRemove from 'src/components/managingActions/ManagingModalRemove';
 import ManagingModalTopSecret from 'src/components/managingActions/ManagingModalTopSecret';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import klasses from '../../../../../config/klasses.json';
+import { elementNames } from 'src/apps/generic/Utils';
 
 const upState = (state) => {
   const { sample, reaction, screen, wellplate, research_plan } = state;
@@ -47,7 +47,7 @@ const upState = (state) => {
   };
 
   // eslint-disable-next-line no-unused-expressions
-  klasses && klasses.forEach((klass) => {
+  elementNames(false).forEach((klass) => {
     stateObj[`${klass}`] = {
       checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
       checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),

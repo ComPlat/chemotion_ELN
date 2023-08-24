@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar } from 'react-bootstrap';
+import { Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import { GenericDSMisType, absOlsTermId } from 'src/apps/admin/generic/Utils';
+import { absOlsTermId } from 'chem-generic-ui';
+import { GenericDSMisType } from 'src/apps/generic/Utils';
 
 const dataTarget = {
   canDrop(props, monitor) {
@@ -101,6 +102,13 @@ class ContainerDatasetField extends Component {
         </div>
       )
     } else {
+      const gds_download = (dataset_container.dataset == null || typeof dataset_container.dataset === 'undefined') ? (<span />) : (
+        <OverlayTrigger placement="top" overlay={<Tooltip id="download dataset">download metadata</Tooltip>}>
+          <Button bsSize="xsmall" bsStyle="success" onClick={() => AttachmentFetcher.downloadDataset(dataset_container.id)}>
+            <i className="fa fa-download"></i>
+          </Button>
+        </OverlayTrigger>
+      );
       return connectDropTarget(
         <div>
           {dataset_container.dataset && dataset_container.dataset.klass_ols !== absOlsTermId(kind) ? <GenericDSMisType /> : null}
@@ -108,6 +116,7 @@ class ContainerDatasetField extends Component {
             {dataset_container.name || 'new'}
           </a>
           <ButtonToolbar className="pull-right">
+            {gds_download}
             <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(dataset_container.id)}>
               <i className="fa fa-download"></i>
             </Button>

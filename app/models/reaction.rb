@@ -49,7 +49,7 @@ class Reaction < ApplicationRecord
   include ElementCodes
   include Taggable
   include ReactionRinchi
-  include Segmentable
+  include Labimotion::Segmentable
 
   serialize :description, Hash
   serialize :observation, Hash

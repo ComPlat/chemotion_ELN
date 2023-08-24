@@ -42,6 +42,7 @@ module Import
             file_name = entry.name.sub('attachments/', '')
             attachment = Attachment.new(
               transferred: true,
+              con_state: Labimotion::ConState::NONE,
               created_by: @current_user_id,
               created_for: @current_user_id,
               key: SecureRandom.uuid,
@@ -95,6 +96,8 @@ module Import
         import_screens if @gt == false
         import_research_plans if @gt == false
         import_containers
+        import_segments
+        import_datasets
         import_attachments
         import_literals
       end
@@ -540,6 +543,15 @@ module Import
       end
     rescue StandardError => e
       Rails.logger.debug(e.backtrace)
+    end
+
+    def import_segments
+      Labimotion::Import.import_segments(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
+      # nil
+    end
+
+    def import_datasets
+      Labimotion::Import.import_datasets(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
     end
 
     def import_literals

@@ -1,68 +1,79 @@
+/* eslint-disable react/forbid-prop-types */
+/* eslint-disable react/no-array-index-key */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { PanelGroup, Panel, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
-import ContainerComponent from 'src/components/container/ContainerComponent';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import GenericContainerGroup from './GenericContainerGroup';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
-    super();
-    const { genericEl } = props;
+    super(props);
     this.state = {
-      genericEl,
       activeContainer: 0
     };
+    this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
+    this.handleSpChange = this.handleSpChange.bind(this);
+    this.handleUndo = this.handleUndo.bind(this);
   }
 
   componentDidMount() {
     TextTemplateActions.fetchTextTemplates(this.props.genericEl.type);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      genericEl: nextProps.genericEl
-    });
-  }
-
   handleChange() {
-    const { genericEl } = this.state;
-    this.props.parent.handleGenericElChanged(genericEl);
+    const { genericEl, handleElChanged } = this.props;
+    handleElChanged(genericEl);
   }
 
-  handleAdd() {
-    const { genericEl } = this.state;
-    const container = Container.buildEmpty();
-    container.container_type = 'analysis';
-
-    genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
-
-    const newKey = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
-
-    this.handleAccordionOpen(newKey);
-
-    this.props.parent.setState({ genericEl });
-  }
-
-  handleRemove(container) {
-    const { genericEl } = this.state;
-    container.is_deleted = true;
-    this.props.parent.setState({ genericEl });
-  }
-
-  handleUndo(container) {
-    const { genericEl } = this.state;
-    container.is_deleted = false;
-    this.props.parent.setState({ genericEl });
+  handleSpChange(genericEl, cb) {
+    const { handleElChanged } = this.props;
+    handleElChanged(genericEl);
+    cb();
   }
 
   handleAccordionOpen(key) {
     this.setState({ activeContainer: key });
   }
 
+  handleAdd() {
+    const { genericEl, handleElChanged } = this.props;
+    const container = Container.buildEmpty();
+    container.container_type = 'analysis';
+    container.extended_metadata.content = { ops: [{ insert: '' }] };
+
+    if (genericEl.container.children.length === 0) {
+      const analyses = Container.buildEmpty();
+      analyses.container_type = 'analyses';
+      genericEl.container.children.push(analyses);
+    }
+
+    genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+
+    const newKey = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
+
+    this.handleAccordionOpen(newKey);
+    handleElChanged(genericEl);
+  }
+
+  handleRemove(container) {
+    const { genericEl, handleElChanged } = this.props;
+    container.is_deleted = true;
+    handleElChanged(genericEl);
+  }
+
+  handleUndo(container) {
+    const { genericEl, handleElChanged } = this.props;
+    container.is_deleted = false;
+    handleElChanged(genericEl);
+  }
+
   addButton() {
     const { readOnly } = this.props;
-
     if (!readOnly) {
       return (
         <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
@@ -73,73 +84,54 @@ export default class GenericElDetailsContainers extends Component {
     return <div />;
   }
 
-  render() {
-    const { genericEl, activeContainer } = this.state;
-    const { readOnly } = this.props;
-
-    const containerHeader = container => (
-      <p style={{ width: '100%' }}>
-        {container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] !== '') ?
-          (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
-        {(container.extended_metadata['status'] && container.extended_metadata['status'] !== '') ? (` - Status: ${container.extended_metadata['status']}`) : ''}
-        <Button
-          bsSize="xsmall"
-          bsStyle="danger"
-          className="button-right"
-          disabled={readOnly}
-          onClick={() => { if (confirm('Delete the container?')) { this.handleRemove(container); } }}
-        >
-          <i className="fa fa-trash" />
-        </Button>
-        {/* <PrintCodeButton element={genericEl} analyses={[container]} ident={container.id} /> */}
-      </p>
-    );
-
-    const containerHeaderDeleted = container => (
-      <p style={{ width: '100%' }}>
-        <strike>{container.name}
-          {(container.extended_metadata['kind'] && container.extended_metadata['kind'] !== '') ?
-            (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
-          {(container.extended_metadata['status'] && container.extended_metadata['status'] !== '') ? (` - Status: ${container.extended_metadata['status']}`) : ''}
-        </strike>
-        <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
-          <i className="fa fa-undo" />
-        </Button>
-      </p>);
-
+  renderNoAct(genericEl, readOnly) {
+    const { linkedAis, handleSubmit } = this.props;
+    if (linkedAis.length < 1) return null; // if layer has no linked analyses
     if (genericEl.container != null) {
-      var analyses_container = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+      const analysesContainer = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+      if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
+        return (
+          <div className="gen_linked_container_group">
+            <h5>Linked Analyses</h5>
+            <GenericContainerGroup
+              ae={analysesContainer}
+              readOnly={readOnly}
+              generic={genericEl}
+              fnChange={this.handleChange}
+              fnUndo={this.handleUndo}
+              fnRemove={this.handleRemove}
+              noAct
+              linkedAis={linkedAis}
+              handleSubmit={handleSubmit}
+            />
+          </div>
+        );
+      }
+      return null;
+    }
+    return null;
+  }
 
-      if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
+  render() {
+    const {
+      genericEl, readOnly, noAct, handleSubmit
+    } = this.props;
+    if (noAct) return this.renderNoAct(genericEl, readOnly);
+    if (genericEl.container != null) {
+      const analysesContainer = genericEl.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+      if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
             <p>&nbsp;{this.addButton()}</p>
-            <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-              {analyses_container[0].children.map((container, key) => {
-                if (container.is_deleted) {
-                  return (
-                    <Panel eventKey={key} key={key}>
-                      <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
-                    </Panel>
-                  );
-                }
-                return (
-                  <Panel eventKey={key} key={key} onClick={() => this.handleAccordionOpen(key)}>
-                    <Panel.Heading>{containerHeader(container)}</Panel.Heading>
-                    <Panel.Body collapsible="true">
-                      <ContainerComponent
-                        templateType={genericEl.type}
-                        readOnly={readOnly}
-                        container={container}
-                        onChange={c => this.handleChange(c)}
-                      />
-                    </Panel.Body>
-                  </Panel>
-                );
-              }
-              )}
-            </PanelGroup>
+            <GenericContainerGroup
+              ae={analysesContainer}
+              readOnly={readOnly}
+              generic={genericEl}
+              fnChange={this.handleChange}
+              fnUndo={this.handleUndo}
+              fnRemove={this.handleRemove}
+              handleSubmit={handleSubmit}
+            />
           </div>
         );
       }
@@ -165,5 +157,10 @@ export default class GenericElDetailsContainers extends Component {
 GenericElDetailsContainers.propTypes = {
   readOnly: PropTypes.bool,
   parent: PropTypes.object,
-  genericEl: PropTypes.object,
+  genericEl: PropTypes.object.isRequired,
+  handleElChanged: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
+  noAct: PropTypes.bool,
+  linkedAis: PropTypes.array
 };
+GenericElDetailsContainers.defaultProps = { noAct: false, linkedAis: [] };

@@ -1,5 +1,5 @@
 import * as routesUtils from 'src/utilities/routesUtils';
-import klasses from '../../../../../config/klasses.json';
+import { elementNames } from 'src/apps/generic/Utils';
 
 
 const routes = {
@@ -105,7 +105,7 @@ const routes = {
   }
 };
 
-klasses && klasses.forEach((klass) => {
+elementNames(false).forEach((klass) => {
   const item = {};
   item['target'] = { showOrNew: routesUtils.genericElShowOrNew };
   item[`/:${klass}ID`] = 'showOrNew';

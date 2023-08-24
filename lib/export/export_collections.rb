@@ -18,6 +18,8 @@ module Export
       @data = {}
       @uuids = {}
       @attachments = []
+      @segments = []
+      @datasets = []
       @images = []
     end
 
@@ -113,6 +115,10 @@ module Export
         collections += descendants
       end
 
+      Labimotion::Export.fetch_element_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Export.fetch_segment_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Export.fetch_dataset_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+
       # loop over all collections
       collections.each do |collection|
         # fetch collection
@@ -159,6 +165,9 @@ module Export
                      'sample_id' => 'Sample',
         })
 
+        segment, @attachments = Labimotion::Export.fetch_segments(sample, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
+
         # fetch containers, attachments and literature
         fetch_containers(sample)
         fetch_literals(sample)
@@ -195,6 +204,9 @@ module Export
                      })
         end
 
+        segment, @attachments = Labimotion::Export.fetch_segments(reaction, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
+
         # fetch containers, attachments and literature
         fetch_containers(reaction)
         fetch_literals(reaction)
@@ -218,6 +230,9 @@ module Export
                      'wellplate_id' => 'Wellplate',
                    })
 
+        segment, @attachments = Labimotion::Export.fetch_segments(wellplate, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
+
         fetch_containers(wellplate)
       end
     end
@@ -236,6 +251,9 @@ module Export
                      'screen_id' => 'Screen',
                      'wellplate_id' => 'Wellplate',
                    })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # fetch containers and attachments
         fetch_containers(screen)
@@ -260,6 +278,8 @@ module Export
                      'created_by' => 'User',
                      'created_for' => 'User',
                    })
+        segment, @attachments = Labimotion::Export.fetch_segments(research_plan, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # add attachments to the list of attachments
         @attachments += research_plan.attachments
@@ -308,6 +328,7 @@ module Export
                         'containable_id' => containable_type,
                         'parent_id' => 'Container',
                       })
+            @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset, &method(:fetch_one) ) if attachment_container.dataset.present?
             fetch_many(attachment_container.attachments, {
                          'attachable_id' => 'Container',
                          'created_by' => 'User',

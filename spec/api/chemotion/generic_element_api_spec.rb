@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 # rubocop:disable RSpec/NestedGroups
-describe Chemotion::GenericElementAPI do
+describe Labimotion::GenericElementAPI do
   context 'with authorized user' do
     let(:user) { create(:person) }
 

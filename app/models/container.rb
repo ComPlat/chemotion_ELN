@@ -21,7 +21,7 @@
 
 class Container < ApplicationRecord
   include ElementCodes
-  include Datasetable
+  include Labimotion::Datasetable
 
   belongs_to :containable, polymorphic: true, optional: true
   has_many :attachments, as: :attachable

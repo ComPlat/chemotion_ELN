@@ -125,28 +125,7 @@ module Chemotion
       end
 
       def elements_search(c_id = @c_id, dl = @dl)
-        collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(c_id)
-        element_scope = Element.joins(:collections_elements).where('collections_elements.collection_id = ? and collections_elements.element_type = (?)', collection.id, params[:selection][:genericElName])
-        element_scope = element_scope.where("name like (?)", "%#{params[:selection][:searchName]}%") if params[:selection][:searchName].present?
-        element_scope = element_scope.where("short_label like (?)", "%#{params[:selection][:searchShowLabel]}%") if params[:selection][:searchShowLabel].present?
-        if params[:selection][:searchProperties].present?
-          params[:selection][:searchProperties] && params[:selection][:searchProperties][:layers] && params[:selection][:searchProperties][:layers].keys.each do |lk|
-            layer = params[:selection][:searchProperties][:layers][lk]
-            qs = layer[:fields].select{ |f| f[:value].present? || f[:type] == "input-group" }
-            qs.each do |f|
-              if f[:type] == "input-group"
-                sfs = f[:sub_fields].map{ |e| { "id": e[:id], "value": e[:value] } }
-                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "sub_fields": sfs }] } } if sfs.length > 0
-              elsif f[:type] == "checkbox" || f[:type] == "integer" || f[:type] == "system-defined"
-                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value] }] } }
-              else
-                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value].to_s }] } }
-              end
-              element_scope = element_scope.where("properties @> ?", query.to_json)
-            end
-          end
-        end
-        element_scope
+        Labimotion::Search.elements_search(params, current_user, c_id, dl)
       end
 
       def serialize_samples sample_ids, page, search_method, molecule_sort
@@ -259,12 +238,12 @@ module Chemotion
           }
         }
 
-        klasses = ElementKlass.where(is_active: true, is_generic: true)
+        klasses = Labimotion::ElementKlass.where(is_active: true, is_generic: true)
         klasses.each do |klass|
-          element_ids_for_klass = Element.where(id: element_ids, element_klass_id: klass.id).pluck(:id)
+          element_ids_for_klass = Labimotion::Element.where(id: element_ids, element_klass_id: klass.id).pluck(:id)
           paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass).page(page).per(page_size)
-          serialized_elements = Element.find(paginated_element_ids).map do |element|
-            Entities::ElementEntity.represent(element, displayed_in_list: true).serializable_hash
+          serialized_elements = Labimotion::Element.find(paginated_element_ids).map do |element|
+            Labimotion::ElementEntity.represent(element, displayed_in_list: true).serializable_hash
           end
 
           result["#{klass.name}s"] = {
@@ -353,8 +332,8 @@ module Chemotion
                       .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
                       .order('molecules.sum_formular')
         elsif search_by_method.start_with?("element_short_label_")
-          klass = ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
-          return Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
+          klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
+          return Labimotion::Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
         scope
       end
@@ -365,7 +344,7 @@ module Chemotion
         user_reactions = Reaction.by_collection_id(collection_id)
         user_wellplates = Wellplate.by_collection_id(collection_id)
         user_screens = Screen.by_collection_id(collection_id)
-        user_elements = Element.by_collection_id(collection_id)
+        user_elements = Labimotion::Element.by_collection_id(collection_id)
 
         case scope&.first
         when Sample
@@ -389,9 +368,9 @@ module Chemotion
           elements[:wellplate_ids] = user_wellplates.by_screen_ids(elements[:screen_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
-        when Element
+        when Labimotion::Element
           elements[:element_ids] = scope&.ids
-          sample_ids = ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
+          sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
           elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
@@ -454,7 +433,6 @@ module Chemotion
           scope = search_elements(@c_id, @dl)
           return unless scope
           elements_ids = elements_by_scope(scope)
-
           serialization_by_elements_and_page(
             elements_ids,
             params[:page],

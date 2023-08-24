@@ -2,17 +2,8 @@
 
 # Create generic datasets revision migration
 class GenericDatasetsRevisionMigration < ActiveRecord::Migration[4.2]
-  # DatasetKlass
-  class DatasetKlass < ActiveRecord::Base
-    DatasetKlass.reset_column_information
-  end
-  # Dataset
-  class Dataset < ActiveRecord::Base
-    Dataset.reset_column_information
-  end
-
   def self.up
-    DatasetKlass.find_each do |klass|
+    Labimotion::DatasetKlass.find_each do |klass|
       uuid = SecureRandom.uuid
       properties = klass.properties_template || { uuid: uuid, layers: {}, select_options: {} }
       properties['uuid'] = uuid
@@ -36,10 +27,10 @@ class GenericDatasetsRevisionMigration < ActiveRecord::Migration[4.2]
         properties_release: klass.properties_template,
         released_at: klass.released_at
       }
-      DatasetKlassesRevision.create(attributes)
+      Labimotion::DatasetKlassesRevision.create(attributes)
     end
 
-    Dataset.find_each do |el|
+    Labimotion::Dataset.find_each do |el|
       klass = DatasetKlass.find_by(id: el.dataset_klass_id)
       if klass.nil?
         el.destroy!
@@ -68,7 +59,7 @@ class GenericDatasetsRevisionMigration < ActiveRecord::Migration[4.2]
         deleted_at: el.deleted_at,
         properties: el.properties
       }
-      DatasetsRevision.create(attributes)
+      Labimotion::DatasetsRevision.create(attributes)
     end
   end
 

@@ -404,3 +404,85 @@ $color-default: #777;
     opacity: 0.2;
   }
 }
+
+
+.generic_layer_modal {
+  > .layer_header {
+    background-color: white;
+    color: $colo-bs-primary;
+    font-size: 20px;
+  }
+}
+
+.generic_layer_column {
+  @include generic_grid_cell;
+  border: 1px solid $colo-bs-primary;
+  background-color: white;
+  margin: 5px;
+  padding: 10px;
+  color: $colo-bs-primary;
+  border-radius: 4px;
+}
+
+.generic_layer_column > div:first-child {
+  display: flex;
+}
+
+.generic_layer_column > div:first-child > button {
+  float: right;
+  border-radius: 50%;
+}
+
+.generic_layer_column > div:first-child > div {
+  width: 100%;
+}
+
+.generic_wf_modal {
+  max-height: 100%;
+  overflow: auto;
+}
+
+.generic_wf_modal > div:first-child {
+  height: 85vh;
+  width: 100%;
+}
+
+.flow_view_draggable {
+  z-index: 100;
+  position: absolute;
+  top: 12%;
+  left: 10%;
+  .panel-body {
+    padding: 5px;
+    > .body_bg {
+      max-height: 100%;
+      overflow: auto;
+      > .body_canvas {
+        resize: both;
+        overflow: auto;
+        height: 70vh;
+        width: 40vw;
+        min-height: 250px;
+        min-width: 300px;
+        max-width: 1600px;
+        max-height: 840px;
+      }
+    }
+  }
+}
+
+.generic-ds-panel {
+  border: none !important;
+  > .panel-body {
+    position: relative;
+    min-height: 260px;
+    overflow-y: unset !important;
+    padding: 0px !important;
+  }
+}
+
+.generic_segments_repo {
+  padding: 10px;
+  background-color: white;
+  margin-bottom: 6px;
+}

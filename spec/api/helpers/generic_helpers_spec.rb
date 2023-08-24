@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'labimotion/helpers/generic_helpers'
 
-RSpec.describe GenericHelpers, type: :helper do
+RSpec.describe Labimotion::GenericHelpers, type: :helper do
   let(:tmp_file) { fixture_file_upload(Rails.root.join('spec/fixtures/upload.png')) }
   let(:id) { nil }
 

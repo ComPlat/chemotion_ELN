@@ -402,7 +402,6 @@ module AttachmentJcampProcess
         generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
         tmp_to_be_deleted.push(curr_tmp_csv)
       end
-
       jcamp_att = curr_jcamp_att if idx == 0
     end
 

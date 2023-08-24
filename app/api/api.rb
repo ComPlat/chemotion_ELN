@@ -4,12 +4,13 @@
 require 'grape-entity'
 require 'grape-swagger'
 
+# rubocop:disable Metrics/BlockLength
 class API < Grape::API
   format :json
   prefix :api
   version 'v1'
 
-  # TODO needs to be tested,
+  # TODO: needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
     def present(*args)
@@ -64,25 +65,23 @@ class API < Grape::API
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
-        '/api/v1/gate/ping'
+        '/api/v1/gate/ping',
       )
     end
 
-    def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
-      molecule_sort = molecule_sort == 1 ? true : false
+    def cache_key(search_method, arg, molfile, collection_id, molecule_sort, opt) # rubocop:disable Metrics/ParameterLists
+      molecule_sort = molecule_sort == 1
       inchikey = Chemotion::OpenBabelService.inchikey_from_molfile molfile
 
-      cache_key = [
+      [
         latest_updated,
         search_method,
         arg,
         inchikey,
         collection_id,
         molecule_sort,
-        opt
+        opt,
       ]
-
-      return cache_key
     end
 
     def to_snake_case_key(k)
@@ -94,7 +93,7 @@ class API < Grape::API
       when Array
         val.map { |v| to_rails_snake_case(v) }
       when Hash
-        Hash[val.map { |k, v| [to_snake_case_key(k), to_rails_snake_case(v)] }]
+        Hash[val.map { |k, v| [to_snake_case_key(k), to_rails_snake_case(v)] }] # rubocop:disable Style/HashConversion
       else
         val
       end
@@ -109,7 +108,7 @@ class API < Grape::API
       when Array
         val.map { |v| to_json_camel_case(v) }
       when Hash
-        Hash[val.map { |k, v| [to_camelcase_key(k), to_json_camel_case(v)] }]
+        Hash[val.map { |k, v| [to_camelcase_key(k), to_json_camel_case(v)] }] # rubocop:disable Style/HashConversion
       else
         val
       end
@@ -122,13 +121,14 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w(name short_label external_label xref)
+    'samples' => %w(name short_label external_label xref),
   }
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
   ELEMENTS = %w[research_plan screen wellplate reaction sample]
 
-  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate ]
+  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
+                     ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate]
 
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
@@ -163,29 +163,32 @@ class API < Grape::API
   mount Chemotion::MessageAPI
   mount Chemotion::AdminAPI
   mount Chemotion::AdminUserAPI
-  mount Chemotion::AdminGenericAPI
   mount Chemotion::EditorAPI
   mount Chemotion::UiAPI
   mount Chemotion::OlsTermsAPI
   mount Chemotion::PredictionAPI
   mount Chemotion::ComputeTaskAPI
   mount Chemotion::TextTemplateAPI
-  mount Chemotion::GenericElementAPI
-  mount Chemotion::SegmentAPI
-  mount Chemotion::GenericDatasetAPI
   mount Chemotion::ReportTemplateAPI
   mount Chemotion::PrivateNoteAPI
   mount Chemotion::NmrdbAPI
   mount Chemotion::MeasurementsAPI
-  mount Chemotion::ConverterAPI
   mount Chemotion::AttachableAPI
   mount Chemotion::SampleTaskAPI
   mount Chemotion::ChemicalAPI
   mount Chemotion::CalendarEntryAPI
   mount Chemotion::CommentAPI
+  mount Labimotion::ConverterAPI
+  mount Labimotion::GenericElementAPI
+  mount Labimotion::GenericDatasetAPI
+  mount Labimotion::SegmentAPI
+  mount Labimotion::LabimotionHubAPI
 
-  add_swagger_documentation(info: {
-    "title": "Chemotion ELN",
-    "version": "1.0"
-  }) if Rails.env.development?
+  if Rails.env.development?
+    add_swagger_documentation(info: {
+                                title: 'Chemotion ELN',
+                                version: '1.0',
+                              })
+  end
 end
+# rubocop: enable Metrics/BlockLength

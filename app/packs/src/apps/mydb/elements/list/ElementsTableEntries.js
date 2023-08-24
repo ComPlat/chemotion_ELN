@@ -258,6 +258,8 @@ export default class ElementsTableEntries extends Component {
       sourceType = DragDropItemTypes.GENERALPROCEDURE;
     } else if (isDropForScreen) {
       sourceType = DragDropItemTypes.RESEARCH_PLAN;
+    } else {
+      sourceType = DragDropItemTypes.ELEMENT;
     }
     return sourceType;
   }

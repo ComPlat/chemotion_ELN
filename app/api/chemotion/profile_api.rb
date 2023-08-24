@@ -6,7 +6,7 @@ module Chemotion
          message: "has too many entries" if  params[attr_name].keys.size > 30
       params[attr_name].each do |key, val|
         fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-          message: "has wrong structure") unless key.to_s =~ /\A[\w \-]+\Z/
+          message: "has wrong structure") unless key.to_s =~ /\A[\w \(\)\-]+\Z/
         fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
           message: "has wrong structure") unless val.to_s =~ /\d+/
       end
@@ -26,9 +26,9 @@ module Chemotion
         end
 
         if current_user.matrix_check_by_name('genericElement')
-          available_elments = ElementKlass.where(is_active: true).pluck(:name)
+          available_elments = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
           new_layout = data['layout'] || {}
-          ElementKlass.where(is_active: true).find_each do |el|
+          Labimotion::ElementKlass.where(is_active: true).find_each do |el|
             if data['layout'] && data['layout']["#{el.name}"].nil?
               new_layout["#{el.name}"] = new_layout&.values&.min < 0 ? new_layout&.values.min-1 : -1;
             end
@@ -90,7 +90,7 @@ module Chemotion
       put do
         declared_params = declared(params, include_missing: false)
         data = current_user.profile.data || {}
-        available_ements = API::ELEMENTS + ElementKlass.where(is_active: true).pluck(:name)
+        available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
 
         data['layout'] = { 'sample' => 1, 'reaction' => 2, 'wellplate' => 3, 'screen' => 4, 'research_plan' => 5 } if data['layout'].nil?
 

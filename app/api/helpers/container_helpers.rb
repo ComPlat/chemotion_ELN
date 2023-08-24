@@ -1,30 +1,32 @@
+require 'labimotion'
 module ContainerHelpers
   extend Grape::API::Helpers
 
-  def update_datamodel(container)
-#TODO check this logic, not sure this is still needed + containable_type should not be null
-    if container[:is_new]
-      root_container = Container.create(
-        #name: "root",
-        container_type: container[:containable_type] #should be 'root'
-      )
-    else
-      root_container = Container.find_by id: container[:id]
-      #root_container.name = "root" #if it is created from client.side
-    end
-    #root_container.save!
-#ODOT
+  def update_datamodel(container, _current_user = {})
+    # TODO: check this logic, not sure this is still needed + containable_type should not be null
+    root_container = if container[:is_new]
+                       Container.create(
+                         # name: "root",
+                         container_type: container[:containable_type], # should be 'root'
+                       )
+                     else
+                       Container.find_by id: container[:id]
+                       # root_container.name = "root" #if it is created from client.side
+                     end
+    # root_container.save!
+    # ODOT
     if container[:children] != nil && !container[:children].empty?
-      create_or_update_containers(container[:children], root_container)
+      create_or_update_containers(container[:children], root_container, current_user)
     end
     root_container
   end
 
   private
 
-  def create_or_update_containers(children, parent_container)
+  def create_or_update_containers(children, parent_container, current_user={})
     return unless children
     return unless can_update_container(parent_container)
+
     children.each do |child|
       if child[:is_deleted]
         delete_containers_and_attachments(child) unless child[:is_new]
@@ -32,41 +34,44 @@ module ContainerHelpers
       end
 
       extended_metadata = child[:extended_metadata]
-      if child[:container_type] == "analysis"
-          extended_metadata["content"] = if extended_metadata.key?("content")
-            extended_metadata["content"].to_json
-          else
-            "{\"ops\":[{\"insert\":\"\"}]}"
-          end
+      if child[:container_type] == 'analysis'
+        extended_metadata['content'] = if extended_metadata.key?('content')
+                                         extended_metadata['content'].to_json
+                                       else
+                                         '{"ops":[{"insert":""}]}'
+                                       end
       end
 
       if child[:is_new]
-        #Create container
+        # Create container
         container = parent_container.children.create(
           name: child[:name],
           container_type: child[:container_type],
           description: child[:description],
-          extended_metadata: extended_metadata
+          extended_metadata: extended_metadata,
         )
       else
-        #Update container
+        # Update container
         next unless container = Container.find_by(id: child[:id])
+
         container.update!(
           name: child[:name],
           container_type: child[:container_type],
           description: child[:description],
-          extended_metadata: extended_metadata
+          extended_metadata: extended_metadata,
         )
       end
 
       create_or_update_attachments(container, child[:attachments]) if child[:attachments]
 
-      if child[:container_type] == 'dataset' && child[:dataset].present? && child[:dataset]["changed"]
+      if child[:container_type] == 'dataset' && child[:dataset].present? && child[:dataset]['changed']
         klass_id = child[:dataset]['dataset_klass_id']
         properties = child[:dataset]['properties']
         container.save_dataset(dataset_klass_id: klass_id, properties: properties)
       end
       container.destroy_datasetable if child[:container_type] == 'dataset' && child[:dataset].blank?
+      Labimotion::Converter.generate_ds(container.id, current_user) if child[:container_type] == 'dataset'
+      Labimotion::NmrMapper.generate_ds(container.id, current_user) if child[:container_type] == 'dataset'
 
       create_or_update_containers(child[:children], container)
     end
@@ -74,9 +79,11 @@ module ContainerHelpers
 
   def create_or_update_attachments(container, attachments)
     return if attachments.empty?
+
     can_update = can_update_container(container)
     can_edit = true
     return unless can_update
+
     attachments.each do |att|
       if att[:is_new]
         attachment = Attachment.where(key: att[:id], attachable: nil).last
@@ -88,13 +95,13 @@ module ContainerHelpers
           can_edit = can_update_container(att_container)
         end
       end
-      if attachment
-        if att[:is_deleted] && can_edit
-          attachment.destroy!
-          next
-        end
-        attachment.update!(attachable: container)
+      next unless attachment
+
+      if att[:is_deleted] && can_edit
+        attachment.destroy!
+        next
       end
+      attachment.update!(attachable: container)
     end
   end
 
@@ -115,5 +122,4 @@ module ContainerHelpers
       true
     end
   end
-
-end #module
+end # module

@@ -218,8 +218,8 @@ module Chemotion
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
           elements = {}
-          ElementKlass.find_each do |klass|
-            elements[klass.name] = Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
+          Labimotion::ElementKlass.find_each do |klass|
+            elements[klass.name] = Labimotion::Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
           end
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
@@ -317,7 +317,7 @@ module Chemotion
             collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
-          klasses = ElementKlass.find_each do |klass|
+          klasses = Labimotion::ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
 
@@ -326,9 +326,9 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
-            CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            Labimotion::CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
+            Labimotion::CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           status 204
@@ -366,7 +366,7 @@ module Chemotion
             collections_element_klass.create_in_collection(ids, to_collection_id)
           end
 
-          klasses = ElementKlass.find_each do |klass|
+          klasses = Labimotion::ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
 
@@ -375,8 +375,8 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
+            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            Labimotion::CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
           end
 
           status 204
@@ -413,7 +413,7 @@ module Chemotion
             collections_element_klass.remove_in_collection(ids, from_collection.id)
           end
 
-          klasses = ElementKlass.find_each do |klass|
+          klasses = Labimotion::ElementKlass.find_each do |klass|
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
 
@@ -423,8 +423,8 @@ module Chemotion
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            CollectionsElement.remove_in_collection(ids, from_collection.id)
+            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            Labimotion::CollectionsElement.remove_in_collection(ids, from_collection.id)
           end
 
           status 204
