@@ -23,6 +23,10 @@ const notification = message => ({
   title: 'Add Literature', message, level: 'error', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
 });
 
+const warningNotification = (message) => ({
+  title: '', message, level: 'warning', dismissible: 'button', autoDismiss: 5, position: 'tr', uid: uuid.v4()
+});
+
 const checkElementStatus = (element) => {
   const type = element.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   if (element.isNew) {
@@ -114,7 +118,9 @@ export default class DetailsTabLiteratures extends Component {
             literatures: prevState.literatures.delete(literature.literal_id),
             sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
           }));
-        }).catch((errorMessage) => {
+        })
+        .then(()=>{NotificationActions.add(warningNotification("Literature entry successfully removed"))})
+        .catch((errorMessage) => {
           NotificationActions.add(notification(errorMessage.error));
         });
     }
