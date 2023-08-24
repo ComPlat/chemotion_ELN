@@ -76,6 +76,7 @@ function SampleSolventGroup({
       key += 1;
       contents.push((
         <SolventDetails
+          key={key}
           solvent={solv}
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
@@ -114,21 +115,22 @@ function SampleSolventGroup({
         <ListGroup fill="true">
           <h5 style={{ fontWeight: 'bold' }}>Solvents:</h5>
           <ListGroupItem style={minPadding}>
-            <div className="properties-form" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+            <div className="properties-form">
               <VirtualizedSelect
-                className="solvents-select"
                 name="default solvents"
                 multi={false}
                 options={solventOptions}
                 placeholder="Select solvents or drag-n-drop molecules from the sample list"
                 onChange={createDefaultSolvents}
-                style={{
-                  width: '100%', marginBottom: '10px', overflow: 'auto'
-                }}
-
+                menuContainerStyle={{ minHeight: '200px' }}
+                style={{ marginBottom: '10px' }}
               />
-              <td style={{ width: '50%', fontWeight: 'bold' }}>Label:</td>
-              <td style={{ width: '50%', fontWeight: 'bold' }}>Ratio:</td>
+              { sampleSolvents && sampleSolvents.length > 0 && (
+                <>
+                  <td style={{ width: '50%', fontWeight: 'bold' }}>Label:</td>
+                  <td style={{ width: '50%', fontWeight: 'bold' }}>Ratio:</td>
+                </>
+              )}
               {contents.map((item) => item)}
             </div>
           </ListGroupItem>
