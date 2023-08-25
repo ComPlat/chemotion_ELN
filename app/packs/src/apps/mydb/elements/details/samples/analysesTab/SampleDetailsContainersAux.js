@@ -10,7 +10,7 @@ import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer } from 'src/utilities/SpectraHelper';
+import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -55,13 +55,6 @@ const qCheckMsg = (sample, container) => {
   }
   return '';
 };
-
-const isNMRKind = (container) => {
-  if (container.extended_metadata.kind) {
-    return container.extended_metadata.kind.includes('NMR');
-  }
-  return false;
-}
 
 const SpectraEditorBtn = ({
   sample, spcInfos, hasJcamp, hasChemSpectra,
@@ -305,8 +298,7 @@ const headerBtnGroup = (
   }
 
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  // const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
-  const hasNMRium = hasNmriumWrapper;
+  const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
 
   return (
     <div className="upper-btn">

@@ -60,11 +60,9 @@ const SampleTaskInbox = ({}) => {
   }
 
   const openSampleTasks = () => {
-    let sampleTasks = values(sampleTasksStore.sample_tasks);
-
-    return sampleTasks.map(sampleTask => (
-      <SampleTaskCard sampleTask={sampleTask} key={`sampleTask_${sampleTask.id}`} />
-    ));
+    return sampleTasksStore.sortedSampleTasks.map(
+      sampleTask => (<SampleTaskCard sampleTask={sampleTask} key={`sampleTask_${sampleTask.id}`} />)
+    );
   }
 
   const sampleDropzone = (dropRef, text) => {

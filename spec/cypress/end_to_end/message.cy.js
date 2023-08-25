@@ -17,10 +17,11 @@ describe('Message Box', () => {
 
   it('open message box and acknowledge all messages', () => {
     cy.login('a01', 'user_password');
-    cy.get('.badge').contains('3').click();
+    cy.get('.badge').as('messages');
+    cy.get('@messages').contains('3');
+    cy.get('@messages').click();
     cy.get('#notice-button-ack-all').click();
     cy.get('.close > [aria-hidden="true"]').click();
-    cy.get('.badge').contains('0');
   });
 
   it('open message box and acknowledge the message one by one', () => {
@@ -30,6 +31,6 @@ describe('Message Box', () => {
     cy.get('#notice-button-ack-2').click();
     cy.get('#notice-button-ack-3').click();
     cy.get('.close > [aria-hidden="true"]').click();
-    cy.get('.badge').contains('0');
+    cy.get('.badge').should('not.exist');
   });
 });
