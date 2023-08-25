@@ -84,7 +84,7 @@ export default class DetailsTabLiteratures extends Component {
         const sortedIds = groupByCitation(fetchedLiterature);
         this.setState((prevState) => ({
           ...prevState,
-          fetchedLiterature,
+          literatures: fetchedLiterature,
           sortedIds,
           sorting: 'literature_id'
         }));
