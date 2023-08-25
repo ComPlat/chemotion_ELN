@@ -693,7 +693,12 @@ export default class SampleForm extends React.Component {
                 </div> */}
                       {
                   enableSampleDecoupled ? (
-                    <div className="decoupled-checkbox">{this.decoupledCheckbox(sample)}</div>
+                    <div
+                      style={{ paddingLeft: '10px' }}
+                      className="decoupled-checkbox"
+                    >
+                      {this.decoupledCheckbox(sample)}
+                    </div>
                   ) : null
                 }
                     </div>
