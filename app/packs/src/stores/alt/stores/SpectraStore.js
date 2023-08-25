@@ -42,7 +42,7 @@ class SpectraStore {
     const { file, predictions, id } = target;
     if (!file) return null;
     let spectrum = { predictions: defaultPred, idx: id };
-    if (predictions.outline && predictions.outline.code) {
+    if (predictions && predictions.outline && predictions.outline.code) {
       spectrum = Object.assign({}, spectrum, { predictions });
     }
 
