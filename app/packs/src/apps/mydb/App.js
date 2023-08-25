@@ -42,12 +42,15 @@ class App extends Component {
     UserActions.fetchEditors();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
+
+    this.patchExternalLibraries();
   }
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
     document.removeEventListener('keydown', this.documentKeyDown);
   }
+
   handleUiStoreChange(state) {
     if (this.state.showCollectionManagement !== state.showCollectionManagement) {
       this.setState({ showCollectionManagement: state.showCollectionManagement });
@@ -64,6 +67,24 @@ class App extends Component {
     if (event.target.tagName.toUpperCase() === 'BODY' && [13, 38, 39, 40].includes(event.keyCode)) {
       KeyboardActions.documentKeyDown(event.keyCode);
     }
+  }
+
+  patchExternalLibraries() {
+    const { plugins } = require('@citation-js/core');
+    plugins.input.add('@doi/api', {
+      parseType: {
+        dataType: 'String',
+        predicate: /\b(https?:\/\/(?:dx\.)?doi\.org\/(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'])\S)+))\b/i,
+        extends: '@else/url'
+      }
+    });
+
+    plugins.input.add('@doi/id', {
+      parseType: {
+        dataType: 'String',
+        predicate: /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'])\S)+)\b/
+      }
+    });
   }
 
   toggleCollectionTree() {
@@ -91,7 +112,7 @@ class App extends Component {
   mainContent() {
     const { showCollectionManagement, mainContentClassName } = this.state;
     return (
-      <Col className={mainContentClassName} >
+      <Col className={mainContentClassName}>
         {showCollectionManagement ? <CollectionManagement /> : <Elements />}
       </Col>
     );
