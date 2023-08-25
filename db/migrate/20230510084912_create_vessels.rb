@@ -15,8 +15,8 @@ class CreateVessels < ActiveRecord::Migration[6.1]
     end
 
     create_table :vessels do |t|
-      t.bigint :vessel_template_id
-      t.bigint :user_id
+      t.integer :vessel_template_id
+      t.integer :user_id
       t.string :name
       t.string :short_label
       t.string :description
