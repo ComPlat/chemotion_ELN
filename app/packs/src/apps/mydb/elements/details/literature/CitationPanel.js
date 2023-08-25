@@ -26,6 +26,9 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
   let cnt = 0;
   let result = unis.map((id) => {
     const citation = rows.get(id);
+    if(!citation){
+      return [];
+    }
     let { litype } = citation;
     if (typeof litype === 'undefined' || CitationTypeEOL.includes(litype)) {
       litype = 'uncategorized';
