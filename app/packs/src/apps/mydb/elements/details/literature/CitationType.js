@@ -28,10 +28,9 @@ const cellLineCitationTypeMap = {
     datacite: []
   }
 };
-const CitationType = Object.keys(CitationTypeMap).filter(e => e !== 'uncategorized');
+const CitationType = Object.keys(CitationTypeMap).filter((e) => e !== 'uncategorized');
 const CitationTypeEOL = ['cited', 'citing', null, ''];
 
-
-
-
-export { CitationTypeMap, CitationType, CitationTypeEOL,cellLineCitationTypeMap };
+export {
+  CitationTypeMap, CitationType, CitationTypeEOL, cellLineCitationTypeMap
+};

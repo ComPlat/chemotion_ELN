@@ -19,7 +19,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
-import {createCitationTypeMap} from 'src/apps/mydb/elements/details/literature/CitationTools';
+import { createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
+
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
 
@@ -51,10 +52,6 @@ const checkElementStatus = (element) => {
   }
   return true;
 };
-
-
-
-
 
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
@@ -96,9 +93,9 @@ export default class DetailsTabLiteratures extends Component {
     }
   }
 
-   createEmptyLiterature (elementType){
+  createEmptyLiterature(elementType) {
     const literature = Literature.buildEmpty();
-    literature.litype = Object.keys(createCitationTypeMap(elementType))[0]
+    literature.litype = Object.keys(createCitationTypeMap(elementType))[0];
     return literature;
   }
 
@@ -108,8 +105,6 @@ export default class DetailsTabLiteratures extends Component {
     literature[type] = value;
     this.setState((prevState) => ({ ...prevState, literature }));
   }
-
- 
 
   handleTypeUpdate(updId, rType) {
     const { element } = this.props;
@@ -281,7 +276,7 @@ export default class DetailsTabLiteratures extends Component {
     const isInvalidDoi = !(doiValid(literature.doi_isbn || ''));
     const isInvalidIsbn = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
 
-    const citationTypeMap=createCitationTypeMap(this.props.element.type);
+    const citationTypeMap = createCitationTypeMap(this.props.element.type);
 
     return (
       <ListGroup fill="true">
@@ -296,11 +291,12 @@ export default class DetailsTabLiteratures extends Component {
               />
             </Col>
             <Col md={3} style={{ paddingRight: 0 }}>
-              <LiteralType 
-               handleInputChange={this.handleInputChange}
-               disabled={false} 
-               val={literature.litype}
-               citationMap={citationTypeMap} />
+              <LiteralType
+                handleInputChange={this.handleInputChange}
+                disabled={false}
+                val={literature.litype}
+                citationMap={citationTypeMap}
+              />
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button
