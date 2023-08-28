@@ -280,10 +280,10 @@ const TextSearch = () => {
               </div>
             </div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
+              <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
-              <Button bsStyle="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
+              <Button bsStyle="primary" id="advanced-search-button" onClick={handleSearch} style={{ marginRight: '20px' }} >
                 Search
               </Button>
             </ButtonToolbar>

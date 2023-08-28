@@ -98,7 +98,7 @@ const SearchResult = ({ handleClear }) => {
     const sum = counts.reduce((a, b) => a + b, 0);
 
     return (
-      <div><h4>{sum} results</h4></div>
+      <div><h4 className="search-result-number-of-results">{sum} results</h4></div>
     );
   }
 
