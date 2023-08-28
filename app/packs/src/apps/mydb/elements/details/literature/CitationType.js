@@ -21,7 +21,17 @@ const CitationTypeMap = {
   }
 };
 
+const cellLineCitationTypeMap = {
+  literatureOfSource: {
+    def: 'Literature from the source of the cell lines describing it',
+    short: 'literature from source',
+    datacite: []
+  }
+};
 const CitationType = Object.keys(CitationTypeMap).filter(e => e !== 'uncategorized');
 const CitationTypeEOL = ['cited', 'citing', null, ''];
 
-export { CitationTypeMap, CitationType, CitationTypeEOL };
+
+
+
+export { CitationTypeMap, CitationType, CitationTypeEOL,cellLineCitationTypeMap };

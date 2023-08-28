@@ -2,7 +2,7 @@ import React from 'react';
 import { Panel, ButtonGroup, Button, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
 import { uniq } from 'lodash';
 import { Citation, literatureContent } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
-import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/apps/mydb/elements/details/literature/CitationType';
+import { CitationType, CitationTypeMap, CitationTypeEOL} from 'src/apps/mydb/elements/details/literature/CitationType';
 
 const changeTypeBtn = (litype, updId, fn) => {
   const cands = CitationType.filter(e => e !== litype);
@@ -33,6 +33,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
     if (litype !== title) {
       return null;
     }
+    
     const content = literatureContent(citation, true);
     cnt += 1;
     return (
@@ -63,16 +64,20 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
 
 const CitationPanel = (props) => {
   const {
-    title, fnDelete, sortedIds, rows, fnUpdate
+    title, fnDelete, sortedIds, rows, fnUpdate,citationMap
   } = props;
+
   let result = buildRow(title, fnDelete, sortedIds, rows, fnUpdate);
+
   if (title === 'uncategorized' && result.length === 0) return null;
+
+  
   result = (result.length > 0) ? result : <span>(No Data)</span>;
   return (
     <Panel id={`_citation_panel_${title}`} defaultExpanded className="panel-cite">
       <Panel.Heading>
         <Panel.Title toggle>
-          &bull;&nbsp;{CitationTypeMap[title].def}
+          &bull;&nbsp;{citationMap.def}
         </Panel.Title>
       </Panel.Heading>
       <Panel.Collapse>

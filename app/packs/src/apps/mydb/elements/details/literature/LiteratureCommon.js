@@ -4,6 +4,7 @@ import { Button, FormControl, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import Literature from 'src/models/Literature';
 import { CitationType, CitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationType';
+import {getKeysOfMap} from 'src/apps/mydb/elements/details/literature/CitationTools';
 
 const RefByUserInfo = ({ info, litype }) => {
   if (typeof (info) === 'undefined' || !info || info.length === 0) {
@@ -28,7 +29,12 @@ const RefByUserInfo = ({ info, litype }) => {
 
 const Cite = require('citation-js');
 
-const LiteralType = ({ val, handleInputChange, disabled = false }) => (
+const LiteralType = ({
+   val,
+   handleInputChange,
+   disabled = false,
+   citationMap }) => {
+  return (
   <FormControl
     componentClass="select"
     onChange={event => handleInputChange('litype', event)}
@@ -36,9 +42,14 @@ const LiteralType = ({ val, handleInputChange, disabled = false }) => (
     value={val}
     disabled={disabled}
   >
-    {CitationType.map(e => (<option key={`_litype_opt_${e}`} value={e}>{CitationTypeMap[e].def}</option>))}
-  </FormControl>
-);
+    {getKeysOfMap(citationMap).map(
+      e =>(<option 
+      key={`_litype_opt_${e}`} 
+      value={e}>
+        {citationMap[e].def}
+      </option>))}
+  </FormControl>);
+};
 
 const LiteratureInput = ({ literature, handleInputChange, field, placeholder }) => (
   <FormControl

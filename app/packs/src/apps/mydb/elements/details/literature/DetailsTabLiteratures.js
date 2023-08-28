@@ -19,8 +19,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
-import { CitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationType';
-
+import {createCitationTypeMap} from 'src/apps/mydb/elements/details/literature/CitationTools';
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
 
@@ -53,11 +52,15 @@ const checkElementStatus = (element) => {
   return true;
 };
 
+
+
+
+
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      literature: Literature.buildEmpty(),
+      literature: this.createEmptyLiterature(this.props.element.type),
       literatures: new Immutable.Map(),
       sortedIds: [],
     };
@@ -85,12 +88,18 @@ export default class DetailsTabLiteratures extends Component {
         const sortedIds = groupByCitation(fetchedLiterature);
         this.setState((prevState) => ({
           ...prevState,
-          fetchedLiterature,
+          literatures: fetchedLiterature,
           sortedIds,
           sorting: 'literature_id'
         }));
       });
     }
+  }
+
+   createEmptyLiterature (elementType){
+    const literature = Literature.buildEmpty();
+    literature.litype = Object.keys(createCitationTypeMap(elementType))[0]
+    return literature;
   }
 
   handleInputChange(type, event) {
@@ -99,6 +108,8 @@ export default class DetailsTabLiteratures extends Component {
     literature[type] = value;
     this.setState((prevState) => ({ ...prevState, literature }));
   }
+
+ 
 
   handleTypeUpdate(updId, rType) {
     const { element } = this.props;
@@ -269,6 +280,9 @@ export default class DetailsTabLiteratures extends Component {
     const { currentUser } = UserStore.getState();
     const isInvalidDoi = !(doiValid(literature.doi_isbn || ''));
     const isInvalidIsbn = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
+
+    const citationTypeMap=createCitationTypeMap(this.props.element.type);
+
     return (
       <ListGroup fill="true">
         <ListGroupItem style={{ border: 'unset' }}>
@@ -282,7 +296,11 @@ export default class DetailsTabLiteratures extends Component {
               />
             </Col>
             <Col md={3} style={{ paddingRight: 0 }}>
-              <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
+              <LiteralType 
+               handleInputChange={this.handleInputChange}
+               disabled={false} 
+               val={literature.litype}
+               citationMap={citationTypeMap} />
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button
@@ -322,7 +340,7 @@ export default class DetailsTabLiteratures extends Component {
         </ListGroupItem>
         <ListGroupItem style={{ border: 'unset' }}>
           {
-            Object.keys(CitationTypeMap)
+            Object.keys(citationTypeMap)
               .map((e) => (
                 <CitationPanel
                   key={`_citation_panel_${e}`}
@@ -332,6 +350,7 @@ export default class DetailsTabLiteratures extends Component {
                   rows={literatures}
                   uid={currentUser && currentUser.id}
                   fnUpdate={this.handleTypeUpdate}
+                  citationMap={citationTypeMap[e]}
                 />
               ))
           }
