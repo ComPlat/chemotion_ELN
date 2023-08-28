@@ -18,6 +18,33 @@ Person.find_each do |u|
     # position:
   )
   ca =  Collection.find_by(user: u, label: 'All', is_locked: true)
+
+  # Vessels
+
+  seed_path = File.join(Rails.root, 'db', 'seeds', 'json', 'vessels.json')
+
+  vessel_array = JSON.parse(File.read(seed_path))
+  vessel_array.each do |v|
+    template = VesselTemplate.create!(
+      name: v['name'],
+      details: v['details'],
+      vessel_type: v['vessel_type'],
+      volume_unit: v['volume_unit'],
+      volume_amount: v['volume_amount'],
+      material_type: v['material_type'],
+      material_details: v['material_details'],
+    )
+    vessel = Vessel.create!(
+      name: Faker::Book.title,
+      description: Faker::Lorem.sentence,
+      vessel_template: template,
+      user_id: u.id,
+      short_label: Faker::Book.title,
+    )
+    vessel.collections = [collection, ca]
+    vessel.save!
+  end
+
   # Molecule.find_each do |molecule|
   Molecule.limit(100).each do |molecule|
     FileUtils.cp_r "public/images/molecules/#{molecule.molecule_svg_file}", 'public/images/samples/'

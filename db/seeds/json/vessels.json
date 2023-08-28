@@ -1,0 +1,38 @@
+[
+  {
+    "name": "RBF - 100 ml",
+    "details": "single-neck",
+    "vessel_type": "ROUND_BOTTOM_FLASK",
+    "volume_unit": "ml",
+    "volume_amount": "100",
+    "material_type": "glass",
+    "material_details": "clear" 
+  },
+  {
+    "name": "RBF - 200 ml",
+    "details": "multi-neck (3)",
+    "vessel_type": "ROUND_BOTTOM_FLASK",
+    "volume_unit": "ml",
+    "volume_amount": "250",
+    "material_type": "glass",
+    "material_details": "clear"
+  },
+  {
+    "name": "Erlenmeyer - 500 ml",
+    "details": "single-neck",
+    "vessel_type": "CONICAL_FLASK",
+    "volume_unit": "ml",
+    "volume_amount": "500",
+    "material_type": "glass",
+    "material_details": "clear"
+  },
+  {
+    "name": "Schlenk rxn & storage tube",
+    "details": "",
+    "vessel_type": "SCHLENK_TUBE",
+    "volume_unit": "ml",
+    "volume_amount": "25",
+    "material_type": "glass",
+    "material_details": "clear"
+  }
+]
