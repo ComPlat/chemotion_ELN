@@ -108,6 +108,7 @@ export default class UserManagement extends React.Component {
       messageNewUserModal: '',
       messageEditUserModal: '',
       processingSummaryUserFile: '',
+      filterCriteria: {}
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -357,6 +358,24 @@ export default class UserManagement extends React.Component {
         return true;
       });
     return true;
+  }
+
+  updateFilter = (key, value) => {
+    this.setState((prevState) => ({
+      filterCriteria: {
+        ...prevState.filterCriteria,
+        [key]: value
+      }
+    }));
+  };
+
+  updateDropdownFilter(field, value) {
+    this.setState((prevState) => ({
+      filterCriteria: {
+        ...prevState.filterCriteria,
+        [field]: value
+      }
+    }));
   }
 
   createNewUserFromFile(newUser) {
@@ -884,27 +903,92 @@ export default class UserManagement extends React.Component {
       return <span />;
     };/* eslint-enable camelcase */
 
-    const { users } = this.state;
+    const { users, filterCriteria } = this.state;
+
+    // filtering logic
+    const filteredUsers = users.filter((user) => Object.keys(filterCriteria).every((key) => {
+      // skip if filter field is empty
+      if (!filterCriteria[key]) return true;
+      // special case for dropdowns
+      if (key === 'account_active' || key === 'locked_at' || key === 'type') {
+        return filterCriteria[key] === (user[key] ? 'true' : 'false') || filterCriteria[key] === user[key];
+      }
+      return String(user[key]).toLowerCase().includes(String(filterCriteria[key]).toLowerCase());
+    }));
 
     const tcolumn = (
-      <tr style={{ height: '26px', verticalAlign: 'middle' }}>
-        <th width="1%">#</th>
-        <th width="12%">Actions</th>
-        <th width="12%">Name</th>
-        <th width="6%">Abbr.</th>
-        <th width="8%">Email</th>
-        <th width="7%">Type</th>
-        <th width="15%">Login at</th>
-        <th width="2%">ID</th>
-      </tr>
+      <thead>
+        <tr style={{ height: '26px', verticalAlign: 'middle' }}>
+          <th width="1%">#</th>
+          <th width="17%">Actions</th>
+          <th width="12%">Name</th>
+          <th width="6%">Abbr.</th>
+          <th width="8%">Email</th>
+          <th width="7%">Type</th>
+          <th width="10%">Login at</th>
+          <th width="2%">ID</th>
+        </tr>
+        <tr>
+          <th aria-label="Empty header for the '#' column" />
+          <th>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <FormControl
+                componentClass="select"
+                placeholder="Active-Inactive"
+                onChange={(e) => this.updateDropdownFilter('account_active', e.target.value)}
+              >
+                <option value="">Active & Inactive</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </FormControl>
+              <FormControl
+                componentClass="select"
+                placeholder="Locked-Unlocked"
+                onChange={(e) => this.updateDropdownFilter('locked_at', e.target.value)}
+              >
+                <option value="">Locked & Unlocked</option>
+                <option value="true">Locked</option>
+                <option value="false">Unlocked</option>
+              </FormControl>
+            </div>
+          </th>
+          <th>
+            <FormControl type="text" placeholder="Name" onChange={(e) => this.updateFilter('name', e.target.value)} />
+          </th>
+          <th>
+            <FormControl
+              type="text"
+              placeholder="Abbr."
+              onChange={(e) => this.updateFilter('initials', e.target.value)}
+            />
+          </th>
+          <th>
+            <FormControl type="text" placeholder="Email" onChange={(e) => this.updateFilter('email', e.target.value)} />
+          </th>
+          <th>
+            <FormControl
+              componentClass="select"
+              placeholder="Person-Device-Admin"
+              onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="Person">Person</option>
+              <option value="Device">Device</option>
+              <option value="Admin">Admin</option>
+            </FormControl>
+          </th>
+          <th aria-label="Empty header for the 'Login at' column" />
+          <th aria-label="Empty header for the 'ID' column" />
+        </tr>
+      </thead>
     );
 
-    const tbody = users.map((g, idx) => (
+    const tbody = filteredUsers.map((g, idx) => (
       <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td width="1%">
+        <td width="2%">
           {idx + 1}
         </td>
-        <td width="12%">
+        <td width="17%">
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               bsSize="xsmall"
@@ -1052,9 +1136,7 @@ export default class UserManagement extends React.Component {
         </Panel>
         <Panel>
           <Table>
-            <thead>
-              {tcolumn}
-            </thead>
+            {tcolumn}
             <tbody>
               {tbody}
             </tbody>
