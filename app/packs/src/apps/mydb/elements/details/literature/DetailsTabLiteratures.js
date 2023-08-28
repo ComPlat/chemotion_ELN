@@ -192,14 +192,14 @@ export default class DetailsTabLiteratures extends Component {
         },
       }).then((literatures) => {
         this.setState(() => ({
-          literature: Literature.buildEmpty(),
+          literature: this.createEmptyLiterature(this.props.element.type),
           literatures,
           sortedIds: groupByCitation(literatures),
           sorting: 'literature_id'
         }));
       }).catch((errorMessage) => {
         NotificationActions.add(notification(errorMessage.error));
-        this.setState({ literature: Literature.buildEmpty() });
+        this.setState({ literature: this.createEmptyLiterature(this.props.element.type) });
       });
     }
   }
