@@ -29,7 +29,7 @@ const AdvancedSearchRow = ({ idx }) => {
     { value: "OR", label: "OR" }
   ];
 
-  const { rxnos, genericEls } = UserStore.getState();
+  const { rxnos } = UserStore.getState();
 
   const formElementValue = (formElement, e) => {
     switch (formElement) {
@@ -117,7 +117,7 @@ const AdvancedSearchRow = ({ idx }) => {
     switch (selection.field.column) {
       case 'status':
         return (
-          <span className="value-field-select">
+          <div className="value-field-select">
             <Select
               options={statusOptions}
               placeholder="Select status"
@@ -125,12 +125,12 @@ const AdvancedSearchRow = ({ idx }) => {
               isClearable={false}
               onChange={onChange('value')}
             />
-          </span>
+          </div>
         );
         break;
       case 'rxno':
         return (
-          <span className="value-field-select">
+          <div className="value-field-select">
             <TreeSelect
               value={selection.value}
               treeData={rxnos}
@@ -139,13 +139,13 @@ const AdvancedSearchRow = ({ idx }) => {
               onChange={onChange('value')}
               filterTreeNode={filterTreeNode}
             />
-          </span>
+          </div>
         );
         break;
       case 'temperature':
         return (
           <>
-            <span className="value-field-select">
+            <div className="value-field-select">
               <Select
                 options={temperatureOptions}
                 placeholder="Select unit"
@@ -153,8 +153,8 @@ const AdvancedSearchRow = ({ idx }) => {
                 isClearable={false}
                 onChange={onChange('unit')}
               />
-            </span>
-            <span className="value-field-select">
+            </div>
+            <div className="value-field-select">
               <FormControl
                 type="text"
                 value={selection.value}
@@ -164,14 +164,14 @@ const AdvancedSearchRow = ({ idx }) => {
                 placeholder="Search value"
                 onChange={onChange('value')}
               />
-            </span>
+            </div>
           </>
         );
         break;
       case 'duration':
         return (
           <>
-            <span className="value-field-select">
+            <div className="value-field-select">
               <Select
                 options={durationOptions}
                 placeholder="Select unit"
@@ -179,8 +179,8 @@ const AdvancedSearchRow = ({ idx }) => {
                 isClearable={false}
                 onChange={onChange('unit')}
               />
-            </span>
-            <span className="value-field-select">
+            </div>
+            <div className="value-field-select">
               <FormControl
                 type="text"
                 value={selection.value}
@@ -190,7 +190,7 @@ const AdvancedSearchRow = ({ idx }) => {
                 placeholder="Search value"
                 onChange={onChange('value')}
               />
-            </span>
+            </div>
           </>
         );
         break;
@@ -201,32 +201,34 @@ const AdvancedSearchRow = ({ idx }) => {
 
   return (
     <div className="adv-search-row">
-      <span className="link-select" style={{ flex: "0 0 127px" }}>
-        <span style={{ display: display, width: '100%' }}>
+      <div className="link-select" style={{ flex: "0 0 127px" }}>
+        <div style={{ display: display, width: '100%' }}>
           <Select
             options={logicalOperators}
             value={logicalOperators.filter(({ value }) => value == selection.link)}
             isClearable={false}
             onChange={onChange('link')}
           />
-        </span>
-      </span>
-      <span className="match-select">
+        </div>
+      </div>
+      <div className="match-select">
         <Select
           options={mapperOptions}
           placeholder="Select search mapper"
           value={mapperOptions.filter(({ value }) => value == selection.match)}
           isClearable={false}
+          className="match-select-options"
           onChange={onChange('match')} />
-      </span>
-      <span className="field-select">
+      </div>
+      <div className="field-select">
         <Select
           options={fieldOptions}
           isClearable={false}
           placeholder="Select search field"
           value={selection.field}
+          className="field-select-options"
           onChange={onChange('field')} />
-      </span>
+      </div>
       {valueField()}
     </div>
   )
