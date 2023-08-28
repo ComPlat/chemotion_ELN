@@ -12,6 +12,7 @@ const VesselItem = types.model({
   id: '',
   vesselName: '',
   vesselDescription: '',
+  shortLabel: '',
   changed: false,
 }).actions((self) => ({
   setChanged(newChanged) {
@@ -77,6 +78,7 @@ export const VesselDetailsStore = types.model({
       id: jsVesselModel.id.toString(),
       vesselName: jsVesselModel.vesselName,
       vesselDescription: jsVesselModel.vesselDescription,
+      shortLabel: jsVesselModel.short_label
     }))
   }
 })).views((self) => ({

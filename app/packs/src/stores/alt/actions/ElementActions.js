@@ -804,7 +804,8 @@ class ElementActions {
 
   createVessel(params){
     return(dispatch) => {
-      VesselsFetcher.create(params)
+      const { currentUser } = UserStore.getState();
+      VesselsFetcher.create(params, currentUser)
       .then((result) => {dispatch(result);}).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -844,7 +845,9 @@ class ElementActions {
 
   generateEmptyVessel(collection_id){
     var v = new Vessel();
-    return Vessel.buildEmpty(collection_id, `${'DP'}-${0}` ); // TO FIX
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) {return }
+    return Vessel.buildEmpty(collection_id, `${currentUser.initials}-V${currentUser.vessels_count}` );
   }
 
   // -- DataCite/Radar metadata --

@@ -91,6 +91,7 @@ module Chemotion
         optional :material_details, type: String, desc: 'Material details'
         optional :name, type: String, desc: 'Name of vessel'
         optional :description, type: String, desc: 'Freeform description of vessel'
+        optional :short_label, type: String, desc: 'short label'
       end
 
       post do

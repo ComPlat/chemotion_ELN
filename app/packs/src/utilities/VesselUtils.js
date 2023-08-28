@@ -11,6 +11,7 @@ const extractApiParameter = (vessel) => {
     "volume_unit":vessel.volumeUnit,
     "material_type":vessel.materialType,
     "material_details":vessel.materialDetails,
+    "short_label":vessel.short_label,
   };
 }
 

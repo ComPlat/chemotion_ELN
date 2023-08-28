@@ -2,6 +2,26 @@
 
 class CreateVessels < ActiveRecord::Migration[6.1]
   def change
+    reversible do |dir|
+      dir.up do
+        d = {
+          samples: 0,
+          reactions: 0,
+          wellplates: 0,
+          vessels: 0,
+        }
+        change_column :users, :counters, :hstore, null: false, default: d
+      end
+      dir.down do
+        d = {
+          samples: 0,
+          reactions: 0,
+          wellplates: 0
+        }
+        change_column :users, :counters, :hstore, null: false, default: d
+      end
+    end
+
     create_table :vessel_templates do |t|
       t.string :name
       t.string :details

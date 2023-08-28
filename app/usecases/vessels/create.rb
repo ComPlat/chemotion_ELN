@@ -18,6 +18,11 @@ module Usecases
           vessel: @vessel,
         )
 
+        CollectionsVessel.create(
+          collection: all_collection_of_current_user,
+          vessel: @vessel
+        )
+
         @vessel
       end
 
@@ -51,6 +56,7 @@ module Usecases
           creator: @current_user,
           name: @params[:name],
           description: @params[:description],
+          short_label: @params[:short_label],
         )
       end
 
@@ -68,6 +74,10 @@ module Usecases
 
       def check_string_value(value)
         value.instance_of?(String) && !value.empty?
+      end
+
+      def all_collection_of_current_user
+        Collection.get_all_collection_for_user(@current_user.id)
       end
     end
   end

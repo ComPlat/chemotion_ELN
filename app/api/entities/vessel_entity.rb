@@ -5,6 +5,7 @@ module Entities
     expose :id
     expose :name
     expose :description
+    expose :short_label
     expose :vessel_template, using: 'Entities::VesselTemplateEntity'
   end
 end

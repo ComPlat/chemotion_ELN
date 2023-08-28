@@ -45,6 +45,9 @@ export default class VesselItemEntry extends React.Component {
                   checked={this.isElementChecked(vesselItem)}
               /><br />
               </td>
+              <td width = "150px" onClick={e => this.showDetails()}>
+                {vesselItem.short_label}
+              </td>
               <td onClick={e => this.showDetails()}>
                 {vesselItem.vesselName}
               </td>
