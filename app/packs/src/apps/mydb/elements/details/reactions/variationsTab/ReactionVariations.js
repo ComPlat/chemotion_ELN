@@ -6,7 +6,7 @@ import React, {
 import { v4 as uuidv4 } from 'uuid';
 import {
   Button, FormGroup, Radio, ControlLabel, ButtonGroup,
-  OverlayTrigger, Tooltip, Form, Badge
+  OverlayTrigger, Tooltip, Form, Badge, DropdownButton, MenuItem
 } from 'react-bootstrap';
 import _ from 'lodash';
 import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
@@ -92,10 +92,29 @@ const CellEditor = forwardRef((props, ref) => {
   );
 });
 
+function getMaterialHeaderIdentifier(material, identifier) {
+  const fallbackIdentifier = `ID: ${material.id.toString()}`;
+  switch (identifier) {
+    case 'ext. label':
+      return material.external_label || fallbackIdentifier;
+    case 'name':
+      return material.name || fallbackIdentifier;
+    case 'short label':
+      return material.short_label || fallbackIdentifier;
+    case 'sum formula':
+      return material?.molecule.sum_formular || fallbackIdentifier;
+    case 'iupac name':
+      return material?.molecule.iupac_name || fallbackIdentifier;
+    default:
+      return fallbackIdentifier;
+  }
+}
+
 export default function ReactionVariations({ reaction, onEditVariations }) {
   const gridRef = useRef();
 
   const [materialUnit, setMaterialUnit] = useState('Equiv');
+  const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('ext. label');
 
   function addRow() {
     const newRow = createVariationsRow(reaction, uuidv4(), materialUnit);
@@ -158,7 +177,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       children: reaction.starting_materials.map(
         (material) => ({
           field: `startingMaterials.${material.id}`, // must be unique
-          headerName: (material.external_label || material.short_label || material.id.toString()),
+          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
         })
       )
     },
@@ -169,8 +188,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       children: reaction.reactants.map(
         (material) => ({
           field: `reactants.${material.id}`,
-          headerName: (material.external_label || material.short_label || material.id.toString()),
-
+          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
         })
       )
     },
@@ -181,7 +199,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       children: reaction.products.map(
         (material) => ({
           field: `products.${material.id}`,
-          headerName: (material.external_label || material.short_label || material.id.toString()),
+          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
         })
       )
     }
@@ -209,6 +227,23 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
               </Radio>
             )
           )}
+          {' '}
+          <ControlLabel>Identify materials by</ControlLabel>
+          {' '}
+          <DropdownButton
+            title={materialHeaderIdentifier}
+          >
+            {['name', 'ext. label', 'short label', 'sum formula', 'iupac name'].map(
+              (identifier) => (
+                <MenuItem
+                  key={identifier}
+                  onSelect={() => setMaterialHeaderIdentifier(identifier)}
+                >
+                  {identifier}
+                </MenuItem>
+              )
+            )}
+          </DropdownButton>
         </FormGroup>
       </Form>
 
