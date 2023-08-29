@@ -68,10 +68,14 @@ class Container < ApplicationRecord
     end
   end
 
+  # rubocop:disable Style/StringLiterals
+
   def content_to_plain_text
     return unless extended_metadata_changed?
     return if extended_metadata.blank? || (extended_metadata.present? && extended_metadata['content'].blank?)
+    return if extended_metadata['content'] == "{\"ops\":[{\"insert\":\"\"}]}"
 
     self.plain_text_content = Chemotion::QuillToPlainText.new.convert(extended_metadata['content'])
   end
+  # rubocop:enable Style/StringLiterals
 end
