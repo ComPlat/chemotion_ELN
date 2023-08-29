@@ -6,17 +6,21 @@ import React, {
 import { v4 as uuidv4 } from 'uuid';
 import {
   Button, FormGroup, Radio, ControlLabel, ButtonGroup,
-  OverlayTrigger, Tooltip, Form
+  OverlayTrigger, Tooltip, Form, Badge
 } from 'react-bootstrap';
 import _ from 'lodash';
 import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function RowToolsCellRenderer({ data, copyRow, removeRow }) {
   return (
-    <ButtonGroup>
-      <Button onClick={() => copyRow(data)}><i className="fa fa-copy" /></Button>
-      <Button onClick={() => removeRow(data)}><i className="fa fa-trash" /></Button>
-    </ButtonGroup>
+    <div>
+      <Badge>{data.id.substring(0, 5)}</Badge>
+      {' '}
+      <ButtonGroup>
+        <Button onClick={() => copyRow(data)}><i className="fa fa-copy" /></Button>
+        <Button onClick={() => removeRow(data)}><i className="fa fa-trash" /></Button>
+      </ButtonGroup>
+    </div>
   );
 }
 
@@ -126,6 +130,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       field: '',
       cellRenderer: RowToolsCellRenderer,
       cellRendererParams: { copyRow, removeRow },
+      lockPosition: 'left',
       editable: false,
       sortable: false,
     },
