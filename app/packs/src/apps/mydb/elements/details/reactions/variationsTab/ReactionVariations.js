@@ -133,6 +133,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       lockPosition: 'left',
       editable: false,
       sortable: false,
+      resizable: false,
     },
 
     {
@@ -182,10 +183,6 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     }
   ];
 
-  const sizeColumnsToFit = useCallback(() => {
-    gridRef.current.api.sizeColumnsToFit({ defaultMinWidth: 125 });
-  }, []);
-
   return (
     <div>
       <Form inline>
@@ -220,10 +217,10 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           columnDefs={columnDefs}
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onComponentStateChanged={sizeColumnsToFit}
           defaultColDef={{
             editable: true,
             sortable: true,
+            resizable: true,
             comparator: cellComparator,
             cellEditor: CellEditor,
             cellRenderer: CellRenderer,
