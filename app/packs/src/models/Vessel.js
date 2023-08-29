@@ -36,6 +36,16 @@ export default class Vessel extends Element {
     return vessel;
   }
 
+  copyMaterialFrom(vesselItem) {
+    this.vesselTemplateName = vesselItem.vesselTemplateName;
+    this.vesselDetails = vesselItem.vesselDetails;
+    this.vesselType = vesselItem.vesselType;
+    this.volumeUnit = vesselItem.volumeUnit;
+    this.volumeAmount = vesselItem.volumeAmount;
+    this.materialType = vesselItem.materialType;
+    this.materialDetails = vesselItem.materialDetails;
+  }
+
   adoptPropsFromMobxModel(mobx) {
     this.vesselTemplateName = mobx.vesselTemplateName;
     this.vesselDetails = mobx.vesselDetails;

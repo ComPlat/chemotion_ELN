@@ -843,11 +843,15 @@ class ElementActions {
     }
   }
 
-  generateEmptyVessel(collection_id){
+  generateEmptyVessel(collection_id, template){
     var v = new Vessel();
     const { currentUser } = UserStore.getState();
     if (!currentUser) {return }
-    return Vessel.buildEmpty(collection_id, `${currentUser.initials}-V${currentUser.vessels_count}` );
+    const vessel =  Vessel.buildEmpty(collection_id, `${currentUser.initials}-V${currentUser.vessels_count}` );
+    if(template) {
+      vessel.copyMaterialFrom(template);
+    }
+    return vessel;
   }
 
   // -- DataCite/Radar metadata --

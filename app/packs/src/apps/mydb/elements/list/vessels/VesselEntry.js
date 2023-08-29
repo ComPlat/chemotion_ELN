@@ -1,7 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselItemEntry from './VesselItemEntry';
-
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import { Button } from 'react-bootstrap'
 export default class VesselEntry extends React.Component {
     constructor(props) {
       super(props);
@@ -23,7 +25,8 @@ export default class VesselEntry extends React.Component {
     render(){
       if (this.props.vesselGroup.vesselItems.length == 0) { return (null); }
       const firstVesselItem = this.props.vesselGroup.vesselItems[0];
-      return (
+      return [
+          this.renderCreateSubVesselButton(firstVesselItem),
           <div>
             <br />
             {firstVesselItem.vesselTemplateName}<br/>
@@ -32,6 +35,36 @@ export default class VesselEntry extends React.Component {
             {' Volume: '}{firstVesselItem.volumeAmount}{' '}{firstVesselItem.volumeUnit}<br/>
             {this.props.vesselGroup.vesselItems.map((vesselItem) => <VesselItemEntry vesselItem={vesselItem}/>)}
           </div>
+      ];
+    }
+
+    renderCreateSubVesselButton(firstVesselItem){
+      return (
+          <Button
+            className={"button-right "}
+            bsSize="xsmall"
+            onClick={(event) => {
+              event.stopPropagation();
+  
+              const { currentCollection, isSync } = UIStore.getState();
+              const ui_state=UIStore.getState();
+              const uri = isSync
+                ? `/scollection/${currentCollection.id}/vessel/new`
+                : `/collection/${currentCollection.id}/vessel/new`;
+              Aviator.navigate(uri, { silent: true });
+  
+              const e = { 
+                type:"vessel", params: 
+                { collectionID: currentCollection.id,
+                  vesselID: "new",
+                  vessel_template: firstVesselItem
+                }
+              };
+              elementShowOrNew(e);
+            }}
+          >
+            <i className="fa fa-plus" aria-hidden="true" />
+          </Button>
         );
     }
 
