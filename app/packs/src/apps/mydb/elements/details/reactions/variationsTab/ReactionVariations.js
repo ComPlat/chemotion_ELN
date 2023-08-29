@@ -210,6 +210,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         <AgGridReact
           ref={gridRef}
           rowData={reaction.variations}
+          rowDragEntireRow
+          rowDragManaged
           columnDefs={columnDefs}
           readOnlyEdit
           onCellEditRequest={updateRow}
