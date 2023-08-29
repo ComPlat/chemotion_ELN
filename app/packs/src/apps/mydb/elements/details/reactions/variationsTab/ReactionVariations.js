@@ -9,18 +9,7 @@ import {
   OverlayTrigger, Tooltip, Form
 } from 'react-bootstrap';
 import _ from 'lodash';
-import { iupacNameTooltip } from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-
-function MaterialHeader({ material }) {
-  return (
-    <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
-      <div>
-        {material.external_label || material.short_label || material.id.toString()}
-      </div>
-    </OverlayTrigger>
-  );
-}
 
 function RowToolsCellRenderer({ data, copyRow, removeRow }) {
   return (
@@ -55,6 +44,15 @@ function CellRenderer({ value: cellData }) {
     </OverlayTrigger>
   );
 }
+
+const cellComparator = (item1, item2) => {
+  const { value: value1, unit: unit1 } = item1;
+  const { value: value2, unit: unit2 } = item2;
+  if (unit1 !== unit2) {
+    return 0;
+  }
+  return value1 - value2;
+};
 
 const CellEditor = forwardRef((props, ref) => {
   const { value = '', unit = 'None', aux = {} } = props.value ?? {};
@@ -129,6 +127,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       cellRenderer: RowToolsCellRenderer,
       cellRendererParams: { copyRow, removeRow },
       editable: false,
+      sortable: false,
     },
 
     {
@@ -151,8 +150,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       children: reaction.starting_materials.map(
         (material) => ({
           field: `startingMaterials.${material.id}`, // must be unique
-          headerComponent: MaterialHeader,
-          headerComponentParams: { material },
+          headerName: (material.external_label || material.short_label || material.id.toString()),
         })
       )
     },
@@ -162,8 +160,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       children: reaction.reactants.map(
         (material) => ({
           field: `reactants.${material.id}`,
-          headerComponent: MaterialHeader,
-          headerComponentParams: { material },
+          headerName: (material.external_label || material.short_label || material.id.toString()),
+
         })
       )
     },
@@ -173,8 +171,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       children: reaction.products.map(
         (material) => ({
           field: `products.${material.id}`,
-          headerComponent: MaterialHeader,
-          headerComponentParams: { material },
+          headerName: (material.external_label || material.short_label || material.id.toString()),
         })
       )
     }
@@ -219,6 +216,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           onComponentStateChanged={sizeColumnsToFit}
           defaultColDef={{
             editable: true,
+            sortable: true,
+            comparator: cellComparator,
             cellEditor: CellEditor,
             cellRenderer: CellRenderer,
             wrapHeaderText: true,
