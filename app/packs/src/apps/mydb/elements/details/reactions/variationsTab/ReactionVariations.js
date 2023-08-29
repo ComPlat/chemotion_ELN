@@ -26,7 +26,7 @@ function RowToolsCellRenderer({ data, copyRow, removeRow }) {
 
 function CellRenderer({ value: cellData }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  const cellContent = `${Number(value) ? Number(value).toFixed(3) : 'NaN'} [${unit}]`;
+  const cellContent = `${Number(value) ? Number(value).toFixed(6) : 'NaN'} [${unit}]`;
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
   overlayContent += aux.isReference ? '; Ref' : '';
