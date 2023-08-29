@@ -6,12 +6,19 @@ import { uniq } from 'lodash';
 import { Citation, literatureContent } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/apps/mydb/elements/details/literature/CitationType';
 
-const changeTypeBtn = (litype, updId, fn) => {
-  const cands = CitationType.filter((e) => e !== litype);
+const changeTypeBtn = (litype, updId, fn, typeMap) => {
+  
+  const cands = Object.keys(typeMap).filter((e) => (e !== litype)&& e !== 'uncategorized');
   const popover = (
     <Popover id="popover-positioned-scrolling-left" title="Move to">
       {
-        cands.map((e) => <Button key={`btn_lit_${updId}`} bsSize="xsmall" onClick={() => fn(updId, e)}>{CitationTypeMap[e].short}</Button>)
+        cands.map((e) =>
+         <Button 
+         key={`btn_lit_${updId}`} 
+         bsSize="xsmall" 
+         onClick={() => fn(updId, e)}>
+          {typeMap[e].short}
+          </Button>)
       }
     </Popover>
   );
@@ -23,7 +30,7 @@ const changeTypeBtn = (litype, updId, fn) => {
   );
 };
 
-const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
+const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate, typeMap) => {
   const unis = uniq(sortedIds);
   let cnt = 0;
   let result = unis.map((id) => {
@@ -64,7 +71,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
                 <i className="fa fa-clipboard" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            {changeTypeBtn(litype, id, fnUpdate)}
+            {changeTypeBtn(litype, id, fnUpdate, typeMap)}
             <Button bsStyle="danger" onClick={() => fnDelete(citation)}><i className="fa fa-trash-o" aria-hidden="true" /></Button>
           </ButtonGroup>
         </div>
@@ -77,10 +84,10 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate) => {
 
 function CitationPanel(props) {
   const {
-    title, fnDelete, sortedIds, rows, fnUpdate, citationMap
+    title, fnDelete, sortedIds, rows, fnUpdate, citationMap, typeMap
   } = props;
 
-  let result = buildRow(title, fnDelete, sortedIds, rows, fnUpdate);
+  let result = buildRow(title, fnDelete, sortedIds, rows, fnUpdate,typeMap);
 
   if (title === 'uncategorized' && result.length === 0) return null;
 

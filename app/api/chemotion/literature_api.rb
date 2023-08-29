@@ -45,7 +45,7 @@ module Chemotion
         requires :element_id, type: Integer
         requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :id, type: Integer
-        requires :litype, type: String, values: %w[citedOwn citedRef referTo]
+        requires :litype, type: String, values: %w[citedOwn citedRef referTo literatureOfSource additionalLiterature]
       end
       put do
         Literal.find(params[:id])&.update(litype: params[:litype])

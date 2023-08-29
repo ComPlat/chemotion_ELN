@@ -23,8 +23,13 @@ const CitationTypeMap = {
 
 const cellLineCitationTypeMap = {
   literatureOfSource: {
-    def: 'Literature from the source of the cell lines describing it',
+    def: 'Official literature from the source of the cell lines describing it',
     short: 'literature from source',
+    datacite: []
+  },
+  additionalLiterature: {
+    def: 'Additional literature',
+    short: 'additional literature',
     datacite: []
   }
 };

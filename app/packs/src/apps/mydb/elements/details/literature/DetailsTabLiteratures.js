@@ -347,6 +347,7 @@ export default class DetailsTabLiteratures extends Component {
                   uid={currentUser && currentUser.id}
                   fnUpdate={this.handleTypeUpdate}
                   citationMap={citationTypeMap[e]}
+                  typeMap={citationTypeMap}
                 />
               ))
           }
