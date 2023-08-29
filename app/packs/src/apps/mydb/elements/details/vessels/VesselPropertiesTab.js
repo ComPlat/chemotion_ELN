@@ -33,7 +33,7 @@ class VesselPropertiesTab extends React.Component {
               {this.renderAttribute('Vessel Template Name', vesselItem.vesselTemplateName, (e)=>{vesselDetailsStore.changeTemplateName(vesselId, e.target.value)})}
               {this.renderAttribute('Vessel Type', vesselItem.vesselType, (e)=>{vesselDetailsStore.changeType(vesselId, e.target.value)})}
               {this.renderAttribute('Vessel Details', vesselItem.vesselDetails, (e)=>{vesselDetailsStore.changeDetails(vesselId, e.target.value)})}
-              {this.renderAttribute('Volume Amount', vesselItem.volumeAmount, (e)=>{vesselDetailsStore.changeVolumeAmount(vesselId, e.target.value)})}
+              {this.renderAttribute('Volume Amount', vesselItem.volumeAmount, (e)=>{vesselDetailsStore.changeVolumeAmount(vesselId, e.target.value)},"number")}
               {this.renderAttribute('Volume Unit', vesselItem.volumeUnit, (e)=>{vesselDetailsStore.changeVolumeUnit(vesselId, e.target.value)})}
               {this.renderAttribute('Material', vesselItem.materialType, (e)=>{vesselDetailsStore.changeMaterialType(vesselId, e.target.value)})}
               {this.renderAttribute('Material Details', vesselItem.materialDetails, (e)=>{vesselDetailsStore.changeMaterialDetails(vesselId, e.target.value)})}
@@ -56,13 +56,13 @@ class VesselPropertiesTab extends React.Component {
     )
   }
 
-  renderAttribute(attributeName, defaultValue, onChangeCallBack) {
+  renderAttribute(attributeName, defaultValue, onChangeCallBack, attrType="text") {
     return (
       <div>
         <Col componentClass={ControlLabel} sm="auto">{attributeName}</Col>
         <Col sm="auto">
           <FormControl
-            type="text"
+            type={attrType}
             name="XXX"
             defaultValue={defaultValue}
             onChange={onChangeCallBack}

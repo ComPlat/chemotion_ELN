@@ -6,7 +6,7 @@ const VesselItem = types.model({
   vesselDetails: '',
   vesselType: '',
   volumeUnit: '',
-  volumeAmount: '',
+  volumeAmount: 0,
   materialType: '',
   materialDetails: '',
   id: '',
@@ -41,7 +41,7 @@ export const VesselDetailsStore = types.model({
   },
   changeVolumeAmount(id, newVolumeAmount) {
     self.vesselItem.get(id).changed = true;
-    self.vesselItem.get(id).volumeAmount = newVolumeAmount;
+    self.vesselItem.get(id).volumeAmount = Number(newVolumeAmount);
   },
   changeMaterialType(id, newMaterialType) {
     self.vesselItem.get(id).changed = true;
