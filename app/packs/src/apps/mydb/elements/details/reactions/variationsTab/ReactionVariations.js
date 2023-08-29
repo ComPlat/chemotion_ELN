@@ -139,6 +139,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       headerName: 'Properties',
       groupId: 'Properties',
+      marryChildren: true,
       children: [
         {
           headerName: 'Temperature',
@@ -153,6 +154,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       headerName: 'Starting Materials',
       groupId: 'Starting Materials',
+      marryChildren: true,
       children: reaction.starting_materials.map(
         (material) => ({
           field: `startingMaterials.${material.id}`, // must be unique
@@ -163,6 +165,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       headerName: 'Reactants',
       groupId: 'Reactants',
+      marryChildren: true,
       children: reaction.reactants.map(
         (material) => ({
           field: `reactants.${material.id}`,
@@ -174,6 +177,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       headerName: 'Products',
       groupId: 'Products',
+      marryChildren: true,
       children: reaction.products.map(
         (material) => ({
           field: `products.${material.id}`,
