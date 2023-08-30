@@ -200,7 +200,7 @@ module ReportHelpers
       export.generate_analyses_sheet_with_samples(sheet_name, result, columns_params)
     when :chemicals
       sheet_name = "#{table}_chemicals"
-      format_result = type == :chemicals ? format_chemical_row_values(result) : result
+      format_result = type == :chemicals ? Export::ExportChemicals.format_chemical_results(result) : result
       export.generate_sheet_with_samples(sheet_name, format_result, columns_params)
     else
       export.generate_sheet_with_samples(table, result)
@@ -235,7 +235,6 @@ module ReportHelpers
       next unless sql_query
 
       result = db_exec_query(sql_query)
-
       generate_sheet(table, result, columns_params, export, type)
     end
   end
@@ -549,11 +548,6 @@ module ReportHelpers
   # { table_name:
   #     column_name: ['abbr.column_name', 'alt column_name', min_detail_level]
   #   ...
-  MERCK_SDS_LINK = 'c."chemical_data"->0->\'merckProductInfo\'->\'sdsLink\''
-  ALFA_SDS_LINK = 'c."chemical_data"->0->\'alfaProductInfo\'->\'sdsLink\''
-  MERCK_PRODUCT_LINK = 'c."chemical_data"->0->\'merckProductInfo\'->\'productLink\''
-  ALFA_PRODUCT_LINK= 'c."chemical_data"->0->\'alfaProductInfo\'->\'productLink\''
-  SAFETY_SHEET_INFO = %w[safety_sheet_link product_link].freeze
   EXP_MAP_ATTR =
     # commented out lines are blacklisted attributes
     {
@@ -660,60 +654,7 @@ module ReportHelpers
         filename: ['att.filename', '"filename"', 10],
         checksum: ['att.checksum', '"checksum"', 10],
       },
-      chemical: {
-        status: ['c."chemical_data"->0->\'status\'', '"status"', nil],
-        vendor: ['c."chemical_data"->0->\'vendor\'', '"vendor"', nil],
-        person: ['c."chemical_data"->0->\'person\'', '"person"', nil],
-        price: ['c."chemical_data"->0->\'price\'', '"price"', nil],
-        amount: ['c."chemical_data"->0->\'amount\'', '"amount"', nil],
-        order_number: ['c."chemical_data"->0->\'order_number\'', '"order_number"', nil],
-        required_date: ['c."chemical_data"->0->\'required_date\'', '"required_date"', nil],
-        required_by: ['c."chemical_data"->0->\'required_by\'', '"required_by"', nil],
-        safety_sheet_link: [MERCK_SDS_LINK, '"safety_sheet_link"', ALFA_SDS_LINK, nil],
-        product_link: [MERCK_PRODUCT_LINK, '"product_link"', ALFA_PRODUCT_LINK, nil],
-        ordered_date: ['c."chemical_data"->0->\'ordered_date\'', '"ordered_date"', nil],
-        h_statements: ['c."chemical_data"->0->\'safetyPhrases\'->\'h_statements\'', '"h_statements"', nil],
-        p_statements: ['c."chemical_data"->0->\'safetyPhrases\'->\'p_statements\'', '"p_statements"', nil],
-        pictograms: ['c."chemical_data"->0->\'safetyPhrases\'->\'pictograms\'', '"pictograms"', nil],
-        host_building: ['c."chemical_data"->0->\'host_building\'', '"host_building"', nil],
-        host_room: ['c."chemical_data"->0->\'host_room\'', '"host_room"', nil],
-        host_cabinet: ['c."chemical_data"->0->\'host_cabinet\'', '"host_cabinet"', nil],
-        host_group: ['c."chemical_data"->0->\'host_group\'', '"host_group"', nil],
-        owner: ['c."chemical_data"->0->\'host_owner\'', '"owner"', nil],
-        current_building: ['c."chemical_data"->0->\'current_building\'', '"current_building"', nil],
-        current_room: ['c."chemical_data"->0->\'current_room\'', '"current_room"', nil],
-        current_cabinet: ['c."chemical_data"->0->\'current_cabinet\'', '"current_cabinet"', nil],
-        current_group: ['c."chemical_data"->0->\'current_group\'', '"current_group"', nil],
-        borrowed_by: ['c."chemical_data"->0->\'borrowed_by\'', '"borrowed_by"', nil],
-        disposal_info: ['c."chemical_data"->0->\'disposal_info\'', '"disposal_info"', nil],
-        important_notes: ['c."chemical_data"->0->\'important_notes\'', '"important_notes"', nil],
-      },
     }.freeze
-
-  def build_chemical_column_query(selection, sel, attrs)
-    chemical_selections = []
-    sel[:chemicals].each do |col|
-      query = attrs[:chemical][col.to_sym]
-      chemical_selections << ("#{query[2]} as #{query[1]}") if SAFETY_SHEET_INFO.include?(col)
-      chemical_selections << ("#{query[0]} as #{query[1]}")
-    end
-    gathered_selections = []
-    gathered_selections << selection
-    gathered_selections << chemical_selections
-  end
-
-  def format_chemical_row_values(result)
-    result.rows.map! do |row|
-      row.map do |value|
-        if value.is_a?(String)
-          # Remove square brackets and curly braces backslashes and extra quotes
-          value = value.gsub(/[\[\]{}"]/, '')
-        end
-        value
-      end
-    end
-    result
-  end
 
   def custom_column_query(table, col, selection, user_id, attrs)
     if col == 'user_labels'
@@ -735,7 +676,7 @@ module ReportHelpers
       end
     end
     selection = if sel[:chemicals].present?
-                  build_chemical_column_query(selection, sel, attrs)
+                  Export::ExportChemicals.build_chemical_column_query(selection, sel)
                 else
                   selection.join(',')
                 end
@@ -756,7 +697,7 @@ module ReportHelpers
     # when :reaction_analyses
     #  columns.slice(:analysis).merge(reaction_id: params[:columns][:reaction])
     when :sample_chemicals
-      columns.slice(:chemicals).merge(sample_id: params[:columns][:sample])
+      columns.slice(:chemicals, :sample, :molecule)
     else
       {}
     end
