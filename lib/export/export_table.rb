@@ -49,10 +49,10 @@ module Export
     HEADERS_DATASET = ["dataset name", "instrument", "dataset description"].freeze
     HEADERS_ATTACHMENT_0 = [].freeze
     HEADERS_ATTACHMENT = ["filename", "checksum"].freeze
-    HEADERS_CHEMICAL = %w[status vendor order_number amount price person required_date ordered_date required_by
-                          safety_sheet_link product_link pictograms h_statements p_statements host_building
-                          host_room host_cabinet host_group owner current_building current_room current_cabinet
-                          borrowed_by disposal_info important_notes].freeze
+    # HEADERS_CHEMICAL = %w[status vendor order_number amount price person required_date ordered_date required_by
+    #                       safety_sheet_link product_link pictograms h_statements p_statements host_building
+    #                       host_room host_cabinet host_group owner current_building current_room current_cabinet
+    #                       borrowed_by disposal_info important_notes].freeze
 
     def extract_label_from_solvent_column(sample_column)
       return unless sample_column.is_a?(String) && !sample_column.empty?
@@ -114,6 +114,13 @@ module Export
       }
     end
 
+    def format_headers(headers)
+      headers.map! do |header|
+        header.tr('_', ' ')
+      end
+      headers
+    end
+
     def generate_headers_sample
       @headers00 = @headers.map { |column|
         HEADERS_SAMPLE_0.include?(column) ? column : nil
@@ -121,6 +128,7 @@ module Export
       @headers100 = @headers.map { |column|
         HEADERS_SAMPLE_10.include?(column) ? column : nil
       }
+      @headers = format_headers(@headers)
     end
 
     def generate_headers_sample_id
