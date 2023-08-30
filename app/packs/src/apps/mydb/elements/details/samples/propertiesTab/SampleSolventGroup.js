@@ -8,10 +8,11 @@ import VirtualizedSelect from 'react-virtualized-select';
 import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
   if (!solvent) {
-    return (<></>);
+    return null;
   }
 
   const changeLabel = (event) => {
@@ -97,6 +98,13 @@ function SampleSolventGroup({
         dropSample(molecule, null, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
+        NotificationActions.add({
+          title: 'Error',
+          message: 'Failed to fetch molecule data.',
+          level: 'error',
+          dismissible: true,
+          autoDismiss: 5
+        });
       });
   };
 
@@ -158,4 +166,4 @@ SampleSolventGroup.defaultProps = {
   lockEquivColumn: false
 };
 
-export { SampleSolventGroup };
+export { SampleSolventGroup, SolventDetails };
