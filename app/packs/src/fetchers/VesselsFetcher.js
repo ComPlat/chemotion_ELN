@@ -1,6 +1,34 @@
 import Vessel from 'src/models/Vessel';
 import { extractApiParameter } from '../utilities/VesselUtils';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+
+const successfullyCreatedParameter = {
+  title: 'Element created',
+  message: 'Vessel successfully added',
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+};
+
+const successfullyUpdatedParameter = {
+  title: 'Element updated',
+  message: 'Vessel successfully updated',
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+};
+
+const errorMessageParameter = {
+  title: 'Error',
+  message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
+  level: 'error',
+  dismissible: 'button',
+  autoDismiss: 30,
+  position: 'tr'
+};
 
 export default class VesselsFetcher {
   static mockData = {};
@@ -40,10 +68,13 @@ export default class VesselsFetcher {
       .then((response) => response.json())
       .then((json) => Vessel.createFromRestResponse(params.collection_id, json)).then((vesselItem) => {
         user.vessels_count = user.vessels_count + 1;
+        NotificationActions.add(successfullyCreatedParameter);
         return vesselItem;
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
+        NotificationActions.add(errorMessageParameter);
+        return vesselItem;
       });
     return promise;
   }
@@ -61,8 +92,14 @@ export default class VesselsFetcher {
     })
       .then((response) => response.json())
       .then((json) => Vessel.createFromRestResponse(params.collection_id, json))
+      .then((vesselItem) => {
+        NotificationActions.add(successfullyUpdatedParameter);
+        return vesselItem;
+      })
       .catch((errorMessage) => {
         console.log(errorMessage);
+        NotificationActions.add(errorMessageParameter);
+        return vesselItem
       });
     return promise;
   }
