@@ -1,19 +1,31 @@
 import cloneDeep from 'lodash/cloneDeep';
+import { convertTemperature, convertDuration } from 'src/models/Reaction';
+import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 
-function getMaterialData(material, requestedUnit) {
-  let value = null;
-  let unit = 'None';
-  if (requestedUnit === 'Equiv') {
-    value = material.equivalent ?? null;
-    unit = 'Equiv';
-  } else if (requestedUnit === 'Amount') {
-    value = material.amount_g ?? null;
-    unit = 'g';
+const temperatureUnits = ['°C', 'K', '°F'];
+const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
+const amountUnits = ['g', 'mg', 'μg'];
+
+function convertUnit(value, fromUnit, toUnit) {
+  if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
+    return convertTemperature(value, fromUnit, toUnit);
   }
+  if (durationUnits.includes(fromUnit) && durationUnits.includes(toUnit)) {
+    return convertDuration(value, fromUnit, toUnit);
+  }
+  if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
+    const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
+    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
+  }
+  return value;
+}
+
+function getMaterialData(material) {
+  const value = material.amount_g ?? null;
+  const unit = amountUnits[0];
   const aux = {
     coefficient: material.coefficient ?? null,
     isReference: material.reference ?? false,
-    referenceAmount: material.reference ?? false ? material.amount_g ?? null : null,
     loading: (Array.isArray(material.residues) && material.residues.length) ? material.residues[0].custom_info?.loading : null,
     purity: material.purity ?? null,
     molarity: material.molarity_value ?? null,
@@ -25,22 +37,22 @@ function getMaterialData(material, requestedUnit) {
 }
 
 function getMolFromGram(material) {
-  const amount = material.aux.isReference ? material.aux.referenceAmount : material.value;
+  const gram = convertUnit(material.value, material.unit, 'g');
 
   if (material.aux.loading) {
-    return (material.aux.loading * amount) / 1000.0;
+    return (material.aux.loading * gram) / 1e4;
   }
 
   if (material.aux.molarity) {
-    const liter = (amount * material.aux.purity)
+    const liter = (gram * material.aux.purity)
       / (material.aux.molarity * material.aux.molecularWeight);
     return liter * material.molarity;
   }
 
-  return (amount * material.aux.purity) / material.aux.molecularWeight;
+  return (gram * material.aux.purity) / material.aux.molecularWeight;
 }
 
-function createVariationsRow(reaction, id, materialUnit) {
+function createVariationsRow(reaction, id) {
   const { dispValue: durationValue = '', dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = '', valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const row = {
@@ -54,11 +66,11 @@ function createVariationsRow(reaction, id, materialUnit) {
       }
     },
     startingMaterials: reaction.starting_materials.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, materialUnit) }), {}),
+      { ...a, [v.id]: getMaterialData(v) }), {}),
     reactants: reaction.reactants.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, materialUnit) }), {}),
+      { ...a, [v.id]: getMaterialData(v) }), {}),
     products: reaction.products.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, 'Amount') }), {})
+      { ...a, [v.id]: getMaterialData(v) }), {})
   };
   return row;
 }
@@ -83,7 +95,7 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
     ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
-          row[materialType][material.id] = getMaterialData(material, materialType === 'products' ? 'Amount' : 'Equiv');
+          row[materialType][material.id] = getMaterialData(material);
         }
       });
     });
@@ -122,5 +134,9 @@ export {
   createVariationsRow,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
-  computeYield
+  computeYield,
+  temperatureUnits,
+  durationUnits,
+  amountUnits,
+  convertUnit
 };

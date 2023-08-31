@@ -5,11 +5,13 @@ import React, {
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  Button, FormGroup, Radio, ControlLabel, ButtonGroup,
+  Button, FormGroup, ControlLabel, ButtonGroup,
   OverlayTrigger, Tooltip, Form, Badge, DropdownButton, MenuItem
 } from 'react-bootstrap';
 import _ from 'lodash';
-import { createVariationsRow } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  createVariationsRow, temperatureUnits, durationUnits, amountUnits, convertUnit
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function RowToolsCellRenderer({ data, copyRow, removeRow }) {
   return (
@@ -60,8 +62,14 @@ const cellComparator = (item1, item2) => {
 
 const CellEditor = forwardRef((props, ref) => {
   const { value = '', unit = 'None', aux = {} } = props.value ?? {};
-  const [editedValue, setEditedValue] = useState(value);
+  const [currentUnit, setCurrentUnit] = useState(unit);
+  const [currentValue, setCurrentValue] = useState(value);
   const refInput = useRef(null);
+
+  const onUnitChange = (newUnit) => {
+    setCurrentValue(convertUnit(currentValue, currentUnit, newUnit));
+    setCurrentUnit(newUnit);
+  };
 
   useEffect(() => {
     // focus on the input
@@ -71,24 +79,33 @@ const CellEditor = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     getValue() {
       // final value to send to the grid, on completion of editing
-      return { value: editedValue, unit, aux };
+      return { value: currentValue, unit: currentUnit, aux };
     },
-
-    isCancelAfterEnd() {
-      // validate edit here: return true to declare edit invalid and keep previous value
-      return false;
-    }
   }));
 
   return (
-    <input
-      type="number"
-      ref={refInput}
-      value={editedValue}
-      onChange={(event) => setEditedValue(event.target.value)}
-      style={{ width: '100%' }}
-      disabled={aux.isReference}
-    />
+    <div>
+      <input
+        type="number"
+        ref={refInput}
+        value={currentValue}
+        onChange={(event) => setCurrentValue(event.target.value)}
+        disabled={aux.isReference}
+      />
+      <DropdownButton title={currentUnit}>
+        {props.unitOptions.map(
+          (option) => (
+            <MenuItem
+              key={option}
+              onSelect={() => onUnitChange(option)}
+            >
+              {option}
+            </MenuItem>
+          )
+        )}
+      </DropdownButton>
+    </div>
+
   );
 });
 
@@ -111,13 +128,15 @@ function getMaterialHeaderIdentifier(material, identifier) {
 }
 
 export default function ReactionVariations({ reaction, onEditVariations }) {
+  // Presentation layer.
+  // All logic regarding variations lives in the Reaction model (src/models/Reaction.js).
+
   const gridRef = useRef();
 
-  const [materialUnit, setMaterialUnit] = useState('Equiv');
   const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('ext. label');
 
   function addRow() {
-    const newRow = createVariationsRow(reaction, uuidv4(), materialUnit);
+    const newRow = createVariationsRow(reaction, uuidv4());
     onEditVariations(
       [...reaction.variations, newRow]
     );
@@ -163,10 +182,12 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         {
           headerName: 'Temperature',
           field: 'properties.temperature',
+          cellEditorParams: { unitOptions: temperatureUnits },
         },
         {
           headerName: 'Duration',
           field: 'properties.duration',
+          cellEditorParams: { unitOptions: durationUnits },
         },
       ]
     },
@@ -213,21 +234,6 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         </OverlayTrigger>
         {' '}
         <FormGroup>
-          <ControlLabel>with material unit</ControlLabel>
-          {' '}
-          {['Equiv', 'Amount'].map(
-            (unit) => (
-              <Radio
-                key={unit}
-                checked={materialUnit === unit}
-                onChange={() => setMaterialUnit(unit)}
-                inline
-              >
-                {unit}
-              </Radio>
-            )
-          )}
-          {' '}
           <ControlLabel>Identify materials by</ControlLabel>
           {' '}
           <DropdownButton
@@ -262,6 +268,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             resizable: true,
             comparator: cellComparator,
             cellEditor: CellEditor,
+            cellEditorPopup: true,
+            cellEditorParams: { unitOptions: amountUnits },
             cellRenderer: CellRenderer,
             wrapHeaderText: true,
             autoHeaderHeight: true,

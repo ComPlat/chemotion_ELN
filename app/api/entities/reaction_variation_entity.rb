@@ -57,7 +57,6 @@ module Entities
     expose(
       :coefficient,
       :isReference,
-      :referenceAmount,
       :loading,
       :purity,
       :molarity,

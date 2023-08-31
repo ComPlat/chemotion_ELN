@@ -24,7 +24,7 @@ async function setUpReaction() {
   reaction.starting_materials[0].reference = true;
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, id, 'Equiv'));
+    variations.push(createVariationsRow(reaction, id));
   }
   reaction.variations = variations;
   return reaction;
