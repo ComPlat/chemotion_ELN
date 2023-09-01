@@ -51,7 +51,7 @@ module Export
       sorted.join
     end
 
-    def self.merge_columns(result, *indexes)
+    def self.format_columns_name(result, *indexes)
       indexes.sort.reverse_each do |index|
         result.columns[index] = result.columns[index].sub(/\s+\S+\z/, '')
       end
@@ -65,7 +65,7 @@ module Export
     end
 
     def self.process_merged_columns(result, columns_index)
-      merge_columns(result, columns_index['safety_sheet_link'][0], columns_index['product_link'][0])
+      format_columns_name(result, columns_index['safety_sheet_link'][0], columns_index['product_link'][0])
       delete_columns(result, columns_index['safety_sheet_link'][1], columns_index['product_link'][1])
     end
 
@@ -73,7 +73,7 @@ module Export
       indexes_to_delete.sort.reverse_each do |index|
         result.columns.delete_at(index)
         result.rows.each { |row| row.delete_at(index) }
-        result.columns[index - 1] = result.columns[index - 1].sub(/\s+\S+\z/, '')
+        format_columns_name(result, index - 1)
       end
     end
 
@@ -82,28 +82,6 @@ module Export
       process_merged_columns(result, columns_index) if indexes_to_delete.empty?
       result
     end
-
-    # def self.merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
-    #   # Sort the indexes in descending order to prevent index shifting issues
-    #   indexes_to_delete.sort.reverse_each do |index|
-    #     result.columns.delete_at(index)
-    #     result.rows.each { |row| row.delete_at(index) }
-    #     binding.pry
-    #     result.columns[index - 1] = result.columns[index - 1].sub(/\s+\S+\z/, '')
-    #   end
-    #   if indexes_to_delete.empty?
-    #     # merge columns here
-    #     result.columns[columns_index['safety_sheet_link'][0]] = result.columns[columns_index['safety_sheet_link'][0]].sub(/\s+\S+\z/, '')
-    #     result.columns[columns_index['product_link'][0]] = result.columns[columns_index['product_link'][0]].sub(/\s+\S+\z/, '')
-    #     columns_to_delete = [columns_index['safety_sheet_link'][1], columns_index['product_link'][1]]
-    #     columns_to_delete.sort.reverse_each do |index|
-    #       result.columns.delete_at(index)
-    #       result.rows.each { |row| row.delete_at(index) }
-    #     end
-    #   end
-    #   # binding.pry
-    #   result
-    # end
 
     def self.format_p_and_h_statements(value)
       keys = JSON.parse(value).keys
@@ -145,46 +123,6 @@ module Export
       merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
     end
 
-    # def self.format_chemical_results_row(result, columns_index)
-    #   # binding.pry
-    #   indexes_to_delete = []
-    #   result.rows.map! do |row|
-    #     row.map.with_index do |value, index|
-    #       if value.is_a?(String)
-    #         # concatenate keys of p and h statements
-    #         if index == columns_index['p_statements'] || index == columns_index['h_statements']
-    #           keys = JSON.parse(value).keys
-    #           value = keys.join('-')
-    #         elsif index == columns_index['amount']
-    #           value = format_chemical_amount(value)
-    #         elsif index == columns_index['safety_sheet_link'][0]
-    #           if columns_index['safety_sheet_link'][1]
-    #             # next_index = columns_index['safety_sheet_link'][1]
-    #             # value_next_index = row[columns_index['safety_sheet_link'][1]]
-    #             if row[columns_index['safety_sheet_link'][1]]
-    #             value += "-#{row[columns_index['safety_sheet_link'][1]]}"
-    #             indexes_to_delete.push(columns_index['safety_sheet_link'][1])
-    #             end
-    #           end
-    #         elsif index == columns_index['product_link'][0]
-    #           if columns_index['product_link'][1]
-    #             # next_index = columns_index['product_link'][1]
-    #             # value_next_index = row[columns_index['product_link'][1]]
-    #             if row[columns_index['product_link'][1]]
-    #               value += "-#{row[columns_index['product_link'][1]]}"
-    #               indexes_to_delete.push(columns_index['product_link'][1])
-    #             end
-    #           end
-    #         end
-    #         # Remove square brackets and curly braces backslashes and extra quotes
-    #         value = value.gsub(/[\[\]"]/, '')
-    #       end
-    #       value
-    #     end
-    #   end
-    #   merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
-    # end
-
     def self.construct_column_name_hash(columns_index, column_name, index)
       case column_name
       when 'p statements'
@@ -218,7 +156,6 @@ module Export
         column_name, columns_index = construct_column_name(column_name, index, columns_index)
         result.columns[index] = column_name # Replace the value in the array
       end
-      # binding.pry
       format_chemical_results_row(result, columns_index)
     end
 
