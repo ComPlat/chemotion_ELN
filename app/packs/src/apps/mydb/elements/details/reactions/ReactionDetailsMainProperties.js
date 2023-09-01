@@ -77,7 +77,7 @@ export default class ReactionDetailsMainProperties extends Component {
           <div style={{ width: '74%', float: 'left' }}>
             <LineChartContainer
               data={temperature}
-              xAxis="Time"
+              xAxis="Time (h)"
               yAxis={tempUnitLabel}
             />
           </div>
