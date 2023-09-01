@@ -342,6 +342,9 @@ module AttachmentJcampProcess
   end
 
   def jcamp_files_already_present?
+    _, extname = extension_parts
+    return false if extname.casecmp('nmrium').zero?
+
     attachments = Attachment.where(attachable_id: self[:attachable_id])
     num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
     jcamp_attachments = file_match(attachments, num)
