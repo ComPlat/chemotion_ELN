@@ -61,7 +61,8 @@ module Export
 
       return nil if solvent_hash.nil?
 
-      solvent_hash[0]&.fetch('label', nil)
+      solvent_values = solvent_hash.map { |solvent| solvent&.fetch('label', nil) }
+      solvent_values.compact.join('-')
     end
 
     def generate_headers(table, excluded_columns = [], selected_columns = [])

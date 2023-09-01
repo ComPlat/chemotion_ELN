@@ -72,14 +72,18 @@ module Export
       data.concat("\$\$\$\$\n")
     end
 
+    def extract_reference_values(raw_value)
+      regex = /[\[\]()]/
+      string = raw_value.gsub(regex, '')
+      string.split(',').join(' - ')
+    end
+
     def format_field(column, raw_value)
       field = column.gsub(/\s+/, '_').upcase
       reference_values = ['melting pt', 'boiling pt']
       sample_column =
         if reference_values.include?(column)
-          regex = /[\[\]()]/
-          string = raw_value.gsub(regex, '')
-          string.split(',').join(' - ')
+          extract_reference_values(raw_value)
         elsif column == 'solvent'
           extract_label_from_solvent_column(raw_value) || ''
         else

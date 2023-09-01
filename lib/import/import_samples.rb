@@ -176,17 +176,26 @@ module Import
       Sample.attribute_names - excluded_fields
     end
 
+    def construct_solvents_array(solvents)
+      solvents_array = solvents.split('-')
+      solvents_array.map(&:capitalize)
+    end
+
     def handle_sample_solvent_column(sample, row)
       return unless row['solvent'].is_a? String
 
-      solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(row['solvent']) }
-      if solvent.present?
-        solvent_column = [{ label: solvent[:value][:external_label],
-                            smiles: solvent[:value][:smiles],
-                            ratio: '100' }]
+      solvent_array = construct_solvents_array(row['solvent'])
+      solvent_column = []
+      solvent_array.each do |element|
+        solvent = Chemotion::SampleConst.solvents_smiles_options.find { |s| s[:label].include?(element) }
+        next if solvent.blank?
+
+        solvent_column.push({ label: solvent[:value][:external_label],
+                              smiles: solvent[:value][:smiles],
+                              ratio: '1' })
       end
       sample['solvent'] = '' if sample['solvent'].is_a? String
-      sample['solvent'] = solvent_column if solvent.present?
+      sample['solvent'] = solvent_column unless solvent_column.empty?
     end
 
     # format row[field] for melting and boiling point

@@ -169,11 +169,11 @@ export default class SamplesFetcher {
   }
 
   static importSamplesFromFileConfirm(params) {
-    let promise = fetch('/api/v1/samples/confirm_import/', {
+    const promise = fetch('/api/v1/samples/confirm_import/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -182,16 +182,16 @@ export default class SamplesFetcher {
         mapped_keys: params.mapped_keys,
       })
     }).then((response) => {
-      return response.json();
+      response.json();
     }).then((json) => {
       if (Array.isArray(json.error_messages)) {
-        for (let i = 0; i < json.error_messages.length; i++) {
+        json.error_messages.forEach((message) => {
           NotificationActions.add({
-            message: json.error_messages[i],
+            message,
             level: 'error',
             autoDismiss: 10
           });
-        }
+        });
       } else {
         NotificationActions.add({
           message: json.error_messages || json.message,
