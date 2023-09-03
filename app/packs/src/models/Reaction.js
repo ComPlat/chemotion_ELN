@@ -27,6 +27,24 @@ const TemperatureDefault = {
   data: []
 };
 
+export const convertTemperature = (temperature, fromUnit, toUnit) => {
+  const conversionTable = {
+    'K': {
+      '°C': (t) => parseFloat(t) - 273.15,
+      '°F': (t) => (parseFloat(t) * 9 / 5) - 459.67
+    },
+    '°C': {
+      'K': (t) => parseFloat(t) + 273.15,
+      '°F': (t) => (parseFloat(t) * 1.8) + 32
+    },
+    '°F': {
+      'K': (t) => (parseFloat(t) + 459.67) * 5 / 9,
+      '°C': (t) => (parseFloat(t) - 32) / 1.8
+    }
+  };
+  return conversionTable[fromUnit][toUnit](temperature);
+};
+
 const MomentUnit = {
   'Week(s)': 'weeks',
   'Day(s)': 'days',
@@ -58,7 +76,7 @@ const DurationDefault = {
   memUnit: 'Hour(s)'
 };
 
-const convertDuration = (value, unit, newUnit) => {
+export const convertDuration = (value, unit, newUnit) => {
   const d = moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
     .as(MomentUnit[newUnit]);
   return round(d, 1).toString();
@@ -362,60 +380,22 @@ export default class Reaction extends Element {
   }
 
   convertTemperature(newUnit) {
-    let temperature = this._temperature
-    let oldUnit = temperature.valueUnit
-    temperature.valueUnit = newUnit
-
-    let convertFunc
-    switch (oldUnit) {
-      case "K":
-        convertFunc = this.convertFromKelvin
-        break
-      case "°F":
-        convertFunc = this.convertFromFarenheit
-        break
-      default:
-        convertFunc = this.convertFromCelcius
-        break
-    }
+    const temperature = this._temperature
+    const oldUnit = temperature.valueUnit;
+    temperature.valueUnit = newUnit;
 
     // If userText is number only, treat as normal temperature value
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
-      temperature.userText =
-        convertFunc(newUnit, temperature.userText).toFixed(2)
+      temperature.userText = convertTemperature(temperature.userText, oldUnit, newUnit).toFixed(2);
 
-      return temperature
+      return temperature;
     }
 
-    temperature.data.forEach(function (data, index, theArray) {
-      theArray[index].value = convertFunc(newUnit, data.value).toFixed(2)
-    })
+    temperature.data.forEach((data, index, theArray) => {
+      theArray[index].value = convertTemperature(data.value, oldUnit, newUnit).toFixed(2);
+    });
 
-    return temperature
-  }
-
-  convertFromKelvin(unit, temperature) {
-    if (unit == "°C") {
-      return (parseFloat(temperature) - 273.15)
-    } else { // Farenheit
-      return ((parseFloat(temperature) * 9 / 5) - 459.67)
-    }
-  }
-
-  convertFromFarenheit(unit, temperature) {
-    if (unit == "°C") {
-      return ((parseFloat(temperature) - 32) / 1.8)
-    } else { // Kelvin
-      return ((parseFloat(temperature) + 459.67) * 5 / 9)
-    }
-  }
-
-  convertFromCelcius(unit, temperature) {
-    if (unit == "°F") {
-      return ((parseFloat(temperature) * 1.8) + 32)
-    } else { // Kelvin
-      return (parseFloat(temperature) + 273.15)
-    }
+    return temperature;
   }
 
   get short_label() {
@@ -880,9 +860,9 @@ export default class Reaction extends Element {
   get totalVolume() {
     let totalVolume = 0.0;
     const materials = [...this.starting_materials,
-    ...this.reactants,
-    ...this.products,
-    ...this.solvents];
+      ...this.reactants,
+      ...this.products,
+      ...this.solvents];
     materials.map(m => totalVolume += m.amount_l);
     return totalVolume;
   }
