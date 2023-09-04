@@ -32,9 +32,9 @@ function convertUnit(value, fromUnit, toUnit) {
   return value;
 }
 
-function getMaterialData(material) {
-  const value = material.amount_value ?? null;
-  const unit = material.amount_unit ?? null;
+function getMaterialData(material, materialType) {
+  const value = materialType === 'solvents' ? (material.amount_l ?? null) : (material.amount_g ?? null);
+  const unit = materialType === 'solvents' ? 'l' : 'g';
   const aux = {
     coefficient: material.coefficient ?? null,
     isReference: material.reference ?? false,
@@ -80,7 +80,7 @@ function createVariationsRow(reaction, id) {
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reaction[reactionAttributeName].reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v) }), {});
+      { ...a, [v.id]: getMaterialData(v, materialType) }), {});
   });
 
   return row;
@@ -106,7 +106,7 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
     Object.keys(materialTypes).forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
-          row[materialType][material.id] = getMaterialData(material);
+          row[materialType][material.id] = getMaterialData(material, materialType);
         }
       });
     });
