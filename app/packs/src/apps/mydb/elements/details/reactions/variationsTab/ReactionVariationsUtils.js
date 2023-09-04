@@ -6,6 +6,12 @@ const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
 const massUnits = ['mg', 'g', 'μg'];
 const volumeUnits = ['ml', 'l', 'μl'];
+const materialTypes = {
+  startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
+  reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
+  products: { label: 'Products', reactionAttributeName: 'products' },
+  solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
+};
 
 function convertUnit(value, fromUnit, toUnit) {
   if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
@@ -71,22 +77,19 @@ function createVariationsRow(reaction, id) {
         value: durationValue, unit: durationUnit
       }
     },
-    startingMaterials: reaction.starting_materials.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v) }), {}),
-    reactants: reaction.reactants.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v) }), {}),
-    products: reaction.products.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v) }), {}),
-    solvents: reaction.solvents.reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v) }), {})
   };
+  Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
+    row[materialType] = reaction[reactionAttributeName].reduce((a, v) => (
+      { ...a, [v.id]: getMaterialData(v) }), {});
+  });
+
   return row;
 }
 
 function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
-    ['startingMaterials', 'reactants', 'products', 'solvents'].forEach((materialType) => {
+    Object.keys(materialTypes).forEach((materialType) => {
       Object.keys(row[materialType]).forEach((materialName) => {
         if (!currentMaterials[materialType].map((material) => material.id.toString()).includes(materialName)) {
           delete row[materialType][materialName];
@@ -100,7 +103,7 @@ function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
 function addMissingMaterialsToVariations(variations, currentMaterials) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
-    ['startingMaterials', 'reactants', 'products', 'solvents'].forEach((materialType) => {
+    Object.keys(materialTypes).forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
           row[materialType][material.id] = getMaterialData(material);
@@ -147,5 +150,6 @@ export {
   durationUnits,
   massUnits,
   volumeUnits,
-  convertUnit
+  convertUnit,
+  materialTypes
 };

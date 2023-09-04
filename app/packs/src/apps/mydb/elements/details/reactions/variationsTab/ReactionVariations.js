@@ -10,7 +10,8 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import {
-  createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits, convertUnit
+  createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits,
+  convertUnit, materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function RowToolsCellRenderer({ data, copyRow, removeRow }) {
@@ -191,52 +192,20 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         },
       ]
     },
-    {
-      headerName: 'Starting Materials',
-      groupId: 'Starting Materials',
+  ].concat(
+    Object.entries(materialTypes).map(([materialType, { label, reactionAttributeName }]) => ({
+      headerName: label,
+      groupId: label,
       marryChildren: true,
-      children: reaction.starting_materials.map(
+      children: reaction[reactionAttributeName].map(
         (material) => ({
-          field: `startingMaterials.${material.id}`, // must be unique
-          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
-        })
-      )
-    },
-    {
-      headerName: 'Reactants',
-      groupId: 'Reactants',
-      marryChildren: true,
-      children: reaction.reactants.map(
-        (material) => ({
-          field: `reactants.${material.id}`,
-          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
-        })
-      )
-    },
-    {
-      headerName: 'Products',
-      groupId: 'Products',
-      marryChildren: true,
-      children: reaction.products.map(
-        (material) => ({
-          field: `products.${material.id}`,
-          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
-        })
-      )
-    },
-    {
-      headerName: 'Solvents',
-      groupId: 'Solvents',
-      marryChildren: true,
-      children: reaction.solvents.map(
-        (material) => ({
-          field: `solvents.${material.id}`,
+          field: `${materialType}.${material.id}`, // must be unique
           headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier),
-          cellEditorParams: { unitOptions: volumeUnits }
+          cellEditorParams: { unitOptions: materialType === 'solvents' ? volumeUnits : massUnits }
         })
       )
-    },
-  ];
+    }))
+  );
 
   return (
     <div>
