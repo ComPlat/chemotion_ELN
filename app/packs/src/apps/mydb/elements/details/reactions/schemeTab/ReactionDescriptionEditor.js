@@ -6,7 +6,7 @@ import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTemplateCreator';
 
 function ReactionDescriptionEditor(props) {
-  const { value } = props;
+  const { value, disabled } = props;
 
   const editorRef = useRef(null);
   // const log = () => {
@@ -69,7 +69,8 @@ function ReactionDescriptionEditor(props) {
         return true;
       }}
       onEditorChange={(newValue) => setValue(newValue)}
-      initialValue={value}
+      value={value}
+      disabled={disabled}
       init={{
         branding: false,
         statusbar: false,
@@ -96,12 +97,14 @@ export default ReactionDescriptionEditor;
 ReactionDescriptionEditor.propTypes = {
   /* eslint-disable react/forbid-prop-types */
   template: PropTypes.object,
-  value: PropTypes.object,
+  value: PropTypes.string,
   onChange: PropTypes.func,
+  disabled: PropTypes.bool,
 };
 
 ReactionDescriptionEditor.defaultProps = {
   template: {},
-  value: {},
+  value: '',
   onChange: null,
+  disabled: false,
 };

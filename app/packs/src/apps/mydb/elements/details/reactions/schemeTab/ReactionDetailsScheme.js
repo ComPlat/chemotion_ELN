@@ -962,29 +962,15 @@ export default class ReactionDetailsScheme extends Component {
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
                   <div className="quill-resize">
-                    {permitOn(reaction) ? (
-                      <ReactionDescriptionEditor
-                        template={reactionDescTemplate}
-                        value={reaction.description}
-                        updateTextTemplates={this.updateTextTemplates}
-                        onChange={(event) =>
-                          this.props.onInputChange('description', event)
-                        }
-                      />
-                    ) : (
-                      <p>{reaction.description}</p>
-                    )}
-                    {
-                      permitOn(reaction) ?
-                        <ReactionDescriptionEditor
-                          height="100%"
-                          reactQuillRef={this.reactQuillRef}
-                          template={reactionDescTemplate}
-                          value={reaction.description}
-                          updateTextTemplates={this.updateTextTemplates}
-                          onChange={event => this.props.onInputChange('description', event)}
-                        /> : <QuillViewer value={reaction.description} />
-                    }
+                    <ReactionDescriptionEditor
+                      template={reactionDescTemplate}
+                      value={reaction.description}
+                      updateTextTemplates={this.updateTextTemplates}
+                      disabled={!permitOn(reaction)}
+                      onChange={(event) =>
+                        this.props.onInputChange('description', event)
+                      }
+                    />
                   </div>
                 </FormGroup>
               </Col>
