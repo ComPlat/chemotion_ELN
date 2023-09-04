@@ -8,7 +8,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.375rem 0.75rem;
+  padding: 0.5em 1em;
   border-radius: 0.4rem;
   cursor: pointer;
   position: relative;
@@ -16,11 +16,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0 5px;
+  margin: 0.3em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  font-size: 1rem;
 }
 
+/* Focus and Hover States */
 .btn-common:focus, .btn-common:hover {
   outline: 0;
 }
@@ -28,11 +30,10 @@
 .btn-common:active {
   filter: brightness(0.9) blur(0.7px);
   transition: all 0.15s;
-
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-
 }
 
+/* Button After Effect */
 .btn-common::after {
   content: "";
   position: absolute;
@@ -87,32 +88,31 @@
   background-color: transparent;
   color: #007bff;
   border: 1px solid #007bff;
-  text-decoration: none;
 }
 
 /* Sizes */
 .btn-xLarge {
   min-width: 40px;
   height: 40px;
-  font-size: 18px;
+  font-size: 1.8rem;
 }
 
 .btn-large {
   min-width: 35px;
   height: 35px;
-  font-size: 16px;
+  font-size: 1.6rem;
 }
 
 .btn-medium {
   min-width: 30px;
   height: 30px;
-  font-size: 14px;
+  font-size: 1.4rem;
 }
 
 .btn-small {
   min-width: 25px;
   height: 25px;
-  font-size: 12px;
+  font-size: 1.2rem;
 }
 
 /* Square */
@@ -120,6 +120,8 @@
   aspect-ratio: 1 / 1;
   min-width: unset;
 }
+
+/* Tool-Tip */
 
 .btn-wrapper {
   position: relative;
@@ -204,4 +206,32 @@
 .btn-wrapper:hover .tooltip {
   visibility: visible;
   opacity: 1;
+}
+
+/* Media Queries */
+@media (max-width: 1200px) {
+  .btn-common {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .btn-common {
+    font-size: 0.9rem;
+    padding: 0.4em 0.8em;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-common {
+    font-size: 0.85rem;
+    padding: 0.3em 0.6em;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn-common {
+    font-size: 0.8rem;
+    padding: 0.2em 0.4em;
+  }
 }
