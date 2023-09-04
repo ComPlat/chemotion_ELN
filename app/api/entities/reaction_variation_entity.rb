@@ -7,6 +7,7 @@ module Entities
       :properties,
       :reactants,
       :products,
+      :solvents,
     )
     expose :starting_materials, as: :startingMaterials
 
@@ -35,6 +36,10 @@ module Entities
 
     def products
       materials(:products)
+    end
+
+    def solvents
+      materials(:solvents)
     end
   end
 

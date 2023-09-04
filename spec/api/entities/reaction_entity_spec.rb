@@ -86,7 +86,8 @@ describe Entities::ReactionEntity do
                                                            isReference: false,
                                                            molecularWeight: 700.9154799999998 },
                                                     unit: 'g',
-                                                    value: nil } } },
+                                                    value: nil } },
+                       solvents: {} },
                      { id: 'd0a7087f-bf1b-479a-b684-783b004ff588',
                        products: { '47': { aux: { yield: '0',
                                                   purity: 0.29,
@@ -149,7 +150,8 @@ describe Entities::ReactionEntity do
                                                            isReference: false,
                                                            molecularWeight: 700.9154799999998 },
                                                     unit: 'g',
-                                                    value: nil } } }],
+                                                    value: nil } },
+                       solvents: {} }],
       )
     end
 

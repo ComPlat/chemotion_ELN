@@ -225,7 +225,12 @@ export default class Reaction extends Element {
     //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
     //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
     //         ...
-    //     }
+    //     },
+    //     "solvents": {
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
+    //     },
     //   },
     //   {
     //     "id": "<number>",
@@ -239,7 +244,8 @@ export default class Reaction extends Element {
       const currentMaterials = {
         startingMaterials: this.starting_materials,
         reactants: this.reactants,
-        products: this.products
+        products: this.products,
+        solvents: this.solvents
       };
       // Keep materials up-to-date. Materials could have been added or removed in the scheme tab
       // (of the reaction detail modal); these changes need to be reflected in the variations.

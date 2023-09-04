@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import {
-  createVariationsRow, temperatureUnits, durationUnits, amountUnits, convertUnit
+  createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits, convertUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function RowToolsCellRenderer({ data, copyRow, removeRow }) {
@@ -223,7 +223,19 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier)
         })
       )
-    }
+    },
+    {
+      headerName: 'Solvents',
+      groupId: 'Solvents',
+      marryChildren: true,
+      children: reaction.solvents.map(
+        (material) => ({
+          field: `solvents.${material.id}`,
+          headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier),
+          cellEditorParams: { unitOptions: volumeUnits }
+        })
+      )
+    },
   ];
 
   return (
@@ -269,7 +281,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             comparator: cellComparator,
             cellEditor: CellEditor,
             cellEditorPopup: true,
-            cellEditorParams: { unitOptions: amountUnits },
+            cellEditorParams: { unitOptions: massUnits },
             cellRenderer: CellRenderer,
             wrapHeaderText: true,
             autoHeaderHeight: true,

@@ -12,7 +12,8 @@ function getReactionMaterials(reaction) {
   return {
     startingMaterials: reaction.starting_materials,
     reactants: reaction.reactants,
-    products: reaction.products
+    products: reaction.products,
+    solvents: reaction.solvents
   };
 }
 

@@ -57,6 +57,7 @@ module Reporter
             'duration' => "#{var[:properties][:duration][:value]} #{var[:properties][:duration][:unit]}",
             'startingMaterials' => variation_materials(var, :startingMaterials),
             'reactants' => variation_materials(var, :reactants),
+            'solvents' => variation_materials(var, :solvents),
             'products' => variation_products(var),
           }
         end

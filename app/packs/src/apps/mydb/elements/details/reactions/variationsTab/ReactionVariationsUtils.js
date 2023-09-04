@@ -4,7 +4,8 @@ import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 
 const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
-const amountUnits = ['g', 'mg', 'μg'];
+const massUnits = ['mg', 'g', 'μg'];
+const volumeUnits = ['ml', 'l', 'μl'];
 
 function convertUnit(value, fromUnit, toUnit) {
   if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
@@ -13,16 +14,21 @@ function convertUnit(value, fromUnit, toUnit) {
   if (durationUnits.includes(fromUnit) && durationUnits.includes(toUnit)) {
     return convertDuration(value, fromUnit, toUnit);
   }
-  if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
+  if (massUnits.includes(fromUnit) && massUnits.includes(toUnit)) {
     const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
+  if (volumeUnits.includes(fromUnit) && volumeUnits.includes(toUnit)) {
+    const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
+    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
+  }
+
   return value;
 }
 
 function getMaterialData(material) {
-  const value = material.amount_g ?? null;
-  const unit = amountUnits[0];
+  const value = material.amount_value ?? null;
+  const unit = material.amount_unit ?? null;
   const aux = {
     coefficient: material.coefficient ?? null,
     isReference: material.reference ?? false,
@@ -70,6 +76,8 @@ function createVariationsRow(reaction, id) {
     reactants: reaction.reactants.reduce((a, v) => (
       { ...a, [v.id]: getMaterialData(v) }), {}),
     products: reaction.products.reduce((a, v) => (
+      { ...a, [v.id]: getMaterialData(v) }), {}),
+    solvents: reaction.solvents.reduce((a, v) => (
       { ...a, [v.id]: getMaterialData(v) }), {})
   };
   return row;
@@ -78,7 +86,7 @@ function createVariationsRow(reaction, id) {
 function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
-    ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
+    ['startingMaterials', 'reactants', 'products', 'solvents'].forEach((materialType) => {
       Object.keys(row[materialType]).forEach((materialName) => {
         if (!currentMaterials[materialType].map((material) => material.id.toString()).includes(materialName)) {
           delete row[materialType][materialName];
@@ -92,7 +100,7 @@ function removeObsoleteMaterialsFromVariations(variations, currentMaterials) {
 function addMissingMaterialsToVariations(variations, currentMaterials) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
-    ['startingMaterials', 'reactants', 'products'].forEach((materialType) => {
+    ['startingMaterials', 'reactants', 'products', 'solvents'].forEach((materialType) => {
       currentMaterials[materialType].forEach((material) => {
         if (!(material.id in row[materialType])) {
           row[materialType][material.id] = getMaterialData(material);
@@ -137,6 +145,7 @@ export {
   computeYield,
   temperatureUnits,
   durationUnits,
-  amountUnits,
+  massUnits,
+  volumeUnits,
   convertUnit
 };
