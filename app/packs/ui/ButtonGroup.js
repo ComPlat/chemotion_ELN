@@ -1,34 +1,40 @@
-import React, { useRef, useEffect } from 'react';
+import React, { Children, cloneElement } from 'react';
 import PropTypes from 'prop-types';
 
-function ButtonGroup(props) {
-  const { children } = props;
-  const groupRef = useRef(null);
+function ButtonGroup({ children }) {
+  const totalButtons = Children.count(children);
 
-  useEffect(() => {
-    if (groupRef.current) {
-      const buttons = Array.from(groupRef.current.querySelectorAll('button'));
-      buttons.forEach((button, index) => {
-        const btn = button;
+  const renderChildren = () => Children.map(children, (child, index) => {
+    let style = {
+      margin: '0',
+      border: 'none',
+    };
 
-        // reset margin & border
-        btn.style.marginRight = '0';
-        btn.style.border = 'none';
-
-        if (index === 0) {
-          btn.style.borderTopRightRadius = '0';
-          btn.style.borderBottomRightRadius = '0';
-        } else if (index === buttons.length - 1) {
-          btn.style.borderTopLeftRadius = '0';
-          btn.style.borderBottomLeftRadius = '0';
-        } else {
-          btn.style.borderRadius = '0';
-        }
-      });
+    if (index === 0) {
+      style = {
+        ...style,
+        borderTopRightRadius: '0',
+        borderBottomRightRadius: '0',
+      };
+    } else if (index === totalButtons - 1) {
+      style = {
+        ...style,
+        borderTopLeftRadius: '0',
+        borderBottomLeftRadius: '0',
+      };
+    } else {
+      style = {
+        ...style,
+        borderRadius: '0',
+      };
     }
-  }, [children]);
 
-  return <div ref={groupRef} style={{ display: 'inline-flex' }}>{children}</div>;
+    return cloneElement(child, {
+      style: { ...child.props.style, ...style },
+    });
+  });
+
+  return <div style={{ display: 'inline-flex' }}>{renderChildren()}</div>;
 }
 
 ButtonGroup.propTypes = {
