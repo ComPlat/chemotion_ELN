@@ -65,10 +65,14 @@ export default class ElementDetailSortTab extends Component {
     const currentCollection = UIStore.getState().currentCollection;
     const collectionTabs = currentCollection?.tabs_segment;
     let layout = {};
-    if (!collectionTabs || _.isEmpty(collectionTabs[`${this.type}`])) {
-      layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
+    if (collectionTabs === undefined) {
+        layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
     } else {
-      layout = collectionTabs[`${this.type}`];
+        if (_.isEmpty(collectionTabs[`${this.type}`])) {
+          layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
+        } else {
+          layout = collectionTabs[`${this.type}`];
+        }
     }
     const { visible, hidden } = getArrayFromLayout(layout, this.type, addInventoryTab, availableTabs);
 
