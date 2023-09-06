@@ -1,141 +1,311 @@
-import React, { Component } from 'react';
+/* eslint-disable react/no-array-index-key */
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import React, { useState } from 'react';
 import Button from 'ui/Button';
 import ButtonGroup from 'ui/ButtonGroup';
 
-import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+function Demo() {
+  const [activeTab, setActiveTab] = useState('Introduction');
+  const [variant, setVariant] = useState('primary');
+  const [size, setSize] = useState('xLarge');
+  const [square, setSquare] = useState(false);
+  const [tooltip, setTooltip] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState('top');
+  const [buttonText, setButtonText] = useState('Button');
 
-class Demo extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      buttons: [
-        {
-          variant: 'primary', size: 'large', square: false, title: 'Primary Large', withIcon: false
-        },
-        {
-          variant: 'primary', size: 'large', square: true, title: 'Primary Large Square', withIcon: false
-        },
-        {
-          variant: 'primary', size: 'large', square: false, title: 'Primary Large with Icon', withIcon: true
-        },
-        {
-          variant: 'secondary', size: 'large', square: false, title: 'Secondary Large', withIcon: false
-        },
-        {
-          variant: 'secondary', size: 'large', square: true, title: 'Secondary Large Square', withIcon: false
-        },
-        {
-          variant: 'secondary', size: 'large', square: false, title: 'Secondary Large with Icon', withIcon: true
-        },
-        {
-          variant: 'tertiary', size: 'large', square: false, title: 'Tertiary Large', withIcon: false
-        },
-        {
-          variant: 'tertiary', size: 'large', square: true, title: 'Tertiary Large Square', withIcon: false
-        },
-        {
-          variant: 'tertiary', size: 'large', square: false, title: 'Tertiary Large with Icon', withIcon: true
-        },
-      ]
-    };
-  }
+  const [groupButtons, setGroupButtons] = useState([
+    {
+      size: 'xLarge',
+      variant: 'primary',
+      text: '1',
+      square: false,
+      tooltip: null,
+      tooltipPosition: 'top',
+    },
+    {
+      size: 'xLarge',
+      variant: 'secondary',
+      text: '2',
+      square: false,
+      tooltip: null,
+      tooltipPosition: 'top',
+    },
+  ]);
 
-  renderButtonContent(btn) {
-    if (btn.square) {
-      return <i className="fa fa-plus" />;
-    }
-    if (btn.withIcon) {
-      return (
-        <>
-          Button&nbsp;
-          <i className="fa fa-plus" />
-        </>
-      );
-    }
-    return 'Button';
-  }
+  const updateGroupButton = (index, key, value) => {
+    const newGroupButtons = [...groupButtons];
+    newGroupButtons[index][key] = value;
+    setGroupButtons(newGroupButtons);
+  };
 
-  render() {
-    return (
-      <div style={{ padding: '50px' }}>
-        <h1 style={{
-          textAlign: 'center', marginBottom: '40px', fontSize: '32px', color: '#333', fontWeight: 'bold'
-        }}
-        >
-          Component Demo
-        </h1>
-        <h2 style={{
-          textAlign: 'center', marginBottom: '40px', fontSize: '28px', color: '#555'
-        }}
-        >
-          Buttons
-        </h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {this.state.buttons.map((btn, index) => (
-            <div
-              key={index}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                margin: '20px',
-                textAlign: 'center'
-              }}
-            >
-              <h3 style={{ fontSize: '16px', color: '#777', marginBottom: '10px' }}>{btn.title}</h3>
-              <div>
-                <Button
-                  variant={btn.variant}
-                  size="xLarge"
-                  square={btn.square}
-                  style={{
-                    margin: '0 20px'
-                  }}
-                >
-                  {this.renderButtonContent(btn)}
-                </Button>
-              </div>
-              <pre
-                style={{
-                  background: '#e9e9e9',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  display: 'flex',
-                  justifyContent: 'flex-start',
-                  maxWidth: '400px',
-                  marginTop: '10px'
-                }}
-              >
-                {`<Button variant="${btn.variant}"`
-                + ` size="${btn.size}" square={${btn.square}}>${this.renderButtonContent(btn)}</Button>`}
-              </pre>
-            </div>
-          ))}
-        </div>
-        <div>
-          <ButtonGroup>
-            <Button
-              variant="secondary"
-              size="xLarge"
-            >
-              Button1
-            </Button>
-            <Button
-              variant="primary"
-              size="xLarge"
-              square
-              tooltip="Hi!"
-              tooltipPosition="top"
-            >
-              Button2
-            </Button>
-          </ButtonGroup>
-        </div>
+  const addGrpButton = () => {
+    setGroupButtons([
+      ...groupButtons,
+      {
+        size: 'xLarge',
+        variant: 'primary',
+        text: 'btn',
+        square: false,
+        tooltip: null,
+        tooltipPosition: 'top',
+      },
+    ]);
+  };
+
+  const renderIntroduction = () => (
+    <div className="demo-section introduction-section">
+      <p>Welcome to the chemotion components library showcase.</p>
+      <p>
+        Here you will find a variety of UI components tailored to the chemotion
+        eln.
+      </p>
+      <p>
+        All components are based on standard HTML elements, use pure css for
+        styling and are fully responsive.
+      </p>
+      <p>
+        Use the sidebar to navigate between the interactive tabs and explore
+        different components and their features.
+      </p>
+    </div>
+  );
+
+  const renderButtonDemo = () => (
+    <div className="demo-section">
+      <div className="controls">
+        <label>
+          Text:
+          <input
+            type="text"
+            value={buttonText}
+            onChange={(e) => setButtonText(e.target.value)}
+          />
+        </label>
+        <label>
+          Variant:
+          <select onChange={(e) => setVariant(e.target.value)} value={variant}>
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+            <option value="tertiary">Tertiary</option>
+          </select>
+        </label>
+        <label>
+          Size:
+          <select onChange={(e) => setSize(e.target.value)} value={size}>
+            <option value="xLarge">Extra Large</option>
+            <option value="large">Large</option>
+            <option value="medium">Medium</option>
+            <option value="small">Small</option>
+          </select>
+        </label>
+        <label>
+          Square:
+          <select
+            onChange={(e) => setSquare(e.target.value === 'true')}
+            value={square.toString()}
+          >
+            <option value="true">Set</option>
+            <option value="false">Unset</option>
+          </select>
+        </label>
+        <label>
+          Tooltip:
+          <input
+            type="text"
+            value={tooltip}
+            onChange={(e) => setTooltip(e.target.value)}
+          />
+        </label>
+        <label>
+          Tooltip Position:
+          <select
+            onChange={(e) => setTooltipPosition(e.target.value)}
+            value={tooltipPosition}
+          >
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
       </div>
-    );
-  }
+      <div className="button-container">
+        <Button
+          variant={variant}
+          size={size}
+          square={square}
+          tooltip={tooltip}
+          tooltipPosition={tooltipPosition}
+        >
+          {buttonText}
+        </Button>
+      </div>
+      <pre>
+        {`<Button variant="${variant}" size="${size}" square={${square}}`
+          + ` tooltip="${tooltip}" tooltipPosition="${tooltipPosition}">${buttonText}</Button>`}
+      </pre>
+    </div>
+  );
+
+  const renderButtonGroupDemo = () => (
+    <div className="demo-section">
+      <button type="button" onClick={addGrpButton}>
+        Add
+      </button>
+      <div className="controls">
+        {groupButtons.map((btn, index) => (
+          <div className="button-group-control" key={index}>
+            <h4 className="button-index-header">
+              Button&nbsp;
+              {index + 1}
+              :
+            </h4>
+            <div className="button-controls">
+              <label>
+                Text:
+                <input
+                  type="text"
+                  value={btn.text}
+                  onChange={(e) => updateGroupButton(index, 'text', e.target.value)}
+                />
+              </label>
+              <label>
+                Variant:
+                <select
+                  onChange={(e) => updateGroupButton(index, 'variant', e.target.value)}
+                  value={btn.variant}
+                >
+                  <option value="primary">Primary</option>
+                  <option value="secondary">Secondary</option>
+                  <option value="tertiary">Tertiary</option>
+                </select>
+              </label>
+              <label>
+                Size:
+                <select
+                  onChange={(e) => updateGroupButton(index, 'size', e.target.value)}
+                  value={btn.size}
+                >
+                  <option value="xLarge">Extra Large</option>
+                  <option value="large">Large</option>
+                  <option value="medium">Medium</option>
+                  <option value="small">Small</option>
+                </select>
+              </label>
+              <label>
+                Square:
+                <select
+                  onChange={(e) => updateGroupButton(
+                    index,
+                    'square',
+                    e.target.value === 'true'
+                  )}
+                  value={btn.square.toString()}
+                >
+                  <option value="true">Set</option>
+                  <option value="false">Unset</option>
+                </select>
+              </label>
+              <label>
+                Tooltip:
+                <input
+                  type="text"
+                  value={btn.tooltip}
+                  onChange={(e) => updateGroupButton(index, 'tooltip', e.target.value)}
+                />
+              </label>
+              <label>
+                Tooltip Position:
+                <select
+                  onChange={(e) => updateGroupButton(index, 'tooltipPosition', e.target.value)}
+                  value={btn.tooltipPosition}
+                >
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="button-container">
+        <ButtonGroup>
+          {groupButtons.map((btn, index) => (
+            <Button
+              key={index}
+              variant={btn.variant}
+              size={btn.size}
+              square={btn.square}
+              tooltip={btn.tooltip}
+              tooltipPosition={btn.tooltipPosition}
+            >
+              {btn.text}
+            </Button>
+          ))}
+        </ButtonGroup>
+      </div>
+      <pre>
+        {`<ButtonGroup>\n${groupButtons
+          .map(
+            (btn) => `  <Button variant="${btn.variant}" size="${btn.size}" square={${btn.square}} `
+              + `tooltip="${btn.tooltip}" tooltipPosition="${btn.tooltipPosition}">${btn.text}</Button>\n`
+          )
+          .join('')}</ButtonGroup>`}
+      </pre>
+    </div>
+  );
+
+  return (
+    <div className="demo-container">
+      <aside className="sidebar">
+        <button
+          type="button"
+          onClick={() => setActiveTab('Introduction')}
+          className={activeTab === 'Introduction' ? 'active' : ''}
+        >
+          Introduction
+        </button>
+        <h3 className="sidebars-header">Components</h3>
+        <button
+          type="button"
+          onClick={() => setActiveTab('Button')}
+          className={activeTab === 'Button' ? 'active' : ''}
+        >
+          Button
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('ButtonGroup')}
+          className={activeTab === 'ButtonGroup' ? 'active' : ''}
+        >
+          Button Group
+        </button>
+      </aside>
+      <main className="main-content">
+        <div
+          className={`tab-content ${
+            activeTab === 'Introduction' ? 'active' : ''
+          }`}
+        >
+          {renderIntroduction()}
+        </div>
+        <div
+          className={`tab-content ${activeTab === 'Button' ? 'active' : ''}`}
+        >
+          {renderButtonDemo()}
+        </div>
+        <div
+          className={`tab-content ${
+            activeTab === 'ButtonGroup' ? 'active' : ''
+          }`}
+        >
+          {renderButtonGroupDemo()}
+        </div>
+      </main>
+    </div>
+  );
 }
 
 export default Demo;
