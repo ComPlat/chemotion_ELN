@@ -23,6 +23,10 @@ module Usecases
           vessel: @vessel
         )
 
+        # reload vessel to have collections associated
+        vessel = Vessel.find(vessel.id)
+        vessel.update_tag!({collection_tag: true})
+
         @vessel
       end
 

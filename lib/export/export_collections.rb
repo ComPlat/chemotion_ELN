@@ -125,11 +125,40 @@ module Export
         fetch_wellplates collection if @gt == false
         fetch_screens collection if @gt == false
         fetch_research_plans collection if @gt == false
+        add_vessel_template_to_package collection if @gt == false
+        add_vessel_to_package collection if @gt == false
       end
     end
 
     private
 
+    def add_vessel_template_to_package(collection)
+      type = 'VesselTemplate'
+      collection.vessels.each do |vessel|
+        template = vessel.vessel_template
+        next if uuid?(type, template.id)
+
+        uuid = uuid(type, template.id)
+        @data[type] = {} unless @data[type]
+        @data[type][uuid] = template.as_json
+      end
+    end
+
+    def add_vessel_to_package(collection)
+      type = 'Vessel'
+      collection.vessels.each do |vessel|
+        next if uuid?(type, vessel.id)
+        uuid = uuid(type, vessel.id)
+        @data[type] = {} unless @data[type]
+        @data[type][uuid] = vessel.as_json
+        @data['CollectionsVessel'] = {} unless @data['CollectionsVessel']
+        @data['CollectionsVessel'][SecureRandom.uuid] = {
+          collection_id: @uuids['Collection'][collection.id],
+          vessel_id: @uuids[type][vessel.id],
+        }
+      end
+    end
+    
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
       samples = collection.samples.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))

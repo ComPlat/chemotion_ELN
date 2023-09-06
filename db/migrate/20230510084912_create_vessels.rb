@@ -53,5 +53,7 @@ class CreateVessels < ActiveRecord::Migration[6.1]
       t.index :deleted_at
       t.index %i[vessel_id collection_id], unique: true
     end
+
+    add_column :collections, :vessel_detail_level, :int, default: 10
   end
 end

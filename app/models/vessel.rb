@@ -19,6 +19,9 @@
 #  index_vessels_on_deleted_at  (deleted_at)
 #
 class Vessel < ApplicationRecord
+  include Taggable
+  include Collectable
+  
   acts_as_paranoid
 
   after_save :update_counter

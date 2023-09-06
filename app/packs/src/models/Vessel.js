@@ -20,6 +20,7 @@ export default class Vessel extends Element {
   static createFromRestResponse(collection_id, response){
     const vessel = Vessel.buildEmpty(collection_id, response.short_label);
     vessel.id = String(response.id);
+    vessel.tag = response.tag;
     vessel.vesselName=response.name;
     vessel.vesselDescription=response.description;
 

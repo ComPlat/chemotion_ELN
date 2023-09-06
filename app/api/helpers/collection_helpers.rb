@@ -33,7 +33,8 @@ module CollectionHelpers
       :permission_level,
       :sample_detail_level, :reaction_detail_level,
       :wellplate_detail_level, :screen_detail_level,
-      :researchplan_detail_level, :element_detail_level
+      :researchplan_detail_level, :element_detail_level,
+      :vessel_detail_level
     )&.symbolize_keys
     {
       permission_level: 0,
@@ -43,6 +44,7 @@ module CollectionHelpers
       screen_detail_level: 0,
       researchplan_detail_level: 0,
       element_detail_level: 0,
+      vessel_detail_level: 0,
     }.merge(dl || {})
   end
 
@@ -116,6 +118,7 @@ module CollectionHelpers
       screen_detail_level: 10,
       researchplan_detail_level: 10,
       element_detail_level: 10,
+      vessel_detail_level: 10,
     }
 
     @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
@@ -126,5 +129,6 @@ module CollectionHelpers
     @dl_sc = @dl[:screen_detail_level]
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
+    @dl_v = @dl[:vessel_detail_level]
   end
 end
