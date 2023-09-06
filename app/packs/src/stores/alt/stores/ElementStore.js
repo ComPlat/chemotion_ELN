@@ -1268,6 +1268,7 @@ class ElementStore {
         this.handleUpdateResearchPlanAttaches(updatedElement);
         break;
       case 'cell_line':
+        this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('cell_line');
         break;
       case 'wellplate':
