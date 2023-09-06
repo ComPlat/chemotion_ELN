@@ -66,10 +66,19 @@ class AnalysesContainer extends Component {
 
   renderOrderModeButton() {
     const { mode } = this.state;
+    const buttonText = mode === 'order' ? 'Order mode' : 'Edit mode';
+    const buttonIcon = mode === 'order' ? 'fa fa-reorder' : 'fa fa-edit';
+    const styleClass = mode === 'order' ? 'orderMode' : 'editMode';
     return (
       <div className="order-mode-button">
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleModeToggle()}>
-          {mode}
+        <Button
+          bsSize="xsmall"
+          className=""
+          bsStyle={styleClass}
+          onClick={() => this.handleModeToggle()}
+        >
+          <i className={buttonIcon} aria-hidden="true" />
+          {buttonText}
         </Button>
       </div>
     );
@@ -119,7 +128,7 @@ class AnalysesContainer extends Component {
 
   render() {
     return (
-      <div>
+      <div className="analysisContainer">
         <div>
           {this.renderOrderModeButton()}
           {this.renderAddButton()}

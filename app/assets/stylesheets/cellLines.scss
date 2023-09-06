@@ -319,6 +319,26 @@
     padding-top: 50px;
     margin-bottom: 25px;
 }
+.analysisContainer{
+    .order-mode-button{
+        .btn-orderMode{
+            color: #fff;
+            background-color: #5cb85c
+            
+        }
+        .btn-editMode{
+            color: #fff;
+            background-color: #337ab7
+        }
+        .btn{
+            width:100px;
+            i{
+                margin-right: 6px;
+            }
+        }
+    }
+
+}
 .analyses{
     padding-top: 50px;
     margin-bottom: 25px; 
