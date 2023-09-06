@@ -86,19 +86,6 @@ export default class EditModeHeader extends React.Component {
           >
             <i className="fa fa-trash" />
           </Button>
-          <PrintCodeButton
-            element={element}
-            analyses={[container]}
-            ident={container.id}
-          />
-          <span className="button-right add-to-report">
-            <Checkbox
-              onClick={(e) => { this.toggleContainerInReport(container, e); }}
-              defaultChecked={container.extended_metadata.report}
-            >
-              <span>Add to Report</span>
-            </Checkbox>
-          </span>
           <div className="lower-text">
             <div className="main-title">{container.name}</div>
             <div className="sub-title">
