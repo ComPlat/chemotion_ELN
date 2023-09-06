@@ -34,5 +34,15 @@ export default class ContainerFactory {
       
       return container_000;
     });
+
+    this.factory.define("container_with_four_children", Container, async () => {
+      const container = Container.init();
+      const childContainer1 = Container.init();
+      const childContainer2 = Container.init();
+      const childContainer3 = Container.init();
+      const childContainer4 = Container.init();
+      container.children = [childContainer1, childContainer2, childContainer3, childContainer4];
+      return container;
+    });
   }
 }
