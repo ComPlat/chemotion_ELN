@@ -15,6 +15,7 @@ class AnalysesContainer extends Component {
     super();
     this.state = { openPanel: 'none', mode: 'edit' };
     this.handleChange.bind(this);
+    this.handleHoverOver.bind(this);
   }
 
   handleAdd() {
@@ -36,6 +37,17 @@ class AnalysesContainer extends Component {
     }
   }
 
+  handleStartDrag(container) {
+    this.setState({ draggingContainer: container.id });
+  }
+
+  handleEndDrag() {
+    this.setState({
+      draggingContainer: '',
+      lastHoveredContainer: ''
+    });
+  }
+
   handleModeToggle() {
     const { mode } = this.state;
     if (mode === 'edit') {
@@ -43,6 +55,16 @@ class AnalysesContainer extends Component {
     } else {
       this.setState({ mode: 'edit' });
     }
+  }
+
+  handleHoverOver(containerId) {
+    const { lastHoveredContainer } = this.state;
+    if (lastHoveredContainer !== undefined
+       && lastHoveredContainer === containerId) {
+      return;
+    }
+
+    this.setState({ lastHoveredContainer: containerId });
   }
 
   handleChange(changed = false) {
@@ -86,6 +108,7 @@ class AnalysesContainer extends Component {
 
   renderContainerPanel() {
     const { currentElement } = ElementStore.getState();
+    const { draggingContainer, lastHoveredContainer } = this.state;
     const containers = currentElement.container.children[0].children;
 
     const { mode } = this.state;
@@ -99,13 +122,26 @@ class AnalysesContainer extends Component {
           container={container}
         />
       ), this)
-      : containers.map((container) => (
-        <OrderModeRow
-          key={container.id}
-          updateFunction={(e) => { this.handleChange(e); }}
-          container={container}
-        />
-      ), this);
+      : containers.map(
+        (container) => {
+          const chosenElementClass = container.id === draggingContainer ? 'chosenElement' : '';
+          const lastHoveredClass = lastHoveredContainer === container.id ? ' lastHoveredElement' : '';
+          const styleClass = chosenElementClass + lastHoveredClass;
+          return (
+            <div className={styleClass} key={container.id}>
+              <OrderModeRow
+                updateFunction={(e) => { this.handleChange(e); }}
+                startDragFunction={() => { this.handleStartDrag(container); }}
+                endDragFunction={() => { this.handleEndDrag(container); }}
+                hoverOverItem={(e) => { this.handleHoverOver(e); }}
+                container={container}
+              />
+            </div>
+          );
+        },
+
+        this
+      );
 
     const { openPanel } = this.state;
     if (containers.length > 0) {

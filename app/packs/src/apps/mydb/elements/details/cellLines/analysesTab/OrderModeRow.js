@@ -9,13 +9,16 @@ import PropTypes from 'prop-types';
 import Container from 'src/models/Container';
 
 const dragHooks = {
+
   beginDrag(props) {
+    props.startDragFunction();
     return {
       id: props.container.id,
       updateFunction: props.updateFunction
     };
   },
   endDrag(props, monitor) {
+    props.endDragFunction();
     if (monitor.getDropResult() == null) {
       return;
     }
@@ -31,6 +34,7 @@ const dragHooks = {
 };
 
 const dragCollectHooks = (connect, monitor) => ({
+
   connectDragSource: connect.dragSource(),
   isDragging: monitor.isDragging(),
 });
@@ -38,6 +42,9 @@ const dragCollectHooks = (connect, monitor) => ({
 const dropHooks = {
   drop(targetProps) {
     return { id: targetProps.container.id };
+  },
+  hover(props, monitor, component) {
+    props.hoverOverItem(component.props.container.id);
   }
 };
 

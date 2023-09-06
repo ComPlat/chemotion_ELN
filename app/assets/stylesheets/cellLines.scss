@@ -320,6 +320,15 @@
     margin-bottom: 25px;
 }
 .analysisContainer{
+    .chosenElement{
+        opacity: 0.1;
+    }
+    .lastHoveredElement{
+        border-width: 1px;
+        border: #337ab7;
+        border-style: dashed;
+    }
+
     .order-mode-button{
         .btn-orderMode{
             color: #fff;
@@ -337,9 +346,9 @@
             }
         }
     }
-
 }
 .analyses{
     padding-top: 50px;
     margin-bottom: 25px; 
 }
+
