@@ -46,6 +46,10 @@ export default class Container extends Element {
     const containerToMove = children[indexOfMovedContainer];
     children.splice(indexOfMovedContainer, 1);
     children.splice(indexOfPredecContainer, 0, containerToMove);
+    
+    children.forEach((element,index) => {
+      element.extended_metadata.index=index;
+    });
   }
 
   serialize() {
