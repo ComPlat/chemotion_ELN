@@ -94,6 +94,7 @@ module Import
         import_wells if @gt == false
         import_screens if @gt == false
         import_research_plans if @gt == false
+        VesselImporter(@data, @current_user_id, @instances).execute if @gt == false
         import_containers
         import_attachments
         import_literals
