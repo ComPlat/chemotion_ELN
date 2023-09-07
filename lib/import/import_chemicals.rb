@@ -88,11 +88,6 @@ module Import
       nil
     end
 
-    def self.extract_product_number(url)
-      match = url.match(/productNumber=(\d+)/) || url.match(/sku=(\w+)/)
-      match[1] if match
-    end
-
     def self.handle_safety_sheet(key, vendor, value, chemical)
       case key
       when 'safety_sheet_link'
@@ -101,6 +96,16 @@ module Import
         set_safety_sheet_link(vendor, product_number, value) if product_number.present?
       when 'product_link'
         { 'productLink' => value }
+      end
+    end
+
+    def self.extract_product_number(url)
+      match = url.match(/productNumber=(\d+)/) || url.match(/sku=(\w+)/)
+      if match
+        match[1]
+      else
+        path = url.split('/')
+        path.last
       end
     end
 

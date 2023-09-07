@@ -49,10 +49,6 @@ module Export
     HEADERS_DATASET = ["dataset name", "instrument", "dataset description"].freeze
     HEADERS_ATTACHMENT_0 = [].freeze
     HEADERS_ATTACHMENT = ["filename", "checksum"].freeze
-    # HEADERS_CHEMICAL = %w[status vendor order_number amount price person required_date ordered_date required_by
-    #                       safety_sheet_link product_link pictograms h_statements p_statements host_building
-    #                       host_room host_cabinet host_group owner current_building current_room current_cabinet
-    #                       borrowed_by disposal_info important_notes].freeze
 
     def extract_label_from_solvent_column(sample_column)
       return unless sample_column.is_a?(String) && !sample_column.empty?
@@ -144,7 +140,6 @@ module Export
       # @headers00 << 'analyses'
       @headers100 << 'analyses'
     end
-
 
     def quill_to_html_to_string(delta)
       html_content = Chemotion::QuillToHtml.new.convert(delta)

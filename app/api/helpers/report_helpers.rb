@@ -322,34 +322,6 @@ module ReportHelpers
     SQL
   end
 
-  # inner join samples s on s_dl.s_id = s.id #{collection_join}
-  # order by #{order};
-  # ,#{columns[1][0]}
-  # c.chemical_data
-  #c."cas",
-  #  c."chemical_data"->0->'status' AS "status"
-  # SELECT json_build_object(c."id", c."sample_id", #{columns[1].join(',')
-  # FROM chemicals c
-  # WHERE c.sample_id = s.id
-  # ORDER BY c.id
-  # LIMIT 1
-
-  # SELECT
-  # s_id, ts, co_id, scu_id, shared_sync, pl, dl_s,
-  # s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
-  # ,#{columns[0].join(',')},
-  # (
-  # SELECT array_to_json(array_agg(row_to_json(chemical)))
-  #   FROM (
-  #     SELECT #{columns[1].join(',')}
-  #     FROM (#{s_subquery}) AS s_dl
-  #     INNER JOIN chemicals c ON c.sample_id = s_dl.s_id
-  #   ) AS chemical
-  # ) AS chemicals
-  # FROM (#{s_subquery}) AS s_dl
-  # INNER JOIN samples s ON s_dl.s_id = s.id #{collection_join}
-  # ORDER BY #{order};
-
   def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
