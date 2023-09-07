@@ -161,7 +161,7 @@ export default class AttachmentFetcher {
     });
     data.append('attachable_type', attachableType);
     data.append('attachable_id', attachableId);
-    
+
     dels.forEach(f => {
       data.append('del_files[]', f.id);
     });
@@ -639,5 +639,23 @@ export default class AttachmentFetcher {
       });
 
     return promise;
+  }
+
+  static annotation(attachment_id) {
+    return fetch(`/api/v1/attachments/${attachment_id}/annotation`).then(
+      (res) => res.text()
+    ).then((text) => {
+      const safeParseJson = (str) => {
+        try {
+          return JSON.parse(str);
+        } catch (e) {
+          console.log('Could not parse JSON when requesting attachment!', e);
+          return '';
+        }
+      };
+      let value = decodeURIComponent(safeParseJson(text))
+      console.debug('Annotation in Fetcher =', value)
+      return value;
+    });
   }
 }

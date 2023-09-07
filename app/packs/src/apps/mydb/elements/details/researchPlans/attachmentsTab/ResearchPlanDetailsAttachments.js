@@ -78,6 +78,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
+      chosenAttachment: null
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -208,21 +209,31 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
-    const { choosenAttachment, imageEditModalShown } = this.state;
+    const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
+    let annotation = '';
+    if (chosenAttachment) {
+      if (chosenAttachment.updatedAnnotation) {
+        console.debug('use existing annotation')
+        annotation = chosenAttachment.updatedAnnotation;
+      } else {
+        console.debug('Use annotation from fetcher')
+        annotation = AttachmentFetcher.annotation(chosenAttachment.id).value;
+      }
+    }
+
     return (
       <ImageAnnotationModalSVG
-        attachment={choosenAttachment}
-        isShow={imageEditModalShown}
+        annotation={annotation}
+        show={imageEditModalShown}
         handleSave={
-          () => {
-            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            choosenAttachment.updatedAnnotation = newAnnotation;
+          (newAnnotation) => {
+            chosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
-            onEdit(choosenAttachment);
+            onEdit(chosenAttachment);
           }
         }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+        handleClose={() => { this.setState({ imageEditModalShown: false }); }}
       />
     );
   }
@@ -230,7 +241,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderAnnotateImageButton(attachment) {
     return (
       <ImageAnnotationEditButton
-        parent={this}
+        onSelectAttachment={(attachment) => {
+          this.setState({
+            imageEditModalShown: true,
+            chosenAttachment: attachment,
+            imageName: attachment.filename,
+          })
+        }}
         attachment={attachment}
         horizontalAlignment="button-right"
       />
@@ -540,5 +557,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => { }
+  onAttachmentImportComplete: () => {}
 };

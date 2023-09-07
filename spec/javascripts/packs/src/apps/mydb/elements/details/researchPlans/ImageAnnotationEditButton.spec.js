@@ -22,7 +22,7 @@ describe('ImageAnnotationEditButton', () => {
       it('button is rendered but disabled', () => {
         expect(wrapper.html())
           .toEqual('<span class=""><button disabled="" style="pointer-events:none" type="button" '
-           + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil" aria-hidden="true"></i></button></span>');
+            + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil" aria-hidden="true"></i></button></span>');
       });
     });
 
@@ -33,7 +33,7 @@ describe('ImageAnnotationEditButton', () => {
       it('button is rendered and not disabled', () => {
         expect(wrapper.html())
           .toEqual('<button type="button" class="btn btn-xs btn-warning">'
-           + '<i class="fa fa-pencil" aria-hidden="true"></i></button>');
+            + '<i class="fa fa-pencil" aria-hidden="true"></i></button>');
       });
     });
 

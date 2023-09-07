@@ -24,11 +24,7 @@ export default class ImageAnnotationEditButton extends Component {
             this.props.horizontalAlignment ? this.props.horizontalAlignment : ""
           }
           onClick={() => {
-            this.props.parent.setState({
-              imageEditModalShown: true,
-              choosenAttachment: this.props.attachment,
-              imageName: this.props.attachment.filename,
-            });
+            this.props.onSelectAttachment(this.props.attachment);
           }}
         >
           <i className="fa fa-pencil" aria-hidden="true" />
@@ -37,7 +33,7 @@ export default class ImageAnnotationEditButton extends Component {
     );
   }
 
-  renderInactiveAnnotationButton(attachment) {   
+  renderInactiveAnnotationButton() {
     return (
       <OverlayTrigger
         overlay={
@@ -65,14 +61,11 @@ export default class ImageAnnotationEditButton extends Component {
   }
 
   render() {
-    if (!this.props.attachment||!this.props.attachment.filename) {
-      return null;
-    }
+    if (!this.props.attachment) return;
+    if (!this.props.attachment.filename) return;
 
     const extension = this.props.attachment.filename.split('.').pop();
-    if (!this.allowedFileTypes.includes(extension)) {
-      return null;
-    }
+    if (!this.allowedFileTypes.includes(extension)) return;
 
     return this.props.attachment.isNew
       ? this.renderInactiveAnnotationButton()
@@ -81,6 +74,6 @@ export default class ImageAnnotationEditButton extends Component {
 }
 ImageAnnotationEditButton.propTypes = {
   attachment: PropTypes.instanceOf(Attachment),
-  parent: PropTypes.object.isRequired,
+  onSelectAttachment: PropTypes.func.isRequired,
   horizontalAlignment: PropTypes.string
 };

@@ -32,8 +32,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     if (state.selecteds.length < 1) return;
 
     // multiple items can be selected, we filter to only keep research plans
-    const researchPlans = state.selecteds.filter((element) => element
-        && element?.type === 'research_plan');
+    const researchPlans = state.selecteds.filter((element) => element.type === 'research_plan');
 
     // we find the reasearch plan that has our image entry
     const researchPlanWithImageEntry = researchPlans.find((element) => !!element.getBodyElementById(this.props?.field?.id));
@@ -97,7 +96,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             <InputGroup.Addon>%</InputGroup.Addon>
             <div className="image-annotation-button-researchplan">
               <ImageAnnotationEditButton
-                parent={this}
+                onSelectAttachment={(attachment) => {
+                  this.setState({
+                    imageEditModalShown: true,
+                    chosenAttachment: attachment,
+                    imageName: attachment.filename,
+                  });
+                }}
                 attachment={currentAttachment}
               />
             </div>
@@ -168,12 +173,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
     return (
       <ImageAnnotationModalSVG
-        attachment={this.state.choosenAttachment}
+        attachment={this.state.chosenAttachment}
         isShow={this.state.imageEditModalShown}
         handleSave={
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            this.state.chosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
             this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
           }

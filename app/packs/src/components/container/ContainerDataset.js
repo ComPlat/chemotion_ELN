@@ -59,13 +59,13 @@ export default class ContainerDataset extends Component {
     const updatedAttachments = newAttachments.map(attachment => {
       return attachment.thumb
         ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
-            result => {
-              if (result != null) {
-                attachment.preview = `data:image/png;base64,${result}`;
-              }
-              return attachment;
+          result => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
             }
-          )
+            return attachment;
+          }
+        )
         : attachment;
     });
 
@@ -143,6 +143,24 @@ export default class ContainerDataset extends Component {
       InboxActions.backToInbox(attachment);
       dataset_container.attachments.splice(index, 1);
       onChange(dataset_container);
+    }
+  }
+
+  renderImageAnnotationButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new) {
+      return (
+        <ImageAnnotationEditButton
+          onSelectAttachment={(attachment) => {
+            this.setState({
+              imageEditModalShown: true,
+              chosenAttachment: attachment,
+              imageName: attachment.filename,
+            })
+          }}
+          attachment={attachment}
+        />
+      );
     }
   }
 
@@ -557,6 +575,19 @@ export default class ContainerDataset extends Component {
             onChange={this.handleDSChange}
           />
         </Col>
+        <ImageAnnotationModalSVG
+          attachment={this.state.chosenAttachment}
+          isShow={this.state.imageEditModalShown}
+          handleSave={
+            () => {
+              let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
+              this.state.chosenAttachment.updatedAnnotation = newAnnotation;
+              this.setState({ imageEditModalShown: false });
+              this.props.onChange(this.props.dataset_container);
+            }
+          }
+          handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+        />
       </Row>
     );
   }
