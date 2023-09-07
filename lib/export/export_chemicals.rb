@@ -45,82 +45,37 @@ module Export
       important_notes: ['c."chemical_data"->0->\'important_notes\'', '"important_notes"', nil],
     }.freeze
 
-    def self.format_chemical_amount(value)
-      amount_value_unit = JSON.parse(value).values
-      sorted = amount_value_unit.sort_by { |element| [element.is_a?(Integer) || element.is_a?(Float) ? 0 : 1, element] }
-      sorted.join
-    end
-
-    def self.format_columns_name(result, *indexes)
-      indexes.sort.reverse_each do |index|
-        result.columns[index] = result.columns[index].sub(/\s+\S+\z/, '')
+    def self.build_chemical_column_query(selection, sel)
+      chemical_selections = []
+      sel[:chemicals].each do |col|
+        query = CHEMICAL_QUERIES[col.to_sym]
+        chemical_selections << ("#{query[2]} as #{query[1]}") if SAFETY_SHEET_INFO.include?(col)
+        chemical_selections << ("#{query[0]} as #{query[1]}")
       end
+      gathered_selections = []
+      gathered_selections << selection
+      gathered_selections << chemical_selections
     end
 
-    def self.delete_columns(result, *indexes)
-      indexes.sort.reverse_each do |index|
-        result.columns.delete_at(index)
-        result.rows.each { |row| row.delete_at(index) }
+    def self.format_chemical_results(result)
+      columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
+      result.columns.map.with_index do |column_name, index|
+        column_name, columns_index = construct_column_name(column_name, index, columns_index)
+        result.columns[index] = column_name # Replace the value in the array
       end
+      format_chemical_results_row(result, columns_index)
     end
 
-    def self.process_merged_columns(result, columns_index)
-      format_columns_name(result, columns_index['safety_sheet_link'][0], columns_index['product_link'][0])
-      delete_columns(result, columns_index['safety_sheet_link'][1], columns_index['product_link'][1])
-    end
-
-    def self.process_to_delete_indexes(result, indexes_to_delete)
-      indexes_to_delete.sort.reverse_each do |index|
-        result.columns.delete_at(index)
-        result.rows.each { |row| row.delete_at(index) }
-        format_columns_name(result, index - 1)
+    def self.construct_column_name(column_name, index, columns_index)
+      format_chemical_column = ['p statements', 'h statements', 'amount', 'safety sheet link thermofischer',
+                                'safety sheet link merck', 'product link thermofischer', 'product link merck'].freeze
+      if column_name.is_a?(String) && CHEMICAL_FIELDS.include?(column_name)
+        column_name = column_name.tr('_', ' ')
+        construct_column_name_hash(columns_index, column_name, index) if format_chemical_column.include?(column_name)
+      else
+        column_name
       end
-    end
-
-    def self.merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
-      process_to_delete_indexes(result, indexes_to_delete)
-      process_merged_columns(result, columns_index) if indexes_to_delete.empty?
-      result
-    end
-
-    def self.format_p_and_h_statements(value)
-      keys = JSON.parse(value).keys
-      keys.join('-')
-    end
-
-    def self.format_link(value, row, next_index, indexes_to_delete)
-      if next_index && row[next_index]
-        value += "-#{row[next_index]}"
-        indexes_to_delete.push(next_index)
-      end
-      value
-    end
-
-    def self.format_row(row, columns_index, indexes_to_delete)
-      row.map.with_index do |value, index|
-        next value unless value.is_a?(String)
-
-        case index
-        when columns_index['p_statements'], columns_index['h_statements']
-          format_p_and_h_statements(value)
-        when columns_index['amount']
-          format_chemical_amount(value)
-        when columns_index['safety_sheet_link'][0]
-          format_link(value, row, columns_index['safety_sheet_link'][1], indexes_to_delete)
-        when columns_index['product_link'][0]
-          format_link(value, row, columns_index['product_link'][1], indexes_to_delete)
-        else
-          value.gsub(/[\[\]"]/, '')
-        end
-      end
-    end
-
-    def self.format_chemical_results_row(result, columns_index)
-      indexes_to_delete = []
-      result.rows.map! do |row|
-        format_row(row, columns_index, indexes_to_delete)
-      end
-      merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
+      [column_name, columns_index]
     end
 
     def self.construct_column_name_hash(columns_index, column_name, index)
@@ -138,37 +93,82 @@ module Export
       end
     end
 
-    def self.construct_column_name(column_name, index, columns_index)
-      format_chemical_column = ['p statements', 'h statements', 'amount', 'safety sheet link thermofischer',
-                                'safety sheet link merck', 'product link thermofischer', 'product link merck'].freeze
-      if column_name.is_a?(String) && CHEMICAL_FIELDS.include?(column_name)
-        column_name = column_name.tr('_', ' ')
-        construct_column_name_hash(columns_index, column_name, index) if format_chemical_column.include?(column_name)
-      else
-        column_name
+    def self.format_chemical_results_row(result, columns_index)
+      indexes_to_delete = []
+      result.rows.map! do |row|
+        format_row(row, columns_index, indexes_to_delete)
       end
-      [column_name, columns_index]
+      merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
     end
 
-    def self.format_chemical_results(result)
-      columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
-      result.columns.map.with_index do |column_name, index|
-        column_name, columns_index = construct_column_name(column_name, index, columns_index)
-        result.columns[index] = column_name # Replace the value in the array
+    def self.format_row(row, columns_index, indexes_to_delete)
+      row.map.with_index do |value, index|
+        next value unless value.is_a?(String)
+
+        case index
+        when columns_index['p_statements'], columns_index['h_statements']
+          value = format_p_and_h_statements(value)
+        when columns_index['amount']
+          value = format_chemical_amount(value)
+        when columns_index['safety_sheet_link'][0]
+          value = format_link(value, row, columns_index['safety_sheet_link'][1], indexes_to_delete)
+        when columns_index['product_link'][0]
+          value = format_link(value, row, columns_index['product_link'][1], indexes_to_delete)
+        end
+        value.gsub(/[\[\]"]/, '')
       end
-      format_chemical_results_row(result, columns_index)
     end
 
-    def self.build_chemical_column_query(selection, sel)
-      chemical_selections = []
-      sel[:chemicals].each do |col|
-        query = CHEMICAL_QUERIES[col.to_sym]
-        chemical_selections << ("#{query[2]} as #{query[1]}") if SAFETY_SHEET_INFO.include?(col)
-        chemical_selections << ("#{query[0]} as #{query[1]}")
+    def self.format_p_and_h_statements(value)
+      keys = JSON.parse(value).keys
+      keys.join('-')
+    end
+
+    def self.format_chemical_amount(value)
+      amount_value_unit = JSON.parse(value).values
+      sorted = amount_value_unit.sort_by { |element| [element.is_a?(Integer) || element.is_a?(Float) ? 0 : 1, element] }
+      sorted.join
+    end
+
+    def self.format_link(value, row, next_index, indexes_to_delete)
+      # binding.pry
+      if next_index && row[next_index].present?
+        value += "-#{row[next_index]}"
+        indexes_to_delete.push(next_index)
       end
-      gathered_selections = []
-      gathered_selections << selection
-      gathered_selections << chemical_selections
+      value
+    end
+
+    def self.merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
+      process_to_delete_indexes(result, indexes_to_delete)
+      process_merged_columns(result, columns_index) if indexes_to_delete.empty?
+      result
+    end
+
+    def self.process_to_delete_indexes(result, indexes_to_delete)
+      indexes_to_delete.sort.reverse_each do |index|
+        result.columns.delete_at(index)
+        result.rows.each { |row| row.delete_at(index) }
+        format_columns_name(result, index - 1)
+      end
+    end
+
+    def self.process_merged_columns(result, columns_index)
+      format_columns_name(result, columns_index['safety_sheet_link'][0], columns_index['product_link'][0])
+      delete_columns(result, columns_index['safety_sheet_link'][1], columns_index['product_link'][1])
+    end
+
+    def self.format_columns_name(result, *indexes)
+      indexes.sort.reverse_each do |index|
+        result.columns[index] = result.columns[index].sub(/\s+\S+\z/, '')
+      end
+    end
+
+    def self.delete_columns(result, *indexes)
+      indexes.sort.reverse_each do |index|
+        result.columns.delete_at(index)
+        result.rows.each { |row| row.delete_at(index) }
+      end
     end
   end
 end

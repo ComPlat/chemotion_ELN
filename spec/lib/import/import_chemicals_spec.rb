@@ -7,6 +7,8 @@ RSpec.describe Import::ImportChemicals do
     it 'extracts a product number from a Sigma-Aldrich URL' do
       url = 'http://www.sigmaaldrich.com/MSDS/MSDS/DisplayMSDSPage.do?country=DE&language=DE&productNumber=131377&brand=ALDRICH'
       expect(described_class.extract_product_number(url)).to eq('131377')
+      url_2 = 'https://www.sigmaaldrich.com/US/en/product/sigma/a5376'
+      expect(described_class.extract_product_number(url_2)).to eq('a5376')
     end
   end
 
