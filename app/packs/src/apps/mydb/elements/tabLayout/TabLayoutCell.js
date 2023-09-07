@@ -31,7 +31,7 @@ class TabLayoutCell extends Component {
     } = this.props;
 
     const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'];
-    const cellIcon = `icon-${cell}`;
+    let cellIcon = `icon-${cell}`;
     let cellTitle = capitalizeWords(cell);
     let cellDescription = '';
 
