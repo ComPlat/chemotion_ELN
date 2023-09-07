@@ -38,8 +38,8 @@ export default class ModalImport extends React.Component {
     NotificationActions.add(notification);
   }
 
-  handleFileDrop(attachment_file) {
-    this.setState({ file: attachment_file[0] });
+  handleFileDrop(attachmentFile) {
+    this.setState({ file: attachmentFile[0] });
   }
 
   handleAttachmentRemove() {
@@ -73,7 +73,7 @@ export default class ModalImport extends React.Component {
 
   isDisabled() {
     const { file } = this.state;
-    return file == null
+    return file == null;
   }
 
   render() {
@@ -87,6 +87,6 @@ export default class ModalImport extends React.Component {
           <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
-    )
+    );
   }
 }
