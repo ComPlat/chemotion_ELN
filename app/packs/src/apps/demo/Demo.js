@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Button from 'ui/Button';
 import ButtonGroup from 'ui/ButtonGroup';
+import Checkbox from 'ui/Checkbox';
 
 function Demo() {
   const [activeTab, setActiveTab] = useState('Introduction');
@@ -31,6 +32,13 @@ function Demo() {
       tooltipPosition: 'top',
     },
   ]);
+
+  const [checkboxChecked, setCheckboxChecked] = useState(false);
+  const [checkboxSize, setCheckboxSize] = useState('medium');
+  const [checkboxLabel, setCheckboxLabel] = useState('Checkbox');
+  const [checkboxLabelPlacement, setCheckboxLabelPlacement] = useState('end');
+  const [checkboxTooltip, setCheckboxTooltip] = useState(null);
+  const [checkboxTooltipPosition, setCheckboxTooltipPosition] = useState('top');
 
   const updateGroupButton = (index, key, value) => {
     const newGroupButtons = [...groupButtons];
@@ -257,6 +265,85 @@ function Demo() {
     </div>
   );
 
+  const renderCheckboxDemo = () => (
+    <div className="demo-section">
+      <div className="controls button-controls">
+        <label>
+          <Checkbox
+            checked={checkboxChecked}
+            onChange={() => setCheckboxChecked(!checkboxChecked)}
+            label="Checked"
+            labelPlacement="start"
+            size="xLarge"
+          />
+        </label>
+        <label>
+          Size:
+          <select onChange={(e) => setCheckboxSize(e.target.value)} value={checkboxSize}>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </label>
+        <label>
+          Label:
+          <input
+            type="text"
+            value={checkboxLabel}
+            onChange={(e) => setCheckboxLabel(e.target.value)}
+          />
+        </label>
+        <label>
+          Label Placement:
+          <select
+            onChange={(e) => setCheckboxLabelPlacement(e.target.value)}
+            value={checkboxLabelPlacement}
+          >
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+            <option value="start">Start</option>
+            <option value="end">End</option>
+          </select>
+        </label>
+        <label>
+          Tooltip:
+          <input
+            type="text"
+            value={checkboxTooltip}
+            onChange={(e) => setCheckboxTooltip(e.target.value)}
+          />
+        </label>
+        <label>
+          Tooltip Position:
+          <select
+            onChange={(e) => setCheckboxTooltipPosition(e.target.value)}
+            value={checkboxTooltipPosition}
+          >
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
+      </div>
+      <div className="checkbox-container button-container">
+        <Checkbox
+          checked={checkboxChecked}
+          size={checkboxSize}
+          label={checkboxLabel}
+          labelPlacement={checkboxLabelPlacement}
+          tooltip={checkboxTooltip}
+          tooltipPosition={checkboxTooltipPosition}
+        />
+      </div>
+      <pre>
+        {`<Checkbox checked={${checkboxChecked}} size="${checkboxSize}" `
+        + `label="${checkboxLabel}" labelPlacement="${checkboxLabelPlacement}" `
+        + `tooltip="${checkboxTooltip}" tooltipPosition="${checkboxTooltipPosition}" />`}
+      </pre>
+    </div>
+  );
+
   return (
     <div className="demo-container">
       <aside className="sidebar">
@@ -282,6 +369,13 @@ function Demo() {
         >
           Button Group
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('Checkbox')}
+          className={activeTab === 'Checkbox' ? 'active' : ''}
+        >
+          Checkbox
+        </button>
       </aside>
       <main className="main-content">
         <div
@@ -302,6 +396,11 @@ function Demo() {
           }`}
         >
           {renderButtonGroupDemo()}
+        </div>
+        <div
+          className={`tab-content ${activeTab === 'Checkbox' ? 'active' : ''}`}
+        >
+          {renderCheckboxDemo()}
         </div>
       </main>
     </div>

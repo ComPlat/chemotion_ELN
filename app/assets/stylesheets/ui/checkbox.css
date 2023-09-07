@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
+:root {
+    --tooltip-bg-color: #555;
+    --tooltip-text-color: #fff;
+    --common-font-family: "Roboto", sans-serif;
+    --common-font-weight: 700;
+}
+
+.checkbox-common {
+    cursor: pointer;
+    font-family: var(--common-font-family);
+    font-weight: var(--common-font-weight);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.checkbox-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    box-shadow: none;
+}
+
+.checkbox-common:checked {
+  background-color: #6200ea;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Sizes */
+.checkbox-small { width: 16px; height: 16px; }
+.checkbox-medium { width: 20px; height: 20px; }
+.checkbox-large { width: 24px; height: 24px; }
+.checkbox-xLarge { width: 28px; height: 28px; }
+
+/* Checkbox - Wrapper & Label */
+.checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.checkbox-wrapper:hover .checkbox-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.checkbox-label-top,
+.checkbox-label-bottom {
+  flex-direction: column;
+  align-items: center;
+}
+
+.checkbox-label-start label,
+.checkbox-label-end label {
+  margin-right: 5px;
+  font-family: var(--common-font-family);
+  font-weight: var(--common-font-weight);
+}
+
