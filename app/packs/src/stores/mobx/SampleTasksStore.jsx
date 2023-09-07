@@ -26,7 +26,7 @@ const SampleTask = types.model({
 export const SampleTasksStore = types
   .model({
     sample_tasks: types.map(SampleTask), // automatically wrapped to types.optional(types.map(SampleTask), {})
-    inbox_visible: types.optional(types.boolean, false) // default set manually
+    inbox_visible: types.optional(types.boolean, false), // default set manually
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises

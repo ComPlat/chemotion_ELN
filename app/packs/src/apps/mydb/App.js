@@ -14,6 +14,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Calendar from 'src/components/calendar/Calendar';
+import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 
 class App extends Component {
   constructor(_props) {
@@ -124,6 +125,7 @@ class App extends Component {
       <Grid fluid>
         <Row className="card-navigation">
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
+          <SampleTaskInbox />
         </Row>
         <Row className="card-content container-fluid">
           {this.collectionTree()}
