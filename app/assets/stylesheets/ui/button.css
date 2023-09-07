@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 
 /* Common Styles */
 .btn-common {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-weight: 510;
   line-height: 1;
   display: inline-flex;
@@ -23,7 +23,8 @@
 }
 
 /* Focus and Hover States */
-.btn-common:focus, .btn-common:hover {
+.btn-common:focus,
+.btn-common:hover {
   outline: 0;
 }
 
@@ -54,10 +55,15 @@
 }
 
 /* Variants */
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   border: unset;
   color: #fff;
-  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.05) 100%);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
 }
 
 .btn-primary {
@@ -68,7 +74,8 @@
   background-color: #0056b3;
 }
 
-.btn-primary:focus, .btn-primary:active {
+.btn-primary:focus,
+.btn-primary:active {
   background-color: #004792;
 }
 
@@ -80,7 +87,8 @@
   background-color: #545b62;
 }
 
-.btn-secondary:focus, .btn-secondary:active {
+.btn-secondary:focus,
+.btn-secondary:active {
   background-color: #4e555b;
 }
 
@@ -128,7 +136,7 @@
   display: inline-block;
 }
 
-.tooltip {
+.btn-tooltip {
   visibility: hidden;
   background-color: #555;
   color: #fff;
@@ -139,71 +147,72 @@
   z-index: 1;
   opacity: 0;
   transition: opacity 0.3s;
+  width: 200px;
 }
 
-.tooltip::after {
-  content: '';
+.btn-tooltip::after {
+  content: "";
   position: absolute;
   border-style: solid;
 }
 
-.tooltip-top {
-  bottom: 125%;
+.btn-tooltip-top {
+  bottom: calc(100% + 5px);
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -5px);
 }
 
-.tooltip-top::after {
-  border-width: 5px 5px 0 5px;
-  border-color: #555 transparent transparent transparent;
+.btn-tooltip-top::after {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
+  border-width: 5px 5px 0 5px;
+  border-color: #555 transparent transparent transparent;
 }
 
-.tooltip-bottom {
-  top: 125%;
+.btn-tooltip-bottom {
+  top: calc(100% + 5px);
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 5px);
 }
 
-.tooltip-bottom::after {
-  border-width: 0 5px 5px 5px;
-  border-color: transparent transparent #555 transparent;
+.btn-tooltip-bottom::after {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
+  border-width: 0 5px 5px 5px;
+  border-color: transparent transparent #555 transparent;
 }
 
-.tooltip-left {
+.btn-tooltip-left {
   top: 50%;
-  right: 125%;
-  margin-top: -15px;
+  right: calc(100% + 5px);
+  transform: translate(-5px, -50%);
 }
 
-.tooltip-left::after {
-  border-width: 5px 0 5px 5px;
-  border-color: transparent transparent transparent #555;
+.btn-tooltip-left::after {
   top: 50%;
   left: 100%;
-  margin-top: -5px;
+  transform: translateY(-50%);
+  border-width: 5px 0 5px 5px;
+  border-color: transparent transparent transparent #555;
 }
 
-.tooltip-right {
+.btn-tooltip-right {
   top: 50%;
-  left: 125%;
-  margin-top: -15px;
+  left: calc(100% + 5px);
+  transform: translate(5px, -50%);
 }
 
-.tooltip-right::after {
-  border-width: 5px 5px 5px 0;
-  border-color: transparent #555 transparent transparent;
+.btn-tooltip-right::after {
   top: 50%;
   right: 100%;
-  margin-top: -5px;
+  transform: translateY(-50%);
+  border-width: 5px 5px 5px 0;
+  border-color: transparent #555 transparent transparent;
 }
 
-.btn-wrapper:hover .tooltip {
+.btn-wrapper:hover .btn-tooltip {
   visibility: visible;
   opacity: 1;
 }

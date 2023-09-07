@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -15,7 +16,6 @@ function Button(props) {
 
   return (
     <div className="btn-wrapper">
-
       <button
       // eslint-disable-next-line react/button-has-type
         type={type}
@@ -25,7 +25,7 @@ function Button(props) {
       >
         {children}
       </button>
-      {tooltip && <span className={`tooltip tooltip-${tooltipPosition}`}>{tooltip}</span>}
+      {tooltip && <span className={`btn-tooltip btn-tooltip-${tooltipPosition}`}>{tooltip}</span>}
     </div>
 
   );
@@ -36,7 +36,8 @@ Button.propTypes = {
   size: PropTypes.oneOf(['xLarge', 'large', 'medium', 'small']),
   children: PropTypes.node,
   onClick: PropTypes.func,
-  square: PropTypes.bool, // this will make the width=height for buttons that only have icons
+  // this will make the width=height for buttons that only have icons
+  square: PropTypes.bool,
   type: PropTypes.oneOf(['submit', 'reset', 'button']),
   tooltip: PropTypes.string,
   tooltipPosition: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
