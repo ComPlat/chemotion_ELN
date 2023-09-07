@@ -214,6 +214,8 @@ export default class ModalExport extends React.Component {
 
   buttonBar() {
     const { onHide } = this.props;
+    const chemicalColumns = this.filteredColumns();
+    const sdfChemicalExport = chemicalColumns.chemicals.length !== 0;
     return (
       <ButtonToolbar>
         <div className="pull-right">
@@ -222,7 +224,7 @@ export default class ModalExport extends React.Component {
             <DropdownButton dropup bsStyle="warning" id="md-export-dropdown"
               title="XLSX/SD Export" onSelect={this.handleClick}>
               <MenuItem eventKey="1">XLSX Export</MenuItem>
-              <MenuItem eventKey="2">SDF Export</MenuItem>
+              <MenuItem eventKey="2" disabled={sdfChemicalExport}>SDF Export</MenuItem>
             </DropdownButton>
           </ButtonToolbar>
         </div>
