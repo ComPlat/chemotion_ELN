@@ -78,7 +78,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
       extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
-      chosenAttachment: null
+      chosenAttachment: null,
+      chosenAttachmentAnnotation: null,
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
