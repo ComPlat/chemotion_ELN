@@ -6,7 +6,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Utils from 'src/utilities/Functions';
 import {
@@ -229,7 +229,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
         handleSave={
           (newAnnotation) => {
             chosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
+            this.setState({
+              imageEditModalShown: false,
+              chosenAttachment: chosenAttachment
+            });
             onEdit(chosenAttachment);
           }
         }
@@ -243,12 +246,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <ImageAnnotationEditButton
         onSelectAttachment={(attachment) => {
           AttachmentFetcher.annotation(attachment.id).then((svg) => {
-            const errorSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><text fill="#000000" font-size="12" stroke="#FF0000" stroke-width="0" text-anchor="middle" transform="matrix(7.15604 0 0 7.15604 -3493.72 -3162.82)" x="622.37" xml:space="preserve" y="525.48">Loading error :(</text></svg>';
             this.setState({
               imageEditModalShown: true,
               chosenAttachment: attachment,
+              chosenAttachmentAnnotation: svg || errorSvg,
               imageName: attachment.filename,
-              chosenAttachmentAnnotation: svg || errorSvg
             })
           });
         }}

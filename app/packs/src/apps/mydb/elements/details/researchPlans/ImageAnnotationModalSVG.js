@@ -2,6 +2,8 @@
 import React, { Component } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 
+export const errorSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><text fill="#000000" font-size="12" stroke="#FF0000" stroke-width="0" text-anchor="middle" transform="matrix(7.15604 0 0 7.15604 -3493.72 -3162.82)" x="622.37" xml:space="preserve" y="525.48">Loading error :(</text></svg>';
+
 export default class ImageAnnotationModalSVG extends Component {
   constructor(props) {
     super(props);
@@ -180,6 +182,8 @@ export default class ImageAnnotationModalSVG extends Component {
             bsStyle="warning"
             disabled={!this.state.canSave}
             onClick={() => {
+              const subWindow = document.getElementById('svgEditId').contentWindow;
+              const { svgEditor } = subWindow;
               this.setState({ canSave: false });
               return this.props.handleSave(
                 svgEditor.svgCanvas.getSvgString()
