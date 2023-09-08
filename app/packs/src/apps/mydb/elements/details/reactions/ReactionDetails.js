@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
+import React, { Component} from 'react';
+
 import PropTypes from 'prop-types';
 import {
   Panel, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, OverlayTrigger, Tooltip
+  Tabs, Tab, OverlayTrigger, Tooltip, Alert
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -39,6 +40,8 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import Popup from 'reactjs-popup';
+
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -254,6 +257,13 @@ export default class ReactionDetails extends Component {
   }
 
   reactionHeader(reaction) {
+   
+    const Modal = () => (  <Popup trigger={<button className="button"> 
+    Open Modal </button>
+    } modal>    
+    <span> Modal content 
+      </span>  
+      </Popup>);
     const hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
@@ -272,7 +282,7 @@ export default class ReactionDetails extends Component {
     const colLabel = reaction.isNew ? null : (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
-
+    
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -302,6 +312,25 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="Curate">Curate</Tooltip>}
+        >
+          
+        {/* <Button
+        title="Press me"
+        bsStyle="warning"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={e=> App()}
+        >
+          Click to curate data
+        
+        </Button> */}
+       <Modal/>
+      
+        </OverlayTrigger>
+      
         {copyBtn}
         <OverlayTrigger
           placement="bottom"
