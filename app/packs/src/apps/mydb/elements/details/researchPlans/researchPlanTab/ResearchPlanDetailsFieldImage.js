@@ -7,14 +7,19 @@ import {
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
-    this.state = { imageEditModalShown: false, attachments: props.attachments };
+    this.state = {
+      imageEditModalShown: false,
+      attachments: props.attachments,
+      chosenAttachment: null,
+      chosenAttachmentAnnotation: null,
+    };
 
     this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
@@ -97,10 +102,14 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             <div className="image-annotation-button-researchplan">
               <ImageAnnotationEditButton
                 onSelectAttachment={(attachment) => {
-                  this.setState({
-                    imageEditModalShown: true,
-                    chosenAttachment: attachment,
-                    imageName: attachment.filename,
+                  AttachmentFetcher.annotation(attachment.id).then((svg) => {
+                    console.debug('Fetched SVG, showing the modal');
+                    this.setState({
+                      imageEditModalShown: true,
+                      chosenAttachment: attachment,
+                      chosenAttachmentAnnotation: svg || errorSvg,
+                      imageName: attachment.filename,
+                    });
                   });
                 }}
                 attachment={currentAttachment}
@@ -168,18 +177,32 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   renderImageEditModal() {
     if (this.isLegacyImage(this.props.field.value.public_name)) {
+      console.debug('its a legacy image, no annotation possible')
       return null;
     }
-
+    const { chosenAttachment } = this.state;
+    let annotation = '';
+    if (chosenAttachment) {
+      if (chosenAttachment.updatedAnnotation) {
+        console.debug('use existing annotation')
+        annotation = chosenAttachment.updatedAnnotation;
+      } else {
+        console.debug('Use annotation from fetcher')
+        annotation = this.state.chosenAttachmentAnnotation
+      }
+    }
+    console.debug(this.state);
     return (
       <ImageAnnotationModalSVG
-        attachment={this.state.chosenAttachment}
-        isShow={this.state.imageEditModalShown}
+        annotation={annotation}
+        show={this.state.imageEditModalShown}
         handleSave={
-          () => {
-            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.chosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
+          (newAnnotation) => {
+            chosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({
+              imageEditModalShown: false,
+              chosenAttachment: chosenAttachment
+            });
             this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
           }
         }
