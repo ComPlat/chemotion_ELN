@@ -157,6 +157,9 @@ export default class ImageAnnotationModalSVG extends Component {
                 this.setState({ canSave: false });
               }
 
+              subDocument.querySelector('se-text[text="tools.fit_to_all"]')?.click();
+              svgEditor.updateCanvas(false, false);
+
               // display the previously invisible iframe
               const newStyle = this.iframe?.getAttribute('style')?.replace('visibility: hidden', 'visibility: visible');
               this.iframe?.setAttribute('style', newStyle);
