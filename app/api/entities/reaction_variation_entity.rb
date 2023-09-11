@@ -68,6 +68,7 @@ module Entities
       :molecularWeight,
       :sumFormula,
       :yield,
+      :equivalent,
     )
   end
 end

@@ -65,7 +65,9 @@ module Reporter
 
       def variation_materials(variation, type)
         variation[type].map do |_, v|
-          "#{v[:aux][:sumFormula]}:\n#{v[:value]} #{v[:unit]}" + (v[:aux][:isReference] ? '; Ref' : '')
+          "#{v[:aux][:sumFormula]}:\n#{v[:value]} #{v[:unit]} " \
+          "; #{v[:aux].fetch(:equivalent, 'n/a')} Equiv " +
+            (v[:aux][:isReference] ? '; Ref' : '')
         end
       end
 

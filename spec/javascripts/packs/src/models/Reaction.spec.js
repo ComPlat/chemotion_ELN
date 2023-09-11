@@ -5,7 +5,9 @@ import {
   createVariationsRow,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
-  computeYield
+  updateYields,
+  updateEquivalents,
+  getReferenceMaterial
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function getReactionMaterials(reaction) {
@@ -23,6 +25,7 @@ async function setUpMaterial() {
 async function setUpReaction() {
   const reaction = await ReactionFactory.build('water+water=>water+water');
   reaction.starting_materials[0].reference = true;
+  reaction.reactants = [await SampleFactory.build("water_100g")];
   const variations = [];
   for (let id = 0; id < 3; id++) {
     variations.push(createVariationsRow(reaction, id));
@@ -118,10 +121,19 @@ describe('Reaction', async () => {
     it('updates yield when product amount changes', async () => {
       const reaction = await setUpReaction();
       const productID = reaction.products[0].id;
-      expect(reaction.variations[0].products[productID].aux.yield).toBe('100');
-      reaction.variations[0].products[productID].value = '2';
-      const updatedVariations = computeYield(reaction.variations, reaction.hasPolymers());
-      expect(updatedVariations[0].products[productID].aux.yield).toBe('5');
+      expect(reaction.variations[0].products[productID].aux.yield).toBe(100);
+      reaction.variations[0].products[productID].value = 2;
+      const updatedVariations = updateYields(reaction.variations, reaction.hasPolymers());
+      expect(updatedVariations[0].products[productID].aux.yield).toBe(5);
+    });
+    it("updates non-reference materials' equivalents when reference material's amount changes ", async () => {
+      const reaction = await setUpReaction();
+      const reactantID = reaction.reactants[0].id;
+      expect(reaction.variations[0].reactants[reactantID].aux.equivalent).toBe(1);
+      const referenceMaterial = getReferenceMaterial(reaction.variations[0]);
+      referenceMaterial.value = 2;
+      const updatedVariations = updateEquivalents(reaction.variations);
+      expect(updatedVariations[0].reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
     });
   });
 });

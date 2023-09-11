@@ -16,7 +16,8 @@ import Segment from 'src/models/Segment';
 import {
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
-  computeYield
+  updateYields,
+  updateEquivalents,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
@@ -247,13 +248,15 @@ export default class Reaction extends Element {
         products: this.products,
         solvents: this.solvents
       };
-      // Keep materials up-to-date. Materials could have been added or removed in the scheme tab
+      // Keep set of materials up-to-date. Materials could have been added or removed in the scheme tab
       // (of the reaction detail modal); these changes need to be reflected in the variations.
       let updatedVariations = removeObsoleteMaterialsFromVariations(variations, currentMaterials);
       updatedVariations = addMissingMaterialsToVariations(updatedVariations, currentMaterials);
-      // The yields need to be updated, since the products' amounts could have been edited in
+      // The products' yields need to be updated, since the products' amounts could have been edited in
       // the variations tab (of the reaction detail modal).
-      updatedVariations = computeYield(updatedVariations, this.hasPolymers());
+      updatedVariations = updateYields(updatedVariations, this.hasPolymers());
+      // A potential change in the reference material's amount needs to be reflected in the remaining materials' equivalents.
+      updatedVariations = updateEquivalents(updatedVariations);
 
       this._variations = updatedVariations;
     }

@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, forwardRef, useState, useEffect, useImperativeHandle, useCallback
+  useRef, forwardRef, useState, useReducer, useEffect, useImperativeHandle, useCallback
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -11,29 +11,32 @@ import {
 import _ from 'lodash';
 import {
   createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits,
-  convertUnit, materialTypes
+  convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
-function RowToolsCellRenderer({ data, copyRow, removeRow }) {
+function RowToolsCellRenderer({ data: variationRow, copyRow, removeRow }) {
   return (
     <div>
-      <Badge>{data.id.substring(0, 5)}</Badge>
+      <Badge>{variationRow.id.substring(0, 5)}</Badge>
       {' '}
       <ButtonGroup>
-        <Button onClick={() => copyRow(data)}><i className="fa fa-copy" /></Button>
-        <Button onClick={() => removeRow(data)}><i className="fa fa-trash" /></Button>
+        <Button onClick={() => copyRow(variationRow)}><i className="fa fa-copy" /></Button>
+        <Button onClick={() => removeRow(variationRow)}><i className="fa fa-trash" /></Button>
       </ButtonGroup>
     </div>
   );
 }
 
-function CellRenderer({ value: cellData }) {
+function CellRenderer({ value: cellData, enableEquivalent }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  const cellContent = `${Number(value) ? Number(value).toFixed(6) : 'NaN'} [${unit}]`;
+  let cellContent = `${Number(value) ? Number(value).toFixed(6) : 'NaN'} [${unit}]`;
+  if (enableEquivalent) {
+    cellContent += `; ${Number(aux.equivalent) ? Number(aux.equivalent).toFixed(6) : 'NaN'} [Equiv]`;
+  }
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
   overlayContent += aux.isReference ? '; Ref' : '';
-  overlayContent += aux.yield ? `; Yield: ${aux.yield}%` : '';
+  overlayContent += aux.yield ? `; Yield: ${aux.yield.toFixed(0)}%` : '';
   if (!overlayContent) {
     return cellContent;
   }
@@ -61,16 +64,97 @@ const cellComparator = (item1, item2) => {
   return value1 - value2;
 };
 
-const CellEditor = forwardRef((props, ref) => {
-  const { value = '', unit = 'None', aux = {} } = props.value ?? {};
-  const [currentUnit, setCurrentUnit] = useState(unit);
-  const [currentValue, setCurrentValue] = useState(value);
+const cellEditorReducer = (cellData, action) => {
+  switch (action.type) {
+    case 'set-value': {
+      const newValue = action.payload;
+      // Non-reference materials require an update to their own equivalent only; those updates are applied here.
+      // Reference materials require updates to other materials' equivalents, i.e., cell's that aren't currently edited;
+      // those updates are handled in the Reaction model (src/models/Reaction.js).
+      if (!action.enableEquivalent) {
+        return { ...cellData, value: newValue };
+      }
+
+      const newEquivalent = (!cellData.aux.isReference)
+        ? computeEquivalent({ value: newValue, ...cellData }, action.referenceMaterial) : cellData.aux.equivalent;
+      return { ...cellData, value: newValue, aux: { ...cellData.aux, equivalent: newEquivalent } };
+    }
+    case 'set-unit': {
+      const newValue = convertUnit(cellData.value, cellData.unit, action.payload);
+      return { ...cellData, value: newValue, unit: action.payload };
+    }
+    case 'set-equivalent': {
+      const newEquivalent = action.payload;
+
+      const referenceMol = getMolFromGram(
+        convertUnit(action.referenceMaterial.value, action.referenceMaterial.unit, 'g'),
+        action.referenceMaterial
+      );
+      const newValue = convertUnit(getGramFromMol(referenceMol * newEquivalent, cellData), 'g', cellData.unit);
+      return { ...cellData, value: newValue, aux: { ...cellData.aux, equivalent: newEquivalent } };
+    }
+    default:
+      return cellData;
+  }
+};
+
+const CellEditor = forwardRef(({
+  data: variationRow, value, enableEquivalent, allowNegativeValue, unitOptions,
+}, ref) => {
+  const [cellData, dispatch] = useReducer(cellEditorReducer, value);
+  const referenceMaterial = getReferenceMaterial(variationRow);
   const refInput = useRef(null);
 
-  const onUnitChange = (newUnit) => {
-    setCurrentValue(convertUnit(currentValue, currentUnit, newUnit));
-    setCurrentUnit(newUnit);
-  };
+  const equivalentEditor = (enableEquivalent) ? (
+    <div>
+      <input
+        type="number"
+        ref={refInput}
+        value={cellData.aux.equivalent}
+        min={0}
+        onChange={(event) => dispatch({ type: 'set-equivalent', payload: event.target.value, referenceMaterial })}
+        disabled={cellData.aux.isReference}
+      />
+      {' '}
+      <span>Equiv</span>
+    </div>
+  ) : null;
+
+  const valueWithUnitEditor = (
+    <div>
+      <input
+        type="number"
+        ref={refInput}
+        value={cellData.value}
+        min={allowNegativeValue ? undefined : 0}
+        onChange={(event) => dispatch({
+          type: 'set-value',
+          payload: event.target.value,
+          referenceMaterial,
+          enableEquivalent
+        })}
+      />
+      <DropdownButton title={cellData.unit}>
+        {unitOptions.map(
+          (option) => (
+            <MenuItem
+              key={option}
+              onSelect={() => dispatch({ type: 'set-unit', payload: option })}
+            >
+              {option}
+            </MenuItem>
+          )
+        )}
+      </DropdownButton>
+    </div>
+  );
+
+  const cellContent = (
+    <div>
+      { valueWithUnitEditor }
+      { equivalentEditor }
+    </div>
+  );
 
   useEffect(() => {
     // focus on the input
@@ -79,35 +163,20 @@ const CellEditor = forwardRef((props, ref) => {
 
   useImperativeHandle(ref, () => ({
     getValue() {
-      // final value to send to the grid, on completion of editing
-      return { value: currentValue, unit: currentUnit, aux };
+      // Final value to send to the grid, on completion of editing.
+      return cellData;
     },
+
+    isCancelAfterEnd() {
+      // Gets called once when editing is finished.
+      // If you return true, then the result of the edit will be ignored.
+      const valueIsInvalid = (allowNegativeValue) ? false : cellData.value < 0;
+      const equivalentIsInvalid = enableEquivalent ? cellData.aux.equivalent < 0 : false;
+      return valueIsInvalid || equivalentIsInvalid;
+    }
   }));
 
-  return (
-    <div>
-      <input
-        type="number"
-        ref={refInput}
-        value={currentValue}
-        onChange={(event) => setCurrentValue(event.target.value)}
-        disabled={aux.isReference}
-      />
-      <DropdownButton title={currentUnit}>
-        {props.unitOptions.map(
-          (option) => (
-            <MenuItem
-              key={option}
-              onSelect={() => onUnitChange(option)}
-            >
-              {option}
-            </MenuItem>
-          )
-        )}
-      </DropdownButton>
-    </div>
-
-  );
+  return cellContent;
 });
 
 function getMaterialHeaderIdentifier(material, identifier) {
@@ -183,7 +252,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         {
           headerName: 'Temperature',
           field: 'properties.temperature',
-          cellEditorParams: { unitOptions: temperatureUnits },
+          cellEditorParams: { unitOptions: temperatureUnits, allowNegativeValue: true },
         },
         {
           headerName: 'Duration',
@@ -201,7 +270,11 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
         (material) => ({
           field: `${materialType}.${material.id}`, // must be unique
           headerName: getMaterialHeaderIdentifier(material, materialHeaderIdentifier),
-          cellEditorParams: { unitOptions: materialType === 'solvents' ? volumeUnits : massUnits }
+          cellEditorParams: {
+            unitOptions: materialType === 'solvents' ? volumeUnits : massUnits,
+            enableEquivalent: ['startingMaterials', 'reactants'].includes(materialType)
+          },
+          cellRendererParams: { enableEquivalent: ['startingMaterials', 'reactants'].includes(materialType) },
         })
       )
     }))
@@ -249,9 +322,10 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             resizable: true,
             comparator: cellComparator,
             cellEditor: CellEditor,
+            cellEditorParams: { enableEquivalent: false, allowNegativeValue: false },
             cellEditorPopup: true,
-            cellEditorParams: { unitOptions: massUnits },
             cellRenderer: CellRenderer,
+            cellRendererParams: { enableEquivalent: false },
             wrapHeaderText: true,
             autoHeaderHeight: true,
           }}
