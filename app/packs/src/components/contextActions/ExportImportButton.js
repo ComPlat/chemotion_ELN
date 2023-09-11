@@ -11,9 +11,8 @@ import ModalReactionExport from 'src/components/contextActions/ModalReactionExpo
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
-import { elementShowOrNew } from 'src/utilities/routesUtils.js'
+import { elementShowOrNew } from 'src/utilities/routesUtils.js';
 
-<<<<<<< HEAD
 function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
   const showRadar = UIStore.getState().hasRadar ? (
     <>
@@ -25,18 +24,13 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
       >
         Edit collection metadata
       </MenuItem>
-<<<<<<< HEAD
-      <MenuItem onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
-      title='Export to RADAR'>
-      Publish current collection via RADAR
-    </MenuItem>
-=======
       <MenuItem
-        onSelect={() => exportCollectionToRadarFunction(updateModalProps)} disabled={isDisabled}
-        title='Export to RADAR'>
-        Archive current collection to RADAR
+        onSelect={() => exportCollectionToRadarFunction(updateModalProps)}
+        disabled={isDisabled}
+        title="Export to RADAR"
+      >
+        Publish current collection via RADAR
       </MenuItem>
->>>>>>> 71c509543 (add impor_type parameter on sample import api request to enable sample import as chemical option and refactor ModalImport and ExportImportButton react components)
     </>
   ) : <span />;
 
@@ -49,30 +43,36 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
       <Dropdown.Menu>
         <MenuItem
           onSelect={() => exportFunction(updateModalProps)}
-          title="Export to spreadsheet" >
+          title="Export to spreadsheet"
+        >
           Export samples from selection
         </MenuItem>
-        <MenuItem onSelect={() => exportReactionFunction(updateModalProps)}
-          title="Export reaction smiles to csv" >
+        <MenuItem
+          onSelect={() => exportReactionFunction(updateModalProps)}
+          title="Export reaction smiles to csv"
+        >
           Export reactions from selection
         </MenuItem>
         <MenuItem divider />
         <MenuItem
           onSelect={() => importSampleFunction(updateModalProps, false)}
           disabled={isDisabled}
-          title="Import chemicals from spreadsheet" >
+          title="Import from spreadsheet or sdf"
+        >
           Import samples to collection
         </MenuItem>
         <MenuItem
           onSelect={() => importSampleFunction(updateModalProps, true)}
           disabled={isDisabled}
-          title="Import from spreadsheet or sdf as chemical" >
-          Import chemicals to inventory collection
+          title="Import chemicals from spreadsheet"
+        >
+          Import chemicals to collection
         </MenuItem>
         <MenuItem divider />
         <MenuItem
           onSelect={() => exportCollectionFunction(updateModalProps)}
-          title="Export as ZIP archive" >
+          title="Export as ZIP archive"
+        >
           Export collections
         </MenuItem>
         <MenuItem
@@ -97,9 +97,6 @@ ExportImportButton.defaultProps = {
   isDisabled: false,
   customClass: null,
 };
-
-=======
->>>>>>> d31be3775 (refactor ExportImportButton react component)
 const importSampleFunction = (updateModalProps, ImportAsChemical) => {
   const title = ImportAsChemical ? 'Import Chemicals from File' : 'Import Samples from File';
   const component = ModalImport;
@@ -188,11 +185,7 @@ const editMetadataFunction = () => {
 };
 
 const exportCollectionToRadarFunction = (updateModalProps) => {
-<<<<<<< HEAD
   const title = "Publish current collection via RADAR";
-=======
-  const title = 'Archive current Collection to RADAR';
->>>>>>> 71c509543 (add impor_type parameter on sample import api request to enable sample import as chemical option and refactor ModalImport and ExportImportButton react components)
   const component = ModalExportRadarCollection;
   const action = CollectionActions.exportCollectionToRadar;
 
@@ -205,91 +198,6 @@ const exportCollectionToRadarFunction = (updateModalProps) => {
   };
 
   updateModalProps(modalProps);
-};
-
-function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
-  const showRadar = UIStore.getState().hasRadar ? (
-    <>
-      <MenuItem divider />
-      <MenuItem
-        onSelect={() => editMetadataFunction()}
-        disabled={isDisabled}
-        title="Edit metadata"
-      >
-        Edit collection metadata
-      </MenuItem>
-      <MenuItem
-        onSelect={() => exportCollectionToRadarFunction(updateModalProps)}
-        disabled={isDisabled}
-        title="Export to RADAR"
-      >
-        Archive current collection to RADAR
-      </MenuItem>
-    </>
-  ) : <span />;
-
-  return (
-    <Dropdown id="export-dropdown">
-      <Dropdown.Toggle className={customClass}>
-        <Glyphicon glyph="import" />
-        <Glyphicon glyph="export" />
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        <MenuItem
-          onSelect={() => exportFunction(updateModalProps)}
-          title="Export to spreadsheet"
-        >
-          Export samples from selection
-        </MenuItem>
-        <MenuItem
-          onSelect={() => exportReactionFunction(updateModalProps)}
-          title="Export reaction smiles to csv"
-        >
-          Export reactions from selection
-        </MenuItem>
-        <MenuItem divider />
-        <MenuItem
-          onSelect={() => importSampleFunction(updateModalProps, false)}
-          disabled={isDisabled}
-          title="Import from spreadsheet or sdf"
-        >
-          Import samples to collection
-        </MenuItem>
-        <MenuItem
-          onSelect={() => importSampleFunction(updateModalProps, true)}
-          disabled={isDisabled}
-          title="Import chemicals from spreadsheet"
-        >
-          Import chemicals to collection
-        </MenuItem>
-        <MenuItem divider />
-        <MenuItem
-          onSelect={() => exportCollectionFunction(updateModalProps)}
-          title="Export as ZIP archive"
-        >
-          Export collections
-        </MenuItem>
-        <MenuItem
-          onSelect={() => importCollectionFunction(updateModalProps)}
-          title="Import collections from ZIP archive"
-        >
-          Import collections
-        </MenuItem>
-
-        {showRadar}
-      </Dropdown.Menu>
-    </Dropdown>
-  );
-}
-
-ExportImportButton.propTypes = {
-  isDisabled: PropTypes.bool,
-  customClass: PropTypes.string,
-};
-
-ExportImportButton.defaultProps = {
-  isDisabled: false,
-  customClass: null,
 };
 
 export default ExportImportButton;
