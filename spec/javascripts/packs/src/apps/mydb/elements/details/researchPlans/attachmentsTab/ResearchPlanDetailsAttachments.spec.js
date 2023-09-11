@@ -1,3 +1,5 @@
+/* global describe, it, beforeEach, afterEach */
+
 import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
@@ -10,17 +12,31 @@ import ResearchPlanFactory from 'factories/ResearchPlanFactory';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ResearchPlanDetailsAttachments from 'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+import ResearchPlanDetailsAttachments from
+  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
 
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('ResearchPlanDetailsAttachments', async () => {
+  let stub;
+  beforeEach(() => { stub = sinon.stub(console, 'error'); });
+  afterEach(() => { stub.restore(); });
+
   describe('.createAttachmentPreviews()', async () => {
     describe('.when preview was changed', async () => {
       it('new preview is rendered', async () => {
         const researchPlanWithAttachment = await ResearchPlanFactory.build(
           'with attachment_not_in_body'
         );
+
+        // Convert id to number
+        if (researchPlanWithAttachment.attachments) {
+          researchPlanWithAttachment.attachments.forEach((attachment) => {
+            attachment.id = Number(attachment.id);
+            attachment.identifier = String(attachment.identifier);
+          });
+        }
+
         sinon
           .stub(EditorFetcher, 'initial')
           .callsFake(() => new Promise(() => {}));
