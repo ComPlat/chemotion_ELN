@@ -260,7 +260,7 @@ module Import
       header.each do |field|
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
-        db_column = map_column.nil? || map_column[1] == "\"cas\"" ? field : map_column[0].sub('s.', '').delete!('"')
+        db_column = map_column.nil? || map_column[1] == '\"cas\"' ? field : map_column[0].sub('s.', '').delete!('"')
         process_sample_fields(sample, db_column, field, row)
       end
       validate_sample_and_save(sample, stereo, row)

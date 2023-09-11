@@ -155,7 +155,7 @@ describe Export::ExportChemicals do
         columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
         result = described_class.construct_column_name('p_statements', 2, columns_index)
         resulting_columns_index = ['p statements', { 'p_statements' => 2, 'safety_sheet_link' => [],
-                                                    'product_link' => [] }]
+                                                     'product_link' => [] }]
         expect(result).to eq(resulting_columns_index)
       end
     end

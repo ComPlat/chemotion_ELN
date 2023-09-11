@@ -7,8 +7,8 @@ RSpec.describe Import::ImportChemicals do
     it 'extracts a product number from a Sigma-Aldrich URL' do
       url = 'http://www.sigmaaldrich.com/MSDS/MSDS/DisplayMSDSPage.do?country=DE&language=DE&productNumber=131377&brand=ALDRICH'
       expect(described_class.extract_product_number(url)).to eq('131377')
-      url_2 = 'https://www.sigmaaldrich.com/US/en/product/sigma/a5376'
-      expect(described_class.extract_product_number(url_2)).to eq('a5376')
+      url2 = 'https://www.sigmaaldrich.com/US/en/product/sigma/a5376'
+      expect(described_class.extract_product_number(url2)).to eq('a5376')
     end
   end
 
@@ -41,14 +41,6 @@ RSpec.describe Import::ImportChemicals do
         },
       )
     end
-
-    # it 'log the error message when an error occurs' do
-    #   # allow(Rails.logger).to receive(:error)
-    #   allow(described_class).to receive(:extract_product_number).and_raise(StandardError)
-    #   expect(Rails.logger).to receive(:error).with(/Error setting safety sheet info for chemical/)
-    #   described_class.set_safety_phrases(chemical, 'pictograms', 'GHS02, GHS07')
-    #   # expect(Rails.logger).to have_received(:error).with('Error setting safety phrases for chemical: Some error')
-    # end
   end
 
   describe '.sets amount of chemical' do
@@ -123,15 +115,7 @@ RSpec.describe Import::ImportChemicals do
 
     it 'creates a chemical with valid data' do
       allow(PubChem).to receive(:get_cid_from_inchikey).and_return('12345')
-      # allow(chemical).to receive(:valid?).and_return(true)
       expect(described_class.build_chemical(row, header)).not_to be_nil
     end
-
-    # it 'log the error message when an error occurs' do
-    #   allow(Chemical).to receive(:new) { raise StandardError, 'Some error' }
-    #   allow(Rails.logger).to receive(:error)
-    #   described_class.create_chemical(sample_id, row, header)
-    #   expect(Rails.logger).to have_received(:error).with('Error importing chemical: Some error')
-    # end
   end
 end
