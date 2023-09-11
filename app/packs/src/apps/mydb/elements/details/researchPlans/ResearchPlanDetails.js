@@ -345,7 +345,6 @@ export default class ResearchPlanDetails extends Component {
 
     const EditButton = (
       <Button
-        bsSize="middle"
         bsStyle={researchPlan.mode === 'edit' ? 'warning' : 'default'}
         style={{
           pointerEvents: 'none',
@@ -358,7 +357,6 @@ export default class ResearchPlanDetails extends Component {
 
     const ViewButton = (
       <Button
-        bsSize="middle"
         bsStyle={researchPlan.mode === 'view' ? 'info' : 'default'}
         style={{
           pointerEvents: 'none',
