@@ -16,14 +16,14 @@ class VesselImporter
     end
     # import vessels
     @data.fetch('Vessel', {}).each do |uuid, fields|
-      Template_uuid = @data.fetch('VesselTemplateVessel', {}).values
-                           .select { |x| x['Vessel_id'] == uuid }
-                           .pick('Vessel_Template_id')
+      template_uuid = @data.fetch('VesselTemplateVessel', {}).values
+                           .select { |x| x['vessel_id'] == uuid }
+                           .pick('vessel_template_id')
       vessel = Vessel.create(
         fields.except('id', 'user_id')
         .merge(
           user_id: @current_user_id,
-          Vessel_Template_id: @instances['VesselTemplate'][Template_uuid].id,
+          vessel_template_id: @instances['VesselTemplate'][template_uuid].id,
         ),
       )
       update_instances!(uuid, vessel)

@@ -171,6 +171,29 @@ RSpec.describe 'ImportCollection' do
         expect(attachment.attachment_data).not_to be_nil
       end
     end
+
+    context 'with zip file containing 2 vessels' do
+      let(:import_id) { '20230912_two_vessels' }
+      let(:attachment) do
+        create(:attachment, file_path: Rails.root.join('spec/fixtures/import/20230912_two_vessels.zip'))
+      end
+      before do
+        importer.execute
+      end
+  
+      it 'collection was created and has two vessels' do
+        expect(Collection.find_by(label: 'Awesome Collection')).not_to be_nil
+        expect(Collection.find_by(label: 'Awesome Collection').vessels.length).to be 2
+      end
+  
+      it 'Two vessel templates was imported' do
+        expect(VesselTemplate.count).to be 2
+      end
+  
+      it 'Two vessels were imported' do
+        expect(Vessel.count).to be 2
+      end
+    end
   end
 
   def stub_rest_request(identifier)
@@ -185,6 +208,8 @@ RSpec.describe 'ImportCollection' do
       )
       .to_return(status: 200, body: '', headers: {})
   end
+
+  
 
   def copy_target_to_import_folder(import_id)
     src_location = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
