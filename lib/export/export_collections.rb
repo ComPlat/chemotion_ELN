@@ -122,11 +122,11 @@ module Export
 
         fetch_samples collection
         fetch_reactions collection
-        fetch_wellplates collection if @gt == false
-        fetch_screens collection if @gt == false
-        fetch_research_plans collection if @gt == false
-        add_vessel_template_to_package collection if @gt == false
-        add_vessel_to_package collection if @gt == false
+        fetch_wellplates collection 
+        fetch_screens collection 
+        fetch_research_plans collection 
+        add_vessel_template_to_package collection 
+        add_vessel_to_package collection 
       end
     end
 
