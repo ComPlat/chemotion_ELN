@@ -32,5 +32,21 @@ export default class VesselFactory {
       vessel.vesselTemplateId = 2;
       return vessel;
     });
+
+    this.factory.define('RBF', Vessel, async () => {
+      const vessel = Vessel.buildEmpty(0, 'DP-V10');
+      vessel.vesselName = 'RBF';
+      vessel.vesselDescription = 'Description';
+      vessel.id = 1;
+      vessel.vesselTemplateName = 'Vessel 2';
+      vessel.vesselTemplateId = 2;
+      vessel.vesselDetails = '';
+      vessel.vesselType = 'round bottom flask';
+      vessel.volumeUnit = 'ml';
+      vessel.volumeAmount = 250;
+      vessel.materialType = 'glass';
+      vessel.materialDetails = 'frosted';
+      return vessel;
+    });
   }
 }
