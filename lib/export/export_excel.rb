@@ -39,7 +39,7 @@ module Export
         image_width = row_image_width if row_image_width > image_width
         # 3/4 -> The misterious ratio!
         if filtered_sample[decouple_idx].present?
-          filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == 't' ? 'Yes' : 'No'
+          filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == 't' ? 'yes' : 'No'
         end
 
         size = sheet.styles.add_style :sz => 12
