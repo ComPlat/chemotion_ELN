@@ -156,6 +156,13 @@ module Export
           collection_id: @uuids['Collection'][collection.id],
           vessel_id: @uuids[type][vessel.id],
         }
+
+        @data['VesselTemplateVessel'] = {} unless @data['VesselTemplateVessel']
+        @data['VesselTemplateVessel'][SecureRandom.uuid] = {
+          vessel_template_id: @uuids['VesselTemplate'][vessel.vessel_template.id],
+          vessel_id: @uuids[type][vessel.id],
+        }
+
       end
     end
     
