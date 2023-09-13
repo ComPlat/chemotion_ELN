@@ -606,7 +606,7 @@ export default class ContainerDataset extends Component {
               this.props.onChange(this.props.dataset_container);
             }
           }
-          handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
+          handleClose={() => { this.setState({ imageEditModalShown: false }) }}
         />
       </Row>
     );

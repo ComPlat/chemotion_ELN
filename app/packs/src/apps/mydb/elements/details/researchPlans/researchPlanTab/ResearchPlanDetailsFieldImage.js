@@ -206,7 +206,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
           }
         }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+        handleClose={() => { this.setState({ imageEditModalShown: false }); }}
       />
     );
   }
