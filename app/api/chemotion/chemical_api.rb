@@ -58,7 +58,7 @@ module Chemotion
           get do
             Chemotion::ChemicalsService.handle_exceptions do
               data = params[:data]
-              molecule = Molecule.find(params[:id])
+              molecule = Molecule.find(params[:id]) if params[:id] != 'null'
               vendor = data[:vendor]
               language = data[:language]
               case data[:option]
