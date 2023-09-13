@@ -37,6 +37,7 @@ function CellRenderer({ value: cellData, enableEquivalent }) {
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
   overlayContent += aux.isReference ? '; Ref' : '';
   overlayContent += aux.yield ? `; Yield: ${aux.yield.toFixed(0)}%` : '';
+  overlayContent += aux.molecularWeight ? `; Molar mass: ${aux.molecularWeight.toFixed(2)} g/mol` : '';
   if (!overlayContent) {
     return cellContent;
   }
