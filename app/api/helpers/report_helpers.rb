@@ -208,7 +208,8 @@ module ReportHelpers
   end
 
   def build_sql_query(table, current_user, sql_params, type)
-    filter_parameter = if table == :sample && type.nil?
+    tables = %i[sample reaction wellplate]
+    filter_parameter = if tables.include?(table) && type.nil?
                          table
                        else
                          "#{table}_#{type}".to_sym
@@ -414,13 +415,13 @@ module ReportHelpers
       selection = "w.wellplate_id in (#{wp_ids}) and"
     end
 
-    <<~SQL.squish
+    <<~SQL
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_wp
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
-      , #{columns.join(',')}
+      , #{columns}
       from (
         select
           s.id as s_id
@@ -470,7 +471,7 @@ module ReportHelpers
       selection = "r_s.reaction_id in (#{r_ids}) and"
     end
 
-    <<~SQL.squish
+    <<~SQL
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_r
@@ -655,8 +656,8 @@ module ReportHelpers
                 end
   end
 
-  def filter_column_selection(type, columns = params[:columns])
-    case type.to_sym
+  def filter_column_selection(table, columns = params[:columns])
+    case table.to_sym
     when :sample
       columns.slice(:sample, :molecule)
     when :reaction
