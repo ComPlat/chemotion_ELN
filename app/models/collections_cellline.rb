@@ -18,6 +18,8 @@ class CollectionsCellline < ApplicationRecord
   end
 
   def self.move_to_collection(cellline_ids, from_col_ids, to_col_id)
+    raise "could not find collection with #{to_col_id}" unless Collection.find_by(id: to_col_id)
+
     Array(cellline_ids).each do |cell_line_id|
       CollectionsCellline.save_to_collection(cell_line_id, to_col_id)
       CollectionsCellline.delete_in_collection(cell_line_id, from_col_ids)
