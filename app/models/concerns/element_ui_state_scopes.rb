@@ -6,13 +6,16 @@ module ElementUIStateScopes
       # see ui_state_params in api/helpers/params_helpers.rb
       # map legacy params
       return none if ui_state.nil?
+    
 
       checked_all = ui_state[:checkedAll] || ui_state[:all]
+      checked_all = false if checked_all == "false"
       checked_ids = ui_state[:checkedIds].presence || ui_state[:included_ids]
 
       return none unless checked_all || checked_ids.present?
 
       unchecked_ids = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+
       checked_all ? where.not(id: unchecked_ids) : where(id: checked_ids)
     }
   end

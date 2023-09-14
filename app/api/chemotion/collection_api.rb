@@ -293,6 +293,7 @@ module Chemotion
         end
 
         put do
+          
           to_collection_id = fetch_collection_id_for_assign(params, 4)
           error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
 
@@ -308,10 +309,17 @@ module Chemotion
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
-            element_klass = element.classify.constantize
+           
+            if element=='cell_line' then 
+              collections_element_klass = CollectionsCellline
+              element_klass = CelllineSample
+            else
+              collections_element_klass = ('collections_' + element).classify.constantize
+              element_klass = element.classify.constantize
+            end
             ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
             collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
@@ -325,7 +333,7 @@ module Chemotion
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-
+            
             ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
             CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]

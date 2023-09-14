@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class CelllineSample < ApplicationRecord
+  include ElementUIStateScopes
+  include Taggable
+  include Collectable
+
   has_one :container, as: :containable
   has_many :collections_celllines, inverse_of: :cellline_sample, dependent: :destroy
   has_many :collections, through: :collections_celllines
@@ -21,7 +25,4 @@ class CelllineSample < ApplicationRecord
     where('collections.id=?', collection_id).
     where('cellline_materials.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
-
-  include Taggable
-  include Collectable
 end
