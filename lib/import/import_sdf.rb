@@ -179,6 +179,7 @@ class Import::ImportSdf < Import::ImportSamples
             sample['xref']['cas'] = row['cas'] if row['cas'].present?
             sample['short_label'] = row['short_label'] if row['short_label'].present?
             sample['molarity_value'] = row['molarity']&.scan(/\d+\.*\d*/)[0] if row['molarity'].present?
+            sample['dry_solvent'] = row['dry_solvent'] if row['dry_solvent'].present?
             properties = process_molfile_opt_data(molfile)
             sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
             sample.target_amount_value = properties['TARGET_AMOUNT'] unless properties['TARGET_AMOUNT'].blank?
