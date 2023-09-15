@@ -167,13 +167,14 @@ export default class ElementsList extends React.Component {
       const { klasses } = UIStore.getState();
       genericKlasses = klasses;
     }
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_lines'].concat(genericKlasses);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericKlasses);
 
     elNames.forEach((type) => {
       const elementUI = state[type] || {
         checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null
       };
       const element = ElementStore.getState().elements[`${type}s`];
+
       const nextCount = elementUI.checkedAll
         ? (element.totalElements - elementUI.uncheckedIds.size)
         : elementUI.checkedIds.size;
