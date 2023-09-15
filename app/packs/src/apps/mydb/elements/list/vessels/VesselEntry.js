@@ -39,6 +39,9 @@ export default class VesselEntry extends React.Component {
     }
 
     renderCreateSubVesselButton(firstVesselItem){
+      const { currentCollection, isSync } = UIStore.getState();
+      if (currentCollection.label === 'All') { return null; }
+
       return (
           <Button
             className={"button-right "}
@@ -46,8 +49,6 @@ export default class VesselEntry extends React.Component {
             onClick={(event) => {
               event.stopPropagation();
   
-              const { currentCollection, isSync } = UIStore.getState();
-              const ui_state=UIStore.getState();
               const uri = isSync
                 ? `/scollection/${currentCollection.id}/vessel/new`
                 : `/collection/${currentCollection.id}/vessel/new`;
