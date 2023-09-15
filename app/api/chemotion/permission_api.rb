@@ -19,12 +19,19 @@ module Chemotion
         end
 
         post do
+          
           cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
           sel, has_sel = {}, {}
+          
           API::ELEMENTS.each do |element|
             ui_state = params[element]
+            
             if ui_state && (ui_state[:checkedAll] || ui_state[:checkedIds].present?)
-              element_klass = element.classify.constantize
+              if(element == "cell_line") then
+                element_klass=CelllineSample
+              else
+                element_klass = element.classify.constantize
+              end
               sel[element] = element_klass.by_collection_id(cid).by_ui_state(params[:sample])
                                                 .for_user_n_groups(user_ids)
             end
