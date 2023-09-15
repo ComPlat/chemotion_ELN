@@ -212,31 +212,29 @@ class Material extends Component {
   }
 
   equivalentOrYield(material) {
-    if (this.props.materialGroup === 'products') {
-      if (this.props.reaction.hasPolymers()) {
-        return (
+    const { reaction, materialGroup } = this.props;
+    if (materialGroup === 'products') {
+      const refMaterial = reaction.getReferenceMaterial();
+      let calculateYield = material.equivalent;
+      if (reaction.hasPolymers()) {
+        calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
+      } else if (refMaterial.decoupled || material.decoupled) {
+        calculateYield = 'n.a.';
+      } else {
+        calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
+      }
+      return (
+        <div>
           <FormControl
+            name="yield"
             type="text"
             bsClass="bs-form--compact form-control"
             bsSize="small"
-            value={`${((material.equivalent || 0) * 100).toFixed(0)}%`}
+            value={calculateYield}
             disabled
           />
-        );
-      } else {
-        return (         
-            <div>
-              <FormControl
-                name='yield'
-                type="text"
-                bsClass="bs-form--compact form-control"
-                bsSize="small"
-                value={`${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`}
-                disabled
-              />
-            </div>
-        );
-      }
+        </div>
+      );
     }
     return (
       <NumeralInputWithUnitsCompo
