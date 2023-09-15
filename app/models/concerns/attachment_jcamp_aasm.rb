@@ -342,8 +342,8 @@ module AttachmentJcampProcess
   end
 
   def jcamp_files_already_present?
-    _, extname = extension_parts
-    return false if extname.casecmp('nmrium').zero?
+    first_part, extname = extension_parts
+    return false if (extname.casecmp('nmrium').zero? || first_part['processed_']) # ignore when file is nmrium or preprocessed from Bruker NMR
 
     attachments = Attachment.where(attachable_id: self[:attachable_id])
     num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
