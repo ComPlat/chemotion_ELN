@@ -576,10 +576,12 @@ class ElementStore {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
+        
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
+        if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
