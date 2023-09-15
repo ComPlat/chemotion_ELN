@@ -112,7 +112,7 @@ const sampleShowOrNew = (e) => {
 };
 
 const vesselShowOrNew = (e) => {
-  if(e.params.new_vessel || e.params.new_vessel===undefined){
+  if(e.params.new_vessel || e.params.new_vessel===undefined || e.params.vessel_template){
     ElementActions.generateEmptyVessel(e.params.collectionID, e.params.vessel_template);
   }else{
     ElementActions.tryFetchVesselElById.defer(e.params.vesselId);
