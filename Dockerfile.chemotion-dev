@@ -24,7 +24,8 @@ RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget a
       fonts-crosextra-caladea fonts-crosextra-carlito \
       fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
-      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape
+      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
+      libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb
 RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
     && apt-get update -yqqq && apt-get -y install google-chrome-stable \
