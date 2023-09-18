@@ -349,24 +349,23 @@ describe Chemotion::CollectionAPI do
           end
 
           context 'when try to move cell line element into collection where it already exists' do
-            let!(:cell_line_1) { create(:cellline_sample, collections: [c_source]) }
-            let!(:cell_line_2) { create(:cellline_sample, collections: [c_target_with_cellline]) }
-            let!(:c_target_with_cellline) { create(:collection, user_id: user.id) }
-            let(:target_collection_id) { c_target_with_cellline.id }
-            let(:cell_line_ids) { [cell_line_1.id] }
+            let!(:cellline_in_two_colls) { create(:cellline_sample, collections: [c_source,c_target]) }
+            let(:target_collection_id) { c_target.id }
+            let(:cell_line_ids) { [cellline_in_two_colls.id] }
 
-            it 'the cell line samples are now in the target collection' do
+            before do
+              put '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: target_collection_id }
             end
 
-            it 'the cell line samples are not in the old collection' do
+            it 'the cell line sample is only in the target collection' do
+              expect(cellline_in_two_colls.reload.collections).to eq [c_target]
+            end
+            
+            it 'tags in the moved cellline are adjusted' do
+              collection_id = cellline_in_two_colls.reload.tag.taggable_data['collection_labels'].first['id']
+              expect(collection_id).to be c_target.id
             end
 
-            it 'tags in the moved collections are adjusted' do
-            end
-
-            it 'the third cell line should remain in the old collection' do
-              expect(cell_line_3.reload.collections).to eq [c_source]
-            end
           end
 
           it 'moves all elements and returns 204' do
