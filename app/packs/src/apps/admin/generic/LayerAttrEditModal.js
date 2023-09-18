@@ -30,7 +30,13 @@ export default class LayerAttrEditModal extends Component {
           <div className="col-md-12">
             <LayerAttrForm ref={this.formRef} layer={layer} />
             <FormGroup>
-              <Button bsStyle="primary" onClick={() => this.handleUpdate()}>Update layer to template workspace&nbsp;<i className="fa fa-archive" aria-hidden="true" /></Button>
+              <Button
+                bsStyle="primary"
+                onClick={() => this.handleUpdate()}
+              >
+                Update layer to template workspace&nbsp;
+                <i className="fa fa-archive" aria-hidden="true" />
+              </Button>
               &nbsp;
               <Button bsStyle="warning" onClick={() => fnClose()}>Cancel</Button>
             </FormGroup>

@@ -6,7 +6,9 @@ import { Badge, Col } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
 import { GenProperties, LayersLayout } from 'src/components/generic/GenericElCommon';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { ButtonTooltip, ButtonConfirm, unitConversion, inputEventVal, genUnits } from 'src/apps/admin/generic/Utils';
+import {
+  ButtonTooltip, ButtonConfirm, unitConversion, inputEventVal, genUnits
+} from 'src/apps/admin/generic/Utils';
 import Utils from 'src/utilities/Functions';
 
 export default class Preview extends Component {
@@ -36,6 +38,62 @@ export default class Preview extends Component {
     }
   }
 
+  handleInputChange(event, field, layer, type = 'text') {
+    const { compareUUID, revisions } = this.state;
+    const { src } = this.props;
+    const selected = (revisions || []).find((r) => r.uuid === compareUUID);
+    if (selected && selected[src]) {
+      const properties_release = selected[src];
+      const value = inputEventVal(event, type);
+      if (!((field === 'name' && layer === ''))) {
+        properties_release.layers[`${layer}`].fields.find((e) => e.field === field).value = value;
+        if (type === 'system-defined'
+          && (!properties_release.layers[`${layer}`].fields.find((e) => e.field === field).value_system
+          || properties_release.layers[`${layer}`].fields.find((e) => e.field === field).value_system === '')) {
+          const opt = properties_release.layers[`${layer}`].fields
+            .find((e) => e.field === field).option_layers;
+          properties_release.layers[`${layer}`].fields
+            .find((e) => e.field === field).value_system = genUnits(opt)[0].key;
+        }
+        this.setRevision(revisions);
+      }
+    }
+  }
+
+  handleSubChange(layer, obj, valueOnly = false) {
+    const { compareUUID, revisions } = this.state;
+    const { src } = this.props;
+    const selected = (revisions || []).find((r) => r.uuid === compareUUID);
+    if (selected && selected[src]) {
+      const properties_release = selected[src];
+      if (!valueOnly) {
+        const subFields = properties_release.layers[`${layer}`].fields
+          .find((m) => m.field === obj.f.field).sub_fields || [];
+        const idxSub = subFields.findIndex((m) => m.id === obj.sub.id);
+        subFields.splice(idxSub, 1, obj.sub);
+        properties_release.layers[`${layer}`].fields
+          .find((e) => e.field === obj.f.field).sub_fields = subFields;
+      }
+      properties_release.layers[`${layer}`].fields
+        .find((e) => e.field === obj.f.field).sub_values = obj.f.sub_values || [];
+      this.setRevision(revisions);
+    }
+  }
+
+  handleUnitClick(layer, obj) {
+    const { compareUUID, revisions } = this.state;
+    const { src } = this.props;
+    const selected = (revisions || []).find((r) => r.uuid === compareUUID);
+    const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
+    if (selected && selected[src]) {
+      selected[src].layers[`${layer}`].fields
+        .find((e) => e.field === obj.field).value_system = obj.value_system;
+      selected[src].layers[`${layer}`].fields
+        .find((e) => e.field === obj.field).value = newVal;
+      this.setRevision(revisions);
+    }
+  }
+
   setRevision(revisions) {
     this.setState({ revisions });
   }
@@ -59,75 +117,20 @@ export default class Preview extends Component {
   retriveRevision(params) {
     const { fnRetrive, src } = this.props;
     LoadingActions.start();
-    const deep = cloneDeep(this.props.revisions.find(r => r.id === params.id));
+    const deep = cloneDeep(this.props.revisions.find((r) => r.id === params.id));
     fnRetrive(deep[src], LoadingActions.stop());
   }
-
 
   dlRevision(params) {
     const { element, revisions } = this.props;
     LoadingActions.start();
-    const revision = revisions.find(r => r.id === params.id);
+    const revision = revisions.find((r) => r.id === params.id);
     const props = revision.properties_release;
     props.klass = revision.properties_release.klass;
     props.released_at = revision.released_at || '';
     const href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(revision.properties_release))}`;
     Utils.downloadFile({ contents: href, name: `${props.klass}_${element.label}_${revision.uuid}.json` });
     LoadingActions.stop();
-  }
-
-  handleInputChange(event, field, layer, type = 'text') {
-    const { compareUUID, revisions } = this.state;
-    const { src } = this.props;
-    const selected = (revisions || []).find(r => r.uuid === compareUUID);
-    if (selected && selected[src]) {
-      const properties_release = selected[src];
-      const value = inputEventVal(event, type);
-      if (!((field === 'name' && layer === ''))) {
-        properties_release.layers[`${layer}`].fields.find(e => e.field === field).value = value;
-        if (type === 'system-defined' && (!properties_release.layers[`${layer}`].fields.find(e => e.field === field).value_system || properties_release.layers[`${layer}`].fields.find(e => e.field === field).value_system === '')) {
-          const opt = properties_release.layers[`${layer}`].fields
-            .find(e => e.field === field).option_layers;
-          properties_release.layers[`${layer}`].fields
-            .find(e => e.field === field).value_system = genUnits(opt)[0].key;
-        }
-        this.setRevision(revisions);
-      }
-    }
-  }
-
-  handleSubChange(layer, obj, valueOnly = false) {
-    const { compareUUID, revisions } = this.state;
-    const { src } = this.props;
-    const selected = (revisions || []).find(r => r.uuid === compareUUID);
-    if (selected && selected[src]) {
-      const properties_release = selected[src];
-      if (!valueOnly) {
-        const subFields = properties_release.layers[`${layer}`].fields
-          .find(m => m.field === obj.f.field).sub_fields || [];
-        const idxSub = subFields.findIndex(m => m.id === obj.sub.id);
-        subFields.splice(idxSub, 1, obj.sub);
-        properties_release.layers[`${layer}`].fields
-          .find(e => e.field === obj.f.field).sub_fields = subFields;
-      }
-      properties_release.layers[`${layer}`].fields
-        .find(e => e.field === obj.f.field).sub_values = obj.f.sub_values || [];
-      this.setRevision(revisions);
-    }
-  }
-
-  handleUnitClick(layer, obj) {
-    const { compareUUID, revisions } = this.state;
-    const { src } = this.props;
-    const selected = (revisions || []).find(r => r.uuid === compareUUID);
-    const newVal = unitConversion(obj.option_layers, obj.value_system, obj.value);
-    if (selected && selected[src]) {
-      selected[src].layers[`${layer}`].fields
-        .find(e => e.field === obj.field).value_system = obj.value_system;
-      selected[src].layers[`${layer}`].fields
-        .find(e => e.field === obj.field).value = newVal;
-      this.setRevision(revisions);
-    }
   }
 
   render() {
@@ -141,30 +144,79 @@ export default class Preview extends Component {
         at = `saved at: ${v.released_at} (UTC)`;
       }
 
-      const del = v.released_at ? <ButtonConfirm msg="Delete this version permanently?" fnClick={this.delRevision} fnParams={{ id: v.id }} bs="default" place="top" /> : null;
-      const ret = v.released_at ? <ButtonConfirm msg="Retrieve this version?" fnClick={this.retriveRevision} fnParams={{ id: v.id }} fa="fa-reply" bs="default" place="top" /> : null;
-      const dl = canDL ? <ButtonTooltip tip="Download this version" fnClick={this.dlRevision} element={{ id: v.id }} fa="fa-download" place="top" bs="default" /> : null;
+      const del = v.released_at ? (
+        <ButtonConfirm
+          msg="Delete this version permanently?"
+          fnClick={this.delRevision}
+          fnParams={{ id: v.id }}
+          bs="default"
+          place="top"
+        />
+      ) : null;
+      const ret = v.released_at ? (
+        <ButtonConfirm
+          msg="Retrieve this version?"
+          fnClick={this.retriveRevision}
+          fnParams={{ id: v.id }}
+          fa="fa-reply"
+          bs="default"
+          place="top"
+        />
+      ) : null;
+      const dl = canDL ? (
+        <ButtonTooltip
+          tip="Download this version"
+          fnClick={this.dlRevision}
+          element={{ id: v.id }}
+          fa="fa-download"
+          place="top"
+          bs="default"
+        />
+      ) : null;
       return (
         <div className={`generic_version_block ${s}`} key={v.uuid}>
-          <div><div style={{ width: '100%' }}>{ver}</div><div style={{ fontSize: '0.8rem' }}>#{(idx + 1)}</div></div>
+          <div>
+            <div style={{ width: '100%' }}>{ver}</div>
+            <div style={{ fontSize: '0.8rem' }}>
+              #
+              {(idx + 1)}
+            </div>
+          </div>
           <div>
             <div style={{ width: '100%' }}>{at}</div>
             {del}
             {dl}
             {ret}
-            <ButtonTooltip tip="Preview this version" fnClick={this.compare} element={{ uuid: v.uuid }} fa="fa-clock-o" place="top" bs="default" />
+            <ButtonTooltip
+              tip="Preview this version"
+              fnClick={this.compare}
+              element={{ uuid: v.uuid }}
+              fa="fa-clock-o"
+              place="top"
+              bs="default"
+            />
           </div>
         </div>
       );
     };
 
     const options = [];
-    const selected = (revisions || []).find(r => r.uuid === compareUUID) || {};
-    const selectOptions = (selected && selected[src] &&
-      selected[src].select_options) || {};
+    const selected = (revisions || []).find((r) => r.uuid === compareUUID) || {};
+    const selectOptions = (selected && selected[src]
+      && selected[src].select_options) || {};
 
     if (selected.name) {
-      const defaultName = <GenProperties label="" description={selected.description || ''} value={selected.name || ''} type="text" isEditable isRequired onChange={() => {}} />;
+      const defaultName = (
+        <GenProperties
+          label=""
+          description={selected.description || ''}
+          value={selected.name || ''}
+          type="text"
+          isEditable
+          isRequired
+          onChange={() => {}}
+        />
+      );
       options.push(defaultName);
     }
 
@@ -186,8 +238,21 @@ export default class Preview extends Component {
         {his}
         <Col md={contentCol}>
           <div style={{ margin: '10px 0px' }}>
-            <div style={{ float: 'right' }}><ButtonTooltip tip={screenFa} fnClick={this.setScreen} element={!this.state.fullScreen} fa={`fa-${screenFa}`} place="left" bs="default" /></div>
-            <Badge style={{ backgroundColor: '#ffc107', color: 'black' }}><i className="fa fa-exclamation-circle" aria-hidden="true" />&nbsp;Sketch Map, the data input here will not be saved.</Badge>
+            <div style={{ float: 'right' }}>
+              <ButtonTooltip
+                tip={screenFa}
+                fnClick={this.setScreen}
+                element={!this.state.fullScreen}
+                fa={`fa-${screenFa}`}
+                place="left"
+                bs="default"
+              />
+
+            </div>
+            <Badge style={{ backgroundColor: '#ffc107', color: 'black' }}>
+              <i className="fa fa-exclamation-circle" aria-hidden="true" />
+&nbsp;Sketch Map, the data input here will not be saved.
+            </Badge>
           </div>
           <div style={{ width: '100%', minHeight: '50vh' }}>{layersLayout}</div>
         </Col>

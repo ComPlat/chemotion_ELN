@@ -1,4 +1,6 @@
-import { Button, OverlayTrigger, Panel, Table, Tooltip } from 'react-bootstrap';
+import {
+  Button, OverlayTrigger, Panel, Table, Tooltip
+} from 'react-bootstrap';
 import React, { Component } from 'react';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
@@ -43,7 +45,8 @@ export default class DelayedJobs extends Component {
           >
             <i className="fa fa-play" aria-hidden="true" />
           </Button>
-        </OverlayTrigger>);
+        </OverlayTrigger>
+      );
     }
     return '';
   }
@@ -64,16 +67,48 @@ export default class DelayedJobs extends Component {
       </tr>
     );
 
-    const tbody = jobs.map(job => (
+    const tbody = jobs.map((job) => (
       <tr key={`row_${job.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td> {job.id} </td>
-        <td> {this.renderShowBtn(job)} </td>
-        <td> {job.queue} </td>
-        <td> {job.handler.split(' ')[4].trim()} </td>
-        <td> {job.run_at} </td>
-        <td> {job.failed_at} </td>
-        <td> {job.attempts} </td>
-        <td> {job.priority} </td>
+        <td>
+          {' '}
+          {job.id}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {this.renderShowBtn(job)}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {job.queue}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {job.handler.split(' ')[4].trim()}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {job.run_at}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {job.failed_at}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {job.attempts}
+          {' '}
+        </td>
+        <td>
+          {' '}
+          {job.priority}
+          {' '}
+        </td>
         <td><textarea defaultValue={job.last_error} style={{ maxWidth: '100%' }} /></td>
       </tr>
     ));

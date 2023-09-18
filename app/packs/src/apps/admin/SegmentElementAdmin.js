@@ -1,8 +1,12 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab } from 'react-bootstrap';
+import {
+  Panel, Table, FormGroup, Popover, FormControl, Button, Row, Col, Badge, Tooltip, OverlayTrigger, InputGroup, Tabs, Tab
+} from 'react-bootstrap';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
-import { findIndex, filter, sortBy, orderBy } from 'lodash';
+import {
+  findIndex, filter, sortBy, orderBy
+} from 'lodash';
 import LoadingModal from 'src/components/common/LoadingModal';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ElementField } from 'src/components/generic/ElementField';
@@ -16,10 +20,12 @@ import LayerAttrEditModal from 'src/apps/admin/generic/LayerAttrEditModal';
 import LayerAttrNewModal from 'src/apps/admin/generic/LayerAttrNewModal';
 import SelectAttrNewModal from 'src/apps/admin/generic/SelectAttrNewModal';
 import UploadModal from 'src/apps/admin/generic/UploadModal';
-import { ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy } from 'src/apps/admin/generic/Utils';
+import {
+  ButtonTooltip, validateLayerInput, validateSelectList, notification, reUnit, GenericDummy
+} from 'src/apps/admin/generic/Utils';
 import Preview from 'src/apps/admin/generic/Preview';
 
-const validateField = field => (/^[a-zA-Z0-9_]*$/g.test(field));
+const validateField = (field) => (/^[a-zA-Z0-9_]*$/g.test(field));
 const validateInput = (element) => {
   if (element.klass_element === '') {
     notification({ title: 'Create Segment Error', lvl: 'error', msg: 'Please select Element.' });
@@ -117,10 +123,10 @@ export default class SegmentElementAdmin extends React.Component {
 
   onOptionInputChange(event, selectKey, optionKey) {
     const { element } = this.state;
-    const options = (element &&
-      element.properties_template && element.properties_template.select_options[selectKey]
+    const options = (element
+      && element.properties_template && element.properties_template.select_options[selectKey]
       && element.properties_template.select_options[selectKey].options) || [];
-    const idx = findIndex(options, o => o.key === optionKey);
+    const idx = findIndex(options, (o) => o.key === optionKey);
     const op = {};
     op.key = optionKey;
     op.label = event.target.value;
@@ -134,7 +140,7 @@ export default class SegmentElementAdmin extends React.Component {
       && element.properties_template.layers[e.l]);
     let { fields } = layer || {};
     fields = fields || [];
-    let idx = fields.findIndex(o => o.field === e.f);
+    let idx = fields.findIndex((o) => o.field === e.f);
     if (idx === -1 && fields.length > 0) idx = fields.length - 1;
     fields.splice(idx + 1, 0, new GenericDummy());
     element.properties_template.layers[e.l].fields = fields;
@@ -155,7 +161,7 @@ export default class SegmentElementAdmin extends React.Component {
     if (sourceLayer && targetLayer) {
       e.sourceTag.field.position = e.targetTag.field.position - 1;
       const { fields } = element.properties_template.layers[sourceKey];
-      const idx = findIndex(fields, o => o.field === e.sourceTag.field.field);
+      const idx = findIndex(fields, (o) => o.field === e.sourceTag.field.field);
       fields.splice(idx, 1, e.sourceTag.field);
       element.properties_template.layers[sourceKey].fields = fields;
       this.setState({ element });
@@ -166,7 +172,7 @@ export default class SegmentElementAdmin extends React.Component {
     const { element } = this.state;
     const layer = (element && element.properties_template && element.properties_template.layers[l]);
     const { fields } = layer;
-    const idx = findIndex(fields, o => o.field === f);
+    const idx = findIndex(fields, (o) => o.field === f);
     if (idx >= 0 && isUp) {
       const curObj = fields[idx];
       curObj.position -= 1;
@@ -192,9 +198,9 @@ export default class SegmentElementAdmin extends React.Component {
       && element.properties_template.layers[lk]);
     const { fields } = layer;
     if (layer != null) {
-      const fobj = (fields || []).find(o => o.field === f.field);
+      const fobj = (fields || []).find((o) => o.field === f.field);
       if (Object.keys(fobj).length > 0) {
-        const idx = (fields || []).findIndex(o => o.field === f.field);
+        const idx = (fields || []).findIndex((o) => o.field === f.field);
         fields.splice(idx, 1, f);
         element.properties_template.layers[lk].fields = fields;
         this.setState({ element }, cb);
@@ -222,7 +228,7 @@ export default class SegmentElementAdmin extends React.Component {
 
     if (fields == null || fields.length === 0) return;
 
-    const fobj = fields.find(e => e.field === fe);
+    const fobj = fields.find((e) => e.field === fe);
     if (Object.keys(fobj).length === 0) return;
 
     switch (fc) {
@@ -234,7 +240,7 @@ export default class SegmentElementAdmin extends React.Component {
         break;
     }
 
-    const idx = findIndex(fields, o => o.field === fe);
+    const idx = findIndex(fields, (o) => o.field === fe);
     fields.splice(idx, 1, fobj);
     element.properties_template.layers[lk].fields = fields;
     this.setState({ element });
@@ -259,8 +265,8 @@ export default class SegmentElementAdmin extends React.Component {
     if (element && element.id) {
       AdminFetcher.fetchKlassRevisions(element.id, 'SegmentKlass')
         .then((result) => {
-          let curr = Object.assign({}, { ...element.properties_template });
-          curr = Object.assign({}, { properties_release: curr }, { uuid: 'current' });
+          let curr = { ...element.properties_template };
+          curr = { properties_release: curr, uuid: 'current' };
           const revisions = [].concat(curr, result.revisions);
           this.setState({ revisions });
         });
@@ -297,7 +303,6 @@ export default class SegmentElementAdmin extends React.Component {
   handleCond(lk) {
     this.onShowFieldCond(null, lk);
   }
-
 
   addLayer() {
     this.setState({ showNewLayer: true });
@@ -346,16 +351,24 @@ export default class SegmentElementAdmin extends React.Component {
       return;
     }
     if (!validateField(newFieldKey)) {
-      notification({ title: 'Add new field', lvl: 'error', msg: 'only can be alphanumeric (a-z, A-Z, 0-9 and underscores).' });
+      notification({
+        title: 'Add new field',
+        lvl: 'error',
+        msg: 'only can be alphanumeric (a-z, A-Z, 0-9 and underscores).'
+      });
       return;
     }
     const { layerKey } = e;
     const layer = element && element.properties_template
       && element.properties_template.layers[layerKey];
     const fields = layer.fields || [];
-    const dupfields = filter(fields, o => o.field === newFieldKey);
+    const dupfields = filter(fields, (o) => o.field === newFieldKey);
     if (dupfields && dupfields.length > 0) {
-      notification({ title: 'Add new field', lvl: 'error', msg: 'this field is used already, please change a field name' });
+      notification({
+        title: 'Add new field',
+        lvl: 'error',
+        msg: 'this field is used already, please change a field name'
+      });
       return;
     }
     const newField = {
@@ -376,9 +389,13 @@ export default class SegmentElementAdmin extends React.Component {
     const selectObj = (element && element.properties_template
       && element.properties_template.select_options[key]
       && element.properties_template.select_options[key].options) || [];
-    const dupops = filter(selectObj, o => o.key === newOptionKey);
+    const dupops = filter(selectObj, (o) => o.key === newOptionKey);
     if (dupops && dupops.length > 0) {
-      notification({ title: 'Add new option', lvl: 'error', msg: 'this option key is used already, please change another option key' });
+      notification({
+        title: 'Add new option',
+        lvl: 'error',
+        msg: 'this option key is used already, please change another option key'
+      });
       return;
     }
     const newOption = { key: newOptionKey, label: newOptionKey };
@@ -416,7 +433,7 @@ export default class SegmentElementAdmin extends React.Component {
     if (validateSelectList(selectName, element)) {
       const sos = element.properties_template.select_options;
       sos[selectName] = {};
-      const selectOptions = Object.keys(sos).map(key => ({ value: key, name: key, label: key }));
+      const selectOptions = Object.keys(sos).map((key) => ({ value: key, name: key, label: key }));
       this.setState({ element, showAddSelect: false, selectOptions });
     }
     return false;
@@ -426,11 +443,19 @@ export default class SegmentElementAdmin extends React.Component {
     if (!validateLayerInput(layer)) return;
     const { element } = this.state;
     if (element && element.properties_template && element.properties_template.layers[`${layer.key}`]) {
-      notification({ title: `Layer [${layer.key}]`, lvl: 'error', msg: 'This Layer is already taken. Please choose another one.' });
+      notification({
+        title: `Layer [${layer.key}]`,
+        lvl: 'error',
+        msg: 'This Layer is already taken. Please choose another one.'
+      });
       return;
     }
     element.properties_template.layers[`${layer.key}`] = layer;
-    notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This new layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
+    notification({
+      title: `Layer [${layer.key}]`,
+      lvl: 'info',
+      msg: 'This new layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.'
+    });
     this.setState({ showNewLayer: false, element, layerKey: layer.key });
   }
 
@@ -441,7 +466,11 @@ export default class SegmentElementAdmin extends React.Component {
       && element.properties_template.layers[layerKey];
     layer = { ...layer, ...updates };
     element.properties_template.layers[`${layer.key}`] = layer;
-    notification({ title: `Layer [${layer.key}]`, lvl: 'info', msg: 'This updates of this layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.' });
+    notification({
+      title: `Layer [${layer.key}]`,
+      lvl: 'info',
+      msg: 'This updates of this layer is kept in the Template workspace temporarily. Please remember to press Save when you finish the editing.'
+    });
     this.setState({ showEditLayer: false, element });
   }
 
@@ -485,7 +514,11 @@ export default class SegmentElementAdmin extends React.Component {
         if (result.error) {
           notification({ title: 'Update Segment fail', lvl: 'error', msg: result.error });
         } else {
-          notification({ title: 'Update Segment successfully', lvl: 'info', msg: `Segment is ${result.is_active ? 'active' : 'deactive'} now` });
+          notification({
+            title: 'Update Segment successfully',
+            lvl: 'info',
+            msg: `Segment is ${result.is_active ? 'active' : 'deactive'} now`
+          });
           this.handleKlassClose();
           this.fetchElements();
         }
@@ -517,11 +550,10 @@ export default class SegmentElementAdmin extends React.Component {
     this.handleSubmit(false);
   }
 
-
   handlePropShow(element) {
     if (element) {
       const selectOptions = Object.keys(element.properties_template.select_options)
-        .map(key => ({ value: key, name: key, label: key }));
+        .map((key) => ({ value: key, name: key, label: key }));
       this.setState({
         element, selectOptions, showPropModal: true, propTabKey: 1
       });
@@ -532,11 +564,17 @@ export default class SegmentElementAdmin extends React.Component {
     const { element } = this.state;
     if (valid === false) {
       this.setState({ showUpload: false });
-      notification({ title: `Upload Template for Segment [${element.label}] Failed`, autoDismiss: 30, lvl: 'error', msg: message });
+      notification({
+        title: `Upload Template for Segment [${element.label}] Failed`, autoDismiss: 30, lvl: 'error', msg: message
+      });
     } else {
       element.properties_template = properties;
       this.setState({ element, showUpload: false });
-      notification({ title: `Upload template to Segment [${element.label}]`, lvl: 'info', msg: 'The templates has been uploaded, please save it.' });
+      notification({
+        title: `Upload template to Segment [${element.label}]`,
+        lvl: 'info',
+        msg: 'The templates has been uploaded, please save it.'
+      });
     }
   }
 
@@ -565,7 +603,7 @@ export default class SegmentElementAdmin extends React.Component {
         if (fd.type !== 'text-formula') { fd.text_sub_fields = []; }
         return fd;
       });
-      sortedFields = sortBy(sortedFields, l => l.position);
+      sortedFields = sortBy(sortedFields, (l) => l.position);
       element.properties_template.layers[key].fields = sortedFields;
     });
 
@@ -595,17 +633,17 @@ export default class SegmentElementAdmin extends React.Component {
     if (delStr === 'Select') {
       delete element.properties_template.select_options[delKey];
       const sos = element.properties_template.select_options;
-      const selectOptions = Object.keys(sos).map(key => ({ value: key, name: key, label: key }));
+      const selectOptions = Object.keys(sos).map((key) => ({ value: key, name: key, label: key }));
       this.setState({ selectOptions });
     } else if (delStr === 'Option') {
       const options = element.properties_template.select_options[delRoot];
-      const idx = findIndex(options, o => o.key === delKey);
+      const idx = findIndex(options, (o) => o.key === delKey);
       options.splice(idx, 1);
     } else if (delStr === 'Layer') {
       delete element.properties_template.layers[delKey];
     } else if (delStr === 'Field') {
       const { fields } = element.properties_template.layers[delRoot];
-      const idx = findIndex(fields, o => o.field === delKey);
+      const idx = findIndex(fields, (o) => o.field === delKey);
       fields.splice(idx, 1);
     } else {
       //
@@ -629,11 +667,19 @@ export default class SegmentElementAdmin extends React.Component {
 
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
-        {msg} <br />
+        {msg}
+        {' '}
+        <br />
         <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" aria-hidden="true" onClick={() => this.confirmDelete(delStr, delKey, delRoot)}>
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            aria-hidden="true"
+            onClick={() => this.confirmDelete(delStr, delKey, delRoot)}
+          >
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
+          </Button>
+          <span>&nbsp;&nbsp;</span>
           <Button bsSize="xsmall" bsStyle="warning">No</Button>
         </div>
       </Popover>
@@ -641,7 +687,7 @@ export default class SegmentElementAdmin extends React.Component {
 
     return (
       <OverlayTrigger animation placement="top" root trigger="focus" overlay={popover}>
-        <Button bsSize="sm" >
+        <Button bsSize="sm">
           <i className="fa fa-trash-o" aria-hidden="true" />
         </Button>
       </OverlayTrigger>
@@ -655,7 +701,7 @@ export default class SegmentElementAdmin extends React.Component {
     Object.keys(element.properties_template.select_options).forEach((key) => {
       const soptions = (element.properties_template.select_options[key]
         && element.properties_template.select_options[key].options) || [];
-      const options = (soptions || []).map(f => (
+      const options = (soptions || []).map((f) => (
         <div key={`${f.key}_${key}`} style={{ marginTop: '10px' }}>
           <FormGroup bsSize="sm" controlId={`frmCtrlSelectOption_${f.key}_${key}`}>
             <InputGroup>
@@ -664,7 +710,7 @@ export default class SegmentElementAdmin extends React.Component {
                 type="text"
                 name="lf_label"
                 defaultValue={f.label}
-                onChange={event => this.onOptionInputChange(event, key, f.key)}
+                onChange={(event) => this.onOptionInputChange(event, key, f.key)}
               />
               <InputGroup.Button>
                 {this.renderDeleteButton('Option', f.key, key)}
@@ -675,7 +721,7 @@ export default class SegmentElementAdmin extends React.Component {
       ));
 
       const snode = (
-        <Panel className="panel_generic_properties" defaultExpanded key={`select_options_${key}`} >
+        <Panel className="panel_generic_properties" defaultExpanded key={`select_options_${key}`}>
           <Panel.Heading className="template_panel_heading">
             <Panel.Title toggle>{key}</Panel.Title>
             <div>
@@ -687,13 +733,19 @@ export default class SegmentElementAdmin extends React.Component {
                   <FormControl
                     type="text"
                     name="input_newOption"
-                    onChange={e => this.onInputNewOption(e)}
+                    onChange={(e) => this.onInputNewOption(e)}
                     placeholder="Input new option"
                     bsSize="sm"
                   />
                   <InputGroup.Button>
                     <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new option</Tooltip>}>
-                      <Button bsSize="sm" onClick={() => this.newOption(key)}><i className="fa fa-plus" aria-hidden="true" /></Button>
+                      <Button
+                        bsSize="sm"
+                        onClick={() => this.newOption(key)}
+                      >
+                        <i className="fa fa-plus" aria-hidden="true" />
+
+                      </Button>
                     </OverlayTrigger>
                   </InputGroup.Button>
                 </InputGroup>
@@ -717,7 +769,10 @@ export default class SegmentElementAdmin extends React.Component {
             <Panel.Title>
               Select Lists
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new select list</Tooltip>}>
-                <Button className="button-right" bsSize="xs" onClick={() => this.addSelection()}>Add new select list&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.addSelection()}>
+                  Add new select list&nbsp;
+                  <i className="fa fa-plus" aria-hidden="true" />
+                </Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -734,7 +789,7 @@ export default class SegmentElementAdmin extends React.Component {
   renderProperties() {
     const { element, selectOptions, unitsSystem } = this.state;
     const layers = [];
-    const sortedLayers = sortBy(element.properties_template.layers, l => l.position);
+    const sortedLayers = sortBy(element.properties_template.layers, (l) => l.position);
 
     (sortedLayers || []).forEach((layer) => {
       const layerKey = `${layer.key}`;
@@ -746,7 +801,7 @@ export default class SegmentElementAdmin extends React.Component {
           position={idx + 1}
           field={f}
           select_options={selectOptions}
-          onDrop={e => this.onFieldDrop(e)}
+          onDrop={(e) => this.onFieldDrop(e)}
           onMove={(l, fe, isUp) => this.onFieldMove(l, fe, isUp)}
           onDelete={(delStr, delKey, delRoot) => this.confirmDelete(delStr, delKey, delRoot)}
           onChange={(e, orig, fe, lk, fc, tp) => this.onFieldInputChange(e, orig, fe, lk, fc, tp)}
@@ -759,34 +814,80 @@ export default class SegmentElementAdmin extends React.Component {
       )) || [];
 
       const hasCond = (layer && layer.cond_fields && layer.cond_fields.length > 0) || false;
-      const btnCond = hasCond ?
-        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} bs="warning" element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />) :
-        (<ButtonTooltip tip="Restriction Setting" fnClick={() => this.handleCond(layerKey)} element={{ l: layerKey, f: null }} fa="fa fa-cogs" place="top" size="sm" />);
+      const btnCond = hasCond
+        ? (
+          <ButtonTooltip
+            tip="Restriction Setting"
+            fnClick={() => this.handleCond(layerKey)}
+            bs="warning"
+            element={{ l: layerKey, f: null }}
+            fa="fa fa-cogs"
+            place="top"
+            size="sm"
+          />
+        )
+        : (
+          <ButtonTooltip
+            tip="Restriction Setting"
+            fnClick={() => this.handleCond(layerKey)}
+            element={{ l: layerKey, f: null }}
+            fa="fa fa-cogs"
+            place="top"
+            size="sm"
+          />
+        );
 
       const node = (
         <Panel className="panel_generic_properties" defaultExpanded key={`idxLayer_${layerKey}`}>
           <Panel.Heading className="template_panel_heading">
             <Panel.Title toggle>
-              {layer.label}&nbsp;<Badge>{layer.key}</Badge>&nbsp;<Badge>{`Columns per Row: ${layer.cols}`}</Badge>&nbsp;<Badge className="bg-bs-primary">{`Fields: ${(layer.fields && layer.fields.length) || 0}`}</Badge>
+              {layer.label}
+&nbsp;
+              <Badge>{layer.key}</Badge>
+&nbsp;
+              <Badge>{`Columns per Row: ${layer.cols}`}</Badge>
+&nbsp;
+              <Badge className="bg-bs-primary">{`Fields: ${(layer.fields && layer.fields.length) || 0}`}</Badge>
             </Panel.Title>
             <div>
               <FormGroup bsSize="sm" style={{ marginBottom: 'unset', display: 'inline-table' }}>
                 <InputGroup>
                   <InputGroup.Button>
                     {btnCond}
-                    <ButtonTooltip tip={`Edit Layer: ${layer.label}`} fnClick={this.editLayer} element={{ layerKey }} fa="fa-pencil" place="top" size="sm" />
+                    <ButtonTooltip
+                      tip={`Edit Layer: ${layer.label}`}
+                      fnClick={this.editLayer}
+                      element={{ layerKey }}
+                      fa="fa-pencil"
+                      place="top"
+                      size="sm"
+                    />
                     {this.renderDeleteButton('Layer', layerKey, null)}
                   </InputGroup.Button>
                   <FormControl
                     type="text"
                     name="nf_newfield"
-                    onChange={e => this.onInputNewField(e)}
+                    onChange={(e) => this.onInputNewField(e)}
                     placeholder="Input new field name"
                     bsSize="sm"
                   />
                   <InputGroup.Button>
-                    <ButtonTooltip tip="Add new field" fnClick={this.newField} element={{ layerKey }} fa="fa fa-plus" place="top" size="sm" />
-                    <ButtonTooltip tip="Add Dummy field" fnClick={this.onDummyAdd} element={{ l: layerKey, f: null }} fa="fa fa-plus-circle" place="top" size="sm" />
+                    <ButtonTooltip
+                      tip="Add new field"
+                      fnClick={this.newField}
+                      element={{ layerKey }}
+                      fa="fa fa-plus"
+                      place="top"
+                      size="sm"
+                    />
+                    <ButtonTooltip
+                      tip="Add Dummy field"
+                      fnClick={this.onDummyAdd}
+                      element={{ l: layerKey, f: null }}
+                      fa="fa fa-plus-circle"
+                      place="top"
+                      size="sm"
+                    />
                   </InputGroup.Button>
                 </InputGroup>
               </FormGroup>
@@ -809,7 +910,10 @@ export default class SegmentElementAdmin extends React.Component {
             <Panel.Title>
               Layers
               <OverlayTrigger placement="top" overlay={<Tooltip id={uuid.v4()}>Add new layer</Tooltip>}>
-                <Button className="button-right" bsSize="xs" onClick={() => this.addLayer()}>Add new layer&nbsp;<i className="fa fa-plus" aria-hidden="true" /></Button>
+                <Button className="button-right" bsSize="xs" onClick={() => this.addLayer()}>
+                  Add new layer&nbsp;
+                  <i className="fa fa-plus" aria-hidden="true" />
+                </Button>
               </OverlayTrigger>
             </Panel.Title>
           </Panel.Heading>
@@ -829,13 +933,49 @@ export default class SegmentElementAdmin extends React.Component {
           <Tab eventKey={1} title="Template">
             <Panel show={showPropModal.toString()}>
               <Panel.Heading>
-                <b>{`Template of Segment [${element.label}]: ${element.desc}`}</b>&nbsp;
-                <span className="generic_version">{`ver.: ${element.uuid}`}</span>
-                <span className="generic_version_draft">{element.uuid === element.properties_template.uuid ? '' : `draft: ${element.properties_template.uuid}`}</span>
-                <span className="button-right" >
-                  <ButtonTooltip tip="Upload Segment template in JSON format" fnClick={this.handleUploadShow} element={element} place="top" fa="fa-upload" />&nbsp;
-                  <ButtonTooltip txt="Save and Release" tip="Save and Release template" fnClick={() => this.handleSubmit(true)} fa="fa-floppy-o" place="top" bs="primary" />&nbsp;
-                  <ButtonTooltip txt="Save as draft" tip="Save template as draft" fnClick={() => this.handleSubmit(false)} fa="fa-floppy-o" place="top" bs="primary" />
+                <b>{`Template of Segment [${element.label}]: ${element.desc}`}</b>
+&nbsp;
+                <span
+                  className="generic_version"
+                >
+                  {`ver.: ${element.uuid}`}
+
+                </span>
+                <span
+                  className="generic_version_draft"
+                >
+                  {element.uuid === element.properties_template.uuid ? ''
+                    : `draft: ${element.properties_template.uuid}`}
+
+                </span>
+                <span
+                  className="button-right"
+                >
+                  <ButtonTooltip
+                    tip="Upload Segment template in JSON format"
+                    fnClick={this.handleUploadShow}
+                    element={element}
+                    place="top"
+                    fa="fa-upload"
+                  />
+&nbsp;
+                  <ButtonTooltip
+                    txt="Save and Release"
+                    tip="Save and Release template"
+                    fnClick={() => this.handleSubmit(true)}
+                    fa="fa-floppy-o"
+                    place="top"
+                    bs="primary"
+                  />
+&nbsp;
+                  <ButtonTooltip
+                    txt="Save as draft"
+                    tip="Save template as draft"
+                    fnClick={() => this.handleSubmit(false)}
+                    fa="fa-floppy-o"
+                    place="top"
+                    bs="primary"
+                  />
                 </span>
                 <div className="clearfix" />
               </Panel.Heading>
@@ -848,7 +988,13 @@ export default class SegmentElementAdmin extends React.Component {
             </Panel>
           </Tab>
           <Tab eventKey={3} title="Preview">
-            <Preview revisions={revisions} element={element} fnRetrive={this.retriveRevision} fnDelete={this.delRevision} canDL />
+            <Preview
+              revisions={revisions}
+              element={element}
+              fnRetrive={this.retriveRevision}
+              fnDelete={this.delRevision}
+              canDL
+            />
           </Tab>
         </Tabs>
       );
@@ -861,7 +1007,13 @@ export default class SegmentElementAdmin extends React.Component {
     const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
     const tbody = els && els.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
-        <tr key={`row_${e.id}`} id={`row_${e.id}`} style={e.id === element.id ? { fontWeight: 'bold', borderWidth: 'medium', backgroundColor: 'white', borderStyle: 'groove' } : { fontWeight: 'unset' }}>
+        <tr
+          key={`row_${e.id}`}
+          id={`row_${e.id}`}
+          style={e.id === element.id ? {
+            fontWeight: 'bold', borderWidth: 'medium', backgroundColor: 'white', borderStyle: 'groove'
+          } : { fontWeight: 'unset' }}
+        >
           <td>{idx + 1}</td>
           <td>
             <ButtonTooltip tip="copy to ..." fa="fa fa-clone" element={e} fnClick={this.copyKlass} />
@@ -873,15 +1025,35 @@ export default class SegmentElementAdmin extends React.Component {
           <td>{e.desc}</td>
           <td>
             {
-              e.is_active ? <i className="fa fa-check" aria-hidden="true" style={{ color: 'green' }} /> : <i className="fa fa-ban" aria-hidden="true" style={{ color: 'red' }} />
+              e.is_active ? (
+                <i
+                  className="fa fa-check"
+                  aria-hidden="true"
+                  style={{ color: 'green' }}
+                />
+              ) : <i className="fa fa-ban" aria-hidden="true" style={{ color: 'red' }} />
             }
           </td>
           <td>
-            <ButtonTooltip tip="Edit Segment template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />&nbsp;
-            <ButtonTooltip tip="Edit Segment template in JSON format" fnClick={this.showJsonModal} element={e} fa="fa-file-code-o" />
+            <ButtonTooltip tip="Edit Segment template" fnClick={this.handlePropShow} element={e} fa="fa-file-text" />
+&nbsp;
+            <ButtonTooltip
+              tip="Edit Segment template in JSON format"
+              fnClick={this.showJsonModal}
+              element={e}
+              fa="fa-file-code-o"
+            />
           </td>
-          <td>{e.element_klass && e.element_klass.label}&nbsp;<i className={e.element_klass && e.element_klass.icon_name} /></td>
-          <td>{e.released_at} (UTC)</td>
+          <td>
+            {e.element_klass && e.element_klass.label}
+&nbsp;
+            <i className={e.element_klass && e.element_klass.icon_name} />
+          </td>
+          <td>
+            {e.released_at}
+            {' '}
+            (UTC)
+          </td>
         </tr>
       </tbody>
     ));
@@ -913,12 +1085,14 @@ export default class SegmentElementAdmin extends React.Component {
     const layer = (element && element.properties_template
       && element.properties_template.layers[layerKey]) || {};
 
-    const sortedLayers = (element && element.properties_template && element.properties_template.layers && sortBy(element.properties_template.layers, l => l.position)) || [];
+    const sortedLayers = (element && element.properties_template
+      && element.properties_template.layers && sortBy(element.properties_template.layers, (l) => l.position)) || [];
 
     return (
       <div>
         <Button bsStyle="primary" bsSize="small" onClick={() => this.newKlass()}>
-          New Segment&nbsp;<i className="fa fa-plus" aria-hidden="true" />
+          New Segment&nbsp;
+          <i className="fa fa-plus" aria-hidden="true" />
         </Button>
         &nbsp;
         <br />

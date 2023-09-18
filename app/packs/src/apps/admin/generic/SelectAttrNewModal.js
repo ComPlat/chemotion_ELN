@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, FormControl, FormGroup, InputGroup, Modal, Button } from 'react-bootstrap';
+import {
+  Form, FormControl, FormGroup, InputGroup, Modal, Button
+} from 'react-bootstrap';
 
 export default class SelectAttrNewModal extends Component {
   handleCreate() {
@@ -21,14 +23,19 @@ export default class SelectAttrNewModal extends Component {
                   <FormControl type="text" inputRef={(ref) => { this.s_selectKey = ref; }} />
                 </InputGroup>
                 <div className="help">
-                  Seletc List name is unique in the template<br />
-                  Seletc List name must contain only lowercase letters and underscores<br />
+                  Seletc List name is unique in the template
+                  <br />
+                  Seletc List name must contain only lowercase letters and underscores
+                  <br />
                   Seletc List name should not contain special characters like $, !, %, etc.
                 </div>
               </FormGroup>
             </Form>
             <FormGroup>
-              <Button bsStyle="primary" onClick={() => this.handleCreate()}>Add new select list to template workspace&nbsp;<i className="fa fa-hdd-o" aria-hidden="true" /></Button>
+              <Button bsStyle="primary" onClick={() => this.handleCreate()}>
+                Add new select list to template workspace&nbsp;
+                <i className="fa fa-hdd-o" aria-hidden="true" />
+              </Button>
               &nbsp;
               <Button bsStyle="warning" onClick={() => fnClose()}>Cancel</Button>
             </FormGroup>

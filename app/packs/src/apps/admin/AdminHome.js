@@ -1,5 +1,7 @@
 import React from 'react';
-import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap';
+import {
+  Grid, Row, Col, Nav, NavItem
+} from 'react-bootstrap';
 import AdminNavigation from 'src/apps/admin/AdminNavigation';
 import Notifications from 'src/components/Notifications';
 import AdminDashboard from 'src/apps/admin/AdminDashboard';
@@ -29,6 +31,12 @@ class AdminHome extends React.Component {
     this.handleSelect = this.handleSelect.bind(this);
   }
 
+  handleSelect(pageIndex) {
+    this.setState({
+      pageIndex
+    });
+  }
+
   toggleTree() {
     const { showTree } = this.state;
     this.setState({
@@ -37,42 +45,35 @@ class AdminHome extends React.Component {
     });
   }
 
-  handleSelect(pageIndex) {
-    this.setState({
-      pageIndex
-    });
-  }
-
-
   mainContent() {
     const { pageIndex } = this.state;
     if (pageIndex === 0) {
       return this.renderDashboard();
-    } else if (pageIndex === 1) {
+    } if (pageIndex === 1) {
       return this.renderUserManagement();
-    } else if (pageIndex === 2) {
+    } if (pageIndex === 2) {
       return this.renderMessagePublish();
-    } else if (pageIndex === 3) {
+    } if (pageIndex === 3) {
       return this.renderDataCollector();
-    } else if (pageIndex === 4) {
+    } if (pageIndex === 4) {
       return this.renderGroupMgnt();
-    } else if (pageIndex === 5) {
+    } if (pageIndex === 5) {
       return this.renderOlsTerms();
-    } else if (pageIndex === 6) {
+    } if (pageIndex === 6) {
       return this.renderNovncSettings();
-    } else if (pageIndex === 7) {
+    } if (pageIndex === 7) {
       return this.renderContent(<MatrixManagement />);
-    } else if (pageIndex === 8) {
+    } if (pageIndex === 8) {
       return this.renderTextTemplates();
-    } else if (pageIndex === 9) {
+    } if (pageIndex === 9) {
       return this.renderContent(<GenericElementAdmin />);
-    } else if (pageIndex === 10) {
+    } if (pageIndex === 10) {
       return this.renderContent(<SegmentElementAdmin />);
-    } else if (pageIndex === 11) {
+    } if (pageIndex === 11) {
       return this.renderContent(<DatasetElementAdmin />);
-    } else if (pageIndex === 12) {
+    } if (pageIndex === 12) {
       return this.renderTemplateManagement();
-    } else if (pageIndex === 13) {
+    } if (pageIndex === 13) {
       return this.renderDelayedJobs();
     }
     return (<div />);
@@ -100,7 +101,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
-	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
+            {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
           </Nav>
         </Col>
@@ -111,7 +112,7 @@ class AdminHome extends React.Component {
   renderDashboard() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <AdminDashboard />
       </Col>
     );
@@ -120,7 +121,7 @@ class AdminHome extends React.Component {
   renderUserManagement() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <UserManagement />
       </Col>
     );
@@ -129,7 +130,7 @@ class AdminHome extends React.Component {
   renderMessagePublish() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <MessagePublish />
       </Col>
     );
@@ -138,7 +139,7 @@ class AdminHome extends React.Component {
   renderDataCollector() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <DataCollector />
       </Col>
     );
@@ -147,7 +148,7 @@ class AdminHome extends React.Component {
   renderGroupMgnt() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <GroupsDevices />
       </Col>
     );
@@ -156,7 +157,7 @@ class AdminHome extends React.Component {
   renderOlsTerms() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <OlsTerms />
       </Col>
     );
@@ -165,7 +166,7 @@ class AdminHome extends React.Component {
   renderNovncSettings() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <NovncSettings />
       </Col>
     );
@@ -174,7 +175,7 @@ class AdminHome extends React.Component {
   renderTextTemplates() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <TextTemplateContainer />
       </Col>
     );
@@ -183,7 +184,7 @@ class AdminHome extends React.Component {
   renderContent(component) {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         {component}
       </Col>
     );
@@ -192,7 +193,7 @@ class AdminHome extends React.Component {
   renderDelayedJobs() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <DelayedJobs />
       </Col>
     );
@@ -201,7 +202,7 @@ class AdminHome extends React.Component {
   renderTemplateManagement() {
     const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col className={contentClassName}>
         <TemplateManagement />
       </Col>
     );
@@ -214,7 +215,7 @@ class AdminHome extends React.Component {
           <Row className="card-navigation">
             <AdminNavigation toggleTree={this.toggleTree} />
           </Row>
-          <Row className="card-content container-fluid" >
+          <Row className="card-content container-fluid">
             {this.tree()}
             {this.mainContent()}
           </Row>

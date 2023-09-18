@@ -29,7 +29,14 @@ export default class LayerAttrNewModal extends Component {
           <div className="col-md-12">
             <LayerAttrForm ref={this.formRef} layer={{}} isKlassReadonly={false} />
             <FormGroup>
-              <Button bsStyle="primary" onClick={() => this.handleCreate()}>Add new layer to template workspace&nbsp;<i className="fa fa-hdd-o" aria-hidden="true" /></Button>
+              <Button
+                bsStyle="primary"
+                onClick={() => this.handleCreate()}
+              >
+                Add new layer to template workspace&nbsp;
+                <i className="fa fa-hdd-o" aria-hidden="true" />
+
+              </Button>
               &nbsp;
               <Button bsStyle="warning" onClick={() => fnClose()}>Cancel</Button>
             </FormGroup>

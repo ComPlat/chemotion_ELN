@@ -1,5 +1,8 @@
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, ButtonGroup, Tooltip, OverlayTrigger, Popover, FormControl } from 'react-bootstrap';
+import {
+  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form,
+  Col, ButtonGroup, Tooltip, OverlayTrigger, Popover, FormControl
+} from 'react-bootstrap';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
 import Select from 'react-select';
@@ -92,29 +95,29 @@ export default class TemplateManagement extends React.Component {
   }
 
   handleCreateNewTemplate() {
-    let params = {
+    const params = {
       attachment: this.state.attachment,
       name: this.templateName.value.trim(),
       report_type: this.state.templateType?.value
-    }
+    };
 
     ReportTemplateFetcher.createTemplate(params)()
       .then(() => {
         this.handleFetchTemplates();
-      })
+      });
 
     this.handleNewTemplateClose();
     return true;
   }
 
   handleUpdateTemplate(id) {
-    let params = {
-      id: id,
+    const params = {
+      id,
       attachment: this.state.attachment,
       name: this.templateName.value.trim(),
       report_type: this.state.templateType?.value,
       attachment_id: this.state.template.attachment_id,
-    }
+    };
 
     if (!params.report_type) {
       params.report_type = this.state.templateType;
@@ -123,7 +126,7 @@ export default class TemplateManagement extends React.Component {
     ReportTemplateFetcher.updateTemplate(params)()
       .then(() => {
         this.handleFetchTemplates();
-      })
+      });
 
     this.handleEditTemplateClose();
     return true;
@@ -134,7 +137,7 @@ export default class TemplateManagement extends React.Component {
   }
 
   handleAttachmentRemove() {
-    let newTemplate = this.state.template;
+    const newTemplate = this.state.template;
     newTemplate.attachment = null;
     newTemplate.attachment_id = null;
     this.setState({ template: newTemplate, attachment: null });
@@ -144,9 +147,13 @@ export default class TemplateManagement extends React.Component {
     ReportTemplateFetcher.deleteAttachment(template)
       .then(() => {
         this.handleFetchTemplates();
-      })
+      });
 
     return true;
+  }
+
+  onTemplateTypeChange(e) {
+    this.setState({ templateType: e });
   }
 
   dropzoneOrfilePreview() {
@@ -154,42 +161,54 @@ export default class TemplateManagement extends React.Component {
     if (template.attachment_id) {
       return (
         <div className="control-label">
-          {template.attachment.filename} &nbsp;
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
-            <i className="fa fa-trash-o"></i>
+          {template.attachment.filename}
+          {' '}
+&nbsp;
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={() => this.handleAttachmentRemove()}
+            className="pull-right"
+          >
+            <i className="fa fa-trash-o" />
           </Button>
         </div>
       );
-    } else if (attachment) {
+    } if (attachment) {
       return (
         <div className="control-label">
-          {attachment.name} &nbsp;
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
-            <i className="fa fa-trash-o"></i>
+          {attachment.name}
+          {' '}
+&nbsp;
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={() => this.handleAttachmentRemove()}
+            className="pull-right"
+          >
+            <i className="fa fa-trash-o" />
           </Button>
         </div>
       );
-    } else {
-      return (
-        <Dropzone
-          accept="application/pdf,.docx,.xlsx,.html,.csv,.erb"
-          onDrop={attachment_file => this.handleFileDrop(attachment_file)}
-          style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-        >
-          <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
-            Drop File, or Click to Select.
-          </div>
-        </Dropzone>
-      );
     }
+    return (
+      <Dropzone
+        accept="application/pdf,.docx,.xlsx,.html,.csv,.erb"
+        onDrop={(attachment_file) => this.handleFileDrop(attachment_file)}
+        style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+      >
+        <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+          Drop File, or Click to Select.
+        </div>
+      </Dropzone>
+    );
   }
 
-  onTemplateTypeChange(e) {
-    this.setState({ templateType: e })
-  };
+  toggleTooltip() {
+    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+  }
 
   renderNewTemplateModal() {
-
     return (
       <Modal
         show={this.state.showNewTemplateModal}
@@ -217,7 +236,7 @@ export default class TemplateManagement extends React.Component {
                   <Select
                     options={this.state.reportTemplateTypes}
                     value={this.state.templateType}
-                    clearable={true}
+                    clearable
                     onChange={this.onTemplateTypeChange}
                   />
                 </Col>
@@ -232,12 +251,12 @@ export default class TemplateManagement extends React.Component {
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewTemplate()} >
+                  <Button bsStyle="primary" onClick={() => this.handleCreateNewTemplate()}>
                     Create&nbsp;
                     <i className="fa fa-plus" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleNewTemplateClose()} >
+                  <Button bsStyle="warning" onClick={() => this.handleNewTemplateClose()}>
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -268,7 +287,12 @@ export default class TemplateManagement extends React.Component {
                   Name:
                 </Col>
                 <Col sm={10}>
-                  <FormControl type="text" name="templateName" defaultValue={template.name} inputRef={(ref) => { this.templateName = ref; }} />
+                  <FormControl
+                    type="text"
+                    name="templateName"
+                    defaultValue={template.name}
+                    inputRef={(ref) => { this.templateName = ref; }}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup controlId="formControlReportTemplateType">
@@ -279,7 +303,7 @@ export default class TemplateManagement extends React.Component {
                   <Select
                     options={this.state.reportTemplateTypes}
                     value={this.state.templateType}
-                    clearable={true}
+                    clearable
                     onChange={this.onTemplateTypeChange}
                   />
                 </Col>
@@ -294,12 +318,12 @@ export default class TemplateManagement extends React.Component {
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateTemplate(template.id)} >
+                  <Button bsStyle="primary" onClick={() => this.handleUpdateTemplate(template.id)}>
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditTemplateClose()} >
+                  <Button bsStyle="warning" onClick={() => this.handleEditTemplateClose()}>
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -314,12 +338,15 @@ export default class TemplateManagement extends React.Component {
   renderDeleteButton(template) {
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
-        Delete this template? <br />
+        Delete this template?
+        {' '}
+        <br />
         <div className="btn-toolbar">
           <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleDeleteTemplate(template)}>
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          </Button>
+          <span>&nbsp;&nbsp;</span>
+          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick}>
             No
           </Button>
         </div>
@@ -335,16 +362,12 @@ export default class TemplateManagement extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button bsSize="xsmall" bsStyle="danger">
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
       </ButtonGroup>
     );
-  }
-
-  toggleTooltip() {
-    this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
   }
 
   render() {
@@ -358,18 +381,30 @@ export default class TemplateManagement extends React.Component {
         <th width="2%">ID</th>
         <th width="30%">Actions</th>
       </tr>
-    )
+    );
 
     const tbody = templates.map((g, idx) => (
       <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
         <td width="1%">
           {idx + 1}
         </td>
-        <td width="30%"> {g.name} </td>
-        <td width="30%"> {this.state.reportTemplateTypes.find(({ value }) => value === g.report_type).label} </td>
-        <td width="2%"> {g.id} </td>
+        <td width="30%">
+          {' '}
+          {g.name}
+          {' '}
+        </td>
+        <td width="30%">
+          {' '}
+          {this.state.reportTemplateTypes.find(({ value }) => value === g.report_type).label}
+          {' '}
+        </td>
+        <td width="2%">
+          {' '}
+          {g.id}
+          {' '}
+        </td>
         <td width="12%">
-          <OverlayTrigger placement="bottom" overlay={editTooltip} >
+          <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle="info"
@@ -390,7 +425,8 @@ export default class TemplateManagement extends React.Component {
       <div>
         <Panel>
           <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewTemplateShow()}>
-            Add new template&nbsp;<i className="fa fa-plus" />
+            Add new template&nbsp;
+            <i className="fa fa-plus" />
           </Button>
           &nbsp;
         </Panel>

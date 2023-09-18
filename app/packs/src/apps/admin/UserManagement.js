@@ -1,10 +1,18 @@
+/* eslint-disable react/no-unused-state */
+/* eslint-disable react/destructuring-assignment */
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
+import {
+  Panel, Table, Modal, FormGroup,
+  ControlLabel, Form, Col, FormControl,
+  Tooltip, OverlayTrigger, Tabs, Tab
+} from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import styles from 'Styles';
+import Button from 'ui/Button';
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -18,41 +26,62 @@ const loadUserByName = (input) => {
     });
 };
 
-const handleResetPassword = (id, random) => {
-  AdminFetcher.resetUserPassword({ user_id: id, random })
-    .then((result) => {
-      if (result.rp) {
-        let message = '';
-        if (random) {
-          message = result.pwd ? `Password reset! New password: \n ${result.pwd}`
-            : 'Password reset!';
-        } else {
-          message = result.email ? `Password reset! instructions sent to : \n ${result.email}`
-            : 'Password instruction sent!';
-        }
-        alert(message);
-      } else {
-        alert(`Password reset fail: \n ${result.pwd}`);
-      }
-    });
-};
-
-const validateEmail = mail => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
-const editTooltip = <Tooltip id="inchi_tooltip">edit User Info</Tooltip>;
-const resetPasswordTooltip = <Tooltip id="assign_button">reset password</Tooltip>;
-const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">send password instructions</Tooltip>;
-const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Tooltip>;
-const confirmEmailChangeTooltip = email => (<Tooltip id="email_change_button">confirm email: <br /> {email}</Tooltip>);
-const disableTooltip = <Tooltip id="assign_button">lock this account</Tooltip>;
-const enableTooltip = <Tooltip id="assign_button">unlock this account</Tooltip>;
-const converterEnableTooltip = <Tooltip id="assign_button">Enable Converter profiles editing for this user (currently disabled)</Tooltip>;
-const converterDisableTooltip = <Tooltip id="assign_button">Disable Converter profiles editing for this user (currently enabled)</Tooltip>;
-const templateModeratorEnableTooltip = <Tooltip id="assign_button">Enable Ketcher template editing for this user (currently disabled)</Tooltip>;
-const templateModeratorDisableTooltip = <Tooltip id="assign_button">Disable Ketcher template editing for this user (currently enabled)</Tooltip>;
-const moleculeModeratorEnableTooltip = <Tooltip id="assign_button">Enable editing the representation of the global molecules for this user (currently disabled)</Tooltip>;
-const moleculeModeratorDisableTooltip = <Tooltip id="assign_button">Disable editing the representation of the global molecules for this user (currently enabled)</Tooltip>;
-const accountActiveTooltip = <Tooltip id="assign_button">This user account is deactivated, press button to [activate]</Tooltip>;
-const accountInActiveTooltip = <Tooltip id="assign_button">This user account is activated, press button to [deactivate]</Tooltip>;
+const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(mail));
+const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
+const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
+const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
+const confirmUserTooltip = <Tooltip id="assign_button">Confirm this account</Tooltip>;
+const confirmEmailChangeTooltip = (email) => (
+  <Tooltip id="email_change_button">
+    Confirm E-Mail:
+    {' '}
+    <br />
+    {' '}
+    {email}
+  </Tooltip>
+);
+const disableTooltip = <Tooltip id="assign_button">Lock this account</Tooltip>;
+const enableTooltip = <Tooltip id="assign_button">Unlock this account</Tooltip>;
+const converterEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable Converter profiles editing for this user (currently disabled)
+  </Tooltip>
+);
+const converterDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable Converter profiles editing for this user (currently enabled)
+  </Tooltip>
+);
+const templateModeratorEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable Ketcher template editing for this user (currently disabled)
+  </Tooltip>
+);
+const templateModeratorDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable Ketcher template editing for this user (currently enabled)
+  </Tooltip>
+);
+const moleculeModeratorEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable editing the representation of the global molecules for this user (currently disabled)
+  </Tooltip>
+);
+const moleculeModeratorDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable editing the representation of the global molecules for this user (currently enabled)
+  </Tooltip>
+);
+const accountActiveTooltip = (
+  <Tooltip id="assign_button">
+    This user account is deactivated, press button to [activate]
+  </Tooltip>
+);
+const accountInActiveTooltip = (
+  <Tooltip id="assign_button">
+    This user account is activated, press button to [deactivate]
+  </Tooltip>
+);
 
 export default class UserManagement extends React.Component {
   constructor(props) {
@@ -67,6 +96,8 @@ export default class UserManagement extends React.Component {
       messageNewUserModal: '',
       messageEditUserModal: '',
       processingSummaryUserFile: '',
+      alertModalShow: false,
+      alertModalMessage: '',
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -79,6 +110,8 @@ export default class UserManagement extends React.Component {
     this.handleEditUserShow = this.handleEditUserShow.bind(this);
     this.handleEditUserClose = this.handleEditUserClose.bind(this);
     this.handleUpdateUser = this.handleUpdateUser.bind(this);
+    this.showAlertModal = this.showAlertModal.bind(this);
+    this.hideAlertModal = this.hideAlertModal.bind(this);
   }
 
   componentDidMount() {
@@ -138,48 +171,71 @@ export default class UserManagement extends React.Component {
       });
   }
 
+  handleResetPassword(id, random) {
+    AdminFetcher.resetUserPassword({ user_id: id, random })
+      .then((result) => {
+        let message = '';
+        if (result.rp) {
+          if (random) {
+            message = result.pwd ? `Password reset!\nNew password: ${result.pwd}`
+              : 'Password reset!';
+          } else {
+            message = result.email ? `Password reset!\nInstructions sent to: ${result.email}`
+              : 'Password instruction sent!';
+          }
+          this.showAlertModal(message);
+        } else {
+          this.showAlertModal(`Password reset fail: \n ${result.pwd}`);
+        }
+      });
+  }
+
   handleEnableDisableAccount(id, lockedAt) {
     AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
-        alert(message);
+        this.showAlertModal(message);
       });
   }
 
   handleConverterAdmin(id, isConverterAdmin) {
     AdminFetcher.updateAccount({ user_id: id, converter_admin: !isConverterAdmin })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isConverterAdmin === true ? 'Disable Converter profiles editing for this user' : 'Enable Converter profiles editing for this user';
-        alert(message);
+        const message = isConverterAdmin === true
+          ? 'Disabled Converter profiles editing for this user.' : 'Enabled Converter profiles editing for this user.';
+        this.showAlertModal(message);
       });
   }
 
   handleTemplatesModerator(id, isTemplatesModerator) {
     AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isTemplatesModerator === true ? 'Disable Ketcher template editing for this user' : 'Enable Ketcher template editing for this user';
-        alert(message);
+        const message = isTemplatesModerator === true
+          ? 'Disabled Ketcher template editing for this user.' : 'Enabled Ketcher template editing for this user.';
+        this.showAlertModal(message);
       });
   }
 
   handleMoleculesModerator(id, isMoleculesEditor) {
     AdminFetcher.updateAccount({ user_id: id, molecule_editor: !isMoleculesEditor })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isMoleculesEditor === true ? 'Disable editing the representation of the global molecules for this user' : 'Enable editing the representation of the global molecules for this user';
-        alert(message);
+        const message = isMoleculesEditor === true
+          ? 'Disabled editing the representation of the global molecules for this user.'
+          : 'Enabled editing the representation of the global molecules for this user.';
+        this.showAlertModal(message);
       });
   }
 
   handleActiveInActiveAccount(id, isActive) {
     AdminFetcher.updateAccount({ user_id: id, account_active: !isActive })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isActive === true ? 'User is In-Active!' : 'User is Active now!';
-        alert(message);
+        const message = isActive === true ? 'User is inactive!' : 'User is active!';
+        this.showAlertModal(message);
       });
   }
 
@@ -194,7 +250,7 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         if (result !== null) {
           this.handleFetchUsers();
-          alert('User Account has been confirmed!');
+          this.showAlertModal('User Account has been confirmed!');
         }
       });
   }
@@ -204,32 +260,9 @@ export default class UserManagement extends React.Component {
       .then((result) => {
         if (result !== null) {
           this.handleFetchUsers();
-          alert('User New Email has been confirmed!');
+          this.showAlertModal('New user email has been confirmed!');
         }
       });
-  }
-
-  validateUserInput() {
-    if (this.email.value === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input email.' });
-      return false;
-    } else if (!validateEmail(this.email.value.trim())) { // also validated in backend
-      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
-      return false;
-    } else if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
-      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
-      return false;
-    } else if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
-      this.setState({ messageNewUserModal: 'passwords do not mach!' });
-      return false;
-    } else if (this.password.value.trim().length < 8) { // also validated in backend
-      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
-      return false;
-    } else if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
-      return false;
-    }
-    return true;
   }
 
   handleCreateNewUser() {
@@ -265,22 +298,24 @@ export default class UserManagement extends React.Component {
   handleOnDropUserFile = (data, file) => {
     const validFileTypes = ['text/csv', 'application/vnd.ms-excel'];
     if (!validFileTypes.includes(file.type)) { // Note that MIME type doesn't reliably indicate file type. It's only an initial guard and data is validated more thoroughly during processing.
-      this.setState({ processingSummaryUserFile: `Invalid file type ${file.type}. Please make sure to upload a CSV file.` });
+      this.setState({
+        processingSummaryUserFile: `Invalid file type ${file.type}. Please make sure to upload a CSV file.`
+      });
       this.newUsers = null;
       return false;
     }
     this.newUsers = data;
-    for (let i = 0; i < this.newUsers.length; i++) {
+    for (let i = 0; i < this.newUsers.length; i += 1) {
       this.newUsers[i].data.row = i + 1;
     }
   };
 
-  handleOnErrorUserFile = (err, file, inputElem, reason) => {
+  handleOnErrorUserFile = (err) => {
     console.log(err);
     this.newUsers = null;
   };
 
-  handleOnRemoveUserFile = (data) => {
+  handleOnRemoveUserFile = () => {
     this.newUsers = null;
   };
 
@@ -289,7 +324,7 @@ export default class UserManagement extends React.Component {
       this.newUsers = null;
       this.setState({ messageNewUserModal: 'Finished processing user file.' });
     } else {
-      const promisedNewUsers = this.newUsers.map(user => this.createNewUserFromFile(user));
+      const promisedNewUsers = this.newUsers.map((user) => this.createNewUserFromFile(user));
       Promise.allSettled(promisedNewUsers)
         .then((userResults) => {
           this.showProcessingSummaryUserFile(userResults);
@@ -299,6 +334,47 @@ export default class UserManagement extends React.Component {
           this.setState({ messageNewUserModal: `Failed to process user file: ${reason}.` });
         });
     }
+  }
+
+  handleUpdateUser(user) {
+    if (!validateEmail(this.u_email.value.trim())) {
+      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
+      return false;
+    } if (this.u_firstname.value.trim() === ''
+      || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
+      this.setState({ messageEditUserModal: 'Please input first name, last name and name abbreviation!' });
+      return false;
+    }
+    AdminFetcher.updateUser({
+      id: user.id,
+      email: this.u_email.value.trim(),
+      first_name: this.u_firstname.value.trim(),
+      last_name: this.u_lastname.value.trim(),
+      name_abbreviation: this.u_abbr.value.trim(),
+      type: this.u_type.value
+    })
+      .then((result) => {
+        if (result.error) {
+          this.setState({ messageEditUserModal: result.error });
+          return false;
+        }
+        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
+        this.u_email.value = '';
+        this.u_firstname.value = '';
+        this.u_lastname.value = '';
+        this.u_abbr.value = '';
+        this.handleFetchUsers();
+        return true;
+      });
+    return true;
+  }
+
+  showAlertModal(message) {
+    this.setState({ alertModalShow: true, alertModalMessage: message });
+  }
+
+  hideAlertModal() {
+    this.setState({ alertModalShow: false, alertModalMessage: '' });
   }
 
   createNewUserFromFile(newUser) {
@@ -329,15 +405,21 @@ export default class UserManagement extends React.Component {
     const nUsers = this.newUsers.length;
     const nUsersMax = 100;
     if (nUsers > nUsersMax) {
-      this.setState({ processingSummaryUserFile: `The file contains too many users. Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.` });
+      this.setState({
+        processingSummaryUserFile: `The file contains too many users.
+        Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
+      });
       return false;
     }
 
     const fileHeader = this.newUsers[0].meta.fields;
     const validHeader = ['email', 'password', 'firstname', 'lastname', 'nameabbr', 'type'];
-    if (!(fileHeader.length === validHeader.length &&
-      fileHeader.every((val, index) => val === validHeader[index]))) {
-      this.setState({ processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. Please make sure that your file's header is organized as follows: ${validHeader}.` });
+    if (!(fileHeader.length === validHeader.length
+      && fileHeader.every((val, index) => val === validHeader[index]))) {
+      this.setState({
+        processingSummaryUserFile: `The file contains an invalid header ${fileHeader}.
+        Please make sure that your file's header is organized as follows: ${validHeader}.`
+      });
       return false;
     }
 
@@ -365,7 +447,8 @@ export default class UserManagement extends React.Component {
     this.newUsers.forEach((user) => {
       const userType = user.data.type.trim();
       if (!validTypes.includes(userType)) {
-        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. Please select a valid type from ${validTypes}.\n\n`;
+        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}"
+          is invalid. Please select a valid type from ${validTypes}.\n\n`;
       }
     });
     if (!(invalidTypeMessage === '')) {
@@ -373,15 +456,19 @@ export default class UserManagement extends React.Component {
       return false;
     }
 
-    const sortedUserEmails = this.newUsers.map(user => user.data.email).sort();
+    const sortedUserEmails = this.newUsers.map((user) => user.data.email).sort();
     const duplicateUserEmails = new Set();
-    for (let i = 0; i < sortedUserEmails.length - 1; i++) {
-      if (sortedUserEmails[i + 1] == sortedUserEmails[i]) {
+    for (let i = 0; i < sortedUserEmails.length - 1; i += 1) {
+      if (sortedUserEmails[i + 1] === sortedUserEmails[i]) {
         duplicateUserEmails.add(sortedUserEmails[i]);
       }
     }
+
     if (duplicateUserEmails.size) {
-      this.setState({ processingSummaryUserFile: `The file contains duplicate user emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.` });
+      this.setState({
+        processingSummaryUserFile: `The file contains duplicate user emails:
+        ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
+      });
       return false;
     }
 
@@ -399,43 +486,36 @@ export default class UserManagement extends React.Component {
     });
   }
 
-  handleUpdateUser(user) {
-    if (!validateEmail(this.u_email.value.trim())) {
-      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
+  validateUserInput() {
+    if (this.email.value === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input email.' });
       return false;
-    } else if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
-      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
+    } if (!validateEmail(this.email.value.trim())) { // also validated in backend
+      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
+      return false;
+    } if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
+      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
+      return false;
+    } if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
+      this.setState({ messageNewUserModal: 'Passwords do not match!' });
+      return false;
+    } if (this.password.value.trim().length < 8) { // also validated in backend
+      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
+      return false;
+    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
+        || this.nameAbbr.value.trim() === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input first name, last name and name abbreviation' });
       return false;
     }
-    AdminFetcher.updateUser({
-      id: user.id,
-      email: this.u_email.value.trim(),
-      first_name: this.u_firstname.value.trim(),
-      last_name: this.u_lastname.value.trim(),
-      name_abbreviation: this.u_abbr.value.trim(),
-      type: this.u_type.value
-    })
-      .then((result) => {
-        if (result.error) {
-          this.setState({ messageEditUserModal: result.error });
-          return false;
-        }
-        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
-        this.u_email.value = '';
-        this.u_firstname.value = '';
-        this.u_lastname.value = '';
-        this.u_abbr.value = '';
-        this.handleFetchUsers();
-        return true;
-      });
     return true;
   }
+
   messageSend() {
     const { selectedUsers } = this.state;
     if (this.myMessage.value === '') {
-      alert('Please input the message!');
+      this.showAlertModal('Please input the message!');
     } else if (!selectedUsers) {
-      alert('Please select user(s)!');
+      this.showAlertModal('Please select user(s)!');
     } else {
       const userIds = [];
       selectedUsers.map((g) => {
@@ -450,7 +530,7 @@ export default class UserManagement extends React.Component {
             user_ids: userIds
           };
           MessagesFetcher.createMessage(params)
-            .then((result) => {
+            .then(() => {
               this.myMessage.value = '';
               this.setState({
                 selectedUsers: null
@@ -469,18 +549,19 @@ export default class UserManagement extends React.Component {
         onHide={this.handleMsgClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Send Message</Modal.Title>
+          <Modal.Title style={styles.modalTitle}>Send Message</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
+        <Modal.Body style={{ overflow: 'auto', maxHeight: '80%' }}>
+          <div>
             <Form>
               <FormGroup controlId="formControlsTextarea">
                 <ControlLabel>Message</ControlLabel>
                 <FormControl
                   componentClass="textarea"
                   placeholder="message..."
-                  rows="20"
+                  rows="10"
                   inputRef={(ref) => { this.myMessage = ref; }}
+                  style={{ resize: 'vertical', maxHeight: '60vh' }}
                 />
               </FormGroup>
               <FormGroup>
@@ -498,13 +579,12 @@ export default class UserManagement extends React.Component {
                   onChange={this.handleSelectUser}
                 />
               </FormGroup>
-              <Button
-                bsStyle="primary"
-                onClick={() => this.messageSend()}
-              >
-                Send&nbsp;
-                <i className="fa fa-paper-plane" />
-              </Button>
+              <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button variant="primary" onClick={() => this.messageSend()} option="modal">
+                  Send&nbsp;
+                  <i className="fa fa-paper-plane" />
+                </Button>
+              </FormGroup>
             </Form>
           </div>
         </Modal.Body>
@@ -513,82 +593,96 @@ export default class UserManagement extends React.Component {
   }
 
   renderNewUserModal() {
-    // const { selectedUsers } = this.state;
     return (
       <Modal
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>New User</Modal.Title>
+          <Modal.Title style={styles.modalTitle}>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Tabs id="createUserTabs">
             <Tab eventKey="singleUser" title="Single user">
-              <Form horizontal>
-                <FormGroup controlId="formControlEmail">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Email:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
+              <Form horizontal style={{ marginTop: '20px' }}>
+                <div style={{ marginRight: '15px' }}>
+                  <FormGroup controlId="formControlEmail">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Email: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlPassword">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Password: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlPasswordConfirmation">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Password
+                      &nbsp;&nbsp;
+                      <br />
+                      confirmation: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlFirstName">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      First name: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlLastName">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Last name: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlAbbr">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Abbreviation: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlsType">
+                    <Col componentClass={ControlLabel} sm={3}>
+                      Type: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
+                        <option value="Person">Person</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Device">Device</option>
+                      </FormControl>
+                    </Col>
+                  </FormGroup>
+                </div>
+                <FormGroup controlId="formControlMessage">
+                  <Col style={{ marginLeft: '35px' }} sm={11} smOffset={3}>
+                    <FormControl
+                      type="text"
+                      readOnly
+                      name="messageNewUserModal"
+                      value={this.state.messageNewUserModal}
+                    />
                   </Col>
                 </FormGroup>
-                <FormGroup controlId="formControlPassword">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Password:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="password" name="password" inputRef={(ref) => { this.password = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlPasswordConfirmation">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Password Confirmation:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="password" inputRef={(ref) => { this.passwordConfirm = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlFirstName">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    First name:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="firstname" inputRef={(ref) => { this.firstname = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlLastName">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Last name:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="lastname" inputRef={(ref) => { this.lastname = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlAbbr">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Abbr (3) *:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl type="text" name="nameAbbr" inputRef={(ref) => { this.nameAbbr = ref; }} />
-                  </Col>
-                </FormGroup>
-                <FormGroup controlId="formControlsType">
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Type:
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }} >
-                      <option value="Person">Person</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Device">Device</option>
-                    </FormControl>
-                  </Col>
-                </FormGroup>
-                <FormGroup>
-                  <Col smOffset={0} sm={10}>
-                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()} >
+                <FormGroup style={{ marginRight: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <Col>
+                    <Button variant="primary" onClick={() => this.handleCreateNewUser()} option="modal">
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -598,8 +692,10 @@ export default class UserManagement extends React.Component {
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
               <Form>
-                <FormGroup>
-                  <ControlLabel>Please format the user file like the table below.</ControlLabel>
+                <FormGroup style={{ marginTop: '20px' }}>
+                  <ControlLabel style={{ marginBottom: '20px' }}>
+                    Please format the user file like the table below:
+                  </ControlLabel>
                   <Table striped bordered hover>
                     <thead>
                       <tr>
@@ -631,7 +727,7 @@ export default class UserManagement extends React.Component {
                     </tbody>
                   </Table>
                 </FormGroup>
-                <FormGroup id="userFileDragAndDrop">
+                <FormGroup id="userFileDragAndDrop" style={{ marginTop: '30px', marginBottom: '30px' }}>
                   <CSVReader
                     onDrop={this.handleOnDropUserFile}
                     onError={this.handleOnErrorUserFile}
@@ -640,122 +736,128 @@ export default class UserManagement extends React.Component {
                     addRemoveButton
                     onRemoveFile={this.handleOnRemoveUserFile}
                   >
-                    <span>Drop a CSV user file here or click to upload.
+                    <span style={{ marginRight: '70px', marginTop: '30px', marginBottom: '30px' }}>
+                      Drop a CSV user file here or click to upload.
+                      <br />
                       The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
                     </span>
                   </CSVReader>
                 </FormGroup>
-                <FormGroup>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()} >
-                    Create users&nbsp;
-                    <i className="fa fa-plus" />
+                <FormGroup style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button variant="primary" onClick={() => this.handleUploadUsers()} option="modal">
+                    Upload users&nbsp;
+                    <i className="fa fa-upload" />
                   </Button>
-                </FormGroup>
-                <FormGroup>
-                  <ControlLabel>Processing Summary</ControlLabel>
-                  <FormControl
-                    readOnly
-                    id="processingSummary"
-                    componentClass="textarea"
-                    rows="5"
-                    style={{ whiteSpace: 'pre-wrap', overflowY: 'scroll' }}
-                    value={this.state.processingSummaryUserFile}
-                  />
                 </FormGroup>
               </Form>
             </Tab>
           </Tabs>
-          <Modal.Footer>
-            <FormGroup controlId="formControlMessage">
-              <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
-            </FormGroup>
-            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()} >Cancel</Button>
-          </Modal.Footer>
         </Modal.Body>
       </Modal>
     );
   }
 
-
   renderEditUserModal() {
     const { user } = this.state;
     return (
-      <Modal
-        show={this.state.showEditUserModal}
-        onHide={this.handleEditUserClose}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
-            <Form horizontal>
-              <FormGroup controlId="formControlEmail">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Email:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="email" name="u_email" defaultValue={user.email} inputRef={(ref) => { this.u_email = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlFirstName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  First name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" name="u_firstname" defaultValue={user.first_name} inputRef={(ref) => { this.u_firstname = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlLastName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Last name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" name="u_lastname" defaultValue={user.last_name} inputRef={(ref) => { this.u_lastname = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlAbbr">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Abbr (3):
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" name="u_abbr" defaultValue={user.initials} inputRef={(ref) => { this.u_abbr = ref; }} />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlsType">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Type:
-                </Col>
-                <Col sm={9}>
-                  <FormControl componentClass="select" defaultValue={user.type} inputRef={(ref) => { this.u_type = ref; }} >
-                    <option value="Person">Person</option>
-                    <option value="Group">Group</option>
-                    <option value="Device">Device</option>
-                    <option value="Admin">Admin</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlMessage">
-                <Col sm={12}>
-                  <FormControl type="text" readOnly name="messageEditUserModal" value={this.state.messageEditUserModal} />
-                </Col>
-              </FormGroup>
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)} >
-                    Update&nbsp;
-                    <i className="fa fa-save" />
-                  </Button>
-                  &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()} >
-                    Cancel&nbsp;
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
+      <div>
+        <Modal show={this.state.showEditUserModal} onHide={this.handleEditUserClose}>
+          <div>
+            <Modal.Header closeButton>
+              <Modal.Title style={styles.modalTitle}>Edit User</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div>
+                <Form horizontal>
+                  <FormGroup controlId="formControlEmail">
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Email:</Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="email"
+                        name="u_email"
+                        defaultValue={user.email}
+                        inputRef={(ref) => { this.u_email = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+
+                  <FormGroup controlId="formControlFirstName">
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>
+                      First name:
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        name="u_firstname"
+                        defaultValue={user.first_name}
+                        inputRef={(ref) => { this.u_firstname = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlLastName">
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Last name:</Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        name="u_lastname"
+                        defaultValue={user.last_name}
+                        inputRef={(ref) => { this.u_lastname = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlAbbr">
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Abbreviation:</Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        name="u_abbr"
+                        defaultValue={user.initials}
+                        inputRef={(ref) => { this.u_abbr = ref; }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlsType">
+                    <Col style={{ marginLeft: '-20px' }} componentClass={ControlLabel} sm={3}>Type:</Col>
+                    <Col sm={9}>
+                      <FormControl
+                        componentClass="select"
+                        defaultValue={user.type}
+                        inputRef={(ref) => { this.u_type = ref; }}
+                      >
+                        <option value="Person">Person</option>
+                        <option value="Group">Group</option>
+                        <option value="Device">Device</option>
+                        <option value="Admin">Admin</option>
+                      </FormControl>
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formControlMessage">
+                    <Col style={{ marginLeft: '30px' }} sm={11}>
+                      <FormControl
+                        type="text"
+                        readOnly
+                        name="messageEditUserModal"
+                        value={this.state.messageEditUserModal}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup style={{ marginRight: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      size="lg"
+                      variant="primary"
+                      onClick={() => this.handleUpdateUser(user)}
+                      option="modal"
+                    >
+                      Update&nbsp;&nbsp;
+                      <i className="fa fa-floppy-o" />
+                    </Button>
+                  </FormGroup>
+                </Form>
+              </div>
+            </Modal.Body>
           </div>
-        </Modal.Body>
-      </Modal>
+        </Modal>
+      </div>
     );
   }
 
@@ -763,11 +865,11 @@ export default class UserManagement extends React.Component {
     const renderConfirmButton = (show, userId) => {
       if (show) {
         return (
-          <OverlayTrigger placement="bottom" overlay={confirmUserTooltip}>
+          <OverlayTrigger placement="top" overlay={confirmUserTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="info"
+              variant="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
+              option="panel"
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -777,14 +879,14 @@ export default class UserManagement extends React.Component {
       return <span />;
     };
 
-    const renderReConfirmButton = (unconfirmed_email, userId) => {
-      if (unconfirmed_email) {
+    const renderReConfirmButton = (unconfirmedEmail, userId) => {
+      if (unconfirmedEmail) {
         return (
-          <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
+          <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmedEmail)}>
             <Button
-              bsSize="xsmall"
-              bsStyle="warning"
+              variant="primary"
               onClick={() => this.handleReConfirmUserAccount(userId)}
+              option="panel"
             >
               <i className="fa fa-check-square" />
             </Button>
@@ -800,7 +902,7 @@ export default class UserManagement extends React.Component {
       <tr style={{ height: '26px', verticalAlign: 'middle' }}>
         <th width="1%">#</th>
         <th width="12%">Actions</th>
-        <th width="12%">Name</th>
+        <th style={{ flex: '1 1 auto' }}>Name</th>
         <th width="6%">Abbr.</th>
         <th width="8%">Email</th>
         <th width="7%">Type</th>
@@ -810,122 +912,206 @@ export default class UserManagement extends React.Component {
     );
 
     const tbody = users.map((g, idx) => (
-      <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td width="1%">
+      <tr
+        key={`row_${g.id}`}
+        style={{
+          height: '25px',
+          verticalAlign: 'middle',
+          backgroundColor: idx % 2 === 0 ? '#F0F2F5' : '#F4F6F9',
+        }}
+      >
+        <td width="1%" style={{ verticalAlign: 'middle' }}>
           {idx + 1}
         </td>
-        <td width="12%">
-          <OverlayTrigger placement="bottom" overlay={editTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle="info"
-              onClick={() => this.handleEditUserShow(g)}
+        <td width="12%" style={{ verticalAlign: 'middle' }}>
+          <div style={{ display: 'flex' }}>
+            <OverlayTrigger placement="top" overlay={editTooltip}>
+              <Button
+                variant="secondary"
+                onClick={() => this.handleEditUserShow(g)}
+                option="panel"
+                square
+              >
+                <i className="fa fa-user" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={resetPasswordTooltip}>
+              <Button
+                variant="secondary"
+                onClick={() => this.handleResetPassword(g.id, true)}
+                option="panel"
+                square
+              >
+                <i className="fa fa-key" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={resetPasswordInstructionsTooltip}>
+              <Button
+                variant="primary"
+                onClick={() => this.handleResetPassword(g.id, false)}
+                option="panel"
+                square
+              >
+                <i className="fa fa-key" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="top" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
+              <Button
+                variant={g.locked_at === null ? 'secondary' : 'primary'}
+                onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
+                option="panel"
+                square
+              >
+                <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={(g.converter_admin === null || g.converter_admin === false)
+                ? converterEnableTooltip : converterDisableTooltip}
             >
-              <i className="fa fa-user" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle="success"
-              onClick={() => handleResetPassword(g.id, true)}
+              <Button
+                variant={(g.converter_admin === null || g.converter_admin === false) ? 'secondary' : 'primary'}
+                onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
+                option="panel"
+                square
+              >
+                <i className="fa fa-hourglass-half" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false)
+                ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
             >
-              <i className="fa fa-key" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle="primary"
-              onClick={() => handleResetPassword(g.id, false)}
+              <Button
+                variant={(g.is_templates_moderator === null || g.is_templates_moderator === false)
+                  ? 'secondary' : 'primary'}
+                onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
+                option="panel"
+                square
+              >
+                <i className="fa fa-book" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={(g.molecule_editor == null || g.molecule_editor === false)
+                ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
             >
-              <i className="fa fa-key" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.locked_at === null ? 'default' : 'warning'}
-              onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
+              <Button
+                variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'secondary' : 'primary'}
+                onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
+                option="panel"
+                square
+              >
+                <i className="icon-sample" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
             >
-              <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={(g.converter_admin === null || g.converter_admin === false) ? converterEnableTooltip : converterDisableTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
-              onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
-            >
-              <i className="fa fa-hourglass-half" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? 'default' : 'success'}
-              onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
-            >
-              <i className="fa fa-book" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={(g.molecule_editor == null || g.molecule_editor === false) ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip} >
-            <Button
-              bsSize="xsmall"
-              bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
-              onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
-            >
-              <i className="icon-sample" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          <OverlayTrigger placement="bottom" overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}>
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.account_active === true ? 'default' : 'danger'}
-              onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
-            >
-              <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          &nbsp;
-          {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
-          {renderReConfirmButton(g.unconfirmed_email, g.id)}
+              <Button
+                variant={g.account_active === true ? 'secondary' : 'primary'}
+                onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
+                option="panel"
+                square
+              >
+                <i
+                  className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'}
+                  aria-hidden="true"
+                />
+              </Button>
+            </OverlayTrigger>
+            {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
+            {renderReConfirmButton(g.unconfirmed_email, g.id)}
+          </div>
+
         </td>
-        <td width="12%"> {g.name} </td>
-        <td width="6%"> {g.initials} </td>
-        <td width="8%"> {g.email} </td>
-        <td width="7%"> {g.type} </td>
-        <td width="15%"> {g.current_sign_in_at} </td>
-        <td width="2%"> {g.id} </td>
+        <td width="12%" style={{ verticalAlign: 'middle' }}>
+          {' '}
+          {g.name}
+          {' '}
+        </td>
+        <td width="6%" style={{ verticalAlign: 'middle' }}>
+          {' '}
+          {g.initials}
+          {' '}
+        </td>
+        <td width="8%" style={{ verticalAlign: 'middle' }}>
+          {' '}
+          {g.email}
+          {' '}
+        </td>
+        <td width="7%" style={{ verticalAlign: 'middle' }}>
+          {' '}
+          {g.type}
+          {' '}
+        </td>
+        <td width="15%" style={{ verticalAlign: 'middle' }}>
+          {' '}
+          {g.current_sign_in_at}
+          {' '}
+        </td>
+        <td width="2%" style={{ verticalAlign: 'middle' }}>
+          {' '}
+          {g.id}
+          {' '}
+        </td>
       </tr>
     ));
 
     return (
       <div>
-        <Panel>
-          <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
-            Send Message&nbsp;<i className="fa fa-commenting-o" />
-          </Button>
-          &nbsp;
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()} data-cy="create-user">
-            New User&nbsp;<i className="fa fa-plus" />
-          </Button>
-        </Panel>
-        <Panel>
+        <Modal size="sm" show={this.state.alertModalShow} onHide={this.hideAlertModal}>
+          <Modal.Header closeButton>
+            <Modal.Title style={styles.modalTitle}>Alert</Modal.Title>
+          </Modal.Header>
+          <Modal.Body size="sm" style={{ fontWeight: 'bold' }}>
+            {this.state.alertModalMessage.split('\n').map((item, key) => (
+              <React.Fragment key={key}>
+                {item}
+                <br />
+              </React.Fragment>
+            ))}
+          </Modal.Body>
+        </Modal>
+        <Panel style={styles.panelGrp}>
+          <Panel.Title style={{
+            ...styles.modalTitle, marginTop: '20px', marginLeft: '20px', marginBottom: '20px', verticalAlign: 'center'
+          }}
+          >
+            Users
+            <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>Send Message</Tooltip>}>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => this.handleMsgShow()}
+                option="main"
+                square
+                style={{ marginLeft: '15px', marginTop: '-3px' }}
+              >
+                <i className="fa fa-paper-plane" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={<Tooltip>New User</Tooltip>}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => this.handleNewUserShow()}
+                option="main"
+                square
+                data-cy="create-user"
+                style={{ marginTop: '-3px' }}
+              >
+                <i className="fa fa-plus" />
+              </Button>
+            </OverlayTrigger>
+          </Panel.Title>
           <Table>
-            <thead>
-              {tcolumn}
-            </thead>
-            <tbody>
-              {tbody}
-            </tbody>
+            <thead>{tcolumn}</thead>
+            <tbody>{tbody}</tbody>
           </Table>
         </Panel>
         {this.renderMessageModal()}

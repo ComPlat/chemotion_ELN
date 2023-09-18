@@ -1,0 +1,246 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
+/* Common Styles */
+.btn-common {
+  font-family: "Roboto", sans-serif;
+  font-weight: 510;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5em 1em;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0.3em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+/* Focus and Hover States */
+.btn-common:focus,
+.btn-common:hover {
+  outline: 0;
+}
+
+.btn-common:active {
+  filter: brightness(0.9) blur(0.7px);
+  transition: all 0.15s;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Button After Effect */
+.btn-common::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0);
+  transition: opacity 0.6s, transform 0.6s;
+}
+
+.btn-common:active::after {
+  opacity: 1;
+  transform: scale(2);
+  transition: 0s;
+}
+
+/* Variants */
+.btn-primary,
+.btn-secondary {
+  border: unset;
+  color: #fff;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+}
+
+.btn-primary {
+  background-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: #004792;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+}
+
+.btn-secondary:focus,
+.btn-secondary:active {
+  background-color: #4e555b;
+}
+
+.btn-tertiary {
+  background-color: transparent;
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+/* Sizes */
+.btn-xLarge {
+  min-width: 40px;
+  height: 40px;
+  font-size: 1.8rem;
+}
+
+.btn-large {
+  min-width: 35px;
+  height: 35px;
+  font-size: 1.6rem;
+}
+
+.btn-medium {
+  min-width: 30px;
+  height: 30px;
+  font-size: 1.4rem;
+}
+
+.btn-small {
+  min-width: 25px;
+  height: 25px;
+  font-size: 1.2rem;
+}
+
+/* Square */
+.btn-square {
+  aspect-ratio: 1 / 1;
+  min-width: unset;
+}
+
+/* Tool-Tip */
+
+.btn-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-tooltip {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
+  width: 200px;
+}
+
+.btn-tooltip::after {
+  content: "";
+  position: absolute;
+  border-style: solid;
+}
+
+.btn-tooltip-top {
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translate(-50%, -5px);
+}
+
+.btn-tooltip-top::after {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0 5px;
+  border-color: #555 transparent transparent transparent;
+}
+
+.btn-tooltip-bottom {
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translate(-50%, 5px);
+}
+
+.btn-tooltip-bottom::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 5px 5px 5px;
+  border-color: transparent transparent #555 transparent;
+}
+
+.btn-tooltip-left {
+  top: 50%;
+  right: calc(100% + 5px);
+  transform: translate(-5px, -50%);
+}
+
+.btn-tooltip-left::after {
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border-width: 5px 0 5px 5px;
+  border-color: transparent transparent transparent #555;
+}
+
+.btn-tooltip-right {
+  top: 50%;
+  left: calc(100% + 5px);
+  transform: translate(5px, -50%);
+}
+
+.btn-tooltip-right::after {
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  border-width: 5px 5px 5px 0;
+  border-color: transparent #555 transparent transparent;
+}
+
+.btn-wrapper:hover .btn-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Media Queries */
+@media (max-width: 1200px) {
+  .btn-common {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .btn-common {
+    font-size: 0.9rem;
+    padding: 0.4em 0.8em;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-common {
+    font-size: 0.85rem;
+    padding: 0.3em 0.6em;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn-common {
+    font-size: 0.8rem;
+    padding: 0.2em 0.4em;
+  }
+}

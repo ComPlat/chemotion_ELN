@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Button } from 'react-bootstrap';
 
-const RemoveRowBtn = ({ removeRow, node }) => {
+function RemoveRowBtn({ removeRow, node }) {
   const { data, gridOptionsWrapper } = node;
 
   const btnClick = () => {
@@ -23,7 +23,7 @@ const RemoveRowBtn = ({ removeRow, node }) => {
       <i className="fa fa-trash" />
     </Button>
   );
-};
+}
 
 RemoveRowBtn.propTypes = {
   removeRow: PropTypes.func.isRequired,
@@ -31,7 +31,7 @@ RemoveRowBtn.propTypes = {
   node: PropTypes.object.isRequired,
 };
 
-const SaveRowBtn = ({ saveRow, node }) => {
+function SaveRowBtn({ saveRow, node }) {
   const { data, gridOptionsWrapper } = node;
 
   const btnClick = () => {
@@ -52,7 +52,7 @@ const SaveRowBtn = ({ saveRow, node }) => {
       <i className="fa fa-floppy-o" />
     </Button>
   );
-};
+}
 
 SaveRowBtn.propTypes = {
   saveRow: PropTypes.func.isRequired,
@@ -61,7 +61,7 @@ SaveRowBtn.propTypes = {
 };
 
 // const ActionRowBtn = ({ removeRow, saveRow, node }) => {
-const ActionRowBtn = ({ removeRow, node }) => {
+function ActionRowBtn({ removeRow, node }) {
   return <RemoveRowBtn node={node} removeRow={removeRow} />;
 
   // const { data } = node;
@@ -70,7 +70,7 @@ const ActionRowBtn = ({ removeRow, node }) => {
   // }
 
   // return <SaveRowBtn node={node} saveRow={saveRow} />;
-};
+}
 
 ActionRowBtn.propTypes = {
   removeRow: PropTypes.func.isRequired,

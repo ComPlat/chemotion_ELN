@@ -49,6 +49,9 @@ Rails.application.routes.draw do
     get 'mydb', to: 'pages#welcome'
     get 'molecule_moderator', to: 'pages#molecule_moderator'
     get 'converter_admin', to: 'pages#converter_admin'
+    if Rails.env.development? || ENV['DEMO_MODE'].presence == 'true'
+      get 'demo', to: 'pages#demo'
+    end
   end
 
   # Standalone page for ChemScanner

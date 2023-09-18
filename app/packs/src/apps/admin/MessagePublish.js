@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { FormGroup, ControlLabel, FormControl, Button, Panel } from 'react-bootstrap';
+import {
+  FormGroup, ControlLabel, FormControl, Button, Panel
+} from 'react-bootstrap';
 import Select from 'react-select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
@@ -30,8 +32,7 @@ export default class MessagePublish extends React.Component {
   toggleChannelList() {
     MessagesFetcher.fetchChannels(9)
       .then((result) => {
-        const channels = result.channels.map(c =>
-          ({ value: c.id, name: c.subject, label: c.subject }));
+        const channels = result.channels.map((c) => ({ value: c.id, name: c.subject, label: c.subject }));
         channels.sort((a, b) => (a.value - b.value));
         this.setState({ channels });
       });
@@ -77,7 +78,12 @@ export default class MessagePublish extends React.Component {
               <form>
                 <FormGroup controlId="formControlsTextarea">
                   <ControlLabel>Message</ControlLabel>
-                  <FormControl componentClass="textarea" placeholder="message..." rows="20" inputRef={(ref) => { this.myMessage = ref; }} />
+                  <FormControl
+                    componentClass="textarea"
+                    placeholder="message..."
+                    rows="20"
+                    inputRef={(ref) => { this.myMessage = ref; }}
+                  />
                 </FormGroup>
                 <Button
                   bsStyle="primary"

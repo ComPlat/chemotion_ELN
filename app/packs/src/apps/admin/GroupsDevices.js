@@ -1,5 +1,7 @@
 import React from 'react';
-import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row } from 'react-bootstrap';
+import {
+  Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row
+} from 'react-bootstrap';
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -8,6 +10,8 @@ import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
 import AdminDeviceElement from 'src/apps/admin/AdminDeviceElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
+
+import styles from 'Styles';
 
 export default class GroupsDevices extends React.Component {
   constructor(props) {
@@ -69,10 +73,10 @@ export default class GroupsDevices extends React.Component {
         if (setAdmin) {
           groupRec.admins.splice(1, 0, userRec);
         } else {
-          const usrIdx = findIndex(groupRec.admins, o => o.id === userRec.id);
+          const usrIdx = findIndex(groupRec.admins, (o) => o.id === userRec.id);
           groupRec.admins.splice(usrIdx, 1);
         }
-        const idx = findIndex(groups, o => o.id === groupRec.id);
+        const idx = findIndex(groups, (o) => o.id === groupRec.id);
         groups.splice(idx, 1, groupRec);
         this.setState({ groups });
       });
@@ -128,7 +132,7 @@ export default class GroupsDevices extends React.Component {
       showModal: false,
       rootType: '',
       actionType: '',
-      root: null
+      root: {}
     });
   }
 
@@ -149,7 +153,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   deviceMetadataDoiExists() {
-    return this.state.deviceMetadata.doi
+    return this.state.deviceMetadata.doi;
   }
 
   handleShowCreateModal(rootType) {
@@ -341,10 +345,10 @@ export default class GroupsDevices extends React.Component {
           case 'Group':
             if (isRoot === true) {
               this.setState({
-                groups: filter(this.state.groups, o => o.id != groupRec.id),
+                groups: filter(this.state.groups, (o) => o.id != groupRec.id),
               });
             } else {
-              const idx = findIndex(groups, o => o.id === result.root.id);
+              const idx = findIndex(groups, (o) => o.id === result.root.id);
               groups.splice(idx, 1, result.root);
               this.setState({ groups });
             }
@@ -353,10 +357,10 @@ export default class GroupsDevices extends React.Component {
           case 'Device':
             if (isRoot === true) {
               this.setState({
-                devices: filter(this.state.devices, o => o.id !== groupRec.id),
+                devices: filter(this.state.devices, (o) => o.id !== groupRec.id),
               });
             } else {
-              const idx = findIndex(devices, o => o.id === result.root.id);
+              const idx = findIndex(devices, (o) => o.id === result.root.id);
               devices.splice(idx, 1, result.root);
               this.setState({ devices });
             }
@@ -395,12 +399,12 @@ export default class GroupsDevices extends React.Component {
       .then((result) => {
         switch (rootType) {
           case 'Group':
-            idx = findIndex(groups, o => o.id === result.root.id);
+            idx = findIndex(groups, (o) => o.id === result.root.id);
             groups.splice(idx, 1, result.root);
             this.fetch('Device');
             break;
           case 'Device':
-            idx = findIndex(devices, o => o.id === result.root.id);
+            idx = findIndex(devices, (o) => o.id === result.root.id);
             devices.splice(idx, 1, result.root);
             this.fetch('Group');
             break;
@@ -412,78 +416,133 @@ export default class GroupsDevices extends React.Component {
   }
 
   renderGroups() {
+    const tcolumn = (
+      <tr>
+        <th width="3%">#</th>
+        <th width="25%">Actions</th>
+        <th width="15%">Name</th>
+        <th width="15%">Abbreviation</th>
+        <th width="17%">Admin by</th>
+        <th width="25%">E-Mail</th>
+      </tr>
+    );
     const { groups } = this.state;
-    const adminIcon = (<OverlayTrigger placement="top" overlay={<Tooltip id="admin">Group Administrator</Tooltip>}><i className="fa fa-key" /></OverlayTrigger>);
+    const adminIcon = (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="admin">Group Administrator</Tooltip>}
+      >
+        <i className="fa fa-key" />
+      </OverlayTrigger>
+    );
     let tbody = '';
     if (Object.keys(groups).length <= 0) {
       tbody = '';
     } else {
       tbody = groups.map((g, idx) => (
-        <AdminGroupElement groupElement={g} index={idx} currentState={this.state}
-          onChangeGroupData={this.handleGroupChange} onShowModal={this.handleShowModal}></AdminGroupElement>
+        <AdminGroupElement
+          groupElement={g}
+          index={idx}
+          currentState={this.state}
+          onChangeGroupData={this.handleGroupChange}
+          onShowModal={this.handleShowModal}
+        />
       ));
     }
 
     return (
-      <Panel>
-        <Panel.Heading>
-          <Panel.Title>
-            Group List &nbsp;
-            ({groups.length}) &nbsp;
-            <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
+      <div>
+        <Panel style={styles.panelGrp}>
+          <Panel.Title style={{
+            ...styles.modalTitle, marginTop: '20px', marginLeft: '20px', marginBottom: '20px', verticalAlign: 'center'
+          }}
+          >
+            Groups
+            <OverlayTrigger
+              placement="top"
+              delay={{ show: 250, hide: 400 }}
+              overlay={<Tooltip>Add new group</Tooltip>}
+            >
+              <Button
+                size="sm"
+                bsStyle="primary"
+                onClick={() => this.handleShowCreateModal('Group')}
+                style={{ ...styles.amazingBtn, marginLeft: '15px', marginTop: '-3px' }}
+              >
+                <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
           </Panel.Title>
-        </Panel.Heading>
-        <Table responsive condensed hover>
-          <thead>
-            <tr style={{ backgroundColor: '#ddd' }}>
-              <th width="5%">#</th>
-              <th width="25%">Actions</th>
-              <th width="20%">Name</th>
-              <th width="10%">Kürzel</th>
-              <th width="20%">Admin by</th>
-              <th width="20%">Email</th>
-            </tr>
-          </thead>
-          {tbody}
-        </Table>
-      </Panel>
+          <Table>
+            <thead>{tcolumn}</thead>
+            {tbody}
+          </Table>
+        </Panel>
+
+      </div>
+
     );
   }
 
   renderDevices() {
     const { devices } = this.state;
+    const tcolumn = (
+      <tr>
+        <th width="3%">#</th>
+        <th width="25%">Actions</th>
+        <th width="15%">Name</th>
+        <th width="15%">Abbreviation</th>
+        <th width="42%">E-Mail</th>
+      </tr>
+    );
 
     let tbody = '';
     if (typeof (devices) !== 'undefined' && Object.keys(devices).length <= 0) {
       tbody = '';
     } else {
       tbody = devices && devices.map((device, idx) => (
-        <AdminDeviceElement deviceElement={device} index={idx} currentState={this.state}
-          onChangeDeviceData={this.handleDeviceChange} onShowModal={this.handleShowModal} onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}></AdminDeviceElement>
+        <AdminDeviceElement
+          deviceElement={device}
+          index={idx}
+          currentState={this.state}
+          onChangeDeviceData={this.handleDeviceChange}
+          onShowModal={this.handleShowModal}
+          onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}
+        />
       ));
     }
 
     return (
-      <Panel>
-        <Panel.Heading>
-          <Panel.Title>
-            Device List &nbsp; ({devices.length}) &nbsp;
-            <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Device')}>Add New Device</Button>
+      <div>
+        <Panel style={styles.panelGrp}>
+          <Panel.Title style={{
+            ...styles.modalTitle, marginTop: '20px', marginLeft: '20px', marginBottom: '20px', verticalAlign: 'center'
+          }}
+          >
+            Devices
+            <OverlayTrigger
+              placement="top"
+              delay={{ show: 250, hide: 400 }}
+              overlay={<Tooltip>Add new device</Tooltip>}
+            >
+              <Button
+                bsStyle="warning"
+                onClick={() => this.handleShowCreateModal('Device')}
+                size="sm"
+                style={{ ...styles.amazingBtn, marginLeft: '15px', marginTop: '-3px' }}
+              >
+                <i className="fa fa-plus" style={{ color: 'white', fontSize: '16px' }} />
+              </Button>
+            </OverlayTrigger>
+
           </Panel.Title>
-        </Panel.Heading>
-        <Table responsive condensed hover>
-          <thead>
-            <tr style={{ backgroundColor: '#ddd' }}>
-              <th width="4%">#</th>
-              <th width="28%">Actions</th>
-              <th width="28%">Name</th>
-              <th width="12%">Kürzel</th>
-              <th width="28%">Email</th>
-            </tr>
-          </thead>
-          {tbody}
-        </Table>
-      </Panel>
+          <Table>
+            <thead>{tcolumn}</thead>
+            {tbody}
+          </Table>
+        </Panel>
+      </div>
+
     );
   }
 
@@ -491,237 +550,378 @@ export default class GroupsDevices extends React.Component {
     const { showCreateModal, rootType } = this.state;
     const title = (rootType === 'Group') ? 'Add new group' : 'Add new device';
     return (
-      <Modal
-        show={showCreateModal}
-        onHide={this.handleCloseGroup}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>
-                {title}
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
-              <Form>
-                <FormGroup controlId="formInlineName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.firstInput = m; }}
-                    placeholder="eg: AK"
-                  />
-                </FormGroup>
-                <FormGroup controlId="formInlineName">
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.lastInput = m; }}
-                    placeholder="J. Moriarty"
-                  />
-                </FormGroup>&nbsp;&nbsp;
-                <FormGroup controlId="formInlineNameAbbr">
-                  <ControlLabel>Name abbreviation* </ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.abbrInput = m; }}
-                    placeholder="AK-JM"
-                  />
-                </FormGroup>&nbsp;&nbsp;
-                <FormGroup controlId="formInlineEmail">
-                  <ControlLabel>Email</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    inputRef={(m) => { this.emailInput = m; }}
-                    placeholder="eg: abc@kit.edu"
-                  />
-                </FormGroup>
-                <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
-                  Create new {rootType === 'Group' ? 'group' : 'device'}
-                </Button>
-              </Form>
-            </Panel.Body>
-          </Panel>
-        </Modal.Body>
-      </Modal>
+      <div>
+        <Modal show={showCreateModal} onHide={this.handleCloseGroup}>
+          <div>
+            <Modal.Header closeButton>
+              <Modal.Title style={styles.modalTitle}>{title}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div>
+                <Form horizontal>
+                  <FormGroup controlId="formInlineName">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Name: *
+
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        inputRef={(m) => { this.firstInput = m; }}
+                        placeholder="eg: AK"
+                      />
+                      <FormControl
+                        type="text"
+                        inputRef={(m) => { this.lastInput = m; }}
+                        placeholder="J. Moriarty"
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup controlId="formInlineNameAbbr">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Abbreviation: *
+
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        inputRef={(m) => { this.abbrInput = m; }}
+                        placeholder="AK-JM"
+                      />
+                    </Col>
+
+                  </FormGroup>
+
+                  <FormGroup controlId="formInlineEmail">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      E-Mail: *
+
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        inputRef={(m) => { this.emailInput = m; }}
+                        placeholder="eg: abc@kit.edu"
+                      />
+                    </Col>
+
+                  </FormGroup>
+                  <FormGroup style={{ marginRight: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+
+                    <Button
+                      size="lg"
+                      bsStyle={rootType === 'Group' ? 'primary' : 'warning'}
+                      onClick={() => this.createGroup()}
+                      style={styles.modalBtn}
+                    >
+                      Create&nbsp;
+                      {rootType === 'Group' ? 'group' : 'device'}
+                      &nbsp;&nbsp;
+                      <i className="fa fa-floppy-o" style={{ fontSize: '18px' }} />
+                    </Button>
+                  </FormGroup>
+                </Form>
+              </div>
+            </Modal.Body>
+          </div>
+        </Modal>
+      </div>
+
     );
   }
 
   renderDeviceMetadataModal() {
     const { showDeviceMetadataModal, device, deviceMetadata } = this.state;
-    const title = 'Edit Device Metadata';
+    const title = 'Edit Device Metadata: ';
     return (
-      <Modal
-        show={showDeviceMetadataModal}
-        onHide={this.handleCloseDeviceMetadata}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit {device.name} Metadata</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>
+      <div>
+        <Modal show={showDeviceMetadataModal} onHide={this.handleCloseDeviceMetadata}>
+          <div>
+            <Modal.Header closeButton>
+              <Modal.Title style={styles.modalTitle}>
                 {title}
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
-              <Form>
-                {!this.deviceMetadataDoiExists() &&
-                  <p className="text-center">Get Metadata from DataCite</p>
-                }
-                <FormGroup controlId="metadataFormDOI">
-                  <ControlLabel>DOI*</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    defaultValue={deviceMetadata.doi}
-                    inputRef={(m) => { this.doi = m; }}
-                    placeholder="10.*****/**********"
-                    readOnly={this.deviceMetadataDoiExists()}
-                  />
-                </FormGroup>
-                {!this.deviceMetadataDoiExists() &&
+                {device.name}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body style={styles.modalBody}>
+              <div>
+                <Form horizontal>
+                  {!this.deviceMetadataDoiExists()
+                  && (
+                  <p className="text-left" style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                    Get Metadata from DataCite
+                  </p>
+                  )}
+
+                  <FormGroup controlId="metadataFormDOI">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      DOI: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        defaultValue={deviceMetadata.doi}
+                        inputRef={(m) => { this.doi = m; }}
+                        placeholder="10.*****/**********"
+                        readOnly={this.deviceMetadataDoiExists()}
+                      />
+                    </Col>
+                  </FormGroup>
+                  {!this.deviceMetadataDoiExists()
+                  && (
                   <Col smOffset={0} sm={12}>
-                    <Button className="pull-right" bsStyle="danger" onClick={() => this.syncDeviceMetadataFromDataCite(device.id)}>
+                    <Button
+                      className="pull-right"
+                      bsStyle="danger"
+                      onClick={() => this.syncDeviceMetadataFromDataCite(device.id)}
+                      style={{ ...styles.modalBtn, marginBottom: '20px' }}
+
+                    >
                       Sync from DataCite
                     </Button>
                   </Col>
-                }
-                {!this.deviceMetadataDoiExists() &&
-                  <p className="text-center">Or create Metadata and sync to DataCite</p>
-                }
+                  )}
+                  {!this.deviceMetadataDoiExists()
+                  && (
+                  <p className="text-left" style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                    Or create Metadata and sync to DataCite
+                  </p>
+                  )}
 
-                <FormGroup controlId="metadataFormState">
-                  <ControlLabel>State*</ControlLabel>
-                  <FormControl
-                    componentClass="select"
-                    value={deviceMetadata.data_cite_state}
-                    onChange={event => this.updateDeviceMetadataDataCiteState(event.target.value)}
-                    inputRef={(m) => { this.dataCiteState = m; }}
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="registered">Registered</option>
-                    <option value="findable">Findable</option>
-                  </FormControl>
-                </FormGroup>
+                  <FormGroup controlId="metadataFormState">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      State: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        componentClass="select"
+                        value={deviceMetadata.data_cite_state}
+                        onChange={(event) => this.updateDeviceMetadataDataCiteState(event.target.value)}
+                        inputRef={(m) => { this.dataCiteState = m; }}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="registered">Registered</option>
+                        <option value="findable">Findable</option>
+                      </FormControl>
+                    </Col>
+                  </FormGroup>
 
-                <FormGroup controlId="metadataFormURL">
-                  <ControlLabel>URL*</ControlLabel>
-                  <FormControl
-                    type="text"
-                    defaultValue={deviceMetadata.url}
-                    inputRef={(m) => { this.url = m; }}
-                    placeholder="https://<device.url>"
-                  />
-                </FormGroup>
+                  <FormGroup controlId="metadataFormURL">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      URL: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        defaultValue={deviceMetadata.url}
+                        inputRef={(m) => { this.url = m; }}
+                        placeholder="https://<device.url>"
+                      />
+                    </Col>
+                  </FormGroup>
 
-                <FormGroup controlId="metadataFormLandingPage">
-                  <ControlLabel>Landing Page*</ControlLabel>
-                  <FormControl
-                    type="text"
-                    defaultValue={deviceMetadata.landing_page}
-                    inputRef={(m) => { this.landing_page = m; }}
-                    placeholder="https://<device.landing.page>"
-                  />
-                </FormGroup>
-                <FormGroup controlId="metadataFormName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    defaultValue={deviceMetadata.name}
-                    inputRef={(m) => { this.name = m; }}
-                    placeholder="Name"
-                  />
-                </FormGroup>
-                <FormGroup controlId="metadataFormPublicationYear">
-                  <ControlLabel>Publication Year*</ControlLabel>
-                  <FormControl
-                    type="number"
-                    defaultValue={deviceMetadata.publication_year}
-                    inputRef={(m) => { this.publication_year = m; }}
-                    placeholder="Publication Year e.g. '2020'"
-                  />
-                </FormGroup>
-                <FormGroup controlId="metadataFormDescription">
-                  <ControlLabel>Description</ControlLabel>
-                  <FormControl
-                    type="text"
-                    defaultValue={deviceMetadata.description}
-                    inputRef={(m) => { this.description = m; }}
-                    placeholder="Description"
-                  />
-                </FormGroup>
+                  <FormGroup controlId="metadataFormLandingPage">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Landing Page: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        defaultValue={deviceMetadata.landing_page}
+                        inputRef={(m) => { this.landing_page = m; }}
+                        placeholder="https://<device.landing.page>"
+                      />
+                    </Col>
+                  </FormGroup>
 
-                <ControlLabel style={{ marginTop: 5 }}>Dates</ControlLabel>
-                {deviceMetadata.dates && deviceMetadata.dates.map((dateItem, index) => (
-                  <div key={dateItem.id}>
-                    <Row>
-                      <Col smOffset={0} sm={5}>
-                        <FormGroup>
-                          <ControlLabel>Date</ControlLabel>
-                          <FormControl
-                            type="text"
-                            value={dateItem.date}
-                            placeholder="Date e.g. '2020-01-01'"
-                            onChange={event => this.updateDeviceMetadataDate(index, 'date', event.target.value)}
-                          />
-                        </FormGroup>
-                      </Col>
-                      <Col smOffset={0} sm={5}>
-                        <FormGroup>
-                          <ControlLabel>Date Type</ControlLabel>
-                          <FormControl
-                            type="text"
-                            value={dateItem.dateType}
-                            placeholder="DateType e.g. 'Created'"
-                            onChange={event => this.updateDeviceMetadataDate(index, 'dateType', event.target.value)}
-                          />
-                        </FormGroup>
-                      </Col>
-                      <Col smOffset={0} sm={2}>
-                        <ControlLabel>Action</ControlLabel>
-                        <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeDeviceMetadataDate(index)}>
-                          <i className="fa fa-trash-o" />
-                        </Button>
-                      </Col>
-                    </Row>
-                  </div>
-                ))}
-                <Row>
-                  <Col smOffset={0} sm={12}>
-                    <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addDeviceMetadataDate()}>
-                      <i className="fa fa-plus" />
+                  <FormGroup controlId="metadataFormName">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Name: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        defaultValue={deviceMetadata.name}
+                        inputRef={(m) => { this.name = m; }}
+                        placeholder="Name"
+                      />
+                    </Col>
+                  </FormGroup>
+
+                  <FormGroup controlId="metadataFormPublicationYear">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Publication Year: *
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="number"
+                        defaultValue={deviceMetadata.publication_year}
+                        inputRef={(m) => { this.publication_year = m; }}
+                        placeholder="Publication Year e.g. '2020'"
+                      />
+                    </Col>
+                  </FormGroup>
+
+                  <FormGroup controlId="metadataFormDescription">
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Description:
+                    </Col>
+                    <Col sm={9}>
+                      <FormControl
+                        type="text"
+                        defaultValue={deviceMetadata.description}
+                        inputRef={(m) => { this.description = m; }}
+                        placeholder="Description"
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup>
+                    <Col
+                      style={{ marginLeft: '-10px', marginRight: '-10px' }}
+                      componentClass={ControlLabel}
+                      sm={3}
+                    >
+                      Date(s):
+                    </Col>
+                    <Col sm={9}>
+
+                      {deviceMetadata.dates && deviceMetadata.dates.map((dateItem, index) => (
+                        <div key={dateItem.id}>
+                          <Col smOffset={0} sm={5}>
+                            <FormGroup>
+                              <FormControl
+                                type="text"
+                                value={dateItem.date}
+                                placeholder="Date e.g. '2020-01-01'"
+                                onChange={(event) => this.updateDeviceMetadataDate(index, 'date', event.target.value)}
+                              />
+                            </FormGroup>
+                          </Col>
+                          <Col smOffset={0} sm={5} style={{ marginLeft: '20px' }}>
+                            <FormGroup>
+                              <FormControl
+                                type="text"
+                                value={dateItem.dateType}
+                                placeholder="DateType e.g. 'Created'"
+                                onChange={
+                                    (event) => this.updateDeviceMetadataDate(index, 'dateType', event.target.value)
+                                  }
+                              />
+                            </FormGroup>
+                          </Col>
+                          <Col smOffset={0} sm={1}>
+                            <Button
+                              bsStyle="danger"
+                              style={{ ...styles.panelIcons, marginTop: '2px', marginLeft: '5px' }}
+                              onClick={() => this.removeDeviceMetadataDate(index)}
+                            >
+                              <i className="fa fa-trash-o" />
+                            </Button>
+                          </Col>
+                        </div>
+                      ))}
+                      <Row>
+                        <Col smOffset={10} sm={12}>
+                          <Button
+                            bsStyle="success"
+                            bsSize="small"
+                            onClick={() => this.addDeviceMetadataDate()}
+                            style={{
+                              ...styles.panelIcons, marginBottom: '10px', marginTop: '2px', marginLeft: '15px'
+                            }}
+                          >
+                            <i className="fa fa-plus" />
+                          </Button>
+                        </Col>
+                      </Row>
+                    </Col>
+                  </FormGroup>
+                  <FormGroup>
+                    <Col sm={12}>
+                      <Row>
+                        <Col smOffset={0} sm={11}>
+                          <p className="text-right">
+                            DataCiteVersion:
+                            {' '}
+                            {deviceMetadata.data_cite_version}
+                            <br />
+                            DataCiteUpdatedAt:
+                            {' '}
+                            {formatDate(deviceMetadata.data_cite_updated_at)}
+                            <br />
+                          </p>
+                        </Col>
+                      </Row>
+                    </Col>
+                  </FormGroup>
+                  <FormGroup style={{ marginRight: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      className="pull-left"
+                      bsStyle="danger"
+                      onClick={() => this.syncDeviceMetadataToDataCite(device.id)}
+                      style={{ ...styles.modalBtn, marginRight: '10px' }}
+                    >
+                      Sync to DataCite&nbsp;&nbsp;
+                      <i className="fa fa-refresh" style={{ fontSize: '18px' }} />
                     </Button>
-                  </Col>
-                </Row>
 
-                <Row>
-                  <Col smOffset={0} sm={12}>
-                    <p className="text-right">
-                      DataCiteVersion: {deviceMetadata.data_cite_version}<br />
-                      DataCiteUpdatedAt: {formatDate(deviceMetadata.data_cite_updated_at)}<br />
-                    </p>
-                  </Col>
-                </Row>
-              </Form>
-            </Panel.Body>
-          </Panel>
-        </Modal.Body>
-        <Modal.Footer>
-          <Col smOffset={0} sm={6}>
-            <Button className="pull-left" bsStyle="danger" onClick={() => this.syncDeviceMetadataToDataCite(device.id)}>
-              Sync to DataCite
-            </Button>
-          </Col>
-          <Col smOffset={0} sm={6}>
-            <Button className="pull-right" bsStyle="success" onClick={() => this.saveDeviceMetadata(device.id)}>
-              Save Device Metadata
-            </Button>
-          </Col>
-        </Modal.Footer>
-      </Modal>
+                    <Button
+                      size="lg"
+                      bsStyle="success"
+                      onClick={() => this.saveDeviceMetadata(device.id)}
+                      style={styles.modalBtn}
+                    >
+                      Save Device Metadata&nbsp;&nbsp;
+                      <i className="fa fa-floppy-o" style={{ fontSize: '18px' }} />
+                    </Button>
+                  </FormGroup>
+
+                </Form>
+              </div>
+            </Modal.Body>
+          </div>
+        </Modal>
+      </div>
     );
   }
 
@@ -758,34 +958,46 @@ export default class GroupsDevices extends React.Component {
         show={showModal}
         onHide={this.handleClose}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Panel bsStyle="success">
-            <Panel.Heading>
-              <Panel.Title>
-                {title}
-              </Panel.Title>
-            </Panel.Heading>
-            <Panel.Body>
-              <Select.Async
-                multi
-                isLoading
-                backspaceRemoves
-                value={selectedUsers}
-                valueKey="value"
-                labelKey="label"
-                matchProp="name"
-                placeholder="Select ..."
-                promptTextCreator={this.promptTextCreator}
-                loadOptions={this.loadUserByNameType}
-                onChange={this.handleSelectUser}
-              />
-              <Button bsSize="small" type="button" bsStyle="warning" onClick={() => this.addToRoot(root)}>Add</Button>
-            </Panel.Body>
-          </Panel>
-        </Modal.Body>
+        <div>
+          <Modal.Header closeButton>
+            <Modal.Title style={styles.modalTitle}>{title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form horizontal>
+              <FormGroup controlId="formInlineName" style={{ marginRight: '10px', marginLeft: '10px' }}>
+                <Col>
+                  <Select.Async
+                    multi
+                    isLoading
+                    backspaceRemoves
+                    value={selectedUsers}
+                    valueKey="value"
+                    labelKey="label"
+                    matchProp="name"
+                    placeholder="Select ..."
+                    promptTextCreator={this.promptTextCreator}
+                    loadOptions={this.loadUserByNameType}
+                    onChange={this.handleSelectUser}
+                  />
+                </Col>
+              </FormGroup>
+              <FormGroup style={{
+                display: 'flex', justifyContent: 'flex-end', marginRight: '10px', marginLeft: '10px'
+              }}
+              >
+                <Button
+                  bsStyle="warning"
+                  onClick={() => this.addToRoot(root)}
+                  style={styles.modalBtn}
+                >
+                  Add
+                  &nbsp;&nbsp;
+                  <i className="fa fa-plus-circle" style={{ fontSize: '18px' }} />
+                </Button>
+              </FormGroup>
+            </Form>
+          </Modal.Body>
+        </div>
       </Modal>
     );
   }
