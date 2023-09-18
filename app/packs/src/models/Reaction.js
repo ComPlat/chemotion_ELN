@@ -748,6 +748,10 @@ export default class Reaction extends Element {
     });
   }
 
+  getReferenceMaterial() {
+    return this.referenceMaterial;
+  }
+
   updateMaterial(material, refreshCoefficient) {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
