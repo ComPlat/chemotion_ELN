@@ -468,7 +468,8 @@ const getElementSegments = (elementName, tabs) => {
   if (!MatrixCheck(currentUser.matrix, 'segment')) {
     return tabs.filter((key) => !labels.includes(key));
   }
-  return _.intersection(tabs, labels);
+
+  return _.uniq(tabs.concat(labels));
 }
 
 export {
