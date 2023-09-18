@@ -313,16 +313,10 @@ module Chemotion
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
            
-            if element=='cell_line' then 
-              collections_element_klass = CollectionsCellline
-              element_klass = CelllineSample
-            else
-              collections_element_klass = ('collections_' + element).classify.constantize
-              element_klass = element.classify.constantize
-            end
-            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
-            collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            classes = create_classes_of_element(element)
+            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            classes[1].move_to_collection(ids, from_collection.id, to_collection_id)
+            classes[1].remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           klasses = ElementKlass.find_each do |klass|
@@ -368,10 +362,9 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
-            element_klass = element.classify.constantize
-            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.create_in_collection(ids, to_collection_id)
+            classes = create_classes_of_element(element)
+            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            classes[1].create_in_collection(ids, to_collection_id)
           end
 
           klasses = ElementKlass.find_each do |klass|

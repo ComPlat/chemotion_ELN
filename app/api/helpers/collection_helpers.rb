@@ -131,4 +131,15 @@ module CollectionHelpers
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:celllinesample_detail_level]
   end
+
+  def create_classes_of_element(element) 
+    if element == 'cell_line' then 
+      element_klass = CelllineSample
+      collections_element_klass = CollectionsCellline
+    else
+      collections_element_klass = ('collections_' + element).classify.constantize
+      element_klass = element.classify.constantize
+    end
+    [element_klass,collections_element_klass]
+  end
 end
