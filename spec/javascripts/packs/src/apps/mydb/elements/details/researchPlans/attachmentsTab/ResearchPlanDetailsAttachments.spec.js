@@ -1,4 +1,4 @@
-/* global describe, it, beforeEach, afterEach */
+/* global describe, it */
 
 import React from 'react';
 import expect from 'expect';
@@ -18,25 +18,12 @@ import ResearchPlanDetailsAttachments from
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('ResearchPlanDetailsAttachments', async () => {
-  let stub;
-  beforeEach(() => { stub = sinon.stub(console, 'error'); });
-  afterEach(() => { stub.restore(); });
-
   describe('.createAttachmentPreviews()', async () => {
     describe('.when preview was changed', async () => {
       it('new preview is rendered', async () => {
         const researchPlanWithAttachment = await ResearchPlanFactory.build(
           'with attachment_not_in_body'
         );
-
-        // Convert id to number
-        if (researchPlanWithAttachment.attachments) {
-          researchPlanWithAttachment.attachments.forEach((attachment) => {
-            attachment.id = Number(attachment.id);
-            attachment.identifier = String(attachment.identifier);
-          });
-        }
-
         sinon
           .stub(EditorFetcher, 'initial')
           .callsFake(() => new Promise(() => {}));

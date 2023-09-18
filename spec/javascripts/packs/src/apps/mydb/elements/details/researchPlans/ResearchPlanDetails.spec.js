@@ -1,4 +1,4 @@
-/* global describe, context, it */
+/* global describe, context, it, beforeEach, afterEach */
 
 import React from 'react';
 import expect from 'expect';
@@ -17,12 +17,24 @@ import uuid from 'uuid';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
+import sinon from 'sinon';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
 
 Enzyme.configure({
   adapter: new Adapter(),
 });
 
 describe('ResearchPlanDetails', async () => {
+  let stub;
+
+  beforeEach(() => {
+    stub = sinon.stub(CommentActions, 'fetchComments');
+    stub.returns(Promise.resolve());
+  });
+  afterEach(() => {
+    stub.restore();
+  });
+
   const FIELD_ID_IMAGE = 'entry-001';
   const FIELD_ID_NO_IMAGE = 'entry-002';
   describe('.handleBodyChange', async () => {
@@ -35,8 +47,7 @@ describe('ResearchPlanDetails', async () => {
           <ResearchPlanDetails
             researchPlan={researchPlanWithImage}
             toggleFullScreen={() => {}}
-          />,
-          { disableLifecycleMethods: true }
+          />
         );
         wrapper.instance().handleBodyChange({}, 'nonExistingFieldId', []);
 
@@ -54,8 +65,7 @@ describe('ResearchPlanDetails', async () => {
           <ResearchPlanDetails
             researchPlan={researchPlanWithoutImage}
             toggleFullScreen={() => {}}
-          />,
-          { disableLifecycleMethods: true }
+          />
         );
 
         wrapper.instance().handleBodyChange(
@@ -101,8 +111,7 @@ describe('ResearchPlanDetails', async () => {
           <ResearchPlanDetails
             researchPlan={researchPlanWithImage}
             toggleFullScreen={() => {}}
-          />,
-          { disableLifecycleMethods: true }
+          />
         );
 
         wrapper
@@ -146,8 +155,7 @@ describe('ResearchPlanDetails', async () => {
             <ResearchPlanDetails
               researchPlan={researchPlanWithImage}
               toggleFullScreen={() => {}}
-            />,
-            { disableLifecycleMethods: true }
+            />
           );
 
           wrapper
@@ -187,8 +195,7 @@ describe('ResearchPlanDetails', async () => {
             <ResearchPlanDetails
               researchPlan={researchPlanWithImage}
               toggleFullScreen={() => {}}
-            />,
-            { disableLifecycleMethods: true }
+            />
           );
 
           wrapper
