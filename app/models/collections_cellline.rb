@@ -21,6 +21,8 @@ class CollectionsCellline < ApplicationRecord
     raise "could not find collection with #{to_col_id}" unless Collection.find_by(id: to_col_id)
 
     Array(cellline_ids).each do |cell_line_id|
+      next if to_col_id == from_col_ids
+
       CollectionsCellline.save_to_collection(cell_line_id, to_col_id)
       CollectionsCellline.delete_in_collection(cell_line_id, from_col_ids)
     end

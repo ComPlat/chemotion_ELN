@@ -349,7 +349,7 @@ describe Chemotion::CollectionAPI do
           end
 
           context 'when try to move cell line element into collection where it already exists' do
-            let!(:cellline_in_two_colls) { create(:cellline_sample, collections: [c_source,c_target]) }
+            let!(:cellline_in_two_colls) { create(:cellline_sample, collections: [c_source, c_target]) }
             let(:target_collection_id) { c_target.id }
             let(:cell_line_ids) { [cellline_in_two_colls.id] }
 
@@ -360,12 +360,24 @@ describe Chemotion::CollectionAPI do
             it 'the cell line sample is only in the target collection' do
               expect(cellline_in_two_colls.reload.collections).to eq [c_target]
             end
-            
+
             it 'tags in the moved cellline are adjusted' do
               collection_id = cellline_in_two_colls.reload.tag.taggable_data['collection_labels'].first['id']
               expect(collection_id).to be c_target.id
             end
+          end
 
+          context 'when source and target collection are the same' do
+            let(:target_collection_id) { c_source.id }
+            let(:cell_line_ids) { [cell_line_1.id] }
+
+            before do
+              put '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_source }
+            end
+
+            it 'the cell line sample was not moved' do
+              expect(cell_line_1.reload.collections).to eq [c_source]
+            end
           end
 
           it 'moves all elements and returns 204' do
