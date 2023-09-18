@@ -434,6 +434,10 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
   // eslint-disable-next-line camelcase
   handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
@@ -973,7 +977,7 @@ export default class SampleDetails extends React.Component {
             disabled={!sample.can_update}
           />
           <InputGroup.Button>
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+            <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
               <Button active className="clipboardBtn" data-clipboard-text={cas}><i className="fa fa-clipboard" /></Button>
             </OverlayTrigger>
           </InputGroup.Button>
