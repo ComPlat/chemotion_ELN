@@ -387,8 +387,45 @@ describe Chemotion::CollectionAPI do
         end
 
         describe 'POST /api/v1/collections/elements' do
+          context 'assign cellline to new collection' do
+            let!(:cell_line_sample) { create(:cellline_sample, collections: [c_source]) }
+            let!(:ui_state) do
+              {
+                cell_line: {
+                  checkedAll: false,
+                  checkedIds: [cell_line_sample.id],
+                },
+                currentCollection: {
+                  id: c_source.id,
+                  is_shared: false,
+                  is_synchronized: false,
+                },
+              }
+            end
+
+            before do
+              post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_target.id }
+            end
+
+            it 'cell line connected to two collections' do
+              expect(cell_line_sample.reload.collections.pluck(:id)).to eq [c_source.id, c_target.id]
+            end
+
+            it 'cell line tag was updated' do
+              new_coll_ids = cell_line_sample.reload.tag.taggable_data['collection_labels'].pluck('id')
+              expect(new_coll_ids).to eq [c_source.id, c_target.id]
+            end
+          end
+
+          context 'assign cellline to collection where it is already in' do
+            xit 'cell line connected to one collections' do
+            end
+
+            xit 'cell line tag was not updated' do
+            end
+          end
+
           it 'assigns elements to collection and returns 204' do
-            post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_target.id }
             expect(response).to have_http_status :no_content
           end
         end
