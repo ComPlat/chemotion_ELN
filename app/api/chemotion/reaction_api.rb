@@ -19,7 +19,8 @@ module Chemotion
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :sort_column, type: String, desc: 'sort by created_at, updated_at, rinchi_short_key, or rxno',
-                               values: %w[created_at updated_at rinchi_short_key rxno]
+                               values: %w[created_at updated_at rinchi_short_key rxno],
+                               default: 'created_at'
       end
       paginate per_page: 7, offset: 0
 
