@@ -74,6 +74,10 @@ export default class BaseFetcher {
         addQuery = group === 'none'
           ? '&sort_column=created_at'
           : `&sort_column=${sort && group ? group : 'updated_at'}`;
+        // if the user has not updated its profile yet, we set the default sort to created_at
+        if (!filters.reaction) {
+          addQuery = '&sort_column=created_at';
+        }
         break;
       case 'generic_elements':
         userState = UserStore.getState();
