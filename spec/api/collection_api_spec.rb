@@ -387,22 +387,22 @@ describe Chemotion::CollectionAPI do
         end
 
         describe 'POST /api/v1/collections/elements' do
-          context 'assign cellline to new collection' do
-            let!(:cell_line_sample) { create(:cellline_sample, collections: [c_source]) }
-            let!(:ui_state) do
-              {
-                cell_line: {
-                  checkedAll: false,
-                  checkedIds: [cell_line_sample.id],
-                },
-                currentCollection: {
-                  id: c_source.id,
-                  is_shared: false,
-                  is_synchronized: false,
-                },
-              }
-            end
+          let!(:cell_line_sample) { create(:cellline_sample, collections: [c_source]) }
+          let!(:ui_state) do
+            {
+              cell_line: {
+                checkedAll: false,
+                checkedIds: [cell_line_sample.id],
+              },
+              currentCollection: {
+                id: c_source.id,
+                is_shared: false,
+                is_synchronized: false,
+              },
+            }
+          end
 
+          context 'assign cellline to new collection' do
             before do
               post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_target.id }
             end
@@ -417,15 +417,33 @@ describe Chemotion::CollectionAPI do
             end
           end
 
-          context 'assign cellline to collection where it is already in' do
-            xit 'cell line connected to one collections' do
+          context 'assign cell line to collection where it is already in' do
+            let(:cellline_collections) do
+              CollectionsCellline.find_by(
+                cellline_sample_id: cell_line_sample.id,
+                collection_id: c_source.id,
+              )
             end
 
-            xit 'cell line tag was not updated' do
+            before do
+              post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_source.id }
+            end
+
+            it 'cell line connected to one collections' do
+              expect(cell_line_sample.reload.collections.map(&:id)).to eq [c_source.id]
+            end
+
+            it 'cell line tag was not updated' do
+              new_coll_id = cell_line_sample.reload.tag.taggable_data['collection_labels'].pluck('id')
+              expect(new_coll_id).to eq [c_source.id]
+            end
+
+            it 'only one link between cell line and collection exists' do
+              expect([cellline_collections].flatten.size).to be 1
             end
           end
 
-          it 'assigns elements to collection and returns 204' do
+          xit 'assigns elements to collection and returns 204' do
             expect(response).to have_http_status :no_content
           end
         end
