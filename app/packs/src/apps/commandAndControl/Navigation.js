@@ -7,18 +7,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 
 import NavNewSession from 'src/components/navigation/NavNewSession';
 import DocumentHelper from 'src/utilities/DocumentHelper';
-
-const NavHead = () => (
-  <Navbar.Brand>
-    <NavDropdown title="Chemotion" className="navig-brand" id="bg-nested-dropdown-brand">
-      <MenuItem eventKey="11" href="http://www.chemotion.net" target="_blank">Chemotion repository</MenuItem>
-      <MenuItem eventKey="13" href="http://www.complat.kit.edu/" target="_blank">Complat</MenuItem>
-      <MenuItem eventKey="14" href="https://github.com/ComPlat" target="_blank">Complat on Github</MenuItem>
-      <MenuItem divider />
-      <MenuItem eventKey="15" href="/" target="_self">ELN</MenuItem>
-    </NavDropdown>
-  </Navbar.Brand>
-);
+import NavHead from 'src/components/navigation/NavHead';
 
 export default class Navigation extends React.Component {
   constructor(props) {
