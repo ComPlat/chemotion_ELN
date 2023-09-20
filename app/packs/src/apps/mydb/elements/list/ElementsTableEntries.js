@@ -271,6 +271,8 @@ export default class ElementsTableEntries extends Component {
       sourceType = DragDropItemTypes.GENERALPROCEDURE;
     } else if (isDropForScreen) {
       sourceType = DragDropItemTypes.RESEARCH_PLAN;
+    } else {
+      sourceType = DragDropItemTypes.ELEMENT;
     }
     return sourceType;
   }
@@ -308,7 +310,7 @@ export default class ElementsTableEntries extends Component {
         </td>
       );
     }
-    if (element.type === 'research_plan') {
+    if (element.type === 'research_plan' || element.element_klass) {
       if (element.thumb_svg !== 'not available') {
         return (
           <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>

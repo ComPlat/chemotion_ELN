@@ -19,7 +19,7 @@ module Entities
       expose! :research_plan_metadata,  anonymize_with: nil, using: 'Entities::ResearchPlanMetadataEntity'
       expose! :tag,                     anonymize_with: nil, using: 'Entities::ElementTagEntity'
       expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
-      expose! :segments,                anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :segments,                anonymize_with: [],  using: 'Labimotion::SegmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 

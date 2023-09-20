@@ -4,9 +4,12 @@ class OmniauthProviders < ActiveRecord::Migration[5.2]
 
       User.where.not(omniauth_provider: '').find_each do |u|
         next if u.omniauth_provider.blank? || u.omniauth_uid.blank?
-        providers = {}
-        providers[u.omniauth_provider] = u.omniauth_uid
-        u.update_columns(providers: providers)
+
+        if u.omniauth_provider.present? && u.omniauth_uid.present?
+          providers = {}
+          providers[u.omniauth_provider] = u.omniauth_uid
+          u.update_columns(providers: providers) if providers && providers.is_a?(Hash)
+        end
       end
 
       remove_column :users, :omniauth_provider if column_exists? :users, :omniauth_provider

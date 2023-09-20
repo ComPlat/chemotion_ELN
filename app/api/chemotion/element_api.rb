@@ -85,7 +85,7 @@ module Chemotion
         deleted['sample'] += Sample.joins(sql_join).joins(:collections)
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
-        klasses = ElementKlass.find_each do |klass|
+        klasses = Labimotion::ElementKlass.find_each do |klass|
           next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
           deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
         end

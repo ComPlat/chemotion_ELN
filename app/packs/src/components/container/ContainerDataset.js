@@ -1,8 +1,20 @@
 import React, { Component } from 'react';
-import { Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, Overlay } from 'react-bootstrap';
+import {
+  Row,
+  Col,
+  FormGroup,
+  FormControl,
+  ControlLabel,
+  Table,
+  ListGroup,
+  ListGroupItem,
+  Button,
+  Overlay,
+} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
 import { findIndex, cloneDeep } from 'lodash';
+import { absOlsTermId } from 'chem-generic-ui';
 
 import Utils from 'src/utilities/Functions';
 import { formatBytes } from 'src/utilities/MathUtils';
@@ -11,11 +23,9 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
-import { absOlsTermId } from 'src/apps/admin/generic/Utils';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managingActions/ChildOverlay';
-
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
@@ -29,7 +39,7 @@ export default class ContainerDataset extends Component {
       instruments: null,
       valueBeforeFocus: null,
       timeoutReference: null,
-      link: null
+      link: null,
     };
 
     this.timeout = 6e2; // 600ms timeout for input typing
@@ -37,27 +47,33 @@ export default class ContainerDataset extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
+    this.handleDSChange = this.handleDSChange.bind(this);
   }
-
 
   createAttachmentPreviews(dataset_container) {
     const { attachments } = dataset_container;
-    const newAttachments = attachments.filter((attachment) => !attachment.preview);
+    const newAttachments = attachments.filter(
+      attachment => !attachment.preview
+    );
 
     const updatedAttachments = newAttachments.map(attachment => {
-      return attachment.thumb ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then((result) => {
-        if (result != null) {
-          attachment.preview = `data:image/png;base64,${result}`;
-        }
-        return attachment;
-      }) : attachment;
+      return attachment.thumb
+        ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+            result => {
+              if (result != null) {
+                attachment.preview = `data:image/png;base64,${result}`;
+              }
+              return attachment;
+            }
+          )
+        : attachment;
     });
 
-    Promise.all(updatedAttachments).then((attachments) => {
+    Promise.all(updatedAttachments).then(attachments => {
       dataset_container.attachments = attachments;
 
       this.setState({
-        dataset_container: dataset_container
+        dataset_container: dataset_container,
       });
     });
   }
@@ -82,11 +98,16 @@ export default class ContainerDataset extends Component {
     this.setState({ dataset_container });
   }
 
+  handleDSChange(ds) {
+    this.handleInputChange('dataset', { target: { value: ds } });
+  }
+
   handleFileDrop(files) {
     const { dataset_container } = this.state;
-    let attachments = files.map(f => Attachment.fromFile(f))
-    let first_attach = dataset_container.attachments.length == 0
-    dataset_container.attachments = dataset_container.attachments.concat(attachments)
+    let attachments = files.map(f => Attachment.fromFile(f));
+    let first_attach = dataset_container.attachments.length == 0;
+    dataset_container.attachments =
+      dataset_container.attachments.concat(attachments);
     if (first_attach) {
       let attachment_list = dataset_container.attachments;
       let attach_name = attachment_list[attachment_list.length - 1].filename;
@@ -101,7 +122,10 @@ export default class ContainerDataset extends Component {
   }
 
   handleAttachmentDownload(attachment) {
-    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
+    Utils.downloadFile({
+      contents: `/api/v1/attachments/${attachment.id}`,
+      name: attachment.filename,
+    });
   }
 
   handleAttachmentRemove(attachment) {
@@ -122,18 +146,6 @@ export default class ContainerDataset extends Component {
     }
   }
 
-  renderImageAnnotationButton(attachment) {
-    const { readOnly } = this.props;
-    if (!readOnly && !attachment.is_new) {
-      return (
-      <ImageAnnotationEditButton
-        parent={this}
-        attachment={attachment}
-      />
-      );
-    }
-  }
-
   handleUndo(attachment) {
     const { dataset_container } = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
@@ -151,18 +163,34 @@ export default class ContainerDataset extends Component {
 
   listGroupItem(attachment) {
     const { disabled } = this.props;
-    const preview = (attachment.preview ? (<tr><td rowSpan="2" width="128"><img style={{ width: '85%', display: 'block' }} src={attachment.preview} alt="" /></td></tr>) : (
-      <tr><td rowSpan="2" width="128"><img style={{ width: '128px', display: 'block' }} alt="" /></td></tr>
-    ));
+    const preview = attachment.preview ? (
+      <tr>
+        <td rowSpan="2" width="128">
+          <img src={attachment.preview} alt="" />
+        </td>
+      </tr>
+    ) : (
+      <tr>
+        <td rowSpan="2" width="128">
+          <img style={{ width: '128px', display: 'block' }} alt="" />
+        </td>
+      </tr>
+    );
     if (attachment.is_deleted) {
       return (
-        <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
+        <Table className="borderless" style={{ marginBottom: 'unset' }}>
           <tbody>
             {preview}
             <tr>
               <td style={{ verticalAlign: 'middle' }}>
-                <strike>{attachment.filename}</strike><br />
-                <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(attachment)} disabled={disabled}>
+                <strike>{attachment.filename}</strike>
+                <br />
+                <Button
+                  bsSize="xsmall"
+                  bsStyle="danger"
+                  onClick={() => this.handleUndo(attachment)}
+                  disabled={disabled}
+                >
                   <i className="fa fa-undo" aria-hidden="true" />
                 </Button>
               </td>
@@ -172,18 +200,20 @@ export default class ContainerDataset extends Component {
       );
     }
     return (
-      <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
+      <Table className="borderless" style={{ marginBottom: 'unset' }}>
         <tbody>
           {preview}
           <tr>
-            <td style={{ width: '60%', wordWrap: 'break-word' }}>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
-            </td>
-            <td style={{ width: '20%', wordWrap: 'break-word' }}><span>{formatBytes(attachment.filesize)}</span></td>
-            <td style={{ width: '20%', wordWrap: 'break-word' }}>
+            <td style={{ verticalAlign: 'middle' }}>
+              <a
+                onClick={() => this.handleAttachmentDownload(attachment)}
+                style={{ cursor: 'pointer' }}
+              >
+                {attachment.filename}
+              </a>
+              <br />
               {this.removeAttachmentButton(attachment)} &nbsp;
-              {this.attachmentBackToInboxButton(attachment)} &nbsp;
-              {this.renderImageAnnotationButton(attachment)} &nbsp;
+              {this.attachmentBackToInboxButton(attachment)}
             </td>
           </tr>
         </tbody>
@@ -193,26 +223,31 @@ export default class ContainerDataset extends Component {
 
   attachments() {
     const { dataset_container } = this.state;
-    if (dataset_container.attachments && dataset_container.attachments.length > 0) {
+    if (
+      dataset_container.attachments &&
+      dataset_container.attachments.length > 0
+    ) {
       return (
         <div className="list">
           <ListGroup>
-            {
-              dataset_container.attachments.map((attachment) => {
-                return (
-                  <ListGroupItem key={attachment.id} style={{ margin: 'unset', padding: 'unset' }}>
-                    {this.listGroupItem(attachment)}
-                  </ListGroupItem>
-                );
-              })
-            }
+            {dataset_container.attachments.map(attachment => {
+              return (
+                <ListGroupItem
+                  key={attachment.id}
+                  style={{ margin: 'unset', padding: 'unset' }}
+                >
+                  {this.listGroupItem(attachment)}
+                </ListGroupItem>
+              );
+            })}
           </ListGroup>
         </div>
       );
     }
     return (
       <div style={{ padding: 15 }}>
-        There are currently no Datasets.<br />
+        There are currently no Datasets.
+        <br />
       </div>
     );
   }
@@ -221,7 +256,11 @@ export default class ContainerDataset extends Component {
     const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
       return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
+        <Button
+          bsSize="xsmall"
+          bsStyle="danger"
+          onClick={() => this.handleAttachmentRemove(attachment)}
+        >
           <i className="fa fa-trash-o" />
         </Button>
       );
@@ -232,7 +271,11 @@ export default class ContainerDataset extends Component {
     const { readOnly } = this.props;
     if (!readOnly && !attachment.is_new) {
       return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentBackToInbox(attachment)}>
+        <Button
+          bsSize="xsmall"
+          bsStyle="danger"
+          onClick={() => this.handleAttachmentBackToInbox(attachment)}
+        >
           <i className="fa fa-backward" />
         </Button>
       );
@@ -255,7 +298,6 @@ export default class ContainerDataset extends Component {
     }
   }
 
-
   resetInstrumentComponent() {
     const { dataset_container } = this.state;
     this.setState({
@@ -263,7 +305,7 @@ export default class ContainerDataset extends Component {
       showInstruments: false,
       instruments: null,
       valueBeforeFocus: null,
-      error: ''
+      error: '',
     });
     dataset_container.extended_metadata['instrument'] = '';
   }
@@ -279,20 +321,22 @@ export default class ContainerDataset extends Component {
 
   fetchInstruments(value, show = true) {
     const debounced = debounce(function (query) {
-      return InstrumentsFetcher.fetchInstrumentsForCurrentUser(query)
+      return InstrumentsFetcher.fetchInstrumentsForCurrentUser(query);
     }, 200);
-    debounced(value).then((result) => {
-      const newState = {};
-      if (result.length > 0) {
-        newState.instruments = result;
-        newState.showInstruments = show;
-      } else {
-        newState.instruments = null;
-        newState.error = '';
-        newState.showInstruments = false;
-      }
-      this.setState(newState);
-    }).catch(error => console.log(error));
+    debounced(value)
+      .then(result => {
+        const newState = {};
+        if (result.length > 0) {
+          newState.instruments = result;
+          newState.showInstruments = show;
+        } else {
+          newState.instruments = null;
+          newState.error = '';
+          newState.showInstruments = false;
+        }
+        this.setState(newState);
+      })
+      .catch(error => console.log(error));
   }
 
   handleInstrumentValueChange(event, doneInstrumentTyping) {
@@ -308,8 +352,8 @@ export default class ContainerDataset extends Component {
     this.setState({
       value,
       timeoutReference: setTimeout(function () {
-        doneInstrumentTyping()
-      }, this.timeout)
+        doneInstrumentTyping();
+      }, this.timeout),
     });
     this.handleInputChange('instrument', event);
   }
@@ -319,8 +363,8 @@ export default class ContainerDataset extends Component {
 
     this.setState({
       showInstruments: false,
-      valueBeforeFocus: null
-    })
+      valueBeforeFocus: null,
+    });
 
     if (!value || value.trim() === '') {
       this.setState({ value: '' });
@@ -333,7 +377,7 @@ export default class ContainerDataset extends Component {
 
   focusInstrument(newFocus) {
     const { instruments, valueBeforeFocus } = this.state;
-    const newState = {}
+    const newState = {};
     if (!valueBeforeFocus) {
       newState.valueBeforeFocus = instruments[newFocus].name;
     }
@@ -346,7 +390,7 @@ export default class ContainerDataset extends Component {
     this.setState({
       value: valueBeforeFocus,
       valueBeforeFocus: null,
-    })
+    });
   }
 
   renderInstruments() {
@@ -364,14 +408,14 @@ export default class ContainerDataset extends Component {
                 ref={'instrument_' + index}
                 header={instrument.name}
               />
-            )
+            );
           })}
         </div>
       );
     } else if (error) {
       return <ListGroupItem>{error}</ListGroupItem>;
     }
-    return (<div />);
+    return <div />;
   }
 
   handleAddLink(link) {
@@ -398,21 +442,27 @@ export default class ContainerDataset extends Component {
     const { readOnly, disabled, kind } = this.props;
     const overlayAttributes = {
       style: {
-        position: 'absolute', width: 300, marginTop: 144, marginLeft: 17
-      }
+        position: 'absolute',
+        width: 300,
+        marginTop: 144,
+        marginLeft: 17,
+      },
     };
     const termId = absOlsTermId(kind);
-    const klasses = (UserStore.getState() && UserStore.getState().dsKlasses) || [];
+    const klasses =
+      (UserStore.getState() && UserStore.getState().dsKlasses) || [];
     let klass = {};
     const idx = findIndex(klasses, o => o.ols_term_id === termId);
-    if (idx > -1) { klass = klasses[idx]; }
-
-    if (dataset_container.dataset && dataset_container.dataset.id) {
-      dataset_container.dataset = dataset_container.dataset;
-    } else if (klass.ols_term_id !== undefined) {
-      dataset_container.dataset = GenericDS.buildEmpty(cloneDeep(klass), dataset_container.id);
+    if (idx > -1) {
+      klass = klasses[idx];
     }
 
+    let genericDS = {};
+    if (dataset_container?.dataset?.id) {
+      genericDS = dataset_container.dataset;
+    } else if (klass.ols_term_id !== undefined) {
+      genericDS = GenericDS.buildEmpty(cloneDeep(klass), dataset_container.id);
+    }
     return (
       <Row>
         <Col md={6} className="col-base">
@@ -431,14 +481,24 @@ export default class ContainerDataset extends Component {
               type="text"
               value={dataset_container.extended_metadata['instrument'] || ''}
               disabled={readOnly || disabled}
-              onChange={event => this.handleInstrumentValueChange(event, this.doneInstrumentTyping)}
-              ref={(input) => { this.autoComplete = input; }}
+              onChange={event =>
+                this.handleInstrumentValueChange(
+                  event,
+                  this.doneInstrumentTyping
+                )
+              }
+              ref={input => {
+                this.autoComplete = input;
+              }}
               autoComplete="off"
             />
             <Overlay
               placement="bottom"
               style={{
-                marginTop: 80, width: 398, height: 10, maxHeight: 20
+                marginTop: 80,
+                width: 398,
+                height: 10,
+                maxHeight: 20,
               }}
               show={showInstruments}
               container={this}
@@ -461,36 +521,44 @@ export default class ContainerDataset extends Component {
               rows={4}
             />
           </FormGroup>
-          <GenericDSDetails
-            kind={kind}
-            genericDS={dataset_container.dataset}
-            klass={klass}
-            onChange={this.handleInputChange}
-          />
         </Col>
         <Col md={6} className="col-full">
-          <label>Attachments: </label>
+          <label>Attachments</label>
           {this.dropzone()}
           {this.attachments()}
-          <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
-            disabled={disabled}></HyperLinksSection>
+          <>
+            <HyperLinksSection
+              data={dataset_container.extended_metadata['hyperlinks']}
+              onAddLink={this.handleAddLink}
+              onRemoveLink={this.handleRemoveLink}
+              disabled={disabled}
+            ></HyperLinksSection>
+            <ImageAnnotationModalSVG
+              attachment={this.state.choosenAttachment}
+              isShow={this.state.imageEditModalShown}
+              handleSave={() => {
+                let newAnnotation = document
+                  .getElementById('svgEditId')
+                  .contentWindow.svgEditor.svgCanvas.getSvgString();
+                this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+                this.setState({ imageEditModalShown: false });
+                this.props.onChange(this.props.dataset_container);
+              }}
+              handleOnClose={() => {
+                this.setState({ imageEditModalShown: false });
+              }}
+            />
+          </>
         </Col>
-        <ImageAnnotationModalSVG
-        attachment={this.state.choosenAttachment}
-        isShow={this.state.imageEditModalShown}
-        handleSave={
-          () => {
-            let newAnnotation = document.getElementById("svgEditId").contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation=newAnnotation;
-            this.setState({ imageEditModalShown: false });
-            this.props.onChange(this.props.dataset_container);
-          }
-        }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }) }}
-      />
+        <Col md={12}>
+          <GenericDSDetails
+            genericDS={genericDS}
+            klass={klass}
+            kind={kind}
+            onChange={this.handleDSChange}
+          />
+        </Col>
       </Row>
-
-      
     );
   }
 }

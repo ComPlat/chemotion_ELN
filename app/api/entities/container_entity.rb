@@ -15,7 +15,7 @@ module Entities
     expose :attachments, using: 'Entities::AttachmentEntity'
     expose :code_log, using: 'Entities::CodeLogEntity'
     expose :children, using: 'Entities::ContainerEntity'
-    expose :dataset, using: 'Entities::DatasetEntity'
+    expose :dataset, using: 'Labimotion::DatasetEntity'
 
     def extended_metadata
       return unless object.extended_metadata

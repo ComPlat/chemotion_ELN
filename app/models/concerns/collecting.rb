@@ -47,8 +47,8 @@ module Collecting
       end
 
       def update_tag_by_element_ids(element_ids)
-        name[11..-1].constantize.includes(:tag).where(id: element_ids).select(:id)
-            .each { |el| el.update_tag!(collection_tag: true) }
+        klass = Labimotion::Utils.klass_by_collection(name).constantize
+        klass.includes(:tag).where(id: element_ids).select(:id).each { |el| el.update_tag!(collection_tag: true) }
       end
 
       handle_asynchronously :update_tag_by_element_ids
@@ -67,7 +67,7 @@ module Collecting
       end
 
       def update_tag_by_ui_state(**args)
-        element_klass = name[11..-1].constantize
+        element_klass = Labimotion::Utils.klass_by_collection(name).constantize
         statement = "WHERE collection_id in (?) AND #{table_name}.#{table_name[12..-2]}_id"
         if args[:checkedAll]
           statement += ' NOT IN (?)'
