@@ -37,5 +37,17 @@ FactoryBot.define do
         profile.update_columns(data: data)
       end
     end
+
+    factory :generic_user do
+      callback(:after_create) do |user|
+        profile = user.profile
+        data = profile&.data
+        unless data.nil?
+          data[:generic_admin] = { elements: true, segments: true, datasets: true }
+          # data.merge!(generic_admin: { elements: true, segments: true, datasets: true })
+          profile.update_columns(data: data)
+        end
+      end
+    end
   end
 end

@@ -12,7 +12,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
-import klasses from '../../../../../config/klasses.json';
+import { elementNames } from 'src/apps/generic/Utils';
 
 export default class ManagingModalSharing extends React.Component {
 
@@ -74,7 +74,7 @@ export default class ManagingModalSharing extends React.Component {
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
 
       // eslint-disable-next-line no-unused-expressions
-      klasses && klasses.forEach((klass) => {
+      elementNames(false).forEach((klass) => {
         isElementSelectionEmpty = isElementSelectionEmpty && this.isElementSelectionEmpty(uiState[`${klass}`]);
       });
     }
@@ -121,7 +121,7 @@ export default class ManagingModalSharing extends React.Component {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    klasses && klasses.forEach((klass) => {
+    elementNames(false).forEach((klass) => {
       filterParams[`${klass}`] = {
         all: true,
         included_ids: [],
@@ -171,7 +171,7 @@ export default class ManagingModalSharing extends React.Component {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    klasses && klasses.forEach((klass) => {
+    elementNames(false).forEach((klass) => {
       filterParams[`${klass}`] = {
         all: uiState[`${klass}`].checkedAll,
         included_ids: uiState[`${klass}`].checkedIds,

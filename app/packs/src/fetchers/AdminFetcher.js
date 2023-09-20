@@ -2,52 +2,59 @@ import 'whatwg-fetch';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class AdminFetcher {
-  static fetchUnitsSystem() {
-    return fetch('/units_system/units_system.json', {
-      credentials: 'same-origin', cache: 'no-store', headers: { 'cache-control': 'no-cache' }
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-  }
-
   static fetchLocalCollector() {
     return fetch('/api/v1/admin/listLocalCollector/all.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static checkDiskSpace() {
     return fetch('/api/v1/admin/disk.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchDevices() {
     return fetch('/api/v1/admin/listDevices/all.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchDeviceById(deviceId) {
     return fetch(`/api/v1/admin/device/${deviceId}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchDeviceMetadataByDeviceId(deviceId) {
     return fetch(`/api/v1/admin/deviceMetadata/${deviceId}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static postDeviceMetadata(params) {
@@ -56,26 +63,35 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static syncDeviceMetadataToDataCite(params) {
-    return fetch(`/api/v1/admin/deviceMetadata/${params.device_id}/sync_to_data_cite`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+    return fetch(
+      `/api/v1/admin/deviceMetadata/${params.device_id}/sync_to_data_cite`,
+      {
+        credentials: 'same-origin',
+        method: 'PUT',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      }
+    )
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static testSFTP(params) {
@@ -84,12 +100,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static removeDeviceMethod(params) {
@@ -98,12 +117,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static updateDeviceMethod(params) {
@@ -112,12 +134,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static editNovncSettings(params) {
@@ -126,11 +151,13 @@ export default class AdminFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then((response) => {
-      if (response.status === 204) { return ''; }
+      body: JSON.stringify(params),
+    }).then(response => {
+      if (response.status === 204) {
+        return '';
+      }
       return 'error';
     });
   }
@@ -141,12 +168,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static createUserAccount(params) {
@@ -155,12 +185,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static updateUser(params) {
@@ -169,29 +202,45 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchUsers() {
     return fetch('/api/v1/admin_user/listUsers/all.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchUsersByNameType(name, type, limit = 5) {
-    return fetch(`/api/v1/admin_user/listUsers/byname.json?${new URLSearchParams({ name, type, limit })}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    }).then(response => response.json())
+    return fetch(
+      `/api/v1/admin_user/listUsers/byname.json?${new URLSearchParams({
+        name,
+        type,
+        limit,
+      })}`,
+      {
+        credentials: 'same-origin',
+        method: 'GET',
+      }
+    )
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static updateAccount(params) {
@@ -200,12 +249,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static olsTermDisableEnable(params) {
@@ -214,10 +266,10 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then((response) => {
+      body: JSON.stringify(params),
+    }).then(response => {
       if (response.status === 204) {
         return true;
       }
@@ -231,18 +283,24 @@ export default class AdminFetcher {
     return fetch('/api/v1/admin/importOlsTerms/', {
       credentials: 'same-origin',
       method: 'POST',
-      body: data
-    }).then(response => response.json())
+      body: data,
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchGroupsDevices(type) {
     return fetch(`/api/v1/admin/group_device/list?type=${type}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static updateGroup(params = {}) {
@@ -251,12 +309,15 @@ export default class AdminFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static createGroupDevice(params = {}) {
@@ -265,20 +326,26 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchMatrices() {
     return fetch('/api/v1/matrix/list.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static updateMatrice(params) {
@@ -287,12 +354,15 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static updateMatriceJson(params) {
@@ -301,99 +371,27 @@ export default class AdminFetcher {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static exec(path, method) {
-    return BaseFetcher.withoutBodyData({
-      apiEndpoint: path, requestMethod: method, jsonTranformation: json => json
-    });
-  }
-
-  static genericKlass(params, path) {
-    return BaseFetcher.withBodyData({
-      apiEndpoint: `/api/v1/admin_generic/${path}/`, requestMethod: 'POST', bodyData: params, jsonTranformation: json => json
-    });
-  }
-
-  static fetchElementKlasses() {
-    return this.exec('/api/v1/generic_elements/klasses_all.json', 'GET');
-  }
-
-  static updateGElTemplates(params) {
-    return this.genericKlass(params, 'update_element_template');
-  }
-
-  static createElementKlass(params) {
-    return this.genericKlass(params, 'create_element_klass');
-  }
-
-  static updateElementKlass(params) {
-    return this.genericKlass(params, 'update_element_klass');
-  }
-
-  static activeInActiveElementKlass(params) {
-    return this.genericKlass(params, 'de_active_element_klass');
-  }
-
-  static deleteElementKlass(params) {
-    return this.genericKlass(params, 'delete_element_klass');
-  }
-
-  static createSegmentKlass(params) {
-    return this.genericKlass(params, 'create_segment_klass');
-  }
-
-  static updateSegmentKlass(params) {
-    return this.genericKlass(params, 'update_segment_klass');
-  }
-
-  static deActiveSegmentKlass(params) {
-    return this.genericKlass(params, 'de_active_segment_klass');
-  }
-
-  static updateSegmentTemplate(params) {
-    return this.genericKlass(params, 'update_segment_template');
-  }
-
-  static deleteKlassRevision(params) {
-    return this.genericKlass(params, 'delete_klass_revision');
-  }
-
-  static deleteGenericRevision(id) {
-    return this.exec(`/api/v1/admin_generic/delete_generic_revision/${id}`, 'DELETE');
-  }
-
-  static listSegmentKlass(params = {}) {
-    const api = params.is_active === undefined ? '/api/v1/admin_generic/list_segment_klass.json' : `/api/v1/admin/list_segment_klass.json?is_active=${params.is_active}`;
-    return this.exec(api, 'GET');
-  }
-
-  static listDatasetKlass(params = {}) {
-    const api = params.is_active === undefined ? '/api/v1/admin_generic/list_dataset_klass.json' : `/api/v1/admin/list_dataset_klass.json?is_active=${params.is_active}`;
-    return this.exec(api, 'GET');
-  }
-
-  static deActiveDatasetKlass(params) {
-    return this.genericKlass(params, 'de_active_dataset_klass');
-  }
-
-  static updateDatasetTemplate(params) {
-    return this.genericKlass(params, 'update_dataset_template');
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchJobs() {
     return fetch('/api/v1/admin/jobs', {
       credentials: 'same-origin',
       method: 'GET',
-    }).then(response => response.json())
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.error(errorMessage); });
+      .catch(errorMessage => {
+        console.error(errorMessage);
+      });
   }
 
   static restartJob(id) {
@@ -402,15 +400,14 @@ export default class AdminFetcher {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(id)
-    }).then(response => response.json())
+      body: JSON.stringify(id),
+    })
+      .then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => { console.error(errorMessage); });
-  }
-
-  static fetchKlassRevisions(id, klass) {
-    return this.exec(`/api/v1/admin/klass_revisions.json?id=${id}&klass=${klass}`, 'GET');
+      .catch(errorMessage => {
+        console.error(errorMessage);
+      });
   }
 }

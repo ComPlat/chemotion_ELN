@@ -21,7 +21,9 @@ module Chemotion
         end
         before do
           @attachment = Attachment.find_by(id: params[:attachment_id])
-          unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: @attachment[:attachable_id])).update?
+          if %w[ResearchPlan Labimotion::Element].include?(@attachment.attachable_type)
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachment.attachable).update?
+          else
             error!('401 Unauthorized', 401)
           end
           # error!('401 Unauthorized', 401) if @attachment.oo_editing?

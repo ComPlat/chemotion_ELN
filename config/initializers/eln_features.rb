@@ -9,7 +9,7 @@ ActiveSupport.on_load(:active_record) do
   # config.eln_features.merge(ActiveRecord::Base.connection.table_exists?('matrices') ? Matrice.pluck(:name, :id).to_h : {})
 
   Matrice.gen_matrices_json if ActiveRecord::Base.connection.table_exists?('matrices')
-  ElementKlass.gen_klasses_json if ActiveRecord::Base.connection.table_exists?('element_klasses')
+  Labimotion::ElementKlass.gen_klasses_json if ActiveRecord::Base.connection.table_exists?('element_klasses')
 rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e
   puts e.message
 end

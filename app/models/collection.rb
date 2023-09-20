@@ -40,7 +40,7 @@ class Collection < ApplicationRecord
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections_screens, dependent: :destroy
   has_many :collections_research_plans, dependent: :destroy
-  has_many :collections_elements, dependent: :destroy
+  has_many :collections_elements, dependent: :destroy, class_name: 'Labimotion::CollectionsElement'
 
   has_many :samples, through: :collections_samples
   has_many :reactions, through: :collections_reactions

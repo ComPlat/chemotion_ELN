@@ -26,7 +26,7 @@ class Screen < ApplicationRecord
   include Collectable
   include ElementCodes
   include Taggable
-  include Segmentable
+  include Labimotion::Segmentable
 
   serialize :description, Hash
 

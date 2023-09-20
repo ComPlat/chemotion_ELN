@@ -51,6 +51,30 @@ module Chemotion
       error!(message, 404)
     end
 
+
+    resource :export_ds do
+      before do
+        @container = Container.find_by(id: params[:container_id])
+        element = @container.root.containable
+        can_read = ElementPolicy.new(current_user, element).read?
+        can_dwnld = can_read &&
+                    ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+        error!('401 Unauthorized', 401) unless can_dwnld
+      end
+      desc "Download the dataset attachment file"
+      get 'dataset/:container_id' do
+        env['api.format'] = :binary
+        export = Labimotion::ExportDataset.new
+        export.export(params[:container_id])
+        export.spectra(params[:container_id])
+        content_type('application/vnd.ms-excel')
+        ds_filename = export.res_name(params[:container_id])
+        filename = URI.escape(ds_filename)
+        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+        export.read
+      end
+    end
+
     resource :attachments do
       before do
         @attachment = Attachment.find_by(id: params[:attachment_id])
@@ -269,6 +293,14 @@ module Chemotion
             ensure
               file.close
             end
+          end
+
+          if Labimotion::Dataset.find_by(element_id: params[:container_id], element_type: 'Container').present?
+            export = Labimotion::ExportDataset.new
+            export.export(params[:container_id])
+            export.spectra(params[:container_id])
+            zip.put_next_entry export.res_name(params[:container_id])
+            zip.write export.read
           end
 
           hyperlinks_text = ''

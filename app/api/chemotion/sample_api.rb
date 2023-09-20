@@ -396,15 +396,6 @@ module Chemotion
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-          # params[:segments].each do |seg|
-          #   segment = Segment.find_by(element_type: Sample.name, element_id: @sample.id, segment_klass_id: seg["segment_klass_id"])
-          #   if segment.present?
-          #     segment.update!(properties: seg["properties"])
-          #   else
-          #     Segment.create!(segment_klass_id: seg["segment_klass_id"], element_type: Sample.name, element_id: @sample.id, properties: seg["properties"], created_by: current_user.id)
-          #   end
-          # end
-
           #save to profile
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
@@ -550,14 +541,6 @@ module Chemotion
         sample.save!
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        # params[:segments].each do |seg|
-        #   segment = Segment.find_by(element_type: Sample.name, element_id: @sample.id, segment_klass_id: seg["segment_klass_id"])
-        #   if segment.present?
-        #     segment.update!(properties: seg["properties"])
-        #   else
-        #     Segment.create!(segment_klass_id: seg["segment_klass_id"], element_type: Sample.name, element_id: @sample.id, properties: seg["properties"], created_by: current_user.id)
-        #   end
-        # end
 
         #save to profile
         kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
