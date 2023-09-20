@@ -98,6 +98,8 @@ module Export
       result.rows.map! do |row|
         format_row(row, columns_index, indexes_to_delete)
       end
+      return result if indexes_to_delete.empty?
+
       merge_safety_sheets_columns_rows(result, indexes_to_delete, columns_index)
     end
 

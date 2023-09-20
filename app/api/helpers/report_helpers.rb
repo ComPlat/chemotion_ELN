@@ -314,6 +314,8 @@ module ReportHelpers
 
   def build_sql_sample_chemicals(columns, c_id, ids, checked_all)
     sample_query = build_sql_sample_sample(columns[0].join(','), c_id, ids, checked_all)
+    return nil if sample_query.blank?
+
     chemical_query = chemical_query(columns[1].join(','), ids)
     <<~SQL.squish
       SELECT *
@@ -328,6 +330,7 @@ module ReportHelpers
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && s_ids.empty?
+
     t = 's' # table samples
     cont_type = 'Sample' # containable_type
     if checkedAll
