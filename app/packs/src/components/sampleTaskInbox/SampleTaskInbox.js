@@ -1,12 +1,12 @@
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import Draggable from 'react-draggable';
 import React, { useContext } from 'react';
-import SampleTaskCard from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskCard';
+import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
+import SampleTaskReloadButton from 'src/components/sampleTaskInbox/SampleTaskReloadButton';
 import { Button, Panel } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
-import { values } from 'mobx';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SampleTaskInbox = ({}) => {
@@ -103,7 +103,10 @@ const SampleTaskInbox = ({}) => {
       >
         <Panel.Heading className="handle">
           <div className="row">
-            <div className="col-md-11">{openSampleTaskCount()} open SampleTasks</div>
+            <div className="col-md-1">
+              <SampleTaskReloadButton />
+            </div>
+            <div className="col-md-10">{openSampleTaskCount()} open SampleTasks</div>
             <div className="col-md-1">
               <Button
                 bsStyle="danger"
