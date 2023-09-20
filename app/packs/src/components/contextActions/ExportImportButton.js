@@ -97,8 +97,8 @@ ExportImportButton.defaultProps = {
   isDisabled: false,
   customClass: null,
 };
-const importSampleFunction = (updateModalProps, ImportAsChemical) => {
-  const title = ImportAsChemical ? 'Import Chemicals from File' : 'Import Samples from File';
+const importSampleFunction = (updateModalProps, importAsChemical) => {
+  const title = importAsChemical ? 'Import Chemicals from File' : 'Import Samples from File';
   const component = ModalImport;
   const action = ElementActions.importSamplesFromFile;
   const listSharedCollections = false;

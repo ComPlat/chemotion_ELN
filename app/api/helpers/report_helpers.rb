@@ -200,7 +200,7 @@ module ReportHelpers
       export.generate_analyses_sheet_with_samples(sheet_name, result, columns_params)
     when :chemicals
       sheet_name = "#{table}_chemicals"
-      format_result = type == :chemicals ? Export::ExportChemicals.format_chemical_results(result) : result
+      format_result = Export::ExportChemicals.format_chemical_results(result)
       export.generate_sheet_with_samples(sheet_name, format_result, columns_params)
     else
       export.generate_sheet_with_samples(table, result)
