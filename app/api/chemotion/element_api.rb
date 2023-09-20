@@ -34,6 +34,9 @@ module Chemotion
         optional :research_plan, type: Hash do
           use :ui_state_params
         end
+        optional :cell_line, type: Hash do
+          use :ui_state_params
+        end
         optional :selecteds, desc: 'Elements currently opened in detail tabs', type: Array do
           optional :type, type: String
           optional :id, type: Integer
@@ -72,11 +75,15 @@ module Chemotion
 
       desc "delete element from ui state selection."
       delete do
-
         deleted = { 'sample' => [] }
-        %w[sample reaction wellplate screen research_plan].each do |element|
+        %w[sample reaction wellplate screen research_plan cell_line].each do |element|
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
-          deleted[element] = @collection.send(element + 's').by_ui_state(params[element]).destroy_all.map(&:id)
+              
+          assoziation_name = element + 's'
+          if(element=='cell_line') then
+            assoziation_name = 'cellline_samples'
+          end 
+          deleted[element] = @collection.send(assoziation_name).by_ui_state(params[element]).destroy_all.map(&:id)
         end
 
         # explicit inner join on reactions_samples to get soft deleted reactions_samples entries

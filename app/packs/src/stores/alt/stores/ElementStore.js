@@ -519,7 +519,7 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan, currentCollection } = ui_state;
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
     const params = {
       options,
@@ -529,7 +529,8 @@ class ElementStore {
       screen,
       research_plan,
       currentCollection,
-      selecteds
+      selecteds,
+      cell_line
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
