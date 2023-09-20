@@ -53,6 +53,19 @@ export function reactionRole(element) {
   return null;
 }
 
+function reactionVariations(element) {
+  if (element.type === 'reaction' && element.variations && element.variations.length) {
+    return (
+      <div>
+        {element.variations.length}
+        {' '}
+        variations
+      </div>
+    );
+  }
+  return undefined;
+}
+
 function showDetails(element) {
   const { currentCollection, isSync } = UIStore.getState();
   const { id, type } = element;
@@ -389,6 +402,7 @@ export default class ElementsTableEntries extends Component {
                     {reactionStatus(element)}
                     {' '}
                     {reactionRole(element)}
+                    {reactionVariations(element)}
                     <br />
                     {sampleMoleculeName}
                     <CommentIcon commentCount={element.comment_count} />
