@@ -4,8 +4,6 @@ module Usecases
   module Attachments
     module Annotation
       class AnnotationCreator
-        require_relative 'mini_magick_image_analyser'
-
         def initialize(image_analyzer = nil)
           @image_analyzer = image_analyzer || MiniMagickImageAnalyser.new
         end
@@ -29,7 +27,7 @@ module Usecases
         end
 
         def create_annotation_string(height, width, id)
-          <<-ENDOFSTRING
+          <<~ENDOFSTRING
           <svg
             width="#{width}"
             height="#{height}"
