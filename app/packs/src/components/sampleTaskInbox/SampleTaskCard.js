@@ -59,7 +59,7 @@ const SampleTaskCard = ({ sampleTask }) => {
     if (sampleTask.scan_results.length > 0) {
       const scan_results = sampleTask.scan_results.map(scan_result => {
         return (
-          <li>
+          <li key={`scanResult-${scan_result.id}`}>
             <a href={`/api/v1/attachments/image/${scan_result.attachment_id}`} target="_blank">
               {scan_result.title}: {scan_result.measurement_value}{scan_result.measurement_unit}
             </a>
@@ -102,7 +102,7 @@ const SampleTaskCard = ({ sampleTask }) => {
 
   const deleteButton = () => {
     return (
-      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => setShowDeletionConfirmationDialog(true) }>
+      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => setShowDeletionConfirmationDialog(true)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -180,7 +180,7 @@ const SampleTaskCard = ({ sampleTask }) => {
         showModal={showDeletionConfirmationDialog}
         title="Are you sure?"
         content={deletionConfirmationContent()}
-        onClick={ deleteSampleTask }
+        onClick={deleteSampleTask}
       />
     </Panel>
   )

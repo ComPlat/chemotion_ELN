@@ -2,9 +2,9 @@
 
 require 'charlock_holmes'
 
-class Import::ImportSdf
+class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :file_path,
-               :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys
+               :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples
 
   SIZE_LIMIT = 40 # MB
   MOLFILE_BLOCK_END_LINE = 'M  END'
@@ -18,7 +18,8 @@ class Import::ImportSdf
     @inchi_array = args[:inchikeys] || []
     @rows = args[:rows] || []
     @custom_data_keys = {}
-    @mapped_keys = args[:mapped_keys] || {}
+    @mapped_keys = keys_to_map || {}
+    @unprocessable_samples = []
     read_data
 
     @count = @raw_data.empty? && @rows.size || @raw_data.size
@@ -27,6 +28,28 @@ class Import::ImportSdf
     else
       @message[:info] << "This file contains #{@count} Molecules."
     end
+  end
+
+  def keys_to_map
+    {
+      description: { field: 'description', displayName: 'Description', multiple: true },
+      location: { field: 'location', displayName: 'Location' },
+      name: { field: 'name', displayName: 'Name' },
+      external_label: { field: 'external_label', displayName: 'External label' },
+      purity: { field: 'purity', displayName: 'Purity' },
+      molecule_name: { field: 'molecule_name', displayName: 'Molecule Name' },
+      short_label: { field: 'short_label', displayName: 'Short Label' },
+      real_amount: { field: 'real_amount', displayName: 'Real Amount' },
+      real_amount_unit: { field: 'real_amount_unit', displayName: 'Real Amount Unit' },
+      target_amount: { field: 'target_amount', displayName: 'Target Amount' },
+      target_amount_unit: { field: 'target_amount_unit', displayName: 'Target Amount Unit' },
+      molarity: { field: 'molarity', displayName: 'Molarity' },
+      density: { field: 'density', displayName: 'Density' },
+      melting_point: { field: 'melting_point', displayName: 'Melting Point' },
+      boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
+      cas: { field: 'cas', displayName: 'Cas' },
+      solvent: { field: 'solvent', displayName: 'Solvent' },
+    }
   end
 
   def read_data
@@ -46,7 +69,12 @@ class Import::ImportSdf
   end
 
   def message
-    @message[:error].join("\n") + @message[:info].join("\n")
+    if @unprocessable_samples.empty?
+      @message[:error].join("\n") + @message[:info].join("\n")
+    else
+      result = " Following samples could not be imported #{@unprocessable_samples}"
+      @message[:error].join("\n") + @message[:info].join("\n") + result
+    end
   end
 
   def error_messages
@@ -87,7 +115,6 @@ class Import::ImportSdf
   def create_samples
     ids = []
     read_data if raw_data.empty? && rows.empty?
-
     if !raw_data.empty? && inchi_array.empty?
       ActiveRecord::Base.transaction do
         raw_data.each do |molfile|
@@ -102,7 +129,7 @@ class Import::ImportSdf
             created_by: current_user_id,
             molfile: molfile,
             molfile_version: babel_info[:molfile_version],
-            molecule_id: molecule.id
+            molecule_id: molecule.id,
           )
           sample.collections << Collection.find(collection_id)
           sample.collections << Collection.get_all_collection_for_user(current_user_id)
@@ -115,7 +142,7 @@ class Import::ImportSdf
         ActiveRecord::Base.transaction do
           attribs = Sample.attribute_names & @mapped_keys.keys
           error_messages = []
-          rows.each do |row|
+          rows.each_with_index do |row, i|
             next unless row
 
             error_columns = ''
@@ -140,26 +167,20 @@ class Import::ImportSdf
               molecule_name = molecule.create_molecule_name_by_user(row['molecule_name'], current_user_id)
               sample['molecule_name_id'] = molecule_name.id unless molecule_name.blank?
             end
-
-            mp = row['melting_point'].scan(/\d+(?:\.\d+)?/).map(&:to_f) if row['melting_point'].present?
-            sample['melting_point'] = Range.new(-Float::INFINITY, Float::INFINITY)
-            sample['melting_point'] = Range.new(mp[0], Float::INFINITY) if mp.present? && mp.length == 1
-            sample['melting_point'] = Range.new(mp[0], mp[1]) if mp.present? && mp.length == 2
-            bp = row['boiling_point'].scan(/\d+(?:\.\d+)?/).map(&:to_f) if row['boiling_point'].present?
-            sample['boiling_point']  = Range.new(-Float::INFINITY, Float::INFINITY)
-            sample['boiling_point']  = Range.new(bp[0], Float::INFINITY) if bp.present? && bp.length == 1
-            sample['boiling_point']  = Range.new(bp[0], bp[1]) if bp.present? && bp.length == 2
+            sample['melting_point'] = format_to_interval_syntax(row['melting_point']) if row['melting_point'].present?
+            sample['boiling_point'] = format_to_interval_syntax(row['boiling_point']) if row['boiling_point'].present?
+            sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
 
             sample['description'] = row['description'] if row['description'].present?
             sample['location'] = row['location'] if row['location'].present?
+            sample['external_label'] = row['external_label'] if row['external_label'].present?
+            sample['density'] = row['density'] if row['density'].present?
             sample['name'] = row['name'] if row['name'].present?
             sample['xref']['cas'] = row['cas'] if row['cas'].present?
-            sample['external_label'] = row['external_label'] if row['external_label'].present?
             sample['short_label'] = row['short_label'] if row['short_label'].present?
             sample['molarity_value'] = row['molarity']&.scan(/\d+\.*\d*/)[0] if row['molarity'].present?
             properties = process_molfile_opt_data(molfile)
             sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
-
             sample.target_amount_value = properties['TARGET_AMOUNT'] unless properties['TARGET_AMOUNT'].blank?
             sample.target_amount_unit = properties['TARGET_UNIT'] unless properties['TARGET_UNIT'].blank?
             if row['target_amount'].present? && row['target_amount_unit'].blank?
@@ -179,7 +200,6 @@ class Import::ImportSdf
                 error_columns += ' target amount, target amount unit ,'
               end
             end
-
             sample.real_amount_value = properties['REAL_AMOUNT'] unless properties['REAL_AMOUNT'].blank?
             sample.real_amount_unit = properties['REAL_UNIT'] unless properties['REAL_UNIT'].blank?
             if row['real_amount'].present? && row['real_amount_unit'].blank?
@@ -205,6 +225,11 @@ class Import::ImportSdf
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
             ids << sample.id
+          rescue StandardError => _e
+            @unprocessable_samples << (i + 1)
+          end
+          unless @unprocessable_samples.empty?
+            error_messages = "Following samples could not be imported #{@unprocessable_samples}."
           end
           @message[:error_messages] = error_messages if error_messages.present?
         end

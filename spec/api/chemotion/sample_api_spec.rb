@@ -31,9 +31,9 @@ describe Chemotion::SampleAPI do
             all: false,
             included_ids: [sample_1.id, sample_2.id],
             excluded_ids: [],
-            collection_id: collection.id
+            collection_id: collection.id,
           },
-          limit: limit
+          limit: limit,
         }
       end
 
@@ -49,8 +49,8 @@ describe Chemotion::SampleAPI do
             all: false,
             included_ids: [sample_1.id, sample_2.id],
             excluded_ids: [],
-            collection_id: collection.id
-          }
+            collection_id: collection.id,
+          },
         }
       end
 
@@ -70,10 +70,10 @@ describe Chemotion::SampleAPI do
           sample: {
             all: true,
             included_ids: [],
-            excluded_ids: []
+            excluded_ids: [],
           },
-          currentCollectionId: collection.id
-        }
+          currentCollectionId: collection.id,
+        },
       }
     end
 
@@ -96,18 +96,18 @@ describe Chemotion::SampleAPI do
       ]
       sample1_attributes = s1.attributes.except(*except_attr)
       subsample1_attributes = s3.attributes.except(*except_attr)
-      expect(sample1_attributes).to eq (subsample1_attributes)
+      expect(sample1_attributes).to eq(subsample1_attributes)
 
       expect(s3.name).to eq(s1.name)
       expect(s3.external_label).to eq(s1.external_label)
-      expect(s3.short_label).to eq(s1.short_label + '-' + s1.children.count.to_s)
+      expect(s3.short_label).to eq("#{s1.short_label}-#{s1.children.count}")
 
       sample2_attributes = s2.attributes.except(*except_attr)
       subsample2_attributes = s4.attributes.except(*except_attr)
-      expect(sample2_attributes).to eq (subsample2_attributes)
+      expect(sample2_attributes).to eq(subsample2_attributes)
       expect(s4.name).to eq(s2.name)
       expect(s4.external_label).to eq(s2.external_label)
-      expect(s4.short_label).to eq(s2.short_label + '-' + s2.children.count.to_s)
+      expect(s4.short_label).to eq("#{s2.short_label}-#{s2.children.count}")
 
       expect(s1.id).not_to eq(s3.id)
       expect(s2.id).not_to eq(s4.id)
@@ -129,8 +129,8 @@ describe Chemotion::SampleAPI do
         params: params,
         headers: {
           'HTTP_ACCEPT' => '*/*',
-          'CONTENT_TYPE' => 'multipart/form-data'
-        }
+          'CONTENT_TYPE' => 'multipart/form-data',
+        },
       )
     end
 
@@ -138,7 +138,8 @@ describe Chemotion::SampleAPI do
       let(:params) do
         {
           currentCollectionId: collection.id,
-          file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+          file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.xlsx'),
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
         }
       end
 
@@ -155,13 +156,13 @@ describe Chemotion::SampleAPI do
       let(:params) do
         {
           currentCollectionId: collection.id,
-          file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile')
+          file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile'),
         }
       end
 
       it 'is able to import new samples' do
         expect(
-          JSON.parse(response.body)['message']
+          JSON.parse(response.body)['message'],
         ).to eq "This file contains 2 Molecules.\n2 Molecules processed. "
 
         expect(JSON.parse(response.body)['sdf']).to be true
@@ -184,53 +185,53 @@ describe Chemotion::SampleAPI do
         {
           currentCollectionId: collection.id,
           mapped_keys: {
-            "description": %w[
+            description: %w[
               MOLECULE_NAME
               SAFETY_R_S
               SMILES_STEREO
             ],
-            "short_label": 'EMP_FORMULA_SHORT',
-            "target_amount": 'AMOUNT',
-            "real_amount": 'REAL_AMOUNT',
-            "density": 'DENSITY_20',
-            "decoupled": 'MOLECULE-LESS',
-            "molarity": 'MOLARITY',
-            "melting_point": 'melting_point',
-            "boiling_point": 'boiling_point',
-            "location": 'location',
-            "external_label": 'external_label',
-            "name": 'name'
+            short_label: 'EMP_FORMULA_SHORT',
+            target_amount: 'AMOUNT',
+            real_amount: 'REAL_AMOUNT',
+            density: 'DENSITY_20',
+            decoupled: 'MOLECULE-LESS',
+            molarity: 'MOLARITY',
+            melting_point: 'melting_point',
+            boiling_point: 'boiling_point',
+            location: 'location',
+            external_label: 'external_label',
+            name: 'name',
           },
           rows: [{
-            "inchikey": 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            "molfile": File.read(Rails.root.join('spec', 'fixtures', 'mf_with_data_01.sdf')),
-            "description": "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
-            "short_label": 'C9H12ClNO2',
-            "target_amount": '10 g /  g',
-            "real_amount": '15mg/mg',
-            "density": '30',
-            "decoupled": 'f',
-            "molarity": '900',
-            "melting_point": '[900.0,)',
-            "boiling_point": '[900.0,1500.0)',
-            "location": 'location',
-            "external_label": 'external_label',
-            "name": 'name'
-          }]
+            inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
+            molfile: Rails.root.join('spec', 'fixtures', 'mf_with_data_01.sdf').read,
+            description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
+            short_label: 'C9H12ClNO2',
+            target_amount: '10 g /  g',
+            real_amount: '15mg/mg',
+            density: '30',
+            decoupled: 'f',
+            molarity: '900',
+            melting_point: '900.0',
+            boiling_point: '900.0-1500.0',
+            location: 'location',
+            external_label: 'external_label',
+            name: 'name',
+          }],
         }
       end
 
       it 'is able to create samples from an array of inchikeys' do
         expect(
-          JSON.parse(response.body)['message']
+          JSON.parse(response.body)['message'],
         ).to eq "This file contains 1 Molecules.\nCreated 1 sample. \nImport successful! "
 
         expect(
-          JSON.parse(response.body)['sdf']
+          JSON.parse(response.body)['sdf'],
         ).to be true
 
         expect(
-          JSON.parse(response.body)['status']
+          JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
         collection_sample = CollectionsSample.where(collection_id: collection.id)
@@ -260,47 +261,47 @@ describe Chemotion::SampleAPI do
         {
           currentCollectionId: collection.id,
           mapped_keys: {
-            "description": %w[
+            description: %w[
               MOLECULE_NAME
               SAFETY_R_S
               SMILES_STEREO
             ],
-            "short_label": 'EMP_FORMULA_SHORT',
-            "target_amount": 'AMOUNT',
-            "real_amount": 'REAL_AMOUNT',
-            "density": 'DENSITY_20',
-            "decoupled": 'MOLECULE-LESS'
+            short_label: 'EMP_FORMULA_SHORT',
+            target_amount: 'AMOUNT',
+            real_amount: 'REAL_AMOUNT',
+            density: 'DENSITY_20',
+            decoupled: 'MOLECULE-LESS',
           },
           rows: [{
-            "inchikey": 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            "molfile": File.read(Rails.root.join('spec', 'fixtures', 'mf_with_data_01.sdf')),
-            "description": "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
-            "short_label": 'C9H12ClNO2',
-            "target_amount": 'Test data',
-            "real_amount": 'Test',
-            "density": 'Test',
-            "decoupled": 'f',
-            "molarity": '900sdadsad',
-            "melting_point": 'test900',
-            "boiling_point": 'test1000',
-            "location": 'location',
-            "external_label": 'external_label',
-            "name": 'name'
-          }]
+            inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
+            molfile: Rails.root.join('spec', 'fixtures', 'mf_with_data_01.sdf').read,
+            description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
+            short_label: 'C9H12ClNO2',
+            target_amount: 'Test data',
+            real_amount: 'Test',
+            density: 'Test',
+            decoupled: 'f',
+            molarity: '900sdadsad',
+            melting_point: '900',
+            boiling_point: '1000',
+            location: 'location',
+            external_label: 'external_label',
+            name: 'name',
+          }],
         }
       end
 
       it 'is able to import new samples' do
         expect(
-          JSON.parse(response.body)['message']
+          JSON.parse(response.body)['message'],
         ).to eq "This file contains 1 Molecules.\nCreated 1 sample. \nImport successful! "
 
         expect(
-          JSON.parse(response.body)['sdf']
+          JSON.parse(response.body)['sdf'],
         ).to be true
 
         expect(
-          JSON.parse(response.body)['status']
+          JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
         collection_sample = CollectionsSample.where(collection_id: collection.id)
@@ -338,20 +339,20 @@ describe Chemotion::SampleAPI do
         expect(first_sample).to include(
           id: sample.id,
           name: sample.name,
-          type: 'sample'
+          type: 'sample',
         )
         expect(
-          first_sample[:tag]['taggable_data']['collection_labels']
+          first_sample[:tag]['taggable_data']['collection_labels'],
         ).to include(
           'name' => personal_collection.label,
           'is_shared' => false,
           'id' => personal_collection.id,
           'user_id' => user.id,
           'shared_by_id' => personal_collection.shared_by_id,
-          'is_synchronized' => personal_collection.is_synchronized
+          'is_synchronized' => personal_collection.is_synchronized,
         )
         expect(
-          first_sample[:tag]['taggable_data']['analyses']
+          first_sample[:tag]['taggable_data']['analyses'],
         ).to include('confirmed' => { 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' => 1 })
       end
     end
@@ -362,7 +363,7 @@ describe Chemotion::SampleAPI do
 
       it 'returns samples in the right order' do
         get '/api/v1/samples', params: { molecule_sort: 1 }
-        expect(JSON.parse(response.body)['samples'].map { |x| x['id'] }).to eq([sample.id, sample2.id])
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to eq([sample.id, sample2.id])
       end
     end
 
@@ -372,7 +373,7 @@ describe Chemotion::SampleAPI do
 
       it 'returns samples in the right order' do
         get '/api/v1/samples', params: { molecule_sort: 0 }
-        expect(JSON.parse(response.body)['samples'].map { |x| x['id'] }).to eq([sample2.id, sample.id])
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to eq([sample2.id, sample.id])
       end
     end
 
@@ -443,7 +444,7 @@ describe Chemotion::SampleAPI do
       end
 
       it 'returns 200 status code' do
-        expect(response.status).to eq 200
+        expect(response).to have_http_status :ok
       end
 
       it 'returns serialized sample' do
@@ -451,8 +452,8 @@ describe Chemotion::SampleAPI do
       end
 
       it 'returns correct can_publish & can_update' do
-        expect(JSON.parse(response.body)['sample']['can_update']).to eq true
-        expect(JSON.parse(response.body)['sample']['can_publish']).to eq true
+        expect(JSON.parse(response.body)['sample']['can_update']).to be true
+        expect(JSON.parse(response.body)['sample']['can_publish']).to be true
       end
     end
 
@@ -468,8 +469,8 @@ describe Chemotion::SampleAPI do
         let(:permission_level) { 0 }
 
         it 'returns correct can_publish & can_update' do
-          expect(JSON.parse(response.body)['sample']['can_update']).to eq false
-          expect(JSON.parse(response.body)['sample']['can_publish']).to eq false
+          expect(JSON.parse(response.body)['sample']['can_update']).to be false
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
         end
       end
 
@@ -477,8 +478,8 @@ describe Chemotion::SampleAPI do
         let(:permission_level) { 1 }
 
         it 'returns correct can_publish & can_update' do
-          expect(JSON.parse(response.body)['sample']['can_update']).to eq true
-          expect(JSON.parse(response.body)['sample']['can_publish']).to eq false
+          expect(JSON.parse(response.body)['sample']['can_update']).to be true
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
         end
       end
 
@@ -486,8 +487,8 @@ describe Chemotion::SampleAPI do
         let(:permission_level) { 3 }
 
         it 'returns correct can_publish & can_update' do
-          expect(JSON.parse(response.body)['sample']['can_update']).to eq true
-          expect(JSON.parse(response.body)['sample']['can_publish']).to eq true
+          expect(JSON.parse(response.body)['sample']['can_update']).to be true
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be true
         end
       end
     end
@@ -497,7 +498,7 @@ describe Chemotion::SampleAPI do
 
       it 'returns 401 unauthorized status code' do
         get "/api/v1/samples/#{sample.id}"
-        expect(response.status).to eq 401
+        expect(response).to have_http_status :unauthorized
       end
     end
   end
@@ -508,7 +509,7 @@ describe Chemotion::SampleAPI do
     let(:expected_response) do
       {
         'sample_id' => sample.id,
-        'collection_id' => collection.id
+        'collection_id' => collection.id,
       }
     end
 
@@ -553,12 +554,12 @@ describe Chemotion::SampleAPI do
             children: [],
             is_new: true,
             is_deleted: false,
-            name: 'new'
+            name: 'new',
           },
           boiling_point_upperbound: 100.0,
           boiling_point_lowerbound: nil,
           melting_point_upperbound: 121.5,
-          melting_point_lowerbound: nil
+          melting_point_lowerbound: nil,
         }
       end
 
@@ -573,7 +574,7 @@ describe Chemotion::SampleAPI do
         let(:sample) { s1 }
 
         it 'returns 200 status code' do
-          expect(response.status).to eq 200
+          expect(response).to have_http_status :ok
         end
 
         it 'updates sample' do
@@ -588,7 +589,7 @@ describe Chemotion::SampleAPI do
         let(:sample) { s2 }
 
         it 'returns 200 status code' do
-          expect(response.status).to eq 200
+          expect(response).to have_http_status :ok
         end
 
         it 'updates sample' do
@@ -613,7 +614,7 @@ describe Chemotion::SampleAPI do
           solvent: '',
           location: '',
           molfile: '',
-          is_top_secret: false
+          is_top_secret: false,
         }
       end
 
@@ -621,7 +622,7 @@ describe Chemotion::SampleAPI do
         CollectionsSample.create!(sample: sample, collection: other_user_collection)
 
         put "/api/v1/samples/#{sample.id}", params: params
-        expect(response.status).to eq 401
+        expect(response).to have_http_status :unauthorized
       end
     end
   end
@@ -645,7 +646,7 @@ describe Chemotion::SampleAPI do
         boiling_point_lowerbound: 100,
         melting_point_upperbound: 200,
         melting_point_lowerbound: 200,
-        molfile: File.read(Rails.root + 'spec/fixtures/test_2.mol'),
+        molfile: File.read("#{Rails.root}/spec/fixtures/test_2.mol"),
         is_top_secret: false,
         xref: { 'cas' => cas },
         container: {
@@ -653,9 +654,9 @@ describe Chemotion::SampleAPI do
           children: [],
           is_new: true,
           is_deleted: false,
-          name: 'new'
+          name: 'new',
         },
-        collection_id: user.collections[1][:id]
+        collection_id: user.collections[1][:id],
       }
     end
 
@@ -675,7 +676,9 @@ describe Chemotion::SampleAPI do
         expect(s.attributes.symbolize_keys[:boiling_point].last).to eq(v) if k.to_s == 'boiling_point_lowerbound'
         expect(s.attributes.symbolize_keys[:melting_point].first).to eq(v) if k.to_s == 'melting_point_upperbound'
         expect(s.attributes.symbolize_keys[:melting_point].last).to eq(v) if k.to_s == 'melting_point_lowerbound'
-        expect(s.attributes.symbolize_keys[k]).to eq(v) unless k.to_s.include?('bound') || k.to_s.include?('collection_id')
+        unless k.to_s.include?('bound') || k.to_s.include?('collection_id')
+          expect(s.attributes.symbolize_keys[k]).to eq(v)
+        end
       end
 
       expect(s.attributes.symbolize_keys[:solvent]).to eq([])
@@ -703,7 +706,7 @@ describe Chemotion::SampleAPI do
           solvent: '',
           location: '',
           molfile: '',
-          is_top_secret: false
+          is_top_secret: false,
         }
       end
 
@@ -727,7 +730,7 @@ describe Chemotion::SampleAPI do
         {
           all: false,
           included_ids: [sample_1.id, sample_2.id],
-          excluded_ids: []
+          excluded_ids: [],
         }
       end
 
@@ -735,7 +738,7 @@ describe Chemotion::SampleAPI do
         {
           all: true,
           included_ids: [],
-          excluded_ids: [sample_3.id]
+          excluded_ids: [sample_3.id],
         }
       end
 
@@ -823,16 +826,14 @@ describe Chemotion::SampleAPI do
         :attachment,
         storage: 'tmp', key: '8580a8d0-4b83-11e7-afc4-85a98b9d0194',
         filename: 'upload.jpg',
-        file_path: File.join(Rails.root, 'spec/fixtures/upload.jpg'),
+        file_path: Rails.root.join('spec/fixtures/upload.jpg'),
         created_by: u1.id, created_for: u1.id
       )
     end
 
     let(:sample_upd_1_params) do
       JSON.parse(
-        IO.read(File.join(
-                  Rails.root, 'spec', 'fixtures', 'sample_update_1_params.json'
-                ))
+        Rails.root.join('spec', 'fixtures', 'sample_update_1_params.json').read,
       ).deep_symbolize_keys
     end
 
@@ -865,13 +866,12 @@ describe Chemotion::SampleAPI do
             attachment.attachable = nil
             attachment.save!
             put("/api/v1/samples/#{s1.id}.json",
-              params: sample_upd_1_params.to_json,
-              headers: { 'CONTENT_TYPE' => 'application/json' }
-            )
+                params: sample_upd_1_params.to_json,
+                headers: { 'CONTENT_TYPE' => 'application/json' })
           end
 
           it 'returns 200 status code' do
-            expect(response.status).to eq 200
+            expect(response).to have_http_status :ok
           end
 
           it 'has updated the analysis description' do
@@ -887,13 +887,13 @@ describe Chemotion::SampleAPI do
           it 'has created an attachment for the new dataset' do
             expect(Attachment.count).to eq(1)
             expect(
-              s1.analyses.first.children.first.attachments.first
+              s1.analyses.first.children.first.attachments.first,
             ).to eq(attachment)
           end
 
           it 'has stored the file' do
             expect(
-              File.exist?(s1.analyses.first.children.first.attachments.first.abs_path)
+              File.exist?(s1.analyses.first.children.first.attachments.first.abs_path),
             ).to be true
           end
         end
@@ -918,22 +918,21 @@ describe Chemotion::SampleAPI do
             # sample_upd_1_params[:container][:children][0][:children][0][:id] =
             #  s2.container.children[0].children[0].id
             put("/api/v1/samples/#{s1.id}.json",
-              params: sample_upd_1_params.to_json,
-              headers: { 'CONTENT_TYPE' => 'application/json' }
-            )
+                params: sample_upd_1_params.to_json,
+                headers: { 'CONTENT_TYPE' => 'application/json' })
           end
 
           it 'returns 200 status code' do
-            expect(response.status).to eq 200
+            expect(response).to have_http_status :ok
           end
+
           it 'has not created a dataset for the corresponding analysis' do
             expect(cont_s2_analysis.children.count).to eq(1)
             expect do
               put("/api/v1/samples/#{s1.id}.json",
-                params: sample_upd_1_params.to_json,
-                headers: { 'CONTENT_TYPE' => 'application/json' }
-              )
-            end.to change { s2.analyses.first.children.count }.by 0
+                  params: sample_upd_1_params.to_json,
+                  headers: { 'CONTENT_TYPE' => 'application/json' })
+            end.not_to change { s2.analyses.first.children.count }
           end
         end
       end
