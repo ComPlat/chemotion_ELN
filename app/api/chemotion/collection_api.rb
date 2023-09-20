@@ -408,10 +408,10 @@ module Chemotion
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
-            element_klass = element.classify.constantize
-            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.remove_in_collection(ids, from_collection.id)
+            classes = create_classes_of_element(element)
+
+            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            classes[1].remove_in_collection(ids, from_collection.id)
           end
 
           klasses = ElementKlass.find_each do |klass|
