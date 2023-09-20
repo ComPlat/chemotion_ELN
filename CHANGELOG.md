@@ -1,5 +1,15 @@
 # Chemotion_ELN Changelog
 
+## [v1.8.0-rc1]
+> (2023-09-20)
+
+* Features and Improvements:
+  * Enhance import samples for sdf [#1364](https://github.com/ComPlat/chemotion_ELN/pull/1364)
+  * Move sample task inbox to header bar [#1517](https://github.com/ComPlat/chemotion_ELN/pull/1517)
+  * filter options for admin user management [#1510](https://github.com/ComPlat/chemotion_ELN/pull/1510)
+  * Reaction Variations [#1409](https://github.com/ComPlat/chemotion_ELN/pull/1409)
+  * LabiIMotion Integration [#1504](https://github.com/ComPlat/chemotion_ELN/pull/1504)
+
 ## [v1.7.3] 
 > (2023-09-20)
 
