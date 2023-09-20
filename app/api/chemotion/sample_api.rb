@@ -74,36 +74,19 @@ module Chemotion
           # Create a temp file in the tmp folder and sdf delayed job, and pass it to sdf delayed job
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(sdf?|mol)/i)
-            sdf_import = Import::ImportSdf.new(file_path: params[:file][:tempfile].path,
+            sdf_import = Import::ImportSdf.new(
+              file_path: params[:file][:tempfile].path,
               collection_id: params[:currentCollectionId],
-              mapped_keys: {
-                description: {field: "description", displayName: "Description", multiple: true},
-                location: {field: "location", displayName: "Location"},
-                name: {field: "name", displayName: "Name"},
-                external_label: {field: "external_label", displayName: "External label"},
-                purity: {field: "purity", displayName: "Purity"},
-
-                molecule_name: { field: 'molecule_name', displayName: 'Molecule Name' },
-                short_label: { field: 'short_label', displayName: 'Short Label' },
-                real_amount: { field: 'real_amount', displayName: 'Real Amount' },
-                real_amount_unit: { field: 'real_amount_unit', displayName: 'Real Amount Unit' },
-                target_amount: { field: 'target_amount', displayName: 'Target Amount' },
-                target_amount_unit: { field: 'target_amount_unit', displayName: 'Target Amount Unit' },
-                molarity: { field: 'molarity', displayName: 'Molarity' },
-                density: { field: 'density', displayName: 'Density' },
-                melting_point: { field: 'melting_point', displayName: 'Melting Point' },
-                boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
-                cas: { field: 'cas', displayName: 'Cas' },
-              },
-              current_user_id: current_user.id)
+              current_user_id: current_user.id,
+            )
             sdf_import.find_or_create_mol_by_batch
             return {
-               sdf: true, message: sdf_import.message,
-               data: sdf_import.processed_mol, status: sdf_import.status,
-               custom_data_keys: sdf_import.custom_data_keys.keys,
-               mapped_keys: sdf_import.mapped_keys,
-               collection_id: sdf_import.collection_id
-             }
+              sdf: true, message: sdf_import.message,
+              data: sdf_import.processed_mol, status: sdf_import.status,
+              custom_data_keys: sdf_import.custom_data_keys.keys,
+              mapped_keys: sdf_import.mapped_keys,
+              collection_id: sdf_import.collection_id
+            }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
           file_size = params[:file][:tempfile].size
@@ -127,21 +110,22 @@ module Chemotion
             tmp_file_path = File.join('tmp', temp_filename)
             # Write the contents of the uploaded file to the temporary file
             File.binwrite(tmp_file_path, file[:tempfile].read)
-            ImportSamplesJob.perform_later(
-              tmp_file_path,
-              params[:currentCollectionId],
-              current_user.id,
-              file['filename'],
-            )
+            parameters = {
+              collection_id: params[:currentCollectionId],
+              user_id: current_user.id,
+              file_name: file['filename'],
+              file_path: tmp_file_path,
+            }
+            ImportSamplesJob.perform_later(parameters)
             { status: 'in progress', message: 'Importing samples in background' }
           end
         end
       end
 
       namespace :confirm_import do
-        desc "Create Samples from an Array of inchikeys"
+        desc 'Create Samples from an Array of inchikeys'
         params do
-          requires :rows, type: Array, desc: "Selected Molecule from the UI"
+          requires :rows, type: Array, desc: 'Selected Molecule from the UI'
           requires :currentCollectionId, type: Integer
           requires :mapped_keys, type: Hash
         end
@@ -151,17 +135,33 @@ module Chemotion
         end
 
         post do
-          sdf_import = Import::ImportSdf.new(
-            collection_id: params[:currentCollectionId],
-            current_user_id: current_user.id,
-            rows: params[:rows],
-            mapped_keys: params[:mapped_keys]
-          )
-
-          sdf_import.create_samples
-          return {
-            sdf: true, message: sdf_import.message, status: sdf_import.status, error_messages: sdf_import.error_messages
-          }
+          rows = params[:rows]
+          if rows.length < 25
+            sdf_import = Import::ImportSdf.new(
+              collection_id: params[:currentCollectionId],
+              current_user_id: current_user.id,
+              rows: rows,
+              mapped_keys: params[:mapped_keys],
+            )
+            sdf_import.create_samples
+            return {
+              sdf: true, message: sdf_import.message,
+              status: sdf_import.status,
+              error_messages: sdf_import.error_messages
+            }
+          else
+            parameters = {
+              collection_id: params[:currentCollectionId],
+              user_id: current_user.id,
+              file_name: 'dummy.sdf',
+              sdf_rows: rows,
+              mapped_keys: params[:mapped_keys],
+            }
+            ImportSamplesJob.perform_later(parameters)
+            return {
+              message: 'importing samples in background',
+            }
+          end
         end
       end
 
