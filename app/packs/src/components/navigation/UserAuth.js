@@ -692,6 +692,7 @@ export default class UserAuth extends Component {
               My Devices
             </MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
+            <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
           </NavDropdown>
           <NavItem
             onClick={() => this.logout()}

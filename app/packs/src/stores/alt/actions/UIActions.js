@@ -130,6 +130,9 @@ class UIActions {
   setProductOnly(bool) {
     return bool;
   }
+
+  rerenderGenericWorkflow(params) { return params; }
+  showGenericWorkflowModal(show) { return show; }
 }
 
 export default alt.createActions(UIActions);

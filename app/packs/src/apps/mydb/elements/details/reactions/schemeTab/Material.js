@@ -500,7 +500,7 @@ class Material extends Component {
         <td>
           <OverlayTrigger
             delay="100"
-            placement="top" 
+            placement="top"
             overlay={
               <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material,reaction)}</Tooltip>
             }>

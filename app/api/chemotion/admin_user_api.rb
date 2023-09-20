@@ -101,6 +101,11 @@ module Chemotion
           optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
           optional :converter_admin, type: Boolean, desc: 'converter profile'
           optional :account_active, type: Boolean, desc: 'active or inactive this user'
+          optional :auth_generic_admin, type: Hash do
+            optional :elements, type: Boolean, desc: 'un-authorize the user as generic elements admin'
+            optional :segments, type: Boolean, desc: 'un-authorize the user as generic segments admin'
+            optional :datasets, type: Boolean, desc: 'un-authorize the user as generic datasets admin'
+          end
         end
 
         post do
@@ -159,6 +164,12 @@ module Chemotion
           end
 
           user.update!(account_active: params[:account_active]) unless params[:account_active].nil?
+          if params[:auth_generic_admin].present?
+            profile = user.profile
+            pdata = profile.data || {}
+            data = pdata.deep_merge('generic_admin' => params[:auth_generic_admin])
+            profile.update!(data: data)
+          end
 
           present user, with: Entities::UserEntity
         end

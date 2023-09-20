@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :element do
-    name { "New element #{Element.count + 1}" }
-    element_klass { ElementKlass.first || create(:element_klass) }
+  factory :element, class: 'Labimotion::Element' do
+    name { "New element #{Labimotion::Element.count + 1}" }
+    element_klass { FactoryBot.build(:element_klass) }
     short_label { 'label' }
     properties { element_klass.properties_release }
-    creator { User.first || create(:user) }
     uuid { SecureRandom.uuid }
     klass_uuid { element_klass.uuid }
+    callback(:before_create) do |element|
+      element.creator = FactoryBot.build(:user) if element.creator.blank?
+      element.collections << FactoryBot.build(:collection)
+      element.container = FactoryBot.create(:container, :with_analysis) if element.container.blank?
+    end
   end
 end
+

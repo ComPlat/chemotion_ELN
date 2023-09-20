@@ -51,7 +51,7 @@ module Usecases
           eventable: [
             Sample.joins(:collections).where(collections: { id: collection_ids }),
             Reaction.joins(:collections).where(collections: { id: collection_ids }),
-            Element.joins(:collections).where(collections: { id: collection_ids }),
+            Labimotion::Element.joins(:collections).where(collections: { id: collection_ids }),
             Wellplate.joins(:collections).where(collections: { id: collection_ids }),
             ResearchPlan.joins(:collections).where(collections: { id: collection_ids }),
             Screen.joins(:collections).where(collections: { id: collection_ids }),
@@ -67,7 +67,7 @@ module Usecases
           entry_ids_grouped_by_type.each do |type, ids|
             next if type.nil?
 
-            elements[type] = if type == 'Element'
+            elements[type] = if type == 'Labimotion::Element'
                                type.constantize.where(id: ids).includes(:element_klass, :collections).index_by(&:id)
                              else
                                type.constantize.where(id: ids).includes(:collections).index_by(&:id)
@@ -92,7 +92,7 @@ module Usecases
           element = elements.dig(entry.eventable_type, entry.eventable_id)
 
           entry.instance_variable_set(:@element, element)
-          entry.instance_variable_set(:@element_klass, element&.element_klass) if entry.eventable_type == 'Element'
+          entry.instance_variable_set(:@element_klass, element&.element_klass) if entry.eventable_type == 'Labimotion::Element'
           entry.instance_variable_set(:@accessible, (collection_ids & (element&.collection_ids || [])).any?)
           entry.instance_variable_set(:@notified_users, entry.notified_users)
         end

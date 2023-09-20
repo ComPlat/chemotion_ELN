@@ -35,7 +35,7 @@ module Entities
       expose! :rinchi_short_key
       expose! :rinchi_web_key
       expose! :rxno
-      expose! :segments,              anonymize_with: [],                               using: 'Entities::SegmentEntity'
+      expose! :segments,              anonymize_with: [],                               using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_06_13_063121) do
+ActiveRecord::Schema.define(version: 2023_08_10_100000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -70,6 +70,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "aasm_state"
     t.bigint "filesize"
     t.jsonb "attachment_data"
+    t.integer "con_state"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -78,8 +79,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "token", null: false
     t.integer "user_id"
     t.inet "ip"
-    t.string "role"
     t.string "fqdn"
+    t.string "role"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["user_id"], name: "index_authentication_keys_on_user_id"
@@ -162,8 +163,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
   create_table "collections_elements", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "element_id"
-    t.string "element_type"
     t.datetime "deleted_at"
+    t.string "element_type"
     t.index ["collection_id"], name: "index_collections_elements_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_elements_on_deleted_at"
     t.index ["element_id", "collection_id"], name: "index_collections_elements_on_element_id_and_collection_id", unique: true
@@ -223,13 +224,13 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "content"
     t.integer "created_by", null: false
     t.string "section"
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "status", default: "Pending"
-    t.string "submitter"
-    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
@@ -294,6 +295,14 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
+    t.string "identifier"
+    t.datetime "sync_time"
+    t.integer "updated_by"
+    t.integer "released_by"
+    t.integer "sync_by"
+    t.jsonb "admin_ids", default: {}
+    t.jsonb "user_ids", default: {}
+    t.string "version"
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -306,6 +315,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "version"
     t.index ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id"
   end
 
@@ -319,6 +329,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "uuid"
     t.string "klass_uuid"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
   end
 
   create_table "datasets_revisions", id: :serial, force: :cascade do |t|
@@ -330,6 +341,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
     t.index ["dataset_id"], name: "index_datasets_revisions_on_dataset_id"
   end
 
@@ -382,18 +394,26 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "label"
     t.string "desc"
     t.string "icon_name"
-    t.boolean "is_active", default: true, null: false
-    t.string "klass_prefix", default: "E", null: false
-    t.boolean "is_generic", default: true, null: false
-    t.integer "place", default: 100, null: false
     t.jsonb "properties_template"
     t.integer "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.boolean "is_active", default: true, null: false
+    t.string "klass_prefix", default: "E", null: false
+    t.boolean "is_generic", default: true, null: false
+    t.integer "place", default: 100, null: false
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
+    t.string "identifier"
+    t.datetime "sync_time"
+    t.integer "updated_by"
+    t.integer "released_by"
+    t.integer "sync_by"
+    t.jsonb "admin_ids", default: {}
+    t.jsonb "user_ids", default: {}
+    t.string "version"
   end
 
   create_table "element_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -406,6 +426,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "version"
     t.index ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id"
   end
 
@@ -431,14 +452,26 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
   create_table "elements", id: :serial, force: :cascade do |t|
     t.string "name"
     t.integer "element_klass_id"
-    t.string "short_label"
     t.jsonb "properties"
     t.integer "created_by"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "short_label"
     t.string "uuid"
     t.string "klass_uuid"
+    t.jsonb "properties_release"
+  end
+
+  create_table "elements_elements", force: :cascade do |t|
+    t.integer "element_id"
+    t.integer "parent_id"
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["element_id"], name: "index_elements_elements_on_element_id"
+    t.index ["parent_id"], name: "index_elements_elements_on_parent_id"
   end
 
   create_table "elements_revisions", id: :serial, force: :cascade do |t|
@@ -451,6 +484,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
     t.index ["element_id"], name: "index_elements_revisions_on_element_id"
   end
 
@@ -750,16 +784,16 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
     t.text "content"
-    t.string "searchable_type"
     t.integer "searchable_id"
+    t.string "searchable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
   create_table "predictions", id: :serial, force: :cascade do |t|
-    t.string "predictable_type"
     t.integer "predictable_id"
+    t.string "predictable_type"
     t.jsonb "decision", default: {}, null: false
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -869,7 +903,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "updated_at", null: false
     t.string "template", default: "standard"
     t.text "mol_serials", default: "--- []\n"
-    t.text "si_reaction_settings", default: "---\nName: true\nCAS: true\nFormula: true\nSmiles: true\nInCHI: true\nMolecular Mass: true\nExact Mass: true\nEA: true\n"
+    t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
     t.text "prd_atts", default: "--- []\n"
     t.integer "report_templates_id"
     t.index ["author_id"], name: "index_reports_on_author_id"
@@ -945,8 +979,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.bigint "screen_id", null: false
-    t.bigint "research_plan_id", null: false
+    t.integer "screen_id"
+    t.integer "research_plan_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -955,8 +989,8 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.bigint "research_plan_id", null: false
-    t.bigint "wellplate_id", null: false
+    t.integer "research_plan_id"
+    t.integer "wellplate_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1021,6 +1055,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.integer "molecule_name_id"
     t.string "molfile_version", limit: 20
     t.jsonb "stereo"
+    t.string "mol_rdkit"
     t.string "metrics", default: "mmm"
     t.boolean "decoupled", default: false, null: false
     t.float "molecular_mass"
@@ -1092,6 +1127,14 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
+    t.string "identifier"
+    t.datetime "sync_time"
+    t.integer "updated_by"
+    t.integer "released_by"
+    t.integer "sync_by"
+    t.jsonb "admin_ids", default: {}
+    t.jsonb "user_ids", default: {}
+    t.string "version"
   end
 
   create_table "segment_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -1104,6 +1147,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "version"
     t.index ["segment_klass_id"], name: "index_segment_klasses_revisions_on_segment_klass_id"
   end
 
@@ -1118,6 +1162,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "deleted_at"
     t.string "uuid"
     t.string "klass_uuid"
+    t.jsonb "properties_release"
   end
 
   create_table "segments_revisions", id: :serial, force: :cascade do |t|
@@ -1129,6 +1174,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
     t.index ["segment_id"], name: "index_segments_revisions_on_segment_id"
   end
 
@@ -1217,11 +1263,11 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
     t.string "name_abbreviation", limit: 12
     t.string "type", default: "Person"
     t.string "reaction_name_prefix", limit: 3, default: "R"
+    t.hstore "layout", default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.hstore "layout", default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer "selected_device_id"
     t.integer "failed_attempts", default: 0, null: false
     t.string "unlock_token"
@@ -1289,115 +1335,53 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
-  create_function :user_instrument, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-         select distinct extended_metadata -> 'instrument' as instrument from containers c
-         where c.container_type='dataset' and c.id in
-         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-         order by extended_metadata -> 'instrument' limit 10
-       $function$
-  SQL
   create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
        LANGUAGE sql
       AS $function$
-       select array_to_json(array_agg(row_to_json(result))) from (
-       SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
-       sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
-       FROM sync_collections_users
-       INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
-       WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
-       group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
-       ) as result
-       $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-          select $1 as id
-          union
-          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-         and users.type in ('Group') and users_groups.user_id = $1)
-        $function$
-  SQL
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-         select row_to_json(result) from (
-           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           from users where id = $1
-         ) as result
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-         begin
-          if (in_user_id = in_current_user_id) then
-            return null;
-          else
-            return (select row_to_json(result) from (
-            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-            from users where id = $1
-            ) as result);
-          end if;
-          end;
-       $function$
+           select array_to_json(array_agg(row_to_json(result))) from (
+           SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
+           sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
+           FROM sync_collections_users
+           INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
+           WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
+           group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
+           ) as result
+           $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
        LANGUAGE plpgsql
       AS $function$
-      declare
-        i_detail_level_wellplate integer default 0;
-        i_detail_level_sample integer default 0;
-      begin
-        select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
-        into i_detail_level_sample, i_detail_level_wellplate
-        from
-        (
-          select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
-            from v_samples_collections v_sams_cols
-            where v_sams_cols.sams_id = in_sample_id
-            and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
-          union
-          select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
-            from sync_collections_users sync_cols
-            inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
-            where sync_cols.collection_id in
-            (
-              select v_sams_cols.cols_id
-              from v_samples_collections v_sams_cols
-              where v_sams_cols.sams_id = in_sample_id
-            )
-            and sync_cols.user_id in (select user_ids(in_user_id))
-        ) all_cols;
-          return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
-      end;$function$
-  SQL
-  create_function :group_user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
+          declare
+          	i_detail_level_wellplate integer default 0;
+          	i_detail_level_sample integer default 0;
+          begin
+          	select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
+          	into i_detail_level_sample, i_detail_level_wellplate
+          	from
+          	(
+          		select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
+          			from v_samples_collections v_sams_cols
+          			where v_sams_cols.sams_id = in_sample_id
+          			and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
+          		union
+          		select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
+          			from sync_collections_users sync_cols
+          			inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
+          			where sync_cols.collection_id in
+          			(
+          				select v_sams_cols.cols_id
+          				from v_samples_collections v_sams_cols
+          				where v_sams_cols.sams_id = in_sample_id
+          			)
+          			and sync_cols.user_id in (select user_ids(in_user_id))
+          	) all_cols;
+
+              return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
+          end;$function$
   SQL
   create_function :generate_notifications, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
@@ -1411,6 +1395,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
+
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1428,21 +1413,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       	end case;
       	return in_message_id;
       end;$function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
   SQL
   create_function :generate_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
@@ -1479,6 +1449,58 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       end
       $function$
   SQL
+  create_function :group_user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
+  SQL
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
+         and l.element_type = $1 and l.element_id = $2
+       $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+             begin
+             	if (in_user_id = in_current_user_id) then
+             		return null;
+             	else
+             		return (select row_to_json(result) from (
+             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+             		from users where id = $1
+             		) as result);
+             	end if;
+              end;
+           $function$
+  SQL
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1488,6 +1510,7 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
+
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
@@ -1501,15 +1524,41 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       end
       $function$
   SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
+  create_function :user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
-         and l.element_type = $1 and l.element_id = $2
-       $function$
+             select row_to_json(result) from (
+            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           	   from users where id = $1
+         	   ) as result
+           $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select $1 as id
+             union
+             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+             and users.type in ('Group') and users_groups.user_id = $1)
+           $function$
+  SQL
+  create_function :user_instrument, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+             select distinct extended_metadata -> 'instrument' as instrument from containers c
+             where c.container_type='dataset' and c.id in
+             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+             order by extended_metadata -> 'instrument' limit 10
+           $function$
   SQL
 
 
@@ -1517,20 +1566,6 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
 
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
-  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
@@ -1573,5 +1608,19 @@ ActiveRecord::Schema.define(version: 2023_06_13_063121) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
+  SQL
+  create_view "v_samples_collections", sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
   SQL
 end

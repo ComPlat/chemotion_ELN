@@ -243,7 +243,7 @@ export default class StructureEditorModal extends React.Component {
         <MarvinjsEditor editor={this.editors.marvinjs} molfile={molfile} parent={this} iH={iframeHeight} />;
       citeMarvin = (
         <a href="https://chemaxon.com/" target="_blank" rel="noreferrer">
-          <img alt="Marvin JS" src="/marvinjs/powered_by_chemaxon.png" style={{ width: '256px', cursor: 'pointer' }} />
+          <img alt="Marvin JS" src="/editors/marvinjs/powered_by_chemaxon.png" style={{ width: '256px', cursor: 'pointer' }} />
         </a>
       );
     }

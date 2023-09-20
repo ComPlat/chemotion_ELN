@@ -314,6 +314,10 @@ class User < ApplicationRecord
     profile&.data&.fetch('molecule_editor', false)
   end
 
+  def generic_admin
+    profile&.data&.fetch('generic_admin', {})
+  end
+
   def converter_admin
     profile&.data&.fetch('converter_admin', false)
   end
@@ -375,7 +379,7 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(provider, uid, email, first_name, last_name)
-    user = find_by(email: email)
+    user = find_by(email: email&.downcase)
     if user.present?
       providers = user.providers || {}
       providers[provider] = uid
