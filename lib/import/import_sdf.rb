@@ -49,6 +49,7 @@ class Import::ImportSdf < Import::ImportSamples
       boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
       cas: { field: 'cas', displayName: 'Cas' },
       solvent: { field: 'solvent', displayName: 'Solvent' },
+      dry_solvent: { field: 'dry_solvent', displayName: 'Dry Solvent' },
     }
   end
 
