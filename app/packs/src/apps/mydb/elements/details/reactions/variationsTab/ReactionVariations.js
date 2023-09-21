@@ -29,9 +29,9 @@ function RowToolsCellRenderer({ data: variationRow, copyRow, removeRow }) {
 
 function CellRenderer({ value: cellData, enableEquivalent }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  let cellContent = `${Number(value) ? Number(value).toFixed(6) : 'NaN'} [${unit}]`;
+  let cellContent = `${Number(value).toFixed(6)} [${unit}]`;
   if (enableEquivalent) {
-    cellContent += `; ${Number(aux.equivalent) ? Number(aux.equivalent).toFixed(6) : 'NaN'} [Equiv]`;
+    cellContent += `; ${Number(aux.equivalent).toFixed(6)} [Equiv]`;
   }
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
