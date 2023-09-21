@@ -20,6 +20,7 @@ module Import
       'current cabinet', 'current group', 'disposal info', 'important notes'
     ].freeze
     GHS_VALUES = %w[GHS01 GHS02 GHS03 GHS04 GHS05 GHS06 GHS07 GHS08 GHS09].freeze
+    AMOUNT_UNITS = %w[g mg μg].freeze
 
     def self.build_chemical(row, header)
       chemical = Chemical.new
@@ -159,7 +160,9 @@ module Import
     def self.set_amount(chemical, value)
       chemical['chemical_data'][0]['amount'] = {} if chemical['chemical_data'][0]['amount'].nil?
       quantity = value.to_f
-      unit = value.gsub(/\d+/, '')
+      unit = value.gsub(/\d+(\.\d+)?/, '')
+      return chemical unless AMOUNT_UNITS.include?(unit)
+
       chemical['chemical_data'][0]['amount']['value'] = quantity
       chemical['chemical_data'][0]['amount']['unit'] = unit
     end
