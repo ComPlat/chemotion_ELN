@@ -284,7 +284,20 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   return (
     <div>
       <Form inline>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip>Add row with data from current reaction scheme.</Tooltip>}>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip>
+              Add row with current data from &quot;Scheme&quot; tab.
+              <br />
+              Changes in &quot;Scheme&quot; tab are not applied to
+              {' '}
+              <i>existing</i>
+              {' '}
+              rows.
+            </Tooltip>
+          )}
+        >
           <Button onClick={() => addRow()}>Add row</Button>
         </OverlayTrigger>
         {' '}
