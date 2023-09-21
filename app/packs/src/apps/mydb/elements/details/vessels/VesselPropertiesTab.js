@@ -10,7 +10,7 @@ class VesselPropertiesTab extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { openPanel: 'common-properties' };
+    this.state = { openPanel: 'specific-properties' };
   }
   
   render() {
@@ -25,6 +25,17 @@ class VesselPropertiesTab extends React.Component {
           accordion
         >
           <Panel
+            eventKey="specific-properties"
+            key="specific-properties"
+          >
+            <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }) }}>Specific Properties</Panel.Heading>
+            <Panel.Body collapsible>
+            {this.renderAttribute('Name', vesselItem.vesselName, (e)=>{vesselDetailsStore.changeName(vesselId, e.target.value)})}
+            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{vesselDetailsStore.changeDescription(vesselId, e.target.value)})}
+            </Panel.Body>
+          </Panel>
+
+          <Panel
           eventKey="common-properties"
           key="common-properties"
           >
@@ -37,17 +48,6 @@ class VesselPropertiesTab extends React.Component {
               {this.renderAttribute('Volume Unit', vesselItem.volumeUnit, (e)=>{vesselDetailsStore.changeVolumeUnit(vesselId, e.target.value)})}
               {this.renderAttribute('Material', vesselItem.materialType, (e)=>{vesselDetailsStore.changeMaterialType(vesselId, e.target.value)})}
               {this.renderAttribute('Material Details', vesselItem.materialDetails, (e)=>{vesselDetailsStore.changeMaterialDetails(vesselId, e.target.value)})}
-            </Panel.Body>
-          </Panel>
-
-          <Panel
-            eventKey="specific-properties"
-            key="specific-properties"
-          >
-            <Panel.Heading onClick={(e) => { this.setState({ openPanel: 'specific-properties' }) }}>Specific Properties</Panel.Heading>
-            <Panel.Body collapsible>
-            {this.renderAttribute('Name', vesselItem.vesselName, (e)=>{vesselDetailsStore.changeName(vesselId, e.target.value)})}
-            {this.renderAttribute('Description', vesselItem.vesselDescription, (e)=>{vesselDetailsStore.changeDescription(vesselId, e.target.value)})}
             </Panel.Body>
           </Panel>
       </PanelGroup>

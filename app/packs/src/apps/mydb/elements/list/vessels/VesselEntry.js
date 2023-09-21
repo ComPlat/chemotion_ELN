@@ -29,7 +29,7 @@ export default class VesselEntry extends React.Component {
           this.renderCreateSubVesselButton(firstVesselItem),
           <div>
             <br />
-            {firstVesselItem.vesselTemplateName}<br/>
+            {' Template: '}{firstVesselItem.vesselTemplateName}<br/>
             {' Type: '}{firstVesselItem.vesselType}<br/>
             {' Material: '}{firstVesselItem.materialType}<br/>
             {' Volume: '}{firstVesselItem.volumeAmount}{' '}{firstVesselItem.volumeUnit}<br/>

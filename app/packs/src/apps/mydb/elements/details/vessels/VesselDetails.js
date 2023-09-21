@@ -184,10 +184,9 @@ class VesselDetails extends React.Component {
         <Panel.Heading>{this.vesselHeader()}</Panel.Heading>
         <Panel.Body>
           <Tabs activeKey={ this.state.activeTab} onSelect={event => this.handleTabChange(event)} id="vesselDetailsTab">
-            <Tab eventKey="tab1" title="General Properties" key={"tab1"}>
+            <Tab eventKey="tab1" title="Properties" key={"tab1"}>
               <VesselPropertiesTab item={vesselItem} />
             </Tab>
-            <Tab eventKey="tab2" title="tab2" key={"tab2"}>Tab 2</Tab>
           </Tabs>
           {this.renderSaveCloseButtons()}                             
         </Panel.Body>
