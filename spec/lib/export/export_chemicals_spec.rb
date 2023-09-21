@@ -169,7 +169,8 @@ describe Export::ExportChemicals do
 
         result = described_class.format_chemical_results(result)
 
-        expect(result.columns).to eq(['safety sheet link', 'product link'])
+        expect(result.columns).to eq(['safety sheet link merck', 'safety sheet link thermofischer',
+                                      'product link merck', 'product link thermofischer'])
       end
     end
 
