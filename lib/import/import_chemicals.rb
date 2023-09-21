@@ -4,7 +4,7 @@ module Import
   class ImportChemicals
     SAFETY_PHRASES = %w[pictograms h_statements p_statements].freeze
     AMOUNT = %w[amount].freeze
-    SAFETY_SHEET = %w[safety_sheet_link product_link].freeze
+    SAFETY_SHEET = %w[safety_sheet_link_merck product_link_merck].freeze
     KEYS_TO_EXCLUDE = SAFETY_SHEET + %w[cas].freeze
     SIGMA_ALDRICH_PATTERN = /(sigmaaldrich|merck)/.freeze
     THERMOFISCHER_PATTERN = /(thermofischer|alfa)/.freeze
@@ -90,11 +90,11 @@ module Import
 
     def self.handle_safety_sheet(key, vendor, value, chemical)
       case key
-      when 'safety_sheet_link'
+      when 'safety_sheet_link_merck'
         product_number = extract_product_number(value)
         create_safety_sheet_path(vendor.downcase, value, product_number, chemical) if product_number.present?
         set_safety_sheet_link(vendor, product_number, value) if product_number.present?
-      when 'product_link'
+      when 'product_link_merck'
         { 'productLink' => value }
       end
     end

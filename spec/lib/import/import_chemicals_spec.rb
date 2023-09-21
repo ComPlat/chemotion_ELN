@@ -70,7 +70,7 @@ RSpec.describe Import::ImportChemicals do
     let(:column_header) { 'Amount' }
     let(:value) { '5g' }
 
-    it 'sets the amount hash when amount is passed' do
+    it 'sets the amount hash when amount is present' do
       chemical['chemical_data'] = [{}]
       described_class.process_column(chemical, column_header, value)
       expect(chemical['chemical_data'][0]['amount']).to eq(
@@ -81,7 +81,7 @@ RSpec.describe Import::ImportChemicals do
       )
     end
 
-    it 'sets the safety sheet info when a safety sheet link is passed' do
+    it 'sets the safety sheet info when a safety sheet link is present' do
       chemical['chemical_data'] = [{}]
       safety_sheet_value = 'http://www.sigmaaldrich.com/MSDS/MSDS/DisplayMSDSPage.do?country=DE&language=DE&productNumber=131377&brand=ALDRICH'
       product_link = 'https://www.sigmaaldrich.com/US/en/product/aldrich/131377'
@@ -90,13 +90,13 @@ RSpec.describe Import::ImportChemicals do
       allow(HTTParty).to receive(:get).with(safety_sheet_value || product_link, anything).and_return(
         instance_double(HTTParty::Response, headers: { 'Content-Type' => content_type }, body: response_body),
       )
-      described_class.process_column(chemical, 'Safety Sheet Link', safety_sheet_value)
+      described_class.process_column(chemical, 'Safety Sheet Link Merck', safety_sheet_value)
       expect(chemical['chemical_data'][0]['merckProductInfo']).to be_present
       described_class.process_column(chemical, 'product link', product_link)
       expect(chemical['chemical_data'][0]['merckProductInfo']).to be_present
     end
 
-    it 'sets the safety phrases when safety phrases are passed' do
+    it 'sets the safety phrases when safety phrases are present' do
       chemical['chemical_data'] = [{}]
       described_class.process_column(chemical, 'H Statements', 'H350-H351')
       expect(chemical['chemical_data'][0]['safetyPhrases']['h_statements']).to eq(
