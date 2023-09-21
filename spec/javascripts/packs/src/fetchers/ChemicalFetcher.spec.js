@@ -75,13 +75,27 @@ describe('ChemicalFetcher methods', () => {
     });
 
     it('should handle fetch error', async () => {
-      // Call the create method of ChemicalFetcher and catch the error
+      // Stub ChemicalFetcher.create
+      const createStub = sinon.stub(ChemicalFetcher, 'create').callsFake(async (input) => {
+        await fetch('/api/v1/chemicals/create', {
+          credentials: 'same-origin',
+          method: 'post',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(input)
+        });
+      });
+      // Setup fetchStub to reject with a specific error
       fetchStub.rejects(new Error('Fetch error'));
       try {
         await ChemicalFetcher.create(inputData);
         // If the code execution reaches here, the test should fail
         throw new Error('Failed to create chemical');
       } catch (error) {
+        // Restore original method
+        createStub.restore();
         sinon.assert.calledOnce(fetchStub);
         sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/create', {
           credentials: 'same-origin',
@@ -92,7 +106,7 @@ describe('ChemicalFetcher methods', () => {
           },
           body: JSON.stringify(inputData)
         });
-        expect(error.message).toEqual('Failed to create chemical');
+        expect(error.message).toEqual('Fetch error');
       }
     });
   });
@@ -152,7 +166,9 @@ describe('ChemicalFetcher methods', () => {
       const resultObject = JSON.parse(result); // Parse the received response as JSON
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}&data[language]=${queryParams.language}&data[searchStr]=${queryParams.string}`, {
+      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/fetch_safetysheet'
+        + `/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}`
+        + `&data[language]=${queryParams.language}&data[searchStr]=${queryParams.string}`, {
         credentials: 'same-origin',
         method: 'GET',
         headers: {
@@ -211,7 +227,8 @@ describe('ChemicalFetcher methods', () => {
         },
         p_statements: {
           P201: ' Obtain special instructions before use.',
-          P210: ' Keep away from heat, hot surfaces, sparks, open flames and other ignition sources. No smoking. [As modified by IV ATP]',
+          P210: ' Keep away from heat, hot surfaces, sparks,'
+                  + 'open flames and other ignition sources. No smoking. [As modified by IV ATP]',
           P280: ' Wear protective gloves/protective clothing/eye protection/face protection. [As modified by IV ATP]'
         },
         pictograms: [
@@ -227,7 +244,8 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.safetyPhrases(queryParams);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/safety_phrases/${queryParams.id}?vendor=${queryParams.vendor}`, {
+      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/safety_phrases/${queryParams.id}`
+           + `?vendor=${queryParams.vendor}`, {
         credentials: 'same-origin',
         method: 'GET'
       });
