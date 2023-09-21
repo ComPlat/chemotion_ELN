@@ -726,7 +726,9 @@ export default class SampleForm extends React.Component {
             </td>
           </tr>
           <tr>
-            {this.additionalProperties(sample)}
+            <td colSpan="4">
+              {this.additionalProperties(sample)}
+            </td>
           </tr>
           <tr>
             <td colSpan="4">
