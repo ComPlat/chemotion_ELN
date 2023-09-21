@@ -204,7 +204,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   const gridRef = useRef();
 
-  const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('ext. label');
+  const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('name');
 
   function addRow() {
     const newRow = createVariationsRow(reaction, uuidv4());
