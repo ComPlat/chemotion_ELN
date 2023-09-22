@@ -46,7 +46,7 @@ export default class BaseFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, ElKlass, queryParams = {}, isSync = false, type = 'samples') {
+  static fetchByCollectionId(id, queryParams = {}, isSync = false, type = 'samples', ElKlass) {
     const page = queryParams.page || 1;
     const perPage = queryParams.per_page || UIStore.getState().number_of_results;
     const filterCreatedAt = queryParams.filterCreatedAt === true
