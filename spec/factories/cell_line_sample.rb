@@ -7,6 +7,7 @@ FactoryBot.define do
     amount { 999 }
     passage { 10 }
     unit { "g" }
+    container { FactoryBot.create(:container )}
   end
 
   trait :with_analysis do
