@@ -8,6 +8,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers LiteratureHelpers
+    helpers ReflectionHelpers
 
     namespace :ui_state do
       desc 'Delete elements by UI state'
@@ -80,10 +81,7 @@ module Chemotion
           next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
 
-          assoziation_name = element + 's'
-          if(element=='cell_line') then
-            assoziation_name = 'cellline_samples'
-          end 
+          assoziation_name = get_assoziation_name_in_collections(element)
           deleted[element] = @collection.send(assoziation_name).by_ui_state(params[element]).destroy_all.map(&:id)
         end
 
