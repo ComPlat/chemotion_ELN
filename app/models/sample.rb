@@ -159,14 +159,15 @@ class Sample < ApplicationRecord
     Sample.where(id: samples.map(&:id))
   }
 
-
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
   before_save :check_molfile_polymer_section
   before_save :find_or_create_fingerprint
-  before_save :attach_svg, :init_elemental_compositions,
-              :set_loading_from_ea
+  before_save :attach_svg
+  before_save :attach_annotation
+  before_save :init_elemental_compositions
+  before_save :set_loading_from_ea
   before_save :auto_set_short_label
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
@@ -470,6 +471,17 @@ class Sample < ApplicationRecord
     unless sample_svg_file =~ /\A[0-9a-f]{128}.svg\z/
       self.sample_svg_file = nil
     end
+  end
+
+  def attach_annotation
+    return unless sample_svg_annotation.present?
+    return unless sample_svg_annotation.start_with?(/\s*\<\?xml/, /\s*\<svg/)
+
+    prefix = sample_svg_file[0..-5] # cut off .svg suffice
+    filename = "#{prefix}_annotation.svg"
+
+    File.write(full_svg_path(filename), scrub(sample_svg_annotation))
+    self.sample_svg_annotation_file = filename
   end
 
   def init_elemental_compositions
