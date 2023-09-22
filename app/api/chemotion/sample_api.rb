@@ -413,6 +413,15 @@ module Chemotion
             root: :sample,
           )
         end
+
+        namespace :annotation do
+          desc 'Fetch a new annotation svg for this sample'
+          get do
+            Rails.logger.debug('Hallo Welt')
+            content_type('image/svg+xml')
+            Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
+          end
+        end
       end
 
       desc 'Create a sample'

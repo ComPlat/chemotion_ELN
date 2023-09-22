@@ -10,8 +10,8 @@ module Usecases
 
         def create_derivative(tmp_path, original_file, db_id, result, _record)
           tmp_file = create_tmp_file(tmp_path, File.basename(original_file, '.*'))
-          dimension = get_image_dimension(original_file)
-          svg_string = create_annotation_string(dimension[0], dimension[1], db_id)
+          dimensions = get_image_dimension(original_file)
+          svg_string = create_annotation_string(dimensions[:width], dimensions[:height], db_id)
           File.write(tmp_file.path, svg_string)
           result[:annotation] = File.open(tmp_file.path, 'rb')
           result
@@ -23,10 +23,10 @@ module Usecases
         end
 
         def get_image_dimension(original)
-          @image_analyzer.get_image_dimension(original.path)
+          @image_analyzer.get_image_dimensions(original.path)
         end
 
-        def create_annotation_string(height, width, id)
+        def create_annotation_string(width, height, id)
           <<~ENDOFSTRING
           <svg
             width="#{width}"
