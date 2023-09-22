@@ -1,9 +1,33 @@
 # frozen_string_literal: true
 
+# rubocop: disable RSpec/NestedGroups
+# rubocop: disable RSpec/AnyInstance
 require 'rails_helper'
 
 describe Chemotion::ElementAPI do
-  context 'authorized user logged in' do
+  describe 'DELETE /api/v1/ui_state' do
+    context 'when user with delete access is logged in' do
+      before do
+        allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
+      end
+
+      context 'when one cell line should be removed from the eln' do
+        xit 'only one cell line remains in eln' do end
+        xit 'all links between collections and cell lines are removed' do end
+        xit 'cell line material still remains in eln' do end
+        xit 'returned correct response code' do end
+      end
+
+      context 'when all cell lines should be removed from the eln' do
+        xit 'no cell line remains in eln' do end
+        xit 'all links between collections and cell lines are removed' do end
+        xit 'cell line material still remains in eln' do end
+        xit 'returned correct response code' do end
+      end
+    end
+  end
+
+  context 'when authorized user logged in' do
     let(:user) { create(:user) }
     let!(:c)    { create(:collection, user_id: user.id) }
     let!(:s1)   { create(:sample, collections: [c]) }
@@ -13,7 +37,7 @@ describe Chemotion::ElementAPI do
       {
         sample: { checkedIds: [s1.id] },
         reaction: { checkedIds: [r1.id] },
-        currentCollection: { id: c.id }
+        currentCollection: { id: c.id },
       }
     end
 
@@ -33,3 +57,6 @@ describe Chemotion::ElementAPI do
     end
   end
 end
+
+# rubocop: enable RSpec/NestedGroups
+# rubocop: enable RSpec/AnyInstance
