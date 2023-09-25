@@ -192,6 +192,9 @@ module Chemotion
             optional :research_plan, type: Hash do
               use :ui_state_params
             end
+            optional :cell_line, type: Hash do
+              use :ui_state_params
+            end
           end
           requires :collection_attributes, type: Hash do
             requires :permission_level, type: Integer
@@ -217,6 +220,7 @@ module Chemotion
           wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
+          cell_lines =  CelllineSample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:cell_line]).for_user_n_groups(user_ids)
           elements = {}
           ElementKlass.find_each do |klass|
             elements[klass.name] = Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
@@ -227,20 +231,25 @@ module Chemotion
           top_secret_screen = screens.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
 
           is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
-
           share_samples = ElementsPolicy.new(current_user, samples).share?
           share_reactions = ElementsPolicy.new(current_user, reactions).share?
           share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
           share_screens = ElementsPolicy.new(current_user, screens).share?
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
+          share_cell_lines_plans = ElementsPolicy.new(current_user, cell_lines).share?
           share_elements = !(elements&.length > 0)
           elements.each do |k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?
             break unless share_elements
           end
 
-          sharing_allowed = share_samples && share_reactions &&
-            share_wellplates && share_screens && share_research_plans && share_elements
+          sharing_allowed = share_samples && 
+            share_reactions &&
+            share_wellplates && 
+            share_screens && 
+            share_research_plans && 
+            share_cell_lines_plans &&
+            share_elements
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
 
           @sample_ids = samples.pluck(:id)
@@ -248,6 +257,7 @@ module Chemotion
           @wellplate_ids = wellplates.pluck(:id)
           @screen_ids = screens.pluck(:id)
           @research_plan_ids = research_plans.pluck(:id)
+          @cell_line_ids = cell_lines.pluck(:id)
           @element_ids = elements&.transform_values { |v| v && v.pluck(:id) }
         end
 
@@ -261,6 +271,7 @@ module Chemotion
               User.where(email: val).pluck :id
             end
           end.flatten.compact.uniq
+          
           Usecases::Sharing::ShareWithUsers.new(
             user_ids: uids,
             sample_ids: @sample_ids,
@@ -268,6 +279,7 @@ module Chemotion
             wellplate_ids: @wellplate_ids,
             screen_ids: @screen_ids,
             research_plan_ids: @research_plan_ids,
+            cell_line_ids: @cell_line_ids,
             element_ids: @element_ids,
             collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
           ).execute!
