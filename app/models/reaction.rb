@@ -212,6 +212,7 @@ class Reaction < ApplicationRecord
   def update_svg_file!
     svg = reaction_svg_file
     if svg.present? && svg.end_with?('</svg>')
+      Loofah.fragment(svg).scrub!(:strip).to_html
       svg_file_name = "#{SecureRandom.hex(64)}.svg"
       svg_path = Rails.public_path.join('images', 'reactions', svg_file_name)
       svg_file = File.new(svg_path, 'w+')
