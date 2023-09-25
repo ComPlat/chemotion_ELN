@@ -102,7 +102,8 @@ export default class CellLineEntry extends Component {
     const { cellLineItems } = this.props;
     const { currentCollection, isSync } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
-
+    if (currentCollection.is_sync_to_me && currentCollection.permission_level==0){return null;}
+    
     return (
       <OverlayTrigger key="subSampleButton" placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
         <Button
