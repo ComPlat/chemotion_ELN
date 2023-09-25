@@ -1459,8 +1459,8 @@ export default class SampleDetails extends React.Component {
       <StructureEditorModal
         key={sample.id}
         showModal={showStructureEditor}
-        onSave={this.handleStructureEditorSave}
-        onCancel={this.handleStructureEditorCancel}
+        onSave={this.handleStructureEditorSave.bind(this)}
+        onCancel={this.handleStructureEditorCancel.bind(this)}
         molfile={molfile}
         hasParent={hasParent}
         hasChildren={hasChildren}
