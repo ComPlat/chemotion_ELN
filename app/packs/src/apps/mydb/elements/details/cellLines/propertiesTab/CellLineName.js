@@ -3,7 +3,7 @@ import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Col, Row, ControlLabel
+  Col, Row, ControlLabel, FormControl
 } from 'react-bootstrap';
 import Creatable from 'react-select3/creatable';
 
@@ -41,10 +41,26 @@ export default class CellLineName extends React.Component {
   render() {
     const { cellLineDetailsStore } = this.context;
     const { nameSuggestions } = this.state;
-    const { id, name } = this.props;
+    const { id, name, readOnly } = this.props;
     const className = cellLineDetailsStore.cellLines(id).cellLineName
       ? 'cell-line-name-autocomplete'
       : 'cell-line-name-autocomplete invalid';
+    if (readOnly) {
+      return (
+        <Row>
+          <Col componentClass={ControlLabel} sm={3}>Cell line name *</Col>
+          <Col sm={9}>
+            <FormControl
+              disabled
+              className=""
+              type="text"
+              value={cellLineDetailsStore.cellLines(id).cellLineName}
+              onChange={() => {}}
+            />
+          </Col>
+        </Row>
+      );
+    }
 
     return (
       <div className="cell-line-name">
@@ -86,5 +102,6 @@ export default class CellLineName extends React.Component {
 
 CellLineName.propTypes = {
   id: PropTypes.string.isRequired,
+  readOnly: PropTypes.bool.isRequired,
   name: PropTypes.string.isRequired,
 };

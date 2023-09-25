@@ -27,12 +27,13 @@ class Amount extends React.Component {
 
   renderDecimalRepresentation() {
     const { cellLineDetailsStore } = this.context;
-    const { cellLineId } = this.props;
+    const { cellLineId, readOnly } = this.props;
     const { currentValue } = this.state;
     const cellLineItem = cellLineDetailsStore.cellLines(cellLineId);
 
     return (
       <FormControl
+        disabled={readOnly}
         className={this.getStyleClass(cellLineItem)}
         value={currentValue}
         onChange={(e) => {
@@ -99,5 +100,6 @@ export default observer(Amount);
 
 Amount.propTypes = {
   cellLineId: PropTypes.string.isRequired,
+  readOnly: PropTypes.bool.isRequired,
   initialValue: PropTypes.number.isRequired,
 };

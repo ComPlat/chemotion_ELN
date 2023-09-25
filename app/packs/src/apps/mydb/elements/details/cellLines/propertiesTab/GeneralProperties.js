@@ -10,6 +10,7 @@ import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -19,7 +20,13 @@ class GeneralProperties extends React.Component {
     super(props);
     this.state = {
       openPanel: 'common-properties',
+      readOnly: this.isReadOnly()
     };
+  }
+
+  isReadOnly() {
+    const { currentCollection, isSync } = UIStore.getState();
+    return currentCollection.permission_level === 0 && isSync;
   }
 
   renderOptionalAttribute(attributeName, defaultValue, onChangeCallBack) {
@@ -34,6 +41,8 @@ class GeneralProperties extends React.Component {
     optional = false,
     numeric = false
   ) {
+    const { readOnly } = this.state;
+
     let styleClass = '';
     if (!optional) {
       if (numeric) {
@@ -44,13 +53,13 @@ class GeneralProperties extends React.Component {
         styleClass = noInput ? 'invalid-input' : '';
       }
     }
-
     return (
       <div>
         <Row>
           <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
           <Col sm={9}>
             <FormControl
+              disabled={readOnly}
               className={styleClass}
               type="text"
               value={defaultValue}
@@ -63,6 +72,8 @@ class GeneralProperties extends React.Component {
   }
 
   renderBiosafetyLevel(item) {
+    const { readOnly } = this.state;
+
     const { cellLineDetailsStore } = this.context;
     const options = [
       { value: 'S0', label: 'Biosafety level 0' },
@@ -76,6 +87,7 @@ class GeneralProperties extends React.Component {
           <Col componentClass={ControlLabel} sm={3}>Biosafety level</Col>
           <Col sm={9}>
             <Select
+              disabled={readOnly}
               options={options}
               clearable={false}
               value={item.bioSafetyLevel}
@@ -89,29 +101,47 @@ class GeneralProperties extends React.Component {
 
   renderAmount(item) {
     const { cellLineDetailsStore } = this.context;
-
+    const { readOnly } = this.state;
     const styleClassUnit = item.unit === '' ? 'invalid-input' : '';
-
     const options = [
       { value: 'g', label: 'g' },
       { value: 'units/cm²', label: 'units/cm²' },
     ];
+
+    const unitComponent = readOnly ? (
+      <FormControl
+        disabled
+        className=""
+        type="text"
+        value={item.unit}
+        onChange={() => {}}
+      />
+    ) : (
+      <Creatable
+        className={styleClassUnit}
+        onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
+        onInputChange={(e, action) => {
+          if (action.action === 'input-change') { cellLineDetailsStore.changeUnit(item.id, e); }
+        }}
+        options={options}
+        placeholder="choose/enter unit"
+        defaultInputValue={item.unit}
+      />
+    );
+
     return (
       <div>
         <Row>
           <Col componentClass={ControlLabel} sm={3}>Amount *</Col>
           <Col sm={6}>
-            <Amount cellLineId={item.id} initialValue={item.amount} />
+            <Amount
+              cellLineId={item.id}
+              initialValue={item.amount}
+              readOnly={readOnly}
+            />
           </Col>
           <Col sm={3} className="amount-unit">
-            <Creatable
-              className={styleClassUnit}
-              onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
-              onInputChange={(e, action) => { if (action.action === 'input-change') { cellLineDetailsStore.changeUnit(item.id, e); } }}
-              options={options}
-              placeholder="choose/enter unit"
-              defaultInputValue={item.unit}
-            />
+            {unitComponent}
           </Col>
         </Row>
       </div>
@@ -135,7 +165,7 @@ class GeneralProperties extends React.Component {
     const { cellLineDetailsStore } = this.context;
     const cellLineItem = cellLineDetailsStore.cellLines(item.id);
     const cellLineId = item.id;
-    const { openPanel } = this.state;
+    const { openPanel, readOnly } = this.state;
     return (
       <div>
         <div />
@@ -157,25 +187,51 @@ class GeneralProperties extends React.Component {
             </Panel.Heading>
             <Panel.Body collapsible>
 
-              <CellLineName id={cellLineId} name={cellLineItem.cellLineName} />
-              {this.renderAttribute('Source *', cellLineItem.source, (e) => { cellLineDetailsStore.changeSource(cellLineId, e.target.value); })}
+              <CellLineName
+                id={cellLineId}
+                name={cellLineItem.cellLineName}
+                readOnly={readOnly}
+              />
+              {this.renderAttribute('Source *', cellLineItem.source, (e) => {
+                cellLineDetailsStore.changeSource(cellLineId, e.target.value);
+              })}
 
-              {this.renderOptionalAttribute('Disease', cellLineItem.disease, (e) => { cellLineDetailsStore.changeDisease(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Organism', cellLineItem.organism, (e) => { cellLineDetailsStore.changeOrganism(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Tissue', cellLineItem.tissue, (e) => { cellLineDetailsStore.changeTissue(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('GrowthMedium', cellLineItem.growthMedium, (e) => { cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => { cellLineDetailsStore.changeMutation(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => { cellLineDetailsStore.changeVariant(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('Disease', cellLineItem.disease, (e) => {
+                cellLineDetailsStore.changeDisease(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Organism', cellLineItem.organism, (e) => {
+                cellLineDetailsStore.changeOrganism(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Tissue', cellLineItem.tissue, (e) => {
+                cellLineDetailsStore.changeTissue(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('GrowthMedium', cellLineItem.growthMedium, (e) => {
+                cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => {
+                cellLineDetailsStore.changeMutation(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Variant', cellLineItem.variant, (e) => {
+                cellLineDetailsStore.changeVariant(cellLineId, e.target.value);
+              })}
               {this.renderBiosafetyLevel(cellLineItem)}
               {this.renderOptionalAttribute(
                 'Cryopreservation medium',
                 cellLineItem.cryopreservationMedium,
                 (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); }
               )}
-              {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => { cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value)); })}
-              {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => { cellLineDetailsStore.changeGender(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => { cellLineDetailsStore.changeCellType(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => { cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value); })}
+              {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
+                cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value));
+              })}
+              {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => {
+                cellLineDetailsStore.changeGender(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Cell type', cellLineItem.cellType, (e) => {
+                cellLineDetailsStore.changeCellType(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Description', cellLineItem.materialDescription, (e) => {
+                cellLineDetailsStore.changeMaterialDescription(cellLineId, e.target.value);
+              })}
             </Panel.Body>
           </Panel>
 
@@ -190,10 +246,18 @@ class GeneralProperties extends React.Component {
             </Panel.Heading>
             <Panel.Body collapsible>
               {this.renderAmount(cellLineItem)}
-              {this.renderAttribute('Passage *', cellLineItem.passage, (e) => { cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value)); }, false, true)}
-              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => { cellLineDetailsStore.changeContamination(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => { cellLineDetailsStore.changeItemName(cellLineId, e.target.value); })}
-              {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => { cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value); })}
+              {this.renderAttribute('Passage *', cellLineItem.passage, (e) => {
+                cellLineDetailsStore.changePassage(cellLineId, Number(e.target.value));
+              }, false, true)}
+              {this.renderOptionalAttribute('Contamination', cellLineItem.contamination, (e) => {
+                cellLineDetailsStore.changeContamination(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Name of specific probe', cellLineItem.itemName, (e) => {
+                cellLineDetailsStore.changeItemName(cellLineId, e.target.value);
+              })}
+              {this.renderOptionalAttribute('Description', cellLineItem.itemDescription, (e) => {
+                cellLineDetailsStore.changeItemDescription(cellLineId, e.target.value);
+              })}
             </Panel.Body>
           </Panel>
         </PanelGroup>
