@@ -266,7 +266,7 @@ module Chemotion
         namespace :update do
           desc 'update a group of persons'
           params do
-            requires :action, type: String, values: %w[RootDel NodeDel NodeAdd NodeAdm]
+            requires :action, type: String, values: %w[SuperDevice RootDel NodeDel NodeAdd NodeAdm]
             requires :rootType, type: String, values: %w[Group Device]
             optional :actionType, type: String, values: %w[Person Device Group Adm]
             requires :id, type: Integer
@@ -278,6 +278,12 @@ module Chemotion
           end
           put ':id' do
             case params[:action]
+            when 'SuperDevice'
+              if params[:rootType] == 'Device'
+                obj = Device.find(params[:id])
+                obj.is_super_device = ! obj.is_super_device
+                obj.save!
+              end
             when 'RootDel'
               obj = Group.find(params[:id]) if params[:rootType] == 'Group'
               obj = Device.find(params[:id]) if params[:rootType] == 'Device'
@@ -306,6 +312,8 @@ module Chemotion
               obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
               User.gen_matrix(rm_users) if rm_users&.length&.positive?
               present obj, with: Entities::GroupDeviceEntity, root: 'root'
+            else
+              # type code here
             end
           end
         end

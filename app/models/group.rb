@@ -34,8 +34,8 @@
 #  locked_at              :datetime
 #  account_active         :boolean
 #  matrix                 :integer          default(0)
-#  omniauth_provider      :string
-#  omniauth_uid           :string
+#  providers              :jsonb
+#  is_super_device        :boolean          default(FALSE)
 #
 # Indexes
 #

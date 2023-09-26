@@ -6,9 +6,9 @@ export default class AdminFetcher {
     return fetch('/api/v1/admin/listLocalCollector/all.json', {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -17,9 +17,9 @@ export default class AdminFetcher {
     return fetch('/api/v1/admin/disk.json', {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -28,9 +28,9 @@ export default class AdminFetcher {
     return fetch('/api/v1/admin/listDevices/all.json', {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -39,9 +39,9 @@ export default class AdminFetcher {
     return fetch(`/api/v1/admin/device/${deviceId}`, {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -50,9 +50,9 @@ export default class AdminFetcher {
     return fetch(`/api/v1/admin/deviceMetadata/${deviceId}`, {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -67,9 +67,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -87,9 +87,9 @@ export default class AdminFetcher {
         body: JSON.stringify(params),
       }
     )
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -104,9 +104,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -121,9 +121,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -138,9 +138,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -154,7 +154,7 @@ export default class AdminFetcher {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(params),
-    }).then(response => {
+    }).then((response) => {
       if (response.status === 204) {
         return '';
       }
@@ -172,9 +172,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -189,9 +189,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -206,9 +206,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -217,9 +217,9 @@ export default class AdminFetcher {
     return fetch('/api/v1/admin_user/listUsers/all.json', {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -236,9 +236,9 @@ export default class AdminFetcher {
         method: 'GET',
       }
     )
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -253,9 +253,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -269,7 +269,7 @@ export default class AdminFetcher {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(params),
-    }).then(response => {
+    }).then((response) => {
       if (response.status === 204) {
         return true;
       }
@@ -285,9 +285,9 @@ export default class AdminFetcher {
       method: 'POST',
       body: data,
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -296,9 +296,9 @@ export default class AdminFetcher {
     return fetch(`/api/v1/admin/group_device/list?type=${type}`, {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -313,9 +313,28 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static updateDevice(id = {}) {
+    // eslint-disable-next-line no-bitwise
+    const allParams = { action: 'SuperDevice', rootType: 'Device', id };
+    return fetch(`/api/v1/admin/group_device/update/${allParams.id}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(allParams),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -330,9 +349,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -341,9 +360,9 @@ export default class AdminFetcher {
     return fetch('/api/v1/matrix/list.json', {
       credentials: 'same-origin',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -358,9 +377,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -375,9 +394,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -387,9 +406,9 @@ export default class AdminFetcher {
       credentials: 'same-origin',
       method: 'GET',
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.error(errorMessage);
       });
   }
@@ -404,9 +423,9 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(id),
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
         console.error(errorMessage);
       });
   }

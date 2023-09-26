@@ -1,6 +1,6 @@
 module Entities
     class GroupDeviceEntity < Grape::Entity
-      expose :id, :name, :email, :data, :name_abbreviation, :type
+      expose :id, :name, :email, :data, :name_abbreviation, :type, :is_super_device
       expose :users, as: 'users', using: Entities::UserSimpleEntity
       expose :admins, as: 'admins', using: Entities::UserSimpleEntity
       expose :devices, as: 'devices', using: Entities::UserSimpleEntity

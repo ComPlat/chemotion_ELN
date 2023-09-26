@@ -33,12 +33,15 @@
 #  duration           :string
 #  rxno               :string
 #  conditions         :string
+#  variations         :jsonb
 #
 # Indexes
 #
-#  index_reactions_on_deleted_at      (deleted_at)
-#  index_reactions_on_rinchi_web_key  (rinchi_web_key)
-#  index_reactions_on_role            (role)
+#  index_reactions_on_deleted_at        (deleted_at)
+#  index_reactions_on_rinchi_short_key  (rinchi_short_key)
+#  index_reactions_on_rinchi_web_key    (rinchi_web_key)
+#  index_reactions_on_role              (role)
+#  index_reactions_on_rxno              (rxno)
 #
 
 class Reaction < ApplicationRecord

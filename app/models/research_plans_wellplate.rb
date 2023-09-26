@@ -2,8 +2,8 @@
 #
 # Table name: research_plans_wellplates
 #
-#  research_plan_id :integer
-#  wellplate_id     :integer
+#  research_plan_id :bigint           not null
+#  wellplate_id     :bigint           not null
 #  id               :bigint           not null, primary key
 #  created_at       :datetime
 #  updated_at       :datetime

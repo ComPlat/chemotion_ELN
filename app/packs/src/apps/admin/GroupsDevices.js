@@ -1,8 +1,11 @@
 import React from 'react';
-import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row } from 'react-bootstrap';
+import {
+  Alert, Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row
+} from 'react-bootstrap';
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
@@ -16,6 +19,7 @@ export default class GroupsDevices extends React.Component {
       groups: [],
       devices: [],
       showModal: false,
+      showApiModal: false,
       showCreateModal: false,
       showDeviceMetadataModal: false,
       rootType: '', // Group, Device
@@ -36,6 +40,8 @@ export default class GroupsDevices extends React.Component {
     this.handleCloseGroup = this.handleCloseGroup.bind(this);
     this.handleGroupChange = this.handleGroupChange.bind(this);
     this.handleDeviceChange = this.handleDeviceChange.bind(this);
+    this.handleToggleDeviceSuper = this.handleToggleDeviceSuper.bind(this);
+    this.onShowDeviceApiToken = this.onShowDeviceApiToken.bind(this);
   }
 
   componentDidMount() {
@@ -65,14 +71,14 @@ export default class GroupsDevices extends React.Component {
       set_admin: setAdmin
     };
     AdminFetcher.updateGroup(params)
-      .then((result) => {
+      .then(() => {
         if (setAdmin) {
           groupRec.admins.splice(1, 0, userRec);
         } else {
-          const usrIdx = findIndex(groupRec.admins, o => o.id === userRec.id);
+          const usrIdx = findIndex(groupRec.admins, (o) => o.id === userRec.id);
           groupRec.admins.splice(usrIdx, 1);
         }
-        const idx = findIndex(groups, o => o.id === groupRec.id);
+        const idx = findIndex(groups, (o) => o.id === groupRec.id);
         groups.splice(idx, 1, groupRec);
         this.setState({ groups });
       });
@@ -103,6 +109,18 @@ export default class GroupsDevices extends React.Component {
       });
   }
 
+  updateDevices(id) {
+    AdminFetcher.fetchGroupsDevices('Device')
+      .then((result) => {
+        const { devices } = this.state;
+        const idx = devices.map((e) => e.id).indexOf(id);
+        devices[idx] = result.list.find((e) => e.id === id);
+        this.setState({
+          devices
+        });
+      });
+  }
+
   handlefetchDeviceMetadataByDeviceId(deviceID) {
     AdminFetcher.fetchDeviceMetadataByDeviceId(deviceID)
       .then((result) => {
@@ -126,9 +144,11 @@ export default class GroupsDevices extends React.Component {
   handleClose() {
     this.setState({
       showModal: false,
+      showApiModal: false,
       rootType: '',
+      token: '',
       actionType: '',
-      root: null
+      root: {},
     });
   }
 
@@ -149,13 +169,20 @@ export default class GroupsDevices extends React.Component {
   }
 
   deviceMetadataDoiExists() {
-    return this.state.deviceMetadata.doi
+    const { deviceMetadata } = this.state;
+    return deviceMetadata.doi;
   }
 
   handleShowCreateModal(rootType) {
     this.setState({
       showCreateModal: true,
       rootType
+    });
+  }
+
+  handleToggleDeviceSuper(deviceId) {
+    AdminFetcher.updateDevice(deviceId).then((data) => {
+      this.updateDevices(deviceId);
     });
   }
 
@@ -251,19 +278,20 @@ export default class GroupsDevices extends React.Component {
   }
 
   saveDeviceMetadata(deviceId) {
+    const { deviceMetadata } = this.state;
     // TODO: add Validations
     AdminFetcher.postDeviceMetadata({
       // TODO: add more Attributes:
       // t.string   "publisher"
 
       device_id: deviceId,
-      data_cite_state: this.state.deviceMetadata.data_cite_state,
+      data_cite_state: deviceMetadata.data_cite_state,
       url: this.url.value.trim(),
       landing_page: this.landing_page.value.trim(),
       name: this.name.value.trim(),
       description: this.description.value.trim(),
       publication_year: this.publication_year.value.trim(),
-      dates: this.state.deviceMetadata.dates
+      dates: deviceMetadata.dates
 
     }).then((result) => {
       if (result.error) {
@@ -341,10 +369,10 @@ export default class GroupsDevices extends React.Component {
           case 'Group':
             if (isRoot === true) {
               this.setState({
-                groups: filter(this.state.groups, o => o.id != groupRec.id),
+                groups: filter(this.state.groups, (o) => o.id != groupRec.id),
               });
             } else {
-              const idx = findIndex(groups, o => o.id === result.root.id);
+              const idx = findIndex(groups, (o) => o.id === result.root.id);
               groups.splice(idx, 1, result.root);
               this.setState({ groups });
             }
@@ -353,10 +381,10 @@ export default class GroupsDevices extends React.Component {
           case 'Device':
             if (isRoot === true) {
               this.setState({
-                devices: filter(this.state.devices, o => o.id !== groupRec.id),
+                devices: filter(this.state.devices, (o) => o.id !== groupRec.id),
               });
             } else {
-              const idx = findIndex(devices, o => o.id === result.root.id);
+              const idx = findIndex(devices, (o) => o.id === result.root.id);
               devices.splice(idx, 1, result.root);
               this.setState({ devices });
             }
@@ -395,12 +423,12 @@ export default class GroupsDevices extends React.Component {
       .then((result) => {
         switch (rootType) {
           case 'Group':
-            idx = findIndex(groups, o => o.id === result.root.id);
+            idx = findIndex(groups, (o) => o.id === result.root.id);
             groups.splice(idx, 1, result.root);
             this.fetch('Device');
             break;
           case 'Device':
-            idx = findIndex(devices, o => o.id === result.root.id);
+            idx = findIndex(devices, (o) => o.id === result.root.id);
             devices.splice(idx, 1, result.root);
             this.fetch('Group');
             break;
@@ -411,6 +439,18 @@ export default class GroupsDevices extends React.Component {
       });
   }
 
+  onShowDeviceApiToken(device) {
+    DeviceFetcher.fetchApiToken(device.id).then((res) => {
+      const { token, exp_date } = res;
+      this.setState({
+        showApiModal: true,
+        root: device,
+        token,
+        exp_date
+      });
+    });
+  }
+
   renderGroups() {
     const { groups } = this.state;
     const adminIcon = (<OverlayTrigger placement="top" overlay={<Tooltip id="admin">Group Administrator</Tooltip>}><i className="fa fa-key" /></OverlayTrigger>);
@@ -419,8 +459,14 @@ export default class GroupsDevices extends React.Component {
       tbody = '';
     } else {
       tbody = groups.map((g, idx) => (
-        <AdminGroupElement groupElement={g} index={idx} currentState={this.state}
-          onChangeGroupData={this.handleGroupChange} onShowModal={this.handleShowModal}></AdminGroupElement>
+        <AdminGroupElement
+          key={`AdminGroupElement-${g.name}`}
+          groupElement={g}
+          index={idx}
+          currentState={this.state}
+          onChangeGroupData={this.handleGroupChange}
+          onShowModal={this.handleShowModal}
+        />
       ));
     }
 
@@ -429,7 +475,9 @@ export default class GroupsDevices extends React.Component {
         <Panel.Heading>
           <Panel.Title>
             Group List &nbsp;
-            ({groups.length}) &nbsp;
+            (
+            {groups.length}
+            ) &nbsp;
             <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
           </Panel.Title>
         </Panel.Heading>
@@ -458,8 +506,16 @@ export default class GroupsDevices extends React.Component {
       tbody = '';
     } else {
       tbody = devices && devices.map((device, idx) => (
-        <AdminDeviceElement deviceElement={device} index={idx} currentState={this.state}
-          onChangeDeviceData={this.handleDeviceChange} onShowModal={this.handleShowModal} onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}></AdminDeviceElement>
+        <AdminDeviceElement
+          deviceElement={device}
+          index={idx}
+          currentState={this.state}
+          onChangeDeviceData={this.handleDeviceChange}
+          handleToggleDeviceSuper={this.handleToggleDeviceSuper}
+          onShowModal={this.handleShowModal}
+          onShowDeviceMetadataModal={this.handleShowDeviceMetadataModal}
+          onShowDeviceApiToken={this.onShowDeviceApiToken}
+        />
       ));
     }
 
@@ -467,7 +523,9 @@ export default class GroupsDevices extends React.Component {
       <Panel>
         <Panel.Heading>
           <Panel.Title>
-            Device List &nbsp; ({devices.length}) &nbsp;
+            Device List &nbsp; (
+            {devices.length}
+            ) &nbsp;
             <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Device')}>Add New Device</Button>
           </Panel.Title>
         </Panel.Heading>
@@ -508,7 +566,8 @@ export default class GroupsDevices extends React.Component {
             <Panel.Body>
               <Form>
                 <FormGroup controlId="formInlineName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name*</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     inputRef={(m) => { this.firstInput = m; }}
@@ -521,17 +580,21 @@ export default class GroupsDevices extends React.Component {
                     inputRef={(m) => { this.lastInput = m; }}
                     placeholder="J. Moriarty"
                   />
-                </FormGroup>&nbsp;&nbsp;
+                </FormGroup>
+&nbsp;&nbsp;
                 <FormGroup controlId="formInlineNameAbbr">
-                  <ControlLabel>Name abbreviation* </ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name abbreviation* </ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     inputRef={(m) => { this.abbrInput = m; }}
                     placeholder="AK-JM"
                   />
-                </FormGroup>&nbsp;&nbsp;
+                </FormGroup>
+&nbsp;&nbsp;
                 <FormGroup controlId="formInlineEmail">
-                  <ControlLabel>Email</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Email</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     inputRef={(m) => { this.emailInput = m; }}
@@ -539,7 +602,9 @@ export default class GroupsDevices extends React.Component {
                   />
                 </FormGroup>
                 <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
-                  Create new {rootType === 'Group' ? 'group' : 'device'}
+                  Create new
+                  {' '}
+                  {rootType === 'Group' ? 'group' : 'device'}
                 </Button>
               </Form>
             </Panel.Body>
@@ -558,7 +623,12 @@ export default class GroupsDevices extends React.Component {
         onHide={this.handleCloseDeviceMetadata}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Edit {device.name} Metadata</Modal.Title>
+          <Modal.Title>
+            Edit
+            {device.name}
+            {' '}
+            Metadata
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Panel bsStyle="success">
@@ -569,11 +639,11 @@ export default class GroupsDevices extends React.Component {
             </Panel.Heading>
             <Panel.Body>
               <Form>
-                {!this.deviceMetadataDoiExists() &&
-                  <p className="text-center">Get Metadata from DataCite</p>
-                }
+                {!this.deviceMetadataDoiExists()
+                  && <p className="text-center">Get Metadata from DataCite</p>}
                 <FormGroup controlId="metadataFormDOI">
-                  <ControlLabel>DOI*</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>DOI*</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     defaultValue={deviceMetadata.doi}
@@ -582,23 +652,23 @@ export default class GroupsDevices extends React.Component {
                     readOnly={this.deviceMetadataDoiExists()}
                   />
                 </FormGroup>
-                {!this.deviceMetadataDoiExists() &&
+                {!this.deviceMetadataDoiExists()
+                  && (
                   <Col smOffset={0} sm={12}>
                     <Button className="pull-right" bsStyle="danger" onClick={() => this.syncDeviceMetadataFromDataCite(device.id)}>
                       Sync from DataCite
                     </Button>
                   </Col>
-                }
-                {!this.deviceMetadataDoiExists() &&
-                  <p className="text-center">Or create Metadata and sync to DataCite</p>
-                }
+                  )}
+                {!this.deviceMetadataDoiExists()
+                  && <p className="text-center">Or create Metadata and sync to DataCite</p>}
 
                 <FormGroup controlId="metadataFormState">
                   <ControlLabel>State*</ControlLabel>
                   <FormControl
                     componentClass="select"
                     value={deviceMetadata.data_cite_state}
-                    onChange={event => this.updateDeviceMetadataDataCiteState(event.target.value)}
+                    onChange={(event) => this.updateDeviceMetadataDataCiteState(event.target.value)}
                     inputRef={(m) => { this.dataCiteState = m; }}
                   >
                     <option value="draft">Draft</option>
@@ -627,7 +697,8 @@ export default class GroupsDevices extends React.Component {
                   />
                 </FormGroup>
                 <FormGroup controlId="metadataFormName">
-                  <ControlLabel>Name*</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name*</ControlLabel>
+&nbsp;&nbsp;
                   <FormControl
                     type="text"
                     defaultValue={deviceMetadata.name}
@@ -665,7 +736,7 @@ export default class GroupsDevices extends React.Component {
                             type="text"
                             value={dateItem.date}
                             placeholder="Date e.g. '2020-01-01'"
-                            onChange={event => this.updateDeviceMetadataDate(index, 'date', event.target.value)}
+                            onChange={(event) => this.updateDeviceMetadataDate(index, 'date', event.target.value)}
                           />
                         </FormGroup>
                       </Col>
@@ -676,7 +747,7 @@ export default class GroupsDevices extends React.Component {
                             type="text"
                             value={dateItem.dateType}
                             placeholder="DateType e.g. 'Created'"
-                            onChange={event => this.updateDeviceMetadataDate(index, 'dateType', event.target.value)}
+                            onChange={(event) => this.updateDeviceMetadataDate(index, 'dateType', event.target.value)}
                           />
                         </FormGroup>
                       </Col>
@@ -700,8 +771,14 @@ export default class GroupsDevices extends React.Component {
                 <Row>
                   <Col smOffset={0} sm={12}>
                     <p className="text-right">
-                      DataCiteVersion: {deviceMetadata.data_cite_version}<br />
-                      DataCiteUpdatedAt: {formatDate(deviceMetadata.data_cite_updated_at)}<br />
+                      DataCiteVersion:
+                      {' '}
+                      {deviceMetadata.data_cite_version}
+                      <br />
+                      DataCiteUpdatedAt:
+                      {' '}
+                      {formatDate(deviceMetadata.data_cite_updated_at)}
+                      <br />
                     </p>
                   </Col>
                 </Row>
@@ -721,6 +798,59 @@ export default class GroupsDevices extends React.Component {
             </Button>
           </Col>
         </Modal.Footer>
+      </Modal>
+    );
+  }
+
+  renderApiModal() {
+    const {
+      showApiModal,
+      token,
+      exp_date,
+      root
+    } = this.state;
+    const title = `API key for Device ${root.name_abbreviation}`;
+    return (
+      <Modal
+        show={showApiModal}
+        onHide={this.handleClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Panel bsStyle="success">
+            <Panel.Heading>
+              <Panel.Title>
+                {title}
+              </Panel.Title>
+            </Panel.Heading>
+            <Panel.Body>
+              You can view the token on this page only once. Please keep it somewhere safe.
+              It expires at
+              {' '}
+              {exp_date}
+              .
+              <Alert
+                style={{ overflow: 'auto', 'white-space': 'nowrap' }}
+                variant="warning"
+              >
+                {token}
+              </Alert>
+              <Button
+                bsSize="small"
+                type="button"
+                bsStyle="warning"
+                onClick={() => this.setState({
+                  showApiModal: false,
+                  token: ''
+                })}
+              >
+                Close
+              </Button>
+            </Panel.Body>
+          </Panel>
+        </Modal.Body>
       </Modal>
     );
   }
@@ -748,9 +878,6 @@ export default class GroupsDevices extends React.Component {
         } else {
           title = `Add permission on device: ${root.name} to groups`;
         }
-        break;
-      default:
-        break;
     }
 
     return (
@@ -797,6 +924,7 @@ export default class GroupsDevices extends React.Component {
         {this.renderDevices()}
         {this.renderModal()}
         {this.renderCreateModal()}
+        {this.renderApiModal()}
         {this.renderDeviceMetadataModal()}
       </div>
     );

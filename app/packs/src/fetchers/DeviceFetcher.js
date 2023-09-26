@@ -1,15 +1,14 @@
-import BaseFetcher from 'src/fetchers/BaseFetcher'
-import Device from 'src/models/Device'
-import DeviceAnalysis from 'src/models/DeviceAnalysis'
-import _ from 'lodash'
+import BaseFetcher from 'src/fetchers/BaseFetcher';
+import Device from 'src/models/Device';
+import DeviceAnalysis from 'src/models/DeviceAnalysis';
 
 export default class DeviceFetcher {
   static fetchAll() {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: '/api/v1/devices/',
       requestMethod: 'GET',
-      jsonTranformation: (json) => json.devices.map(device => new Device(device))
-    })
+      jsonTranformation: (json) => json.devices.map((device) => new Device(device))
+    });
   }
 
   static fetchById(deviceId) {
@@ -17,7 +16,7 @@ export default class DeviceFetcher {
       apiEndpoint: `/api/v1/devices/${deviceId}`,
       requestMethod: 'GET',
       jsonTranformation: (json) => new Device(json.device)
-    })
+    });
   }
 
   static create(device) {
@@ -26,7 +25,7 @@ export default class DeviceFetcher {
       requestMethod: 'POST',
       bodyData: device,
       jsonTranformation: (json) => new Device(json.device)
-    })
+    });
   }
 
   static changeSelectedDevice(device) {
@@ -34,7 +33,7 @@ export default class DeviceFetcher {
       apiEndpoint: `/api/v1/devices/${device.id}/selected`,
       requestMethod: 'POST',
       jsonTranformation: (json) => json
-    })
+    });
   }
 
   static update(device) {
@@ -43,15 +42,15 @@ export default class DeviceFetcher {
       requestMethod: 'PUT',
       bodyData: device.serialize(),
       jsonTranformation: (json) => new Device(json.device)
-    })
+    });
   }
 
   static delete(device) {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'DELETE',
-      jsonTranformation: (json) => { new Device(json.device) }
-    })
+      jsonTranformation: (json) => { new Device(json.device); }
+    });
   }
 
   static fetchAnalysisById(analysisId) {
@@ -59,34 +58,44 @@ export default class DeviceFetcher {
       apiEndpoint: `/api/v1/devices_analysis/${analysisId}`,
       requestMethod: 'GET',
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
-    })
+    });
   }
 
   static createAnalysis(analysis) {
     return BaseFetcher.withBodyData({
-      apiEndpoint: `/api/v1/devices_analysis`,
+      apiEndpoint: '/api/v1/devices_analysis',
       requestMethod: 'POST',
       bodyData: analysis.serialize(),
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
-    })
+    });
   }
 
   static updateAnalysis(analysis) {
-    const { deviceId, sampleId, analysisType, experiments } = analysis
+    const {
+      deviceId, sampleId, analysisType, experiments
+    } = analysis;
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/devices_analysis/${analysis.id}`,
       requestMethod: 'PUT',
       bodyData: analysis.serialize(),
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
-    })
+    });
   }
 
   static generateExperimentConfig(experiment) {
     return BaseFetcher.withBodyData({
-      apiEndpoint: `/api/v1/icon_nmr/config`,
+      apiEndpoint: '/api/v1/icon_nmr/config',
       requestMethod: 'POST',
       bodyData: experiment.buildConfig(),
       jsonTranformation: (json) => json
-    })
+    });
+  }
+
+  static fetchApiToken(deviceId) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/devices/remote/jwt/${deviceId}`,
+      requestMethod: 'GET',
+      jsonTranformation: (json) => json
+    });
   }
 }
