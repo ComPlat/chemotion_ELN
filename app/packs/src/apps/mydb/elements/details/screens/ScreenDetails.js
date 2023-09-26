@@ -51,7 +51,9 @@ export default class ScreenDetails extends Component {
   componentDidMount() {
     const { screen } = this.props;
     UIStore.listen(this.onUIStoreChange);
-    CommentActions.fetchComments(screen);
+    if (!screen.isNew) {
+      CommentActions.fetchComments(screen);
+    }
   }
 
   componentWillReceiveProps(nextProps) {

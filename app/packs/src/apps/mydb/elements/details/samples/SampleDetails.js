@@ -157,7 +157,9 @@ export default class SampleDetails extends React.Component {
     UIStore.listen(this.onUIStoreChange);
     const { activeTab } = this.state;
     this.fetchQcWhenNeeded(activeTab);
-    CommentActions.fetchComments(sample);
+    if (!sample.isNew) {
+      CommentActions.fetchComments(sample);
+    }
   }
 
   // eslint-disable-next-line camelcase

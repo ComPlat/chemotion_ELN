@@ -54,7 +54,9 @@ export default class ResearchPlanDetails extends Component {
 
   componentDidMount() {
     const { researchPlan } = this.props;
-    CommentActions.fetchComments(researchPlan);
+    if (!researchPlan.isNew) {
+      CommentActions.fetchComments(researchPlan);
+    }
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
