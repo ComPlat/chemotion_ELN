@@ -43,7 +43,7 @@ module Usecases
       def basic_conditions_by_filter(filter)
         @table = filter['table']
         @field_table = filter['field']['table']
-        @conditions[:model_name] = @table.singularize.camelize.constantize
+        @conditions[:model_name] = model_name(@table)
         @match = filter['value'] == 'true' ? '=' : filter['match']
         @conditions[:condition_table] = "#{@table}."
         @conditions[:first_condition] = ''
@@ -54,6 +54,10 @@ module Usecases
         return unless @table == 'elements' && filter['element_id'] != 0
 
         @conditions[:additional_condition] = "AND element_klass_id = #{filter['element_id']}"
+      end
+
+      def model_name(table)
+        table == 'elements' ? Labimotion::Element : table.singularize.camelize.constantize
       end
 
       def special_and_generic_conditions_by_filter(filter, number)

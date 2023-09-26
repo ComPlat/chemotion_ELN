@@ -26,7 +26,7 @@ module Usecases
         @user_wellplates = Wellplate.by_collection_id(@collection_id)
         @user_screens = Screen.by_collection_id(@collection_id)
         @user_research_plans = ResearchPlan.by_collection_id(@collection_id)
-        @user_elements = Element.by_collection_id(@collection_id)
+        @user_elements = Labimotion::Element.by_collection_id(@collection_id)
       end
 
       def perform!

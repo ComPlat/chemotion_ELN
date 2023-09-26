@@ -26,7 +26,7 @@ module Usecases
         @user_wellplates = Wellplate.by_collection_id(@collection_id)
         @user_screens = Screen.by_collection_id(@collection_id)
         @user_research_plans = ResearchPlan.by_collection_id(@collection_id)
-        @user_elements = Element.by_collection_id(@collection_id)
+        @user_elements = Labimotion::Element.by_collection_id(@collection_id)
       end
 
       def perform!
@@ -53,8 +53,13 @@ module Usecases
       def elements_by_scope(scope)
         return if scope.blank?
 
-        @elements["#{@conditions[:model_name].model_name.singular}_ids".to_sym] = scope
-        send("#{@conditions[:model_name].to_s.downcase}_relations_element_ids")
+        if @conditions[:model_name] == Labimotion::Element
+          @elements[:element_ids] = scope
+          element_relations_element_ids
+        else
+          @elements["#{@conditions[:model_name].model_name.singular}_ids".to_sym] = scope
+          send("#{@conditions[:model_name].to_s.downcase}_relations_element_ids")
+        end
       end
 
       # rubocop:disable Metrics/AbcSize
@@ -100,7 +105,7 @@ module Usecases
       end
 
       def element_relations_element_ids
-        sample_ids = ElementsSample.where(element_id: @elements[:element_ids]).pluck(:sample_id)
+        sample_ids = Labimotion::ElementsSample.where(element_id: @elements[:element_ids]).pluck(:sample_id)
         @elements[:sample_ids] = @user_samples.where(id: sample_ids).uniq.pluck(:id)
       end
       # rubocop:enable Metrics/AbcSize

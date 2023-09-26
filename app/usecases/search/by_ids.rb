@@ -14,7 +14,7 @@ module Usecases
         @user = user
         @shared_methods = SharedMethods.new(params: @params, user: @user)
 
-        @model_name = @id_params[:model_name].camelize.constantize
+        @model_name = model_name(@id_params)
         if @filter_params
           @from = @filter_params[:from_date]
           @to = @filter_params[:to_date]
@@ -31,6 +31,10 @@ module Usecases
       end
 
       private
+
+      def model_name(id_params)
+        id_params == 'element' ? Labimotion::Element : id_params[:model_name].camelize.constantize
+      end
 
       def basic_scope
         if @model_name == Sample
@@ -130,7 +134,8 @@ module Usecases
       end
 
       def serialized_result_by_id(element, serialized_scope)
-        entities = "Entities::#{@model_name}Entity".constantize
+        entities =
+          @model_name == Labimotion::Element ? Labimotion::ElementEntity : "Entities::#{@model_name}Entity".constantize
         serialized =
           entities.represent(element, displayed_in_list: true).serializable_hash
         serialized_scope.push(serialized)
