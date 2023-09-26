@@ -13,7 +13,10 @@ class AnalysesContainer extends Component {
 
   constructor() {
     super();
-    this.state = { openPanel: 'none', mode: 'edit' };
+    this.state = {
+      openPanel: 'none',
+      mode: 'edit'
+    };
     this.handleChange.bind(this);
     this.handleHoverOver.bind(this);
   }
@@ -77,9 +80,16 @@ class AnalysesContainer extends Component {
   }
 
   renderAddButton() {
+    const { readOnly } = this.props;
+
     return (
       <div className="add-button">
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+        <Button
+          bsSize="xsmall"
+          bsStyle="success"
+          onClick={() => this.handleAdd()}
+          disabled={readOnly}
+        >
           Add analysis
         </Button>
       </div>
@@ -88,12 +98,14 @@ class AnalysesContainer extends Component {
 
   renderOrderModeButton() {
     const { mode } = this.state;
+    const { readOnly } = this.props;
     const buttonText = mode === 'order' ? 'Order mode' : 'Edit mode';
     const buttonIcon = mode === 'order' ? 'fa fa-reorder' : 'fa fa-edit';
     const styleClass = mode === 'order' ? 'orderMode' : 'editMode';
     return (
       <div className="order-mode-button">
         <Button
+          disabled={readOnly}
           bsSize="xsmall"
           className=""
           bsStyle={styleClass}
@@ -177,6 +189,7 @@ class AnalysesContainer extends Component {
 export default observer(AnalysesContainer);
 
 AnalysesContainer.propTypes = {
+  readOnly: PropTypes.bool.isRequired,
   item: PropTypes.shape({
     id: PropTypes.string.isRequired,
   }).isRequired
