@@ -29,7 +29,7 @@ export default class HyperLinksSection extends Component {
 
   renderHyperLinkInput() {
     const { link } = this.state;
-    const { disabled } = this.props;
+    const { disabled,readOnly } = this.props;
 
     if (disabled) {
       return <div></div>;
@@ -43,13 +43,14 @@ export default class HyperLinksSection extends Component {
           onChange={event => this.handleLinkInputChange(event)}
           bsClass="form-control"
           bsSize="small"
+          disabled={disabled || readOnly}
           style={{ width: '90%' }}
         />
         <Button
           className="button-right"
           bsStyle="success"
           onClick={this.handleAddLink}
-          disabled={link == null}
+          disabled={link == null || readOnly}
           bsSize="small"
           style={{ width: '8%' }}
         >
@@ -135,5 +136,10 @@ HyperLinksSection.propTypes = {
   data: PropTypes.arrayOf(PropTypes.string).isRequired,
   onAddLink: PropTypes.func.isRequired,
   onRemoveLink: PropTypes.func.isRequired,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool.isRequired
 };
+
+HyperLinksSection.defaultProps ={
+  readOnly: false
+}

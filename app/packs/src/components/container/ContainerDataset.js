@@ -221,7 +221,8 @@ export default class ContainerDataset extends Component {
     const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
       return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
+        <Button 
+          bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
           <i className="fa fa-trash-o" />
         </Button>
       );
@@ -395,7 +396,7 @@ export default class ContainerDataset extends Component {
 
   render() {
     const { dataset_container, showInstruments } = this.state;
-    const { readOnly, disabled, kind } = this.props;
+    const { readOnly, disabled, kind} = this.props;
     const overlayAttributes = {
       style: {
         position: 'absolute', width: 300, marginTop: 144, marginLeft: 17
@@ -472,7 +473,11 @@ export default class ContainerDataset extends Component {
           <label>Attachments: </label>
           {this.dropzone()}
           {this.attachments()}
-          <HyperLinksSection data={dataset_container.extended_metadata['hyperlinks']} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
+          <HyperLinksSection
+            data={dataset_container.extended_metadata['hyperlinks']}
+            onAddLink={this.handleAddLink} 
+            onRemoveLink={this.handleRemoveLink}
+            readOnly={readOnly}
             disabled={disabled}></HyperLinksSection>
         </Col>
         <ImageAnnotationModalSVG

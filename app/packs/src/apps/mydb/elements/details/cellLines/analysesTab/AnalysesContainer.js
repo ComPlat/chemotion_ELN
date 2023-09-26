@@ -124,6 +124,7 @@ class AnalysesContainer extends Component {
     const containers = currentElement.container.children[0].children;
 
     const { mode } = this.state;
+    const { readOnly } = this.props;
 
     const analysisRows = mode === 'edit'
       ? containers.map((container) => (
@@ -132,6 +133,7 @@ class AnalysesContainer extends Component {
           parent={this}
           element={currentElement}
           container={container}
+          readOnly={readOnly}
         />
       ), this)
       : containers.map(

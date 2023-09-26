@@ -6,8 +6,9 @@ import PropTypes from 'prop-types';
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class EditModeRow extends Component {
+  
   render() {
-    const { container, parent, element } = this.props;
+    const { container, parent, element,readOnly } = this.props;
     return (
       <Panel
         eventKey={container.id}
@@ -16,14 +17,18 @@ export default class EditModeRow extends Component {
         <Panel.Heading
           onClick={() => parent.handleClickOnPanelHeader(container.id)}
         >
-          <EditModeHeader element={element} container={container} parent={parent} />
+          <EditModeHeader 
+            element={element} 
+            container={container}
+            parent={parent} 
+            readOnly={readOnly}/>
         </Panel.Heading>
         <Panel.Body collapsible>
           <ContainerComponent
             analysisMethodTitle="Type (Cell line ontology)"
             ontologyName="clo"
             templateType="researchPlan"
-            readOnly={false}
+            readOnly={readOnly}
             disabled={false}
             container={container}
             onChange={() => parent.handleChange(container)}
@@ -43,5 +48,6 @@ EditModeRow.propTypes = {
     handleChange: PropTypes.func.isRequired
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
-  element: PropTypes.object.isRequired
+  element: PropTypes.object.isRequired,
+  readOnly: PropTypes.bool.isRequired
 };

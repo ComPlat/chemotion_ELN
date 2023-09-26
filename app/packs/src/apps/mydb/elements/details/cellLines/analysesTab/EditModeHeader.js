@@ -64,7 +64,7 @@ export default class EditModeHeader extends React.Component {
   }
 
   renderNotDeletedContainer() {
-    const { container, element } = this.props;
+    const { container,readOnly } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
     const contentOneLine = {
       ops: content.ops.map((x) => {
@@ -79,6 +79,7 @@ export default class EditModeHeader extends React.Component {
         <div className="preview">{this.renderImagePreview(container)}</div>
         <div className="abstract">
           <Button
+            disabled={readOnly}
             bsSize="xsmall"
             bsStyle="danger"
             className="button-right"
