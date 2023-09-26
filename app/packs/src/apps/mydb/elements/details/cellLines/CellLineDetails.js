@@ -5,6 +5,7 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 import {
   Panel, ButtonToolbar, Button,
@@ -20,7 +21,10 @@ class CellLineDetails extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { activeTab: 'tab1' };
+    this.state = {
+      activeTab: 'tab1',
+      readOnly: this.isReadOnly()
+    };
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
@@ -63,14 +67,28 @@ class CellLineDetails extends React.Component {
     this.setState({ visible });
   }
 
+  isReadOnly() {
+    const { currentCollection, isSync } = UIStore.getState();
+    return currentCollection.permission_level === 0 && isSync;
+  }
+
   renderHeaderContent() {
     const { cellLineItem } = this.props;
 
     return (
       <div>
 
-        <ElementCollectionLabels class="collection-label floating" element={cellLineItem} key={cellLineItem.id} placement="right" />
-        <div className="floating header"> <i className="icon-cell_line" />{cellLineItem.short_label}</div>
+        <ElementCollectionLabels
+          class="collection-label floating"
+          element={cellLineItem}
+          key={cellLineItem.id}
+          placement="right"
+        />
+        <div className="floating header">
+          {' '}
+          <i className="icon-cell_line" />
+          {cellLineItem.short_label}
+        </div>
 
         {this.renderCloseHeaderButton()}
         {this.renderEnlargenButton()}
@@ -152,8 +170,23 @@ class CellLineDetails extends React.Component {
     const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
     const disabled = validationInfo.length > 0 || !mobXItem.changed;
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
-    const disabledButton = <Button bsStyle="warning" disabled onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
-    const enabledButton = <Button bsStyle="warning" onClick={() => { this.handleSubmit(cellLineItem); }}>{buttonText}</Button>;
+    const disabledButton = (
+      <Button
+        bsStyle="warning"
+        disabled
+        onClick={() => { this.handleSubmit(cellLineItem); }}
+      >
+        {buttonText}
+      </Button>
+    );
+    const enabledButton = (
+      <Button
+        bsStyle="warning"
+        onClick={() => { this.handleSubmit(cellLineItem); }}
+      >
+        {buttonText}
+      </Button>
+    );
 
     return disabled ? disabledButton : enabledButton;
   }
@@ -164,7 +197,7 @@ class CellLineDetails extends React.Component {
     if (!cellLineItem) { return (null); }
     // eslint-disable-next-line react/destructuring-assignment
     this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
-
+    const { readOnly } = this.state;
     const { activeTab } = this.state;
     return (
       <Panel
@@ -173,10 +206,21 @@ class CellLineDetails extends React.Component {
         <Panel.Heading className="blue-background">{this.renderHeaderContent()}</Panel.Heading>
         <Panel.Body>
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
-            <Tab eventKey="tab1" title="General properties" key="tab1"><GeneralProperties item={cellLineItem} /></Tab>
-            <Tab eventKey="tab2" title="Analyses" key="tab2"><AnalysesContainer item={cellLineItem} /></Tab>
+            <Tab eventKey="tab1" title="General properties" key="tab1">
+              <GeneralProperties
+                item={cellLineItem}
+                readOnly={readOnly}
+              />
+            </Tab>
+            <Tab eventKey="tab2" title="Analyses" key="tab2">
+              <AnalysesContainer
+                item={cellLineItem}
+                readOnly={readOnly}
+              />
+            </Tab>
             <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
               <DetailsTabLiteratures
+                readOnly={readOnly}
                 element={cellLineItem}
                 literatures={cellLineItem.is_new === true ? cellLineItem.literatures : null}
               />
@@ -202,6 +246,7 @@ CellLineDetails.propTypes = {
     id: PropTypes.string.isRequired,
     itemName: PropTypes.string.isRequired,
     cellLineName: PropTypes.string.isRequired,
+    short_label: PropTypes.string.isRequired,
     is_new: PropTypes.bool.isRequired,
     // eslint-disable-next-line react/forbid-prop-types
     literatures: PropTypes.arrayOf(PropTypes.object),

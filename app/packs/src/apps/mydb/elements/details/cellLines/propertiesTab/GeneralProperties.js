@@ -10,7 +10,6 @@ import Select from 'react-select';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -20,13 +19,7 @@ class GeneralProperties extends React.Component {
     super(props);
     this.state = {
       openPanel: 'common-properties',
-      readOnly: this.isReadOnly()
     };
-  }
-
-  isReadOnly() {
-    const { currentCollection, isSync } = UIStore.getState();
-    return currentCollection.permission_level === 0 && isSync;
   }
 
   renderOptionalAttribute(attributeName, defaultValue, onChangeCallBack) {
@@ -41,7 +34,7 @@ class GeneralProperties extends React.Component {
     optional = false,
     numeric = false
   ) {
-    const { readOnly } = this.state;
+    const { readOnly } = this.props;
 
     let styleClass = '';
     if (!optional) {
@@ -72,7 +65,7 @@ class GeneralProperties extends React.Component {
   }
 
   renderBiosafetyLevel(item) {
-    const { readOnly } = this.state;
+    const { readOnly } = this.props;
 
     const { cellLineDetailsStore } = this.context;
     const options = [
@@ -101,7 +94,7 @@ class GeneralProperties extends React.Component {
 
   renderAmount(item) {
     const { cellLineDetailsStore } = this.context;
-    const { readOnly } = this.state;
+    const { readOnly } = this.props;
     const styleClassUnit = item.unit === '' ? 'invalid-input' : '';
     const options = [
       { value: 'g', label: 'g' },
@@ -161,11 +154,11 @@ class GeneralProperties extends React.Component {
   }
 
   render() {
-    const { item } = this.props;
+    const { item, readOnly } = this.props;
     const { cellLineDetailsStore } = this.context;
     const cellLineItem = cellLineDetailsStore.cellLines(item.id);
     const cellLineId = item.id;
-    const { openPanel, readOnly } = this.state;
+    const { openPanel } = this.state;
     return (
       <div>
         <div />
@@ -270,6 +263,7 @@ class GeneralProperties extends React.Component {
 export default observer(GeneralProperties);
 
 GeneralProperties.propTypes = {
+  readOnly: PropTypes.bool.isRequired,
   item: PropTypes.shape({
     id: PropTypes.string.isRequired
   }).isRequired
