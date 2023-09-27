@@ -134,6 +134,11 @@ module Chemotion
       end
 
       namespace :remote do
+
+        before do
+          error!("401 Unauthorized", 401) unless current_user.is_a?(Admin) or current_user.is_super_device
+        end
+
         namespace :create do
           desc 'create a new Device'
           params do
@@ -154,7 +159,7 @@ module Chemotion
               new_obj.save!
               present new_obj, with: Entities::GroupDeviceEntity
             rescue ActiveRecord::RecordInvalid => e
-              { error: e.message }
+              error!(e.message, 409)
             end
           end
         end
@@ -166,7 +171,6 @@ module Chemotion
           end
           route_param :id do
             get do
-              error(401) unless current_user.is_a?(Admin) or current_user.is_super_device
               device = Device.find(params[:id])
 
               payload = {

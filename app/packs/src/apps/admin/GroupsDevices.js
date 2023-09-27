@@ -835,7 +835,15 @@ export default class GroupsDevices extends React.Component {
                 style={{ overflow: 'auto', 'white-space': 'nowrap' }}
                 variant="warning"
               >
-                {token}
+                <input
+                  className="form-control"
+                  style={{
+                    'background-color': 'rgba(0,0,0,0)',
+                    border: 'none'
+                  }}
+                  type="text"
+                  value={token}
+                />
               </Alert>
               <Button
                 bsSize="small"
