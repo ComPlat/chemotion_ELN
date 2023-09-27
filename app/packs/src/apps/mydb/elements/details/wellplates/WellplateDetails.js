@@ -52,7 +52,9 @@ export default class WellplateDetails extends Component {
   componentDidMount() {
     const { wellplate } = this.props;
     UIStore.listen(this.onUIStoreChange);
-    CommentActions.fetchComments(wellplate);
+    if (!wellplate.isNew) {
+      CommentActions.fetchComments(wellplate);
+    }
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
