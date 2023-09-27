@@ -32,7 +32,7 @@ module Entities
     )
 
     def display_name
-      object.sample&.showed_name
+      object.sample&.name || object.sample&.showed_name
     end
 
     def scan_results

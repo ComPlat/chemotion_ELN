@@ -43,13 +43,27 @@ module Export
       'r ref', 'r eq'
     ].freeze
 
-
     HEADERS_ANALYSIS_0 = [].freeze
     HEADERS_ANALYSIS = ["name", "description", "uuid", "kind", "status", "content"].freeze
     HEADERS_DATASET_0 = [].freeze
     HEADERS_DATASET = ["dataset name", "instrument", "dataset description"].freeze
     HEADERS_ATTACHMENT_0 = [].freeze
     HEADERS_ATTACHMENT = ["filename", "checksum"].freeze
+
+    def extract_label_from_solvent_column(sample_column)
+      return unless sample_column.is_a?(String) && !sample_column.empty?
+
+      solvent_hash = begin
+        JSON.parse(sample_column)
+      rescue StandardError
+        nil
+      end
+
+      return nil if solvent_hash.nil?
+
+      solvent_values = solvent_hash.map { |solvent| solvent&.fetch('label', nil) }
+      solvent_values.compact.join('-')
+    end
 
     def generate_headers(table, excluded_columns = [], selected_columns = [])
       @row_headers = @samples.columns - excluded_columns

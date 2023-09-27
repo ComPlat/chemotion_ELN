@@ -294,6 +294,7 @@ class ViewSpectra extends React.Component {
       });
     }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
     let couplings = [].concat(...macs.map((m) => {
+      m.js.sort((a, b) => (isAscend ? a - b : b - a));
       const c = m.center;
       const type = m.mpyType;
       const it = Math.round(m.area);
@@ -338,7 +339,7 @@ class ViewSpectra extends React.Component {
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '19F'].indexOf(layout) >= 0 && isMpy) {
+    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
@@ -533,7 +534,7 @@ class ViewSpectra extends React.Component {
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
     ] : [];
-    const isNmr = updatable && ['1H', '13C', '19F'].indexOf(et.layout) >= 0;
+    const isNmr = updatable && ['1H', '13C', '15N', '19F', '29Si', '31P'].includes(et.layout);
     if (isNmr) {
       baseOps = [
         ...baseOps,
@@ -661,7 +662,7 @@ class ViewSpectra extends React.Component {
                 descriptions={descriptions}
                 canChangeDescription
                 onDescriptionChanged={this.onSpectraDescriptionChanged}
-                userManualLink={{ cv: 'https://chemotion.net/docs/chemspectra/cv' }}
+                userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
             />
         }
       </Modal.Body>

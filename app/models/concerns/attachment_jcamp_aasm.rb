@@ -122,6 +122,7 @@ end
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Process for attachment Jcamp handle
+# rubocop:disable Metrics/ModuleLength
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
@@ -253,9 +254,9 @@ module AttachmentJcampProcess
     elsif arr_jcamp.length > 1
       read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     else
+      img_att = generate_img_att(tmp_img, 'peak')
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
       jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-      img_att = generate_img_att(tmp_img, 'peak')
 
       tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
       tmp_files_to_be_deleted.push(*arr_img)
@@ -331,11 +332,35 @@ module AttachmentJcampProcess
   end
 
   def generate_spectrum(is_create = false, is_regen = false, params = {})
+    return if is_create && !is_regen && jcamp_files_already_present?
+
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
   rescue StandardError => e
     set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
     Rails.logger.error(e)
+  end
+
+  def jcamp_files_already_present?
+    first_part, extname = extension_parts
+    return false if (extname.casecmp('nmrium').zero? || first_part['processed_']) # ignore when file is nmrium or preprocessed from Bruker NMR
+
+    attachments = Attachment.where(attachable_id: self[:attachable_id])
+    num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
+    jcamp_attachments = file_match(attachments, num)
+    jcamp_attachments.any?
+  end
+
+  def file_match(attachments, num)
+    attachments.select do |att|
+      if num
+        att.filename == filename || att.filename == "#{filename[0..-2]}#{num}_bagit.peak.jdx" ||
+          att.filename == "#{filename[0..-2]}#{num}_bagit.edit.jdx"
+      else
+        att.extension_parts[-1] == 'jdx' || att.extension_parts[0] == 'peak' ||
+          att.extension_parts[0] == 'edit'
+      end
+    end
   end
 
   def read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
@@ -380,7 +405,6 @@ module AttachmentJcampProcess
         generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
         tmp_to_be_deleted.push(curr_tmp_csv)
       end
-
       jcamp_att = curr_jcamp_att if idx == 0
     end
 
@@ -649,3 +673,4 @@ module AttachmentJcampProcess
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

@@ -9,8 +9,8 @@ module Usecases
         @current_user_id = @collection_attributes[:shared_by_id]
       end
 
-      def execute!
-        ActiveRecord::Base.transaction do
+      def execute! # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/MethodLength
+        ActiveRecord::Base.transaction do # rubocop:disable Metrics/BlockLength
           c = Collection.create(@collection_attributes)
           sample_ids = @params.fetch(:sample_ids, [])
           reaction_ids =  @params.fetch(:reaction_ids, [])
@@ -62,7 +62,7 @@ module Usecases
 
           element_ids.each do |k, ids|
             ids.each do |element_id|
-              CollectionsElement.create(collection_id: c.id, element_id: element_id, element_type: k)
+              Labimotion::CollectionsElement.create(collection_id: c.id, element_id: element_id, element_type: k)
             end
           end
 

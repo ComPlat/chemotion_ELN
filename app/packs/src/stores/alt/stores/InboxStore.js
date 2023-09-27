@@ -15,12 +15,15 @@ class InboxStore {
       numberOfAttachments: 0,
       checkedIds: [],
       checkedAll: false,
+      checkedDeviceIds: [],
+      checkedDeviceAll: false,
       inboxModalVisible: false,
       inboxVisible: false,
       currentPage: 1,
       itemsPerPage: 20,
       currentContainerPage: 1,
       currentUnsortedBoxPage: 1,
+      currentDeviceBoxPage: 1,
       dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
@@ -41,6 +44,9 @@ class InboxStore {
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
       handleCheckedAll: InboxActions.checkedAll,
       handleCheckedIds: InboxActions.checkedIds,
+      handleCheckDeviceAttachments: InboxActions.checkDeviceAttachments,
+      handleCheckedDeviceIds: InboxActions.checkedDeviceIds,
+      handleCheckedDeviceAll: InboxActions.checkedDeviceAll,
       handlePrevClick: InboxActions.prevClick,
       handleNextClick: InboxActions.nextClick,
 
@@ -62,6 +68,7 @@ class InboxStore {
       handleSetPagination: InboxActions.setInboxPagination,
       setInboxVisible: InboxActions.setInboxVisible,
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
+      handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
     });
   }
 
@@ -87,6 +94,17 @@ class InboxStore {
 
     this.sync();
     this.countAttachments();
+  }
+
+  handleFetchInboxUnsorted(payload) {
+    this.setState((prevState) => ({
+      inbox: {
+        ...prevState.inbox,
+        unlinked_attachments: payload.unlinked_attachments,
+        inbox_count: payload.inbox_count,
+      },
+      currentUnsortedBoxPage: 1,
+    }));
   }
 
   handleFetchInboxCount(result) {
@@ -324,7 +342,7 @@ class InboxStore {
 
   handleCheckedIds(params) {
     const {
-      inbox, checkedIds, currentUnsortedBoxPage, dataItemsPerPage
+      inbox, checkedIds, currentUnsortedBoxPage, dataItemsPerPage,
     } = this.state;
     const unlinkedAttachments = inbox.unlinked_attachments;
     const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
@@ -343,6 +361,64 @@ class InboxStore {
       currentAttachments.forEach((attachment) => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
       this.handleCheckedAll(params);
     }
+
+    // If unsortedBox, remove devicebox attachments from checkedIds
+    if (this.state.activeDeviceBoxId === -1) {
+      for (let i = checkedIds.length - 1; i >= 0; i--) {
+        const checkedId = checkedIds[i];
+        const hasCorrespondingAttachment = currentAttachments.some((attachment) => attachment.id === checkedId);
+        if (!hasCorrespondingAttachment) {
+          checkedIds.splice(i, 1);
+        }
+      }
+    }
+  }
+
+  handleCheckedDeviceAll(params) {
+    const { checkedDeviceAll, inbox, activeDeviceBoxId } = this.state;
+
+    if (params.range === 'all') {
+      if (params.type) {
+        const currentDeviceBox = inbox.children.find((deviceBox) => deviceBox.id === activeDeviceBoxId);
+        if (currentDeviceBox) {
+          const allDatasetIdsFlat = currentDeviceBox.children.map((dataset) => dataset.id);
+          const allAttachments = currentDeviceBox.children.reduce((acc, dataset) => {
+            acc.push(...dataset.attachments);
+            return acc;
+          }, []);
+          const allAttachmentsFlat = _.flatten(allAttachments).map((attachment) => attachment.id);
+
+          this.setState({
+            checkedDeviceIds: allDatasetIdsFlat,
+            checkedIds: allAttachmentsFlat,
+          });
+        }
+      } else {
+        this.setState({
+          checkedDeviceIds: [],
+          checkedIds: [],
+        });
+      }
+    }
+
+    this.setState({ checkedDeviceAll: !checkedDeviceAll });
+  }
+
+  handleCheckedDeviceIds(params) {
+    this.setState({
+      checkedDeviceIds: params.checkedDeviceIds,
+      checkedIds: params.checkedIds
+    });
+  }
+
+  handleCheckDeviceAttachments(params) {
+    const { checkedIds } = this.state;
+
+    const newCheckedIds = (params.isSelected)
+      ? checkedIds.filter((checkedId) => checkedId !== params.ids)
+      : [...checkedIds, params.ids];
+
+    this.setState({ checkedIds: newCheckedIds });
   }
 }
 

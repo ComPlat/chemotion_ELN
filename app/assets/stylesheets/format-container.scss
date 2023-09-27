@@ -14,12 +14,11 @@
   width: calc(80vw) !important;
   .modal-content {
     height: 95%;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
     .modal-header .modal-title .btn-toolbar {
       float: right;
     }
-    .modal-body {      
+    .modal-body {
+      height: 90%;
       overflow: auto;
       .row {
         height: 100%;
@@ -27,10 +26,10 @@
           min-height: 200px;
         }
         .col-full {
-          height: 100%;
+          // height: 100%;
           .list {
             overflow: auto;
-            // max-height: calc(100% - 70px) !important;
+            max-height: calc(100% - 70px) !important;
           }
         }
       }

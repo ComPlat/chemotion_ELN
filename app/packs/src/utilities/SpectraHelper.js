@@ -66,7 +66,7 @@ const extractJcampWithFailedFiles = (container) => {
         const isJcamp = acceptables.indexOf(ext.toLowerCase()) >= 0;
         const isApp = [
           'idle', 'queueing', 'done',
-          'backup', 'image','non_jcamp',
+          'backup', 'image', 'non_jcamp',
         ].indexOf(att.aasm_state) < 0;
         if (isJcamp && isApp) {
           const file = Object.assign({}, att, {
@@ -90,7 +90,7 @@ const extractNMRiumFiles = (container) => {
         const fns = att.filename.split('.');
         const ext = fns[fns.length - 1];
         const isNMRium = ext.toLowerCase() === 'nmrium';
-        
+
         if (isNMRium) {
           const file = Object.assign({}, att, {
             idDt: dt.id,
@@ -122,7 +122,7 @@ const BuildSpcInfos = (sample, container) => {
   const files = extractJcampFiles(container);
   if (files.length < 1) return [];
   const idAe = extractAnalysesId(sample, container);
-  return files.map(file => (
+  return files.map((file) => (
     {
       value: null,
       label: file.filename,
@@ -143,7 +143,7 @@ const BuildSpcInfosForNMRDisplayer = (sample, container) => {
   files.push(...nmriumFiles);
   if (files.length < 1) return [];
   const idAe = extractAnalysesId(sample, container);
-  return files.map(file => (
+  return files.map((file) => (
     {
       value: null,
       label: file.filename,
@@ -157,4 +157,11 @@ const BuildSpcInfosForNMRDisplayer = (sample, container) => {
   ));
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds }; // eslint-disable-line
+const isNMRKind = (container) => {
+  if (!(container && container.extended_metadata && container.extended_metadata.kind)) return false;
+  const { extended_metadata } = container; // eslint-disable-line
+  const { kind } = extended_metadata; // eslint-disable-line
+  return kind.toLowerCase().includes('nuclear magnetic resonance');
+};
+
+export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind }; // eslint-disable-line

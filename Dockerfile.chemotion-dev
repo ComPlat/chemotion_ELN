@@ -7,8 +7,7 @@ FROM --platform=linux/amd64 ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.7.7
-ARG VNODE=14.21.3
-ARG VNODENEXT=16.16.0
+ARG VNODE=18.17.1
 ARG ASDF_BRANCH=v0.11.3
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
@@ -25,7 +24,8 @@ RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget a
       fonts-crosextra-caladea fonts-crosextra-carlito \
       fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
-      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape
+      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
+      libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb
 RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
     && apt-get update -yqqq && apt-get -y install google-chrome-stable \
@@ -56,7 +56,6 @@ ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:/usr/loca
 
 RUN asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 RUN asdf install nodejs $VNODE
-RUN asdf install nodejs $VNODENEXT
 RUN asdf global nodejs $VNODE
 
 RUN asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git

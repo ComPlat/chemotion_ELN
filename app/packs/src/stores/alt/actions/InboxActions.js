@@ -35,6 +35,18 @@ class InboxActions {
     return params;
   }
 
+  checkedDeviceAll(params) {
+    return params;
+  }
+
+  checkedDeviceIds(params) {
+    return params;
+  }
+
+  checkDeviceAttachments(params) {
+    return params;
+  }
+
   prevClick() {
     return null;
   }
@@ -73,6 +85,17 @@ class InboxActions {
             inbox: result.inbox,
             currentContainerPage,
           });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchInboxUnsorted() {
+    return (dispatch) => {
+      InboxFetcher.fetchInboxUnsorted()
+        .then((result) => {
+          dispatch(result.inbox);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

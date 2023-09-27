@@ -1,24 +1,43 @@
-import React from 'react'
-import {NavDropdown, Navbar, MenuItem} from 'react-bootstrap';
+import React from 'react';
+import { NavDropdown, Navbar, MenuItem } from 'react-bootstrap';
 
-const NavHead = () => {
-  let isHome = window.location.href.match(/\/home/)
-  return(
+function NavHead() {
+  const isOnMydb = window.location.href.match(/\/mydb/);
+  return (
     <Navbar.Brand>
-      <NavDropdown title='Chemotion' className="navig-brand" id="bg-nested-dropdown-brand">
-        <MenuItem eventKey="11" href="http://www.chemotion.net" target="_blank">Chemotion repository</MenuItem>
-        <MenuItem eventKey="13" href="http://www.complat.kit.edu/" target="_blank">Complat</MenuItem>
-        <MenuItem eventKey="14" href="https://github.com/ComPlat" target="_blank">Complat on Github</MenuItem>
+      <NavDropdown title="Chemotion" className="navig-brand" id="bg-nested-dropdown-brand">
+        <MenuItem eventKey="11" href="https://chemotion.net/docs/eln/ui" target="_blank">
+          Documentation
+          <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
+        </MenuItem>
+        <MenuItem eventKey="15" href="https://www.chemotion.net" target="_blank">
+          Chemotion.net
+          <i className="fa fa-external-link " style={{ float: 'right' }} aria-hidden />
+        </MenuItem>
+        <MenuItem eventKey="14" href="https://github.com/ComPlat/chemotion_ELN/issues" target="_blank">
+          Complat on Github
+          <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
+        </MenuItem>
+        <MenuItem eventKey="15" href="https://www.chemotion-repository.net" target="_blank">
+          Chemotion-Repository.net
+          {' '}
+          {' '}
+          <i className="fa fa-external-link " aria-hidden />
+        </MenuItem>
         <MenuItem divider />
-        <MenuItem eventKey='15' href={isHome ? '/' : '/home'} target="_self">{isHome ? 'ELN' : 'Home'}</MenuItem>
+        <MenuItem eventKey="16" href={isOnMydb ? '/home' : '/mydb'} target="_self">
+          {isOnMydb ? 'Home' : 'ELN'}
+        </MenuItem>
         <MenuItem divider />
-        <MenuItem eventKey='15' href="/about" target="_self">About</MenuItem>
+        <MenuItem eventKey="17" href="/about" target="_self">
+          About
+        </MenuItem>
       </NavDropdown>
     </Navbar.Brand>
-  )
+  );
 }
 
 NavHead.propTypes = {
-}
+};
 
 export default NavHead;

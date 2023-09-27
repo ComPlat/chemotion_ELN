@@ -1,10 +1,13 @@
 require('@babel/register')();
 
-var jsdom = require('jsdom').jsdom;
+const jsdom = require('jsdom');
 
-var exposedProperties = ['window', 'navigator', 'document'];
+const { JSDOM } = jsdom;
 
-global.document = jsdom('');
+const { document } = (new JSDOM('', { url: 'http://localhost' })).window;
+global.document = document;
+
+const exposedProperties = ['window', 'navigator', 'document'];
 global.window = document.defaultView;
 Object.keys(document.defaultView).forEach((property) => {
   if (typeof global[property] === 'undefined') {
@@ -12,6 +15,20 @@ Object.keys(document.defaultView).forEach((property) => {
     global[property] = document.defaultView[property];
   }
 });
+
+// Polyfill for requestAnimationFrame
+if (!window.requestAnimationFrame) {
+  window.requestAnimationFrame = function requestAnimationFramePolyfill(callback) {
+    return setTimeout(callback, 0);
+  };
+}
+
+// Polyfill for cancelAnimationFrame
+if (!window.cancelAnimationFrame) {
+  window.cancelAnimationFrame = function cancelAnimationFramePolyfill(id) {
+    clearTimeout(id);
+  };
+}
 
 global.navigator = {
   userAgent: 'node.js'

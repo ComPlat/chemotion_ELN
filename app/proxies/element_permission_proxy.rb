@@ -36,13 +36,13 @@ class ElementPermissionProxy
     # Fall 2: User besitzt mindestens einen Share, der das Element enthält...von diesen Shares nutzt man das maximale
     # Element Detaillevel
 
-    c.map { |cc| [cc.is_shared, cc.send("#{element.class.to_s.downcase}_detail_level")] }.each do |bool, dl|
+    c.map { |cc| [cc.is_shared, cc.send("#{Labimotion::Utils.element_name_dc(element.class.to_s)}_detail_level")] }.each do |bool, dl|
       return (@dl = max_detail_level) if !bool
       @dl = dl if dl > @dl
     end
 
     sc.each do |sc|
-      dl = sc.send("#{element.class.to_s.downcase}_detail_level")
+      dl = sc.send("#{Labimotion::Utils.element_name_dc(element.class.to_s)}_detail_level")
       @dl = dl if dl > @dl
     end
 
@@ -84,7 +84,7 @@ class ElementPermissionProxy
       10
     when ResearchPlan
       10
-    when Element
+    when Labimotion::Element
       10
     end
   end

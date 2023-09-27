@@ -37,12 +37,41 @@ const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annota
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
+  static isImageFile(fileName) {
+    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
+    const dataType = last(fileName.split('.'));
+    return acceptedImageTypes.includes(dataType);
+  }
+
+  static renderDownloadAnnotatedImageButton(attachment) {
+    if (!ResearchPlanDetailsAttachments.isImageFile(attachment.filename)) {
+      return null;
+    }
+    return (
+      <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
+        <div className="research-plan-attachments-annotation-download">
+          <Button
+            bsSize="xsmall"
+            className="button-right"
+            bsStyle="primary"
+            disabled={attachment.isNew}
+            onClick={() => {
+              Utils.downloadFile({
+                contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+                name: attachment.filename
+              });
+            }}
+          >
+            <i className="fa fa-download" aria-hidden="true" />
+          </Button>
+        </div>
+      </OverlayTrigger>
+    );
+  }
+
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-    const {
-      attachments, onDrop, onDelete, onUndoDelete, onDownload, onEdit
-    } = props;
 
     this.state = {
       attachmentEditor: false,
@@ -60,19 +89,69 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.attachments !== prevProps.attachments) {
+    const { attachments } = this.props;
+    if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
     }
   }
 
-  editorInitial() {
-    EditorFetcher.initial().then((result) => {
-      this.setState({
-        attachmentEditor: result.installed,
-        extension: result.ext,
+  /* eslint-disable no-param-reassign */
+  handleEdit(attachment) {
+    const fileType = last(attachment.filename.split('.'));
+    const docType = this.documentType(attachment.filename);
+
+    EditorFetcher.startEditing({ attachment_id: attachment.id })
+      .then((result) => {
+        if (result.token) {
+          const url = `/editor?id=${attachment.id}&docType=${docType}
+          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
+          &only_office_token=${result.only_office_token}`;
+          window.open(url, '_blank');
+
+          attachment.aasm_state = 'oo_editing';
+          attachment.updated_at = new Date();
+
+          this.props.onEdit(attachment);
+        } else {
+          alert('Unauthorized to edit this file.');
+        }
       });
+  }
+  /* eslint-enable no-param-reassign */
+
+  onImport(attachment) {
+    const { researchPlan, onAttachmentImportComplete } = this.props;
+    const researchPlanId = researchPlan.id;
+    LoadingActions.start();
+    ElementActions.importTableFromSpreadsheet(
+      researchPlanId,
+      attachment.id,
+      onAttachmentImportComplete
+    );
+    LoadingActions.stop();
+  }
+
+  /* eslint-disable no-param-reassign */
+  createAttachmentPreviews() {
+    const { attachments } = this.props;
+    attachments.map((attachment) => {
+      if (attachment.thumb) {
+        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+          (result) => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
+              this.forceUpdate();
+            }
+          }
+        );
+      } else {
+        attachment.preview = '/images/wild_card/not_available.svg';
+        this.forceUpdate();
+      }
+      return attachment;
     });
   }
+  /* eslint-enable no-param-reassign */
 
   documentType(filename) {
     const { extension } = this.state;
@@ -87,71 +166,41 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return docType;
   }
 
-  isImageFile(fileName) {
-    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
-    const dataType = last(fileName.split('.'));
-    return acceptedImageTypes.includes(dataType);
-  }
-
-  handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-    .then((result) => {
-      if (result.token) {
-        const url = `/editor?id=${attachment.id}&docType=${docType}
-        &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-        &only_office_token=${result.only_office_token}`;
-        window.open(url, '_blank');
-
-        attachment.aasm_state = 'oo_editing';
-        attachment.updated_at = new Date();
-
-        this.props.onEdit(attachment);
-      } else {
-        alert('Unauthorized to edit this file.');
-      }
+  editorInitial() {
+    EditorFetcher.initial().then((result) => {
+      this.setState({
+        attachmentEditor: result.installed,
+        extension: result.ext,
+      });
     });
   }
 
-  createAttachmentPreviews() {
-    const { attachments } = this.props;
-    attachments.map((attachment) => {
-      if (attachment.thumb) {
-        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
-          (result) => {
-            if (result != null) {
-              attachment.preview = `data:image/png;base64,${result}`;
-            }
-          }
-        );
-      } else {
-        attachment.preview = '/images/wild_card/not_available.svg';
-      }
-      return attachment;
-    });
+  showImportConfirm(attachmentId) {
+    const { showImportConfirm } = this.state;
+    showImportConfirm[attachmentId] = true;
+    this.setState({ showImportConfirm });
   }
 
-  onImport(attachment) {
-    const researchPlanId = this.props.researchPlan.id;
-    LoadingActions.start();
-    ElementActions.importTableFromSpreadsheet(
-      researchPlanId,
-      attachment.id,
-      this.props.onAttachmentImportComplete
-    );
-    LoadingActions.stop();
+  hideImportConfirm(attachmentId) {
+    const { showImportConfirm } = this.state;
+    showImportConfirm[attachmentId] = false;
+    this.setState({ showImportConfirm });
+  }
+
+  confirmAttachmentImport(attachment) {
+    this.onImport(attachment);
+    this.hideImportConfirm(attachment.id);
   }
 
   renderRemoveAttachmentButton(attachment) {
+    const { onDelete, readOnly } = this.props;
     return (
       <Button
         bsSize="xsmall"
         bsStyle="danger"
         className="button-right"
-        onClick={() => this.props.onDelete(attachment)}
-        disabled={this.props.readOnly}
+        onClick={() => onDelete(attachment)}
+        disabled={readOnly}
       >
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
@@ -159,16 +208,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
+    const { choosenAttachment, imageEditModalShown } = this.state;
+    const { onEdit } = this.props;
     return (
       <ImageAnnotationModalSVG
-        attachment={this.state.choosenAttachment}
-        isShow={this.state.imageEditModalShown}
+        attachment={choosenAttachment}
+        isShow={imageEditModalShown}
         handleSave={
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            choosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
-            this.props.onEdit(this.state.choosenAttachment);
+            onEdit(choosenAttachment);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
@@ -188,6 +239,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderListGroupItem(attachment) {
     const { attachmentEditor, extension } = this.state;
+    const { onUndoDelete } = this.props;
 
     const updateTime = new Date(attachment.updated_at);
     updateTime.setTime(updateTime.getTime() + 15 * 60 * 1000);
@@ -215,7 +267,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 bsSize="xsmall"
                 bsStyle="danger"
                 className="button-right"
-                onClick={() => this.props.onUndoDelete(attachment)}
+                onClick={() => onUndoDelete(attachment)}
               >
                 <i className="fa fa-undo" aria-hidden="true" />
               </Button>
@@ -251,7 +303,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           <Col md={8}>{attachment.filename}</Col>
           <Col md={3}>
             {this.renderRemoveAttachmentButton(attachment)}
-            {this.renderDownloadOriginalButton(attachment, downloadTooltip)}
+            {this.renderDownloadOriginalButton(attachment)}
             {this.renderEditAttachmentButton(
               attachment,
               extension,
@@ -261,7 +313,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
               styleEditorBtn,
               editDisable
             )}
-            {this.renderDownloadAnnotatedImageButton(attachment)}
+            {ResearchPlanDetailsAttachments.renderDownloadAnnotatedImageButton(attachment)}
             {this.renderAnnotateImageButton(attachment)}
             {this.renderImportAttachmentButton(attachment)}
           </Col>
@@ -279,23 +331,25 @@ export default class ResearchPlanDetailsAttachments extends Component {
           className="button-right"
           bsStyle="success"
           disabled={editDisable}
-          onClick={() => this.handleEdit(attachment)}>
+          onClick={() => this.handleEdit(attachment)}
+        >
 
-          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing}/>
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
         </Button>
       </OverlayTrigger>
 
     );
   }
 
-  renderDownloadOriginalButton(attachment, downloadTooltip) {
+  renderDownloadOriginalButton(attachment) {
+    const { onDownload } = this.props;
     return (
       <OverlayTrigger placement="top" overlay={downloadTooltip}>
         <Button
           bsSize="xsmall"
           className="button-right"
           bsStyle="primary"
-          onClick={() => this.props.onDownload(attachment)}
+          onClick={() => onDownload(attachment)}
         >
           <i className="fa fa-download" aria-hidden="true" />
         </Button>
@@ -303,36 +357,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderDownloadAnnotatedImageButton(attachment) {
-    if (!this.isImageFile(attachment.filename)) {
-      return null;
-    }
-    return (
-    <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
-      <div className="research-plan-attachments-annotation-download">
-        <Button
-          bsSize="xsmall"
-          className="button-right"
-          bsStyle="primary"
-          disabled={attachment.isNew}
-          onClick={() =>{
-            Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}/annotated_image`, name: attachment.filename });
-          }}
-        >
-          <i className="fa fa-download" aria-hidden="true" />
-        </Button>
-      </div>
-    </OverlayTrigger>
-    );
-  }
-
   renderAttachments() {
-    const { attachments } = this.props;
+    const { attachments, researchPlan } = this.props;
     if (attachments && attachments.length > 0) {
       const filter = new ImageAttachmentFilter();
       const filteredAttachments = filter.filterAttachmentsWhichAreInBody(
-        this.props.researchPlan.body,
-        this.props.researchPlan.attachments
+        researchPlan.body,
+        researchPlan.attachments
       );
 
       return (
@@ -354,10 +385,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderDropzone() {
+    const { onDrop, readOnly } = this.props;
     return (
       <Dropzone
-        onDrop={(files) => this.props.onDrop(files)}
-        className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}
+        onDrop={(files) => onDrop(files)}
+        className={`research-plan-dropzone-${readOnly ? 'disable' : 'enable'}`}
       >
         <div className="zone">Drop Files, or Click to Select.</div>
       </Dropzone>
@@ -365,9 +397,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImportAttachmentButton(attachment) {
-    const show = this.state.showImportConfirm[attachment.id];
+    const { showImportConfirm } = this.state;
+    const { researchPlan } = this.props;
+    const show = showImportConfirm[attachment.id];
     // TODO: import disabled when?
-    const importDisabled = this.props.researchPlan.changed;
+    const importDisabled = researchPlan.changed;
     const extension = last(attachment.filename.split('.'));
 
     const importTooltip = importDisabled
@@ -432,23 +466,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return true;
   }
 
-  showImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = true;
-    this.setState({ showImportConfirm });
-  }
-
-  hideImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = false;
-    this.setState({ showImportConfirm });
-  }
-
-  confirmAttachmentImport(attachment) {
-    this.onImport(attachment);
-    this.hideImportConfirm(attachment.id);
-  }
-
   render() {
     return (
       <Row>
@@ -466,8 +483,52 @@ export default class ResearchPlanDetailsAttachments extends Component {
 }
 
 ResearchPlanDetailsAttachments.propTypes = {
-  researchPlan: PropTypes.object.isRequired,
-  attachments: PropTypes.array,
+  researchPlan: PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    changed: PropTypes.bool.isRequired,
+    body: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        type: PropTypes.string.isRequired,
+      })
+    ).isRequired,
+    attachments: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number
+        ]).isRequired,
+        aasm_state: PropTypes.string.isRequired,
+        content_type: PropTypes.string.isRequired,
+        filename: PropTypes.string.isRequired,
+        filesize: PropTypes.number.isRequired,
+        identifier: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number
+        ]).isRequired,
+        thumb: PropTypes.bool.isRequired
+      })
+    )
+  }).isRequired,
+  attachments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    aasm_state: PropTypes.string.isRequired,
+    content_type: PropTypes.string.isRequired,
+    filename: PropTypes.string.isRequired,
+    filesize: PropTypes.number.isRequired,
+    identifier: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    thumb: PropTypes.bool.isRequired
+  })),
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,

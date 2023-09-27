@@ -53,6 +53,19 @@ export function reactionRole(element) {
   return null;
 }
 
+function reactionVariations(element) {
+  if (element.type === 'reaction' && element.variations && element.variations.length) {
+    return (
+      <div>
+        {element.variations.length}
+        {' '}
+        variations
+      </div>
+    );
+  }
+  return undefined;
+}
+
 function showDetails(element) {
   const { currentCollection, isSync } = UIStore.getState();
   const { id, type } = element;
@@ -179,7 +192,7 @@ export default class ElementsTableEntries extends Component {
     switch (documentKeyDownCode) {
       case 13: // Enter
       case 39: // Right
-        if (keyboardElementIndex != null && elements[keyboardElementIndex] != null) {
+        if (keyboardElementIndex && elements[keyboardElementIndex]) {
           showDetails(elements[keyboardElementIndex]);
         }
         break;
@@ -258,6 +271,8 @@ export default class ElementsTableEntries extends Component {
       sourceType = DragDropItemTypes.GENERALPROCEDURE;
     } else if (isDropForScreen) {
       sourceType = DragDropItemTypes.RESEARCH_PLAN;
+    } else {
+      sourceType = DragDropItemTypes.ELEMENT;
     }
     return sourceType;
   }
@@ -295,7 +310,7 @@ export default class ElementsTableEntries extends Component {
         </td>
       );
     }
-    if (element.type === 'research_plan') {
+    if (element.type === 'research_plan' || element.element_klass) {
       if (element.thumb_svg !== 'not available') {
         return (
           <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
@@ -303,10 +318,24 @@ export default class ElementsTableEntries extends Component {
           </td>
         );
       }
-      return <td role="gridcell" aria-label="Element" style={svgContainerStyle} onClick={() => this.showDetails(element)} />;
+      return (
+        <td
+          role="gridcell"
+          aria-label="Element"
+          style={svgContainerStyle}
+          onClick={() => showDetails(element)}
+        />
+      );
     }
 
-    return <td role="gridcell" aria-label="Element" style={{ display: 'none', cursor: 'pointer' }} onClick={() => showDetails(element)} />;
+    return (
+      <td
+        role="gridcell"
+        aria-label="Element"
+        style={{ display: 'none', cursor: 'pointer' }}
+        onClick={() => showDetails(element)}
+      />
+    );
   }
 
   dragColumn(element) {
@@ -375,6 +404,7 @@ export default class ElementsTableEntries extends Component {
                     {reactionStatus(element)}
                     {' '}
                     {reactionRole(element)}
+                    {reactionVariations(element)}
                     <br />
                     {sampleMoleculeName}
                     <CommentIcon commentCount={element.comment_count} />

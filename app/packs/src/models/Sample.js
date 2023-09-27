@@ -7,7 +7,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container.js';
 import Segment from 'src/models/Segment';
 
-const prepareRangeBound = (args, field) => {
+const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
   if (args[field] && typeof args[field] === 'string') {
     const bounds = args[field].split(/\.{2,3}/);
@@ -67,8 +67,7 @@ export default class Sample extends Element {
     }
 
     newSample.filterElementalComposition();
-    newSample.segments = _.cloneDeep(sample.segments);
-
+    newSample.segments = Segment.buildCopy(sample.segments);
     return newSample;
   }
 
