@@ -72,7 +72,9 @@ export default class ReactionDetails extends Component {
   componentDidMount() {
     const { reaction } = this.props;
     UIStore.listen(this.onUIStoreChange);
-    CommentActions.fetchComments(reaction);
+    if (!reaction.isNew) {
+      CommentActions.fetchComments(reaction);
+    }
   }
 
   // eslint-disable-next-line camelcase
