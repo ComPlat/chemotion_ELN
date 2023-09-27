@@ -125,4 +125,9 @@ export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.UNLINKED_DA
 ContainerDatasetField.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
+  readOnly: PropTypes.bool
 };
+
+ContainerDatasetField.defaultProps ={
+  readOnly: false
+}
