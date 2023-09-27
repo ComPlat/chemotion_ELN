@@ -55,12 +55,16 @@ module Entities
       )
       return no_preview_image_available unless attachments_with_thumbnail.exists?
 
-      latest_image_attachment = attachments_with_thumbnail.where(
+      atts_with_thumbnail = attachments_with_thumbnail.where(
         "attachment_data -> 'metadata' ->> 'mime_type' in (:value)",
         value: THUMBNAIL_CONTENT_TYPES,
-      ).order(updated_at: :desc).first
+      ).order(updated_at: :desc)
 
-      attachment = latest_image_attachment || attachments_with_thumbnail.first
+      combined_image_attachment = atts_with_thumbnail.where('filename LIKE ?', '%combined%').first
+
+      latest_image_attachment = atts_with_thumbnail.first
+
+      attachment = combined_image_attachment || latest_image_attachment || attachments_with_thumbnail.first
       preview_image = attachment.read_thumbnail
       return no_preview_image_available unless preview_image
 
