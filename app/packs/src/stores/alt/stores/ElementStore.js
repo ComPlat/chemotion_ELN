@@ -581,6 +581,7 @@ class ElementStore {
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+        if (layout.vessel && layout.vessel > 0) { this.handleRefreshElements('vessel'); }
 
 
         const { currentUser, genericEls } = UserStore.getState();
