@@ -68,7 +68,8 @@ class SharedMethods
     klasses = Labimotion::ElementKlass.where(is_active: true, is_generic: true)
     klasses.each do |klass|
       element_ids_for_klass = Labimotion::Element.where(id: element.last, element_klass_id: klass.id).pluck(:id)
-      paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass).page(@params[:page]).per(@params[:per_page])
+      paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass)
+                                      .page(@params[:page]).per(@params[:per_page])
       serialized_elements = Labimotion::Element.find(paginated_element_ids).map do |generic_element|
         Labimotion::ElementEntity.represent(generic_element, displayed_in_list: true).serializable_hash
       end

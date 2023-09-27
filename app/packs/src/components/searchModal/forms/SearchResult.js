@@ -74,7 +74,7 @@ const SearchResult = ({ handleClear }) => {
           <h4>Your Search</h4>
           {
             searchStore.searchValues.map((val, i) => {
-              return <div key={i}>{val}</div>
+              return <div key={i}>{val.replace('ILIKE', 'LIKE')}</div>
             })
           }
           {

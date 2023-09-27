@@ -35,13 +35,12 @@ export default {
       },
       {
         value: {
-          column: 'xref',
-          opt: 'cas',
-          label: 'CAS',
-          type: 'text',
+          column: 'decoupled',
+          label: 'Decoupled',
+          type: 'checkbox',
           advanced: true,
         },
-        label: 'CAS'
+        label: 'Decoupled'
       },
       {
         value: {
@@ -84,8 +83,8 @@ export default {
         value: {
           column: 'target_amount_value',
           label: 'Amount',
-          type: 'system-defined',
-          option_layers: 'mass',
+          type: 'textWithAddOn',
+          addon: 'g',
           advanced: false,
         },
         label: 'Amount'
@@ -118,6 +117,35 @@ export default {
           advanced: false,
         },
         label: 'Purity / Concentration'
+      },
+      {
+        value: {
+          column: 'xref',
+          opt: 'cas',
+          label: 'CAS',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'CAS'
+      },
+      {
+        value: {
+          column: 'molecular_mass',
+          label: 'Molecular mass',
+          type: 'textWithAddOn',
+          addon: 'g/mol',
+          advanced: false,
+        },
+        label: 'Molecular mass'
+      },
+      {
+        value: {
+          column: 'sum_formula',
+          label: 'Sum formula',
+          type: 'text',
+          advanced: false,
+        },
+        label: 'Sum formula'
       },
       {
         value: {

@@ -235,7 +235,7 @@ module Usecases
           prop_sub = "#{prop}_sub_#{j}"
           sub_value = "%#{value}%"
           unit = ''
-          sub_match = 'LIKE'
+          sub_match = 'ILIKE'
           sub_fields = filter['field']['type'] == 'table' ? 'sub_values' : 'sub_fields'
           if value['value'].present?
             sub_value = value['value'].tr(',', '.')
@@ -251,7 +251,7 @@ module Usecases
               " AND (#{prop_sub} ->> '#{key}')::TEXT #{sub_match} '#{sub_value}'#{unit}"
           else
             @conditions[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = '#{key}'
-                                                AND (#{prop_sub} ->> 'value')::TEXT LIKE '%#{value}%'"
+                                                AND (#{prop_sub} ->> 'value')::TEXT ILIKE '%#{value}%'"
           end
         end
       end
@@ -270,7 +270,7 @@ module Usecases
           filter['sub_values'].first.each_with_index do |(key, value), j|
             first_and = j.zero? ? '' : ' AND'
             @conditions[:field] = ''
-            @conditions[:additional_condition] += "#{first_and} (#{prop} ->> '#{key}')::TEXT LIKE '#{value}'"
+            @conditions[:additional_condition] += "#{first_and} (#{prop} ->> '#{key}')::TEXT ILIKE '#{value}'"
           end
         else
           @conditions[:field] = "(#{prop} ->> '#{filter['field']['column']}')::TEXT"

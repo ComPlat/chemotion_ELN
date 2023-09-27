@@ -31,7 +31,7 @@ const DetailSearch = () => {
 
   const defaultDetailSearchValues = [{
     link: 'AND',
-    match: 'LIKE',
+    match: 'ILIKE',
     table: selection.table,
     element_id: selection.element_id,
     field: {
@@ -425,7 +425,7 @@ const DetailSearch = () => {
       case 'unit_measurement':
         return '=';
       default:
-        return type == 'system-defined' ? '>=' : 'LIKE';
+        return type == 'system-defined' ? '>=' : 'ILIKE';
     }
   }
 
