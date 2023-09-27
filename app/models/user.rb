@@ -25,19 +25,18 @@
 #  name_abbreviation      :string(12)
 #  type                   :string           default("Person")
 #  reaction_name_prefix   :string(3)        default("R")
+#  layout                 :hstore           not null
 #  confirmation_token     :string
 #  confirmed_at           :datetime
 #  confirmation_sent_at   :datetime
 #  unconfirmed_email      :string
-#  layout                 :hstore           not null
 #  selected_device_id     :integer
 #  failed_attempts        :integer          default(0), not null
 #  unlock_token           :string
 #  locked_at              :datetime
 #  account_active         :boolean
 #  matrix                 :integer          default(0)
-#  omniauth_provider      :string
-#  omniauth_uid           :string
+#  providers              :jsonb
 #
 # Indexes
 #
@@ -50,8 +49,9 @@
 #
 
 # rubocop: disable Metrics/ClassLength
-# rubocop: disable Metrics/MethodLength
 # rubocop: disable Metrics/AbcSize
+# rubocop: disable Metrics/CyclicComplexity
+# rubocop: disable Metrics/PerceivedComplexity
 
 class User < ApplicationRecord
   attr_writer :login
@@ -70,14 +70,18 @@ class User < ApplicationRecord
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
+  has_many :vessels, through: :collections
+
+  # created vessels will be kept when the creator goes (dependent: nil).
+  has_many :created_vessels, class_name: 'Vessel', inverse_of: :creator, dependent: nil
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
   has_many :sync_out_collections_users, foreign_key: :shared_by_id, class_name: 'SyncCollectionsUser'
-  has_many :sync_in_collections_users,  foreign_key: :user_id, class_name: 'SyncCollectionsUser'
+  has_many :sync_in_collections_users, class_name: 'SyncCollectionsUser'
   has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
   has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
-  has_many :users_devices, dependent: :destroy, foreign_key: :user_id
+  has_many :users_devices, dependent: :destroy
   has_many :devices, through: :users_devices
   # belongs_to :selected_device, class_name: 'Device'
 
@@ -102,7 +106,7 @@ class User < ApplicationRecord
 
   accepts_nested_attributes_for :affiliations, :profile
 
-  validates_presence_of :first_name, :last_name, allow_blank: false
+  validates :first_name, :last_name, presence: { allow_blank: false }
 
   validates :name_abbreviation, uniqueness: { message: 'is already in use.' }
   validate :name_abbreviation_reserved_list, on: :create
@@ -111,9 +115,14 @@ class User < ApplicationRecord
   validate :mail_checker
 
   # NB: only Persons and Admins can get a confirmation email and confirm their email.
-  before_create :skip_confirmation_notification!, unless: proc { |user| %w[Person Admin].include?(user.type) }
+  before_create :skip_confirmation_notification!, unless: proc { |user|
+                                                            %w[Person Admin].include?(user.type)
+                                                          }
   # NB: option to skip devise confirmable for Admins and Persons
-  before_create :skip_confirmation!, if: proc { |user| %w[Person Admin].include?(user.type) && self.class.allow_unconfirmed_access_for.nil? }
+  before_create :skip_confirmation!, if: proc { |user|
+                                           %w[Person Admin].include?(user.type) &&
+                                             self.class.allow_unconfirmed_access_for.nil?
+                                         }
   before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
 
   after_create :create_chemotion_public_collection
@@ -123,9 +132,11 @@ class User < ApplicationRecord
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
   before_destroy :delete_data
 
-  scope :by_name, ->(query) {
+  scope :by_name, lambda { |query|
     where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
-          "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%")
+          "#{sanitize_sql_like(query.downcase)}%",
+          "#{sanitize_sql_like(query.downcase)}%",
+          "#{sanitize_sql_like(query.downcase)}%")
   }
   scope :persons, -> { where(type: 'Person') }
 
@@ -149,13 +160,13 @@ class User < ApplicationRecord
   end
 
   def login
-    @login || self.name_abbreviation || self.email
+    @login || name_abbreviation || email
   end
 
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
     if (login = conditions.delete(:login))
-      where(conditions).where(["name_abbreviation = :value OR lower(email) = lower(:value)", { value: login }]).first
+      where(conditions).where(['name_abbreviation = :value OR lower(email) = lower(:value)', { value: login }]).first
     else
       where(conditions).first
     end
@@ -166,7 +177,8 @@ class User < ApplicationRecord
   end
 
   def name_abbr_config
-    @name_abbr_config ||= Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
+    @name_abbr_config ||=
+      Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
   end
 
   def name_abbreviation_reserved_list
@@ -177,7 +189,8 @@ class User < ApplicationRecord
 
   def name_abbreviation_format
     format_abbr_default = /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/
-    format_err_msg_default = "can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
+    format_err_msg_default =
+      "can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not."
 
     format_abbr = name_abbr_config[:format_abbr].presence || format_abbr_default.presence
     format_err_msg = name_abbr_config[:format_abbr_err_msg].presence || format_err_msg_default.presence
@@ -188,7 +201,6 @@ class User < ApplicationRecord
   end
 
   def name_abbreviation_length
-    na = name_abbreviation
     case type
     when 'Group'
       min_val = name_abbr_config[:length_group]&.first || 2
@@ -201,8 +213,9 @@ class User < ApplicationRecord
       max_val = name_abbr_config[:length_default]&.last || 3
     end
 
-    na.blank? || !na.length.between?(min_val, max_val) &&
-      errors.add(:name_abbreviation, "has to be #{min_val} to #{max_val} characters long")
+    return if name_abbreviation.to_s.length.between?(min_val, max_val)
+
+    errors.add(:name_abbreviation, "has to be #{min_val} to #{max_val} characters long")
   end
 
   def mail_checker
@@ -228,21 +241,21 @@ class User < ApplicationRecord
   end
 
   def restore_counters_data
-    samples_number = self.samples_created.pluck(:short_label).map do |l|
+    samples_number = samples_created.pluck(:short_label).map do |l|
       l.split('-').map(&:to_i)
     end.flatten.max || 0
 
-    reactions_number = self.reactions.pluck(:name).map do |l|
+    reactions_number = reactions.pluck(:name).map do |l|
       l.split('#').last.to_i
     end.max || 0
 
     self.counters = {
       samples: samples_number,
       reactions: reactions_number,
-      wellplates: self.wellplates.count + self.wellplates.deleted.count
+      wellplates: wellplates.count + wellplates.deleted.count,
     }
 
-    self.save!
+    save!
   end
 
   def increment_counter(key)
@@ -255,30 +268,32 @@ class User < ApplicationRecord
   end
 
   def has_profile
-    self.create_profile if !self.profile
-    if self.type == 'Person'
-      profile = self.profile
-      data = profile.data || {}
-      file = Rails.root.join('db', 'chmo.default.profile.json')
-      result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
-      unless result.nil? || result['ols_terms'].nil?
-        data['chmo'] = result['ols_terms']
-        data['is_templates_moderator'] = false
-        data['molecule_editor'] = false
-        data['converter_admin'] = false
-        data.merge!(layout: {
-          'sample' => 1,
-          'reaction' => 2,
-          'wellplate' => 3,
-          'screen' => 4,
-          'research_plan' => 5
-        }) if (data['layout'].nil?)
-        self.profile.update_columns(data: data)
-      end
+    create_profile unless profile
+    return unless type == 'Person'
+
+    profile = self.profile
+    data = profile.data || {}
+    file = Rails.root.join('db', 'chmo.default.profile.json')
+    result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
+    return if result.nil? || result['ols_terms'].nil?
+
+    data['chmo'] = result['ols_terms']
+    data['is_templates_moderator'] = false
+    data['molecule_editor'] = false
+    data['converter_admin'] = false
+    if data['layout'].nil?
+      data.merge!(layout: {
+                    'sample' => 1,
+                    'reaction' => 2,
+                    'wellplate' => 3,
+                    'screen' => 4,
+                    'research_plan' => 5,
+                  })
     end
+    self.profile.update_columns(data: data)
   end
 
-  has_many :users_groups, dependent: :destroy, foreign_key: :user_id
+  has_many :users_groups, dependent: :destroy
   has_many :groups, through: :users_groups
 
   def group_ids
@@ -299,7 +314,7 @@ class User < ApplicationRecord
 
   def current_affiliations
     Affiliation.joins(
-      'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id'
+      'INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id',
     ).where(
       '(ua.user_id = ?) and (ua.deleted_at ISNULL) and (ua.to ISNULL or ua.to > ?)',
       id, Time.now
@@ -337,7 +352,8 @@ class User < ApplicationRecord
   end
 
   def update_matrix
-    check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
+    check_sql = ApplicationRecord.send(:sanitize_sql_array,
+                                       ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
 
     if result.presence&.first&.fetch('rs', false)
@@ -349,12 +365,17 @@ class User < ApplicationRecord
   end
 
   def remove_from_matrices
-    Matrice.where('include_ids @> ARRAY[?]', [id]).each { |ma| ma.update_columns(include_ids: ma.include_ids -= [id]) }
-    Matrice.where('exclude_ids @> ARRAY[?]', [id]).each { |ma| ma.update_columns(exclude_ids: ma.exclude_ids -= [id]) }
+    Matrice.where('include_ids @> ARRAY[?]', [id]).find_each do |ma|
+      ma.update_columns(include_ids: ma.include_ids -= [id])
+    end
+    Matrice.where('exclude_ids @> ARRAY[?]', [id]).find_each do |ma|
+      ma.update_columns(exclude_ids: ma.exclude_ids -= [id])
+    end
   end
 
   def self.gen_matrix(user_ids = nil)
-    check_sql = ApplicationRecord.send(:sanitize_sql_array, ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
+    check_sql = ApplicationRecord.send(:sanitize_sql_array,
+                                       ["SELECT to_regproc('generate_users_matrix') IS NOT null as rs"])
     result = ApplicationRecord.connection.exec_query(check_sql)
     if result.presence&.first&.fetch('rs', false)
       sql = if user_ids.present?
@@ -427,7 +448,7 @@ class User < ApplicationRecord
   end
 
   def create_chemotion_public_collection
-    return unless self.type == 'Person'
+    return unless type == 'Person'
 
     Collection.create(user: self, label: 'chemotion-repository.net', is_locked: true, position: 1)
   end
@@ -437,11 +458,11 @@ class User < ApplicationRecord
   end
 
   def send_welcome_email
-    file_path =  Rails.public_path.join('welcome-message.md')
+    file_path = Rails.public_path.join('welcome-message.md')
     if File.exist?(file_path)
       SendWelcomeEmailJob.perform_later(id)
     else
-      #do nothing
+      # do nothing
     end
   end
 
@@ -477,7 +498,7 @@ class Device < User
   has_many :users_admins, dependent: :destroy, foreign_key: :user_id
   has_many :admins, through: :users_admins, source: :admin
 
-  has_one :device_metadata, dependent: :destroy, foreign_key: :device_id
+  has_one :device_metadata, dependent: :destroy
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
@@ -509,5 +530,6 @@ class Group < User
 end
 
 # rubocop: enable Metrics/ClassLength
-# rubocop: enable Metrics/MethodLength
 # rubocop: enable Metrics/AbcSize
+# rubocop: enable Metrics/CyclicComplexity
+# rubocop: enable Metrics/PerceivedComplexity

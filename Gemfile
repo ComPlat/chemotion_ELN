@@ -196,6 +196,8 @@ group :test do
 
   gem 'rspec-repeat'
 
+  gem 'shoulda-matchers'
+
   gem 'simplecov', require: false
   gem 'simplecov-lcov', require: false
 
