@@ -341,15 +341,6 @@ export default class SampleDetails extends React.Component {
       .finally(() => LoadingActions.stop());
   }
 
-  handleSegmentsChange(se) {
-    const { sample } = this.state;
-    const { segments } = sample;
-    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
-    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
-    sample.segments = segments;
-    this.setState({ sample });
-  }
-
   handleElementalSectionToggle() {
     const { showElementalComposition } = this.state;
     this.setState({
@@ -502,6 +493,8 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     LoadingActions.start();
+    let promise = Promise.resolve();
+
     const { sample, validCas } = this.state;
     this.checkMolfileChange();
     if (!validCas) {
@@ -515,18 +508,18 @@ export default class SampleDetails extends React.Component {
       reaction.editedSample = sample;
       const materialGroup = sample.matGroup;
       if (sample.isNew) {
-        ElementActions.createSampleForReaction(sample, reaction, materialGroup);
+        promise = ElementActions.createSampleForReaction(sample, reaction, materialGroup);
       } else {
-        ElementActions.updateSampleForReaction(sample, reaction, closeView);
+        promise = ElementActions.updateSampleForReaction(sample, reaction, closeView);
       }
     } else if (sample.belongTo && sample.belongTo.type === 'wellplate') {
       const wellplate = sample.belongTo;
-      ElementActions.updateSampleForWellplate(sample, wellplate);
+      promise = ElementActions.updateSampleForWellplate(sample, wellplate);
     } else if (sample.isNew) {
-      ElementActions.createSample(sample, closeView);
+      promise = ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      promise = ElementActions.updateSample(new Sample(sample), closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -534,6 +527,8 @@ export default class SampleDetails extends React.Component {
     }
     sample.updateChecksum();
     this.setState({ validCas: true, trackMolfile: sample.molfile });
+
+    return promise;
   }
 
   toggleInchi() {
@@ -992,9 +987,10 @@ export default class SampleDetails extends React.Component {
   handleSegmentsChange(se) {
     const { sample } = this.state;
     const { segments } = sample;
-    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
     sample.segments = segments;
+    sample.changed = true;
     this.setState({ sample });
   }
 
