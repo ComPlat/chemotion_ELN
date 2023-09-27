@@ -74,7 +74,7 @@ export default class VesselsFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
         NotificationActions.add(errorMessageParameter);
-        return vesselItem;
+        return vessel;
       });
     return promise;
   }
