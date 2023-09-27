@@ -61,11 +61,12 @@ function LiteralType({
 }
 
 function LiteratureInput({
-  literature, handleInputChange, field, placeholder
+  literature, handleInputChange, field, placeholder, readOnly = false
 }) {
   return (
     <FormControl
       type="text"
+      disabled={readOnly}
       onChange={(event) => handleInputChange(field, event)}
       placeholder={placeholder}
       value={literature[field] || ''}
@@ -77,14 +78,16 @@ const isLiteratureValid = (literature) => (
   literature.title !== '' && literature.url.concat(literature.doi) !== ''
 );
 
-function AddButton({ onLiteratureAdd, literature, title }) {
+function AddButton({
+  onLiteratureAdd, literature, title, readOnly = false
+}) {
   return (
     <Button
       bsStyle="success"
       bsSize="small"
       onClick={() => onLiteratureAdd(literature)}
       style={{ marginTop: 2 }}
-      disabled={!isLiteratureValid(literature)}
+      disabled={!isLiteratureValid(literature) || readOnly}
       title={title}
     >
       <i className="fa fa-plus" />

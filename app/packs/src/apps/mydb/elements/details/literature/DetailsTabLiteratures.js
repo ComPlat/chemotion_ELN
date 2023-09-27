@@ -56,6 +56,7 @@ const checkElementStatus = (element) => {
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
       literature: this.createEmptyLiterature(this.props.element.type),
       literatures: new Immutable.Map(),
@@ -275,7 +276,7 @@ export default class DetailsTabLiteratures extends Component {
     const { currentUser } = UserStore.getState();
     const isInvalidDoi = !(doiValid(literature.doi_isbn || ''));
     const isInvalidIsbn = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
-
+    const { readOnly } = this.props;
     const citationTypeMap = createCitationTypeMap(this.props.element.type);
 
     return (
@@ -287,13 +288,14 @@ export default class DetailsTabLiteratures extends Component {
                 handleInputChange={this.handleInputChange}
                 literature={literature}
                 field="doi_isbn"
+                readOnly={readOnly}
                 placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..."
               />
             </Col>
             <Col md={3} style={{ paddingRight: 0 }}>
               <LiteralType
                 handleInputChange={this.handleInputChange}
-                disabled={false}
+                disabled={readOnly}
                 val={literature.litype}
                 citationMap={citationTypeMap}
               />
@@ -305,7 +307,7 @@ export default class DetailsTabLiteratures extends Component {
                 style={{ marginTop: 2 }}
                 onClick={this.fetchMetadata}
                 title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
-                disabled={isInvalidDoi && isInvalidIsbn}
+                disabled={(isInvalidDoi && isInvalidIsbn) || readOnly}
               >
                 <i className="fa fa-plus" aria-hidden="true" />
               </Button>
@@ -318,6 +320,7 @@ export default class DetailsTabLiteratures extends Component {
                 handleInputChange={this.handleInputChange}
                 literature={literature}
                 field="title"
+                readOnly={readOnly}
                 placeholder="Title..."
               />
             </Col>
@@ -326,11 +329,16 @@ export default class DetailsTabLiteratures extends Component {
                 handleInputChange={this.handleInputChange}
                 literature={literature}
                 field="url"
+                readOnly={readOnly}
                 placeholder="URL..."
               />
             </Col>
             <Col md={1}>
-              <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
+              <AddButton
+                readOnly={readOnly}
+                onLiteratureAdd={this.handleLiteratureAdd}
+                literature={literature}
+              />
             </Col>
           </Row>
         </ListGroupItem>
@@ -344,6 +352,7 @@ export default class DetailsTabLiteratures extends Component {
                   fnDelete={this.handleLiteratureRemove}
                   sortedIds={sortedIds}
                   rows={literatures}
+                  readOnly={readOnly}
                   uid={currentUser && currentUser.id}
                   fnUpdate={this.handleTypeUpdate}
                   citationMap={citationTypeMap[e]}
@@ -364,5 +373,11 @@ DetailsTabLiteratures.propTypes = {
     PropTypes.instanceOf(CellLine),
     PropTypes.instanceOf(Sample)
   ]).isRequired,
-  literatures: PropTypes.array
+  literatures: PropTypes.array,
+  readOnly: PropTypes.bool
+};
+
+DetailsTabLiteratures.defaultProps = {
+  readOnly: false,
+  literatures: []
 };
