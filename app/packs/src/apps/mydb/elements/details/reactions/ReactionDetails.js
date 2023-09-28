@@ -308,21 +308,7 @@ export default class ReactionDetails extends Component {
           placement="bottom"
           overlay={<Tooltip id="Curate">Curate</Tooltip>}
         >
-          
-        {/* <Button
-        title="Press me"
-        bsStyle="warning"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={()=> spell_check(clean_description(reaction.description.ops))}
-        >
-          press here
-        
-        </Button> */}
-      
         <Curation_modal description= {reaction.description.ops}/>
-        
-      
         </OverlayTrigger>
       
         {copyBtn}
@@ -525,7 +511,6 @@ export default class ReactionDetails extends Component {
             {exportButton}
           </ButtonToolbar>
           <CommentModal element={reaction} />
-          <Description_box description= {reaction.description.ops}/>
         </Panel.Body>
       </Panel>
     );
