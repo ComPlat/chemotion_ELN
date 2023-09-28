@@ -29,9 +29,9 @@ function RowToolsCellRenderer({ data: variationRow, copyRow, removeRow }) {
 
 function CellRenderer({ value: cellData, enableEquivalent }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  let cellContent = `${Number(value).toFixed(6)} [${unit}]`;
+  let cellContent = `${Number(value)} [${unit}]`;
   if (enableEquivalent) {
-    cellContent += `; ${Number(aux.equivalent).toFixed(6)} [Equiv]`;
+    cellContent += `; ${Number(aux.equivalent)} [Equiv]`;
   }
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
@@ -110,6 +110,7 @@ const CellEditor = forwardRef(({
     <div>
       <input
         type="number"
+        step="any"
         ref={refInput}
         value={cellData.aux.equivalent}
         min={0}
@@ -125,6 +126,7 @@ const CellEditor = forwardRef(({
     <div>
       <input
         type="number"
+        step="any"
         ref={refInput}
         value={cellData.value}
         min={allowNegativeValue ? undefined : 0}
