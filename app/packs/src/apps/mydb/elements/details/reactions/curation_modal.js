@@ -33,14 +33,18 @@ export default class Curation_modal extends Component {
         const regexp = /  /g;
         const str = input;
         const matches = str.matchAll(regexp);
+        let typo_index_array = [];
         for (const match of matches) {
-        console.log(
-        `Found ${match[0]} start=${match.index} end=${
-         match.index + match[0].length}.`,)
+          typo_index_array.push([match.index,match.index + match[0].length])
+        // console.log(
+        // `Found ${match[0]} start=${match.index} end=${
+        //  match.index + match[0].length}.`,)
         }
-        // input = input.replaceAll(regexp, " ")
-        // console.log(input)
+         return (typo_index_array);
       }
+    spell_check_underline(input){
+      
+    }
 
     render() {
       return (
@@ -59,8 +63,10 @@ export default class Curation_modal extends Component {
                     fontFamily: "Arial",
                     borderRadius: "10px",}}>
                 {this.clean_data(this.props.description)}
+                
                 </div>
                 <div>
+                {this.spell_check(this.clean_data(this.props.description))}
                     suggestion
                 </div>
                 <div class="row">
