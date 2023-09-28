@@ -1,6 +1,5 @@
 import React, { Component} from 'react';
-
-import PropTypes from 'prop-types';
+import PropTypes, { array } from 'prop-types';
 import {
   Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip, Alert
@@ -40,7 +39,7 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import Popup from 'reactjs-popup';
+import Curation_modal from "./curation_modal";
 
 
 export default class ReactionDetails extends Component {
@@ -257,13 +256,6 @@ export default class ReactionDetails extends Component {
   }
 
   reactionHeader(reaction) {
-   
-    const Modal = () => (  <Popup trigger={<button className="button"> 
-    Open Modal </button>
-    } modal>    
-    <span> Modal content 
-      </span>  
-      </Popup>);
     const hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
@@ -282,7 +274,7 @@ export default class ReactionDetails extends Component {
     const colLabel = reaction.isNew ? null : (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
-    
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -322,12 +314,14 @@ export default class ReactionDetails extends Component {
         bsStyle="warning"
         bsSize="xsmall"
         className="button-right"
-        onClick={e=> App()}
+        onClick={()=> spell_check(clean_description(reaction.description.ops))}
         >
-          Click to curate data
+          press here
         
         </Button> */}
-       <Modal/>
+      
+        <Curation_modal description= {reaction.description.ops}/>
+        
       
         </OverlayTrigger>
       
@@ -497,12 +491,12 @@ export default class ReactionDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
-
+    // console.log(reaction.description.ops[0]["insert"]);
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
     const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesBtn type="reaction" id={reaction.id} />;
 
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
-
+    
     return (
       <Panel className="eln-panel-detail"
         bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
@@ -515,6 +509,7 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
+          
           {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
             {tabContents}
@@ -530,6 +525,7 @@ export default class ReactionDetails extends Component {
             {exportButton}
           </ButtonToolbar>
           <CommentModal element={reaction} />
+          <Description_box description= {reaction.description.ops}/>
         </Panel.Body>
       </Panel>
     );
