@@ -129,7 +129,7 @@ module Usecases
       end
 
       def sanitize_float_fields(filter)
-        fields = %w[boiling_point melting_point density molarity_value target_amount_value purity]
+        fields = %w[boiling_point melting_point density molarity_value target_amount_value purity temperature duration]
         fields.include?(filter['field']['column']) && filter['field']['table'] != 'segments'
       end
 
@@ -137,10 +137,8 @@ module Usecases
         return [filter['value']] if filter['value'] == 'true'
         return [filter['value'].to_f] if sanitize_float_fields(filter)
 
-        no_sanitizing_columns = %w[temperature duration]
         no_sanitizing_matches = ['=', '>=']
-        sanitize =
-          no_sanitizing_matches.exclude?(filter['match']) && no_sanitizing_columns.exclude?(filter['field']['column'])
+        sanitize = no_sanitizing_matches.exclude?(filter['match'])
         words = filter['value'].split(/(\r)?\n/).map!(&:strip)
         words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } if sanitize
         words
@@ -165,13 +163,11 @@ module Usecases
           @conditions[:first_condition] = "(#{@table}.temperature ->> 'userText')::TEXT != ''"
           @conditions[:first_condition] += " AND (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
           @conditions[:additional_condition] = "AND (#{@table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
-          @conditions[:words][0] = options[:words].first.to_f
           @conditions[:condition_table] = ''
         when 'duration'
           @conditions[:field] =
             "(EXTRACT(epoch FROM #{@table}.duration::interval)/#{duration_interval_by_unit(filter['unit'])})::INT"
           @conditions[:first_condition] = "#{@table}.duration IS NOT NULL AND #{@table}.duration != '' AND "
-          @conditions[:words][0] = @conditions[:words].first.to_i
           @conditions[:condition_table] = ''
         when 'target_amount_value'
           @conditions[:additional_condition] = "AND #{@table}.target_amount_unit = '#{filter['unit']}'"
@@ -187,6 +183,11 @@ module Usecases
           @conditions[:condition_table] = ''
         when 'xref'
           @conditions[:field] = "xref ->> '#{filter['field']['opt']}'"
+          if filter['unit'].present?
+            @conditions[:field] = "xref -> '#{filter['field']['opt']}' ->> 'value'"
+            @conditions[:additional_condition] =
+              "AND (#{@table}.xref -> '#{filter['field']['opt']}' ->> 'unit')::TEXT = '#{filter['unit']}'"
+          end
         when 'stereo'
           @conditions[:field] = "stereo ->> '#{filter['field']['opt']}'"
         when 'solvent'
@@ -194,6 +195,13 @@ module Usecases
           @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent' if joins_exists
           @conditions[:field] = "(prop_solvent ->> '#{filter['field']['opt']}')::TEXT"
           @conditions[:condition_table] = ''
+        when 'boiling_point', 'melting_point'
+          range = filter['value'].split('-')
+          field = "#{@table}.#{filter['field']['column']}"
+          @match = '!='
+          @conditions[:words][0] = '(,)'
+          @conditions[:additional_condition] =
+            "AND #{field} <@ '[#{range.first.squish.to_f}, #{range.last.squish.to_f}]'::numrange"
         end
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
@@ -255,7 +263,6 @@ module Usecases
           end
         end
       end
-      # rubocop:enable Metrics/AbcSize
 
       def chemicals_tab_options(filter)
         prop = "prop_#{@field_table}"
@@ -272,10 +279,16 @@ module Usecases
             @conditions[:field] = ''
             @conditions[:additional_condition] += "#{first_and} (#{prop} ->> '#{key}')::TEXT ILIKE '#{value}'"
           end
+        elsif filter['unit'].present?
+          @conditions[:field] = "(#{prop} -> '#{filter['field']['column']}' ->> 'value')::FLOAT"
+          @conditions[:words][0] = filter['value'].to_f
+          unit = %w[mg g].include?(filter['unit']) ? filter['unit'] : 'μg'
+          @conditions[:additional_condition] = "AND #{prop} -> '#{filter['field']['column']}' ->> 'unit' = '#{unit}'"
         else
           @conditions[:field] = "(#{prop} ->> '#{filter['field']['column']}')::TEXT"
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       def analyses_tab_options(filter)
         prop = "prop_#{@field_table}"

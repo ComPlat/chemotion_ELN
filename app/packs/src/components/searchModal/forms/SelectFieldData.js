@@ -83,8 +83,9 @@ export default {
         value: {
           column: 'target_amount_value',
           label: 'Amount',
-          type: 'textWithAddOn',
-          addon: 'g',
+          type: 'system-defined',
+          option_layers: 'amount',
+          info: 'Only works with the correct unit',
           advanced: false,
         },
         label: 'Amount'
@@ -117,6 +118,15 @@ export default {
           advanced: false,
         },
         label: 'Purity / Concentration'
+      },
+      {
+        value: {
+          column: 'inventory_sample',
+          label: 'Inventory',
+          type: 'checkbox',
+          advanced: false,
+        },
+        label: 'Inventory'
       },
       {
         value: {
@@ -160,6 +170,7 @@ export default {
           label: 'Boiling point',
           type: 'textWithAddOn',
           addon: '°C',
+          info: 'Numrange: input of 2 values, e.g. 100 - 200',
           advanced: false,
         },
         label: 'Boiling point'
@@ -170,6 +181,7 @@ export default {
           label: 'Melting point',
           type: 'textWithAddOn',
           addon: '°C',
+          info: 'Numrange: input of 2 values, e.g. 100 - 200',
           advanced: false,
         },
         label: 'Melting point'
@@ -181,6 +193,7 @@ export default {
           label: 'Flash Point',
           type: 'system-defined',
           option_layers: 'temperature',
+          info: 'Only works with the correct temperature unit',
           advanced: false,
         },
         label: 'Flash Point'
@@ -237,7 +250,8 @@ export default {
           column: 'solvent',
           opt: 'label',
           label: 'Label',
-          type: 'text',
+          type: 'solventSelect',
+          option_layers: 'ionic_liquids',
           advanced: false,
         },
         label: 'Label'

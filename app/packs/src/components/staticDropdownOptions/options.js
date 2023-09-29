@@ -650,5 +650,11 @@ export const chemicalStatusOptions = [
   { label: 'Available', value: 'Available' },
   { label: 'Out of stock', value: 'Out of stock' },
   { label: 'To be ordered', value: 'To be ordered' },
-  { label: 'Ordered', value: 'Ordered' }
+  { label: 'Ordered', value: 'Ordered' },
+];
+
+export const amountSearchOptions = [
+  { label: 'g', value: 'g' },
+  { label: 'l', value: 'l' },
+  { label: 'mol', value: 'mol' },
 ];

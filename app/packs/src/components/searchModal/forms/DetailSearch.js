@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup, Tabs, Tab } from 'react-bootstrap'
+import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
@@ -10,6 +10,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
 
 const DetailSearch = () => {
@@ -121,10 +122,30 @@ const DetailSearch = () => {
       });
   }
 
+  const labelWithInfo = (option) => {
+    let infoButton = ''
+    if (option.info) {
+      infoButton = (
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id={option.column}>{option.info}</Tooltip>
+          }
+        >
+          <span className="glyphicon glyphicon-info-sign search-info-button" />
+        </OverlayTrigger>
+      );
+    }
+
+    return (
+      <ControlLabel>{option.label}{infoButton}</ControlLabel>
+    );
+  }
+
   const textInput = (option, type, selectedValue, column, keyLabel) => {
     return (
       <FormGroup key={`${column}-${keyLabel}-${type}`}>
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <FormControl
           id={`input_${column}`}
           type="text"
@@ -158,9 +179,13 @@ const DetailSearch = () => {
 
     if (option.type == 'system-defined') {
       let systemOptions = unitsSystem.fields.find((u) => { return u.field === option.option_layers });
-      options = systemOptions.units;
+
       if (option.column && option.column == 'duration') {
         options = FieldOptions.durationOptions;
+      } else if (option.column && option.column == 'target_amount_value') {
+        options = FieldOptions.amountSearchOptions;
+      } else {
+        options = systemOptions.units;
       }
     } else if (genericOptions.length >= 1 && genericSelectOptions[option.option_layers]) {
       Object.values(genericSelectOptions[option.option_layers].options).forEach((option) => {
@@ -180,13 +205,41 @@ const DetailSearch = () => {
     let options = optionsForSelect(option);
     return (
       <FormGroup key={`${columnName}-${keyLabel}-${type}`}>
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <Select
           name={columnName}
           key={`${columnName}-${keyLabel}`}
           options={options}
           onChange={handleFieldChanged(option, columnName, type)}
           value={selectedValue ? options.filter((f) => { return f.value == selectedValue[columnName].value }) : ''}
+        />
+      </FormGroup>
+    );
+  }
+
+  const solventOptions = Object.keys(ionic_liquids).reduce(
+    (solvents, ionicLiquid) => solvents.concat({
+      label: ionicLiquid,
+      value: {
+        external_label: ionicLiquid,
+        smiles: ionic_liquids[ionicLiquid],
+        density: 1.0
+      }
+    }), FieldOptions.defaultMultiSolventsSmilesOptions
+  );
+
+  const solventSelect = (option, type, selectedValue, columnName, keyLabel) => {
+    let options = solventOptions;
+    options.unshift({ label: '', value: '' });
+    return (
+      <FormGroup key={`${columnName}-${keyLabel}-${type}`}>
+        {labelWithInfo(option)}
+        <Select
+          name={columnName}
+          key={`${columnName}-${keyLabel}`}
+          options={solventOptions}
+          onChange={handleFieldChanged(option, columnName, type)}
+          value={selectedValue ? solventOptions.filter((f) => { return f.label == selectedValue[columnName].value }) : ''}
         />
       </FormGroup>
     );
@@ -201,7 +254,7 @@ const DetailSearch = () => {
     if (options[0].value !== '') { options.unshift({ search: '', title: '', value: '', is_enabled: true }); }
     return (
       <FormGroup key={`${option.column}-${option.label}-${type}`}>
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <TreeSelect
           key={option.column}
           value={selectedValue ? selectedValue[column].value : ''}
@@ -219,7 +272,7 @@ const DetailSearch = () => {
     let column = option.column || option.field;
     return (
       <FormGroup key={`${column}-${keyLabel}-${type}`}>
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <InputGroup>
           <FormControl
             id={`input_${column}`}
@@ -255,7 +308,7 @@ const DetailSearch = () => {
     let value = selectedValue ? selectedValue[column].unit : units[0].label;
     return (
       <FormGroup key={`${column}-${keyLabel}-${type}`}>
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <InputGroup>
           <FormControl
             id={`input_${column}`}
@@ -293,7 +346,7 @@ const DetailSearch = () => {
 
     return (
       <FormGroup key={`${column}-${keyLabel}-${type}`}>
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <InputGroup style={{ display: 'flex' }}>
           {subFields}
         </InputGroup>
@@ -374,7 +427,7 @@ const DetailSearch = () => {
 
     return (
       <FormGroup key={`${column}-${keyLabel}-${type}`} className="sub-group-with-addon-2col">
-        <ControlLabel>{option.label}</ControlLabel>
+        {labelWithInfo(option)}
         <FormGroup className="grouped-sub-fields">
           {subFields}
         </FormGroup>
@@ -403,6 +456,8 @@ const DetailSearch = () => {
         return e.target.checked;
       case 'select':
         return e.value ? e.value : e.label;
+      case 'solventSelect':
+        return e.label;
       default:
         return e;
     }
@@ -412,7 +467,7 @@ const DetailSearch = () => {
     switch (field) {
       case 'boiling_point':
       case 'melting_point':
-        return '@>';
+        return '<@';
       case 'density':
       case 'molarity_value':
       case 'target_amount_value':
@@ -555,6 +610,9 @@ const DetailSearch = () => {
         break;
       case 'subGroupWithAddOn':
         fields.push(subGroupWithAddOnFields(option, 'subGroupWithAddOn', selectedValue, column, keyLabel));
+        break;
+      case 'solventSelect':
+        fields.push(solventSelect(option, 'solventSelect', selectedValue, column, keyLabel));
         break;
       case 'spacer':
         fields.push(<div class="form-group" key={`empty-column-${i}`}></div>);

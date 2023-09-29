@@ -35,6 +35,7 @@ export default {
               table: 'chemicals',
               type: 'system-defined',
               option_layers: "mass",
+              info: 'Only works with the correct unit'
             },
             {
               column: 'price',

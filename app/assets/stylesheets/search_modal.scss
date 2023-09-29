@@ -67,6 +67,15 @@
   }
 }
 
+@media screen and (min-width: 1600px) {
+  [dialogas=full-search].modal {
+    left: calc(calc(100% - 1400px) / 2);
+  }
+  [dialogas=full-search] .modal-dialog {
+    width: 1400px !important;
+  }
+}
+
 .search-selection.btn-group {
   float: right;
 }
@@ -440,4 +449,8 @@ i.fa.icon-right {
   color: #337ab7;
   border: 1px solid rgba(0,0,0, 0.4);
   border-bottom-color: transparent;
+}
+.search-info-button {
+  display: inline-block;
+  margin-left: 5px;
 }

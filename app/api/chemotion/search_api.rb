@@ -34,7 +34,7 @@ module Chemotion
           optional :name, type: String
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
-            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '@>'], default: 'LIKE'
+            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '@>', '<@'], default: 'LIKE'
             optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements segments]
             optional :element_id, type: Integer
             optional :unit, type: String
@@ -352,7 +352,7 @@ module Chemotion
                .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
                .order('molecules.sum_formular')
         elsif search_by_method.start_with?('element_short_label_')
-          klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
+          klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub('element_short_label_', ''))
           return Labimotion::Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
         scope
