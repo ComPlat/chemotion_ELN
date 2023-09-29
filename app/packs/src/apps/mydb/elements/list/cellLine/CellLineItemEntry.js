@@ -65,7 +65,9 @@ export default class CellLineItemEntry extends Component {
                   checked={this.isElementChecked(cellLineItem)}
                 />
               </td>
-              <td className="short_label">
+              <td 
+                className="short_label"
+                onClick={() => { this.showDetails(); }}>
                 {cellLineItem.short_label}
               </td>
 
