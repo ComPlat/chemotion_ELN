@@ -6,6 +6,8 @@ import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 import {
   Panel, ButtonToolbar, Button,
@@ -69,8 +71,14 @@ class CellLineDetails extends React.Component {
 
   isReadOnly() {
     const { currentCollection, isSync } = UIStore.getState();
-    return currentCollection.permission_level === 0 && isSync;
+    const {currentUser }= UserStore.getState();
+
+    return CollectionUtils.isReadOnly(
+      currentCollection,
+      currentUser.id,
+      isSync);
   }
+
 
   renderHeaderContent() {
     const { cellLineItem } = this.props;
