@@ -110,16 +110,11 @@ module PubChem
   def self.get_cas_from_cid(cid)
     return [] unless cid
 
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
+    options = { :timeout => 10, :headers => {'Content-Type' => 'text/json'} }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
     resp_xml = HTTParty.get(page, options).body
     resp_doc = Nokogiri::XML(resp_xml)
-    # cas_values = resp_doc.css('Name:contains("CAS")').map { |x| x.parent.css('StringValue').text }
-    cas_values = resp_doc.css('Name:contains("CAS")').map { |x|
-      x.parent.css('Value').css('StringWithMarkup').css('String').map { |y|
-        y.text
-      }
-    }.flatten
+    cas_values = resp_doc.css('Value').css('StringWithMarkup').css('String').map(&:text).flatten
     cas = most_occurance(cas_values)
     [cas]
   end
