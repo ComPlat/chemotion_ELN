@@ -74,8 +74,15 @@ const AdvancedSearchRow = ({ idx }) => {
   }
 
   const onChange = (formElement) => (e) => {
-    let value = formElementValue(formElement, e, e.currentTarget);
     let searchValues = { ...searchStore.advancedSearchValues[idx] };
+
+    if (e === undefined) {
+      searchValues[formElement] = '';
+      searchStore.addAdvancedSearchValue(idx, searchValues);
+      return;
+    }
+
+    let value = formElementValue(formElement, e, e.currentTarget);
     searchValues[formElement] = value;
     searchValues['table'] = searchElement.table;
     searchValues['element_id'] = searchElement.element_id
@@ -134,8 +141,9 @@ const AdvancedSearchRow = ({ idx }) => {
             <TreeSelect
               value={selection.value}
               treeData={rxnos}
+              allowClear
               placeholder="Select type"
-              dropdownStyle={{ maxHeight: '250px' }}
+              dropdownStyle={{ maxHeight: '250px', zIndex: '500000' }}
               onChange={onChange('value')}
               filterTreeNode={filterTreeNode}
             />
