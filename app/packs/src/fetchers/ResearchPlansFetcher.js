@@ -70,12 +70,15 @@ export default class ResearchPlansFetcher {
       },
       body: JSON.stringify(researchPlan.serialize())
     }).then( response => response.json())
-      .then((json) => { AttachmentFetcher.updateAttachables(
-      researchPlan.getNewAttachments(),
-       'ResearchPlan',
-        json.research_plan.id,
-        researchPlan.getMarkedAsDeletedAttachments())();
-        return json;
+      .then((json) => { 
+          AttachmentFetcher.updateAttachables(
+            researchPlan.getNewAttachments(),
+            'ResearchPlan',
+            json.research_plan.id,
+            researchPlan.getMarkedAsDeletedAttachments()
+          )()
+          .then((json)=> {return json});
+          return json;
       })
       .then((json) =>{ return GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)})
       .then(() => {
