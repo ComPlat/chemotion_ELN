@@ -89,8 +89,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       data.append('elInfo', JSON.stringify(elMap));
     }
 
-    if (GenericElsFetcher.shouldUploadAttachments(hasAttach,element)){
-      GenericElsFetcher.prepareAttachmentParam(element,data);
+    if (GenericElsFetcher.shouldUploadAttachments(hasAttach, element)) {
+      GenericElsFetcher.prepareAttachmentParam(element, data);
     }
 
     (element.segments || []).forEach((segment) => {
@@ -205,9 +205,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return this.execData(params, 'create_repo_klass');
   }
 
- 
-
-  static prepareAttachmentParam(element,data){
+  static prepareAttachmentParam(element, data) {
     const newFiles = (element.attachments || []).filter(
       (a) => a.is_new && !a.is_deleted
     );
@@ -223,10 +221,10 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     });
   }
 
-  static shouldUploadAttachments(hasAttach,element){
+  static shouldUploadAttachments(hasAttach, element) {
     return hasAttach === true
     && element.attachments
     && element.attachments.length > 0
-    && element.type !== "research_plan"
+    && element.type !== 'research_plan';
   }
 }
