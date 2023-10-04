@@ -88,25 +88,11 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       });
       data.append('elInfo', JSON.stringify(elMap));
     }
-    if (
-      hasAttach === true
-      && element.attachments
-      && element.attachments.length > 0
-    ) {
-      const newFiles = (element.attachments || []).filter(
-        (a) => a.is_new && !a.is_deleted
-      );
-      const delFiles = (element.attachments || []).filter(
-        (a) => !a.is_new && a.is_deleted
-      );
-      (newFiles || []).forEach((file) => {
-        data.append('attfiles[]', file.file, file.name);
-        data.append('attfilesIdentifier[]', file.id);
-      });
-      (delFiles || []).forEach((f) => {
-        data.append('delfiles[]', f.id);
-      });
+
+    if (GenericElsFetcher.shouldUploadAttachments(hasAttach,element)){
+      GenericElsFetcher.prepareAttachmentParam(element,data);
     }
+
     (element.segments || []).forEach((segment) => {
       segMap[segment.segment_klass_id] = {
         type: 'SegmentProps',
@@ -217,5 +203,30 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
   static createRepo(params) {
     return this.execData(params, 'create_repo_klass');
+  }
+
+ 
+
+  static prepareAttachmentParam(element,data){
+    const newFiles = (element.attachments || []).filter(
+      (a) => a.is_new && !a.is_deleted
+    );
+    const delFiles = (element.attachments || []).filter(
+      (a) => !a.is_new && a.is_deleted
+    );
+    (newFiles || []).forEach((file) => {
+      data.append('attfiles[]', file.file, file.name);
+      data.append('attfilesIdentifier[]', file.id);
+    });
+    (delFiles || []).forEach((f) => {
+      data.append('delfiles[]', f.id);
+    });
+  }
+
+  static shouldUploadAttachments(hasAttach,element){
+    return hasAttach === true
+    && element.attachments
+    && element.attachments.length > 0
+    && element.type !== "research_plan"
   }
 }
