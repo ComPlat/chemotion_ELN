@@ -260,11 +260,11 @@ export default class ResearchPlan extends Element {
 
   getNewAttachments() {
     return this.attachments
-      .filter((attachment) => attachment.is_new === true);
+      .filter((attachment) => attachment.is_new === true && !attachment.is_deleted);
   }
 
   getMarkedAsDeletedAttachments() {
     return this.attachments
-      .filter((attachment) => attachment.is_deleted === true);
+      .filter((attachment) => attachment.is_deleted === true && !attachment.is_new);
   }
 }
