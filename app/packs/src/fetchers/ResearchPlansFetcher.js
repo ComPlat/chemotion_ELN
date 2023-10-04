@@ -32,6 +32,7 @@ export default class ResearchPlansFetcher {
 
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
+
     const promise = fetch('/api/v1/research_plans/', {
       credentials: 'same-origin',
       method: 'post',
@@ -40,8 +41,16 @@ export default class ResearchPlansFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(researchPlan.serialize())
-    }).then((response) => response.json()).then((json) => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-      .then(() => this.fetchById(json.research_plan.id))).catch((errorMessage) => {
+    })
+    .then((response) => response.json())
+    .then((json) => AttachmentFetcher.updateAttachables(
+      researchPlan.getNewAttachments(),
+       'ResearchPlan',
+        json.research_plan.id,
+        researchPlan.getMarkedAsDeletedAttachments())())
+    .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+    .then(() => this.fetchById(json.research_plan.id)))
+    .catch((errorMessage) => {
       console.log(errorMessage);
     });
     return promise;

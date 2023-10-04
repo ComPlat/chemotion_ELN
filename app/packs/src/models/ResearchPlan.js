@@ -252,8 +252,19 @@ export default class ResearchPlan extends Element {
         delete value.old_value;
       });
   }
+
   getAttachmentByIdentifier(identifier){
      return this.attachments
      .filter((attachment)=>attachment.identifier===identifier)[0];
+  }
+
+  getNewAttachments(){
+    return this.attachments
+      .filter((attachment)=>attachment.is_new===true);
+  }
+
+  getMarkedAsDeletedAttachments(){
+    return this.attachments
+    .filter((attachment)=>attachment.is_deleted===true);
   }
 }
