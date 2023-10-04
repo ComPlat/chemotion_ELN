@@ -7,6 +7,7 @@ module Chemotion
         optional :files, type: Array[File], desc: 'files', default: []
         optional :attachable_type, type: String, desc: 'attachable_type'
         optional :attachable_id, type: Integer, desc: 'attachable id'
+        optional :attfilesIdentifier, type: Array[String], desc: 'file identifier'
         optional :del_files, type: Array[Integer], desc: 'del file id', default: []
       end
       after_validation do
@@ -20,13 +21,15 @@ module Chemotion
       post 'update_attachments_attachable' do
         attachable_type = params[:attachable_type]
         attachable_id = params[:attachable_id]
+       
         if params.fetch(:files, []).any?
           attach_ary = []
           rp_attach_ary = []
-          params[:files].each do |file|
+          index=0;
+          params[:files].each do |file,index|
             next unless (tempfile = file[:tempfile])
-
             a = Attachment.new(
+              identifier: params[:attfilesIdentifier][index],
               bucket: file[:container_id],
               filename: file[:filename],
               file_path: file[:tempfile],
@@ -36,6 +39,7 @@ module Chemotion
               attachable_type: attachable_type,
               attachable_id: attachable_id
             )
+            index=index +1
             begin
               a.save!
               attach_ary.push(a.id)
