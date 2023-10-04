@@ -198,7 +198,7 @@ export default class ResearchPlan extends Element {
     return this._wellplates || [];
   }
 
-  upsertAttachments(attachmentsToAdd=[]) {
+  upsertAttachments(attachmentsToAdd = []) {
     const idsOfAttachmentsInResearchPlan = this.attachments.map(
       (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
     );
@@ -253,18 +253,18 @@ export default class ResearchPlan extends Element {
       });
   }
 
-  getAttachmentByIdentifier(identifier){
-     return this.attachments
-     .filter((attachment)=>attachment.identifier===identifier)[0];
+  getAttachmentByIdentifier(identifier) {
+    return this.attachments
+      .filter((attachment) => attachment.identifier === identifier)[0];
   }
 
-  getNewAttachments(){
+  getNewAttachments() {
     return this.attachments
-      .filter((attachment)=>attachment.is_new===true);
+      .filter((attachment) => attachment.is_new === true);
   }
 
-  getMarkedAsDeletedAttachments(){
+  getMarkedAsDeletedAttachments() {
     return this.attachments
-    .filter((attachment)=>attachment.is_deleted===true);
+      .filter((attachment) => attachment.is_deleted === true);
   }
 }
