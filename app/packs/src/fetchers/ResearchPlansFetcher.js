@@ -69,19 +69,14 @@ export default class ResearchPlansFetcher {
       },
       body: JSON.stringify(researchPlan.serialize())
     }).then((response) => response.json())
-      .then((json) => {
-        return AttachmentFetcher.updateAttachables(
-          researchPlan.getNewAttachments(),
-          'ResearchPlan',
-          json.research_plan.id,
-          researchPlan.getMarkedAsDeletedAttachments()
-        )().then(()=>{
-          return GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-          .then(() => ResearchPlansFetcher.updateAnnotations(researchPlan))
-          .then(() => this.fetchById(researchPlan.id))
-        }
-        )
-      })
+      .then((json) => AttachmentFetcher.updateAttachables(
+        researchPlan.getNewAttachments(),
+        'ResearchPlan',
+        json.research_plan.id,
+        researchPlan.getMarkedAsDeletedAttachments()
+      )().then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
+        .then(() => ResearchPlansFetcher.updateAnnotations(researchPlan))
+        .then(() => this.fetchById(researchPlan.id))))
       .catch((errorMessage) => { console.log(errorMessage); });
 
     if (containerFiles.length > 0) {
