@@ -280,6 +280,7 @@ module Import
         'impurities',
         # 'location',
         'is_top_secret',
+        # 'dry_solvent',
         'ancestry',
         # 'external_label',
         'created_by',
