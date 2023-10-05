@@ -65,14 +65,13 @@ module Import
 
     def process_row(data)
       row = [header, xlsx.row(data)].transpose.to_h
-
-      return unless structure?(row) || row['decoupled'] == 'yes'
+      return unless structure?(row) || row['decoupled'].casecmp('yes').zero?
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
     def process_row_data(row)
-      return Molecule.find_or_create_dummy if row['decoupled'] == 'yes' && !structure?(row)
+      return Molecule.find_or_create_dummy if row['decoupled'].casecmp('yes').zero? && !structure?(row)
 
       molecule, molfile = extract_molfile_and_molecule(row)
       return if molfile.nil? || molecule.nil?
@@ -226,7 +225,7 @@ module Import
       value = format_to_interval_syntax(value) if comparison_values.include?(db_column)
       handle_sample_fields(sample, db_column, value)
       sample[db_column] = '' if excluded_column.include?(db_column) && row[field].nil?
-      sample[db_column] = row[field] == 'yes' if %w[decoupled].include?(db_column)
+      sample[db_column] = row[field].casecmp('yes').zero? if %w[decoupled].include?(db_column)
     end
 
     def save_chemical(chemical, sample)
