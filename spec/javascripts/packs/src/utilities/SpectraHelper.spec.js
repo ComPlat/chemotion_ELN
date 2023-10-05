@@ -4,7 +4,8 @@ import {
 } from 'mocha';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
-  JcampIds, BuildSpcInfos
+  JcampIds, BuildSpcInfos,
+  BuildSpectraComparedInfos
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
@@ -259,5 +260,53 @@ describe('SpectraHelper', () => {
         expect(specInfo).toEqual(expectedValue);
       });
     });
+  });
+
+  describe('.BuildSpectraComparedInfos()', () => {
+    describe('when sample or container is null or undefined', () => {
+      it('sample is null or undefined', () => {
+        const specInfo1 = BuildSpectraComparedInfos(null, 'just a random value');
+        expect(specInfo1).toEqual([]);
+
+        const specInfo2 = BuildSpectraComparedInfos(undefined, 'just a random value');
+        expect(specInfo2).toEqual([]);
+      });
+
+      it('container is null or undefined', () => {
+        const specInfo1 = BuildSpectraComparedInfos('just a random value', null);
+        expect(specInfo1).toEqual([]);
+
+        const specInfo2 = BuildSpectraComparedInfos('just a random value', undefined);
+        expect(specInfo2).toEqual([]);
+      });
+    });
+
+    describe('when it does not has any comparable info', () => {
+      let container;
+      beforeEach(() => {
+        container = Container.buildEmpty();
+      });
+
+      it('container does not has any comparable info', () => {
+        const specInfo = BuildSpectraComparedInfos('just a random value', container);
+        expect(specInfo).toEqual([]);
+      });
+
+      it('container has comparable info', () => {
+        const { extended_metadata } = container;
+        const comparableData = {
+          file: { name: 'testfile.jdx', id: '1' },
+          dataset: { name: 'dataset.title', id: 'dataset.key' },
+          analysis: { name: 'analysis.title', id: 'analysis.key' },
+          layout: 'layout.title',
+        };
+        extended_metadata.analyses_compared = [comparableData];
+
+        const specInfo = BuildSpectraComparedInfos('just a random value', container);
+        const expectedValue = [{ idx: comparableData.file.id, info: comparableData }]
+        expect(specInfo).toEqual(expectedValue);
+      });
+    });
+
   });
 });
