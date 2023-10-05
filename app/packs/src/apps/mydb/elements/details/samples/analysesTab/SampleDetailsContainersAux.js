@@ -14,6 +14,7 @@ import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 
@@ -298,7 +299,8 @@ const headerBtnGroup = (
   }
 
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
+  const { chmos } = UserStore.getState();
+  const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
   return (
     <div className="upper-btn">
