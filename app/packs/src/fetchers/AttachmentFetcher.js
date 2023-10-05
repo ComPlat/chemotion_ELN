@@ -156,10 +156,12 @@ export default class AttachmentFetcher {
   static updateAttachables(files, attachableType, attachableId, dels) {
     const data = new FormData();
     files.forEach(file => {
+      data.append('attfilesIdentifier[]', file.id);
       data.append('files[]', file.file, file.name);
     });
     data.append('attachable_type', attachableType);
     data.append('attachable_id', attachableId);
+    
     dels.forEach(f => {
       data.append('del_files[]', f.id);
     });
