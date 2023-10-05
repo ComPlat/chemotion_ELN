@@ -192,6 +192,76 @@ module ReportHelpers
   #   from collections sync_colls assigned to user
   # - selected columns from samples, molecules table
   #
+
+  def generate_sheet(table, result, columns_params, export, type)
+    case type
+    when :analyses
+      sheet_name = "#{table}_analyses".to_sym
+      export.generate_analyses_sheet_with_samples(sheet_name, result, columns_params)
+    when :chemicals
+      sheet_name = "#{table}_chemicals"
+      format_result = Export::ExportChemicals.format_chemical_results(result)
+      export.generate_sheet_with_samples(sheet_name, format_result, columns_params)
+    else
+      export.generate_sheet_with_samples(table, result)
+    end
+  end
+
+  def build_sql_query(table, current_user, sql_params, type)
+    tables = %i[sample reaction wellplate]
+    filter_parameter = if tables.include?(table) && type.nil?
+                         table
+                       else
+                         "#{table}_#{type}".to_sym
+                       end
+    type ||= :sample
+    filter_selections = filter_column_selection(filter_parameter)
+    column_query = build_column_query(filter_selections, current_user.id)
+    send("build_sql_#{table}_#{type}", column_query, sql_params[:c_id], sql_params[:ids], sql_params[:checked_all])
+  end
+
+  def generate_sheets_for_tables(tables, table_params, export, columns_params = nil, type = nil)
+    tables.each do |table|
+      next unless (p_t = table_params[:ui_state][table])
+
+      checked_all = p_t[:checkedAll]
+
+      ids = checked_all ? p_t[:uncheckedIds] : p_t[:checkedIds]
+      next unless checked_all || ids.present?
+
+      sql_params = {
+        c_id: table_params[:c_id], ids: ids, checked_all: checked_all
+      }
+      sql_query = build_sql_query(table, current_user, sql_params, type)
+      next unless sql_query
+
+      result = db_exec_query(sql_query)
+      generate_sheet(table, result, columns_params, export, type)
+    end
+  end
+
+  def sample_details_subquery(u_ids, selection)
+    # Extract sample details subquery
+    <<~SQL.squish
+      select
+        s.id as s_id
+        , s.is_top_secret as ts
+        , min(co.id) as co_id
+        , min(scu.id) as scu_id
+        , bool_and(co.is_shared) as shared_sync
+        , max(GREATEST(co.permission_level, scu.permission_level)) as pl
+        , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+      from samples s
+      inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
+      left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
+      left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
+      left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+      where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
+        and (co.id is not null or scu.id is not null)
+      group by s_id
+    SQL
+  end
+
   def build_sql_sample_sample(columns, c_id, ids, checkedAll = false)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
@@ -200,6 +270,7 @@ module ReportHelpers
 
     if checkedAll
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
       selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
@@ -208,35 +279,49 @@ module ReportHelpers
       selection = "s.id in (#{s_ids}) and"
     end
 
-    <<~SQL
+    rest_of_selections = if columns[0].is_a?(Array)
+                           columns[0][0]
+                         else
+                           columns
+                         end
+    s_subquery = sample_details_subquery(u_ids, selection)
+
+    <<~SQL.squish
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
-      , #{columns}
-      from (
-        select
-          s.id as s_id
-          , s.is_top_secret as ts
-          , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
-        from samples s
-        inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
-        left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
-        left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
-        where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
-        group by s_id
-      ) as s_dl
+      , #{rest_of_selections}
+      from (#{s_subquery}) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
       left join molecules m on s.molecule_id = m.id
       left join molecule_names mn on s.molecule_name_id = mn.id
       left join residues res on res.sample_id = s.id
-      order by #{order};
+      order by #{order}
+    SQL
+  end
+
+  def chemical_query(chemical_columns, sample_ids)
+    individual_queries = sample_ids.map do |s_id|
+      <<~SQL.squish
+        SELECT #{s_id} AS chemical_sample_id, #{chemical_columns}
+        FROM chemicals c
+        WHERE c.sample_id = #{s_id}
+      SQL
+    end
+    individual_queries.join(' UNION ALL ')
+  end
+
+  def build_sql_sample_chemicals(columns, c_id, ids, checked_all)
+    sample_query = build_sql_sample_sample(columns[0].join(','), c_id, ids, checked_all)
+    return nil if sample_query.blank?
+
+    chemical_query = chemical_query(columns[1].join(','), ids)
+    <<~SQL.squish
+      SELECT *
+      FROM (#{sample_query}) AS sample_results
+      JOIN (#{chemical_query}) AS chemical_results
+      ON sample_results.s_id = chemical_results.chemical_sample_id
     SQL
   end
 
@@ -245,6 +330,7 @@ module ReportHelpers
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && s_ids.empty?
+
     t = 's' # table samples
     cont_type = 'Sample' # containable_type
     if checkedAll
@@ -256,8 +342,9 @@ module ReportHelpers
       order = "position(','||s_id::text||',' in '(,#{s_ids},)')"
       selection = "s.id in (#{s_ids}) and"
     end
+    s_subquery = sample_details_subquery(u_ids, selection)
 
-    <<~SQL
+    <<~SQL.squish
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , #{columns}
@@ -292,24 +379,7 @@ module ReportHelpers
         where cont.containable_type = '#{cont_type}' and cont.containable_id = #{t}.id
         ) analysis
       ) as analyses
-      from (
-        select
-          s.id as s_id
-          , s.is_top_secret as ts
-          , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
-        from samples s
-        inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
-        left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
-        left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
-        where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
-        group by s_id
-      ) as s_dl
+      from (#{s_subquery}) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
       order by #{order};
     SQL
@@ -460,17 +530,17 @@ module ReportHelpers
       sample: {
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
-        cas: ['s.xref', nil, 0],
+        cas: ['s.xref', '"cas"', 0],
         target_amount_value: ['s.target_amount_value', '"target amount"', 0],
         target_amount_unit: ['s.target_amount_unit', '"target unit"', 0],
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
         real_amount_unit: ['s.real_amount_unit', '"real unit"', 0],
-        description: ['s.description', nil, 0],
+        description: ['s.description', '"description"', 0],
         molfile: ["encode(s.molfile, 'escape')", 'molfile', 1],
-        purity: ['s.purity', nil, 0],
-        solvent: ['s.solvent', nil, 0],
+        purity: ['s.purity', '"purity"', 0],
+        solvent: ['s.solvent', '"solvent"', 0],
         # impurities: ['s.impurities', nil, 0],
-        location: ['s.location', nil, 0],
+        location: ['s.location', '"location"', 0],
         is_top_secret: ['s.is_top_secret', '"secret"', 10],
         # ancestry: ['s.ancestry', nil, 10],
         short_label: ['s.short_label', '"short label"', 0],
@@ -478,11 +548,11 @@ module ReportHelpers
         sample_svg_file: ['s.sample_svg_file', 'image', 1],
         molecule_svg_file: ['m.molecule_svg_file', 'm_image', 1],
         identifier: ['s.identifier', nil, 1],
-        density: ['s.density', nil, 0],
+        density: ['s.density', '"density"', 0],
         melting_point: ['s.melting_point', '"melting pt"', 0],
         boiling_point: ['s.boiling_point', '"boiling pt"', 0],
-        created_at: ['s.created_at', nil, 0],
-        updated_at: ['s.updated_at', nil, 0],
+        created_at: ['s.created_at', '"created at"', 0],
+        updated_at: ['s.updated_at', '"updated_at"', 0],
         # deleted_at: ['wp.deleted_at', nil, 10],
         molecule_name: ['mn."name"', '"molecule name"', 1],
         molarity_value: ['s."molarity_value"', '"molarity_value"', 0],
@@ -492,7 +562,7 @@ module ReportHelpers
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
         short_label: ['s.short_label', '"short label"', 0],
-        #molecule_name: ['mn."name"', '"molecule name"', 1]
+        # molecule_name: ['mn."name"', '"molecule name"', 1]
       },
       molecule: {
         cano_smiles: ['m.cano_smiles', '"canonical smiles"', 10],
@@ -563,27 +633,34 @@ module ReportHelpers
       },
     }.freeze
 
-  # desc: concatenate columns to be queried
-  def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
-    selection = []
-    attrs.keys.each do |table|
-      sel.symbolize_keys.fetch(table, []).each do |col|
-        if col == 'user_labels'
-          selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
-        elsif col == 'literature'
-          selection << "literatures_by_element('Sample', s_id) as literatures"
-        elsif col == 'cas'
-          selection << "s.xref->>'cas' as cas"
-        elsif (s = attrs[table][col.to_sym])
-          selection << (s[1] && s[0] + ' as ' + s[1] || s[0])
-        end
-      end
+  def custom_column_query(table, col, selection, user_id, attrs)
+    if col == 'user_labels'
+      selection << "labels_by_user_sample(#{user_id}, s_id) as user_labels"
+    elsif col == 'literature'
+      selection << "literatures_by_element('Sample', s_id) as literatures"
+    elsif col == 'cas'
+      selection << "s.xref->>'cas' as cas"
+    elsif (s = attrs[table][col.to_sym])
+      selection << ("#{s[1] && s[0]} as #{s[1] || s[0]}")
     end
-    selection.join(', ')
   end
 
-  def filter_column_selection(type, columns = params[:columns])
-    case type.to_sym
+  def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
+    selection = []
+    attrs.each_key do |table|
+      sel.symbolize_keys.fetch(table, []).each do |col|
+        custom_column_query(table, col, selection, user_id, attrs)
+      end
+    end
+    selection = if sel[:chemicals].present?
+                  Export::ExportChemicals.build_chemical_column_query(selection, sel)
+                else
+                  selection.join(',')
+                end
+  end
+
+  def filter_column_selection(table, columns = params[:columns])
+    case table.to_sym
     when :sample
       columns.slice(:sample, :molecule)
     when :reaction
@@ -591,11 +668,13 @@ module ReportHelpers
     when :wellplate
       columns.slice(:sample, :molecule, :wellplate)
     when :sample_analyses
-    # FIXME: slice analyses + process properly
+      # FIXME: slice analyses + process properly
       columns.slice(:analyses).merge(sample_id: params[:columns][:sample])
     # TODO: reaction analyses data
     # when :reaction_analyses
     #  columns.slice(:analysis).merge(reaction_id: params[:columns][:reaction])
+    when :sample_chemicals
+      columns.slice(:chemicals, :sample, :molecule)
     else
       {}
     end
@@ -670,6 +749,7 @@ module ReportHelpers
   def default_columns_reaction
     DEFAULT_COLUMNS_REACTION
   end
+
   def default_columns_wellplate
     DEFAULT_COLUMNS_WELLPLATE
   end

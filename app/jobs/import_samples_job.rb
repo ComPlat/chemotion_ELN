@@ -25,7 +25,12 @@ class ImportSamplesJob < ApplicationJob
     begin
       case file_format
       when '.xlsx'
-        import = Import::ImportSamples.new(file_path, params[:collection_id], @user_id, params[:file_name])
+        import = Import::ImportSamples.new(
+          file_path,
+          params[:collection_id],
+          @user_id, params[:file_name],
+          params[:import_type]
+        )
         @result = import.process
       when '.sdf'
         sdf_import = Import::ImportSdf.new(
