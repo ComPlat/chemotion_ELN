@@ -1,5 +1,6 @@
 import React from 'react';
-import { Nav, Navbar, MenuItem, NavDropdown } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { Nav, Navbar } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -29,23 +30,30 @@ export default class Navigation extends React.Component {
   }
 
   onChange(state) {
-    const newId = state.currentUser ? state.currentUser.id : null;
-    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
-    if (newId !== oldId) { this.setState({ currentUser: state.currentUser }); }
+    const { currentUser } = state;
+    const { currentUser: oldCurrentUser } = this.state;
+    const newId = currentUser ? currentUser.id : null;
+    const oldId = oldCurrentUser ? oldCurrentUser.id : null;
+    if (newId !== oldId) { this.setState({ currentUser }); }
   }
 
   toggleDeviceList() {
-    this.props.toggleDeviceList();
+    const { toggleDeviceList } = this.props;
+    toggleDeviceList();
   }
 
   navHeader() {
     return (
       <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{ cursor: "pointer" }}>
+        <Navbar.Text style={{ cursor: 'pointer' }}>
           <i
             className="fa fa-list"
-            style={{ fontStyle: "normal" }}
+            style={{ fontStyle: 'normal' }}
             onClick={this.toggleDeviceList}
+            role="button"
+            onKeyDown={this.toggleDeviceList}
+            tabIndex={0}
+            aria-label="Toggle Device List"
           />
         </Navbar.Text>
         <Navbar.Text />
@@ -55,18 +63,16 @@ export default class Navigation extends React.Component {
   }
 
   render() {
-    const { modalProps } = this.state;
-
-    return this.state.currentUser ? (
+    const { currentUser } = this.state;
+    return currentUser ? (
       <Navbar fluid className="navbar-custom">
         {this.navHeader()}
-        <Nav navbar className="navbar-form">
-        </Nav>
+        <Nav navbar className="navbar-form" />
         <UserAuth />
         <div style={{ clear: 'both' }} />
       </Navbar>
     ) : (
-      <Navbar fluid className="navbar-custom" >
+      <Navbar fluid className="navbar-custom">
         {this.navHeader()}
         <Nav navbar className="navbar-form" />
         <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
@@ -75,3 +81,7 @@ export default class Navigation extends React.Component {
     );
   }
 }
+
+Navigation.propTypes = {
+  toggleDeviceList: PropTypes.func.isRequired,
+};
