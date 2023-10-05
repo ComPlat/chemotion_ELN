@@ -394,6 +394,19 @@ module Chemotion
         end
       end
 
+      namespace :data_types do
+        desc 'Update data types'
+        put do
+          file_path = File.join('public', 'data_type.json')
+          new_data_types = JSON.parse(request.body.read)
+          begin
+            File.write(file_path, JSON.pretty_generate(new_data_types))
+          rescue Errno::EACCES
+            error!('Save files error!', 500)
+          end
+        end
+      end
+
       resource :jobs do
         desc 'list queued delayed jobs'
         get do

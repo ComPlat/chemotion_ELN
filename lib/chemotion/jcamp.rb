@@ -114,7 +114,18 @@ module Chemotion
           cyclic_volta: params[:cyclicvolta],
           jcamp_idx: params[:curve_idx],
           simulatenmr: params[:simulatenmr],
+          data_type_mapping: read_data_type_mapping,
         }
+      end
+
+      def self.read_data_type_mapping
+        file_path = File.join('public', 'data_type.json')
+        begin
+          return File.read(file_path) if File.exist?(file_path)
+        rescue Errno::EACCES
+          error!('read file error', 500)
+        end
+        ''
       end
 
       def self.stub_http(
