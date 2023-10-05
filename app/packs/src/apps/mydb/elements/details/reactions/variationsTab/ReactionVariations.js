@@ -29,9 +29,9 @@ function RowToolsCellRenderer({ data: variationRow, copyRow, removeRow }) {
 
 function CellRenderer({ value: cellData, enableEquivalent }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  let cellContent = `${Number(value) ? Number(value).toFixed(6) : 'NaN'} [${unit}]`;
+  let cellContent = `${Number(value)} [${unit}]`;
   if (enableEquivalent) {
-    cellContent += `; ${Number(aux.equivalent) ? Number(aux.equivalent).toFixed(6) : 'NaN'} [Equiv]`;
+    cellContent += `; ${Number(aux.equivalent)} [Equiv]`;
   }
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
@@ -110,6 +110,7 @@ const CellEditor = forwardRef(({
     <div>
       <input
         type="number"
+        step="any"
         ref={refInput}
         value={cellData.aux.equivalent}
         min={0}
@@ -125,6 +126,7 @@ const CellEditor = forwardRef(({
     <div>
       <input
         type="number"
+        step="any"
         ref={refInput}
         value={cellData.value}
         min={allowNegativeValue ? undefined : 0}
@@ -204,7 +206,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   const gridRef = useRef();
 
-  const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('ext. label');
+  const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('name');
 
   function addRow() {
     const newRow = createVariationsRow(reaction, uuidv4());
@@ -284,7 +286,20 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   return (
     <div>
       <Form inline>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip>Add row with data from current reaction scheme.</Tooltip>}>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip>
+              Add row with current data from &quot;Scheme&quot; tab.
+              <br />
+              Changes in &quot;Scheme&quot; tab are not applied to
+              {' '}
+              <i>existing</i>
+              {' '}
+              rows.
+            </Tooltip>
+          )}
+        >
           <Button onClick={() => addRow()}>Add row</Button>
         </OverlayTrigger>
         {' '}
