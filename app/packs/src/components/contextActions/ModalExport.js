@@ -56,6 +56,7 @@ export default class ModalExport extends React.Component {
           { value: "solvent", text: "solvent", checked: false },
           { value: "location", text: "location", checked: false },
           { value: "is_top_secret", text: "is top secret?", checked: false },
+          { value: "dry_solvent", text: "dry solvent", checked: false },
           //  {value: "ancestry", text: "ancestry", checked: false},
           { value: "imported_readout", text: "imported readout", checked: false },
           //  {value: "identifier", text: "identifier", checked: false},
