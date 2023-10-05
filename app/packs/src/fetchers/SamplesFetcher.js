@@ -156,6 +156,7 @@ export default class SamplesFetcher {
     const data = new FormData();
     data.append('file', params.file);
     data.append('currentCollectionId', params.currentCollectionId);
+    data.append('import_type', params.type);
 
     const promise = fetch('/api/v1/samples/import/', {
       credentials: 'same-origin',
