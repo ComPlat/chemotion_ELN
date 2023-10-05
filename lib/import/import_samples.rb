@@ -65,13 +65,15 @@ module Import
 
     def process_row(data)
       row = [header, xlsx.row(data)].transpose.to_h
-      return unless structure?(row) || row['decoupled'].casecmp('yes').zero?
+      is_decoupled = row['decoupled'].casecmp('yes').zero? if row['decoupled'].present?
+      return unless structure?(row) || is_decoupled
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
     def process_row_data(row)
-      return Molecule.find_or_create_dummy if row['decoupled'].casecmp('yes').zero? && !structure?(row)
+      is_decoupled = row['decoupled'].casecmp('yes').zero? if row['decoupled'].present?
+      return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
       molecule, molfile = extract_molfile_and_molecule(row)
       return if molfile.nil? || molecule.nil?
