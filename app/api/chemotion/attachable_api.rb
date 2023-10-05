@@ -26,7 +26,7 @@ module Chemotion
           attach_ary = []
           rp_attach_ary = []
           index=0;
-          params[:files].each do |file,index|
+          params[:files].each do |file|
             next unless (tempfile = file[:tempfile])
             a = Attachment.new(
               identifier: params[:attfilesIdentifier][index],
