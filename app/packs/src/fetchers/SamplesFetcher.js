@@ -58,7 +58,7 @@ export default class SamplesFetcher {
     let promise = fetch('/api/v1/samples/' + id + '/annotation', {
       credentials: 'same-origin'
     }).then((response) => {
-      return response.text()
+      return response.text();
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

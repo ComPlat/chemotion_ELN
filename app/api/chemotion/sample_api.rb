@@ -289,6 +289,19 @@ module Chemotion
             root: :sample,
           )
         end
+
+        namespace :annotation do
+          before do
+            @sample = Sample.find(params[:id])
+            @element_policy = ElementPolicy.new(current_user, @sample)
+            error!('401 Unauthorized', 401) unless @element_policy.update?
+          end
+          desc 'Fetch a new annotation svg for this sample'
+          get do
+            content_type('image/svg+xml')
+            Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
+          end
+        end
       end
 
       namespace :findByShortLabel do
@@ -412,15 +425,6 @@ module Chemotion
             policy: @element_policy,
             root: :sample,
           )
-        end
-
-        namespace :annotation do
-          desc 'Fetch a new annotation svg for this sample'
-          get do
-            Rails.logger.debug('Hallo Welt')
-            content_type('image/svg+xml')
-            Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
-          end
         end
       end
 
