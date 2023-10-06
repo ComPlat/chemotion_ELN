@@ -49,11 +49,20 @@ function getMaterialData(material, materialType) {
   return { value, unit, aux };
 }
 
-function createVariationsRow(reaction, id) {
+function getVariationsRowName(reaction, variationsRow) {
+  return `${reaction.short_label}-${variationsRow.id}`;
+}
+
+function getSequentialId(variations) {
+  const ids = variations.map((row) => (row.id));
+  return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
+}
+
+function createVariationsRow(reaction) {
   const { dispValue: durationValue = '', dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = '', valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const row = {
-    id,
+    id: getSequentialId(reaction.variations),
     properties: {
       temperature: {
         value: temperatureValue, unit: temperatureUnit
@@ -62,6 +71,7 @@ function createVariationsRow(reaction, id) {
         value: durationValue, unit: durationUnit
       }
     },
+    analyses: [],
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reaction[reactionAttributeName].reduce((a, v) => (
@@ -71,9 +81,12 @@ function createVariationsRow(reaction, id) {
   return row;
 }
 
-function getSequentialId(variations) {
-  const ids = variations.map((row) => (row.id));
-  return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
+function copyVariationsRow(reaction, row) {
+  const copiedRow = cloneDeep(row);
+  copiedRow.id = getSequentialId(reaction.variations);
+  copiedRow.analyses = [];
+
+  return copiedRow;
 }
 
 function getMolFromGram(gram, material) {
@@ -176,8 +189,85 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
   return updatedVariations;
 }
 
+function associateAnalysisWithVariationsRow(variations, variationsRow, analysisID) {
+  /*
+  Only one variations row can be associated with an analysis.
+  In case `analysisID` is already associated with a variations row,
+  it's being re-assigned to another row with this function call:
+  remove analysisID from any variations row that's tracking it.
+  */
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    row.analyses = row.analyses.filter((id) => id !== analysisID);
+  });
+
+  if (variationsRow === null) {
+    return updatedVariations;
+  }
+
+  const updatedVariationsRow = updatedVariations.find((row) => row.id === variationsRow.id);
+  updatedVariationsRow.analyses.push(analysisID);
+
+  return updatedVariations;
+}
+
+function updateAnalyses(variations, reaction) {
+  /*
+  The "Variations" tab holds references to analyses in the "Analyses" tab.
+  Users can add, remove, or edit analyses in the "Analyses" tab.
+  Every analysis in the "Analyses" tab can be assigned to a row in the "Variations" tab.
+
+  Each row in the variations table keeps references to its assigned analyses
+  by tracking the corresponding `analysesIDs`. In the example below,
+  variations row "A" keeps references to `analysesIDs` "1" and "2",
+  whereas variations row "C" keeps a reference to "4".
+  The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
+
+  Figure 1
+  Analyses tab      Variations tab
+  .---.             .---------.
+  | 1 |<------------| A: 1, 2 |
+  |---|        /    |---------|
+  | 2 |<------/     | B:      |
+  |---|             |---------|
+  | 3 |         ----| C: 4    |
+  |---|        /    `---------`
+  | 4 |<------/
+  `---`
+
+  The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
+  "X" denotes absence of ID.
+
+  Table 1
+  .-------------- ---------------- -------------------------------------------------.
+  | Analyses tab  | Variations tab | action                                         |
+  | (analysesIDs) | (referenceIDs) |                                                |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | ID             | None                                           |
+  |-------------- |--------------- |----------------------------------------------- |
+  | X             | ID             | Container with ID removed in "Analyses" tab.   |
+  |               |                | Remove ID from `referenceIDs`.                 |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | X              | Row that's tracking ID removed in "Variations" |
+  |               |                | tab. No action required since "Analyses" tab   |
+  |               |                | only displays associations to existing rows.   |
+  `-------------- ---------------- -------------------------------------------------`
+  */
+  const reactionAnalyses = cloneDeep(reaction).container.children.find((child) => child.container_type === 'analyses');
+  const analysesIDs = reactionAnalyses.children.filter(
+    (child) => !child.is_deleted
+  ).map((child) => child.id);
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    row.analyses = row.analyses.filter((id) => analysesIDs.includes(id));
+  });
+
+  return updatedVariations;
+}
+
 export {
   createVariationsRow,
+  copyVariationsRow,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
   updateYields,
@@ -192,5 +282,8 @@ export {
   getMolFromGram,
   computeEquivalent,
   getReferenceMaterial,
-  getSequentialId
+  getSequentialId,
+  updateAnalyses,
+  associateAnalysisWithVariationsRow,
+  getVariationsRowName
 };

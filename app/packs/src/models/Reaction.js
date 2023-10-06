@@ -18,6 +18,7 @@ import {
   addMissingMaterialsToVariations,
   updateYields,
   updateEquivalents,
+  updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
@@ -217,6 +218,7 @@ export default class Reaction extends Element {
     //         "temperature": {"value": <number>, "unit": <string>},
     //         "duration": {"value": <number>, "unit": <string>}
     //     },
+    //     "analyses": [<id>, <id>, ...],
     //     "startingMaterials": {
     //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
     //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
@@ -262,6 +264,9 @@ export default class Reaction extends Element {
       updatedVariations = updateYields(updatedVariations, this.hasPolymers());
       // A potential change in the reference material's amount needs to be reflected in the remaining materials' equivalents.
       updatedVariations = updateEquivalents(updatedVariations);
+      if (this.container) {
+        updatedVariations = updateAnalyses(updatedVariations, this);
+      }
 
       this._variations = updatedVariations;
     }

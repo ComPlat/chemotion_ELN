@@ -9,10 +9,13 @@ import {
 } from 'react-bootstrap';
 import _ from 'lodash';
 import {
-  createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits,
+  createVariationsRow, copyVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits,
   convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol,
-  getSequentialId
+  getVariationsRowName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  AnalysesCellRenderer, AnalysesCellEditor
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 
 function AddButton({ onClick }) {
   return (
@@ -39,11 +42,11 @@ function RemoveButton({ onClick }) {
 }
 
 function RowToolsCellRenderer({
-  data: variationsRow, reactionShortLabel, copyRow, removeRow
+  data: variationsRow, reaction, copyRow, removeRow
 }) {
   return (
     <div>
-      <Badge>{`${reactionShortLabel}-${variationsRow.id}`}</Badge>
+      <Badge>{getVariationsRowName(reaction, variationsRow)}</Badge>
       {' '}
       <ButtonGroup>
         <CopyButton onClick={() => copyRow(variationsRow)} />
@@ -226,7 +229,7 @@ function getMaterialHeaderIdentifier(material, identifier) {
   }
 }
 
-export default function ReactionVariations({ reaction, onEditVariations }) {
+export default function ReactionVariations({ reaction, onReactionChange }) {
   // Presentation layer.
   // All logic regarding variations lives in the Reaction model (src/models/Reaction.js).
 
@@ -234,16 +237,22 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('name');
 
+  function onEditVariations(updatedVariations) {
+    // `reaction` property needs to be mutated. When passing mutated (deep) copy of `reaction` to parent component,
+    // state update fails (variations not rendered).
+    reaction.variations = updatedVariations;
+    onReactionChange(reaction);
+  }
+
   function addRow() {
-    const newRow = createVariationsRow(reaction, getSequentialId(reaction.variations));
+    const newRow = createVariationsRow(reaction);
     onEditVariations(
       [...reaction.variations, newRow]
     );
   }
 
   function copyRow(data) {
-    const copiedRow = _.cloneDeep(data);
-    copiedRow.id = getSequentialId(reaction.variations);
+    const copiedRow = copyVariationsRow(reaction, data);
     onEditVariations(
       [...reaction.variations, copiedRow]
     );
@@ -266,11 +275,20 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       field: '',
       cellRenderer: RowToolsCellRenderer,
-      cellRendererParams: { copyRow, removeRow, reactionShortLabel: reaction.short_label },
+      cellRendererParams: { copyRow, removeRow, reaction },
       lockPosition: 'left',
       editable: false,
       sortable: false,
       resizable: false,
+    },
+
+    {
+      headerName: 'Analyses',
+      field: 'analyses',
+      cellRenderer: AnalysesCellRenderer,
+      cellEditor: AnalysesCellEditor,
+      cellEditorParams: { reaction },
+      cellEditorPopupPosition: 'under',
     },
 
     {

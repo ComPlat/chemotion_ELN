@@ -5,6 +5,7 @@ module Entities
     expose(
       :id,
       :properties,
+      :analyses,
       :reactants,
       :products,
       :solvents,

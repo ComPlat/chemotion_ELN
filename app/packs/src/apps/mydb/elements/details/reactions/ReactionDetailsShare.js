@@ -67,9 +67,6 @@ const setReactionByType = (reaction, type, value) => {
     case 'rxno':
       reaction.rxno = value;
       break;
-    case 'variations':
-      reaction.variations = value;
-      break;
   }
 
   return { newReaction: reaction, options: options }
