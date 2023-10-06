@@ -22,7 +22,7 @@ module Entities
 
     def materials(material_type)
       {}.tap do |materials|
-        object[material_type].each do |k, v|
+        object[material_type]&.each do |k, v|
           materials[k] = ReactionVariationMaterialEntity.represent(v)
         end
       end
