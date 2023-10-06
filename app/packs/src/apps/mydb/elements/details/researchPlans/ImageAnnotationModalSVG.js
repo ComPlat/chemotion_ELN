@@ -63,10 +63,10 @@ export default class ImageAnnotationModalSVG extends Component {
               }
 
               // hide some panels
-              subDocument.querySelector('#sidepanels')?.setAttribute('style', 'display: none');
-              subDocument.querySelector('#title_panel')?.setAttribute('style', 'display: none');
-              subDocument.querySelector('#editor_panel')?.setAttribute('style', 'display: none');
-              subDocument.querySelector('#history_panel')?.setAttribute('style', 'display: none');
+              // subDocument.querySelector('#sidepanels')?.setAttribute('style', 'display: none');
+              // subDocument.querySelector('#title_panel')?.setAttribute('style', 'display: none');
+              // subDocument.querySelector('#editor_panel')?.setAttribute('style', 'display: none');
+              // subDocument.querySelector('#history_panel')?.setAttribute('style', 'display: none');
 
               // make sure top is at least 40px to prevent view bobbing
               subDocument.querySelector('#tools_top')?.setAttribute('style', 'min-height: 40px');

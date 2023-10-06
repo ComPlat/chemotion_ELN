@@ -37,7 +37,7 @@ module Usecases
               height="#{height}"
               width="#{width}"
               id="original_image"
-              xlink:href="/images_samples/#{sample.sample_svg_file}"
+              xlink:href="/images/samples/#{sample.sample_svg_file}"
             />
           </g>
           <g

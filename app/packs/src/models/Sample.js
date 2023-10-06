@@ -309,6 +309,7 @@ export default class Sample extends Element {
       molecule_id: this.molecule && (this.molecule.id === '_none_' ? null : this.molecule.id),
       molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
+      sample_svg_annotation: this.sample_svg_annotation,
       is_top_secret: this.is_top_secret || false,
       dry_solvent: this.dry_solvent,
       parent_id: this.parent_id,
@@ -899,6 +900,9 @@ export default class Sample extends Element {
     if (this.sample_svg_file) {
       if (this.sample_svg_file === '***') {
         return '/images/wild_card/no_image_180.svg';
+      }
+      if (this.sample_svg_annotation_file) {
+        return `/images/samples/${this.sample_svg_annotation_file}`;
       }
       return `/images/samples/${this.sample_svg_file}`;
     }

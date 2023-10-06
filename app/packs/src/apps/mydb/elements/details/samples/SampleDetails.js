@@ -1348,8 +1348,8 @@ export default class SampleDetails extends React.Component {
   }
 
   renderSampleAnnotationEditModal() {
-    const { sampleAnnotationEditModalShown } = this.state;
-    let annotation = '';
+    const { sample, sampleAnnotationEditModalShown } = this.state;
+    let annotation = '<svg width="254" height="150" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" > <g class="layer" id="background" > <title>Image</title> <image height="150" width="254" id="original_image" xlink:href="/images/samples/db3a2c0e27e740e65e0abbf7732ceb456661134b3ec363428536d067cebe1048bc0647c00fb520bc845628dfa9cf879b3a65b617846f353f3052fe0fe5c09087.svg" /> </g> <g class="layer" id="annotation" > <title>Annotation</title> </g> </svg> ';
     // if (chosenAttachment) {
     //   if (chosenAttachment.updatedAnnotation) {
     //     console.debug('use existing annotation')
@@ -1366,10 +1366,11 @@ export default class SampleDetails extends React.Component {
         show={sampleAnnotationEditModalShown}
         handleSave={
           (newAnnotation) => {
-            chosenAttachment.updatedAnnotation = newAnnotation;
+            const { sample } = this.state
+            sample.sample_svg_annotation = newAnnotation
             this.setState({
               sampleAnnotationEditModalShown: false,
-              chosenAttachment: chosenAttachment
+              sample
             });
           }
         }
@@ -1383,7 +1384,11 @@ export default class SampleDetails extends React.Component {
     if (this.state.loadingMolecule) {
       svgPath = '/images/wild_card/loading-bubbles.svg';
     } else {
-      svgPath = sample.svgPath;
+      if (sample.sample_svg_annotation) {
+        svgPath = "data:image/svg+xml;base64," + btoa(sample.sample_svg_annotation);
+      } else {
+        svgPath = sample.svgPath;
+      }
     }
     const className = svgPath ? 'svg-container' : 'svg-container-empty';
     return (
