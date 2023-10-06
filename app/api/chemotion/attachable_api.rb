@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/SkipsModelValidations
+
 module Chemotion
   class AttachableAPI < Grape::API
     resource :attachable do
@@ -7,12 +9,16 @@ module Chemotion
         optional :files, type: Array[File], desc: 'files', default: []
         optional :attachable_type, type: String, desc: 'attachable_type'
         optional :attachable_id, type: Integer, desc: 'attachable id'
+        optional :attfilesIdentifier, type: Array[String], desc: 'file identifier'
         optional :del_files, type: Array[Integer], desc: 'del file id', default: []
       end
       after_validation do
         case params[:attachable_type]
         when 'ResearchPlan'
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: params[:attachable_id])).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(
+            current_user,
+            ResearchPlan.find_by(id: params[:attachable_id]),
+          ).update?
         end
       end
 
@@ -20,13 +26,15 @@ module Chemotion
       post 'update_attachments_attachable' do
         attachable_type = params[:attachable_type]
         attachable_id = params[:attachable_id]
+
         if params.fetch(:files, []).any?
           attach_ary = []
           rp_attach_ary = []
-          params[:files].each do |file|
+          params[:files].each_with_index do |file, index|
             next unless (tempfile = file[:tempfile])
 
             a = Attachment.new(
+              identifier: params[:attfilesIdentifier][index],
               bucket: file[:container_id],
               filename: file[:filename],
               file_path: file[:tempfile],
@@ -34,8 +42,9 @@ module Chemotion
               created_for: current_user.id,
               content_type: file[:type],
               attachable_type: attachable_type,
-              attachable_id: attachable_id
+              attachable_id: attachable_id,
             )
+
             begin
               a.save!
               attach_ary.push(a.id)
@@ -45,12 +54,14 @@ module Chemotion
               tempfile.unlink
             end
           end
-
-          TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}").perform_later(rp_attach_ary) if rp_attach_ary.any?
         end
-        Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil) if params[:del_files].any?
+        if params[:del_files].any?
+          Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i),
+                           attachable_type).update_all(attachable_id: nil)
+        end
         true
       end
     end
   end
 end
+# rubocop:enable Rails/SkipsModelValidations
