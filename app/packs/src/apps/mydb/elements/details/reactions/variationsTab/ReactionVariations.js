@@ -311,7 +311,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   return (
     <div>
-      <Form inline>
+      <Form inline style={{ marginTop: '2em', marginBottom: '1em' }}>
         <OverlayTrigger
           placement="bottom"
           overlay={(
