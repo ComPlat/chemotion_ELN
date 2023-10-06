@@ -22,7 +22,12 @@ class Mailcollector
       log_info('Login...')
       imap.select('INBOX')
       imap.search(['NOT', 'SEEN']).each do |message_id|
-        handle_new_mail(message_id, imap)
+        begin
+          handle_new_mail(message_id, imap)
+        rescue => e
+          log_error e.message
+        end
+
       end
       imap.close
     else
@@ -44,28 +49,30 @@ class Mailcollector
     envelope = imap.fetch(message_id, 'ENVELOPE')[0].attr['ENVELOPE']
     raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
     message = Mail.read_from_string raw_message
-    helper = create_helper(envelope)
+    helper_set = create_helper_set(envelope)
     log_info 'Mail from ' + message.from.to_s
-    unless helper
+    unless helper_set
       log_info message.from.to_s + ' Email format incorrect or sender unknown!'
       return nil
     end
-    unless helper.sender
-      log_info message.from.to_s + ' Sender unknown!'
-      return nil
+    for helper in helper_set.helper_set do
+      unless helper.sender
+        log_info message.from.to_s + ' Sender unknown!'
+        return nil
+      end
+      unless helper.recipient
+        log_info message.from.to_s + ' Recipient unknown!'
+        return nil
+      end
+      if message.attachments
+        handle_new_message(message, helper)
+        log_info message.from.to_s + ' Data stored!'
+      else
+        log_info message.from.to_s + ' No data!'
+      end
+      imap.store(message_id, '+FLAGS', [:Deleted])
+      log_info message.from.to_s + ' Email processed!'
     end
-    unless helper.recipient
-      log_info message.from.to_s + ' Recipient unknown!'
-      return nil
-    end
-    if message.attachments
-      handle_new_message(message, helper)
-      log_info message.from.to_s + ' Data stored!'
-    else
-      log_info message.from.to_s + ' No data!'
-    end
-    imap.store(message_id, '+FLAGS', [:Deleted])
-    log_info message.from.to_s + ' Email processed!'
   rescue => e
     log_error 'Error on mailcollector handle_new_mail'
     log_error e.backtrace.join('\n')
@@ -85,7 +92,7 @@ class Mailcollector
           created_by: helper.sender.id,
           created_for: helper.recipient.id,
           file_path: tempfile.path,
-          )
+        )
 
         att.save!
         tempfile.close
@@ -99,45 +106,42 @@ class Mailcollector
     end
   end
 
-  def create_helper(envelope)
+  def is_email_eln_email?(mail_to)
+    begin
+      return mail_to.casecmp(@mail_address).zero? ||
+        (@aliases.any? { |s| s.casecmp(mail_to).zero? })
+    end
+  end
+
+  def get_user(mail)
+    user = User.find_by email: mail
+    user = User.find_by email: mail.downcase unless user
+    user
+  end
+
+  def create_helper_set(envelope)
     helper = nil
     begin
-      if (envelope.cc && envelope.cc.length == 1) && (envelope.to && envelope.to.length == 1)
-        log_info 'Using CC method...'
-        mail_to = envelope.to[0].mailbox.to_s + '@' + envelope.to[0].host.to_s
-        if mail_to.casecmp(@mail_address).zero? ||
-           (@aliases.any? { |s| s.casecmp(mail_to).zero? })
-          helper = CollectorHelper.new(
-            envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s,
-            envelope.cc[0].mailbox.to_s + '@' + envelope.cc[0].host.to_s
-          )
-        end
-      elsif !envelope.cc && envelope.to && envelope.to.length == 2
-        log_info 'Using To method...'
-        mail_to_first = envelope.to[0].mailbox.to_s + '@' + envelope.to[0].host.to_s
-        mail_to_second = envelope.to[1].mailbox.to_s + '@' + envelope.to[1].host.to_s
-        if  mail_to_first.casecmp(@mail_address).zero? ||
-            (@aliases.any? { |s| s.casecmp(mail_to_first).zero? })
-          helper = CollectorHelper.new(
-            envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s,
-            mail_to_second
-          )
-        elsif mail_to_second.casecmp(@mail_address).zero? ||
-              (@aliases.any? { |s| s.casecmp(mail_to_second).zero? })
-          helper = CollectorHelper.new(
-            envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s,
-            mail_to_first
-          )
-        end
-      elsif !envelope.cc && envelope.to && envelope.to.length == 1
-        log_info 'Using Sender = Recipient method...'
-        mail_to = envelope.to[0].mailbox.to_s + '@' + envelope.to[0].host.to_s
-        if mail_to.casecmp(@mail_address).zero? || (@aliases.any? { |s| s.casecmp(mail_to).zero? })
-          helper = CollectorHelper.new(
-            envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s
-          )
-        end
+
+      # Check if from is User or Device
+      from = envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s
+      from_user = get_user from
+      raise from + ' not registered' if from_user.nil?
+      receiver = []
+      if from_user.is_a?(User) && (!from_user.is_a?(Device) && !from_user.is_a?(Admin))
+        receiver.push(from_user)
+      else # Concatenate all receiver (cc & to)
+        receiver.concat(envelope.cc) if envelope.cc
+        receiver.concat(envelope.to) if envelope.to
+        receiver = receiver.map { |m| m.mailbox.to_s + '@' + m.host.to_s }
+        receiver = receiver.select { |m| !is_email_eln_email?(m) }
+        receiver = receiver.map { |m| get_user m }.select { |user| !user.nil? && !user.is_a?(Device) && !user.is_a?(Admin) }
       end
+      helper = CollectorHelperSet.new(
+        from_user,
+        receiver
+      ) unless receiver.length == 0
+
     rescue => e
       log_error 'Error on mailcollector create_helper:'
       log_error e.backtrace.join('\n')
