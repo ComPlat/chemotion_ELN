@@ -20,13 +20,13 @@ class UserStore {
       unitsSystem: {},
       matriceConfigs: [],
       omniauthProviders: [],
-      clo:[]
+      bao:[]
     };
 
     this.bindListeners({
       handleFetchOlsRxno: UserActions.fetchOlsRxno,
       handleFetchOlsChmo: UserActions.fetchOlsChmo,
-      handleFetchOlsClo: UserActions.fetchOlsClo,
+      handleFetchOlsBao: UserActions.fetchOlsBao,
       handleFetchGenericEls: UserActions.fetchGenericEls,
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchUserLabels: UserActions.fetchUserLabels,
@@ -49,8 +49,8 @@ class UserStore {
   handleFetchEditors(result) {
     this.state.matriceConfigs = result.matrices;
   }
-  handleFetchOlsClo(result) {
-    this.state.clo = result.ols_terms;
+  handleFetchOlsBao(result) {
+    this.state.bao = result.ols_terms;
   }
 
   handleFetchOlsRxno(result) {

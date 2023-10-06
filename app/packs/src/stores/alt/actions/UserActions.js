@@ -27,9 +27,9 @@ class UserActions {
         });
     };
   }
-  fetchOlsClo() {
+  fetchOlsBao() {
     return (dispatch) => {
-      UsersFetcher.fetchOls('clo')
+      UsersFetcher.fetchOls('bao')
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
