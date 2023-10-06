@@ -14,14 +14,14 @@ import {
   convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
-function RowToolsCellRenderer({ data: variationRow, copyRow, removeRow }) {
+function RowToolsCellRenderer({ data: variationsRow, copyRow, removeRow }) {
   return (
     <div>
-      <Badge>{variationRow.id.substring(0, 5)}</Badge>
+      <Badge>{variationsRow.id.substring(0, 5)}</Badge>
       {' '}
       <ButtonGroup>
-        <Button onClick={() => copyRow(variationRow)}><i className="fa fa-copy" /></Button>
-        <Button onClick={() => removeRow(variationRow)}><i className="fa fa-trash" /></Button>
+        <Button onClick={() => copyRow(variationsRow)}><i className="fa fa-copy" /></Button>
+        <Button onClick={() => removeRow(variationsRow)}><i className="fa fa-trash" /></Button>
       </ButtonGroup>
     </div>
   );
@@ -100,10 +100,10 @@ const cellEditorReducer = (cellData, action) => {
 };
 
 const CellEditor = forwardRef(({
-  data: variationRow, value, enableEquivalent, allowNegativeValue, unitOptions,
+  data: variationsRow, value, enableEquivalent, allowNegativeValue, unitOptions,
 }, ref) => {
   const [cellData, dispatch] = useReducer(cellEditorReducer, value);
-  const referenceMaterial = getReferenceMaterial(variationRow);
+  const referenceMaterial = getReferenceMaterial(variationsRow);
   const refInput = useRef(null);
 
   const equivalentEditor = (enableEquivalent) ? (
