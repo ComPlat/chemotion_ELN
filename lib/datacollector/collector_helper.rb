@@ -2,7 +2,7 @@ class CollectorHelper
   attr_reader :sender, :sender_container, :recipient
 
   def initialize(from, cc = nil)
-    if from.is_a?(Device) && cc.is_a?(User)
+    if (from.is_a?(Device) && cc.is_a?(User)) || (from.is_a?(User) && from == cc)
       @sender = from
       @recipient = cc
       prepare_containers
