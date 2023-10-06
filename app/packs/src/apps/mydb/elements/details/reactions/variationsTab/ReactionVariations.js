@@ -14,14 +14,38 @@ import {
   convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
+function AddButton({ onClick }) {
+  return (
+    <Button bsSize="xsmall" bsStyle="success" onClick={onClick}>
+      <i className="fa fa-plus" />
+    </Button>
+  );
+}
+
+function CopyButton({ onClick }) {
+  return (
+    <Button bsSize="xsmall" bsStyle="success" onClick={onClick}>
+      <i className="fa fa-clone" />
+    </Button>
+  );
+}
+
+function RemoveButton({ onClick }) {
+  return (
+    <Button bsSize="xsmall" bsStyle="danger" onClick={onClick}>
+      <i className="fa fa-trash-o" />
+    </Button>
+  );
+}
+
 function RowToolsCellRenderer({ data: variationsRow, copyRow, removeRow }) {
   return (
     <div>
       <Badge>{variationsRow.id.substring(0, 5)}</Badge>
       {' '}
       <ButtonGroup>
-        <Button onClick={() => copyRow(variationsRow)}><i className="fa fa-copy" /></Button>
-        <Button onClick={() => removeRow(variationsRow)}><i className="fa fa-trash" /></Button>
+        <CopyButton onClick={() => copyRow(variationsRow)} />
+        <RemoveButton onClick={() => removeRow(variationsRow)} />
       </ButtonGroup>
     </div>
   );
@@ -300,7 +324,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             </Tooltip>
           )}
         >
-          <Button onClick={() => addRow()}>Add row</Button>
+          <AddButton onClick={() => addRow()} />
         </OverlayTrigger>
         {' '}
         <FormGroup>
