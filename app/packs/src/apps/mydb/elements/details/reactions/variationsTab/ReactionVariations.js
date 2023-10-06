@@ -3,7 +3,6 @@ import { AgGridReact } from 'ag-grid-react';
 import React, {
   useRef, forwardRef, useState, useReducer, useEffect, useImperativeHandle, useCallback
 } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import {
   Button, FormGroup, ControlLabel, ButtonGroup,
   OverlayTrigger, Tooltip, Form, Badge, DropdownButton, MenuItem
@@ -11,7 +10,8 @@ import {
 import _ from 'lodash';
 import {
   createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits,
-  convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol
+  convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol,
+  getSequentialId
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function AddButton({ onClick }) {
@@ -38,10 +38,12 @@ function RemoveButton({ onClick }) {
   );
 }
 
-function RowToolsCellRenderer({ data: variationsRow, copyRow, removeRow }) {
+function RowToolsCellRenderer({
+  data: variationsRow, reactionShortLabel, copyRow, removeRow
+}) {
   return (
     <div>
-      <Badge>{variationsRow.id.substring(0, 5)}</Badge>
+      <Badge>{`${reactionShortLabel}-${variationsRow.id}`}</Badge>
       {' '}
       <ButtonGroup>
         <CopyButton onClick={() => copyRow(variationsRow)} />
@@ -233,7 +235,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('name');
 
   function addRow() {
-    const newRow = createVariationsRow(reaction, uuidv4());
+    const newRow = createVariationsRow(reaction, getSequentialId(reaction.variations));
     onEditVariations(
       [...reaction.variations, newRow]
     );
@@ -241,7 +243,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   function copyRow(data) {
     const copiedRow = _.cloneDeep(data);
-    copiedRow.id = uuidv4();
+    copiedRow.id = getSequentialId(reaction.variations);
     onEditVariations(
       [...reaction.variations, copiedRow]
     );
@@ -264,7 +266,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       field: '',
       cellRenderer: RowToolsCellRenderer,
-      cellRendererParams: { copyRow, removeRow },
+      cellRendererParams: { copyRow, removeRow, reactionShortLabel: reaction.short_label },
       lockPosition: 'left',
       editable: false,
       sortable: false,

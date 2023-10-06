@@ -71,6 +71,11 @@ function createVariationsRow(reaction, id) {
   return row;
 }
 
+function getSequentialId(variations) {
+  const ids = variations.map((row) => (row.id));
+  return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
+}
+
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
     return (material.aux.loading * gram) / 1e4;
@@ -186,5 +191,6 @@ export {
   getGramFromMol,
   getMolFromGram,
   computeEquivalent,
-  getReferenceMaterial
+  getReferenceMaterial,
+  getSequentialId
 };
