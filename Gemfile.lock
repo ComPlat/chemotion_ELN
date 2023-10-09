@@ -414,7 +414,7 @@ GEM
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
     httpclient (2.8.3)
-    i18n (1.12.0)
+    i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     icalendar (2.8.0)
       ice_cube (~> 0.16)
@@ -456,7 +456,7 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (1.0.11)
+    labimotion (1.0.10)
       rails (~> 6.1.7)
     latex-decode (0.4.0)
     launchy (2.5.0)
@@ -464,9 +464,9 @@ GEM
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
-    loofah (2.19.1)
+    loofah (2.21.3)
       crass (~> 1.0.2)
-      nokogiri (>= 1.5.9)
+      nokogiri (>= 1.12.0)
     mail (2.8.1)
       mini_mime (>= 0.1.1)
       net-imap
@@ -488,8 +488,8 @@ GEM
       rake
     mini_magick (4.11.0)
     mini_mime (1.1.2)
-    mini_portile2 (2.8.1)
-    minitest (5.18.0)
+    mini_portile2 (2.8.4)
+    minitest (5.20.0)
     msgpack (1.6.0)
     multi_json (1.15.0)
     multi_xml (0.6.0)
@@ -513,8 +513,8 @@ GEM
       net-protocol
     net-ssh (6.1.0)
     nio4r (2.5.9)
-    nokogiri (1.14.3)
-      mini_portile2 (~> 2.8.0)
+    nokogiri (1.15.4)
+      mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     numerizer (0.1.1)
     oauth2 (2.0.9)
@@ -590,8 +590,8 @@ GEM
     pundit (2.2.0)
       activesupport (>= 3.0.0)
     raabro (1.4.0)
-    racc (1.6.2)
-    rack (2.2.6.4)
+    racc (1.7.1)
+    rack (2.2.8)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-contrib (2.3.0)
@@ -623,11 +623,13 @@ GEM
       bundler (>= 1.15.0)
       railties (= 6.1.7.3)
       sprockets-rails (>= 2.0.0)
-    rails-dom-testing (2.0.3)
-      activesupport (>= 4.2.0)
+    rails-dom-testing (2.2.0)
+      activesupport (>= 5.0.0)
+      minitest
       nokogiri (>= 1.6)
-    rails-html-sanitizer (1.5.0)
-      loofah (~> 2.19, >= 2.19.1)
+    rails-html-sanitizer (1.6.0)
+      loofah (~> 2.21)
+      nokogiri (~> 1.14)
     railties (6.1.7.3)
       actionpack (= 6.1.7.3)
       activesupport (= 6.1.7.3)
@@ -735,10 +737,10 @@ GEM
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
     semantic_range (3.0.0)
-    sentry-rails (5.5.0)
+    sentry-rails (5.11.0)
       railties (>= 5.0)
-      sentry-ruby (~> 5.5.0)
-    sentry-ruby (5.5.0)
+      sentry-ruby (~> 5.11.0)
+    sentry-ruby (5.11.0)
       concurrent-ruby (~> 1.0, >= 1.0.2)
     shrine (3.4.0)
       content_disposition (~> 1.0)
@@ -789,7 +791,7 @@ GEM
     sys-filesystem (1.4.3)
       ffi (~> 1.1)
     temple (0.9.1)
-    thor (1.2.1)
+    thor (1.2.2)
     tilt (2.0.11)
     timeout (0.3.2)
     ttfunk (1.7.0)
@@ -845,7 +847,7 @@ GEM
       rake (>= 0.8.7)
     yard (0.9.28)
       webrick (~> 1.7.0)
-    zeitwerk (2.6.7)
+    zeitwerk (2.6.12)
 
 PLATFORMS
   ruby
@@ -919,7 +921,7 @@ DEPENDENCIES
   kaminari
   kaminari-grape
   ketcherails!
-  labimotion (= 1.0.11)
+  labimotion (= 1.0.10)
   launchy
   listen
   memory_profiler

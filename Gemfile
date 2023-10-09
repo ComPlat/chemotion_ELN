@@ -60,7 +60,7 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
-gem 'labimotion', '1.0.11'
+gem 'labimotion', '1.0.10'
 
 gem 'mimemagic', '0.3.10'
 
