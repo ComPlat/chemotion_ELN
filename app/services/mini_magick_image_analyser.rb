@@ -7,7 +7,7 @@ class MiniMagickImageAnalyser
 
     {
       width: image[:width],
-      height: image[:height]
+      height: image[:height],
     }
   rescue StandardError
     { width: 0, height: 0 }

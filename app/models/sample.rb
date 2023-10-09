@@ -474,8 +474,8 @@ class Sample < ApplicationRecord
   end
 
   def attach_annotation
-    return unless sample_svg_annotation.present?
-    return unless sample_svg_annotation.start_with?(/\s*\<\?xml/, /\s*\<svg/)
+    return if sample_svg_annotation.blank?
+    return unless sample_svg_annotation.start_with?(/\s*<\?xml/, /\s*<svg/)
 
     prefix = sample_svg_file[0..-5] # cut off .svg suffice
     filename = "#{prefix}_annotation.svg"

@@ -338,7 +338,7 @@ module Chemotion
         optional :molfile, type: String, desc: 'Sample molfile'
         optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
         optional :sample_svg_annotation, type: String, desc: 'SVG code to update the annotation svg'
-        optional :sample_svg_file, type: String, desc: "Sample SVG file"
+        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
         # optional :molecule, type: Hash, desc: "Sample molecule" do
         #   optional :id, type: Integer
         # end

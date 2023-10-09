@@ -28,32 +28,32 @@ module Usecases
 
         def create_annotation_string(width, height, id)
           <<~ENDOFSTRING
-          <svg
-            width="#{width}"
-            height="#{height}"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlns:svg="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-          >
-            <g
-              class="layer"
-              id="background"
+            <svg
+              width="#{width}"
+              height="#{height}"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlns:svg="http://www.w3.org/2000/svg"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
             >
-              <title>Image</title>
-              <image
-                height="#{height}"
-                width="#{width}"
-                id="original_image"
-                xlink:href="/api/v1/attachments/image/#{id}"
-              />
-            </g>
-            <g
-              class="layer"
-              id="annotation"
-            >
-              <title>Annotation</title>
-            </g>
-          </svg>
+              <g
+                class="layer"
+                id="background"
+              >
+                <title>Image</title>
+                <image
+                  height="#{height}"
+                  width="#{width}"
+                  id="original_image"
+                  xlink:href="/api/v1/attachments/image/#{id}"
+                />
+              </g>
+              <g
+                class="layer"
+                id="annotation"
+              >
+                <title>Annotation</title>
+              </g>
+            </svg>
           ENDOFSTRING
         end
       end
