@@ -7,59 +7,88 @@ import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
 import { previewContainerImage } from 'src/utilities/imageHelper';
-import { JcampIds, BuildSpcInfos } from 'src/utilities/SpectraHelper';
+import { JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 const SpectraEditorBtn = ({
   element, spcInfo, hasJcamp, hasChemSpectra,
   toggleSpectraModal, confirmRegenerate,
+  toggleNMRDisplayerModal, hasNMRium,
 }) => (
-  <OverlayTrigger
-    placement="bottom"
-    delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Editor {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
-  >{spcInfo ? (
-    <ButtonGroup className="button-right">
-      <SplitButton
-        id="spectra-editor-split-button"
-        pullRight
-        bsStyle="info"
-        bsSize="xsmall"
-        title={<i className="fa fa-area-chart" />}
-        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
-        onClick={toggleSpectraModal}
-        disabled={!spcInfo || !hasChemSpectra}
-      >
-        <MenuItem
-          id="regenerate-spectra"
-          key="regenerate-spectra"
-          onSelect={(eventKey, event) => {
-            event.stopPropagation();
-            confirmRegenerate(event);
-          }}
-          disabled={!hasJcamp || !element.can_update}
+  <span>
+    <OverlayTrigger
+      placement="bottom"
+      delayShow={500}
+      overlay={<Tooltip id="spectra">Spectra Editor {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
+    >{spcInfo ? (
+      <ButtonGroup className="button-right">
+        <SplitButton
+          id="spectra-editor-split-button"
+          pullRight
+          bsStyle="info"
+          bsSize="xsmall"
+          title={<i className="fa fa-area-chart" />}
+          onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+          onClick={toggleSpectraModal}
+          disabled={!spcInfo || !hasChemSpectra}
         >
-          <i className="fa fa-refresh" /> Reprocess
-        </MenuItem>
-      </SplitButton>
-    </ButtonGroup>
-  ) : (
-    <Button
-      bsStyle="warning"
-      bsSize="xsmall"
-      className="button-right"
-      onClick={confirmRegenerate}
-      disabled={false}
-    >
-      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
-    </Button>
-  )}
-  </OverlayTrigger>
+          <MenuItem
+            id="regenerate-spectra"
+            key="regenerate-spectra"
+            onSelect={(eventKey, event) => {
+              event.stopPropagation();
+              confirmRegenerate(event);
+            }}
+            disabled={!hasJcamp || !element.can_update}
+          >
+            <i className="fa fa-refresh" /> Reprocess
+          </MenuItem>
+        </SplitButton>
+      </ButtonGroup>
+    ) : (
+      <Button
+        bsStyle="warning"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={confirmRegenerate}
+        disabled={false}
+      >
+        <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+      </Button>
+    )}
+    </OverlayTrigger>
+    {
+      hasNMRium ? (
+        <OverlayTrigger
+          placement="top"
+          delayShow={500}
+          overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
+        >
+          <ButtonGroup className="button-right">
+            <Button
+              id="spectra-editor-split-button"
+              pullRight
+              bsStyle="info"
+              bsSize="xsmall"
+              onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+              onClick={toggleNMRDisplayerModal}
+              disabled={!hasJcamp}
+            >
+              <i className="fa fa-bar-chart"/>
+            </Button>
+          </ButtonGroup>
+        </OverlayTrigger>
+      ) : null
+    }
+  </span>
+  
 );
 
 
@@ -73,6 +102,8 @@ SpectraEditorBtn.propTypes = {
   hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
+  toggleNMRDisplayerModal: PropTypes.func.isRequired,
+  hasNMRium: PropTypes.bool,
 };
 
 SpectraEditorBtn.defaultProps = {
@@ -80,6 +111,7 @@ SpectraEditorBtn.defaultProps = {
   spcInfo: false,
   element: {},
   hasChemSpectra: false,
+  hasNMRium: false,
 };
 
 export default class ResearchPlanDetailsContainers extends Component {
@@ -163,12 +195,24 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
     };
     const spcInfo = BuildSpcInfos(researchPlan, container);
-    const { hasChemSpectra } = UIStore.getState();
+    const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
     const toggleSpectraModal = (e) => {
       e.stopPropagation();
       SpectraActions.ToggleModal();
       SpectraActions.LoadSpectra.defer(spcInfo);
     };
+
+    //process open NMRium
+    const toggleNMRDisplayerModal = (e) => {
+      const spcInfosForNMRDisplayer = BuildSpcInfosForNMRDisplayer(researchPlan, container);
+      e.stopPropagation();
+      SpectraActions.ToggleModalNMRDisplayer();
+      SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
+    }
+
+    const { chmos } = UserStore.getState();
+    const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
+
     return (
       <div className="upper-btn">
         <Button
@@ -187,6 +231,8 @@ export default class ResearchPlanDetailsContainers extends Component {
           hasChemSpectra={hasChemSpectra}
           toggleSpectraModal={toggleSpectraModal}
           confirmRegenerate={confirmRegenerate}
+          toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+          hasNMRium={hasNMRium}
         />
       </div>
     );
@@ -345,6 +391,11 @@ export default class ResearchPlanDetailsContainers extends Component {
                         onChange={this.handleChange}
                       />
                       <ViewSpectra
+                        sample={this.props.researchPlan}
+                        handleSampleChanged={this.handleSpChange}
+                        handleSubmit={this.props.handleSubmit}
+                      />
+                      <NMRiumDisplayer
                         sample={this.props.researchPlan}
                         handleSampleChanged={this.handleSpChange}
                         handleSubmit={this.props.handleSubmit}
