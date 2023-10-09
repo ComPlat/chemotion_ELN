@@ -157,11 +157,51 @@ const BuildSpcInfosForNMRDisplayer = (sample, container) => {
   ));
 };
 
-const isNMRKind = (container) => {
+const listNMROntology = (chmos, storedSet, parentIsNMR = false) => {
+  if (Array.isArray(chmos)) {
+    chmos.forEach((obj) => {
+      const { children } = obj;
+      if (children && children.length > 0) {
+        children.forEach((child) => {
+          listNMROntology(child, storedSet);
+        });
+      } else {
+        return storedSet;
+      }
+    })
+  } else {
+    const { children, value } = chmos;
+    let isNMR = parentIsNMR;
+    if (value && (value.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
+      storedSet.add(value);
+      isNMR = true;
+    } else if(typeof chmos === 'string' && (chmos.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
+      storedSet.add(value);
+      isNMR = true;
+    } else {
+      isNMR = false;
+    }
+    if (children && children.length > 0) {
+      children.forEach((child) => {
+        listNMROntology(child, storedSet, isNMR);
+      });
+    } else {
+      return storedSet;
+    }
+  }
+  return storedSet;
+};
+
+const isNMRKind = (container, chmos=[]) => {
   if (!(container && container.extended_metadata && container.extended_metadata.kind)) return false;
   const { extended_metadata } = container; // eslint-disable-line
   const { kind } = extended_metadata; // eslint-disable-line
-  return kind.toLowerCase().includes('nuclear magnetic resonance');
+  let setToBeStored = new Set([]);
+  const ontologies = Array.from(listNMROntology(chmos, setToBeStored));
+  const filtered = ontologies.filter((ontology) => {
+    return kind === ontology || kind.toLowerCase().includes(ontology);
+  })
+  return filtered.length > 0;
 };
 
 export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind }; // eslint-disable-line

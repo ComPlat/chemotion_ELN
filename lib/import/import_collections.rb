@@ -42,6 +42,7 @@ module Import
             file_name = entry.name.sub('attachments/', '')
             attachment = Attachment.new(
               transferred: true,
+              con_state: Labimotion::ConState::NONE,
               created_by: @current_user_id,
               created_for: @current_user_id,
               key: SecureRandom.uuid,
@@ -90,12 +91,15 @@ module Import
         import_residues
         import_reactions
         import_reactions_samples
+ #       import_elements if @gt == false
+ #       import_elements_samples if @gt == false
         import_wellplates if @gt == false
         import_wells if @gt == false
         import_screens if @gt == false
         import_research_plans if @gt == false
-        CelllineImporter.new(@data, @current_user_id, @instances).execute if @gt == false
         import_containers
+        import_segments
+        import_datasets
         import_attachments
         import_literals
       end
@@ -222,6 +226,7 @@ module Import
           'impurities',
           'location',
           'is_top_secret',
+          'dry_solvent',
           'external_label',
           'short_label',
           'real_amount_value',
@@ -373,6 +378,11 @@ module Import
           update_instances!(uuid, reactions_sample)
         end
       end
+    end
+
+
+    def import_elements
+      Labimotion::Import.import_elements(@data, @instances, @gt, @current_user_id, method(:fetch_many), &method(:update_instances!))
     end
 
     def import_wellplates
@@ -541,6 +551,15 @@ module Import
       end
     rescue StandardError => e
       Rails.logger.debug(e.backtrace)
+    end
+
+    def import_segments
+      Labimotion::Import.import_segments(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
+      # nil
+    end
+
+    def import_datasets
+      Labimotion::Import.import_datasets(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
     end
 
     def import_literals

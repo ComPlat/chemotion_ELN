@@ -22,8 +22,8 @@ module Tagging
     when 'Well'
       args = { wellplate_tag: wellplate_id }
       element = 'sample'
-    when 'ElementsSample'
-      el = Element.find_by(id: element_id)
+    when 'Labimotion::ElementsSample'
+      el = Labimotion::Element.find_by(id: element_id)
       return if el.nil?
 
       args = if deleted_at.nil?
@@ -33,7 +33,7 @@ module Tagging
                { element_tag: {} }
              end
       element = 'sample'
-    when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'CollectionsElement',
+    when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'Labimotion::CollectionsElement',
       'CollectionsScreen', 'CollectionsResearchPlan', 'CollectionsCellline'
 
       args = { collection_tag: true }

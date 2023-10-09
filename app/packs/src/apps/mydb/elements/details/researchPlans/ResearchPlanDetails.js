@@ -54,7 +54,9 @@ export default class ResearchPlanDetails extends Component {
 
   componentDidMount() {
     const { researchPlan } = this.props;
-    CommentActions.fetchComments(researchPlan);
+    if (!researchPlan.isNew) {
+      CommentActions.fetchComments(researchPlan);
+    }
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -345,7 +347,6 @@ export default class ResearchPlanDetails extends Component {
 
     const EditButton = (
       <Button
-        bsSize="middle"
         bsStyle={researchPlan.mode === 'edit' ? 'warning' : 'default'}
         style={{
           pointerEvents: 'none',
@@ -358,7 +359,6 @@ export default class ResearchPlanDetails extends Component {
 
     const ViewButton = (
       <Button
-        bsSize="middle"
         bsStyle={researchPlan.mode === 'view' ? 'info' : 'default'}
         style={{
           pointerEvents: 'none',

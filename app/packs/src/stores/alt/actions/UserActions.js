@@ -1,6 +1,6 @@
 import alt from 'src/stores/alt/alt';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import SegmentsFetcher from 'src/fetchers/SegmentsFetcher';
+import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 
 import DocumentHelper from 'src/utilities/DocumentHelper';
@@ -129,7 +129,7 @@ class UserActions {
 
   fetchSegmentKlasses() {
     return (dispatch) => {
-      SegmentsFetcher.fetchKlass()
+      GenericSgsFetcher.listSegmentKlass()
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {

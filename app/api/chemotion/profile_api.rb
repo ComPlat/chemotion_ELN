@@ -3,10 +3,10 @@ module Chemotion
   class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
       fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-         message: "has too many entries" if  params[attr_name].keys.size > 30
+         message: "has too many entries" if  params[attr_name].keys.size > 100
       params[attr_name].each do |key, val|
         fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-          message: "has wrong structure") unless key.to_s =~ /\A[\w \-]+\Z/
+          message: "has wrong structure") unless key.to_s =~ /\A[\w \(\)\-]+\Z/
         fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
           message: "has wrong structure") unless val.to_s =~ /\d+/
       end
@@ -26,9 +26,9 @@ module Chemotion
         end
 
         if current_user.matrix_check_by_name('genericElement')
-          available_elments = ElementKlass.where(is_active: true).pluck(:name)
+          available_elments = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
           new_layout = data['layout'] || {}
-          ElementKlass.where(is_active: true).find_each do |el|
+          Labimotion::ElementKlass.where(is_active: true).find_each do |el|
             if data['layout'] && data['layout']["#{el.name}"].nil?
               new_layout["#{el.name}"] = new_layout&.values&.min < 0 ? new_layout&.values.min-1 : -1;
             end

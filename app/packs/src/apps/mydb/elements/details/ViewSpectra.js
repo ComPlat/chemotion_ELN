@@ -662,7 +662,7 @@ class ViewSpectra extends React.Component {
                 descriptions={descriptions}
                 canChangeDescription
                 onDescriptionChanged={this.onSpectraDescriptionChanged}
-                userManualLink={{ cv: 'https://chemotion.net/docs/chemspectra/cv' }}
+                userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
             />
         }
       </Modal.Body>

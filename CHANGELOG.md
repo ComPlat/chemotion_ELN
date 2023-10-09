@@ -1,7 +1,65 @@
 # Chemotion_ELN Changelog
 
+## [v1.8.0-rc1]
+> (2023-09-20)
+
+* Features and Improvements:
+  * Enhance import samples for sdf [#1364](https://github.com/ComPlat/chemotion_ELN/pull/1364)
+  * Move sample task inbox to header bar [#1517](https://github.com/ComPlat/chemotion_ELN/pull/1517)
+  * filter options for admin user management [#1510](https://github.com/ComPlat/chemotion_ELN/pull/1510)
+  * Reaction Variations [#1409](https://github.com/ComPlat/chemotion_ELN/pull/1409)
+  * LabiIMotion Integration [#1504](https://github.com/ComPlat/chemotion_ELN/pull/1504)
+
+## [v1.7.3] 
+> (2023-09-20)
+
+* Features and Improvements:
+  * Always sort new sample tasks on top of list [#1456](https://github.com/ComPlat/chemotion_ELN/pull/1456)
+  * add fluorescence (emission), DLS ACF, DLS Intensity layouts [#1374](https://github.com/ComPlat/chemotion_ELN/pull/1374)
+  * Update CDCl3 solvent value on chemspectra and fix typo [#1480](https://github.com/ComPlat/chemotion_ELN/pull/1480)
+  * Reaction table dropdown value updates [#1433](https://github.com/ComPlat/chemotion_ELN/pull/1433)
+  * select all option for device inbox folder by [#1437](https://github.com/ComPlat/chemotion_ELN/pull/1437)
+  * Show sample name in SampleTask Api [#1518](https://github.com/ComPlat/chemotion_ELN/pull/1518)
+  * update ext links in the Navbar menu dropdown [#1534](https://github.com/ComPlat/chemotion_ELN/pull/1534)
+  * Allow deletion of SampleTasks and fix SampleTask Inbox scroll issues [#1444](https://github.com/ComPlat/chemotion_ELN/pull/1444)
+  * add-analysis button always visible [#1465](https://github.com/ComPlat/chemotion_ELN/pull/1465)
+
+* chore:
+  * upgrade converter 1.0.0 [#1450](https://github.com/ComPlat/chemotion_ELN/pull/1450)
+  * update information of chem-spectra-app [#1484](https://github.com/ComPlat/chemotion_ELN/pull/1484)
+  * Add Cypress dependencies to Dockerfiles [#1491](https://github.com/ComPlat/chemotion_ELN/pull/1491)
+  * upg nodejs LTS to 18 [#1489](https://github.com/ComPlat/chemotion_ELN/pull/1489)
+  * puma from 5.6.5 to 5.6.7 [#1488](https://github.com/ComPlat/chemotion_ELN/pull/1488)
+  * update README - acknowledge NFDI [#1472](https://github.com/ComPlat/chemotion_ELN/pull/1472)
+  
+* Fixes:
+  * disable_chemrepoidjob [#1451](https://github.com/ComPlat/chemotion_ELN/pull/1451)
+  * quill_to_html when type HashWithIndifferentAccess [#1458](https://github.com/ComPlat/chemotion_ELN/pull/1458)
+  * display the not-accessible panel for 401 status on sample fetched by id [#1469](https://github.com/ComPlat/chemotion_ELN/pull/1469)
+  * image annotation tool image preview does not work as expected [#1467](https://github.com/ComPlat/chemotion_ELN/pull/1467)
+  * White screen research plan [#1452](https://github.com/ComPlat/chemotion_ELN/pull/1452)
+  * wellplates multiple readouts design tab [#1474](https://github.com/ComPlat/chemotion_ELN/pull/1474)
+  * Cypress Tests [#1481](https://github.com/ComPlat/chemotion_ELN/pull/1481)
+  * the issue with NMRium wrapper version 0.4.0 [#1436](https://github.com/ComPlat/chemotion_ELN/pull/1436)
+  * nmrium button [#1460](https://github.com/ComPlat/chemotion_ELN/pull/1460)
+  * replace toSorted with manual sorting in SampleTaskInbox [#1485](https://github.com/ComPlat/chemotion_ELN/pull/1485)
+  * duplicate jdx files by [#1479](https://github.com/ComPlat/chemotion_ELN/pull/1479)
+  * sorting multiplicity values [#1478](https://github.com/ComPlat/chemotion_ELN/pull/1478)
+  * inbox UnsortedBox issues [#1447](https://github.com/ComPlat/chemotion_ELN/pull/1447)
+  * deletion of literature [#1502](https://github.com/ComPlat/chemotion_ELN/pull/1502)
+  * doi not accepted [#1486](https://github.com/ComPlat/chemotion_ELN/pull/1486)
+  * fixed wrong literatures mapping [#1506](https://github.com/ComPlat/chemotion_ELN/pull/1506)
+  * ignore predictions when it is null [#1507](https://github.com/ComPlat/chemotion_ELN/pull/1507)
+  * crash when selecting multiplicity checkbox on chemspectra [#1509](https://github.com/ComPlat/chemotion_ELN/pull/1509)
+  * sync chemspectra nmrium eln v173 [#1513](https://github.com/ComPlat/chemotion_ELN/pull/1513)
+  * Update Chemspectra to handle 'FL Spectrum' datatype and fix cannot read processed Bruker data NMR [#1528](https://github.com/ComPlat/chemotion_ELN/pull/1528)
+  * yield percentage error for reactions with decoupled products and … [#1531](https://github.com/ComPlat/chemotion_ELN/pull/1531)
+  * reaction sort column default to created_at [#1533](https://github.com/ComPlat/chemotion_ELN/pull/1533)
+  
+
 ## [v1.7.2] 
 > (2023-08-01)
+
 * Fixes:
   * Comment functionality, closes #1435
   * Sort reactions by creation time  4922fc3, closes #1439

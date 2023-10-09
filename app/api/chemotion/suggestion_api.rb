@@ -139,7 +139,7 @@ module Chemotion
         when 'cell_lines'
           dl_cl.positive? ? search_for_celllines(): []
         else
-          element_short_label = dl_e.positive? && search_by_element_short_label.call(Element, qry) || []
+          element_short_label = dl_e.positive? && search_by_element_short_label.call(Labimotion::Element, qry) || []
           sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
           sample_short_label = dl_s.positive? && search_by_field.call(Sample, :short_label, qry) || []
           sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []

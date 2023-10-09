@@ -18,6 +18,8 @@ module Export
       @data = {}
       @uuids = {}
       @attachments = []
+      @segments = []
+      @datasets = []
       @images = []
     end
 
@@ -113,18 +115,21 @@ module Export
         collections += descendants
       end
 
+      Labimotion::Export.fetch_element_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Export.fetch_segment_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Export.fetch_dataset_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
       # loop over all collections
       collections.each do |collection|
         # fetch collection
         fetch_one(collection, {
-                    'user_id' => 'User',
-                  })
-
+          'user_id' => 'User'
+        })
         fetch_samples collection
         fetch_reactions collection
-        fetch_wellplates collection unless @gt == false
-        fetch_screens collection unless @gt == false
-        fetch_research_plans collection unless @gt == false
+        # fetch_elements collection if @gt == false
+        fetch_wellplates collection if @gt == false
+        fetch_screens collection if @gt == false
+        fetch_research_plans collection if @gt == false
         add_cell_line_material_to_package collection unless @gt == false
         add_cell_line_sample_to_package collection unless @gt == false
       end
@@ -170,7 +175,6 @@ module Export
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
       samples = collection.samples.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))
-
       # fetch samples
       fetch_many(samples, {
                    'molecule_name_id' => 'MoleculeName',
@@ -195,6 +199,9 @@ module Export
         fetch_many(sample.residues, {
                      'sample_id' => 'Sample',
         })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(sample, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # fetch containers, attachments and literature
         fetch_containers(sample)
@@ -232,6 +239,9 @@ module Export
                      })
         end
 
+        segment, @attachments = Labimotion::Export.fetch_segments(reaction, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
+
         # fetch containers, attachments and literature
         fetch_containers(reaction)
         fetch_literals(reaction)
@@ -239,6 +249,10 @@ module Export
         # collect the reaction_svg_file
         fetch_image('reactions', reaction.reaction_svg_file)
       end
+    end
+
+    def fetch_elements(collection)
+      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments, method(:fetch_many), method(:fetch_one), method(:fetch_containers))
     end
 
     def fetch_wellplates(collection)
@@ -254,6 +268,9 @@ module Export
                      'sample_id' => 'Sample',
                      'wellplate_id' => 'Wellplate',
                    })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(wellplate, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         fetch_containers(wellplate)
       end
@@ -273,6 +290,9 @@ module Export
                      'screen_id' => 'Screen',
                      'wellplate_id' => 'Wellplate',
                    })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # fetch containers and attachments
         fetch_containers(screen)
@@ -297,6 +317,8 @@ module Export
                      'created_by' => 'User',
                      'created_for' => 'User',
                    })
+        segment, @attachments = Labimotion::Export.fetch_segments(research_plan, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # add attachments to the list of attachments
         @attachments += research_plan.attachments
@@ -345,6 +367,7 @@ module Export
                         'containable_id' => containable_type,
                         'parent_id' => 'Container',
                       })
+            @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset, &method(:fetch_one) ) if attachment_container.dataset.present?
             fetch_many(attachment_container.attachments, {
                          'attachable_id' => 'Container',
                          'created_by' => 'User',

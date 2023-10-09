@@ -4,10 +4,11 @@ import {
 } from 'mocha';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
-  JcampIds, BuildSpcInfos
+  JcampIds, BuildSpcInfos,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
+import { chmosFixture } from '../../../fixture/chmos';
 
 describe('SpectraHelper', () => {
   describe('isNMRKind', () => {
@@ -38,9 +39,45 @@ describe('SpectraHelper', () => {
           expect(isNMRKind(container)).toEqual(false);
         });
 
-        it('it is NMR type', () => {
-          const container = { extended_metadata: { kind: '1H nuclear magnetic resonance spectroscopy (1H NMR)' } };
-          expect(isNMRKind(container)).toEqual(true);
+        it('it is NMR type when list ontologies is empty', () => {
+          const container = { extended_metadata: { kind: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' } };
+          expect(isNMRKind(container, [])).toEqual(false);
+        });
+
+        it('it is NMR type when having list ontologies', () => {
+          const containers = [
+            { extended_metadata: { kind: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000567 | 15N nuclear magnetic resonance spectroscopy (15N NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0001151 | 1H--1H nuclear Overhauser enhancement spectroscopy (1H-1H NOESY)' } },
+            { extended_metadata: { kind: 'CHMO:0001173 | 13C--13C nuclear Overhauser enhancement spectroscopy (13C-13C NOESY)' } },
+          ];
+          containers.forEach((container) => {
+            expect(isNMRKind(container, chmosFixture)).toEqual(true);
+          });
+        });
+
+        it('it is NMR type but list ontologies is invalid', () => {
+          const containers = [
+            { extended_metadata: { kind: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000567 | 15N nuclear magnetic resonance spectroscopy (15N NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0001151 | 1H--1H nuclear Overhauser enhancement spectroscopy (1H-1H NOESY)' } },
+            { extended_metadata: { kind: 'CHMO:0001173 | 13C--13C nuclear Overhauser enhancement spectroscopy (13C-13C NOESY)' } },
+          ];
+          containers.forEach((container) => {
+            expect(isNMRKind(container, {chmosFixture})).toEqual(false);
+          });
+        });
+
+        it('it is not NMR type when having list ontologies', () => {
+          const containers = [
+            { extended_metadata: { kind: 'mass spectrometry (MS)' } },
+            { extended_metadata: { kind: 'high-performance liquid chromatography (HPLC)' } },
+          ];
+          containers.forEach((container) => {
+            expect(isNMRKind(container, chmosFixture)).toEqual(false);
+          });
         });
       });
     });

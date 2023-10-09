@@ -77,19 +77,6 @@ class UIStore {
       matrices: {}
     };
 
-    // console.log(this.state.klasses);
-    // // eslint-disable-next-line no-unused-expressions
-    // this.state.klasses && this.state.klasses.forEach((klass) => {
-    //   this.state[`${klass}`] = {
-    //     checkedAll: false,
-    //     checkedIds: List(),
-    //     uncheckedIds: List(),
-    //     currentId: null,
-    //     page: 1,
-    //     activeTab: 0,
-    //   };
-    // });
-
     this.bindListeners({
       handleInitialize: UIActions.initialize,
       handleSelectTab: UIActions.selectTab,
@@ -124,13 +111,15 @@ class UIStore {
       handleSetFromDate: UIActions.setFromDate,
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
+      handleRerenderGenericWorkflow: UIActions.rerenderGenericWorkflow,
+      handleShowGenericWorkflowModal: UIActions.showGenericWorkflowModal,
     });
   }
 
   handleInitialize(result) {
     this.setState(result);
     const { klasses } = result;
-    klasses && klasses.forEach((klass) => {
+    klasses?.forEach((klass) => {
       this.state[`${klass}`] = {
         checkedAll: false,
         checkedIds: List(),
@@ -140,6 +129,16 @@ class UIStore {
         activeTab: 0,
       };
     });
+  }
+
+
+  handleRerenderGenericWorkflow(params) {
+    this.state.propGenericWorkflow = params;
+    if (params.toggle) { this.state.showGenericWorkflow = !this.state.showGenericWorkflow; }
+  }
+
+  handleShowGenericWorkflowModal(show) {
+    this.state.showGenericWorkflow = show;
   }
 
   handleToggleCollectionManagement() {
@@ -226,9 +225,11 @@ class UIStore {
   handleUncheckAllElements(params) {
     let { type, range } = params;
 
-    this.state[type].checkedAll = false;
-    this.state[type].checkedIds = List();
-    this.state[type].uncheckedIds = List();
+    if (this.state[type]) {
+      this.state[type].checkedAll = false;
+      this.state[type].checkedIds = List();
+      this.state[type].uncheckedIds = List();
+    }
   }
 
   handleUncheckWholeSelection() {

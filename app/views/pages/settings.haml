@@ -18,7 +18,7 @@
                                 maxlength: 3,
                                 class: 'form-control',
                                 id: 'reaction-name-prefix',
-                                oninput: 'showExampleLabel();'
+                                oninput: 'showExampleLabel()'
           .form-group
             = f.label 'Counter starts at', class: 'col-sm-2 col-sm-offset-2 control-label'
             .col-sm-2
@@ -27,7 +27,7 @@
                                   min: 0,
                                   class: 'form-control',
                                   id: 'reactions-count',
-                                  oninput: 'showExampleLabel();'
+                                  oninput: 'showExampleLabel()'
           = hidden_field_tag :name_abbreviation, current_user.name_abbreviation
           %div
             .col-sm-4.col-sm-offset-2
@@ -85,3 +85,4 @@
 
   = link_to "Back", root_path
 
+  %script{:src => asset_path('pages.js')}

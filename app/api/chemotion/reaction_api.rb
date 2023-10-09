@@ -19,7 +19,8 @@ module Chemotion
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :sort_column, type: String, desc: 'sort by created_at, updated_at, rinchi_short_key, or rxno',
-                               values: %w[created_at updated_at rinchi_short_key rxno]
+                               values: %w[created_at updated_at rinchi_short_key rxno],
+                               default: 'created_at'
       end
       paginate per_page: 7, offset: 0
 
@@ -52,6 +53,10 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
       
         sort_column = params[:sort_column].presence || 'created_at'
+        sort_direction = %w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC'
+
+        sort_column = params[:sort_column].presence || 'created_at'
+        sort_column =  'created_at' if %w[none updated_at].include? sort_column
         sort_direction = %w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC'
 
         scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
@@ -157,6 +162,7 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :segments, type: Array
+        optional :variations, type: [Hash]
       end
       route_param :id do
         after_validation do
@@ -222,6 +228,7 @@ module Chemotion
         requires :container, type: Hash
         optional :duration, type: String
         optional :rxno, type: String
+        optional :variations, type: [Hash]
       end
 
       post do

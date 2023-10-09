@@ -12,8 +12,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
-import SampleTaskNavigationElement from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskNavigationElement';
-import SampleTaskInbox from 'src/apps/mydb/collections/sampleTaskInbox/SampleTaskInbox';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
@@ -54,7 +52,6 @@ export default class CollectionTree extends React.Component {
   componentDidMount() {
     CollectionStore.listen(this.onChange);
     InboxStore.listen(this.onChange);
-    //CollectionActions.fetchGenericEls();
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
@@ -289,7 +286,7 @@ export default class CollectionTree extends React.Component {
   subtrees(roots, label, isRemote, visible = true) {
 
     const subtrees = roots && roots.map((root, index) => {
-      return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
+      return <CollectionSubtree root={root} key={index} isRemote={isRemote} />
     });
 
     let subtreesVisible = visible ? "" : "none"
@@ -405,8 +402,6 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper" style={{ display: inboxDisplay }}>
           {this.inboxSubtrees()}
         </div>
-        <SampleTaskNavigationElement />
-        <SampleTaskInbox />
       </div>
     );
   }

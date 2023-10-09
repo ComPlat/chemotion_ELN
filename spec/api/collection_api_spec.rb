@@ -285,7 +285,13 @@ describe Chemotion::CollectionAPI do
         }
       end
 
-      describe '01 - from and to collections owned by user,' do
+      let!(:tabs_segment) do
+        {
+          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
+        }
+      end
+
+      describe '01 - from and to collections owned by user, ' do
         # before do
         #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s.id)
         #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s_r.id)
@@ -590,16 +596,16 @@ describe Chemotion::CollectionAPI do
           it 'find collection and insert creates tab segments value' do
             post '/api/v1/collections/tabs', params: { segments: tabs_segment, id: c_target.id }
             c = Collection.find(c_target.id)
-            expect(c).not_to be_nil
-            expect(c.tabs_segment).not_to be_nil
-            expect(response).to have_http_status :created
+            expect(c).to_not be_nil
+            expect(c.tabs_segment).to_not be_nil
+            expect(response.status).to eq 201
           end
         end
 
         describe 'PATCH /api/v1/collections/tabs' do
           it 'updates new tab segments value and returns 204' do
             patch '/api/v1/collections/tabs', params: { segment: tabs_segment, id: c_target.id }
-            expect(response).to have_http_status :no_content
+            expect(response.status).to eq 204
           end
         end
       end

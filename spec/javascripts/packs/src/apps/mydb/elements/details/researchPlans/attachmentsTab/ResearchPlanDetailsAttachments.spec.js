@@ -10,7 +10,8 @@ import ResearchPlanFactory from 'factories/ResearchPlanFactory';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ResearchPlanDetailsAttachments from 'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+import ResearchPlanDetailsAttachments from
+  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
 
 Enzyme.configure({ adapter: new Adapter() });
 

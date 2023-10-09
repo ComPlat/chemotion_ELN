@@ -4,11 +4,11 @@
 class GenericElementsRevisionMigration < ActiveRecord::Migration[4.2]
   # ElementKlass
   class ElementKlass < ActiveRecord::Base
-    ElementKlass.reset_column_information
+    Labimotion::ElementKlass.reset_column_information
   end
   # Element
   class Element < ActiveRecord::Base
-    Element.reset_column_information
+    Labimotion::Element.reset_column_information
   end
 
   def self.up
@@ -37,7 +37,7 @@ class GenericElementsRevisionMigration < ActiveRecord::Migration[4.2]
         properties_release: klass.properties_template,
         released_at: klass.released_at
       }
-      ElementKlassesRevision.create(attributes)
+      Labimotion::ElementKlassesRevision.create(attributes)
     end
 
     Element.find_each do |el|
@@ -70,7 +70,7 @@ class GenericElementsRevisionMigration < ActiveRecord::Migration[4.2]
         name: el.name,
         properties: el.properties
       }
-      ElementsRevision.create(attributes)
+      Labimotion::ElementsRevision.create(attributes)
     end
   end
 

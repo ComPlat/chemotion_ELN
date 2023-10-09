@@ -16,28 +16,30 @@ export default class ModalImport extends React.Component {
   handleClick() {
     const { onHide, action } = this.props;
     const { file } = this.state;
-    let ui_state = UIStore.getState();
-    let params = {
-      file: file,
-      currentCollectionId: ui_state.currentCollection.id
-    }
+    const uiState = UIStore.getState();
+    const importSampleAs = uiState.modalParams.title === 'Import Chemicals from File' ? 'chemical' : 'sample';
+    const params = {
+      file,
+      currentCollectionId: uiState.currentCollection.id,
+      type: importSampleAs
+    };
     action(params);
     onHide();
 
-    let notification = {
-      title: "Uploading",
-      message: "The file is being processed. Please wait...",
-      level: "warning",
+    const notification = {
+      title: 'Uploading',
+      message: 'The file is being processed. Please wait...',
+      level: 'warning',
       dismissible: false,
-      uid: "import_samples_upload",
-      position: "bl"
-    }
+      uid: 'import_samples_upload',
+      position: 'bl'
+    };
 
     NotificationActions.add(notification);
   }
 
-  handleFileDrop(attachment_file) {
-    this.setState({ file: attachment_file[0] });
+  handleFileDrop(attachmentFile) {
+    this.setState({ file: attachmentFile[0] });
   }
 
   handleAttachmentRemove() {
@@ -71,7 +73,7 @@ export default class ModalImport extends React.Component {
 
   isDisabled() {
     const { file } = this.state;
-    return file == null
+    return file == null;
   }
 
   render() {
@@ -85,6 +87,6 @@ export default class ModalImport extends React.Component {
           <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
-    )
+    );
   }
 }

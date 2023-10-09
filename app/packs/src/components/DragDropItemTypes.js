@@ -1,5 +1,6 @@
 export default {
   WELL: 'well',
+  ELEMENT: 'element',
   SAMPLE: 'sample',
   MATERIAL: 'material',
   REACTION: 'reaction',

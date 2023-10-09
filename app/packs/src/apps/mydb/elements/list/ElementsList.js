@@ -174,7 +174,6 @@ export default class ElementsList extends React.Component {
         checkedAll: false, checkedIds: [], uncheckedIds: [], currentId: null
       };
       const element = ElementStore.getState().elements[`${type}s`];
-
       const nextCount = elementUI.checkedAll
         ? (element.totalElements - elementUI.uncheckedIds.size)
         : elementUI.checkedIds.size;

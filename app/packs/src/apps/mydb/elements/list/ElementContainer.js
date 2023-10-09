@@ -22,6 +22,8 @@ const ElementContainer = ({ connectDragSource, sourceType }) => {
              sourceType === DragDropItemTypes.REACTION ||
              sourceType === DragDropItemTypes.RESEARCH_PLAN) {
     return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
+  } else if (sourceType === DragDropItemTypes.ELEMENT) {
+    return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
   }
   return <span className="fa fa-arrows dnd-arrow-disable" />;
 };

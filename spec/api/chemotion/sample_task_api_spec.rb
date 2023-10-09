@@ -89,7 +89,7 @@ describe Chemotion::SampleTaskAPI do
     let(:expected_result) do
       {
         description: 'whatever',
-        display_name: sample.showed_name,
+        display_name: sample.name,
         done: false,
         required_scan_results: 2,
         result_unit: 'g',
