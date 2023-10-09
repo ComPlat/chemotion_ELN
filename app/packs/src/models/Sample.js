@@ -300,6 +300,7 @@ export default class Sample extends Element {
       molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
+      dry_solvent: this.dry_solvent,
       parent_id: this.parent_id,
       density: this.density,
       metrics: this.metrics,
@@ -332,6 +333,14 @@ export default class Sample extends Element {
 
   set is_top_secret(is_top_secret) {
     this._is_top_secret = is_top_secret;
+  }
+
+  get dry_solvent() {
+    return this._dry_solvent;
+  }
+
+  set dry_solvent(dry_solvent) {
+    this._dry_solvent = dry_solvent;
   }
 
   set contains_residues(value) {

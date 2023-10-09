@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 require 'open-uri'
-#require './helpers'
+# require './helpers'
 
 module Chemotion
   # rubocop:disable Metrics/ClassLength
@@ -14,12 +16,11 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :samples do
-
-      # TODO Refactoring: Use Grape Entities
+      # TODO: Refactoring: Use Grape Entities
       namespace :ui_state do
-        desc "Get samples by UI state"
+        desc 'Get samples by UI state'
         params do
-          requires :ui_state, type: Hash, desc: "Selected samples from the UI" do
+          requires :ui_state, type: Hash, desc: 'Selected samples from the UI' do
             optional :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
@@ -28,7 +29,7 @@ module Chemotion
             optional :collection_id, type: Integer
             optional :is_sync_to_me, type: Boolean, default: false
           end
-          optional :limit, type: Integer, desc: "Limit number of samples"
+          optional :limit, type: Integer, desc: 'Limit number of samples'
         end
 
         before do
@@ -46,14 +47,15 @@ module Chemotion
       end
 
       namespace :subsamples do
-        desc "Split Samples into Subsamples"
+        desc 'Split Samples into Subsamples'
         params do
-          requires :ui_state, type: Hash, desc: "Selected samples from the UI"
+          requires :ui_state, type: Hash, desc: 'Selected samples from the UI'
         end
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
-          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
+          sample_ids = Sample.for_user(current_user.id)
+                             .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
           Sample.where(id: sample_ids).each do |sample|
             # rubocop:disable Lint/UselessAssignment
             subsample = sample.create_subsample(current_user, col_id, true, 'sample')
@@ -65,7 +67,7 @@ module Chemotion
       end
 
       namespace :import do
-        desc "Import Samples from a File"
+        desc 'Import Samples from a File'
 
         before do
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
@@ -94,7 +96,7 @@ module Chemotion
           if file_size < 25_000
             import = Import::ImportSamples.new(
               params[:file][:tempfile].path,
-              params[:currentCollectionId], current_user.id, file['filename']
+              params[:currentCollectionId], current_user.id, file['filename'], params[:import_type]
             )
             import_result = import.process
             if import_result[:status] == 'ok' || import_result[:status] == 'warning'
@@ -115,6 +117,7 @@ module Chemotion
               user_id: current_user.id,
               file_name: file['filename'],
               file_path: tmp_file_path,
+              import_type: params[:import_type],
             }
             ImportSamplesJob.perform_later(parameters)
             { status: 'in progress', message: 'Importing samples in background' }
@@ -215,10 +218,10 @@ module Chemotion
         sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
         sample_scope = if prod_only
-                  sample_scope.product_only
-                else
-                  sample_scope.distinct.sample_or_startmat_or_products
-                end
+                         sample_scope.product_only
+                       else
+                         sample_scope.distinct.sample_or_startmat_or_products
+                       end
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
@@ -228,7 +231,7 @@ module Chemotion
         sample_scope = sample_scope.updated_time_from(Time.at(from)) if from && !by_created_at
         sample_scope = sample_scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
 
-        samplelist = []
+        sample_list = []
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
@@ -237,12 +240,12 @@ module Chemotion
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|
-            samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
-            samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
-            samplesGroup.each do |sample|
+            samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
+            samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
+            samples_group.each do |sample|
               detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
-              samplelist.push(
-                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
+              sample_list.push(
+                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
               )
             end
           end
@@ -251,21 +254,21 @@ module Chemotion
           sample_scope = sample_scope.order('updated_at DESC')
           paginate(sample_scope).each do |sample|
             detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
-            samplelist.push(
-              Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
+            sample_list.push(
+              Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
             )
           end
         end
 
         return {
-          samples: samplelist,
-          samples_count: sample_scope.count
+          samples: sample_list,
+          samples_count: sample_scope.count,
         }
       end
 
-      desc "Return serialized sample by id"
+      desc 'Return serialized sample by id'
       params do
-        requires :id, type: Integer, desc: "Sample id"
+        requires :id, type: Integer, desc: 'Sample id'
       end
       route_param :id do
         after_validation do
@@ -277,13 +280,13 @@ module Chemotion
 
         get do
           sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container)
-                        .find(params[:id])
+                         .find(params[:id])
           present(
             sample,
             with: Entities::SampleEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels,
             policy: @element_policy,
-            root: :sample
+            root: :sample,
           )
         end
       end
@@ -302,31 +305,32 @@ module Chemotion
         end
       end
 
-      desc "Update sample by id"
+      desc 'Update sample by id'
       params do
-        requires :id, type: Integer, desc: "Sample id"
-        optional :name, type: String, desc: "Sample name"
-        optional :external_label, type: String, desc: "Sample external label"
-        optional :imported_readout, type: String, desc: "Sample Imported Readout"
-        optional :target_amount_value, type: Float, desc: "Sample target amount_value"
-        optional :target_amount_unit, type: String, desc: "Sample target amount_unit"
-        optional :real_amount_value, type: Float, desc: "Sample real amount_value"
-        optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
-        optional :molarity_value, type: Float, desc: "Sample molarity value"
-        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
-        optional :description, type: String, desc: "Sample description"
-        optional :metrics, type: String, desc: "Sample metric units"
-        optional :purity, type: Float, desc: "Sample purity"
-        optional :solvent, type: Array[Hash], desc: "Sample solvent"
-        optional :location, type: String, desc: "Sample location"
-        optional :molfile, type: String, desc: "Sample molfile"
-        optional :sample_svg_file, type: String, desc: "Sample SVG file"
+        requires :id, type: Integer, desc: 'Sample id'
+        optional :name, type: String, desc: 'Sample name'
+        optional :external_label, type: String, desc: 'Sample external label'
+        optional :imported_readout, type: String, desc: 'Sample Imported Readout'
+        optional :target_amount_value, type: Float, desc: 'Sample target amount_value'
+        optional :target_amount_unit, type: String, desc: 'Sample target amount_unit'
+        optional :real_amount_value, type: Float, desc: 'Sample real amount_value'
+        optional :real_amount_unit, type: String, desc: 'Sample real amount_unit'
+        optional :molarity_value, type: Float, desc: 'Sample molarity value'
+        optional :molarity_unit, type: String, desc: 'Sample real amount_unit'
+        optional :description, type: String, desc: 'Sample description'
+        optional :metrics, type: String, desc: 'Sample metric units'
+        optional :purity, type: Float, desc: 'Sample purity'
+        optional :solvent, type: Array[Hash], desc: 'Sample solvent'
+        optional :location, type: String, desc: 'Sample location'
+        optional :molfile, type: String, desc: 'Sample molfile'
+        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
+        optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
         # optional :molecule, type: Hash, desc: "Sample molecule" do
         #   optional :id, type: Integer
         # end
         optional :molecule_id, type: Integer
-        optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
-        optional :density, type: Float, desc: "Sample density"
+        optional :is_top_secret, type: Boolean, desc: 'Sample is marked as top secret?'
+        optional :density, type: Float, desc: 'Sample density'
         optional :boiling_point_upperbound, type: Float, desc: 'upper bound of sample boiling point'
         optional :boiling_point_lowerbound, type: Float, desc: 'lower bound of sample boiling point'
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
@@ -346,7 +350,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        #use :root_container_params
+        # use :root_container_params
       end
 
       route_param :id do
@@ -378,14 +382,14 @@ module Chemotion
             next if prop_value.blank?
 
             attributes.merge!(
-              "#{prop}_attributes".to_sym => prop_value
+              "#{prop}_attributes".to_sym => prop_value,
             )
           end
 
-          boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
-          boiling_point_upperbound = params['boiling_point_upperbound'].blank? ? Float::INFINITY : params['boiling_point_upperbound']
-          melting_point_lowerbound = params['melting_point_lowerbound'].blank? ? -Float::INFINITY : params['melting_point_lowerbound']
-          melting_point_upperbound = params['melting_point_upperbound'].blank? ? Float::INFINITY : params['melting_point_upperbound']
+          boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
+          boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
+          melting_point_lowerbound = (params['melting_point_lowerbound'].presence || -Float::INFINITY)
+          melting_point_upperbound = (params['melting_point_upperbound'].presence || Float::INFINITY)
           attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
           attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
           attributes.delete(:boiling_point_lowerbound)
@@ -405,34 +409,35 @@ module Chemotion
             with: Entities::SampleEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: @sample).detail_levels,
             policy: @element_policy,
-            root: :sample
+            root: :sample,
           )
         end
       end
 
-      desc "Create a sample"
+      desc 'Create a sample'
       params do
-        optional :name, type: String, desc: "Sample name"
-        optional :short_label, type: String, desc: "Sample short label"
-        optional :external_label, type: String, desc: "Sample external label"
-        optional :imported_readout, type: String, desc: "Sample Imported Readout"
-        requires :target_amount_value, type: Float, desc: "Sample target amount_value"
-        requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
-        optional :real_amount_value, type: Float, desc: "Sample real amount_value"
-        optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
-        optional :molarity_value, type: Float, desc: "Sample molarity value"
-        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
-        requires :description, type: String, desc: "Sample description"
-        requires :purity, type: Float, desc: "Sample purity"
+        optional :name, type: String, desc: 'Sample name'
+        optional :short_label, type: String, desc: 'Sample short label'
+        optional :external_label, type: String, desc: 'Sample external label'
+        optional :imported_readout, type: String, desc: 'Sample Imported Readout'
+        requires :target_amount_value, type: Float, desc: 'Sample target amount_value'
+        requires :target_amount_unit, type: String, desc: 'Sample target amount_unit'
+        optional :real_amount_value, type: Float, desc: 'Sample real amount_value'
+        optional :real_amount_unit, type: String, desc: 'Sample real amount_unit'
+        optional :molarity_value, type: Float, desc: 'Sample molarity value'
+        optional :molarity_unit, type: String, desc: 'Sample real amount_unit'
+        requires :description, type: String, desc: 'Sample description'
+        requires :purity, type: Float, desc: 'Sample purity'
+        optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
         # requires :solvent, type: String, desc: "Sample solvent"
-        optional :solvent, type: Array[Hash], desc: "Sample solvent", default: []
-        requires :location, type: String, desc: "Sample location"
-        optional :molfile, type: String, desc: "Sample molfile"
-        optional :sample_svg_file, type: String, desc: "Sample SVG file"
-        #optional :molecule, type: Hash, desc: "Sample molecule"
-        optional :collection_id, type: Integer, desc: "Collection id"
-        requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
-        optional :density, type: Float, desc: "Sample density"
+        optional :solvent, type: Array[Hash], desc: 'Sample solvent', default: []
+        requires :location, type: String, desc: 'Sample location'
+        optional :molfile, type: String, desc: 'Sample molfile'
+        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
+        # optional :molecule, type: Hash, desc: "Sample molecule"
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        requires :is_top_secret, type: Boolean, desc: 'Sample is marked as top secret?'
+        optional :density, type: Float, desc: 'Sample density'
         optional :boiling_point_upperbound, type: Float, desc: 'upper bound of sample boiling point'
         optional :boiling_point_lowerbound, type: Float, desc: 'lower bound of sample boiling point'
         optional :melting_point_upperbound, type: Float, desc: 'upper bound of sample melting point'
@@ -454,7 +459,11 @@ module Chemotion
         optional :sum_formula, type: String
       end
       post do
-        molecule_id = params[:decoupled] && params[:molfile].blank? ? Molecule.find_or_create_dummy&.id : params[:molecule_id]
+        molecule_id = if params[:decoupled] && params[:molfile].blank?
+                        Molecule.find_or_create_dummy&.id
+                      else
+                        params[:molecule_id]
+                      end
         attributes = {
           name: params[:name],
           short_label: params[:short_label],
@@ -467,6 +476,7 @@ module Chemotion
           molarity_unit: params[:molarity_unit],
           description: params[:description],
           purity: params[:purity],
+          dry_solvent: params[:dry_solvent],
           solvent: params[:solvent],
           location: params[:location],
           molfile: params[:molfile],
@@ -483,13 +493,13 @@ module Chemotion
           decoupled: params[:decoupled],
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
-          sum_formula: params[:sum_formula]
+          sum_formula: params[:sum_formula],
         }
 
-        boiling_point_lowerbound = params['boiling_point_lowerbound'].blank? ? -Float::INFINITY : params['boiling_point_lowerbound']
-        boiling_point_upperbound = params['boiling_point_upperbound'].blank? ? Float::INFINITY : params['boiling_point_upperbound']
-        melting_point_lowerbound = params['melting_point_lowerbound'].blank? ? -Float::INFINITY : params['melting_point_lowerbound']
-        melting_point_upperbound = params['melting_point_upperbound'].blank? ? Float::INFINITY : params['melting_point_upperbound']
+        boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
+        boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
+        melting_point_lowerbound = (params['melting_point_lowerbound'].presence || -Float::INFINITY)
+        melting_point_upperbound = (params['melting_point_upperbound'].presence || Float::INFINITY)
         attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
         attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
 
@@ -510,7 +520,7 @@ module Chemotion
           next if prop_value.blank?
 
           attributes.merge!(
-            "#{prop}_attributes".to_sym => prop_value
+            "#{prop}_attributes".to_sym => prop_value,
           )
         end
         attributes.delete(:segments)
@@ -523,7 +533,7 @@ module Chemotion
         end
 
         is_shared_collection = false
-        unless collection.present?
+        if collection.blank?
           sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
           if sync_collection.present?
             is_shared_collection = true
@@ -542,16 +552,16 @@ module Chemotion
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-        #save to profile
+        # save to profile
         kinds = sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         present sample, with: Entities::SampleEntity, root: :sample
       end
 
-      desc "Delete a sample by id"
+      desc 'Delete a sample by id'
       params do
-        requires :id, type: Integer, desc: "Sample id"
+        requires :id, type: Integer, desc: 'Sample id'
       end
       route_param :id do
         before do
@@ -572,4 +582,3 @@ module Chemotion
   end
   # rubocop:enable Metrics/ClassLength
 end
-# rubocop:enable Metrics/ClassLength

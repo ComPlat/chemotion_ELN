@@ -249,7 +249,8 @@ const SolventsMaterialGroup = ({
       value: {
         external_label: ionicLiquid,
         smiles: ionic_liquids[ionicLiquid],
-        density: 1.0
+        density: 1.0,
+        drySolvent: false
       }
     }), defaultMultiSolventsSmilesOptions
   );
@@ -260,7 +261,7 @@ const SolventsMaterialGroup = ({
         <thead>
           <tr>
             <th width="4%">{addSampleButton}</th>
-            <th width="21%">
+            <th width="21%" style={{ paddingRight: '10px' }}>
               <VirtualizedSelect
                 disabled={!permitOn(reaction)}
                 className="solvents-select"
@@ -271,8 +272,9 @@ const SolventsMaterialGroup = ({
                 onChange={createDefaultSolventsForReaction}
               />
             </th>
+            <th width="2%" title="Dry Solvent">DS</th>
             <th width="4%">T/R</th>
-            <th width="26%">Label</th>
+            <th width="24%">Label</th>
             <th width="13%">Vol</th>
             <th width="13%">Vol ratio</th>
             <th width="3%" />

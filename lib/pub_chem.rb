@@ -3,16 +3,17 @@ require 'resolv-replace'
 module PubChem
   include HTTParty
 
-  #debug_output $stderr
+  # debug_output $stderr
   PUBCHEM_HOST = 'pubchem.ncbi.nlm.nih.gov'
 
   def self.http_s
-    Rails.env.test? && "http://" || "https://"
+    (Rails.env.test? && 'http://') || 'https://'
   end
 
   def self.get_record_from_molfile(molfile)
-    @auth = {:username => '', :password => ''}
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'application/x-www-form-urlencoded'}, :body => { 'sdf' => molfile } }
+    @auth = { username: '', password: '' }
+    options = { timeout: 10, headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
+                body: { 'sdf' => molfile } }
 
     HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/sdf/record/JSON', options)
   rescue StandardError => e
@@ -21,9 +22,9 @@ module PubChem
   end
 
   def self.get_record_from_inchikey(inchikey)
-    @auth = {:username => '', :password => ''}
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/'+inchikey+'/record/JSON', options)
+    @auth = { username: '', password: '' }
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/record/JSON', options)
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -31,9 +32,9 @@ module PubChem
 
   def self.get_cids_from_inchikeys(inchikeys)
     options = {
-      :timeout => 10,
-      :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
-      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+      timeout: 10,
+      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
+      body: { 'inchikey' => "#{inchikeys.join(',')}" },
     }
     HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/property/InChIKey/JSON', options).body
   rescue StandardError => e
@@ -43,9 +44,9 @@ module PubChem
 
   def self.get_records_from_inchikeys(inchikeys)
     options = {
-      :timeout => 10,
-      :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
-      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+      timeout: 10,
+      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
+      body: { 'inchikey' => "#{inchikeys.join(',')}" },
     }
     HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/record/JSON', options).body
   rescue StandardError => e
@@ -54,10 +55,10 @@ module PubChem
   end
 
   def self.get_molfile_by_inchikey(inchikey)
-    @auth = {:username => '', :password => ''}
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
+    @auth = { username: '', password: '' }
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
 
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/'+inchikey+'/record/SDF', options).body
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/record/SDF', options).body
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -65,41 +66,42 @@ module PubChem
 
   def self.get_molfiles_by_inchikeys(inchikeys)
     options = {
-      :timeout => 10,
-      :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
-      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+      timeout: 10,
+      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
+      body: { 'inchikey' => "#{inchikeys.join(',')}" },
     }
-    HTTParty.post(http_s+'/rest/pug/compound/inchikey/record/SDF', options).body
+    HTTParty.post(http_s + '/rest/pug/compound/inchikey/record/SDF', options).body
   rescue StandardError => e
     Rails.logger.error "[PubChemError] of [get_molfiles_by_inchikeys] with inchikey [#{inchikeys}], exception [#{e.backtrace}]"
-    return nil
+    nil
   end
 
   def self.get_molfile_by_smiles(smiles)
-    @auth = {:username => '', :password => ''}
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
-    encoded_smiles = URI::encode(smiles, '[]/()+-.@#=\\')
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/'+encoded_smiles+'/record/SDF', options).body
+    @auth = { username: '', password: '' }
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
+    encoded_smiles = URI.encode(smiles, '[]/()+-.@#=\\')
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/' + encoded_smiles + '/record/SDF', options).body
   rescue StandardError => e
     Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
   end
 
   def self.get_xref_by_inchikey(inchikey)
-    @auth = {:username => '', :password => ''}
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
+    @auth = { username: '', password: '' }
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
 
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/'+inchikey+'/xrefs/RN/JSON', options).body
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/xrefs/RN/JSON', options).body
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
   end
 
   def self.get_cid_from_inchikey(inchikey)
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/plain'}  }
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/plain' } }
     begin
       resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)
       return nil unless resp.success?
+
       resp.body.presence&.strip
     rescue StandardError => e
       Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
@@ -110,16 +112,11 @@ module PubChem
   def self.get_cas_from_cid(cid)
     return [] unless cid
 
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
     resp_xml = HTTParty.get(page, options).body
     resp_doc = Nokogiri::XML(resp_xml)
-    # cas_values = resp_doc.css('Name:contains("CAS")').map { |x| x.parent.css('StringValue').text }
-    cas_values = resp_doc.css('Name:contains("CAS")').map { |x|
-      x.parent.css('Value').css('StringWithMarkup').css('String').map { |y|
-        y.text
-      }
-    }.flatten
+    cas_values = resp_doc.css('Value').css('StringWithMarkup').css('String').map(&:text).flatten
     cas = most_occurance(cas_values)
     [cas]
   end
@@ -127,11 +124,13 @@ module PubChem
   def self.get_lcss_from_cid(cid)
     return nil unless cid
     return nil unless cid.is_a? Integer
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}, :format => 'plain'  }
+
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' }, format: 'plain' }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
     begin
       resp = HTTParty.get(page, options)
       return nil unless resp.success?
+
       JSON.parse resp, symbolize_names: true
     rescue StandardError => e
       Rails.logger.error ["with cid: #{cid}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
@@ -148,14 +147,14 @@ module PubChem
     ftp.connect(FTP_PATH)
     ftp.login
     ftp.chdir(dir_path)
-    dirname_list = ftp.list.map { |entry| entry.split(/\s+/)[-1]}
+    dirname_list = ftp.list.map { |entry| entry.split(/\s+/)[-1] }
     ftp.close
     dirname_list
   end
 
   def self.date_select(date, date_list)
     date = Date.parse(date) unless date.is_a?(Date)
-    date_list.select { |d|  d =~ /\d{4}-\d{1,2}-\d{1,2}/ && Date.parse(d) > date  }
+    date_list.select { |d|  d =~ /\d{4}-\d{1,2}-\d{1,2}/ && Date.parse(d) > date }
   end
 
   def self.sdf_file_list(date, type = 'Weekly')
@@ -164,7 +163,7 @@ module PubChem
     ftp.connect(FTP_PATH)
     ftp.login
     ftp.chdir(dir_path)
-    dirname_list = ftp.list('Compound*').map { |entry| entry.split(/\s+/)[-1]}
+    dirname_list = ftp.list('Compound*').map { |entry| entry.split(/\s+/)[-1] }
     ftp.close
     dirname_list
   end
@@ -172,6 +171,7 @@ module PubChem
   # compose the ftp directory
   def self.ftp_update_dir(type: 'Weekly', date: nil)
     return "/pubchem/Compound/#{type}/" unless date.present?
+
     date = date.strftime('%Y-%m-%d') if date.is_a?(Date)
     "/pubchem/Compound/#{type}/#{date}/SDF/"
   end
@@ -184,7 +184,7 @@ module PubChem
     ftp.connect(FTP_PATH)
     ftp.login
     begin
-      ftp.getbinaryfile(remotefile_path) { |data|  tf.write data }
+      ftp.getbinaryfile(remotefile_path) { |data| tf.write data }
     ensure
       ftp.close
     end
@@ -210,12 +210,10 @@ module PubChem
       names = {}
       cid = nil
       ink = nil
-      lines.each.with_index do |line, i|
-        cid = line.strip if previous_line =~ />\s+<PUBCHEM_COMPOUND_CID>/
-        ink = line.strip if previous_line =~ />\s+<PUBCHEM_IUPAC_INCHIKEY>/
-        if previous_line =~ />\s+<PUBCHEM_IUPAC_(\w+)_NAME>/
-          names[$1] = line.strip
-        end
+      lines.each.with_index do |line, _i|
+        cid = line.strip if />\s+<PUBCHEM_COMPOUND_CID>/.match?(previous_line)
+        ink = line.strip if />\s+<PUBCHEM_IUPAC_INCHIKEY>/.match?(previous_line)
+        names[::Regexp.last_match(1)] = line.strip if />\s+<PUBCHEM_IUPAC_(\w+)_NAME>/.match?(previous_line)
         previous_line = line
       end
       results[ink] = { 'cid' => cid, 'names' => names }

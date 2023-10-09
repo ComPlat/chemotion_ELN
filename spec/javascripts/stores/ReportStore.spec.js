@@ -61,7 +61,8 @@ describe('ReportStore', () => {
       { text: "tlc", checked: false },
       { text: "observation", checked: false },
       { text: "analysis", checked: false },
-      { text: "literature", checked: false }]
+      { text: "literature", checked: false },
+      { text: "variations", checked: false }]
     }
     expect(newState).toEqual(expected)
   })

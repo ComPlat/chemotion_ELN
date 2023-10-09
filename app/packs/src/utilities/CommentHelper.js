@@ -11,7 +11,7 @@ const getSectionComments = (comments, section) => {
 };
 const getAllComments = (comments, section) => comments?.filter((cmt) => (cmt.section !== section));
 
-const selectCurrentUser = (state) => state.currentUser;
+const selectCurrentUser = (state) => state.currentUser || {};
 
 const commentActivation = 'commentActivation';
 
