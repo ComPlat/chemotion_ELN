@@ -29,7 +29,7 @@ const headerBtnGroup = (props) => {
       SpectraActions.Regenerate(jcampIds, fnChange);
     }
   };
-  const spcInfo = BuildSpcInfos(generic, container);
+  const spcInfos = BuildSpcInfos(generic, container);
   const { hasChemSpectra } = UIStore.getState();
   const toggleSpectraModal = (e) => {
     SpectraActions.ToggleModal();
@@ -49,7 +49,7 @@ const headerBtnGroup = (props) => {
       <EditorAnalysisBtn
         element={generic}
         hasJcamp={hasJcamp}
-        spcInfo={spcInfo}
+        spcInfos={spcInfos}
         hasChemSpectra={hasChemSpectra}
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}

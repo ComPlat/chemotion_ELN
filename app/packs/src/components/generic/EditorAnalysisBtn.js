@@ -6,14 +6,14 @@ import uuid from 'uuid';
 import { Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
 
 const EditorAnalysisBtn = ({
-  element, spcInfo, hasJcamp, hasChemSpectra,
+  element, spcInfos, hasJcamp, hasChemSpectra,
   toggleSpectraModal, confirmRegenerate,
 }) => (
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Editor {spcInfo.length > 0 ? ': Reprocess' : ''}</Tooltip>}
-  >{spcInfo.length > 0 ? (
+    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
+  >{spcInfos.length > 0 ? (
     <ButtonGroup className="button-right">
       <SplitButton
         id="spectra-editor-split-button"
@@ -23,7 +23,7 @@ const EditorAnalysisBtn = ({
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
-        disabled={!(spcInfo.length > 0) || !hasChemSpectra}
+        disabled={!(spcInfos.length > 0) || !hasChemSpectra}
       >
         <MenuItem
           id="regenerate-spectra"
@@ -44,7 +44,7 @@ const EditorAnalysisBtn = ({
       bsSize="xsmall"
       className="button-right"
       onClick={confirmRegenerate}
-      disabled={false}
+      disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
@@ -55,7 +55,7 @@ const EditorAnalysisBtn = ({
 EditorAnalysisBtn.propTypes = {
   element: PropTypes.object,
   hasJcamp: PropTypes.bool,
-  spcInfo: PropTypes.array,
+  spcInfos: PropTypes.array,
   hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
@@ -63,7 +63,7 @@ EditorAnalysisBtn.propTypes = {
 
 EditorAnalysisBtn.defaultProps = {
   hasJcamp: false,
-  spcInfo: [],
+  spcInfos: [],
   element: {},
   hasChemSpectra: false,
 };
