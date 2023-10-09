@@ -38,7 +38,7 @@ export default {
           column: 'decoupled',
           label: 'Decoupled',
           type: 'checkbox',
-          advanced: true,
+          advanced: false,
         },
         label: 'Decoupled'
       },
