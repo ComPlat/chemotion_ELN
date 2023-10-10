@@ -37,9 +37,10 @@ module Tagging
       args = { collection_tag: true }
       element = Labimotion::Utils.elname_by_collection(klass)
     when 'CollectionsCellline'
+      args = { collection_tag: true }
       element = 'cellline_sample'
     end
-
+    
     element && send(element)&.update_tag!(args)
   end
 end

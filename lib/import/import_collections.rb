@@ -91,6 +91,7 @@ module Import
         import_residues
         import_reactions
         import_reactions_samples
+        CelllineImporter.new(@data, @current_user_id, @instances).execute if @gt == false
  #       import_elements if @gt == false
  #       import_elements_samples if @gt == false
         import_wellplates if @gt == false
