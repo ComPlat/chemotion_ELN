@@ -6,7 +6,7 @@ require 'rails_helper'
 # test for ExportCollection
 RSpec.describe 'ExportCollection' do
   let(:nested) { true }
-  let(:gate) { true }
+  let(:gate) { false }
   let(:user) { create(:person, first_name: 'Ulf', last_name: 'User', name_abbreviation: 'UU') }
   let(:file_names) do
     file_names = []
@@ -73,6 +73,7 @@ RSpec.describe 'ExportCollection' do
     before do
       research_plan.attachments = [attachment]
       research_plan.save!
+     
       update_body_of_researchplan(research_plan, attachment.identifier)
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
@@ -128,7 +129,9 @@ RSpec.describe 'ExportCollection' do
     let(:cell_line_sample) { create(:cellline_sample, :with_analysis, user_id: user.id, collections: [collection]) }
     let!(:cell_line_sample2) do
       create(:cellline_sample,
-             cellline_material: cell_line_sample.cellline_material, user_id: user.id, collections: [collection])
+             cellline_material: cell_line_sample.cellline_material,
+             user_id: user.id,
+             collections: [collection])
     end
 
     let(:fist_cellline_in_json) { cell_line_samples[cell_line_samples.keys.first] }
