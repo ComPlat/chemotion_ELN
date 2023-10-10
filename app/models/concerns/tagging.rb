@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # update ElementTag when Element joint table association is updated
+# rubocop: disable Metrics/CyclomaticComplexity
 module Tagging
   extend ActiveSupport::Concern
 
@@ -10,10 +11,8 @@ module Tagging
     after_restore :update_tag
   end
 
-  # rubocop: disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
   def update_tag
     klass = self.class.name
-
     case klass
     when 'ReactionsProductSample', 'ReactionsStartingMaterialSample',
       'ReactionsSolventSample', 'ReactionsReactantSample'
@@ -34,14 +33,14 @@ module Tagging
              end
       element = 'sample'
     when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'Labimotion::CollectionsElement',
-      'CollectionsScreen', 'CollectionsResearchPlan', 'CollectionsCellline'
-
+      'CollectionsScreen', 'CollectionsResearchPlan'
       args = { collection_tag: true }
-      element = klass[11..].underscore
-      element = 'cellline_sample' if element == 'cellline'
+      element = Labimotion::Utils.elname_by_collection(klass)
+    when 'CollectionsCellline'
+      element = 'cellline_sample'
     end
+
     element && send(element)&.update_tag!(args)
   end
-  # handle_asynchronously :update_tag
 end
-# rubocop: enable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+# rubocop: enable Metrics/CyclomaticComplexity
