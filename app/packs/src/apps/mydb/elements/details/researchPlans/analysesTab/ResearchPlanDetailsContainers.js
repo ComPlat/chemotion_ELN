@@ -18,28 +18,28 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
 const SpectraEditorBtn = ({
-  element, spcInfo, hasJcamp, hasChemSpectra,
+  element, spcInfos, hasJcamp, hasChemSpectra,
   toggleSpectraModal, confirmRegenerate,
   toggleNMRDisplayerModal, hasNMRium,
 }) => (
   <span>
-    <OverlayTrigger
-      placement="bottom"
-      delayShow={500}
-      overlay={<Tooltip id="spectra">Spectra Editor {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
-    >{spcInfo ? (
-      <ButtonGroup className="button-right">
-        <SplitButton
-          id="spectra-editor-split-button"
-          pullRight
-          bsStyle="info"
-          bsSize="xsmall"
-          title={<i className="fa fa-area-chart" />}
-          onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
-          onClick={toggleSpectraModal}
-          disabled={!spcInfo || !hasChemSpectra}
-        >
-          <MenuItem
+  <OverlayTrigger
+    placement="bottom"
+    delayShow={500}
+    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
+  >{spcInfos.length > 0 ? (
+    <ButtonGroup className="button-right">
+      <SplitButton
+        id="spectra-editor-split-button"
+        pullRight
+        bsStyle="info"
+        bsSize="xsmall"
+        title={<i className="fa fa-area-chart" />}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={toggleSpectraModal}
+        disabled={!(spcInfos.length > 0) || !hasChemSpectra}
+      >
+        <MenuItem
             id="regenerate-spectra"
             key="regenerate-spectra"
             onSelect={(eventKey, event) => {
@@ -52,15 +52,15 @@ const SpectraEditorBtn = ({
           </MenuItem>
         </SplitButton>
       </ButtonGroup>
-    ) : (
-      <Button
-        bsStyle="warning"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={confirmRegenerate}
-        disabled={false}
-      >
-        <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+      ) : (
+        <Button
+          bsStyle="warning"
+          bsSize="xsmall"
+          className="button-right"
+          onClick={confirmRegenerate}
+          disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
+        >
+          <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
       </Button>
     )}
     </OverlayTrigger>
@@ -88,17 +88,13 @@ const SpectraEditorBtn = ({
       ) : null
     }
   </span>
-  
 );
 
 
 SpectraEditorBtn.propTypes = {
   element: PropTypes.object,
   hasJcamp: PropTypes.bool,
-  spcInfo: PropTypes.oneOfType([
-    PropTypes.object,
-    PropTypes.bool,
-  ]),
+  spcInfos: PropTypes.array,
   hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
@@ -108,7 +104,7 @@ SpectraEditorBtn.propTypes = {
 
 SpectraEditorBtn.defaultProps = {
   hasJcamp: false,
-  spcInfo: false,
+  spcInfos: PropTypes.array,
   element: {},
   hasChemSpectra: false,
   hasNMRium: false,
@@ -194,12 +190,12 @@ export default class ResearchPlanDetailsContainers extends Component {
         SpectraActions.Regenerate(jcampIds, this.handleChange);
       }
     };
-    const spcInfo = BuildSpcInfos(researchPlan, container);
+    const spcInfos = BuildSpcInfos(researchPlan, container);
     const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
     const toggleSpectraModal = (e) => {
       e.stopPropagation();
       SpectraActions.ToggleModal();
-      SpectraActions.LoadSpectra.defer(spcInfo);
+      SpectraActions.LoadSpectra.defer(spcInfos);
     };
 
     //process open NMRium
@@ -227,7 +223,7 @@ export default class ResearchPlanDetailsContainers extends Component {
         <SpectraEditorBtn
           element={researchPlan}
           hasJcamp={hasJcamp}
-          spcInfo={spcInfo}
+          spcInfos={spcInfos}
           hasChemSpectra={hasChemSpectra}
           toggleSpectraModal={toggleSpectraModal}
           confirmRegenerate={confirmRegenerate}
