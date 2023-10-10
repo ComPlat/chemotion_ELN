@@ -130,8 +130,8 @@ module Export
         fetch_wellplates collection if @gt == false
         fetch_screens collection if @gt == false
         fetch_research_plans collection if @gt == false
-        add_cell_line_material_to_package collection unless @gt == false
-        add_cell_line_sample_to_package collection unless @gt == false
+        add_cell_line_material_to_package collection if @gt == false
+        add_cell_line_sample_to_package collection if  @gt == false
       end
     end
 
@@ -303,6 +303,7 @@ module Export
       fetch_many(collection.research_plans, {
                    'created_by' => 'User',
                  })
+
       fetch_many(collection.collections_research_plans, {
                    'collection_id' => 'Collection',
                    'research_plan_id' => 'ResearchPlan',
