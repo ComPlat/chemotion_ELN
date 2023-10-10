@@ -53,8 +53,8 @@ of the **[Karlsruhe Institute of Technology]**.
 
 <!----------------------------------------------------------------------------->
 
-[Installation]: https://www.chemotion.net/docs/eln/install_configure/
-[Documentation]: https://www.chemotion.net/docs/eln/
+[Installation]: https://www.chemotion.net/docs/eln/install_configure
+[Documentation]: https://www.chemotion.net/docs/eln
 [Changelog]: CHANGELOG.md
 
 [DFG]: https://www.dfg.de/en/
