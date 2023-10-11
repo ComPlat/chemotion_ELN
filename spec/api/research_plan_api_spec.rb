@@ -31,31 +31,6 @@ describe Chemotion::ResearchPlanAPI do
       end
     end
 
-    describe 'GET /api/v1/research_plans' do
-      let!(:c) { create(:collection, label: 'C1', user: user, is_shared: false) }
-      let(:rp) { create(:research_plan) }
-      let!(:research_plan_metadata) { create(:research_plan_metadata) }
-
-      before do
-        rp.research_plan_metadata = research_plan_metadata
-        CollectionsResearchPlan.create!(research_plan: rp, collection: c)
-      end
-
-      it 'returns serialized research_plans of logged in user' do
-        get '/api/v1/research_plans'
-        first_rp = JSON.parse(response.body)['research_plans'].first
-        expect(response.status).to eq 200
-        expect(first_rp).to include(
-          'type' => 'research_plan',
-          'name' => rp.name
-        )
-        expect(first_rp['research_plan_metadata']).to include(
-            'id' => research_plan_metadata.id,
-            'doi' => research_plan_metadata.doi
-        )
-      end
-    end
-
     describe 'POST /api/v1/research_plans' do
       context 'with valid parameters' do
         let(:params) do
@@ -133,6 +108,24 @@ describe Chemotion::ResearchPlanAPI do
 
         expect(first_row['readout_1_value']).to eq first_readout['value']
         expect(first_row['readout_1_unit']).to eq first_readout['unit']
+      end
+    end
+
+    describe 'GET /api/v1/research_plans/linked' do
+      let(:c) { create(:collection, label: 'C1', user: user) }
+      let(:research_plan) { create(:research_plan, :with_linked) }
+
+      before do
+        get '/api/v1/research_plans/linked', params: { id: 100, element: 'reaction' }
+      end
+
+      it 'returns 200 status code' do
+        expect(response.status).to eq 200
+      end
+
+      it 'returns research_plans linked to an element' do
+        response_body = JSON.parse(response.body)
+        expect(response_body[0]['name']).to eq research_plan.name
       end
     end
   end
