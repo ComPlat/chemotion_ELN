@@ -299,7 +299,11 @@ module Chemotion
           desc 'Fetch a new annotation svg for this sample'
           get do
             content_type('image/svg+xml')
-            Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
+            if @sample.sample_svg_annotation_file.present?
+              return File.read(@sample.full_svg_path(@sample.sample_svg_annotation_file))
+            else
+              Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
+            end
           end
         end
       end

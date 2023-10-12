@@ -159,6 +159,8 @@ class Sample < ApplicationRecord
     Sample.where(id: samples.map(&:id))
   }
 
+  attr_accessor :sample_svg_annotation
+
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
@@ -570,7 +572,14 @@ class Sample < ApplicationRecord
     tag&.taggable_data&.fetch('user_labels', nil)
   end
 
-private
+  # build a full path of the sample svg, nil if not buildable
+  def full_svg_path(svg_file_name = sample_svg_file)
+    return unless svg_file_name
+
+    Rails.public_path.join('images', 'samples', svg_file_name)
+  end
+
+  private
 
   def has_collections
     if self.collections_samples.blank?
@@ -718,13 +727,6 @@ private
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
 #   value
-  end
-
-  # build a full path of the sample svg, nil if not buildable
-  def full_svg_path(svg_file_name = sample_svg_file)
-    return unless svg_file_name
-
-    Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
 # rubocop:enable Metrics/ClassLength

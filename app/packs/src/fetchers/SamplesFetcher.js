@@ -54,7 +54,7 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchEmptyAnnotation(id) {
+  static fetchAnnotation(id) {
     let promise = fetch('/api/v1/samples/' + id + '/annotation', {
       credentials: 'same-origin'
     }).then((response) => {
