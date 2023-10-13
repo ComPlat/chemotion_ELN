@@ -5516,10 +5516,10 @@ chem-units@^0.0.5:
   resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-0.0.5.tgz#b5621a6c132ee58e7c0d7999c88ccd63a128498a"
   integrity sha512-obZvfyKjDDgCk0s4FIt5eZxcB+l+3GLnskMnqcE4FaJPNJtJtQwql3JkxsO5BdniK2wKycfHy95aCy7+sOCieA==
 
-chemotion-converter-client@0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/chemotion-converter-client/-/chemotion-converter-client-0.2.0.tgz#2002bb48bbf4b9354220195e12be0e3885b02556"
-  integrity sha512-hqEAVflwpglX0gCkTtEJlbP+4xLU6VHsplP8OcjZiFPf8Up0KTpRkc39DQcOHg5Z0RO4E7txV5FrwYm+hnLs5Q==
+chemotion-converter-client@0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/chemotion-converter-client/-/chemotion-converter-client-0.5.0.tgz#a5c99b1f7bb215f86a7ebd2d78d5c7c6c92eb1b2"
+  integrity sha512-ysq4UyuTXH+SNmPDlYa9HNimgrvm4DIP6E7k1LVlYyydU255gtcobDXzZqfWKdHNhQieu34WwomUfyM16CjtQQ==
   dependencies:
     bootstrap "^3.3.7"
     jquery "^3.4.0"
