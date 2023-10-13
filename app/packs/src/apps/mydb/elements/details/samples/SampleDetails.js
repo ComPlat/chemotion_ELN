@@ -115,29 +115,29 @@ export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sample: props.sample,
-      reaction: null,
-      materialGroup: null,
-      showStructureEditor: false,
-      loadingMolecule: false,
-      showElementalComposition: false,
-      showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
-      qrCodeSVG: '',
+      annotation: '',
       isCasLoading: false,
-      validCas: true,
-      showMolfileModal: false,
-      trackMolfile: props.sample.molfile,
-      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
-        || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
-      quickCreator: false,
-      showInchikey: false,
+      loadingMolecule: false,
+      materialGroup: null,
       pageMessage: null,
-      visible: Immutable.List(),
-      startExport: false,
-      sfn: UIStore.getState().hasSfn,
-      saveInventoryAction: false,
+      qrCodeSVG: '',
+      quickCreator: false,
+      reaction: null,
+      sample: props.sample,
       sampleAnnotationEditModalShown: false,
+      saveInventoryAction: false,
+      sfn: UIStore.getState().hasSfn,
+      showChemicalIdentifiers: false,
+      showElementalComposition: false,
+      showInchikey: false,
+      showMolfileModal: false,
+      showStructureEditor: false,
+      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined') || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
+      startExport: false,
+      trackMolfile: props.sample.molfile,
+      validCas: true,
+      visible: Immutable.List(),
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -1339,7 +1339,21 @@ export default class SampleDetails extends React.Component {
     return (
       <SampleAnnotationEditButton
         sample={this.state.sample}
-        clickHandler={(sample) => { this.setState({ sampleAnnotationEditModalShown: true }) }}
+        clickHandler={(sample) => {
+          if (sample.sample_svg_annotation) {
+            this.setState({
+              annotation: sample.sample_svg_annotation,
+              sampleAnnotationEditModalShown: true
+            })
+          } else {
+            SamplesFetcher.fetchAnnotation(sample.id).then(annotation => {
+              this.setState({
+                annotation,
+                sampleAnnotationEditModalShown: true
+              });
+            })
+          }
+        }}
         horizontalAlignment="pull-left"
         role="button"
         tabIndex='0'
@@ -1348,17 +1362,8 @@ export default class SampleDetails extends React.Component {
   }
 
   renderSampleAnnotationEditModal() {
-    const { sample, sampleAnnotationEditModalShown } = this.state;
-    let annotation = '<svg width="254" height="150" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" > <g class="layer" id="background" > <title>Image</title> <image height="150" width="254" id="original_image" xlink:href="/images/samples/db3a2c0e27e740e65e0abbf7732ceb456661134b3ec363428536d067cebe1048bc0647c00fb520bc845628dfa9cf879b3a65b617846f353f3052fe0fe5c09087.svg" /> </g> <g class="layer" id="annotation" > <title>Annotation</title> </g> </svg> ';
-    // if (chosenAttachment) {
-    //   if (chosenAttachment.updatedAnnotation) {
-    //     console.debug('use existing annotation')
-    //     annotation = chosenAttachment.updatedAnnotation;
-    //   } else {
-    //     console.debug('Use annotation from fetcher')
-    //     annotation = this.state.chosenAttachmentAnnotation
-    //   }
-    // }
+    const { annotation, sample, sampleAnnotationEditModalShown } = this.state;
+    if (!annotation) { return ''; }
 
     return (
       <ImageAnnotationModalSVG

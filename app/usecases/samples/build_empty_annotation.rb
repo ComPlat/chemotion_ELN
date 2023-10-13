@@ -20,6 +20,7 @@ module Usecases
 
       def create_annotation_string(width, height)
         <<~ENDOFSTRING
+          <?xml version="1.0" encoding="UTF-8"?>
           <svg
             width="#{width}"
             height="#{height}"

@@ -301,9 +301,9 @@ module Chemotion
             content_type('image/svg+xml')
             if @sample.sample_svg_annotation_file.present?
               return File.read(@sample.full_svg_path(@sample.sample_svg_annotation_file))
-            else
-              Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
             end
+
+            Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
           end
         end
       end
