@@ -187,7 +187,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   initThirdPartyAppIPList() {
-    const { attachments } = this.props;
     this.setState({
       thirdPartyAppIPList: {}
     });
@@ -213,7 +212,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
   thirdPartyAppSelect(event, attachment) {
 
     const { attachments } = this.props;
-    const userID = this.state.currentUser.user.id;
     const attID = attachment.id;
     let selectedThirdPartyApp = this.state.selectedThirdPartyApp;
 
@@ -226,9 +224,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
       const obj = { i, id }
       arrIdx.push(obj);
     }
-
-    const currentAttachment = arrIdx.find(entry => entry.id === attachment.id);
-    const index = currentAttachment.i;
 
     Promise.all([ThirdPartyAppFetcher.fetchThirdPartyAppIp(event.target.value)
       .then((result) => {

@@ -1,5 +1,4 @@
 import 'whatwg-fetch';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class ThirdPartyAppFetcher {
 
