@@ -1,7 +1,5 @@
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
-import Select from 'react-select';
-import { CSVReader } from 'react-papaparse';
+import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Col, FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 const editTip = <Tooltip id="inchi_tooltip">edit third party app</Tooltip>;
