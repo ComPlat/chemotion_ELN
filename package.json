@@ -145,6 +145,7 @@
   "scripts": {
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_PATH=./app/packs:./spec/javascripts yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
+    "test:file": "NODE_PATH=./app/packs:./spec/javascripts yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html"
   },
   "nyc": {
