@@ -441,11 +441,6 @@ export default class SampleDetails extends React.Component {
         ) : null}
       </Button>
     );
-    const inventorySample = (
-      <Checkbox className="sample-inventory-header" checked={sample.inventory_sample} onChange={(e) => this.handleInventorySample(e)}>
-        Inventory
-      </Checkbox>
-    );
 
     const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (

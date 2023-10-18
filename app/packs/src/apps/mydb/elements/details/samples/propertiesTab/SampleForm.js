@@ -808,9 +808,6 @@ export default class SampleForm extends React.Component {
             {this.additionalProperties(sample)}
           </tr>
           <tr>
-            {this.additionalProperties(sample)}
-          </tr>
-          <tr>
             <td colSpan="4">
               <SampleDetailsSolvents
                 sample={sample}
