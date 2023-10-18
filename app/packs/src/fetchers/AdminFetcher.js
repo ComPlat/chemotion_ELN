@@ -243,15 +243,6 @@ export default class AdminFetcher {
       });
   }
 
-  static fetchUsersByNameType(name, type, limit = 5) {
-    return fetch(`/api/v1/admin_user/listUsers/byname.json?${new URLSearchParams({ name, type, limit })}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
   static updateAccount(params) {
     return fetch('/api/v1/admin_user/updateAccount/', {
       credentials: 'same-origin',

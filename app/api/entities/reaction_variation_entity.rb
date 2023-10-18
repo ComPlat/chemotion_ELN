@@ -20,8 +20,6 @@ module Entities
 
     def materials(material_type)
       {}.tap do |materials|
-        next if object[material_type].blank?
-
         object[material_type].each do |k, v|
           materials[k] = ReactionVariationMaterialEntity.represent(v)
         end

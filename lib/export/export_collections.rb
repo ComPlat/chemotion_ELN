@@ -303,7 +303,6 @@ module Export
       fetch_many(collection.research_plans, {
                    'created_by' => 'User',
                  })
-
       fetch_many(collection.collections_research_plans, {
                    'collection_id' => 'Collection',
                    'research_plan_id' => 'ResearchPlan',

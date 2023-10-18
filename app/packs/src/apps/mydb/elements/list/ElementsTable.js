@@ -485,22 +485,6 @@ export default class ElementsTable extends React.Component {
         </button>
       </OverlayTrigger>
     );
-
-    return (
-      <>
-        <Select
-          simpleValue
-          options={options}
-          clearable={false}
-          searchable
-          value={elementsGroup}
-          onChange={this.changeElementsGroup}
-          className="header-group-select"
-        />
-        {elementsGroup !== 'none' ? (sortContent) : null}
-        {elementsGroup !== 'none' ? (this.collapseButton()) : null}
-      </>
-    );
   };
 
   renderHeader = () => {

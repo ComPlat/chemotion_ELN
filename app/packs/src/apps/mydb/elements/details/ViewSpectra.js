@@ -525,8 +525,8 @@ class ViewSpectra extends React.Component {
   buildOpsByLayout(et) {
     if (this.props.sample && this.props.sample instanceof ResearchPlan) {
       return [
-        { name: 'write & save', value: this.writeOp },
-        { name: 'write, save & close', value: this.writeCloseOp },
+        { name: 'write & save', value: this.saveOp },
+        { name: 'write, save & close', value: this.saveCloseOp },
       ];
     }
     const updatable = this.props.sample && this.props.sample.can_update;

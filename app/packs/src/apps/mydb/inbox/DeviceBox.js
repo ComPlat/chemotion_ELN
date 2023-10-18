@@ -209,18 +209,6 @@ export default class DeviceBox extends React.Component {
     this.toggleTooltip();
   }
 
-  componentDidMount() {
-    const { device_box, deviceBoxVisible } = this.props;
-    const { currentDeviceBoxPage } = this.state;
-    if (deviceBoxVisible) {
-      if (Array.isArray(device_box.children) && !device_box.children.length) {
-        LoadingActions.start();
-        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
-      }
-    }
-    this.setState({ visible: deviceBoxVisible });
-  }
-
   componentDidUpdate(prevProps) {
     const { deviceBoxVisible } = this.props;
     if (deviceBoxVisible !== prevProps.deviceBoxVisible) {

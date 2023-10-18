@@ -3,7 +3,6 @@ import { AgGridReact } from 'ag-grid-react';
 import React, {
   useRef, forwardRef, useState, useReducer, useEffect, useImperativeHandle, useCallback
 } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import {
   Button, FormGroup, ControlLabel, ButtonGroup,
   OverlayTrigger, Tooltip, Form, Badge, DropdownButton, MenuItem
@@ -11,17 +10,44 @@ import {
 import _ from 'lodash';
 import {
   createVariationsRow, temperatureUnits, durationUnits, massUnits, volumeUnits,
-  convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol
+  convertUnit, materialTypes, computeEquivalent, getReferenceMaterial, getMolFromGram, getGramFromMol,
+  getSequentialId
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
-function RowToolsCellRenderer({ data: variationRow, copyRow, removeRow }) {
+function AddButton({ onClick }) {
+  return (
+    <Button bsSize="xsmall" bsStyle="success" onClick={onClick}>
+      <i className="fa fa-plus" />
+    </Button>
+  );
+}
+
+function CopyButton({ onClick }) {
+  return (
+    <Button bsSize="xsmall" bsStyle="success" onClick={onClick}>
+      <i className="fa fa-clone" />
+    </Button>
+  );
+}
+
+function RemoveButton({ onClick }) {
+  return (
+    <Button bsSize="xsmall" bsStyle="danger" onClick={onClick}>
+      <i className="fa fa-trash-o" />
+    </Button>
+  );
+}
+
+function RowToolsCellRenderer({
+  data: variationsRow, reactionShortLabel, copyRow, removeRow
+}) {
   return (
     <div>
-      <Badge>{variationRow.id.substring(0, 5)}</Badge>
+      <Badge>{`${reactionShortLabel}-${variationsRow.id}`}</Badge>
       {' '}
       <ButtonGroup>
-        <Button onClick={() => copyRow(variationRow)}><i className="fa fa-copy" /></Button>
-        <Button onClick={() => removeRow(variationRow)}><i className="fa fa-trash" /></Button>
+        <CopyButton onClick={() => copyRow(variationsRow)} />
+        <RemoveButton onClick={() => removeRow(variationsRow)} />
       </ButtonGroup>
     </div>
   );
@@ -100,10 +126,10 @@ const cellEditorReducer = (cellData, action) => {
 };
 
 const CellEditor = forwardRef(({
-  data: variationRow, value, enableEquivalent, allowNegativeValue, unitOptions,
+  data: variationsRow, value, enableEquivalent, allowNegativeValue, unitOptions,
 }, ref) => {
   const [cellData, dispatch] = useReducer(cellEditorReducer, value);
-  const referenceMaterial = getReferenceMaterial(variationRow);
+  const referenceMaterial = getReferenceMaterial(variationsRow);
   const refInput = useRef(null);
 
   const equivalentEditor = (enableEquivalent) ? (
@@ -209,7 +235,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   const [materialHeaderIdentifier, setMaterialHeaderIdentifier] = useState('name');
 
   function addRow() {
-    const newRow = createVariationsRow(reaction, uuidv4());
+    const newRow = createVariationsRow(reaction, getSequentialId(reaction.variations));
     onEditVariations(
       [...reaction.variations, newRow]
     );
@@ -217,7 +243,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   function copyRow(data) {
     const copiedRow = _.cloneDeep(data);
-    copiedRow.id = uuidv4();
+    copiedRow.id = getSequentialId(reaction.variations);
     onEditVariations(
       [...reaction.variations, copiedRow]
     );
@@ -240,7 +266,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     {
       field: '',
       cellRenderer: RowToolsCellRenderer,
-      cellRendererParams: { copyRow, removeRow },
+      cellRendererParams: { copyRow, removeRow, reactionShortLabel: reaction.short_label },
       lockPosition: 'left',
       editable: false,
       sortable: false,
@@ -285,7 +311,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   return (
     <div>
-      <Form inline>
+      <Form inline style={{ marginTop: '2em', marginBottom: '1em' }}>
         <OverlayTrigger
           placement="bottom"
           overlay={(
@@ -300,7 +326,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             </Tooltip>
           )}
         >
-          <Button onClick={() => addRow()}>Add row</Button>
+          <AddButton onClick={() => addRow()} />
         </OverlayTrigger>
         {' '}
         <FormGroup>

@@ -239,7 +239,7 @@ class UIStore {
     this.handleUncheckAllElements({ type: 'wellplate', range: 'all' });
     this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
     this.handleUncheckAllElements({ type: 'cell_line', range: 'all' });
-    this.state.klasses && this.state.klasses.forEach((klass) => { this.handleUncheckAllElements({ type: klass, range: 'all' }); });
+    this.state.klasses?.forEach((klass) => { this.handleUncheckAllElements({ type: klass, range: 'all' }); });
   }
 
   handleCheckElement(element) {

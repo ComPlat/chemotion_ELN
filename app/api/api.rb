@@ -184,7 +184,6 @@ class API < Grape::API
   mount Labimotion::GenericDatasetAPI
   mount Labimotion::SegmentAPI
   mount Labimotion::LabimotionHubAPI
-  
 
   if Rails.env.development?
     add_swagger_documentation(info: {
