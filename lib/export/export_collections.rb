@@ -422,7 +422,6 @@ module Export
 
         # append updated json to @data
         @data[type] = {} unless @data.key?(type)
-
         # replace ids in the ancestry field
         if instance.respond_to?(:ancestry)
           ancestor_uuids = []

@@ -324,7 +324,6 @@ module Chemotion
 
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-           
             classes = create_classes_of_element(element)
             ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             classes[1].move_to_collection(ids, from_collection.id, to_collection_id)
@@ -419,15 +418,13 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-
+            
             classes = create_classes_of_element(element)
-
             ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             classes[1].remove_in_collection(ids, from_collection.id)
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
-
             ui_state = params[:ui_state][klass.name]
             next unless ui_state
 

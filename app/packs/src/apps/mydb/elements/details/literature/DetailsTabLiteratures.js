@@ -278,7 +278,6 @@ export default class DetailsTabLiteratures extends Component {
     const isInvalidIsbn = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
     const { readOnly } = this.props;
     const citationTypeMap = createCitationTypeMap(this.props.element.type);
-
     return (
       <ListGroup fill="true">
         <ListGroupItem style={{ border: 'unset' }}>
