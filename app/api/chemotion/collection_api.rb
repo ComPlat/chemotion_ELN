@@ -220,7 +220,7 @@ module Chemotion
           wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
-          cell_lines =  CelllineSample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:cell_line]).for_user_n_groups(user_ids)
+          cell_lines = CelllineSample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:cell_line]).for_user_n_groups(user_ids)
           elements = {}
           Labimotion::ElementKlass.find_each do |klass|
             elements[klass.name] = Labimotion::Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
@@ -243,13 +243,13 @@ module Chemotion
             break unless share_elements
           end
 
-          sharing_allowed = share_samples && 
-            share_reactions &&
-            share_wellplates && 
-            share_screens && 
-            share_research_plans && 
-            share_cell_lines_plans &&
-            share_elements
+          sharing_allowed = share_samples &&
+                            share_reactions &&
+                            share_wellplates && 
+                            share_screens && 
+                            share_research_plans && 
+                            share_cell_lines_plans &&
+                            share_elements
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
 
           @sample_ids = samples.pluck(:id)
@@ -271,7 +271,7 @@ module Chemotion
               User.where(email: val).pluck :id
             end
           end.flatten.compact.uniq
-          
+
           Usecases::Sharing::ShareWithUsers.new(
             user_ids: uids,
             sample_ids: @sample_ids,
@@ -305,7 +305,7 @@ module Chemotion
         end
 
         put do
-          
+
           to_collection_id = fetch_collection_id_for_assign(params, 4)
           error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
 
@@ -327,7 +327,9 @@ module Chemotion
             classes = create_classes_of_element(element)
             ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             classes[1].move_to_collection(ids, from_collection.id, to_collection_id)
-            classes[1].remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            classes[1].remove_in_collection(
+              ids,
+              Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
@@ -418,7 +420,7 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-            
+
             classes = create_classes_of_element(element)
             ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             classes[1].remove_in_collection(ids, from_collection.id)

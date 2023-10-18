@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
 module Chemotion
   class SearchAPI < Grape::API
@@ -248,7 +248,7 @@ module Chemotion
             page: page,
             pages: pages(cell_line_ids.size),
             perPage: page_size,
-            ids: cell_line_ids
+            ids: cell_line_ids,
           }
         }
 
@@ -331,9 +331,9 @@ module Chemotion
                 when 'elements'
                   elements_search(c_id)
                 when 'cell_line_material_name'
-                  CelllineSample.by_material_name(arg,c_id)
+                  CelllineSample.by_material_name(arg, c_id)
                 when 'cell_line_sample_name'
-                  CelllineSample.by_sample_name(arg,c_id )
+                  CelllineSample.by_sample_name(arg, c_id)
                 end
 
         if search_method == 'advanced' && molecule_sort == false
@@ -441,7 +441,7 @@ module Chemotion
       end
 
       namespace :cell_lines do
-        desc "Return all matched cell lines and associations for substring query"
+        desc 'Return all matched cell lines and associations for substring query'
         params do
           use :search_params
         end
@@ -453,22 +453,22 @@ module Chemotion
         post do
           query = @params[:selection][:name]
           collection_id = @params[:collection_id]
-        cell_lines =
+          cell_lines =
             case search_by_method
             when 'cell_line_material_name'
-              CelllineSample.by_material_name(query,collection_id)
+              CelllineSample.by_material_name(query, collection_id)
             when 'cell_line_sample_name'
-              CelllineSample.by_sample_name(query,collection_id )
+              CelllineSample.by_sample_name(query, collection_id)
             end
 
-       
           return unless cell_lines
+
           elements_ids = elements_by_scope(cell_lines)
 
           serialization_by_elements_and_page(
             elements_ids,
             params[:page],
-            params[:molecule_sort]
+            params[:molecule_sort],
           )
         end
       end

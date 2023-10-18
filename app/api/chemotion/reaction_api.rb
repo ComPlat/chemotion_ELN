@@ -51,9 +51,6 @@ module Chemotion
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
-      
-        sort_column = params[:sort_column].presence || 'created_at'
-        sort_direction = %w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC'
 
         sort_column = params[:sort_column].presence || 'created_at'
         sort_column =  'created_at' if %w[none updated_at].include? sort_column

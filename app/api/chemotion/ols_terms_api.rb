@@ -13,12 +13,12 @@ module Chemotion
       get 'list' do
         file = Rails.public_path.join(
           'ontologies',
-          "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}"
+          "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}",
         )
         unless File.exist?(file)
           file = Rails.public_path.join(
             'ontologies_default',
-            "#{params[:name]}#{params[:edited] ? '.default.edited.json' : '.default.json'}"
+            "#{params[:name]}#{params[:edited] ? '.default.edited.json' : '.default.json'}",
           )
         end
         result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
