@@ -23,6 +23,7 @@ const elementList = () => {
     { name: 'research_plan', label: 'Research Plan' },
     { name: 'cell_line', label: 'Cell Line' }
   ];
+  
   let genericEls = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
 

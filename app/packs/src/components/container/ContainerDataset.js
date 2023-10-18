@@ -533,7 +533,9 @@ export default class ContainerDataset extends Component {
               onRemoveLink={this.handleRemoveLink}
               disabled={disabled}
               readOnly={readOnly}
-            ></HyperLinksSection>
+            >
+
+            </HyperLinksSection>
             <ImageAnnotationModalSVG
               attachment={this.state.choosenAttachment}
               isShow={this.state.imageEditModalShown}
