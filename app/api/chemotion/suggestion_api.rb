@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/ClassLength
 module Chemotion
   # Input suggestion for free text search
   class SuggestionAPI < Grape::API
@@ -25,15 +26,15 @@ module Chemotion
         suggestions
       end
 
-      def search_for_celllines 
+      def search_for_celllines
         collection_id = @params['collection_id']
         query = params[:query]
 
-        material_ids = CelllineSample.by_material_name(query,collection_id).map{|cl|cl.cellline_material_id}.uniq
-       { 
-        cell_line_material_name: CelllineMaterial.where(id: material_ids).pluck(:name).uniq,
-        cell_line_sample_name: CelllineSample.by_sample_name(query,collection_id).pluck(:name)
-       }
+        material_ids = CelllineSample.by_material_name(query, collection_id).map(&:cellline_material_id).uniq
+        {
+          cell_line_material_name: CelllineMaterial.where(id: material_ids).pluck(:name).uniq,
+          cell_line_sample_name: CelllineSample.by_sample_name(query, collection_id).pluck(:name),
+        }
       end
 
       def search_possibilities_by_type_user_and_collection(type)
@@ -63,26 +64,31 @@ module Chemotion
 
         search_by_element_short_label = proc do |klass, qry|
           scope = d_for.call klass
-          scope.send("by_short_label", qry).page(1).per(page_size).map { |el| {klass: el.element_klass.name, icon: el.element_klass.icon_name, label: "#{el.element_klass.label} Short Label", name: el.short_label } }
+          scope.send(:by_short_label, qry).page(1).per(page_size).map do |el|
+            { klass: el.element_klass.name,
+              icon: el.element_klass.icon_name,
+              label: "#{el.element_klass.label} Short Label",
+              name: el.short_label }
+          end
         end
 
         qry = params[:query]
 
         case type
         when 'samples'
-          sample_short_label = dl_s.positive? && search_by_field.call(Sample, :short_label, qry) || []
-          sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
-          sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
-          polymer_type = dl_s.positive? && d_for.call(Sample)
+          sample_short_label = (dl_s.positive? && search_by_field.call(Sample, :short_label, qry)) || []
+          sample_external_label = (dl_s > -1 && search_by_field.call(Sample, :external_label, qry)) || []
+          sample_name = (dl_s.positive? && search_by_field.call(Sample, :name, qry)) || []
+          polymer_type = (dl_s.positive? && d_for.call(Sample)
                                                 .by_residues_custom_info('polymer_type', qry)
-                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq || []
-          sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
-          iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
+                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq) || []
+          sum_formula = (dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry)) || []
+          iupac_name = (dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry)) || []
           # cas = dl_s.positive? && search_by_field.call(Molecule, :cas, qry) || []
-          cas = dl_s.positive? && search_by_field.call(Sample, :sample_xref_cas, qry) || []
-          inchistring = dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry) || []
-          inchikey = dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry) || []
-          cano_smiles = dl_s.positive? && search_by_field.call(Molecule, :cano_smiles, qry) || []
+          cas = (dl_s.positive? && search_by_field.call(Sample, :sample_xref_cas, qry)) || []
+          inchistring = (dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry)) || []
+          inchikey = (dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry)) || []
+          cano_smiles = (dl_s.positive? && search_by_field.call(Molecule, :cano_smiles, qry)) || []
           {
             sample_short_label: sample_short_label,
             sample_external_label: sample_external_label,
@@ -93,17 +99,30 @@ module Chemotion
             cas: cas,
             inchistring: inchistring,
             inchikey: inchikey,
-            cano_smiles: cano_smiles
+            cano_smiles: cano_smiles,
           }
         when 'reactions'
-          reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
-          reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
-          reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
-          reaction_rinchi_string = dl_r > -1 && search_by_field.call(Reaction, :rinchi_string, qry) || []
-          sample_name = dl_s.positive? && d_for.call(Sample).with_reactions.by_name(qry).pluck(:name).uniq || []
-          iupac_name = dl_s.positive? && d_for.call(Molecule).with_reactions.by_iupac_name(qry).pluck(:iupac_name).uniq || []
-          inchistring = dl_s.positive? && d_for.call(Molecule).with_reactions.by_inchistring(qry).pluck(:inchistring).uniq || []
-          cano_smiles = dl_s.positive? && d_for.call(Molecule).with_reactions.by_cano_smiles(qry).pluck(:cano_smiles).uniq || []
+          reaction_name = (dl_r > -1 && search_by_field.call(Reaction, :name, qry)) || []
+          reaction_short_label = (dl_r > -1 && search_by_field.call(Reaction, :short_label, qry)) || []
+          reaction_status = (dl_r > -1 && search_by_field.call(Reaction, :status, qry)) || []
+          reaction_rinchi_string = (dl_r > -1 && search_by_field.call(Reaction, :rinchi_string, qry)) || []
+          sample_name = (dl_s.positive? && d_for.call(Sample)
+            .with_reactions
+            .by_name(qry)
+            .pluck(:name).uniq) || []
+          iupac_name = (dl_s.positive? && d_for.call(Molecule)
+            .with_reactions.by_iupac_name(qry)
+            .pluck(:iupac_name)
+            .uniq) || []
+          inchistring = (dl_s.positive? && d_for.call(Molecule)
+            .with_reactions
+            .by_inchistring(qry)
+            .pluck(:inchistring)
+            .uniq) || []
+          cano_smiles = (dl_s.positive? && d_for.call(Molecule)
+            .with_reactions.by_cano_smiles(qry)
+            .pluck(:cano_smiles)
+            .uniq) || []
           {
             reaction_name: reaction_name,
             reaction_short_label: reaction_short_label,
@@ -112,56 +131,71 @@ module Chemotion
             sample_name: sample_name,
             iupac_name: iupac_name,
             inchistring: inchistring,
-            cano_smiles: cano_smiles
+            cano_smiles: cano_smiles,
           }
         when 'wellplates'
-          wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
-          sample_name = dl_s.positive? && d_for.call(Sample).with_wellplates.by_name(qry).pluck(:name).uniq || []
-          iupac_name = dl_s.positive? && d_for.call(Molecule).with_wellplates.by_iupac_name(qry).pluck(:iupac_name).uniq || []
-          inchistring = dl_s.positive? && d_for.call(Molecule).with_wellplates.by_inchistring(qry).pluck(:inchistring).uniq || []
-          cano_smiles = dl_s.positive? && d_for.call(Molecule).with_wellplates.by_cano_smiles(qry).pluck(:cano_smiles).uniq || []
+          wellplate_name = (dl_wp > -1 && search_by_field.call(Wellplate, :name, qry)) || []
+          sample_name = (dl_s.positive? && d_for.call(Sample)
+            .with_wellplates
+            .by_name(qry)
+            .pluck(:name).uniq) || []
+          iupac_name = (dl_s.positive? && d_for.call(Molecule)
+            .with_wellplates
+            .by_iupac_name(qry)
+            .pluck(:iupac_name)
+            .uniq) || []
+          inchistring = (dl_s.positive? && d_for.call(Molecule)
+            .with_wellplates
+            .by_inchistring(qry)
+            .pluck(:inchistring)
+            .uniq) || []
+          cano_smiles = (dl_s.positive? && d_for.call(Molecule)
+            .with_wellplates
+            .by_cano_smiles(qry)
+            .pluck(:cano_smiles)
+            .uniq) || []
           {
             wellplate_name: wellplate_name,
             sample_name: sample_name,
             iupac_name: iupac_name,
             inchistring: inchistring,
-            cano_smiles: cano_smiles
+            cano_smiles: cano_smiles,
           }
         when 'screens'
-          screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
-          conditions = dl_sc > -1 && search_by_field.call(Screen, :conditions, qry) || []
-          requirements = dl_sc > -1 && search_by_field.call(Screen, :requirements, qry) || []
+          screen_name = (dl_sc > -1 && search_by_field.call(Screen, :name, qry)) || []
+          conditions = (dl_sc > -1 && search_by_field.call(Screen, :conditions, qry)) || []
+          requirements = (dl_sc > -1 && search_by_field.call(Screen, :requirements, qry)) || []
           {
             screen_name: screen_name,
             conditions: conditions,
-            requirements: requirements
+            requirements: requirements,
           }
         when 'cell_lines'
-          dl_cl.positive? ? search_for_celllines(): []
+          dl_cl.positive? ? search_for_celllines : []
         else
-          element_short_label = dl_e.positive? && search_by_element_short_label.call(Labimotion::Element, qry) || []
-          sample_name = dl_s.positive? && search_by_field.call(Sample, :name, qry) || []
-          sample_short_label = dl_s.positive? && search_by_field.call(Sample, :short_label, qry) || []
-          sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
-          polymer_type = dl_s.positive? && d_for.call(Sample)
+          element_short_label = (dl_e.positive? && search_by_element_short_label.call(Labimotion::Element, qry)) || []
+          sample_name = (dl_s.positive? && search_by_field.call(Sample, :name, qry)) || []
+          sample_short_label = (dl_s.positive? && search_by_field.call(Sample, :short_label, qry)) || []
+          sample_external_label = (dl_s > -1 && search_by_field.call(Sample, :external_label, qry)) || []
+          polymer_type = (dl_s.positive? && d_for.call(Sample)
                                                 .by_residues_custom_info('polymer_type', qry)
-                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq || []
-          sum_formula = dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry) || []
-          iupac_name = dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry) || []
+                                                .pluck(Arel.sql("residues.custom_info->'polymer_type'")).uniq) || []
+          sum_formula = (dl_s.positive? && search_by_field.call(Sample, :molecule_sum_formular, qry)) || []
+          iupac_name = (dl_s.positive? && search_by_field.call(Molecule, :iupac_name, qry)) || []
           # cas = dl_s.positive? && search_by_field.call(Molecule, :cas, qry) || []
-          cas = dl_s.positive? && search_by_field.call(Sample, :sample_xref_cas, qry) || []
-          inchistring = dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry) || []
-          inchikey = dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry) || []
-          cano_smiles = dl_s.positive? && search_by_field.call(Molecule, :cano_smiles, qry) || []
-          reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
-          reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
-          reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
-          reaction_rinchi_string = dl_r > -1 && search_by_field.call(Reaction, :rinchi_string, qry) || []
-          wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
-          screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
-          conditions = dl_sc > -1 && search_by_field.call(Screen, :conditions, qry) || []
-          requirements = dl_sc > -1 && search_by_field.call(Screen, :requirements, qry) || []
-          cell_line_infos =  dl_cl.positive? ? search_for_celllines(): []
+          cas = (dl_s.positive? && search_by_field.call(Sample, :sample_xref_cas, qry)) || []
+          inchistring = (dl_s.positive? && search_by_field.call(Molecule, :inchistring, qry)) || []
+          inchikey = (dl_s.positive? && search_by_field.call(Molecule, :inchikey, qry)) || []
+          cano_smiles = (dl_s.positive? && search_by_field.call(Molecule, :cano_smiles, qry)) || []
+          reaction_name = (dl_r > -1 && search_by_field.call(Reaction, :name, qry)) || []
+          reaction_status = (dl_r > -1 && search_by_field.call(Reaction, :status, qry)) || []
+          reaction_short_label = (dl_r > -1 && search_by_field.call(Reaction, :short_label, qry)) || []
+          reaction_rinchi_string = (dl_r > -1 && search_by_field.call(Reaction, :rinchi_string, qry)) || []
+          wellplate_name = (dl_wp > -1 && search_by_field.call(Wellplate, :name, qry)) || []
+          screen_name = (dl_sc > -1 && search_by_field.call(Screen, :name, qry)) || []
+          conditions = (dl_sc > -1 && search_by_field.call(Screen, :conditions, qry)) || []
+          requirements = (dl_sc > -1 && search_by_field.call(Screen, :requirements, qry)) || []
+          cell_line_infos = dl_cl.positive? ? search_for_celllines : []
 
           {
             element_short_label: element_short_label,
@@ -182,7 +216,7 @@ module Chemotion
             wellplate_name: wellplate_name,
             screen_name: screen_name,
             conditions: conditions,
-            requirements: requirements
+            requirements: requirements,
           }.merge(cell_line_infos)
         end
       end
@@ -207,3 +241,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/ClassLength

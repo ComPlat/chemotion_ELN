@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Entities
   class UserEntity < Grape::Entity
     expose :id, documentation: { type: 'Integer', desc: "User's unique id" }
@@ -7,7 +9,7 @@ module Entities
     expose :initials, documentation: { type: 'String', desc: 'initials' }
     expose :samples_count, documentation: { type: 'Integer', desc: 'Sample count' }
     expose :reactions_count, documentation: { type: 'Integer', desc: 'Reactions count' }
-    expose :cell_lines_count, documentation: { type: "Integer", desc: "Cellline Samples count"}
+    expose :cell_lines_count, documentation: { type: 'Integer', desc: 'Cellline Samples count' }
     expose :type, if: ->(obj, _opts) { obj.respond_to? :type }
     expose :reaction_name_prefix, if: ->(obj, _opts) { obj.respond_to? :reaction_name_prefix }
     expose :layout, if: ->(obj, _opts) { obj.respond_to? :layout }
@@ -31,6 +33,7 @@ module Entities
     def reactions_count
       object.counters['reactions'].to_i
     end
+
     def cell_lines_count
       object.counters['celllines'].to_i
     end
@@ -38,7 +41,7 @@ module Entities
     expose :current_sign_in_at do |obj|
       return nil unless obj.respond_to? :current_sign_in_at
 
-      obj.current_sign_in_at.strftime('%d.%m.%Y, %H:%M') unless obj.current_sign_in_at.nil?
+      obj.current_sign_in_at&.strftime('%d.%m.%Y, %H:%M')
     end
   end
 end

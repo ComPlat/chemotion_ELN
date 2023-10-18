@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+# rubocop:disable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
+
 module CollectionHelpers
   extend Grape::API::Helpers
 
@@ -8,7 +12,7 @@ module CollectionHelpers
   def fetch_collection_id_w_current_user(id, is_sync = false)
     if is_sync
       SyncCollectionsUser.find_by(
-        id: id.to_i, user_id: user_ids
+        id: id.to_i, user_id: user_ids,
       )&.collection_id
     else
       (Collection.find_by(id: id.to_i, user_id: user_ids) ||
@@ -27,8 +31,8 @@ module CollectionHelpers
 
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
-    dl = (is_sync && SyncCollectionsUser || Collection).find_by(
-      id: id.to_i, user_id: user_ids
+    dl = ((is_sync && SyncCollectionsUser) || Collection).find_by(
+      id: id.to_i, user_id: user_ids,
     )&.slice(
       :permission_level,
       :sample_detail_level, :reaction_detail_level,
@@ -47,29 +51,22 @@ module CollectionHelpers
       celllinesample_detail_level: 0,
     }.merge(dl || {})
   end
- 
+
   # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
   def fetch_collection_id_for_assign(prms = params, pl = 1)
     c_id = prms[:collection_id]
-    if !prms[:newCollection].blank?
+    if prms[:newCollection].present?
       c = Collection.create(
-        user_id: current_user.id, label: prms[:newCollection]
+        user_id: current_user.id, label: prms[:newCollection],
       )
     elsif prms[:is_sync_to_me]
       c = Collection.joins(:sync_collections_users).where(
         'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and (sync_collections_users.permission_level = 1 or sync_collections_users.permission_level >= ?)',
         c_id,
         user_ids,
-        pl
-      ).first
-    elsif
-      c = Collection.where(id: c_id).where(
-        'shared_by_id = ? OR (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?))',
-        current_user.id,
-        user_ids,
-        pl
+        pl,
       ).first
     end
     c&.id
@@ -78,21 +75,21 @@ module CollectionHelpers
   def fetch_collection_by_ui_state_params_and_pl(pl = 2)
     current_collection = params['ui_state']['currentCollection']
     @collection = if current_collection['is_sync_to_me']
-      Collection.joins(:sync_collections_users).where(
-        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
-        current_collection['id'],
-        user_ids,
-        pl
-      ).first
-    else
-      Collection.where(
-        'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?)) OR shared_by_id = ?)',
-        current_collection['id'],
-        user_ids,
-        pl,
-        current_user
-      ).first
-    end
+                    Collection.joins(:sync_collections_users).where(
+                      'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
+                      current_collection['id'],
+                      user_ids,
+                      pl,
+                    ).first
+                  else
+                    Collection.where(
+                      'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?)) OR shared_by_id = ?)',
+                      current_collection['id'],
+                      user_ids,
+                      pl,
+                      current_user,
+                    ).first
+                  end
     @collection
   end
 
@@ -132,14 +129,15 @@ module CollectionHelpers
     @dl_cl = @dl[:celllinesample_detail_level]
   end
 
-  def create_classes_of_element(element) 
-    if element == 'cell_line' then 
+  def create_classes_of_element(element)
+    if element == 'cell_line'
       element_klass = CelllineSample
       collections_element_klass = CollectionsCellline
     else
-      collections_element_klass = ('collections_' + element).classify.constantize
+      collections_element_klass = "collections_#{element}".classify.constantize
       element_klass = element.classify.constantize
     end
     [element_klass, collections_element_klass]
   end
 end
+# rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
