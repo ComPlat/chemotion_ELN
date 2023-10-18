@@ -209,6 +209,141 @@ export default class DeviceBox extends React.Component {
     this.toggleTooltip();
   }
 
+  handleDatasetSelect(datasetId) {
+    const { checkedDeviceIds, checkedIds } = this.state;
+    const newCheckedIds = [...checkedIds];
+    const datasetIndex = checkedDeviceIds.indexOf(datasetId);
+    const datasetSelected = datasetIndex !== -1;
+
+    if (datasetSelected) {
+      const newCheckedDeviceIds = checkedDeviceIds.filter((id) => id !== datasetId);
+      const currentDeviceBox = this.props.device_box;
+      const dataset = currentDeviceBox.children.find((d) => d.id === datasetId);
+      dataset.attachments.forEach((attachment) => {
+        const attachmentIndex = newCheckedIds.indexOf(attachment.id);
+        if (attachmentIndex !== -1) {
+          newCheckedIds.splice(attachmentIndex, 1);
+        }
+      });
+
+      const params = {
+        checkedDeviceIds: newCheckedDeviceIds,
+        checkedIds: newCheckedIds,
+      };
+
+      InboxActions.checkedDeviceIds(params);
+    } else {
+      const newCheckedDeviceIds = [...checkedDeviceIds, datasetId];
+      const currentDeviceBox = this.props.device_box;
+      const dataset = currentDeviceBox.children.find((d) => d.id === datasetId);
+      dataset.attachments.forEach((attachment) => {
+        if (!newCheckedIds.includes(attachment.id)) {
+          newCheckedIds.push(attachment.id);
+        }
+      });
+
+      const params = {
+        checkedDeviceIds: newCheckedDeviceIds,
+        checkedIds: newCheckedIds,
+      };
+      InboxActions.checkedDeviceIds(params);
+    }
+  }
+
+  onChange(state) {
+    const { checkedDeviceAll, checkedDeviceIds, checkedIds } = state;
+    this.setState({
+      checkedDeviceAll,
+      checkedDeviceIds,
+      checkedIds,
+    });
+  }
+
+  handlePrevClick = (deviceBox) => {
+    const { currentDeviceBoxPage } = this.state;
+    const updatedPage = currentDeviceBoxPage - 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
+    const params = {
+      checkedDeviceIds: [],
+      checkedIds: [],
+    };
+    InboxActions.checkedDeviceIds(params);
+    LoadingActions.start();
+    InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
+  };
+
+  handleNextClick = (deviceBox) => {
+    const { currentDeviceBoxPage } = this.state;
+    const updatedPage = currentDeviceBoxPage + 1;
+    this.setState({ currentDeviceBoxPage: updatedPage });
+    const params = {
+      checkedDeviceIds: [],
+      checkedIds: [],
+    };
+    InboxActions.checkedDeviceIds(params);
+    LoadingActions.start();
+    InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
+  };
+
+  toggleSelectAllFiles() {
+    const { checkedDeviceAll } = this.state;
+
+    const params = {
+      type: false,
+      range: 'all'
+    };
+
+    if (!checkedDeviceAll) {
+      params.type = true;
+    }
+
+    this.setState(prevState => ({
+      ...prevState.inboxState,
+      checkedDeviceAll: !this.state.checkedDeviceAll
+    }));
+
+    InboxActions.checkedDeviceAll(params);
+  }
+
+  toggleTooltip() {
+    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+  }
+
+  deleteCheckedDataset(device_box) {
+    const { checkedDeviceIds, currentDeviceBoxPage, checkedIds } = this.state;
+
+    const currentItemsCount = device_box.children.length;
+    const itemsDeleted = checkedDeviceIds.length;
+
+    checkedDeviceIds.forEach((checkedDeviceId) => {
+      const datasetToDelete = device_box.children.find((dataset) => dataset.id === checkedDeviceId);
+      if (datasetToDelete) {
+        InboxActions.deleteContainer(datasetToDelete, true);
+      }
+    });
+
+    checkedIds.forEach((checkedId) => {
+      device_box.children.forEach((dataset) => {
+        const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
+        if (attachmentToDelete) {
+          InboxActions.deleteAttachment(attachmentToDelete, false);
+        }
+      });
+    });
+
+    const params = {
+      checkedDeviceIds: [],
+      checkedIds: [],
+    };
+    InboxActions.checkedDeviceIds(params);
+
+    if (currentDeviceBoxPage > 1 && itemsDeleted === currentItemsCount) {
+      this.handlePrevClick(device_box);
+    }
+
+    this.toggleTooltip();
+  }
+
   handlePrevClick = (deviceBox) => {
     const { currentDeviceBoxPage } = this.state;
     const updatedPage = currentDeviceBoxPage - 1;

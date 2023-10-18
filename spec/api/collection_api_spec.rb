@@ -303,6 +303,12 @@ describe Chemotion::CollectionAPI do
         }
       end
 
+      let!(:tabs_segment) do
+        {
+          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
+        }
+      end
+
       describe '01 - from and to collections owned by user, ' do
         # before do
         #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s.id)
