@@ -32,8 +32,9 @@ class CollectionsCellline < ApplicationRecord
 
   def self.create_in_collection(cellline_ids, to_col_id)
     raise "could not find collection with #{to_col_id}" unless Collection.find_by(id: to_col_id)
+
     Array(cellline_ids).each do |cell_line_id|
-      CollectionsCellline.save_to_collection(cell_line_id, to_col_id) if !CollectionsCellline.find_by(
+      CollectionsCellline.save_to_collection(cell_line_id, to_col_id) unless CollectionsCellline.find_by(
         collection_id: to_col_id,
         cellline_sample_id: cell_line_id,
         deleted_at: nil,
@@ -41,9 +42,6 @@ class CollectionsCellline < ApplicationRecord
     end
     CollectionsCellline.update_collection_tag(cellline_ids)
   end
-
-
-
 
   def self.delete_in_collection(cell_line_id, coll_id)
     old_entry = CollectionsCellline.find_by(

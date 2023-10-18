@@ -140,6 +140,6 @@ module CollectionHelpers
       collections_element_klass = ('collections_' + element).classify.constantize
       element_klass = element.classify.constantize
     end
-    [element_klass,collections_element_klass]
+    [element_klass, collections_element_klass]
   end
 end
