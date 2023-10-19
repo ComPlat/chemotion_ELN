@@ -1,5 +1,5 @@
 module Chemotion
-  # rubocop: disable Metrics/ClassLength
+  # rubocop: disable Metrics/ClassLength, Style/MultilineIfModifier, Layout/MultilineMethodCallBraceLayout
 
   class CollectionAPI < Grape::API
     helpers CollectionHelpers
@@ -220,7 +220,9 @@ module Chemotion
           wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
-          cell_lines = CelllineSample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:cell_line]).for_user_n_groups(user_ids)
+          cell_lines = CelllineSample.by_collection_id(@cid)
+                                     .by_ui_state(params[:elements_filter][:cell_line])
+                                     .for_user_n_groups(user_ids)
           elements = {}
           Labimotion::ElementKlass.find_each do |klass|
             elements[klass.name] = Labimotion::Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
@@ -305,7 +307,6 @@ module Chemotion
         end
 
         put do
-
           to_collection_id = fetch_collection_id_for_assign(params, 4)
           error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
 
@@ -547,6 +548,5 @@ module Chemotion
       end
     end
   end
-
-  # rubocop: enable Metrics/ClassLength
 end
+# rubocop: enable Metrics/ClassLength, Style/MultilineIfModifier, Layout/MultilineMethodCallBraceLayout

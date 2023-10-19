@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
-# rubocop:disable Rails/SkipsModelValidations
+# rubocop:disable Metrics/ClassLength, Rails/SkipsModelValidations, Style/MultilineIfThen
 
 module Chemotion
   class LiteratureAPI < Grape::API
@@ -19,18 +18,18 @@ module Chemotion
     resource :literatures do
       after_validation do
         unless %r{doi/metadata|ui_state|collection}.match?(request.url)
-          if params[:element_type] == "cell_line" then
+          if params[:element_type] == 'cell_line'
             cell_line_sample = CelllineSample.find(params[:element_id])
             @element = CelllineMaterial.find(cell_line_sample.cellline_material_id)
             @element_policy = ElementPolicy.new(current_user, cell_line_sample)
-            @element_klass="CelllineMaterial"
+            @element_klass = 'CelllineMaterial'
             params[:element_id] = @element.id
           else
             @element_klass = params[:element_type].classify
             @element = @element_klass.constantize.find_by(id: params[:element_id])
             @element_policy = ElementPolicy.new(current_user, @element)
           end
-          
+
           allowed = if /get/i.match?(request.env['REQUEST_METHOD'])
                       @element_policy.read?
                     else
@@ -287,4 +286,4 @@ module Chemotion
   end
 end
 # rubocop:enable Metrics/ClassLength
-# rubocop:enable Rails/SkipsModelValidations
+# rubocop:enable Rails/SkipsModelValidations, Style/MultilineIfThen

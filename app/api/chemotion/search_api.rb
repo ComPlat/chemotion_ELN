@@ -615,4 +615,4 @@ module Chemotion
   end
 end
 
-# rubocop:enable Metrics/ClassLength
+# rubocop: enable Metrics/ClassLength, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

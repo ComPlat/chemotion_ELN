@@ -1,5 +1,5 @@
+# rubocop: disable Style/MultilineIfModifier
 module Chemotion
-
   class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
       fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
@@ -97,7 +97,8 @@ module Chemotion
           'wellplate' => 3,
           'screen' => 4,
           'research_plan' => 5,
-          'cell_line' => 6 } if data['layout'].nil?
+          'cell_line' => 6,
+        } if data['layout'].nil?
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
@@ -116,3 +117,4 @@ module Chemotion
     end
   end
 end
+# rubocop: enable Style/MultilineIfModifier

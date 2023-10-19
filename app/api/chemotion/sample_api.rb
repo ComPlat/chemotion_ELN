@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength, Lint/UselessAssignment
 require 'open-uri'
-# require './helpers'
 
 module Chemotion
-  # rubocop:disable Metrics/ClassLength
-
   class SampleAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
@@ -57,9 +55,7 @@ module Chemotion
           sample_ids = Sample.for_user(current_user.id)
                              .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
           Sample.where(id: sample_ids).each do |sample|
-            # rubocop:disable Lint/UselessAssignment
             subsample = sample.create_subsample(current_user, col_id, true, 'sample')
-            # rubocop:enable Lint/UselessAssignment
           end
 
           {} # JS layer does not use the reply
@@ -75,7 +71,7 @@ module Chemotion
         post do
           # Create a temp file in the tmp folder and sdf delayed job, and pass it to sdf delayed job
           extname = File.extname(params[:file][:filename])
-          if extname.match(/\.(sdf?|mol)/i)
+          if /\.(sdf?|mol)/i.match?(extname)
             sdf_import = Import::ImportSdf.new(
               file_path: params[:file][:tempfile].path,
               collection_id: params[:currentCollectionId],
@@ -226,10 +222,10 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        sample_scope = sample_scope.created_time_from(Time.at(from)) if from && by_created_at
-        sample_scope = sample_scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        sample_scope = sample_scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        sample_scope = sample_scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        sample_scope = sample_scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        sample_scope = sample_scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        sample_scope = sample_scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        sample_scope = sample_scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
 
         sample_list = []
 
@@ -400,7 +396,7 @@ module Chemotion
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-          #save to profile
+          # save to profile
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
@@ -570,15 +566,10 @@ module Chemotion
 
         delete do
           sample = Sample.find(params[:id])
-          # DevicesSample.find_by(sample_id: sample.id).destroy
-          # sample.devices_analyses.map{|d|
-          #   d.analyses_experiments.destroy_all
-          #   d.destroy
-          # }
           sample.destroy
         end
       end
     end
   end
 end
-# rubocop:enable Metrics/ClassLength
+# rubocop:enable Metrics/ClassLength, Lint/UselessAssignment
