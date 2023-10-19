@@ -79,7 +79,7 @@ export const segmentsByKlass = name => {
 
 export const elementNames = (all = true, generics = null) => {
   const elnElements = all
-    ? ['sample', 'reaction', 'screen', 'wellplate', 'research_plan']
+    ? ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel']
     : [];
   try {
     if (generics?.length > 0)
