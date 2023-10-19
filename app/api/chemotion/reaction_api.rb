@@ -21,6 +21,8 @@ module Chemotion
         optional :sort_column, type: String, desc: 'sort by created_at, updated_at, rinchi_short_key, or rxno',
                                values: %w[created_at updated_at rinchi_short_key rxno],
                                default: 'created_at'
+        optional :sort_direction, type: String, desc: 'sort direction',
+                                  values: %w[ASC DESC]
       end
       paginate per_page: 7, offset: 0
 
@@ -53,8 +55,8 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
 
         sort_column = params[:sort_column].presence || 'created_at'
-        sort_column =  'created_at' if %w[none updated_at].include? sort_column
-        sort_direction = %w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC'
+        sort_direction = params[:sort_direction].presence ||
+                         (%w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC')
 
         scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at

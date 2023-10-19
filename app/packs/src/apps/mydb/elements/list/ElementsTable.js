@@ -38,6 +38,7 @@ export default class ElementsTable extends React.Component {
       pages: null,
       elementsGroup: 'none',
       elementsSort: true,
+      sortDirection: 'DESC',
     };
 
     this.onChange = this.onChange.bind(this);
@@ -174,6 +175,8 @@ export default class ElementsTable extends React.Component {
       this.state.elementsGroup = filters[type]?.group || 'none';
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsSort = filters[type]?.sort || true;
+      // eslint-disable-next-line react/no-direct-mutation-state
+      this.state.sortDirection = filters[type]?.direction || 'DESC';
     }
   };
 
@@ -190,49 +193,62 @@ export default class ElementsTable extends React.Component {
     }, () => ElementActions.changeSorting(moleculeSort));
   };
 
-  changeElementsGroup = (elementsGroup) => {
+  updateFilterAndUserProfile = (elementsSort, sortDirection, elementsGroup) => {
     const { type } = this.props;
-    let { elementsSort } = this.state;
+
+    ElementActions.changeElementsFilter({
+      name: type,
+      sort: elementsSort,
+      direction: sortDirection,
+      group: elementsGroup,
+    });
+
+    UserActions.updateUserProfile({
+      data: {
+        filters: {
+          [type]: {
+            sort: elementsSort,
+            direction: sortDirection,
+            group: elementsGroup,
+          },
+        },
+      },
+    });
+  };
+
+  changeElementsGroup = (elementsGroup) => {
+    const { elementsSort, sortDirection } = this.state;
 
     this.setState({
       elementsGroup,
       elementsSort,
     }, () => {
-      ElementActions.changeElementsFilter({ name: type, sort: elementsSort, group: elementsGroup });
-      UserActions.updateUserProfile({
-        data: {
-          filters: {
-            [type]: {
-              sort: elementsSort,
-              group: elementsGroup
-            }
-          }
-        }
-      });
+      this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
   };
 
   changeElementsSort = () => {
-    const { type } = this.props;
-    const { elementsGroup } = this.state;
+    const { elementsGroup, sortDirection } = this.state;
     let { elementsSort } = this.state;
     elementsSort = !elementsSort;
 
     this.setState({
       elementsSort
     }, () => {
-      ElementActions.changeElementsFilter({ name: type, sort: elementsSort, group: elementsGroup });
-      UserActions.updateUserProfile({
-        data: {
-          filters: {
-            [type]: {
-              sort: elementsSort,
-              group: elementsGroup
-            }
-          }
-        }
-      });
+      this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
+  };
+
+  changeSortDirection = () => {
+    const { elementsGroup, elementsSort, sortDirection } = this.state;
+    const newSortDirection = sortDirection === 'DESC' ? 'ASC' : 'DESC';
+
+    this.setState(
+      { sortDirection: newSortDirection },
+      () => {
+        this.updateFilterAndUserProfile(elementsSort, newSortDirection, elementsGroup);
+      }
+    );
   };
 
   collapseButton = () => {
@@ -372,8 +388,26 @@ export default class ElementsTable extends React.Component {
     );
   };
 
+  renderChangeSortDirectionIcon = () => {
+    const { sortDirection } = this.state;
+    const sortDirectionIcon = sortDirection === 'ASC' ? 'fa-long-arrow-up' : 'fa-long-arrow-down';
+    const changeSortDirectionTitle = sortDirection === 'ASC' ? 'change to descending' : 'change to ascending';
+    const sortDirectionTooltip = <Tooltip id="change_sort_direction">{changeSortDirectionTitle}</Tooltip>;
+    return (
+      <OverlayTrigger placement="top" overlay={sortDirectionTooltip}>
+        <button
+          type="button"
+          style={{ border: 'none' }}
+          onClick={this.changeSortDirection}
+        >
+          <i className={`fa fa-fw ${sortDirectionIcon}`} />
+        </button>
+      </OverlayTrigger>
+    );
+  };
+
   renderReactionsHeader = () => {
-    const { elementsGroup, elementsSort } = this.state;
+    const { elementsGroup, elementsSort, sortDirection } = this.state;
     const optionsHash = {
       none: { sortColumn: 'create date', label: 'List' },
       rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
@@ -384,17 +418,16 @@ export default class ElementsTable extends React.Component {
       label: option[1].label
     }));
     const { sortColumn } = optionsHash[elementsGroup];
+    const sortDirectionText = sortDirection === 'ASC' ? 'ascending' : 'descending';
     const sortTitle = elementsSort
-      ? `click to sort by update date (descending) - currently sorted by ${sortColumn}`
-      : `click to sort by ${sortColumn} - currently sorted by update date (descending)`;
-    const sortTooltip = (
-      <Tooltip id="reaction_sort_tooltip">
-        {elementsGroup !== 'none' ? sortTitle : 'Currently sorted by created date (descending)'}
-      </Tooltip>
-    );
+      ? `click to sort by update date (${sortDirectionText}) - currently sorted by ${sortColumn} (${sortDirectionText})`
+      : `click to sort by ${sortColumn} (${sortDirectionText}) - currently sorted by update date (${sortDirectionText})`;
+    const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     let sortIconClass = 'fa-clock-o';
     if (elementsGroup !== 'none') {
       sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    } else {
+      sortIconClass = elementsSort ? 'fa-history' : 'fa-clock-o';
     }
     const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
     const sortContent = (
@@ -402,7 +435,7 @@ export default class ElementsTable extends React.Component {
         <button
           type="button"
           style={{ border: 'none' }}
-          onClick={elementsGroup !== 'none' ? this.changeElementsSort : null}
+          onClick={this.changeElementsSort}
         >
           {sortIcon}
         </button>
@@ -421,6 +454,7 @@ export default class ElementsTable extends React.Component {
           className="header-group-select"
         />
         {sortContent}
+        {this.renderChangeSortDirectionIcon()}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
