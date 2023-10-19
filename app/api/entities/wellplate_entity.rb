@@ -19,7 +19,7 @@ module Entities
       expose! :description
       expose! :name
       expose! :readout_titles
-      expose! :segments,        anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :segments,        anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end

@@ -7,7 +7,7 @@ RSpec.describe 'Import::ImportSamples' do
   let(:collection_id) { create(:collection).id }
   let(:file_path) { 'spec/fixtures/import/sample_import_template.xlsx' }
   let(:file_name) { File.basename(file_path) }
-  let(:importer) { Import::ImportSamples.new(user_id, collection_id, file_path, file_name) }
+  let(:importer) { Import::ImportSamples.new(user_id, collection_id, file_path, file_name, 'sample') }
 
   describe '.format_to_interval_syntax' do
     let(:processed_row) { importer.send(:format_to_interval_syntax, unprocessed_row) }
@@ -16,7 +16,6 @@ RSpec.describe 'Import::ImportSamples' do
       let(:unprocessed_row) { '1' }
 
       it 'returns single number' do
-        # expect(formated_value).to eq ['13.0']
         expect(processed_row).to eq '[1.0, Infinity]'
       end
     end
@@ -25,7 +24,6 @@ RSpec.describe 'Import::ImportSamples' do
       let(:unprocessed_row) { '1.234' }
 
       it 'returns single number' do
-        # expect(formated_value).to eq ['13.0']
         expect(processed_row).to eq '[1.234, Infinity]'
       end
     end
@@ -34,7 +32,6 @@ RSpec.describe 'Import::ImportSamples' do
       let(:unprocessed_row) { '1.234-2.345' }
 
       it 'returns interval' do
-        # expect(formated_value).to eq ['13.0']
         expect(processed_row).to eq '[1.234, 2.345]'
       end
     end
@@ -43,7 +40,6 @@ RSpec.describe 'Import::ImportSamples' do
       let(:unprocessed_row) { '1.234-1' }
 
       it 'returns interval' do
-        # expect(formated_value).to eq ['13.0']
         expect(processed_row).to eq '[1.234, 1.0]'
       end
     end
@@ -52,7 +48,6 @@ RSpec.describe 'Import::ImportSamples' do
       let(:unprocessed_row) { '1.23.4-1' }
 
       it 'returns infinity interval' do
-        # expect(formated_value).to eq ['13.0']
         expect(processed_row).to eq '[-Infinity, Infinity]'
       end
     end
@@ -61,7 +56,6 @@ RSpec.describe 'Import::ImportSamples' do
       let(:unprocessed_row) { '1.234--1' }
 
       it 'returns interval' do
-        # expect(formated_value).to eq ['13.0']
         expect(processed_row).to eq '[1.234, -1.0]'
       end
     end

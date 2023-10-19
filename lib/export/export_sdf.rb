@@ -44,7 +44,6 @@ module Export
         end
         data = data.rstrip
         data += "\n"
-
         @headers.each do |column|
           column_data = format_field(column, sample[column])
           data.concat(column_data)
@@ -73,9 +72,24 @@ module Export
       data.concat("\$\$\$\$\n")
     end
 
+    def extract_reference_values(raw_value)
+      regex = /[\[\]()]/
+      string = raw_value.gsub(regex, '')
+      string.split(',').join(' - ')
+    end
+
     def format_field(column, raw_value)
       field = column.gsub(/\s+/, '_').upcase
-      value = validate_value(raw_value)
+      reference_values = ['melting pt', 'boiling pt']
+      sample_column =
+        if reference_values.include?(column)
+          extract_reference_values(raw_value)
+        elsif column == 'solvent'
+          extract_label_from_solvent_column(raw_value) || ''
+        else
+          raw_value
+        end
+      value = validate_value(sample_column)
       ">  <#{field}>\n#{value}\n\n"
     end
 

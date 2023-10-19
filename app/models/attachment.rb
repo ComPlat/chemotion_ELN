@@ -34,7 +34,7 @@
 class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
-  include AttachmentConverter
+  include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred

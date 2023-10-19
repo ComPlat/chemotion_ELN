@@ -196,7 +196,13 @@ export default class ChemicalTab extends React.Component {
       const obj = JSON.parse(result);
       safetySheets.splice(0, 1);
       this.setState({ safetySheets });
-      this.setState({ safetySheets: Object.values(obj) });
+      if (obj !== null && obj !== undefined) {
+        this.setState({ safetySheets: Object.values(obj) });
+      } else {
+        // using a mock value if obj undefined or null -> for testing purposes
+        const mockValue = ['mockValue'];
+        this.setState({ safetySheets: mockValue });
+      }
       this.setState({ loadingQuerySafetySheets: false });
       this.setState({ displayWell: true });
     }).catch((errorMessage) => {
@@ -210,7 +216,7 @@ export default class ChemicalTab extends React.Component {
     // eslint-disable-next-line no-restricted-syntax
     for (const [key, value] of Object.entries(str.h_statements)) {
       // eslint-disable-next-line react/jsx-one-expression-per-line
-      const st = <p> {key}:{value} </p>;
+      const st = <p key={key}> {key}:{value} </p>;
       HazardPhrases.push(st);
     }
 
@@ -218,16 +224,17 @@ export default class ChemicalTab extends React.Component {
     // eslint-disable-next-line no-restricted-syntax
     for (const [key, value] of Object.entries(str.p_statements)) {
       // eslint-disable-next-line react/jsx-one-expression-per-line
-      const st = <p>{key}:{value}</p>;
+      const st = <p key={key}>{key}:{value}</p>;
       precautionaryPhrases.push(st);
     }
 
-    const pictogramsArray = str.pictograms.map((i) => (i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
+    const pictogramsArray = str.pictograms?.map((i) => (
+      i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
 
     return (
       <div>
         <p className="safety-phrases">Pictograms: </p>
-        {(str.pictograms !== undefined || str.pictograms.length !== 0)
+        {(str.pictograms !== undefined && str.pictograms.length !== 0)
           ? pictogramsArray : <p>Could not find pictograms</p>}
         <p className="safety-phrases">Hazard Statements: </p>
         {HazardPhrases}
@@ -279,7 +286,9 @@ export default class ChemicalTab extends React.Component {
         if (chemical && vendor === 'thermofischer') {
           chemical._chemical_data[0].alfaProductInfo.properties = result;
         } else if (chemical && vendor === 'merck') {
-          chemical._chemical_data[0].merckProductInfo.properties = result;
+          if (chemical._chemical_data && chemical._chemical_data[0] && chemical._chemical_data[0].merckProductInfo) {
+            chemical._chemical_data[0].merckProductInfo.properties = result;
+          }
         }
         this.mapToSampleProperties(vendor);
       }

@@ -145,6 +145,7 @@
 aliasifyConfig.js
 /app/assets/javascripts/components/extra/*
 /app/packs/src/components/extra/*
+/app/packs/klasses.json
 
 # Backups folder
 backup/deploy_backup

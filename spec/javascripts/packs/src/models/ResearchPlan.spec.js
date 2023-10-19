@@ -1,6 +1,9 @@
 import Attachment from 'src/models/Attachment';
 import ResearchPlan from 'src/models/ResearchPlan';
 import expect from 'expect';
+import {
+  describe, it
+} from 'mocha';
 
 describe('ResearchPlan', () => {
   const researchPlan = ResearchPlan.buildEmpty();
@@ -178,6 +181,48 @@ describe('ResearchPlan', () => {
       researchPlan.convertTemporaryImageFieldsInBody();
 
       expect(researchPlan.body).toEqual([permanentBodyField, expected]);
+    });
+  });
+
+  describe('.getNewAttachments', () => {
+    describe('.with two new attachments but one is already deleted, one was already there', () => {
+      const attachmentNewAndDeleted = new Attachment();
+      const attachmentNew = new Attachment();
+      const attachmentPresent = new Attachment();
+      researchPlan.attachments = [attachmentNewAndDeleted, attachmentNew, attachmentPresent];
+      attachmentNewAndDeleted.is_new = true;
+      attachmentNewAndDeleted.is_deleted = true;
+
+      attachmentNew.is_new = true;
+      attachmentPresent.is_deleted = false;
+
+      attachmentPresent.is_new = false;
+      attachmentPresent.is_deleted = false;
+
+      it('one attachment was found', () => {
+        expect(researchPlan.getNewAttachments().length).toEqual(1);
+      });
+    });
+  });
+
+  describe('.getMarkedAsDeletedAttachments', () => {
+    describe('.with two new attachments but one is already deleted, one was already there', () => {
+      const attachmentNewAndDeleted = new Attachment();
+      const attachmentNew = new Attachment();
+      const attachmentPresent = new Attachment();
+      researchPlan.attachments = [attachmentNewAndDeleted, attachmentNew, attachmentPresent];
+      attachmentNewAndDeleted.is_new = true;
+      attachmentNewAndDeleted.is_deleted = true;
+
+      attachmentNew.is_new = true;
+      attachmentPresent.is_deleted = false;
+
+      attachmentPresent.is_new = false;
+      attachmentPresent.is_deleted = false;
+
+      it('one attachment was found', () => {
+        expect(researchPlan.getNewAttachments().length).toEqual(1);
+      });
     });
   });
 });

@@ -38,6 +38,8 @@ development:
         4
       :green_chemistry:
         5
+      :variations:
+        6
     :layout_detail_wellplate:
       :properties:
         1
@@ -93,6 +95,8 @@ production:
         4
       :green_chemistry:
         5
+      :variations:
+        6
     :layout_detail_wellplate:
       :properties:
         1
@@ -148,6 +152,8 @@ test:
         4
       :green_chemistry:
         5
+      :variations:
+        6
     :layout_detail_wellplate:
       :properties:
         1

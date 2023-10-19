@@ -206,9 +206,9 @@ class Molecule < ApplicationRecord
     end.join
   end
 
-  def load_cas(force = false)
-    return unless inchikey.present?
-    return unless force || cas.blank?
+  def load_cas
+    return if inchikey.blank?
+
     self.cas = PubChem.get_cas_from_cid(cid)
     save
   end

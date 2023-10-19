@@ -1,8 +1,9 @@
-FROM ptrxyz/chemotion:eln-1.5.0
+FROM complat/chemotion_eln_runner:v1.7.0-3
 ARG BRANCH=main
 RUN apt-get install -y --no-install-recommends --autoremove --fix-missing \
   build-essential\
-  openssh-server
+  openssh-server\
+  libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
 WORKDIR "/chemotion/app"
 

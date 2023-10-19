@@ -4,14 +4,15 @@ import {
 } from 'mocha';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
-  JcampIds, BuildSpcInfos
+  JcampIds, BuildSpcInfos,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
+import { chmosFixture } from '../../../fixture/chmos';
 
 describe('SpectraHelper', () => {
-  describe('isNMRKind', () => {
-    describe('container is null or undefined', () => {
+  describe('.isNMRKind()', () => {
+    describe('when container is null or undefined:', () => {
       it('container is null', () => {
         expect(isNMRKind(null)).toEqual(false);
       });
@@ -21,13 +22,13 @@ describe('SpectraHelper', () => {
       });
     });
 
-    describe('container is neither not null nor undefined', () => {
-      it('container does not has extended_metadata', () => {
+    describe('when container is neither not null nor undefined:', () => {
+      it('when container does not has extended_metadata', () => {
         const container = 'Just a random value';
         expect(isNMRKind(container)).toEqual(false);
       });
 
-      describe('container has extended_metadata', () => {
+      describe('when container has extended_metadata', () => {
         it('metadata does not has kind value', () => {
           const container = { extended_metadata: {} };
           expect(isNMRKind(container)).toEqual(false);
@@ -38,16 +39,52 @@ describe('SpectraHelper', () => {
           expect(isNMRKind(container)).toEqual(false);
         });
 
-        it('it is NMR type', () => {
-          const container = { extended_metadata: { kind: '1H nuclear magnetic resonance spectroscopy (1H NMR)' } };
-          expect(isNMRKind(container)).toEqual(true);
+        it('it is NMR type when list ontologies is empty', () => {
+          const container = { extended_metadata: { kind: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' } };
+          expect(isNMRKind(container, [])).toEqual(false);
+        });
+
+        it('it is NMR type when having list ontologies', () => {
+          const containers = [
+            { extended_metadata: { kind: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000567 | 15N nuclear magnetic resonance spectroscopy (15N NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0001151 | 1H--1H nuclear Overhauser enhancement spectroscopy (1H-1H NOESY)' } },
+            { extended_metadata: { kind: 'CHMO:0001173 | 13C--13C nuclear Overhauser enhancement spectroscopy (13C-13C NOESY)' } },
+          ];
+          containers.forEach((container) => {
+            expect(isNMRKind(container, chmosFixture)).toEqual(true);
+          });
+        });
+
+        it('it is NMR type but list ontologies is invalid', () => {
+          const containers = [
+            { extended_metadata: { kind: 'CHMO:0000593 | 1H nuclear magnetic resonance spectroscopy (1H NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0000567 | 15N nuclear magnetic resonance spectroscopy (15N NMR)' } },
+            { extended_metadata: { kind: 'CHMO:0001151 | 1H--1H nuclear Overhauser enhancement spectroscopy (1H-1H NOESY)' } },
+            { extended_metadata: { kind: 'CHMO:0001173 | 13C--13C nuclear Overhauser enhancement spectroscopy (13C-13C NOESY)' } },
+          ];
+          containers.forEach((container) => {
+            expect(isNMRKind(container, {chmosFixture})).toEqual(false);
+          });
+        });
+
+        it('it is not NMR type when having list ontologies', () => {
+          const containers = [
+            { extended_metadata: { kind: 'mass spectrometry (MS)' } },
+            { extended_metadata: { kind: 'high-performance liquid chromatography (HPLC)' } },
+          ];
+          containers.forEach((container) => {
+            expect(isNMRKind(container, chmosFixture)).toEqual(false);
+          });
         });
       });
     });
   });
 
-  describe('BuildSpcInfosForNMRDisplayer', () => {
-    describe('sample or container is null or undefined', () => {
+  describe('.BuildSpcInfosForNMRDisplayer()', () => {
+    describe('when sample or container is null or undefined', () => {
       it('sample is null or undefined', () => {
         const specInfo1 = BuildSpcInfosForNMRDisplayer(null, 'just a random value');
         expect(specInfo1).toEqual([]);
@@ -65,7 +102,7 @@ describe('SpectraHelper', () => {
       });
     });
 
-    describe('it does not has any file to process', () => {
+    describe('when it does not has any file to process', () => {
       it('container does not has any attachment', () => {
         const container = { children: [{ attachments: [] }] };
         const specInfo = BuildSpcInfosForNMRDisplayer('just a random value', container);
@@ -88,7 +125,7 @@ describe('SpectraHelper', () => {
       });
     });
 
-    describe('it has file to be processed', () => {
+    describe('when it has file to be processed', () => {
       it('get spectra info', () => {
         const sample = Sample.buildEmpty();
         const analyses = Container.buildEmpty();
@@ -125,8 +162,8 @@ describe('SpectraHelper', () => {
     });
   });
 
-  describe('JcampIds', () => {
-    describe('Container does not have any child', () => {
+  describe('.JcampIds()', () => {
+    describe('when container does not have any child', () => {
       it('children is empty', () => {
         const container = Container.buildEmpty();
         const listJcampIds = JcampIds(container);
@@ -135,7 +172,7 @@ describe('SpectraHelper', () => {
       });
     });
 
-    describe('Container does not have jcamp file', () => {
+    describe('when container does not have jcamp file', () => {
       const container = Container.buildEmpty();
       const attachments = [{ filename: 'testfile.txt' }];
       container.children.push({ attachments });
@@ -145,7 +182,7 @@ describe('SpectraHelper', () => {
       expect(listJcampIds).toEqual(expectedValue);
     });
 
-    describe('Container has jcamp files', () => {
+    describe('when container has jcamp files', () => {
       let container;
 
       beforeEach(() => {
@@ -184,8 +221,8 @@ describe('SpectraHelper', () => {
     });
   });
 
-  describe('BuildSpcInfos', () => {
-    describe('sample or container is null or undefined', () => {
+  describe('.BuildSpcInfos()', () => {
+    describe('when sample or container is null or undefined', () => {
       it('sample is null or undefined', () => {
         const specInfo1 = BuildSpcInfos(null, 'just a random value');
         expect(specInfo1).toEqual([]);
@@ -203,7 +240,7 @@ describe('SpectraHelper', () => {
       });
     });
 
-    describe('it does not has any file to process', () => {
+    describe('when it does not has any file to process', () => {
       it('container does not has any attachment', () => {
         const container = { children: [{ attachments: [] }] };
         const specInfo = BuildSpcInfos('just a random value', container);
@@ -226,7 +263,7 @@ describe('SpectraHelper', () => {
       });
     });
 
-    describe('it has file to be processed', () => {
+    describe('when it has file to be processed', () => {
       it('get spectra info', () => {
         const sample = Sample.buildEmpty();
         const analyses = Container.buildEmpty();

@@ -88,7 +88,9 @@ export default class WellplatesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(wellplate.serialize())
-    }).then((response) => response.json()).then((json) => {
+    })
+    .then((response) => response.json())
+    .then((json) => {
       if (files.length <= 0) {
         return new Wellplate(json.wellplate);
       }

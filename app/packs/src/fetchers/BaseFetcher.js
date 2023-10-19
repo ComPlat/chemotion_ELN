@@ -50,7 +50,8 @@ export default class BaseFetcher {
   static fetchByCollectionId(id, queryParams = {}, isSync = false, type = 'samples', ElKlass) {
     const page = queryParams.page || 1;
     const perPage = queryParams.per_page || UIStore.getState().number_of_results;
-    const filterCreatedAt = queryParams.filterCreatedAt === true ? '&filter_created_at=true' : '&filter_created_at=false';
+    const filterCreatedAt = queryParams.filterCreatedAt === true
+      ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
     const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
@@ -65,7 +66,8 @@ export default class BaseFetcher {
 
     switch (type) {
       case 'samples':
-        addQuery = `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`;
+        addQuery = `&product_only=${queryParams.productOnly || false}`
+          + `&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`;
         break;
       case 'reactions':
         userState = UserStore.getState();
@@ -75,6 +77,10 @@ export default class BaseFetcher {
         addQuery = group === 'none'
           ? '&sort_column=created_at'
           : `&sort_column=${sort && group ? group : 'updated_at'}`;
+        // if the user has not updated its profile yet, we set the default sort to created_at
+        if (!filters.reaction) {
+          addQuery = '&sort_column=created_at';
+        }
         break;
       case 'generic_elements':
         userState = UserStore.getState();

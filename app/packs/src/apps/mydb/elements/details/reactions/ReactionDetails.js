@@ -11,6 +11,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
@@ -71,7 +72,9 @@ export default class ReactionDetails extends Component {
   componentDidMount() {
     const { reaction } = this.props;
     UIStore.listen(this.onUIStoreChange);
-    CommentActions.fetchComments(reaction);
+    if (!reaction.isNew) {
+      CommentActions.fetchComments(reaction);
+    }
   }
 
   // eslint-disable-next-line camelcase
@@ -145,8 +148,11 @@ export default class ReactionDetails extends Component {
 
   handleInputChange(type, event) {
     let value;
-    if (type === 'temperatureUnit' || type === 'temperatureData' ||
-      type === 'description' || type === 'role' || type === 'observation' || type === 'durationUnit' || type === 'duration' || type === 'rxno') {
+    if (type === 'temperatureUnit' || type === 'temperatureData'
+      || type === 'description' || type === 'role'
+      || type === 'observation' || type === 'durationUnit'
+      || type === 'duration' || type === 'rxno'
+      || type === 'variations') {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -451,6 +457,14 @@ export default class ReactionDetails extends Component {
           <GreenChemistry
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
+          />
+        </Tab>
+      ),
+      variations: (
+        <Tab eventKey="variations" title="Variations" key={`variations_${reaction.id}`} unmountOnExit={false}>
+          <ReactionVariations
+            reaction={reaction}
+            onEditVariations={(event) => this.handleInputChange('variations', event)}
           />
         </Tab>
       )

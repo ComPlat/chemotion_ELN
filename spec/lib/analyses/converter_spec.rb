@@ -3,7 +3,7 @@
 # rubocop: disable Style/OpenStructUse
 require 'rails_helper'
 
-describe Analyses::Converter do
+describe Labimotion::Converter do
   describe '#jcamp_converter' do
     let(:response_ng) { OpenStruct.new(ok?: false, success?: false, parsed_response: { error: 'Your file could not be processed.' }) } # rubocop:disable Layout/LineLength
     let(:response_ok) { OpenStruct.new(ok?: true, success?: true, parsed_response: File.read(Rails.root.join('spec/fixtures/upload.zip'))) } # rubocop:disable Layout/LineLength
@@ -23,7 +23,7 @@ describe Analyses::Converter do
         end
 
         it 'attachment of converted file was not created' do
-          expect(described_class.jcamp_converter(attachment.id)).to eq 'failure'
+          expect(described_class.jcamp_converter(attachment.id)).to eq 9
         end
       end
     end

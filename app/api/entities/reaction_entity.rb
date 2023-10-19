@@ -35,7 +35,7 @@ module Entities
       expose! :rinchi_short_key
       expose! :rinchi_web_key
       expose! :rxno
-      expose! :segments,              anonymize_with: [],                               using: 'Entities::SegmentEntity'
+      expose! :segments,              anonymize_with: [],                               using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status
@@ -45,6 +45,7 @@ module Entities
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
+      expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
     end
 
     expose_timestamps
@@ -101,6 +102,10 @@ module Entities
 
     def comment_count
       object.comments.count
+    end
+
+    def variations
+      object.variations.map(&:deep_symbolize_keys)
     end
   end
 end

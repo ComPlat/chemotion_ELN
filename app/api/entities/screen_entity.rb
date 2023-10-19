@@ -22,7 +22,7 @@ module Entities
       expose! :container,             anonymize_with: nil, using: 'Entities::ContainerEntity'
       expose! :research_plans,        anonymize_with: [],  using: 'Entities::ResearchPlanEntity'
       expose! :component_graph_data,  anonymize_with: {}
-      expose! :segments,              anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :segments,              anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :tag,                   anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end
     # rubocop:enable Layout/ExtraSpacing

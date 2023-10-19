@@ -342,6 +342,9 @@ module AttachmentJcampProcess
   end
 
   def jcamp_files_already_present?
+    first_part, extname = extension_parts
+    return false if (extname.casecmp('nmrium').zero? || first_part['processed_']) # ignore when file is nmrium or preprocessed from Bruker NMR
+
     attachments = Attachment.where(attachable_id: self[:attachable_id])
     num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
     jcamp_attachments = file_match(attachments, num)
@@ -402,7 +405,6 @@ module AttachmentJcampProcess
         generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
         tmp_to_be_deleted.push(curr_tmp_csv)
       end
-
       jcamp_att = curr_jcamp_att if idx == 0
     end
 

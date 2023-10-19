@@ -11,11 +11,11 @@ module Export
       @xfile.workbook.styles.fonts.first.name = 'Calibri'
     end
 
-    def generate_sheet_with_samples(table, samples = nil)
+    def generate_sheet_with_samples(table, samples = nil, selected_columns = nil)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
 
-      generate_headers(table)
+      generate_headers(table, [], selected_columns)
       sheet = @xfile.workbook.add_worksheet(name: table.to_s) # do |sheet|
       grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
       sheet.add_row(@headers, style: grey) # Add header
@@ -39,7 +39,7 @@ module Export
         image_width = row_image_width if row_image_width > image_width
         # 3/4 -> The misterious ratio!
         if filtered_sample[decouple_idx].present?
-          filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == 't' ? 'Yes' : 'No'
+          filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == true ? 'yes' : 'No'
         end
 
         size = sheet.styles.add_style :sz => 12
@@ -112,9 +112,9 @@ module Export
       output = output.join("\n")
       output
     end
-    
+
     def filter_with_permission_and_detail_level(sample)
-      # return all data if sample in own collection
+      # return all data if sample/chemical in own collection
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
         headers = @headers
         reference_values = ['melting pt', 'boiling pt']
@@ -125,6 +125,8 @@ module Export
             regex = /[\[\]()]/
             string = sample[column].gsub(regex, '')
             string.split(',').join(' - ')
+          elsif column == 'solvent'
+            extract_label_from_solvent_column(sample[column]) || ''
           else
             sample[column]
           end
@@ -141,7 +143,6 @@ module Export
         data = headers.map { |column| column ? sample[column] : nil }
         data[@image_index] = svg_path(sample) if headers.include?('image')
       end
-
       data
     end
 

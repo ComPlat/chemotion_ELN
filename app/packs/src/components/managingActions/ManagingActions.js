@@ -14,7 +14,7 @@ import ManagingModalDelete from 'src/components/managingActions/ManagingModalDel
 import ManagingModalRemove from 'src/components/managingActions/ManagingModalRemove';
 import ManagingModalTopSecret from 'src/components/managingActions/ManagingModalTopSecret';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import klasses from '../../../../../config/klasses.json';
+import { elementNames } from 'src/apps/generic/Utils';
 
 const upState = (state) => {
   const { sample, reaction, screen, wellplate, research_plan, vessel } = state;
@@ -52,7 +52,7 @@ const upState = (state) => {
   };
 
   // eslint-disable-next-line no-unused-expressions
-  klasses && klasses.forEach((klass) => {
+  elementNames(false).forEach((klass) => {
     stateObj[`${klass}`] = {
       checkedAll: state[`${klass}`] ? state[`${klass}`].checkedAll : false,
       checkedIds: state[`${klass}`] ? state[`${klass}`].checkedIds : List(),
@@ -114,7 +114,7 @@ export default class ManagingActions extends React.Component {
       });
     }
     else if (this.checkUIState(state)) {
-      const hasSel = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel'].concat(klasses || []).find(el => (
+      const hasSel = elementNames(true).find(el => (
         state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
       PermissionActions.fetchPermissionStatus(state);
       this.setState({
