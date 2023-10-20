@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/NestedGroups, Style/FormatString, RSpec/MultipleMemoizedHelpers, RSpec/AnyInstance, RSpec/MultipleExpectations, RSpec/FilePath, RSpec/LetSetup, Naming/VariableNumber
+
 require 'rails_helper'
 
 describe Chemotion::CollectionAPI do
@@ -15,7 +17,7 @@ describe Chemotion::CollectionAPI do
     }
   end
 
-  context 'authorized user logged in' do
+  context 'with authorized user logged in' do
     let!(:user)  { create(:person, first_name: 'Musashi', last_name: 'M') }
     let!(:u2)    { create(:person) }
     let(:group) { create(:group) }
@@ -280,11 +282,12 @@ describe Chemotion::CollectionAPI do
 
       let!(:tabs_segment) do
         {
-          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
+          'sample' => { 'results' => -2, 'analyses' => 1, 'properties' => 2, 'references' => -1, 'qc_curation' => 3,
+                        'measurements' => -3 },
         }
       end
 
-      describe '01 - from and to collections owned by user, ' do
+      describe '01 - from and to collections owned by user,' do
         # before do
         #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s.id)
         #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s_r.id)
@@ -401,7 +404,7 @@ describe Chemotion::CollectionAPI do
             }
           end
 
-          context 'assign cellline to new collection' do
+          context 'when assigning cellline to new collection' do
             before do
               post '/api/v1/collections/elements', params: { ui_state: ui_state, collection_id: c_target.id }
             end
@@ -416,7 +419,7 @@ describe Chemotion::CollectionAPI do
             end
           end
 
-          context 'assign cell line to collection where it is already in' do
+          context 'when assigning cell line to collection where it is already in' do
             let(:cellline_collections) do
               CollectionsCellline.find_by(
                 cellline_sample_id: cell_line_sample.id,
@@ -589,16 +592,16 @@ describe Chemotion::CollectionAPI do
           it 'find collection and insert creates tab segments value' do
             post '/api/v1/collections/tabs', params: { segments: tabs_segment, id: c_target.id }
             c = Collection.find(c_target.id)
-            expect(c).to_not be_nil
-            expect(c.tabs_segment).to_not be_nil
-            expect(response.status).to eq 201
+            expect(c).not_to be_nil
+            expect(c.tabs_segment).not_to be_nil
+            expect(response).to have_http_status :created
           end
         end
 
         describe 'PATCH /api/v1/collections/tabs' do
           it 'updates new tab segments value and returns 204' do
             patch '/api/v1/collections/tabs', params: { segment: tabs_segment, id: c_target.id }
-            expect(response.status).to eq 204
+            expect(response).to have_http_status :no_content
           end
         end
       end
@@ -778,13 +781,13 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'creates an import job' do
-          status = post '/api/v1/collections/imports', params: file_upload
+          post '/api/v1/collections/imports', params: file_upload
           expect(response).to have_http_status(:no_content)
         end
       end
     end
 
-    context 'metadata' do
+    context 'with metadata' do
       describe 'GET /api/v1/collections/<id>/metadata' do
         it 'with a valid collection id and with existing metadata' do
           c1.metadata = create(:metadata)
@@ -846,7 +849,7 @@ describe Chemotion::CollectionAPI do
     end
   end
 
-  context 'no user logged in' do
+  context 'when no user logged in' do
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(nil)
     end
@@ -912,13 +915,13 @@ describe Chemotion::CollectionAPI do
         end
 
         it 'responds with 401 status code' do
-          status = post '/api/v1/collections/imports', params: file_upload
+          post '/api/v1/collections/imports', params: file_upload
           expect(response).to have_http_status(:unauthorized)
         end
       end
     end
 
-    context 'metadata' do
+    context 'with metadata' do
       let!(:c1) { create(:collection) }
 
       describe 'GET /api/v1/collections/<id>/metadata' do
@@ -959,3 +962,4 @@ describe Chemotion::CollectionAPI do
     end
   end
 end
+# rubocop:enable RSpec/NestedGroups, Style/FormatString, RSpec/MultipleMemoizedHelpers, RSpec/AnyInstance, RSpec/MultipleExpectations, RSpec/FilePath, RSpec/LetSetup, Naming/VariableNumber
