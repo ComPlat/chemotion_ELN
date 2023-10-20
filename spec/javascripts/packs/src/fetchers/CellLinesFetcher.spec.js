@@ -1,5 +1,5 @@
 import expect from "expect";
-import CellLine from 'src/models/CellLine';
+import CellLine from 'src/models/cellLine/CellLine';
 import CellLinesFetcher from "../../../../../app/packs/src/fetchers/CellLinesFetcher";
 
 describe('CellLinesFetcher', () => {

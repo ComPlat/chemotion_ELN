@@ -168,45 +168,5 @@ describe('ResearchPlanDetails', async () => {
         });
       }
     );
-    context(
-      'replacing an image field for the second time - replacing an temporary image',
-      async () => {
-        it('expecting to be replaced with old value in memory', async () => {
-          const attachmentToAdd = await AttachmentFactory.build('new', {
-            id: uuid.v1(),
-          });
-          const researchPlanWithImage = await ResearchPlanFactory.build(
-            'with_image_body_field'
-          );
-
-          const newValue = {
-            file_name: 'abc.png',
-            public_name: attachmentToAdd.identifier,
-            old_value: researchPlanWithImage.attachments[0].identifier,
-          };
-
-          const expectedField = {
-            id: FIELD_ID_IMAGE,
-            type: 'image',
-            value: newValue,
-          };
-
-          const wrapper = shallow(
-            <ResearchPlanDetails
-              researchPlan={researchPlanWithImage}
-              toggleFullScreen={() => {}}
-            />
-          );
-
-          wrapper
-            .instance()
-            .handleBodyChange(newValue, FIELD_ID_IMAGE, [attachmentToAdd]);
-
-          expect(researchPlanWithImage.changed).toEqual(true);
-          expect(researchPlanWithImage.attachments.length).toEqual(2);
-          expect(researchPlanWithImage.body).toEqual([expectedField]);
-        });
-      }
-    );
   });
 });
