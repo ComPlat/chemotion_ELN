@@ -32,6 +32,7 @@ import { notification, FlowViewerBtn, renderFlowModal } from 'src/apps/generic/U
 import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -397,6 +398,9 @@ export default class GenericElDetails extends Component {
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
+        {genericEl.isNew
+          ? null
+          : <OpenCalendarButton isPanelHeader eventableId={genericEl.id} eventableType="Labimotion::Element" />}
       </div>
     );
   }
