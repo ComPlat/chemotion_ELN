@@ -52,21 +52,28 @@ module CollectionHelpers
     }.merge(dl || {})
   end
 
-  # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
+ # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
   def fetch_collection_id_for_assign(prms = params, pl = 1)
     c_id = prms[:collection_id]
-    if prms[:newCollection].present?
+    if !prms[:newCollection].blank?
       c = Collection.create(
-        user_id: current_user.id, label: prms[:newCollection],
+        user_id: current_user.id, label: prms[:newCollection]
       )
     elsif prms[:is_sync_to_me]
       c = Collection.joins(:sync_collections_users).where(
         'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and (sync_collections_users.permission_level = 1 or sync_collections_users.permission_level >= ?)',
         c_id,
         user_ids,
-        pl,
+        pl
+      ).first
+    elsif
+      c = Collection.where(id: c_id).where(
+        'shared_by_id = ? OR (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?))',
+        current_user.id,
+        user_ids,
+        pl
       ).first
     end
     c&.id
