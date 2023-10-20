@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
+# rubocop:disable FactoryBot/FactoryAssociationWithStrategy, Lint/RedundantCopDisableDirective
+
 FactoryBot.define do
   factory :cellline_sample do
     creator { create(:person) }
     cellline_material { create(:cellline_material) }
     amount { 999 }
     passage { 10 }
-    unit { "g" }
-    container { FactoryBot.create(:container, :with_analysis )}
+    unit { 'g' }
+    container { FactoryBot.create(:container, :with_analysis) }
   end
 
   trait :with_analysis do
@@ -17,3 +19,4 @@ FactoryBot.define do
     end
   end
 end
+# rubocop:enable FactoryBot/FactoryAssociationWithStrategy, Lint/RedundantCopDisableDirective

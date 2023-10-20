@@ -4,6 +4,7 @@
 # rubocop: disable RSpec/AnyInstance
 # rubocop: disable RSpec/LetSetup
 # rubocop: disable RSpec/FilePath
+# rubocop: disable RSpec/IndexedLet, Lint/RedundantCopDisableDirective
 
 require 'rails_helper'
 
@@ -112,3 +113,4 @@ end
 # rubocop: enable RSpec/AnyInstance
 # rubocop: enable RSpec/LetSetup
 # rubocop: enable RSpec/FilePath
+# rubocop: enable RSpec/IndexedLet, Lint/RedundantCopDisableDirective
