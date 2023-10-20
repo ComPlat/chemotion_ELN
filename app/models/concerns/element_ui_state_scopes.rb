@@ -1,15 +1,18 @@
+# frozen_string_literal: true
+
+# rubocop:disable Performance/StringInclude
+
 module ElementUIStateScopes
   extend ActiveSupport::Concern
 
   included do
-    scope :by_ui_state, ->(ui_state) {
+    scope :by_ui_state, lambda { |ui_state|
       # see ui_state_params in api/helpers/params_helpers.rb
       # map legacy params
       return none if ui_state.nil?
-    
 
       checked_all = ui_state[:checkedAll] || ui_state[:all]
-      checked_all = false if checked_all == "false"
+      checked_all = false if checked_all == 'false'
       checked_ids = ui_state[:checkedIds].presence || ui_state[:included_ids]
 
       return none unless checked_all || checked_ids.present?
@@ -22,14 +25,18 @@ module ElementUIStateScopes
 
   module ClassMethods
     def for_ui_state(ui_state)
-      return self.none unless ui_state
+      return none unless ui_state
 
       all = coerce_all_to_boolean(ui_state.fetch(:all, false))
       collection_id = ui_state.fetch(:collection_id, 'all')
 
-      if (all)
+      if all
         excluded_ids = ui_state.fetch(:excluded_ids, [])
-        collection_id == 'all' ? where.not(id: excluded_ids).distinct : by_collection_id(collection_id.to_i).where.not(id: excluded_ids).distinct
+        if collection_id == 'all'
+          where.not(id: excluded_ids).distinct
+        else
+          by_collection_id(collection_id.to_i).where.not(id: excluded_ids).distinct
+        end
       else
         included_ids = ui_state.fetch(:included_ids, [])
         where(id: included_ids).distinct
@@ -38,24 +45,25 @@ module ElementUIStateScopes
 
     def for_ui_state_with_collection(ui_state, collection_class, collection_id)
       all = coerce_all_to_boolean(ui_state.fetch(:all, false))
-      attributes = collection_class.column_names - ["collection_id"]
+      attributes = collection_class.column_names - ['collection_id']
       element_label = attributes.find { |e| /_id/ =~ e }
       collection_elements = collection_class.where(collection_id: collection_id)
-      if (all)
+      if all
         excluded_ids = ui_state.fetch(:excluded_ids, [])
-        result = collection_elements.where.not({element_label => excluded_ids})
+        result = collection_elements.where.not({ element_label => excluded_ids })
       else
         included_ids = ui_state.fetch(:included_ids, [])
-        result = collection_elements.where({element_label => included_ids})
+        result = collection_elements.where({ element_label => included_ids })
       end
       result.pluck(element_label).uniq
     end
 
-    # TODO cleanup coercion in API
+    # TODO: cleanup coercion in API
     def coerce_all_to_boolean(all)
       return all unless all.is_a? String
 
-      all == "false" ? false : true
+      all != 'false'
     end
   end
 end
+# rubocop:enable Performance/StringInclude
