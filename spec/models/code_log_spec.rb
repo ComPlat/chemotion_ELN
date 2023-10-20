@@ -13,7 +13,8 @@ RSpec.describe CodeLog, type: :model do
       ['sample', sample.id],
       ['reaction', reaction.id],
       ['screen', screen.id],
-      ['wellplate', wellplate.id]
+      ['wellplate', wellplate.id],
+      ['container', reaction.container.children.first.children.first.id],
     ]
   end
 end

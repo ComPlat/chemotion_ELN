@@ -280,43 +280,6 @@ describe Chemotion::CollectionAPI do
 
       let!(:tabs_segment) do
         {
-          'sample' => { 'results' => -2, 'analyses' => 1, 'properties' => 2, 'references' => -1, 'qc_curation' => 3,
-                        'measurements' => -3 },
-        }
-      end
-
-      let!(:tabs_segment) do
-        {
-          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
-        }
-      end
-
-      let!(:tabs_segment) do
-        {
-          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
-        }
-      end
-
-      let!(:tabs_segment) do
-        {
-          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
-        }
-      end
-
-      let!(:tabs_segment) do
-        {
-          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
-        }
-      end
-
-      let!(:tabs_segment) do
-        {
-          "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
-        }
-      end
-
-      let!(:tabs_segment) do
-        {
           "sample"=>{"results"=>-2, "analyses"=>1, "properties"=>2, "references"=>-1, "qc_curation"=>3, "measurements"=>-3}
         }
       end
