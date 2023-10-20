@@ -14,25 +14,25 @@ export default class CellLineFactory {
   constructor() {
     this.factory = factory;
 
-    this.factory.define('new', CellLine, async () => {
+    this.factory.define('CellLineFactory.new', CellLine, async () => {
       const cellLine = CellLine.buildEmpty(0, '');
       return cellLine;
     });
 
-    this.factory.define('with_name', CellLine, async () => {
+    this.factory.define('CellLineFactory.with_name', CellLine, async () => {
       const cellLine = CellLine.buildEmpty(0, '');
       cellLine.cellLineName = 'Cell line 123';
       cellLine.cellLineId = 1;
       return cellLine;
     });
 
-    this.factory.define('with_other_name', CellLine, async () => {
+    this.factory.define('CellLineFactory.with_other_name', CellLine, async () => {
       const cellLine = CellLine.buildEmpty(0, '');
       cellLine.cellLineName = 'Cell line 456';
       cellLine.cellLineId = 2;
       return cellLine;
     });
-    this.factory.define('heLa', CellLine, async () => {
+    this.factory.define('CellLineFactory.heLa', CellLine, async () => {
       const cellLine = CellLine.buildEmpty(0, '');
       cellLine.cellLineName = 'HeLa';
       cellLine.cellLineId = 2;

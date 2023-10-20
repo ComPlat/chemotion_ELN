@@ -9,7 +9,7 @@ import {
 describe('Container.switchPositionOfChildContainer()', async () => {
   describe('when putting first container after second one', async () => {
     it('new order should be c2,c1,c3,c4', async () => {
-      const container = await ContainerFactory.build('container_with_four_children');
+      const container = await ContainerFactory.build('ContainerFactory.container_with_four_children');
       const originalIds = container.children.map((e) => e.id);
 
       Container.switchPositionOfChildContainer(container.children, originalIds[0], originalIds[1]);

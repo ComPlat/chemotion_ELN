@@ -27,7 +27,7 @@ describe('CellLineDetailsStore', async () => {
     describe('when data is valid', async () => {
       it('material properties are changed', async () => {
         const store = CellLineDetailsStore.create({});
-        const cellLineSample = await CellLineFactory.build('heLa');
+        const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
         store.convertCellLineToModel(cellLineSample);
 
         store.setMaterialProperties(cellLineSample.id, newMaterialProperties);
@@ -51,7 +51,7 @@ describe('CellLineDetailsStore', async () => {
     describe('when object not available', async () => {
       it('creates a valid entry in the store', async () => {
         const store = CellLineDetailsStore.create({});
-        const cellLineSample = await CellLineFactory.build('heLa');
+        const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
         store.convertCellLineToModel(cellLineSample);
         const storeSample = store.cellLines(cellLineSample.id);
 
@@ -81,7 +81,7 @@ describe('CellLineDetailsStore', async () => {
   });
   describe('.changeAmount', async () => {
     const store = CellLineDetailsStore.create({});
-    const cellLineSample = await CellLineFactory.build('heLa');
+    const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
     store.convertCellLineToModel(cellLineSample);
     const storeSample = store.cellLines(cellLineSample.id);
 
