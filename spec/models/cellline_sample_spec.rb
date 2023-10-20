@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe CelllineSample do
-  let(:sample) { create((:cellline_sample)) }
+  let(:sample) { create(:cellline_sample) }
 
   context 'when empty cell line sample crated' do
     it 'root container exists' do

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Performance/MethodObjectAsBlock, Layout/LineLength
 module Export
   class ExportCollections
     attr_accessor :file_path
@@ -32,7 +32,7 @@ module Export
       builder.to_xml
     end
 
-    # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity
     def to_file
       case @format
       when 'json'
@@ -101,7 +101,7 @@ module Export
         @file_path
       end
     end
-    # rubocop:enable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/MethodLength,Metrics/CyclomaticComplexity
 
     def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       # get the collections from the database, in order of ancestry, but with empty ancestry first
@@ -122,8 +122,8 @@ module Export
       collections.each do |collection|
         # fetch collection
         fetch_one(collection, {
-          'user_id' => 'User'
-        })
+                    'user_id' => 'User',
+                  })
         fetch_samples collection
         fetch_reactions collection
         # fetch_elements collection if @gt == false
@@ -131,7 +131,7 @@ module Export
         fetch_screens collection if @gt == false
         fetch_research_plans collection if @gt == false
         add_cell_line_material_to_package collection if @gt == false
-        add_cell_line_sample_to_package collection if  @gt == false
+        add_cell_line_sample_to_package collection if @gt == false
       end
     end
 
@@ -182,11 +182,11 @@ module Export
                    'fingerprint_id' => 'Fingerprint',
                    'created_by' => 'User',
                    'user_id' => 'User',
-      })
+                 })
       fetch_many(collection.collections_samples, {
                    'collection_id' => 'Collection',
                    'sample_id' => 'Sample',
-      })
+                 })
 
       # loop over samples and fetch sample properties
       samples.each do |sample|
@@ -195,10 +195,10 @@ module Export
         fetch_one(sample.molecule_name, {
                     'molecule_id' => 'Molecule',
                     'user_id' => 'User',
-        })
+                  })
         fetch_many(sample.residues, {
                      'sample_id' => 'Sample',
-        })
+                   })
 
         segment, @attachments = Labimotion::Export.fetch_segments(sample, @attachments, &method(:fetch_one))
         @segments += segment if segment.present?
@@ -252,7 +252,8 @@ module Export
     end
 
     def fetch_elements(collection)
-      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments, method(:fetch_many), method(:fetch_one), method(:fetch_containers))
+      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments,
+                                                                  method(:fetch_many), method(:fetch_one), method(:fetch_containers))
     end
 
     def fetch_wellplates(collection)
@@ -367,7 +368,10 @@ module Export
                         'containable_id' => containable_type,
                         'parent_id' => 'Container',
                       })
-            @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset, &method(:fetch_one) ) if attachment_container.dataset.present?
+            if attachment_container.dataset.present?
+              @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset,
+                                                             &method(:fetch_one))
+            end
             fetch_many(attachment_container.attachments, {
                          'attachable_id' => 'Container',
                          'created_by' => 'User',
@@ -403,7 +407,7 @@ module Export
       end
     end
 
-    # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
     def fetch_one(instance, foreign_keys = {})
       return if instance.nil?
 
@@ -466,5 +470,4 @@ module Export
   end
 end
 
-# rubocop: enable Metrics/ClassLength
-#
+# rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock, Layout/LineLength

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, Lint/MissingCopEnableDirective, Lint/RedundantCopDisableDirective
 require 'rails_helper'
 
 # test for ExportCollection
@@ -73,7 +73,7 @@ RSpec.describe 'ExportCollection' do
     before do
       research_plan.attachments = [attachment]
       research_plan.save!
-     
+
       update_body_of_researchplan(research_plan, attachment.identifier)
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
@@ -202,4 +202,4 @@ RSpec.describe 'ExportCollection' do
     research_plan
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, Lint/MissingCopEnableDirective, Lint/RedundantCopDisableDirective

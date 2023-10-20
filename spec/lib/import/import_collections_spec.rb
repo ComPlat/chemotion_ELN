@@ -179,7 +179,6 @@ RSpec.describe 'ImportCollection' do
       it 'collection was created and has two cell lines' do
         expect(Collection.find_by(label: 'Awesome Collection')).not_to be_nil
         expect(Collection.find_by(label: 'Awesome Collection').cellline_samples.length).to be 2
-
       end
 
       it 'One cell line material was imported' do

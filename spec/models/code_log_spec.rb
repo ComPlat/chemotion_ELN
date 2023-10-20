@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:disable RSpec/MatchArray
 
 require 'rails_helper'
 
@@ -18,3 +19,4 @@ RSpec.describe CodeLog, type: :model do
     ]
   end
 end
+# rubocop:enable RSpec/MatchArray

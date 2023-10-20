@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/IndexedLet, Lint/RedundantCopDisableDirective
+
 require 'rails_helper'
 
 RSpec.describe CollectionsCellline do
@@ -70,3 +72,4 @@ RSpec.describe CollectionsCellline do
     end
   end
 end
+# rubocop:enable RSpec/IndexedLet, Lint/RedundantCopDisableDirective
