@@ -7,6 +7,9 @@ module Chemotion
     resource :inbox do
       params do
         requires :cnt_only, type: Boolean, desc: 'return count number only'
+        optional :sort_column, type: String, desc: 'sort by creation time or name',
+                               values: %w[created_at name],
+                               default: 'name'
       end
 
       paginate per_page: 20, offset: 0, max_per_page: 50
@@ -20,7 +23,10 @@ module Chemotion
                                           root: :inbox,
                                           only: [:inbox_count]
         else
-          scope = current_user.container.children.order(created_at: :desc)
+          sort_column = params[:sort_column].presence || 'name'
+          sort_direction = sort_column == 'created_at' ? 'DESC' : 'ASC'
+
+          scope = current_user.container.children.order("#{sort_column} #{sort_direction}")
 
           reset_pagination_page(scope)
 
@@ -37,15 +43,21 @@ module Chemotion
       params do
         requires :container_id, type: Integer, desc: 'subcontainer ID'
         optional :dataset_page, type: Integer, desc: 'Pagination number'
+        optional :sort_column, type: String, desc: 'sort by creation time or name',
+                               values: %w[created_at name],
+                               default: 'name'
       end
 
       get 'containers/:container_id' do
         if current_user.container.present?
           container = current_user.container.children.find params[:container_id]
 
+          sort_column = params[:sort_column].presence || 'name'
+
           Entities::InboxEntity.represent(container,
                                           root_container: false,
                                           dataset_page: params[:dataset_page],
+                                          sort_column: sort_column,
                                           root: :inbox)
         end
       end

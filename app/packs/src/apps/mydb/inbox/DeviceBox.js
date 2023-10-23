@@ -45,9 +45,17 @@ export default class DeviceBox extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { deviceBoxVisible } = this.props;
+    const { deviceBoxVisible, device_box } = this.props;
+    const { currentDeviceBoxPage } = this.state;
+
     if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
       this.setState({ visible: deviceBoxVisible });
+    }
+
+    if (deviceBoxVisible) {
+      if (Array.isArray(device_box.children) && !device_box.children.length) {
+        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
+      }
     }
   }
 
@@ -274,10 +282,6 @@ export default class DeviceBox extends React.Component {
         ) : null}
       </span>
     );
-
-    device_box.children.sort((a, b) => {
-      if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
-    });
 
     const datasets = device_box.children.map((dataset) => (
       <DatasetContainer

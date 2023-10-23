@@ -12,6 +12,8 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 
 export default class InboxModal extends React.Component {
   constructor(props) {
@@ -29,6 +31,7 @@ export default class InboxModal extends React.Component {
       itemsPerPage: inboxState.itemsPerPage,
       totalPages: inboxState.totalPages,
       activeDeviceBoxId: inboxState.activeDeviceBoxId,
+      sortColumn: 'name',
     };
 
     this.onChange = this.onChange.bind(this);
@@ -43,6 +46,7 @@ export default class InboxModal extends React.Component {
     InboxStore.listen(this.onChange);
     UIStore.listen(this.onUIStoreChange);
     InboxActions.fetchInboxCount();
+    this.initState();
   }
 
   componentWillUnmount() {
@@ -87,6 +91,73 @@ export default class InboxModal extends React.Component {
         currentPage: pageNumber
       }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
     }
+  }
+
+  initState = () => {
+    const type = 'inbox';
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+
+    // you are not able to use this.setState because this would rerender it again and again ...
+
+    // eslint-disable-next-line react/no-direct-mutation-state
+    this.state.sortColumn = filters[type]?.sort || 'name';
+  };
+
+  updateFilterAndUserProfile = (type, sort) => {
+    InboxActions.changeInboxFilter({
+      name: type,
+      sort: sort,
+    });
+
+    UserActions.updateUserProfile({
+      data: {
+        filters: {
+          [type]: {
+            sort: sort,
+          },
+        },
+      },
+    });
+  };
+
+  changeSortColumn = () => {
+    const type = 'inbox';
+    const { sortColumn } = this.state;
+    const sort = sortColumn === 'created_at' ? 'name' : 'created_at';
+
+    this.setState({
+      sortColumn: sort,
+    }, () => {
+      this.updateFilterAndUserProfile(type, sort);
+    });
+  };
+
+  renderSortButton() {
+    const { sortColumn } = this.state;
+    const sortTitle = sortColumn === 'name'
+        ? `click to sort by creation date (descending) - currently sorted by name (ascending)`
+        : `click to sort by name (ascending) - currently sorted by creation date (descending)`;
+    const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
+    const sortIconClass = sortColumn === 'name' ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
+    const sortContent = (
+      <OverlayTrigger placement="top" overlay={sortTooltip}>
+        <button
+            type="button"
+            className="btn-inbox-sort"
+            onClick={this.changeSortColumn}
+        >
+          {sortIcon}
+        </button>
+      </OverlayTrigger>
+    );
+
+    return (
+      <>
+        {sortContent}
+      </>
+    );
   }
 
   refreshInbox() {
@@ -166,9 +237,6 @@ export default class InboxModal extends React.Component {
 
     let boxes = '';
     if (inbox.children) {
-      inbox.children.sort((a, b) => {
-        if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
-      });
       boxes = inbox.children.map(deviceBox => (
         <DeviceBox
           key={`box_${deviceBox.id}`}
@@ -275,6 +343,7 @@ export default class InboxModal extends React.Component {
                 >
                   <i className="fa fa-times" />
                 </Button>
+                {this.renderSortButton()}
                 <Button
                   bsStyle="success"
                   bsSize="xsmall"

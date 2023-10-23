@@ -5,6 +5,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 class InboxStore {
   constructor() {
@@ -69,6 +70,7 @@ class InboxStore {
       setInboxVisible: InboxActions.setInboxVisible,
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
       handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
+      handleChangeInboxFilter: InboxActions.changeInboxFilter,
     });
   }
 
@@ -86,11 +88,11 @@ class InboxStore {
     }
   }
 
-  handleFetchInbox(result) {
+  handleFetchInbox(payload) {
     const { itemsPerPage } = this.state;
-    this.state.inbox = result;
+    this.state.inbox = payload.inbox;
     this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
-    this.state.activeDeviceBoxId = null;
+    this.state.activeDeviceBoxId = payload.activeDeviceBoxId ? payload.activeDeviceBoxId : null;
 
     this.sync();
     this.countAttachments();
@@ -105,6 +107,20 @@ class InboxStore {
       },
       currentUnsortedBoxPage: 1,
     }));
+  }
+
+  handleChangeInboxFilter(filter) {
+    const userState = UserStore.getState();
+    if (!userState.profile.filters) {
+      userState.profile.data.filters = {};
+    }
+    userState.profile.data.filters[filter.name] = {
+      sort: filter.sort,
+    };
+
+    const { currentPage, itemsPerPage, activeDeviceBoxId } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId });
+    // this.handleRefreshElements(filter.name);
   }
 
   handleFetchInboxCount(result) {
