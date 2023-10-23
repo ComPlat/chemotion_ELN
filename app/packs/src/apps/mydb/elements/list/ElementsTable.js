@@ -549,8 +549,10 @@ export default class ElementsTable extends React.Component {
       typeSpecificHeader = this.renderGenericElementsHeader();
     }
 
-    const filterTitle = filterCreatedAt === true ? 'filter by creation date' : 'filter by update date';
-    const filterIconClass = filterCreatedAt === true ? 'fa-calendar-o' : 'fa-calendar';
+    const filterTitle = filterCreatedAt === true
+        ? 'click to filter by update date - currently filtered by creation date'
+        : 'click to filter by creation date - currently filtered by update date';
+    const filterIconClass = filterCreatedAt === true ? 'fa-calendar' : 'fa-calendar-o';
 
     const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
