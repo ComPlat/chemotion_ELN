@@ -49,7 +49,7 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength,Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
 # rubocop: disable Metrics/MethodLength
 # rubocop: disable Metrics/AbcSize
 
@@ -510,6 +510,6 @@ class Group < User
   end
 end
 
-# rubocop: enable Metrics/ClassLength
+# rubocop: enable Metrics/ClassLength,Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
 # rubocop: enable Metrics/MethodLength
 # rubocop: enable Metrics/AbcSize

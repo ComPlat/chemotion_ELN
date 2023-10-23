@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop: disable Metrics/CyclomaticComplexity
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
@@ -72,3 +73,4 @@ class ElementDetailLevelCalculator
                                        .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 end
+# rubocop: enable Metrics/CyclomaticComplexity

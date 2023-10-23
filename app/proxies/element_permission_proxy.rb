@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# rubocop: disable Metrics/CyclomaticComplexity, Lint/DuplicateBranch
 class ElementPermissionProxy
   attr_reader :user, :element, :detail_level
 
@@ -104,3 +107,4 @@ class ElementPermissionProxy
     end
   end
 end
+# rubocop: enable Metrics/CyclomaticComplexity, Lint/DuplicateBranch

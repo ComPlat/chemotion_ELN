@@ -19,7 +19,7 @@ module Usecases
             wellplate_ids: @params.fetch(:wellplate_ids, []),
             screen_ids: @params.fetch(:screen_ids, []),
             research_plan_ids: @params.fetch(:research_plan_ids, []),
-            cell_line_ids: @params.fetch(:cell_line_ids, []), 
+            cell_line_ids: @params.fetch(:cell_line_ids, []),
             element_ids: @params.fetch(:element_ids, [])
           ).execute!
         end

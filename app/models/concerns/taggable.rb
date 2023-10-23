@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop: disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/AbcSize, Naming/MethodParameterName, Lint/AssignmentInCondition
+
 # Module for tag behaviour
 module Taggable
   extend ActiveSupport::Concern
@@ -16,7 +18,6 @@ module Taggable
     update_tag(**args)
   end
 
-  # rubocop: disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/AbcSize
   def update_tag(**args)
     build_tag(taggable_data: {}) if new_record? || !tag
     return if tag.destroyed?
@@ -111,3 +112,4 @@ module Taggable
     pcid.presence || PubChem.get_cid_from_inchikey(inchikey)
   end
 end
+# rubocop: enable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/AbcSize, Naming/MethodParameterName, Lint/AssignmentInCondition

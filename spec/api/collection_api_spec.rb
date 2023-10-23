@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/NestedGroups, Style/FormatString, RSpec/MultipleMemoizedHelpers, RSpec/AnyInstance, RSpec/MultipleExpectations, RSpec/FilePath, RSpec/LetSetup, Naming/VariableNumber
+# rubocop:disable RSpec/NestedGroups, Style/FormatString, RSpec/MultipleMemoizedHelpers, RSpec/AnyInstance, RSpec/MultipleExpectations, RSpec/FilePath, RSpec/LetSetup, Naming/VariableNumber, RSpec/IndexedLet, Lint/RedundantCopDisableDirective
 
 require 'rails_helper'
 
@@ -962,4 +962,4 @@ describe Chemotion::CollectionAPI do
     end
   end
 end
-# rubocop:enable RSpec/NestedGroups, Style/FormatString, RSpec/MultipleMemoizedHelpers, RSpec/AnyInstance, RSpec/MultipleExpectations, RSpec/FilePath, RSpec/LetSetup, Naming/VariableNumber
+# rubocop:enable RSpec/NestedGroups, Style/FormatString, RSpec/MultipleMemoizedHelpers, RSpec/AnyInstance, RSpec/MultipleExpectations, RSpec/FilePath, RSpec/LetSetup, Naming/VariableNumber, RSpec/IndexedLet, Lint/RedundantCopDisableDirective

@@ -25,7 +25,7 @@ module Usecases
         shared_or_synced_celllines = @current_user.shared_collections.map do |col|
           col.cellline_samples.find_by(id: @id)
         end
-        shared_or_synced_celllines.first 
+        shared_or_synced_celllines.first
       end
     end
   end

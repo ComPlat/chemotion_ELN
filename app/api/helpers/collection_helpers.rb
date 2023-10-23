@@ -52,7 +52,7 @@ module CollectionHelpers
     }.merge(dl || {})
   end
 
- # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
+  # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
   def fetch_collection_id_for_assign(prms = params, pl = 1)

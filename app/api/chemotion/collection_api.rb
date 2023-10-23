@@ -247,9 +247,9 @@ module Chemotion
 
           sharing_allowed = share_samples &&
                             share_reactions &&
-                            share_wellplates && 
-                            share_screens && 
-                            share_research_plans && 
+                            share_wellplates &&
+                            share_screens &&
+                            share_research_plans &&
                             share_cell_lines_plans &&
                             share_elements
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)

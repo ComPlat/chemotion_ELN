@@ -444,7 +444,6 @@ module Export
       end
       uuid
     end
-    # rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
 
     def fetch_image(image_path, image_file_name)
       return if image_file_name.blank?
@@ -471,3 +470,4 @@ module Export
 end
 
 # rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock, Layout/LineLength
+# rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
