@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/UselessAssignment
+
 
 module Chemotion
   class SearchAPI < Grape::API
@@ -615,4 +616,4 @@ module Chemotion
   end
 end
 
-# rubocop: enable Metrics/ClassLength, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop: enable Metrics/ClassLength, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/UselessAssignment

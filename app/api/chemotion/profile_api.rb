@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # rubocop: disable Style/MultilineIfModifier
 module Chemotion
   class ProfileLayoutHash < Grape::Validations::Validators::Base
