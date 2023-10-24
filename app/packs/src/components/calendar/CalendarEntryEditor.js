@@ -46,8 +46,7 @@ export default class CalendarEntryEditor extends React.Component {
 
     const e = { type: eventableType, params: {} };
     e.params[`${eventableType}ID`] = eventableId;
-
-    if (eventableType === 'element') {
+    if (/\blabimotion\b/.test(eventableType)) {
       e.klassType = 'GenericEl';
     }
 

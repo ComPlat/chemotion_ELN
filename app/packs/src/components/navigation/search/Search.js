@@ -93,6 +93,7 @@ export default class Search extends React.Component {
       searchName: genericEl.search_name,
       searchShowLabel: genericEl.search_short_label,
       genericElName: genericEl.name,
+      genericKlassId: genericEl.id,
       search_by_method: genericEl.name,
       genericElProperties: genericEl.properties,
       searchProperties: genericEl.search_properties,
