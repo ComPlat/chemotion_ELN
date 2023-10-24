@@ -1,5 +1,61 @@
 # Chemotion_ELN Changelog
 
+## [v1.8.0]
+> (2023-10-24)
+
+
+* Features and enhancements
+  * Reaction Variations ([#1409](https://github.com/ComPlat/chemotion_ELN/pull/1409), [#1561](https://github.com/ComPlat/chemotion_ELN/pull/1561), [#1567](https://github.com/ComPlat/chemotion_ELN/pull/1567)) [Docs](https://chemotion.net/docs/eln/ui/details_modal?_highlight=variation#variations-tab) 
+  * LabiIMotion Integration  ([#1504](https://github.com/ComPlat/chemotion_ELN/pull/1504)) [Docs](https://chemotion.net/docs/eln/admin/generic_config)
+  * Enhance import samples for sdf  ([#1364](https://github.com/ComPlat/chemotion_ELN/pull/1364))
+  * Import export sample as chemical  ([#1524](https://github.com/ComPlat/chemotion_ELN/pull/1524))
+  * Dry-solvent properties in the solvents section in the reactions table  ([#1432](https://github.com/ComPlat/chemotion_ELN/pull/1432))
+  * Expand calendar function to generic element  ([#1585](https://github.com/ComPlat/chemotion_ELN/pull/1585))
+
+  UX/UI
+  * Move sample task inbox to header bar  ([#1517](https://github.com/ComPlat/chemotion_ELN/pull/1517))
+  * Admin: Filter options for user list management  ([#1510](https://github.com/ComPlat/chemotion_ELN/pull/1510))
+
+  ChemSpectra and NMRIUM
+  * Display label in CV layout ([#1546](https://github.com/ComPlat/chemotion_ELN/pull/1546))
+  * Nmrium button for reaction and researchplan  ([#1471](https://github.com/ComPlat/chemotion_ELN/pull/1471))
+
+* Bug fixes
+  * assets precompilation css issue  ([#1538](https://github.com/ComPlat/chemotion_ELN/pull/1538))
+  * comment fetch issue on new entities with code refactoring  ([#1547](https://github.com/ComPlat/chemotion_ELN/pull/1547))
+  * show example label for reaction  ([#1556](https://github.com/ComPlat/chemotion_ELN/pull/1556))
+  * current_user.matrix getting null value  ([#1554](https://github.com/ComPlat/chemotion_ELN/pull/1554))
+  * load cas for molecules  ([#1555](https://github.com/ComPlat/chemotion_ELN/pull/1555))
+  * no attachments after research plan save  ([#1564](https://github.com/ComPlat/chemotion_ELN/pull/1564))
+  * sample properties tab  ([#1503](https://github.com/ComPlat/chemotion_ELN/pull/1503))
+  * Admin seed: ensure exisiting Admins have a profile  ([#1572](https://github.com/ComPlat/chemotion_ELN/pull/1572))
+  * assign only boolean values for decoupled column in import samples  ([#1571](https://github.com/ComPlat/chemotion_ELN/pull/1571))
+  * disable spectra button when just uploading an image  ([#1568](https://github.com/ComPlat/chemotion_ELN/pull/1568))
+  * atttachment converter trigger ([#1578](https://github.com/ComPlat/chemotion_ELN/pull/1578))
+  * reaction calculation when no reference material present  ([#1589](https://github.com/ComPlat/chemotion_ELN/pull/1589))
+  * reaction list display break when reaction status not standard  ([#1592](https://github.com/ComPlat/chemotion_ELN/pull/1592))
+
+  ChemSpectra and NMRIUM
+  * UI with cv layout  ([#1526](https://github.com/ComPlat/chemotion_ELN/pull/1526))
+  * nmrium button does not display when selecting some chemical ontology  ([#1563](https://github.com/ComPlat/chemotion_ELN/pull/1563))
+  * change value of reference solvent for NMR layout  ([#1557](https://github.com/ComPlat/chemotion_ELN/pull/1557))
+
+* Code refactoring - Test - CI - Chores
+  * "yarn test" errors & warnings  ([#1523](https://github.com/ComPlat/chemotion_ELN/pull/1523))
+  * update runner image  ([#1576](https://github.com/ComPlat/chemotion_ELN/pull/1576))
+  * minor dep updates  ([#1569](https://github.com/ComPlat/chemotion_ELN/pull/1569))
+  * Bump @adobe/css-tools from 4.2.0 to 4.3.1  ([#1511](https://github.com/ComPlat/chemotion_ELN/pull/1511))
+  * Bump @babel/traverse from 7.16.10 to 7.23.2  ([#1580](https://github.com/ComPlat/chemotion_ELN/pull/1580))
+
+
+## [v1.8.0-rc4]
+> (2023-10-16)
+
+
+## [v1.8.0-rc3]
+> (2023-10-09)
+
+
 ## [v1.8.0-rc2]
 > (2023-10-09)
 
