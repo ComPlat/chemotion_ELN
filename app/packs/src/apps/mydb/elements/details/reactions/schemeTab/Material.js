@@ -226,7 +226,7 @@ class Material extends Component {
       let calculateYield = material.equivalent;
       if (reaction.hasPolymers()) {
         calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
-      } else if (refMaterial.decoupled || material.decoupled) {
+      } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
         calculateYield = 'n.a.';
       } else {
         calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
