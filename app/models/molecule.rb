@@ -236,13 +236,14 @@ class Molecule < ApplicationRecord
 
   def create_molecule_name_by_user(new_name, user_id)
     return unless unique_molecule_name(new_name)
+
     molecule_names
       .create(name: new_name, description: "defined by user #{user_id}")
   end
 
   def unique_molecule_name(new_name)
     mns = molecule_names.map(&:name)
-    !mns.include?(new_name)
+    mns.exclude?(new_name)
   end
 
   def self.svg_reprocess(svg, molfile)
