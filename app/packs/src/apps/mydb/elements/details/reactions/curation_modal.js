@@ -1,18 +1,21 @@
-import React, { Component } from 'react';
+import React, { Component , useState} from 'react';
 import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger} from 'react-bootstrap';
 
 export default class Curation_modal extends Component {
-   
+
     constructor(props) {
       super(props);
+      
       this.handleShow = this.handleShow.bind(this);
       this.handleClose = this.handleClose.bind(this);
       this.state = {
         show: false,
         cleanData : this.clean_data(props.description),
         typo: "  " 
-      };
+      }
     }
+
+    
     handleClose() {
       this.setState({ show: false });
     }
@@ -20,32 +23,19 @@ export default class Curation_modal extends Component {
     handleShow() {
       this.setState({ show: true });
     }
-
-
-    highlight(desc_text, typo){ 
     
-
-    // if (typo_array.length > 0 ){
-    //   console.log(typo_array)
-    // desc_text = {desc_text.split(typo)[0]} <b style={{ backgroundColor: '#e8bb49' }}> {typo} </b> {desc_text.split(typo)[1]}
-    //   used_typo.push(typo_array[count_var])
-    //   typo_array = this.spell_check(desc_text)
-    //   typo_array.shift()
-      // used_typo.forEach((used_typo_pair) => {
-      //   // console.log(used_typo_pair)
-      //   console.log("array " + typo_array[count_var] +" used " + used_typo_pair )
-      //   if (typo_array[count_var] === used_typo_pair){
-      //     typo_array = typo_array.splice(count_var,1)
-      //     console.log("splice done " + count_var)
-      //   } 
-      //   else console.log("no splice "+ count_var)
-      // })
-    //   count_var = count_var +1
-      
-    //   };
-      // console.log(typo_array)
-    return ;
-    }
+    getHighlightedText(text, higlight) {
+      // Split text on higlight term, include term itself into parts, ignore case
+      var parts = text.split(new RegExp(`(${higlight})`, "gi"));
+      return parts.map((part, index) => (
+        <React.Fragment key={index}>
+          {part.toLowerCase() === higlight.toLowerCase() ? (
+            <b style={{ backgroundColor: "#e8bb49" }}>{part}</b>
+          ) : (
+            part
+          )}
+        </React.Fragment>
+      ));}
 
     clean_data(description){
         const array_input = Object.values(description);
@@ -57,47 +47,13 @@ export default class Curation_modal extends Component {
         return str_out
     }
 
-    spell_check(input){
-        const regexp = /  /g;
-        const str = input;
-        const matches = str.matchAll(regexp);
-        let typo_index_array = [];
-        for (const match of matches) {
-          typo_index_array.push([match.index,match.index + match[0].length])
-          
-        // console.log(
-        // `Found ${match[0]} start=${match.index} end=${
-        //  match.index + match[0].length}.`,)
-        }
-        // console.log(typo_index_array)
-         return (typo_index_array);
-    }
-
-    underline_typo(description){
-      let typo_index_array = this.spell_check(description)
-      let length = typo_index_array.length
-      let count = 0
-      let new_text =""
-      new_text = this.highlight(description,"  ")
-        
-      
-      console.log(new_text)
-      return new_text
-
-    }
-    
-    Highlighted_text(props){
-    let clean_desc = clean_data(props.description)
-    let typo = "  "
-    let hl_desc = this.highlight(props.description, typo)
-    return (
-       <b style={{ backgroundColor: '#e8bb49' }}> {typo} </b> 
-    )
-
-  }
-
     render() {
+      const Desc_text = this.clean_data(this.props.description);
+      const Compo = ({ higlight, value }) => {
+        return <p>{this.getHighlightedText(value, higlight)}</p>;
+      };
       return (
+
         <div>
           <Button bsStyle="primary" bsSize="small" onClick={this.handleShow}>
             Check Spelling
@@ -112,11 +68,11 @@ export default class Curation_modal extends Component {
                     padding: "10px",
                     fontFamily: "Arial",
                     borderRadius: "10px",}}>
-                {this.clean_data(this.props.description)}
+                 {Desc_text}
                 
-                </div>
+                </div>  
+                    <Compo key={Desc_text} value={Desc_text} higlight={"  "} />  
                 <div>
-                <this.Highlighted_text/>
                     suggestion
                 </div>
                 <div className="row">
