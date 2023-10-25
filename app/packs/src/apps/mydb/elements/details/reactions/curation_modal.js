@@ -1,19 +1,44 @@
 import React, { Component , useState} from 'react';
 import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger} from 'react-bootstrap';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class Curation_modal extends Component {
 
     constructor(props) {
       super(props);
+      const { reaction } = props;
       this.handleShow = this.handleShow.bind(this);
       this.handleClose = this.handleClose.bind(this);
+      this.handleDesc = this.handleDesc.bind(this);
+      this.handleSubmit = this.handleSubmit.bind(this);
       this.state = {
         desc : this.clean_data(this.props.description),
         show: false, 
+        reaction: reaction,
       }
     }
 
-    
+    handleSubmit(closeView = false) {
+      LoadingActions.start();
+  
+      const { reaction } = this.props;
+      if (reaction && reaction.isNew) {
+        ElementActions.createReaction(reaction);
+      } else {
+        ElementActions.updateReaction(reaction, closeView);
+      }
+      if (reaction.is_new || closeView) {
+        DetailActions.close(reaction, true);
+      }
+    }
+
+    handleDesc(){
+      const old_desc = this.clean_data(this.props.description)
+      const new_desc = old_desc.replaceAll("  ", " ")
+      this.setState({ desc: new_desc});
+    }
 
     handleClose() {
       this.setState({ show: false });
@@ -47,8 +72,6 @@ export default class Curation_modal extends Component {
     }
 
     render() {
-      
-      const Desc_text = this.clean_data(this.props.description);
       const Compo = ({ higlight, value }) => {
         return <p>{this.getHighlightedText(value, higlight)}</p>;
       };
@@ -74,6 +97,8 @@ export default class Curation_modal extends Component {
                     suggestion
                 </div>
                 <div className="row">
+                <Button onClick={this.handleDesc}>fix</Button>
+                <Button onClick={this.handleSubmit}> save and close </Button>
                     <Button>Change</Button>
                     <Button>Skip</Button>
                 </div>

@@ -274,7 +274,7 @@ export default class ReactionDetails extends Component {
     const colLabel = reaction.isNew ? null : (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
-
+    
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -308,7 +308,7 @@ export default class ReactionDetails extends Component {
           placement="bottom"
           overlay={<Tooltip id="Curate">Curate</Tooltip>}
         >
-        <Curation_modal description= {reaction.description.ops}/>
+        <Curation_modal description= {reaction.description.ops} reaction={reaction}/>
         </OverlayTrigger>
       
         {copyBtn}
