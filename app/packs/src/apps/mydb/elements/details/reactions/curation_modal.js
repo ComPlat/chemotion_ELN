@@ -5,17 +5,16 @@ export default class Curation_modal extends Component {
 
     constructor(props) {
       super(props);
-      
       this.handleShow = this.handleShow.bind(this);
       this.handleClose = this.handleClose.bind(this);
       this.state = {
-        show: false,
-        cleanData : this.clean_data(props.description),
-        typo: "  " 
+        desc : this.clean_data(this.props.description),
+        show: false, 
       }
     }
 
     
+
     handleClose() {
       this.setState({ show: false });
     }
@@ -48,12 +47,12 @@ export default class Curation_modal extends Component {
     }
 
     render() {
+      
       const Desc_text = this.clean_data(this.props.description);
       const Compo = ({ higlight, value }) => {
         return <p>{this.getHighlightedText(value, higlight)}</p>;
       };
       return (
-
         <div>
           <Button bsStyle="primary" bsSize="small" onClick={this.handleShow}>
             Check Spelling
@@ -68,10 +67,9 @@ export default class Curation_modal extends Component {
                     padding: "10px",
                     fontFamily: "Arial",
                     borderRadius: "10px",}}>
-                 {Desc_text}
-                
+                 <Compo value={this.state.desc} higlight={"  "} /> 
                 </div>  
-                    <Compo key={Desc_text} value={Desc_text} higlight={"  "} />  
+                     
                 <div>
                     suggestion
                 </div>
