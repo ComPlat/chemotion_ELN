@@ -166,7 +166,7 @@ export default class ContainerDataset extends Component {
     const preview = attachment.preview ? (
       <tr>
         <td rowSpan="2" width="128">
-          <img src={attachment.preview} alt="" />
+          <img style={{ maxWidth: '100%', height: 'auto', display: 'block' }} src={attachment.preview} alt="" />
         </td>
       </tr>
     ) : (
@@ -178,13 +178,14 @@ export default class ContainerDataset extends Component {
     );
     if (attachment.is_deleted) {
       return (
-        <Table className="borderless" style={{ marginBottom: 'unset' }}>
+        <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
           <tbody>
             {preview}
             <tr>
-              <td style={{ verticalAlign: 'middle' }}>
+              <td>
                 <strike>{attachment.filename}</strike>
-                <br />
+              </td>
+              <td>
                 <Button
                   bsSize="xsmall"
                   bsStyle="danger"
@@ -200,19 +201,16 @@ export default class ContainerDataset extends Component {
       );
     }
     return (
-      <Table className="borderless" style={{ marginBottom: 'unset' }}>
+      <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
         <tbody>
           {preview}
           <tr>
-            <td style={{ verticalAlign: 'middle' }}>
-              <a
-                onClick={() => this.handleAttachmentDownload(attachment)}
-                style={{ cursor: 'pointer' }}
-              >
-                {attachment.filename}
-              </a>
-              <br />
-              {this.removeAttachmentButton(attachment)} &nbsp;
+            <td style={{  wordWrap: 'break-word' }}>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
+            </td>
+            <td style={{ wordWrap: 'break-word' }}><span>{formatBytes(attachment.filesize)}</span></td>
+            <td style={{ wordWrap: 'break-word' }}>
+              {this.removeAttachmentButton(attachment)}
               {this.attachmentBackToInboxButton(attachment)}
             </td>
           </tr>
@@ -259,6 +257,7 @@ export default class ContainerDataset extends Component {
         <Button
           bsSize="xsmall"
           bsStyle="danger"
+          style={{ marginRight: 10 }}
           onClick={() => this.handleAttachmentRemove(attachment)}
         >
           <i className="fa fa-trash-o" />
