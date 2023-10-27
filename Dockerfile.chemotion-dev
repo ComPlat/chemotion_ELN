@@ -7,7 +7,7 @@ FROM --platform=linux/amd64 ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VRUBY=2.7.7
-ARG VNODE=18.17.1
+ARG VNODE=18.18.2
 ARG ASDF_BRANCH=v0.11.3
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y

@@ -106,6 +106,8 @@ gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
+
+gem "sentry-delayed_job"
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'shrine', '~> 3.0'
