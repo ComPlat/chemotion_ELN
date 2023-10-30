@@ -6,10 +6,10 @@ describe Chemotion::ThirdPartyAppAPI do
   let!(:admin1) { create(:admin) }
 
   before do
-    allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin1)
+    allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin1) # rubocop:disable RSpec/AnyInstance
   end
 
-  describe 'List all third party apps API', type: :request do
+  describe 'List all third party apps API' do
     describe 'GET /third_party_apps/all' do
       before do
         ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
@@ -37,12 +37,12 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'new_third_party_app API', type: :request do
+  describe 'new_third_party_app API' do
     describe 'POST /new_third_party_app' do
       let(:params) do
         {
           IPAddress: 'http://127.0.0.1',
-          name: 'Example App'
+          name: 'Example App',
         }
       end
 
@@ -59,7 +59,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'update_third_party_app API', type: :request do
+  describe 'update_third_party_app API' do
     let(:tpa_id) do
       ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
       tpas = ThirdPartyApp.all
@@ -112,7 +112,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'delete_third_party_app API', type: :request do
+  describe 'delete_third_party_app API' do
     let(:tpa_id) do
       ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
       tpas = ThirdPartyApp.all
@@ -134,7 +134,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get_by_id a third party app', type: :request do
+  describe 'get_by_id a third party app' do
     before do
       ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
       ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
@@ -176,7 +176,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get names of all third party apps', type: :request do
+  describe 'get names of all third party apps' do
     before do
       ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
       ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
@@ -192,7 +192,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get ip address of a third party app by name', type: :request do
+  describe 'get ip address of a third party app by name' do
     before do
       ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
       ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
@@ -213,7 +213,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get a token for an attachment', type: :request do
+  describe 'get a token for an attachment' do
     let(:user_id) do
       users = User.all
       users[0].id
@@ -223,7 +223,7 @@ describe Chemotion::ThirdPartyAppAPI do
       {
         attID: 1,
         userID: user_id,
-        nameThirdPartyApp: 'fakeName'
+        nameThirdPartyApp: 'fakeName',
       }
     end
 
@@ -238,7 +238,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
   end
 
-  describe 'get a file from the ELN', type: :request do
+  describe 'get a file from the ELN' do
     let(:user) { create(:person) }
     let!(:attachment) do
       create(
@@ -265,7 +265,7 @@ describe Chemotion::ThirdPartyAppAPI do
       token = JWT.encode(payload, secret, 'HS256')
       token_class = CachedTokenThirdPartyApp.new(token, 0, 'fakeDownload')
       Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
-      params = {token: token}
+      params = { token: token }
       file = File.open('spec/fixtures/upload.csv')
       file_content = file.read
       file.close
@@ -276,17 +276,17 @@ describe Chemotion::ThirdPartyAppAPI do
 
     it 'download a file with an invalid token (not in cache)' do
       payload_invalid = { attID: params_token[:attID], userID: params_token[:userID],
-                  nameThirdPartyApp: "Invalid" }
+                          nameThirdPartyApp: 'Invalid' }
       secret_invalid = Rails.application.secrets.secret_key_base
       token_invalid = JWT.encode(payload_invalid, secret_invalid, 'HS256')
-      params_invalid = {token: token_invalid}
+      params_invalid = { token: token_invalid }
       get '/api/v1/public_third_party_app/download', params: params_invalid
       res_invalid = response.body
-      expect(res_invalid).to eq("{\"error\":\"Invalid token\"}")
+      expect(res_invalid).to eq('{"error":"Invalid token"}')
     end
   end
 
-  describe 'upload a file to the ELN', type: :request do
+  describe 'upload a file to the ELN' do
     let(:user) { create(:person) }
     let!(:attachment) do
       create(
@@ -315,7 +315,7 @@ describe Chemotion::ThirdPartyAppAPI do
       Rails.cache.write(cache_key, token_class, expires_in: 48.hours)
       file_path = 'spec/fixtures/upload.csv'
       file = Rack::Test::UploadedFile.new(file_path, 'spec/fixtures/upload2.csv')
-      params = {token: token, attachmentName: 'NewName', file: file, fileType: '.csv'}
+      params = { token: token, attachmentName: 'NewName', file: file, fileType: '.csv' }
       post '/api/v1/public_third_party_app/upload', params: params
       expect(response.body).to include('File uploaded successfully')
     end

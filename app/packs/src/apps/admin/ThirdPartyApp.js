@@ -169,8 +169,6 @@ export default class ThirdPartyApp extends React.Component {
       reject();
     }
 
-    console.log("test1")
-
     ThirdPartyAppFetcher.isNameUnique(name)
       .then((result) => {
         const message = JSON.parse(result).message
