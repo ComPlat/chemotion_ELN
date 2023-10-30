@@ -1,10 +1,11 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Panel, Glyphicon, Pagination
+  Badge, Button, Panel, Glyphicon, Pagination, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
@@ -16,6 +17,7 @@ export default class InboxModal extends React.Component {
     super(props);
 
     const inboxState = InboxStore.getState();
+    const uiStore = UIStore.getState();
 
     this.state = {
       inbox: inboxState.inbox,
@@ -27,6 +29,7 @@ export default class InboxModal extends React.Component {
       itemsPerPage: inboxState.itemsPerPage,
       totalPages: inboxState.totalPages,
       activeDeviceBoxId: inboxState.activeDeviceBoxId,
+      collectorAddress: uiStore.collectorAddress,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -184,9 +187,35 @@ export default class InboxModal extends React.Component {
     );
   }
 
+  infoMessage() {
+    const { collectorAddress } = this.state;
+    return (
+      <Tooltip id="assignButton">
+        You can send data to the following email address:
+        { ' ' }
+        {collectorAddress}
+      </Tooltip>
+    );
+  }
+
+  collectorAddressInfoButton() {
+    return (
+      <OverlayTrigger placement="top" overlay={this.infoMessage()}>
+        <Button
+          bsSize="xsmall"
+          className="btn btn-circle btn-sm btn-info button-right"
+        >
+          <Glyphicon glyph="info-sign" />
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
   render() {
     const { showCollectionTree } = this.props;
-    const { visible, inboxVisible, numberOfAttachments } = this.state;
+    const {
+      visible, inboxVisible, numberOfAttachments, collectorAddress
+    } = this.state;
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -240,6 +269,7 @@ export default class InboxModal extends React.Component {
                 >
                   <Glyphicon bsSize="small" glyph="refresh" />
                 </Button>
+                {collectorAddress ? this.collectorAddressInfoButton() : null}
               </Panel.Heading>
               <Panel.Body>
                 <div>

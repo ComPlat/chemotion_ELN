@@ -28,7 +28,7 @@ module Chemotion
           has_sfn: sfn_config.present? && current_user.matrix_check_by_name('scifinderN'),
           has_converter: converter_config.present?,
           has_radar: radar_config.present?,
-          collector_address: collector_address.presence
+          collector_address: collector_address.presence,
         }
       end
     end
