@@ -1,11 +1,11 @@
 /* eslint-disable react/prefer-stateless-function */
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import Attachment from 'src/models/Attachment';
 
 export default class ImageAnnotationEditButton extends Component {
-  allowedFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff']
+  allowedFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
 
   constructor(props) {
     super(props);
@@ -20,8 +20,9 @@ export default class ImageAnnotationEditButton extends Component {
         <Button
           bsSize="xsmall"
           bsStyle="warning"
+          style={this.props.style}
           className={
-            this.props.horizontalAlignment ? this.props.horizontalAlignment : ""
+            this.props.horizontalAlignment ? this.props.horizontalAlignment : ''
           }
           onClick={() => {
             this.props.parent.setState({
@@ -37,25 +38,26 @@ export default class ImageAnnotationEditButton extends Component {
     );
   }
 
-  renderInactiveAnnotationButton(attachment) {   
+  renderInactiveAnnotationButton(attachment) {
     return (
       <OverlayTrigger
-        overlay={
+        overlay={(
           <Tooltip id="annotate_tooltip">
             Please save the research plan to annotate the image
           </Tooltip>
-        }
+        )}
       >
         <span
           className={
-            this.props.horizontalAlignment ? this.props.horizontalAlignment : ""
+            this.props.horizontalAlignment ? this.props.horizontalAlignment : ''
           }
         >
           <Button
             disabled
-            style={{ pointerEvents: "none" }}
+            style={{ pointerEvents: 'none' }}
             bsSize="xsmall"
             bsStyle="warning"
+            style={this.props.style}
           >
             <i className="fa fa-pencil" aria-hidden="true" />
           </Button>
@@ -65,7 +67,7 @@ export default class ImageAnnotationEditButton extends Component {
   }
 
   render() {
-    if (!this.props.attachment||!this.props.attachment.filename) {
+    if (!this.props.attachment || !this.props.attachment.filename) {
       return null;
     }
 
@@ -82,5 +84,6 @@ export default class ImageAnnotationEditButton extends Component {
 ImageAnnotationEditButton.propTypes = {
   attachment: PropTypes.instanceOf(Attachment),
   parent: PropTypes.object.isRequired,
-  horizontalAlignment: PropTypes.string
+  horizontalAlignment: PropTypes.string,
+  style: PropTypes.object
 };
