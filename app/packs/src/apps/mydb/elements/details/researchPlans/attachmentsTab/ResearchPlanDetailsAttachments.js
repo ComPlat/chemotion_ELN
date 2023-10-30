@@ -181,7 +181,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     ThirdPartyAppFetcher.fetchThirdPartyAppNames()
       .then((result) => {
         this.setState({
-          thirdPartyAppNames: result
+          thirdPartyAppNames: result === null || result.length === 0 ? [] : result
         })
       });
   }

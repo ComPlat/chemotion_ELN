@@ -3,16 +3,18 @@
 module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
-    cache_options = { store: Rails.cache }
-
     helpers do
-      def decode_token(token)
-        payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
-        error!('401 Unauthorized', 401) if payload&.length&.zero?
+      def extract_values(payload)
         att_id = payload[0]['attID']&.to_i
         user_id = payload[0]['userID']&.to_i
         name_third_party_app = payload[0]['nameThirdPartyApp']&.to_s
         [att_id, user_id, name_third_party_app]
+      end
+
+      def decode_token(token)
+        payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
+        error!('401 Unauthorized', 401) if payload&.length&.zero?
+        extract_values(payload)
       end
 
       def verify_token(token)
@@ -20,6 +22,20 @@ module Chemotion
         @attachment = Attachment.find_by(id: payload[0])
         @user = User.find_by(id: payload[1])
         error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+      end
+
+      def perform_download(token_cached, attachment)
+        if token_cached.counter <= 3
+          attachment.read_file
+        else
+          error!('Too many requests with this token', 403)
+        end
+      end
+
+      def update_cache(cache_key, token_cached)
+        error!('Invalid token', 403) if token_cached.nil?
+        token_cached.counter = token_cached.counter + 1
+        Rails.cache.write(cache_key, token_cached)
       end
 
       def download_third_party_app(token)
@@ -32,27 +48,15 @@ module Chemotion
         env['api.format'] = :binary
         cache_key = "token/#{payload[0]}/#{payload[1]}/#{payload[2]}"
         token_cached = Rails.cache.read(cache_key)
-        if token_cached.nil? 
-          error!('Invalid token', 403)
-        end
-        token_cached.counter = token_cached.counter + 1
-        Rails.cache.write(cache_key, token_cached)
-        if token_cached.counter <= 3
-          @attachment.read_file
-        else
-          error!('To many requests with this token', 403)
-        end
+        update_cache(cache_key, token_cached)
+        perform_download(token_cached, @attachment)
       end
 
       def upload_third_party_app(token, file_name, file, file_type)
         payload = decode_token(token)
         cache_key = "token/#{payload[0]}/#{payload[1]}/#{payload[2]}"
         token_cached = Rails.cache.read(cache_key)
-        if token_cached.nil? 
-          error!('Invalid token', 403)
-        end
-        token_cached.counter = token_cached.counter + 1
-        Rails.cache.write(cache_key, token_cached)
+        update_cache(cache_key, token_cached)
         if token_cached.counter > 30
           error!('To many request with this token', 403)
         else
@@ -120,8 +124,10 @@ module Chemotion
       end
       post '/name_unique' do
         declared(params, include_missing: false)
-        result = ThirdPartyApp.all_names.exclude?(params[:name])
-        if result
+        result = ThirdPartyApp.all_names
+        if result.nil?
+          { message: 'Name is unique' }
+        elsif ThirdPartyApp.all_names.exclude?(params[:name])
           { message: 'Name is unique' }
         else
           { message: 'Name is not unique' }
