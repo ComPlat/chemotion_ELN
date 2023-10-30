@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -10,14 +11,7 @@ import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlan
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Utils from 'src/utilities/Functions';
 import {
-  Button, ButtonGroup,
-  Col, ControlLabel,
-  FormGroup,
-  Glyphicon,
-  ListGroup, ListGroupItem,
-  Overlay, OverlayTrigger,
-  Row,
-  Tooltip
+  Button, ButtonGroup, Glyphicon, Overlay, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -26,15 +20,12 @@ import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlan
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">
-    Available extensions:
-    {' '}
+    Available extensions:&nbsp;
     {exts}
   </Tooltip>
 );
 const downloadTooltip = <Tooltip id="download_tooltip">Download original attachment</Tooltip>;
 const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annotated attachment</Tooltip>;
-
-const imageStyle = { position: 'absolute', width: 60, height: 60 };
 
 export default class ResearchPlanDetailsAttachments extends Component {
   static isImageFile(fileName) {
@@ -49,9 +40,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
     return (
       <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
-        <div className="research-plan-attachments-annotation-download">
+        <div>
           <Button
             bsSize="xsmall"
+            style={{ width: '25px', height: '25px' }}
             className="button-right"
             bsStyle="primary"
             disabled={attachment.isNew}
@@ -78,6 +70,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
       extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
+      filteredAttachments: [...props.attachments],
+      filterText: '',
+      sortBy: 'name'
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -92,6 +87,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { attachments } = this.props;
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
+    }
+    if (prevProps.attachments !== this.props.attachments) {
+      this.setState({ filteredAttachments: [...this.props.attachments] }, this.filterAndSortAttachments);
     }
   }
 
@@ -129,6 +127,51 @@ export default class ResearchPlanDetailsAttachments extends Component {
       onAttachmentImportComplete
     );
     LoadingActions.stop();
+  }
+
+  handleFilterChange = (e) => {
+    this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
+  };
+
+  handleSortChange = (e) => {
+    this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
+  };
+
+  toggleSortDirection = () => {
+    this.setState((prevState) => ({
+      sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
+    }), this.filterAndSortAttachments);
+  };
+
+  filterAndSortAttachments() {
+    const { filterText, sortBy } = this.state;
+
+    const filter = new ImageAttachmentFilter();
+    let filteredAttachments = filter.filterAttachmentsWhichAreInBody(
+      this.props.researchPlan.body,
+      this.props.attachments
+    );
+
+    filteredAttachments = filteredAttachments.filter(
+      (attachment) => attachment.filename.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    filteredAttachments.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.filename.localeCompare(b.filename);
+          break;
+        case 'size':
+          comparison = a.filesize - b.filesize;
+          break;
+        default:
+          break;
+      }
+      return this.state.sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    this.setState({ filteredAttachments });
   }
 
   /* eslint-disable no-param-reassign */
@@ -195,15 +238,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderRemoveAttachmentButton(attachment) {
     const { onDelete, readOnly } = this.props;
     return (
-      <Button
-        bsSize="xsmall"
-        bsStyle="danger"
-        className="button-right"
-        onClick={() => onDelete(attachment)}
-        disabled={readOnly}
-      >
-        <i className="fa fa-trash-o" aria-hidden="true" />
-      </Button>
+      <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
+        <Button
+          bsSize="xsmall"
+          bsStyle="danger"
+          style={{ width: '25px', height: '25px' }}
+          className="button-right"
+          onClick={() => onDelete(attachment)}
+          disabled={readOnly}
+        >
+          <i className="fa fa-trash-o" aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 
@@ -233,20 +279,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
         parent={this}
         attachment={attachment}
         horizontalAlignment="button-right"
+        style={{ width: '25px', height: '25px' }}
       />
     );
   }
 
-  renderListGroupItem(attachment) {
+  renderActions(attachment) {
     const { attachmentEditor, extension } = this.state;
     const { onUndoDelete } = this.props;
 
     const updateTime = new Date(attachment.updated_at);
     updateTime.setTime(updateTime.getTime() + 15 * 60 * 1000);
 
-    const hasPop = false;
-    const fetchNeeded = false;
-    const fetchId = attachment.id;
     const isEditing = attachment.aasm_state === 'oo_editing'
       && new Date().getTime() < updateTime;
 
@@ -257,22 +301,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
     if (attachment.is_deleted) {
       return (
         <div>
-          <Row>
-            <Col md={1} />
-            <Col md={9}>
-              <strike>{attachment.filename}</strike>
-            </Col>
-            <Col md={2}>
-              <Button
-                bsSize="xsmall"
-                bsStyle="danger"
-                className="button-right"
-                onClick={() => onUndoDelete(attachment)}
-              >
-                <i className="fa fa-undo" aria-hidden="true" />
-              </Button>
-            </Col>
-          </Row>
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            className="button-right"
+            style={{ width: '25px', height: '25px' }}
+            onClick={() => onUndoDelete(attachment)}
+          >
+            <i className="fa fa-undo" aria-hidden="true" />
+          </Button>
         </div>
       );
     }
@@ -280,44 +317,22 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <div>
         <SaveResearchPlanWarning visible={isAnnotationUpdated} />
-        <Row>
-          <Col md={1}>
-            <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
-              <div className="preview" style={{ width: '60px', height: '60px' }}>
-                <ImageModal
-                  imageStyle={imageStyle}
-                  hasPop={hasPop}
-                  previewObject={{
-                    src: attachment.preview,
-                  }}
-                  popObject={{
-                    title: attachment.filename,
-                    src: attachment.preview,
-                    fetchNeeded,
-                    fetchId,
-                  }}
-                />
-              </div>
-            </div>
-          </Col>
-          <Col md={8}>{attachment.filename}</Col>
-          <Col md={3}>
-            {this.renderRemoveAttachmentButton(attachment)}
-            {this.renderDownloadOriginalButton(attachment)}
-            {this.renderEditAttachmentButton(
-              attachment,
-              extension,
-              attachmentEditor,
-              isEditing,
-              styleEditorBtn,
-              styleEditorBtn,
-              editDisable
-            )}
-            {ResearchPlanDetailsAttachments.renderDownloadAnnotatedImageButton(attachment)}
-            {this.renderAnnotateImageButton(attachment)}
-            {this.renderImportAttachmentButton(attachment)}
-          </Col>
-        </Row>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {this.renderRemoveAttachmentButton(attachment)}
+          {this.renderDownloadOriginalButton(attachment)}
+          {this.renderEditAttachmentButton(
+            attachment,
+            extension,
+            attachmentEditor,
+            isEditing,
+            styleEditorBtn,
+            styleEditorBtn,
+            editDisable
+          )}
+          {ResearchPlanDetailsAttachments.renderDownloadAnnotatedImageButton(attachment)}
+          {this.renderAnnotateImageButton(attachment)}
+          {this.renderImportAttachmentButton(attachment)}
+        </div>
       </div>
     );
   }
@@ -326,7 +341,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
         <Button
-          style={{ display: styleEditorBtn }}
+          style={{ display: styleEditorBtn, width: '25px', height: '25px' }}
           bsSize="xsmall"
           className="button-right"
           bsStyle="success"
@@ -349,6 +364,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           bsSize="xsmall"
           className="button-right"
           bsStyle="primary"
+          style={{ width: '25px', height: '25px' }}
           onClick={() => onDownload(attachment)}
         >
           <i className="fa fa-download" aria-hidden="true" />
@@ -357,42 +373,196 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderAttachments() {
-    const { attachments, researchPlan } = this.props;
-    if (attachments && attachments.length > 0) {
-      const filter = new ImageAttachmentFilter();
-      const filteredAttachments = filter.filterAttachmentsWhichAreInBody(
-        researchPlan.body,
-        researchPlan.attachments
-      );
-
-      return (
-        <ListGroup>
-          {filteredAttachments.map((attachment) => (
-            <ListGroupItem key={attachment.id}>
-              {this.renderListGroupItem(attachment)}
-            </ListGroupItem>
-          ))}
-        </ListGroup>
-      );
-    }
+  renderDropzone() {
     return (
-      <div>
-        There are currently no attachments.
-        <br />
+      <Dropzone
+        onDrop={this.props.onDrop}
+        className="research-plan-dropzone"
+        style={{
+          width: '100%',
+          padding: '20px',
+          border: '2px dashed #cccccc',
+          textAlign: 'center',
+          marginBottom: '20px',
+          borderRadius: '5px',
+          backgroundColor: '#f7f7f7'
+        }}
+      >
+        Drop files here, or click to upload.
+      </Dropzone>
+
+    );
+  }
+
+  renderSortingAndFilteringUI() {
+    const commonStyle = {
+      padding: '5px',
+      borderRadius: '5px',
+      border: '1px solid #ccc',
+      height: '35px'
+    };
+
+    const sortIconStyle = {
+      marginLeft: '10px',
+      cursor: 'pointer',
+      fontSize: '20px',
+      color: '#000',
+      borderRadius: '50%',
+      padding: '5px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'background-color 0.3s'
+    };
+
+    const isAscending = this.state.sortDirection === 'asc';
+
+    return (
+      <div style={{
+        marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <label style={{ marginRight: '10px' }}>Sort by: </label>
+          <select
+            onChange={this.handleSortChange}
+            style={{ ...commonStyle, width: '100px' }}
+          >
+            <option value="name">Name</option>
+            <option value="size">Size</option>
+          </select>
+          <div onClick={this.toggleSortDirection} style={sortIconStyle}>
+            {isAscending ? '▲' : '▼'}
+          </div>
+        </div>
+        <div>
+          <label style={{ marginRight: '10px' }}>Filter: </label>
+          <input
+            type="text"
+            placeholder="Filter by name..."
+            onChange={this.handleFilterChange}
+            style={{ ...commonStyle, width: '250px' }}
+          />
+        </div>
       </div>
     );
   }
 
-  renderDropzone() {
-    const { onDrop, readOnly } = this.props;
-    return (
-      <Dropzone
-        onDrop={(files) => onDrop(files)}
-        className={`research-plan-dropzone-${readOnly ? 'disable' : 'enable'}`}
+  renderAttachmentRow(attachment) {
+    const maxCharsWithoutTooltip = 50;
+
+    const renderTooltip = (
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id={`tooltip-${attachment.id}`}>
+            {attachment.filename}
+          </Tooltip>
+      )}
       >
-        <div className="zone">Drop Files, or Click to Select.</div>
-      </Dropzone>
+        <div style={{
+          flex: '0.5',
+          marginLeft: '20px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          color: '#333',
+        }}
+        >
+          {attachment.filename}
+        </div>
+      </OverlayTrigger>
+    );
+
+    const renderText = (
+      <div style={{
+        flex: '0.5',
+        marginLeft: '20px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        color: '#333',
+      }}
+      >
+        {attachment.filename}
+      </div>
+    );
+
+    const formatFileSize = (sizeInKB) => {
+      if (sizeInKB >= 1024) {
+        return `${(sizeInKB / 1024).toFixed(2)} MB`;
+      }
+      return `${sizeInKB} KB`;
+    };
+
+    const fetchNeeded = false;
+    const hasPop = false;
+
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: '10px',
+        padding: '10px',
+        borderRadius: '5px',
+        boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)',
+        transition: 'box-shadow 0.3s ease',
+      }}
+      >
+        <div style={{
+          flex: '0.1',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        >
+          <ImageModal
+            imageStyle={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '5px',
+              objectFit: 'cover',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+            }}
+            hasPop={hasPop}
+            alt="thumbnail"
+            previewObject={{
+              src: attachment.preview,
+            }}
+            popObject={{
+              title: attachment.filename,
+              src: attachment.preview,
+              fetchNeeded,
+              fetchId: attachment.id,
+            }}
+          />
+        </div>
+
+        {attachment.filename.length > maxCharsWithoutTooltip ? renderTooltip : renderText}
+
+        <div style={{
+          flex: '0.2',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#777',
+          marginLeft: '10px',
+        }}
+        >
+          <span>
+            Size:&nbsp;
+            <span style={{ fontWeight: 'bold', color: '#444' }}>
+              {formatFileSize(attachment.filesize)}
+            </span>
+          </span>
+
+        </div>
+
+        <div style={{ flex: '0.3', display: 'flex', justifyContent: 'flex-end' }}>
+          {this.renderActions(attachment)}
+        </div>
+      </div>
     );
   }
 
@@ -444,7 +614,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ref={(ref) => {
                   this.importButtonRefs[attachment.id] = ref;
                 }}
-                style={importDisabled ? { pointerEvents: 'none' } : {}}
+                style={{
+                  ...(importDisabled ? { pointerEvents: 'none' } : {}),
+                  width: '25px',
+                  height: '25px'
+                }}
                 onClick={() => this.showImportConfirm(attachment.id)}
               >
                 <Glyphicon glyph="import" />
@@ -467,17 +641,30 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   render() {
+    const { filteredAttachments } = this.state;
+
     return (
-      <Row>
-        <Col md={12}>
-          <FormGroup>
-            <ControlLabel>Files</ControlLabel>
-            {this.renderImageEditModal()}
-            {this.renderAttachments()}
-            {this.renderDropzone()}
-          </FormGroup>
-        </Col>
-      </Row>
+      <div style={{
+        padding: '20px', backgroundColor: '#ffffff', borderRadius: '5px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)'
+      }}
+      >
+        {this.renderImageEditModal()}
+        {this.renderDropzone()}
+        {this.renderSortingAndFilteringUI()}
+
+        {filteredAttachments.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            fontSize: '16px',
+            color: '#888',
+          }}
+          >
+            There are currently no attachments.
+          </div>
+        ) : (
+          filteredAttachments.map((attachment) => this.renderAttachmentRow(attachment))
+        )}
+      </div>
     );
   }
 }
