@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Modal, ButtonToolbar, Button } from 'react-bootstrap';
 import ContainerDataset from 'src/components/container/ContainerDataset';
 
@@ -16,14 +17,20 @@ export default class ContainerDatasetModal extends Component {
 
   render() {
     const {
-      show, dataset_container, onHide, onChange, readOnly, disabled, kind
+      show, datasetContainer, onHide, onChange, readOnly, disabled, kind
     } = this.props;
     if (show) {
       return (
-        <Modal show={show} backdrop="static" bsSize="large" dialogClassName="attachment-dataset-modal" onHide={() => (disabled ? onHide() : this.handleSave())}>
+        <Modal
+          show={show}
+          backdrop="static"
+          bsSize="large"
+          dialogClassName="attachment-dataset-modal"
+          onHide={() => (disabled ? onHide() : this.handleSave())}
+        >
           <Modal.Header>
             <Modal.Title>
-              {dataset_container.name}
+              {datasetContainer.name}
               <ButtonToolbar>
                 <Button bsStyle="light" onClick={() => (disabled ? onHide() : this.handleSave())}>
                   <i className="fa fa-times" />
@@ -35,10 +42,10 @@ export default class ContainerDatasetModal extends Component {
             <ContainerDataset
               ref={this.datasetInput}
               readOnly={readOnly}
-              dataset_container={dataset_container}
+              datasetContainer={datasetContainer}
               kind={kind}
               onModalHide={() => onHide()}
-              onChange={dataset_container => onChange(dataset_container)}
+              onChange={onChange}
             />
           </Modal.Body>
         </Modal>
@@ -47,3 +54,20 @@ export default class ContainerDatasetModal extends Component {
     return <div />;
   }
 }
+
+ContainerDatasetModal.propTypes = {
+  show: PropTypes.bool.isRequired,
+  datasetContainer: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }).isRequired,
+  onHide: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
+  disabled: PropTypes.bool,
+  kind: PropTypes.string.isRequired,
+};
+
+ContainerDatasetModal.defaultProps = {
+  readOnly: false,
+  disabled: false,
+};
