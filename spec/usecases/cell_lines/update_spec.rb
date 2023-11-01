@@ -4,20 +4,11 @@ require 'spec_helper'
 
 RSpec.describe Usecases::CellLines::Update do
   describe 'execute!' do
-    before do
-      CollectionsCellline.create(
-        collection: collection,
-        cellline_sample: original_cellline_sample,
-      )
-      user.collections << collection
-      user.save
-    end
-
-    let(:user) { create(:user) }
+    let(:user) { create(:user, collections: [collection]) }
     let(:cell_line_sample) { use_case.execute! }
     let(:use_case) { described_class.new(params, user) }
     let(:collection) { create(:collection) }
-    let(:original_cellline_sample) { create(:cellline_sample) }
+    let(:original_cellline_sample) { create(:cellline_sample, collections: [collection]) }
     let(:params) do
       {
         cell_line_sample_id: original_cellline_sample.id,
