@@ -71,5 +71,39 @@ RSpec.describe Usecases::CellLines::Update do
         expect(loaded_cellline_sample.cellline_material.id).not_to be original_cellline_sample.cellline_material.id
       end
     end
+
+    context 'when changing a cell line in a shared collection' do
+      let(:user) { create(:user) }
+      let(:sharring_user) { create(:user, collections: [collection]) }
+      let(:sharred_collection) { create(:collection) }
+
+      let(:params) do
+        {
+          material_names: 'name-001',
+          source: 'IPB',
+          cell_line_sample_id: original_cellline_sample.id,
+          amount: 5000,
+          passage: original_cellline_sample.passage,
+          unit: original_cellline_sample.unit,
+        }
+      end
+
+      before do
+        Usecases::Sharing::ShareWithUser.new(
+          user_ids: [user.id],
+          cell_line_ids: [original_cellline_sample.id],
+          collection_attributes: {
+            user_id: user.id,
+            label: 'shared_collection',
+            permission_level: 10,
+            shared_by_id: sharring_user.id,
+          },
+        ).execute!
+      end
+
+      it 'amount was changed to 5000' do
+        expect(cell_line_sample.amount).to be 5000
+      end
+    end
   end
 end
