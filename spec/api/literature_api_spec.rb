@@ -198,6 +198,34 @@ describe Chemotion::LiteratureAPI do
       end
     end
   end
+
+  describe 'PUT /api/v1/literatures' do
+    context 'when changing the category of the literal of a cell line' do
+      let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+      let!(:cell_line_literal) do
+        create(:literal,
+               literature: l1,
+               element: cell_line.cellline_material,
+               user: user)
+      end
+
+      before do
+        put '/api/v1/literatures',
+            params: { id: cell_line_literal.id,
+                      litype: 'additionalLiterature',
+                      element_type: 'cell_line',
+                      element_id: cell_line.id }
+      end
+
+      it 'return correct status code' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'literature type was changed' do
+        expect(cell_line.reload.cellline_material.literals.first.litype).to eq 'additionalLiterature'
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/LetSetup
 # rubocop:enable RSpec/FilePath,RSpec/MultipleMemoizedHelpers, RSpec/NestedGroups
