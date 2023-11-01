@@ -6,15 +6,9 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import InboxActions from 'src/stores/alt/actions/InboxActions';
-import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import InboxStore from 'src/stores/alt/stores/InboxStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
-
-import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
-import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
@@ -23,7 +17,6 @@ export default class CollectionTree extends React.Component {
     super(props);
 
     const collecState = CollectionStore.getState();
-    const inboxState = InboxStore.getState();
 
     this.state = {
       unsharedRoots: collecState.unsharedRoots,
@@ -35,68 +28,35 @@ export default class CollectionTree extends React.Component {
       sharedWithCollectionVisible: false,
       sharedToCollectionVisible: false,
       syncCollectionVisible: false,
-      inbox: inboxState.inbox,
-      numberOfAttachments: inboxState.numberOfAttachments,
-      inboxVisible: false,
       visible: false,
       root: {},
       selected: false,
-      itemsPerPage: inboxState.itemsPerPage,
-      inboxSectionVisible: false,
     };
 
     this.onChange = this.onChange.bind(this);
-    this.onClickInbox = this.onClickInbox.bind(this);
   }
 
   componentDidMount() {
     CollectionStore.listen(this.onChange);
-    InboxStore.listen(this.onChange);
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
-    InboxActions.fetchInboxCount();
   }
 
   componentWillUnmount() {
     CollectionStore.unlisten(this.onChange);
-    InboxStore.unlisten(this.onChange);
   }
 
   handleSectionToggle = (visible) => {
     this.setState((prevState) => ({
       [visible]: !prevState[visible],
-      inboxSectionVisible: false
     }));
   };
 
   onChange(state) {
     this.setState(state);
-  }
-
-  onClickInbox() {
-    const {
-      inboxSectionVisible, inbox, currentPage, itemsPerPage
-    } = this.state;
-    this.setState({
-      inboxSectionVisible: !inboxSectionVisible,
-      ownCollectionVisible: false,
-      sharedToCollectionVisible: false,
-      sharedWithCollectionVisible: false,
-      syncCollectionVisible: false,
-    });
-    if (!inbox.children) {
-      LoadingActions.start();
-      InboxActions.fetchInbox({ currentPage, itemsPerPage });
-    }
-  }
-
-  refreshInbox() {
-    const { currentPage, itemsPerPage } = this.state;
-    LoadingActions.start();
-    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   lockedSubtrees() {
@@ -184,49 +144,6 @@ export default class CollectionTree extends React.Component {
 
     return this.subtrees(labelledRoots, subTreeLabels,
       false, sharedWithCollectionVisible)
-  }
-
-  inboxSubtrees() {
-    const { inbox, itemsPerPage } = this.state;
-
-    let boxes = '';
-    if (inbox.children) {
-      inbox.children.sort((a, b) => {
-        if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
-      });
-      boxes = inbox.children.map((deviceBox) => (
-        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} fromCollectionTree />
-      ));
-    }
-
-    return (
-      <div className="tree-view">
-        <div
-          role="button"
-          onClick={InboxActions.showInboxModal}
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              InboxActions.showInboxModal();
-            }
-          }}
-        >
-          {boxes}
-          {inbox.children && inbox.children.length >= itemsPerPage ? (
-            <div className="title" key="more" style={{ textAlign: 'center', overflow: 'hidden' }}>
-              <Button className="btn-default" style={{ width: '100%' }}>Show more</Button>
-            </div>
-          ) : ''}
-        </div>
-        {inbox.unlinked_attachments ? (
-          <UnsortedBox
-            key="unsorted_box"
-            unsorted_box={inbox.unlinked_attachments}
-            fromCollectionTree
-          />
-        ) : ''}
-      </div>
-    );
   }
 
   remoteSyncInSubtrees() {
@@ -344,10 +261,9 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    const { ownCollectionVisible, inboxSectionVisible } = this.state;
+    const { ownCollectionVisible } = this.state;
 
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
-    const inboxDisplay = inboxSectionVisible ? '' : 'none';
 
     return (
       <div>
@@ -375,32 +291,6 @@ export default class CollectionTree extends React.Component {
         </div>
         <div className="tree-wrapper">
           {this.remoteSyncInSubtrees()}
-        </div>
-        <div className="tree-view">
-          <div className="title" style={{ backgroundColor: 'white' }}>
-            <button
-              type="button"
-              className="btn-inbox"
-              onClick={() => this.onClickInbox()}
-            >
-              <i className="fa fa-inbox" />
-              <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
-            </button>
-            {
-              this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ''
-            }
-            <Glyphicon bsSize="small" glyph="refresh" style={{ marginLeft: '5px' }} onClick={() => this.refreshInbox()} />
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullInbox">Show larger Inbox</Tooltip>}>
-              <Button style={{ position: 'absolute', right: 0 }} bsSize="xsmall" onClick={InboxActions.toggleInboxModal}>
-                <i className="fa fa-expand" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
-
-          </div>
-
-        </div>
-        <div className="tree-wrapper" style={{ display: inboxDisplay }}>
-          {this.inboxSubtrees()}
         </div>
       </div>
     );

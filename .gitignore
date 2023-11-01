@@ -48,6 +48,8 @@
 /config/scifinder_n.yml
 /config/radar.yml
 
+/doc/*
+
 /node_modules
 
 /public/images/molecules/*

@@ -1,4 +1,4 @@
-FROM complat/chemotion_eln_runner:v1.7.0-3
+FROM ptrxyz/internal:eln-1.8.0-rc4
 ARG BRANCH=main
 RUN apt-get install -y --no-install-recommends --autoremove --fix-missing \
   build-essential\
