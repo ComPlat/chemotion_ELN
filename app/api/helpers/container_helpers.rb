@@ -69,10 +69,6 @@ module ContainerHelpers
         properties = child[:dataset]['properties']
         container.save_dataset(dataset_klass_id: klass_id, properties: properties)
       end
-      container.destroy_datasetable if child[:container_type] == 'dataset' && child[:dataset].blank?
-      Labimotion::Converter.process_ds(container.id, current_user) if child[:container_type] == 'dataset'
-      Labimotion::NmrMapper.process_ds(container.id, current_user) if child[:container_type] == 'dataset'
-
       create_or_update_containers(child[:children], container)
     end
   end

@@ -106,13 +106,17 @@ export function reactionStatus(element) {
       </Tooltip>
     );
 
-    let icon = null;
+    const overlay = (_icons) => (
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        {_icons}
+      </OverlayTrigger>
+    );
+
     switch (element.status) {
       case 'Planned':
-        icon = <i className="fa fa-clock-o c-bs-warning" />;
-        break;
-      case 'Running':
-        icon = (
+        return overlay(<i className="fa fa-clock-o c-bs-warning" />);
+      case 'Running': {
+        const icon = (
           <span
             style={{ width: '12px', height: '14px', lineHeight: '14px' }}
             className="fa fa-stack"
@@ -122,28 +126,19 @@ export function reactionStatus(element) {
             <i className="fa fa-stack-1x fa-hourglass-3 running-3 c-bs-warning" />
           </span>
         );
-        break;
+        return overlay(icon);
+      }
       case 'Done':
-        icon = <i className="fa fa-hourglass-3 c-bs-primary" />;
-        break;
+        return overlay(<i className="fa fa-hourglass-3 c-bs-primary" />);
       case 'Analyses Pending':
-        icon = <i className="fa fa-ellipsis-h c-bs-primary" />;
-        break;
+        return overlay(<i className="fa fa-ellipsis-h c-bs-primary" />);
       case 'Successful':
-        icon = <i className="fa fa-check-circle-o c-bs-success" />;
-        break;
+        return overlay(<i className="fa fa-check-circle-o c-bs-success" />);
       case 'Not Successful':
-        icon = <i className="fa fa-times-circle-o c-bs-danger" />;
-        break;
+        return overlay(<i className="fa fa-times-circle-o c-bs-danger" />);
       default:
-        break;
+        return null;
     }
-
-    return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        {icon}
-      </OverlayTrigger>
-    );
   }
 
   return null;
