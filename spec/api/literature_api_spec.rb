@@ -7,7 +7,7 @@ require 'rails_helper'
 
 describe Chemotion::LiteratureAPI do
   include_context 'api request authorization context'
-  let(:user) { create(:person) }
+  let!(:user) { create(:person) }
   let!(:collection) { create(:collection, user: user) }
   let!(:r1) { create(:reaction, creator: user, collections: [collection]) }
   let!(:l1) { create(:literature) }
@@ -48,6 +48,30 @@ describe Chemotion::LiteratureAPI do
           title: l2.title,
           url: l2.url,
         )
+      end
+    end
+
+    context 'when fetching literature from a cell line' do
+      let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+      let!(:cell_line_literal) do
+        create(:literal,
+               literature: l1,
+               element: cell_line.cellline_material,
+               user: user)
+      end
+
+      before do
+        get '/api/v1/literatures', params: { element_id: cell_line.id, element_type: 'cell_line' }
+      end
+
+      it 'response code is 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'literature was returned correct' do
+        literatures = JSON.parse(response.body)['literatures']
+        expect(literatures.count).to be 1
+        expect(literatures.first['id']).to be l1.id
       end
     end
   end
