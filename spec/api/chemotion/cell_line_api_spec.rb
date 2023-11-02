@@ -1,9 +1,33 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/LetSetup
+
 require 'rails_helper'
 
 describe Chemotion::CellLineAPI do
   include_context 'api request authorization context'
+
+  describe 'GET /api/v1/cell_lines/' do
+    let(:collection) { create(:collection) }
+    let!(:user) { create(:user, collections: [collection]) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let!(:cell_line2) { create(:cellline_sample, collections: [collection]) }
+    let(:params) { { collection_id: collection.id } }
+
+    context 'when collection is accessable and got 2 cell lines' do
+      before do
+        get '/api/v1/cell_lines/', params: params
+      end
+
+      it 'returns correct response code' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'returns two cell lines' do
+        expect(parsed_json_response.first.count).to be 2
+      end
+    end
+  end
 
   describe 'GET /api/v1/cell_lines/{:id}' do
     let(:cell_line) { create(:cellline_sample, collections: [collection]) }
@@ -107,3 +131,4 @@ describe Chemotion::CellLineAPI do
     end
   end
 end
+# rubocop:enable RSpec/LetSetup
