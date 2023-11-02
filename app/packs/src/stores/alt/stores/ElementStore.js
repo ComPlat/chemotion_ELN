@@ -1086,7 +1086,8 @@ class ElementStore {
     }
     userState.profile.data.filters[filter.name] = {
       sort: filter.sort,
-      group: filter.group
+      group: filter.group,
+      direction: filter.direction,
     };
 
     this.handleRefreshElements(filter.name);
