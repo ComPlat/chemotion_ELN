@@ -221,5 +221,33 @@ describe Chemotion::CellLineAPI do
       end
     end
   end
+
+  describe 'GET /api/v1/cell_lines/material' do
+    context 'when material does not exist' do
+      before do
+        get '/api/v1/cell_lines/material/-1'
+      end
+
+      it 'returns correct response code' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when material exists' do
+      let(:material) { create(:cellline_material) }
+
+      before do
+        get "/api/v1/cell_lines/material/#{material.id}"
+      end
+
+      it 'returns correct response code' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'returns correct material' do
+        expect(parsed_json_response['id']).to be material.id
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/LetSetup, RSpec/NestedGroups
