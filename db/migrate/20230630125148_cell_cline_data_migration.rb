@@ -6,7 +6,7 @@ class CellClineDataMigration < ActiveRecord::Migration[6.1]
     end
 
     Profile.all.each do |profile|
-      profile.data['layout']['cell_line']=-1000
+      profile.data['layout']['cell_line']=-1000 if profile.data['layout']
       profile.save
     end
   end
