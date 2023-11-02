@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/LetSetup
+# rubocop:disable RSpec/LetSetup, RSpec/NestedGroups
 
 require 'rails_helper'
 
@@ -11,20 +11,49 @@ describe Chemotion::CellLineAPI do
     let(:collection) { create(:collection) }
     let!(:user) { create(:user, collections: [collection]) }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let!(:cell_line2) { create(:cellline_sample, collections: [collection]) }
+    let!(:cell_line2) do
+      create(:cellline_sample,
+             collections: [collection],
+             created_at: DateTime.parse('2000-01-01'),
+             updated_at: DateTime.parse('2010-01-01'))
+    end
+
     let(:params) { { collection_id: collection.id } }
 
     context 'when collection is accessable and got 2 cell lines' do
-      before do
-        get '/api/v1/cell_lines/', params: params
+      context 'when fetching by id without restrictions' do
+        before do
+          get '/api/v1/cell_lines/', params: params
+        end
+
+        it 'returns correct response code' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'returns two cell lines' do
+          expect(parsed_json_response['cell_lines'].count).to be 2
+        end
       end
 
-      it 'returns correct response code' do
-        expect(response).to have_http_status :ok
-      end
+      context 'when fetching by id with created at restriction (from_date)' do
+        let(:params) do
+          { collection_id: collection.id,
+            from_date: DateTime.parse('2022-01-01').to_i,
+            filter_created_at: true }
+        end
 
-      it 'returns two cell lines' do
-        expect(parsed_json_response.first.count).to be 2
+        before do
+          get '/api/v1/cell_lines/', params: params
+        end
+
+        it 'returns correct response code' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'returns one cell line' do
+          expect(parsed_json_response['cell_lines'].count).to be 1
+          expect(parsed_json_response['cell_lines'].first['id']).to be cell_line.id
+        end
       end
     end
   end
@@ -131,4 +160,4 @@ describe Chemotion::CellLineAPI do
     end
   end
 end
-# rubocop:enable RSpec/LetSetup
+# rubocop:enable RSpec/LetSetup, RSpec/NestedGroups
