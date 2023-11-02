@@ -5,20 +5,13 @@ require 'rails_helper'
 describe Chemotion::CellLineAPI do
   include_context 'api request authorization context'
 
-  describe 'GET /api/v1/cell_lines/' do
-    let(:cell_line) { create(:cellline_sample) }
-    let(:user) { create(:user) }
+  describe 'GET /api/v1/cell_lines/{:id}' do
+    let(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let(:user) { create(:user, collections: [collection]) }
     let(:collection) { create(:collection) }
 
-    context 'with cell line exists' do
+    context 'when cell line exists' do
       before do
-        CollectionsCellline.create(
-          collection: collection,
-          cellline_sample: cell_line,
-        )
-        user.collections << collection
-        user.save
-
         get "/api/v1/cell_lines/#{cell_line.id}"
       end
 
@@ -32,7 +25,7 @@ describe Chemotion::CellLineAPI do
       end
     end
 
-    context 'with cell does not line exists' do
+    context 'when cell does not line exist' do
       before do
         get '/api/v1/cell_lines/-1'
       end
