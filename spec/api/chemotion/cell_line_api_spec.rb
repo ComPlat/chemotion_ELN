@@ -77,7 +77,7 @@ describe Chemotion::CellLineAPI do
         end
       end
 
-      context 'when fetching by id with created at restriction (from_date)' do
+      context 'when fetching by id with updated_at restriction (from_date)' do
         let(:params) do
           { collection_id: collection.id,
             from_date: DateTime.parse('2011-01-01').to_i,
@@ -98,7 +98,7 @@ describe Chemotion::CellLineAPI do
         end
       end
 
-      context 'when fetching by id with created at restriction (from_date)' do
+      context 'when fetching by id with updated_at restriction (to_date)' do
         let(:params) do
           { collection_id: collection.id,
             to_date: DateTime.parse('2009-01-01').to_i,
