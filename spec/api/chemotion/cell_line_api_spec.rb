@@ -76,6 +76,47 @@ describe Chemotion::CellLineAPI do
           expect(parsed_json_response['cell_lines'].first['id']).to be cell_line2.id
         end
       end
+
+      context 'when fetching by id with created at restriction (from_date)' do
+        let(:params) do
+          { collection_id: collection.id,
+            from_date: DateTime.parse('2011-01-01').to_i,
+            filter_created_at: false }
+        end
+
+        before do
+          get '/api/v1/cell_lines/', params: params
+        end
+
+        it 'returns correct response code' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'returns one cell line' do
+          expect(parsed_json_response['cell_lines'].count).to be 1
+          expect(parsed_json_response['cell_lines'].first['id']).to be cell_line.id
+        end
+      end
+
+      context 'when fetching by id with created at restriction (from_date)' do
+        let(:params) do
+          { collection_id: collection.id,
+            to_date: DateTime.parse('2009-01-01').to_i,
+            filter_created_at: false }
+        end
+
+        before do
+          get '/api/v1/cell_lines/', params: params
+        end
+
+        it 'returns correct response code' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'returns no cell line' do
+          expect(parsed_json_response['cell_lines'].count).to be 0
+        end
+      end
     end
   end
 
