@@ -21,7 +21,7 @@ describe('ImageAnnotationEditButton', () => {
 
       it('button is rendered but disabled', () => {
         expect(wrapper.html())
-          .toEqual('<span class=""><button disabled="" style="pointer-events:none" type="button" '
+          .toEqual('<span class=""><button disabled="" type="button" '
            + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil" aria-hidden="true"></i></button></span>');
       });
     });
