@@ -61,6 +61,7 @@ export default class ContainerDataset extends Component {
     switch (type) {
       case 'name':
         updatedDatasetContainer.name = value;
+        this.props.onNameChange(value);
         break;
       case 'instrument':
         updatedDatasetContainer.extended_metadata = {
@@ -446,17 +447,39 @@ export default class ContainerDataset extends Component {
     return <div />;
   }
 
-  render() {
+  renderAttachments() {
+    return (
+      <>
+        {this.dropzone()}
+        {this.attachments()}
+        <HyperLinksSection
+          data={this.state.datasetContainer.extended_metadata.hyperlinks}
+          onAddLink={this.handleAddLink}
+          onRemoveLink={this.handleRemoveLink}
+          disabled={this.props.disabled}
+        />
+        <ImageAnnotationModalSVG
+          attachment={this.state.choosenAttachment}
+          isShow={this.state.imageEditModalShown}
+          handleSave={() => {
+            const newAnnotation = document
+              .getElementById('svgEditId')
+              .contentWindow.svgEditor.svgCanvas.getSvgString();
+            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            this.props.onChange(this.props.datasetContainer);
+          }}
+          handleOnClose={() => {
+            this.setState({ imageEditModalShown: false });
+          }}
+        />
+      </>
+    );
+  }
+
+  renderMetadata() {
     const { datasetContainer, showInstruments } = this.state;
     const { readOnly, disabled, kind } = this.props;
-    const overlayAttributes = {
-      style: {
-        position: 'absolute',
-        width: 300,
-        marginTop: 144,
-        marginLeft: 17,
-      },
-    };
     const termId = absOlsTermId(kind);
     const klasses = (UserStore.getState() && UserStore.getState().dsKlasses) || [];
     let klass = {};
@@ -472,97 +495,79 @@ export default class ContainerDataset extends Component {
       genericDS = GenericDS.buildEmpty(cloneDeep(klass), datasetContainer.id);
     }
     return (
-      <Row>
-        <Col md={6} className="col-base">
-          <FormGroup controlId="datasetName">
-            <ControlLabel>Name</ControlLabel>
-            <FormControl
-              type="text"
-              value={datasetContainer.name || ''}
-              disabled={readOnly || disabled}
-              onChange={(event) => this.handleInputChange('name', event)}
-            />
-          </FormGroup>
-          <FormGroup controlId="datasetInstrument">
-            <ControlLabel>Instrument</ControlLabel>
-            <FormControl
-              type="text"
-              value={datasetContainer.extended_metadata.instrument || ''}
-              disabled={readOnly || disabled}
-              onChange={(event) => this.handleInstrumentValueChange(
-                event,
-                this.doneInstrumentTyping
-              )}
-              ref={(input) => {
-                this.autoComplete = input;
-              }}
-              autoComplete="off"
-            />
-            <Overlay
-              placement="bottom"
-              style={{
-                marginTop: 80,
-                width: 398,
-                height: 10,
-                maxHeight: 20,
-              }}
-              show={showInstruments}
-              container={this}
-              rootClose
-              onHide={() => this.abortAutoSelection()}
-            >
-              <ChildOverlay
-                dataList={this.renderInstruments()}
-                overlayAttributes={overlayAttributes}
-              />
-            </Overlay>
-          </FormGroup>
-          <FormGroup controlId="datasetDescription">
-            <ControlLabel>Description</ControlLabel>
-            <FormControl
-              componentClass="textarea"
-              value={datasetContainer.description || ''}
-              disabled={readOnly || disabled}
-              onChange={(event) => this.handleInputChange('description', event)}
-              rows={4}
-            />
-          </FormGroup>
-        </Col>
-        <Col md={6} className="col-full">
-          <label>Attachments</label>
-          {this.dropzone()}
-          {this.attachments()}
-          <>
-            <HyperLinksSection
-              data={datasetContainer.extended_metadata.hyperlinks}
-              onAddLink={this.handleAddLink}
-              onRemoveLink={this.handleRemoveLink}
-              disabled={disabled}
-            />
-            <ImageAnnotationModalSVG
-              attachment={this.state.choosenAttachment}
-              isShow={this.state.imageEditModalShown}
-              handleSave={() => {
-                const newAnnotation = document
-                  .getElementById('svgEditId')
-                  .contentWindow.svgEditor.svgCanvas.getSvgString();
-                this.state.choosenAttachment.updatedAnnotation = newAnnotation;
-                this.setState({ imageEditModalShown: false });
-                this.props.onChange(this.props.datasetContainer);
-              }}
-              handleOnClose={() => {
-                this.setState({ imageEditModalShown: false });
-              }}
-            />
-          </>
-        </Col>
-        <Col md={12}>
-          <GenericDSDetails
-            genericDS={genericDS}
-            klass={klass}
-            kind={kind}
-            onChange={this.handleDSChange}
+      <>
+        <FormGroup controlId="datasetName">
+          <ControlLabel>Name</ControlLabel>
+          <FormControl
+            type="text"
+            value={datasetContainer.name || ''}
+            disabled={readOnly || disabled}
+            onChange={(event) => this.handleInputChange('name', event)}
           />
+        </FormGroup>
+        <FormGroup controlId="datasetInstrument">
+          <ControlLabel>Instrument</ControlLabel>
+          <FormControl
+            type="text"
+            value={datasetContainer.extended_metadata.instrument || ''}
+            disabled={readOnly || disabled}
+            onChange={(event) => this.handleInstrumentValueChange(
+              event,
+              this.doneInstrumentTyping
+            )}
+            ref={(input) => {
+              this.autoComplete = input;
+            }}
+            autoComplete="off"
+          />
+          <Overlay
+            placement="bottom"
+            show={showInstruments}
+            container={this}
+            rootClose
+            onHide={() => this.abortAutoSelection()}
+          >
+            <ChildOverlay
+              dataList={this.renderInstruments()}
+              overlayAttributes={{
+                style: {
+                  position: 'absolute',
+                  width: 300,
+                  marginTop: 144,
+                  marginLeft: 17,
+                },
+              }}
+            />
+          </Overlay>
+        </FormGroup>
+        <FormGroup controlId="datasetDescription">
+          <ControlLabel>Description</ControlLabel>
+          <FormControl
+            componentClass="textarea"
+            value={datasetContainer.description || ''}
+            disabled={readOnly || disabled}
+            onChange={(event) => this.handleInputChange('description', event)}
+            rows={4}
+          />
+        </FormGroup>
+        <GenericDSDetails
+          genericDS={genericDS}
+          klass={klass}
+          kind={kind}
+          onChange={this.handleDSChange}
+        />
+      </>
+    );
+  }
+
+  render() {
+    const { mode } = this.props;
+
+    return (
+      <Row>
+        <Col md={12}>
+          {mode === 'attachments' && this.renderAttachments()}
+          {mode === 'metadata' && this.renderMetadata()}
         </Col>
       </Row>
     );
@@ -570,15 +575,19 @@ export default class ContainerDataset extends Component {
 }
 
 ContainerDataset.propTypes = {
-  datasetContainer: PropTypes.object.isRequired,
+  datasetContainer: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }).isRequired,
   onChange: PropTypes.func.isRequired,
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string.isRequired,
+  mode: PropTypes.oneOf(['attachments', 'metadata']),
 };
 
 ContainerDataset.defaultProps = {
+  mode: 'attachments',
   disabled: false,
   readOnly: false,
 };
