@@ -12,34 +12,43 @@ export default class ContainerDatasetModal extends Component {
 
     this.datasetInput = React.createRef();
 
+    this.originalDatasetContainer = { ...props.datasetContainer };
+
     this.state = {
       mode: 'attachments',
       isNameEditing: false,
-      originalDatasetContainer: { ...props.datasetContainer },
-
+      datasetContainer: { ...props.datasetContainer },
     };
 
     this.handleSave = this.handleSave.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
+    this.discardChanges = this.discardChanges.bind(this);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.datasetContainer !== this.props.datasetContainer) {
+      this.originalDatasetContainer = { ...this.props.datasetContainer };
+      this.setState({ datasetContainer: { ...this.props.datasetContainer } });
+    }
   }
 
   handleSave() {
     this.datasetInput.current.handleSave();
+    // this.props.onChange(this.state.datasetContainer);
+    this.props.onHide();
   }
 
   handleSwitchMode(mode) {
     this.setState({ mode });
   }
 
-  discardChanges = () => {
-    this.props.onChange(this.state.originalDatasetContainer);
-    this.props.onHide();
-  };
-
   handleNameChange = (newName) => {
-    const { datasetContainer } = this.props;
-    datasetContainer.name = newName;
-    this.setState({ datasetContainer });
+    this.setState((prevState) => ({
+      datasetContainer: {
+        ...prevState.datasetContainer,
+        name: newName,
+      }
+    }));
   };
 
   toggleNameEditing = () => {
@@ -47,6 +56,11 @@ export default class ContainerDatasetModal extends Component {
       isNameEditing: !prevState.isNameEditing,
     }));
   };
+
+  discardChanges() {
+    this.setState({ datasetContainer: this.originalDatasetContainer });
+    this.props.onHide();
+  }
 
   render() {
     const {
@@ -136,7 +150,7 @@ export default class ContainerDatasetModal extends Component {
                 <div style={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
                   <input
                     type="text"
-                    defaultValue={datasetContainer.name}
+                    value={this.state.datasetContainer.name}
                     onBlur={this.toggleNameEditing}
                     onKeyPress={(event) => {
                       if (event.key === 'Enter') {
