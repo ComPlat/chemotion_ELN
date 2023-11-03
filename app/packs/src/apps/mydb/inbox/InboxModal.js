@@ -11,6 +11,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 export default class InboxModal extends React.Component {
   constructor(props) {
@@ -202,21 +203,25 @@ export default class InboxModal extends React.Component {
         { ' ' }
         {collectorAddress}
         { ' ' }
-        Click to copy the address to your clipboard.
+        . Click to copy the address to your clipboard.
       </Tooltip>
     );
   }
 
   collectorAddressInfoButton() {
+    const { collectorAddress } = this.state;
+
     return (
-      <OverlayTrigger placement="top" overlay={this.infoMessage()}>
-        <Button
-          bsSize="xsmall"
-          className="btn btn-circle btn-sm btn-info button-right"
-        >
-          <Glyphicon glyph="info-sign" />
-        </Button>
-      </OverlayTrigger>
+      <CopyToClipboard text={collectorAddress}>
+        <OverlayTrigger placement="top" overlay={this.infoMessage()}>
+          <Button
+            bsSize="xsmall"
+            className="btn btn-circle btn-sm btn-info button-right"
+          >
+            <Glyphicon glyph="info-sign" />
+          </Button>
+        </OverlayTrigger>
+      </CopyToClipboard>
     );
   }
 
