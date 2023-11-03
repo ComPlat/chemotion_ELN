@@ -66,6 +66,8 @@ export default class EditModeHeader extends React.Component {
   renderNotDeletedContainer() {
     const { container,readOnly } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+    const kind = container.extended_metadata.kind.split('|')[1] || '';
+    
     const contentOneLine = {
       ops: content.ops.map((x) => {
         const c = { ...x };
@@ -92,7 +94,7 @@ export default class EditModeHeader extends React.Component {
             <div className="sub-title">
               Type:
               {' '}
-              {container.extended_metadata.kind || ''}
+              {kind}
             </div>
             <div className="sub-title">
               Status:
