@@ -5,7 +5,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 
 const filterTreeNode = (input, child) => String(child.props.search && child.props.search.toLowerCase())
   .indexOf(input && input.toLowerCase()) !== -1;
-const uuidCheckRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 export default class OlsTreeSelect extends Component {
   constructor(props) {
     super(props);
@@ -13,15 +12,16 @@ export default class OlsTreeSelect extends Component {
   }
 
   OnSelectChange(e) {
+    const cleanedOlsEntry = this.removeArtificalId(e || '');
     this.props.onSelectChange(
-      this.removeArtificalId(e || ''),
+      cleanedOlsEntry,
       this.props.selectName
     );
   }
 
   removeArtificalId(value) {
+    const uuidCheckRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
     const parts = value.split('$');
-
     if (parts.length === 1) { return value.trim(); }
 
     if (!uuidCheckRegex.test(parts.slice(-1))) { return value.trim(); }
