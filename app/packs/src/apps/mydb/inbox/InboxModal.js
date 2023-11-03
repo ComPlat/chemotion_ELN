@@ -17,7 +17,6 @@ export default class InboxModal extends React.Component {
     super(props);
 
     const inboxState = InboxStore.getState();
-    const uiStore = UIStore.getState();
 
     this.state = {
       inbox: inboxState.inbox,
@@ -29,10 +28,10 @@ export default class InboxModal extends React.Component {
       itemsPerPage: inboxState.itemsPerPage,
       totalPages: inboxState.totalPages,
       activeDeviceBoxId: inboxState.activeDeviceBoxId,
-      collectorAddress: uiStore.collectorAddress,
     };
 
     this.onChange = this.onChange.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onClickInbox = this.onClickInbox.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -41,6 +40,7 @@ export default class InboxModal extends React.Component {
 
   componentDidMount() {
     InboxStore.listen(this.onChange);
+    UIStore.listen(this.onUIStoreChange);
     InboxActions.fetchInboxCount();
   }
 
@@ -59,6 +59,13 @@ export default class InboxModal extends React.Component {
   onChange(state) {
     this.setState(state);
     this.setState({ visible: state.inboxModalVisible });
+  }
+
+  onUIStoreChange(state) {
+    const { collectorAddress } = state;
+    if (collectorAddress !== this.state.collectorAddress) {
+      this.setState({ collectorAddress });
+    }
   }
 
   onClickInbox() {
@@ -191,9 +198,11 @@ export default class InboxModal extends React.Component {
     const { collectorAddress } = this.state;
     return (
       <Tooltip id="assignButton">
-        You can send data to the following email address:
+        You can send yourself files to your inbox by emailing them from your registered email to the following email address:
         { ' ' }
         {collectorAddress}
+        { ' ' }
+        Click to copy the address to your clipboard.
       </Tooltip>
     );
   }
