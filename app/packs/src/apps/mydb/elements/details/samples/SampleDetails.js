@@ -1392,7 +1392,7 @@ export default class SampleDetails extends React.Component {
       if (sample.sample_svg_annotation) {
         svgPath = "data:image/svg+xml;base64," + btoa(sample.sample_svg_annotation);
       } else {
-        svgPath = sample.svgPath;
+        svgPath = sample.svgAnnotationPath;
       }
     }
     const className = svgPath ? 'svg-container' : 'svg-container-empty';

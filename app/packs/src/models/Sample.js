@@ -892,7 +892,7 @@ export default class Sample extends Element {
       && !this.error_loading && !this.error_polymer_type);
   }
 
-  get svgPath() {
+  get svgAnnotationPath() {
     if (this.show_label) {
       return `svg_text/${this.labelText}`;
     }
@@ -909,7 +909,21 @@ export default class Sample extends Element {
     return this.molecule && this.molecule.molecule_svg_file
       ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
   }
-  // todo: have a dedicated Material Sample subclass
+
+  get svgPath() {
+    if (this.show_label) {
+      return `svg_text/${this.labelText}`
+    }
+
+    if (this.sample_svg_file) {
+      if (this.sample_svg_file === '***') {
+        return `/images/wild_card/no_image_180.svg`
+      }
+      return `/images/samples/${this.sample_svg_file}`;
+    }
+    return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+  }
+  //todo: have a dedicated Material Sample subclass
 
   get labelText() {
     return this.name || this.molecule_formula || this.molecule.iupac_name;
