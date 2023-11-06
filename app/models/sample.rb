@@ -482,7 +482,13 @@ class Sample < ApplicationRecord
     prefix = sample_svg_file[0..-5] # cut off .svg suffice
     filename = "#{prefix}_annotation.svg"
 
-    File.write(full_svg_path(filename), scrub(sample_svg_annotation))
+    Rails.logger.debug('========================================================')
+    Rails.logger.debug sample_svg_annotation
+    scrubbed_svg = scrub(sample_svg_annotation)
+    Rails.logger.debug('========================================================')
+    Rails.logger.debug(scrubbed_svg)
+    Rails.logger.debug('========================================================')
+    File.write(full_svg_path(filename), scrubbed_svg)
     self.sample_svg_annotation_file = filename
   end
 
@@ -725,8 +731,9 @@ class Sample < ApplicationRecord
 
   def scrub(value)
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
+    Loofah::HTML5::SafeList::ALLOWED_ELEMENTS_WITH_LIBXML2.add('image')
+
     Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
-#   value
   end
 end
 # rubocop:enable Metrics/ClassLength

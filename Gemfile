@@ -63,6 +63,7 @@ gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
 gem 'labimotion', '1.0.19'
+gem 'loofah', '2.21.3' # comes as dependency of rails-html-sanitizer but is explicitly used so it needs to be in the Gemfile
 
 gem 'mimemagic', '0.3.10'
 

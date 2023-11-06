@@ -18,8 +18,13 @@ export default class ImageAnnotationModalSVG extends Component {
     p = p.replaceAll(/\\u003e/g, ">");
     p = p.replaceAll("\\n", "");
     p = p.replaceAll('\\"', '"');
-    // for whatever reason, the arriving svg string is wrapped in another set of quotes, so we return only the content
-    return p.slice(1, -1);
+    if (p.startsWith('"') && p.endsWith('"')) {
+      // for whatever reason, the arriving svg string from the backend is sometimes wrapped in another set of quotes,
+      // so we return only the content
+      p = p.slice(1, -1);
+    }
+
+    return p;
   }
 
   render() {
@@ -73,10 +78,10 @@ export default class ImageAnnotationModalSVG extends Component {
               }
 
               // hide some panels
-              // subDocument.querySelector('#sidepanels')?.setAttribute('style', 'display: none');
-              // subDocument.querySelector('#title_panel')?.setAttribute('style', 'display: none');
-              // subDocument.querySelector('#editor_panel')?.setAttribute('style', 'display: none');
-              // subDocument.querySelector('#history_panel')?.setAttribute('style', 'display: none');
+              subDocument.querySelector('#sidepanels')?.setAttribute('style', 'display: none');
+              subDocument.querySelector('#title_panel')?.setAttribute('style', 'display: none');
+              subDocument.querySelector('#editor_panel')?.setAttribute('style', 'display: none');
+              subDocument.querySelector('#history_panel')?.setAttribute('style', 'display: none');
 
               // make sure top is at least 40px to prevent view bobbing
               subDocument.querySelector('#tools_top')?.setAttribute('style', 'min-height: 40px');
@@ -195,9 +200,10 @@ export default class ImageAnnotationModalSVG extends Component {
               const subWindow = document.getElementById('svgEditId').contentWindow;
               const { svgEditor } = subWindow;
               this.setState({ canSave: false });
-              return this.props.handleSave(
-                svgEditor.svgCanvas.getSvgString()
-              );
+              const resulting_annotation = svgEditor.svgCanvas.getSvgString();
+              console.debug('Resulting Annotation:');
+              console.debug(resulting_annotation);
+              return this.props.handleSave(resulting_annotation);
             }}
           >
             Accept changes

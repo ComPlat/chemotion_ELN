@@ -929,6 +929,7 @@ DEPENDENCIES
   labimotion (= 1.0.19)
   launchy
   listen
+  loofah (= 2.21.3)
   memory_profiler
   meta_request
   mimemagic (= 0.3.10)
