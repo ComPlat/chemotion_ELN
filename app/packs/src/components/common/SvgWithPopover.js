@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { OverlayTrigger, Popover } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 
 export default class SvgWithPopover extends Component {
   constructor(props) {
@@ -10,15 +11,25 @@ export default class SvgWithPopover extends Component {
   }
 
   popHover() {
-    const { popObject } = this.props;
-
+    const { popObject, previewObject } = this.props;
     return (
       <Popover
         id="popover-trigger-hover-focus"
         title={popObject.title}
         style={{ maxWidth: 'none', maxHeight: 'none' }}
       >
-        <img src={popObject.src} style={{ height: popObject.height, width: popObject.width }} alt="" />
+        {
+          previewObject.isSVG
+          ? 
+          <div style={{ height: popObject.height, width: popObject.width }}>
+            <SvgFileZoomPan
+              svgPath={popObject.src}
+              duration={0}
+              resize
+            />
+          </div>
+          : <img src={popObject.src} style={{ height: popObject.height, width: popObject.width }} alt="" />
+        }
       </Popover>
     );
   }
