@@ -207,10 +207,8 @@ class API < Grape::API
   mount Chemotion::AdminDeviceAPI
   mount Chemotion::AdminDeviceMetadataAPI
 
-  if Rails.env.development?
     add_swagger_documentation(info: {
                                 title: 'Chemotion ELN',
                                 version: '1.0',
                               })
-  end
 end
