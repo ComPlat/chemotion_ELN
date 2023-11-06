@@ -11,6 +11,8 @@ import {
   ListGroupItem,
   Button,
   Overlay,
+  Panel,
+  Accordion
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import debounce from 'es6-promise-debounce';
@@ -448,10 +450,44 @@ export default class ContainerDataset extends Component {
   }
 
   renderAttachments() {
+    const { datasetContainer } = this.state;
+
+    const groupedAttachments = {};
+    datasetContainer.attachments.forEach((attachment) => {
+      const { filename } = attachment;
+      const nameWithoutExtension = filename.replace(/\.[^.]+$/, '');
+      if (!groupedAttachments[nameWithoutExtension]) {
+        groupedAttachments[nameWithoutExtension] = [];
+      }
+      groupedAttachments[nameWithoutExtension].push(attachment);
+    });
+
+    const attachmentGroups = Object.entries(groupedAttachments).map(([name, attachments]) => (
+      <Panel key={name} eventKey={name}>
+        <Panel.Heading>
+          <Panel.Title toggle>{name}</Panel.Title>
+        </Panel.Heading>
+        <Panel.Collapse>
+          <Panel.Body>
+            <ListGroup>
+              {attachments.map((attachment) => (
+                <ListGroupItem key={attachment.id}>
+                  {this.listGroupItem(attachment)}
+                </ListGroupItem>
+              ))}
+            </ListGroup>
+          </Panel.Body>
+        </Panel.Collapse>
+      </Panel>
+    ));
+
     return (
       <>
         {this.dropzone()}
-        {this.attachments()}
+        <Accordion>
+          {attachmentGroups}
+        </Accordion>
+
         <HyperLinksSection
           data={this.state.datasetContainer.extended_metadata.hyperlinks}
           onAddLink={this.handleAddLink}
