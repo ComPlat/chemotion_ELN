@@ -2,6 +2,7 @@
 backup
 uploads
 public
+!/public/json/
 !/public/ontologies_default/
 .gitignore
 node_modules
