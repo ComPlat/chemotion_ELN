@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { Table, Button, Tooltip, OverlayTrigger, Label } from 'react-bootstrap';
+import {
+  Table, Button, Tooltip, OverlayTrigger, Label
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -52,7 +54,7 @@ const targets = {
 };
 
 const isCurrEleDropType = (sourceType, targetType) => {
-  if ((sourceType == 'molecule' || sourceType == 'sample') && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
+  if (['molecule', 'sample'].includes(sourceType) && !['wellplate', 'device', 'research_plan'].includes(targetType)) {
     return sourceType && targetType;
   }
   return sourceType && targetType && targets[sourceType].includes(targetType);
@@ -106,17 +108,18 @@ XvialIcon.defaultProps = {
   label: ''
 };
 
-const showDecoupledIcon = sample => (sample.decoupled ? (
-  <div className="decoupled-icon" onClick={e => e.stopPropagation()}>
+const showDecoupledIcon = (sample) => (sample.decoupled ? (
+  <div className="decoupled-icon" onClick={(e) => e.stopPropagation()}>
     <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
       <Label><i className="fa fa-chain-broken" aria-hidden="true" /></Label>
     </OverlayTrigger>
-  </div>) : null);
+  </div>
+) : null);
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
 
 const svgPreview = (showPreviews, sample) => (
-  <div style={{ float: 'left' }} >
+  <div style={{ float: 'left' }}>
     {
       showPreviews
         ? <SvgWithPopover
@@ -147,7 +150,7 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
       style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
       onClick={onClick}
     >
-      {sample.molecule && sample.molecule.inchikey === 'DUMMY' ?
+      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null ?
         (<td colSpan="3" style={{ position: 'relative ' }} ><div><h4>(No-structure sample)</h4></div></td>) :
         (
           <td colSpan="2" style={{ position: 'relative ' }} >
@@ -172,7 +175,7 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
           </td>
         )
       }
-      {sample.molecule && sample.molecule.inchikey === 'DUMMY' ?
+      {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null ?
         null : dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
     </tr>
   );
@@ -205,10 +208,12 @@ export default class ElementsTableSampleEntries extends Component {
     elements.forEach((sample) => {
       let samples = [];
       let molId = '';
-      if (sample.stereo == null) {
+      if (sample.decoupled && sample.molfile) {
+        molId = `M${sample.id}`;
+      } else if (sample.stereo == null) {
         molId = `M${sample.molecule.id}_any_any`;
       } else {
-        molId = `M${sample.molecule.id}_${typeof sample.stereo.abs === 'undefined' ? 'any' : sample.stereo.abs}_${typeof sample.stereo.rel === 'undefined' ? 'any' : sample.stereo.rel}`;
+        molId = `M${sample.molecule.id}_${sample.stereo.abs || 'any'}_${sample.stereo.rel || 'any'}`;
       }
       if (moleculelist[molId]) {
         samples = moleculelist[molId];
