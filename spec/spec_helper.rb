@@ -59,7 +59,7 @@ RSpec.configure do |config|
 
   config.include FactoryBot::Syntax::Methods
 
-  config.before do
+  config.around do |example|
     [
       'XLYOFNOQVPJJNP-UHFFFAOYSA-N',
       'YJTKZCDBKVTVBY-UHFFFAOYSA-N',
@@ -147,6 +147,9 @@ RSpec.configure do |config|
                        'Access-Control-Request-Method' => 'GET',
                        'User-Agent' => 'Google Chrome' })
       .to_return(status: 200, body: '', headers: {})
+
+
+    example.run
   end
 
   config.expect_with :rspec do |expectations|
