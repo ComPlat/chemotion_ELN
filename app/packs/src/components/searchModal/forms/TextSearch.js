@@ -53,7 +53,6 @@ const TextSearch = () => {
           (id == 0 && f.field && f.value)
       });
     }
-    console.log(filteredOptions);
     searchStore.changeSearchFilter(filteredOptions);
     const storedFilter = searchStore.searchFilters;
     return storedFilter.length == 0 ? [] : storedFilter[0].filters;

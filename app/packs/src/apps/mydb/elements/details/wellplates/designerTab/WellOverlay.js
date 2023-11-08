@@ -234,7 +234,7 @@ WellOverlay.propTypes = {
   removeSampleFromWell: PropTypes.func.isRequired,
   handleWellLabel: PropTypes.func.isRequired,
   handleColorPicker: PropTypes.func.isRequired,
-  //selectedColor: PropTypes.func.isRequired,
+  selectedColor: PropTypes.func.isRequired,
   saveColorCode: PropTypes.func.isRequired,
 };
 
