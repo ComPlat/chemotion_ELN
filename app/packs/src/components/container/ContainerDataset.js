@@ -456,10 +456,12 @@ export default class ContainerDataset extends Component {
     datasetContainer.attachments.forEach((attachment) => {
       const { filename } = attachment;
       const nameWithoutExtension = filename.replace(/\.[^.]+$/, '');
-      if (!groupedAttachments[nameWithoutExtension]) {
-        groupedAttachments[nameWithoutExtension] = [];
+      // remove .peak format
+      const nameWithoutPeak = nameWithoutExtension.replace(/\.peak$/, '');
+      if (!groupedAttachments[nameWithoutPeak]) {
+        groupedAttachments[nameWithoutPeak] = [];
       }
-      groupedAttachments[nameWithoutExtension].push(attachment);
+      groupedAttachments[nameWithoutPeak].push(attachment);
     });
 
     const attachmentGroups = Object.entries(groupedAttachments).map(([name, attachments]) => (
