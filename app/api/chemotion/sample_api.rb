@@ -299,11 +299,12 @@ module Chemotion
           desc 'Fetch a new annotation svg for this sample'
           get do
             content_type('image/svg+xml')
+            env['api.format'] = :binary # send data as-is, otherwise it will be wrapped in quotes
             if @sample.sample_svg_annotation_file.present?
               return File.read(@sample.full_svg_path(@sample.sample_svg_annotation_file))
             end
 
-            Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
+            body Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
           end
         end
       end

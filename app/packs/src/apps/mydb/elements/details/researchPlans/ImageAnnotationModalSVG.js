@@ -12,21 +12,6 @@ export default class ImageAnnotationModalSVG extends Component {
     };
   }
 
-  unescapedAnnotation() {
-    let p = this.props.annotation;
-    p = p.replaceAll(/\\u003c/g, "<");
-    p = p.replaceAll(/\\u003e/g, ">");
-    p = p.replaceAll("\\n", "");
-    p = p.replaceAll('\\"', '"');
-    if (p.startsWith('"') && p.endsWith('"')) {
-      // for whatever reason, the arriving svg string from the backend is sometimes wrapped in another set of quotes,
-      // so we return only the content
-      p = p.slice(1, -1);
-    }
-
-    return p;
-  }
-
   render() {
     return (
       <Modal
@@ -167,8 +152,7 @@ export default class ImageAnnotationModalSVG extends Component {
               }, true);
 
               if (this.props.annotation != '') {
-                let unescaped_annotation = this.unescapedAnnotation();
-                svgEditor.svgCanvas.setSvgString(unescaped_annotation);
+                svgEditor.svgCanvas.setSvgString(this.props.annotation);
                 this.setState({ canSave: true });
               } else {
                 this.setState({ canSave: false });
