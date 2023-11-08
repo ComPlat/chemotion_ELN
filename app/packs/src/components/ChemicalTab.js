@@ -222,7 +222,7 @@ export default class ChemicalTab extends React.Component {
 
     const precautionaryPhrases = [];
     // eslint-disable-next-line no-restricted-syntax
-    for (const [key, value] of Object.entries(str.p_statements)) {
+    for (const [key, value] of Object.entries(str?.p_statements || {})) {
       // eslint-disable-next-line react/jsx-one-expression-per-line
       const st = <p key={key}>{key}:{value}</p>;
       precautionaryPhrases.push(st);
