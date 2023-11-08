@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/LetSetup
+
 require 'rails_helper'
 
 RSpec.describe 'ImportCollection' do
@@ -166,7 +168,8 @@ RSpec.describe 'ImportCollection' do
       end
     end
 
-    context 'with zip file including two cell line samples' do
+    context 'with zip file including two cell line samples, material already existing' do
+      let!(:cell_line) { create(:cellline_sample) }
       let(:import_id) { '20230629_two_cell_line_samples' }
       let(:attachment) do
         create(:attachment, file_path: Rails.root.join('spec/fixtures/import/20230629_two_cell_line_samples.zip'))
@@ -181,12 +184,12 @@ RSpec.describe 'ImportCollection' do
         expect(Collection.find_by(label: 'Awesome Collection').cellline_samples.length).to be 2
       end
 
-      it 'One cell line material was imported' do
-        expect(CelllineMaterial.count).to be 1
+      it 'Two cell line samples were imported, one from the original state' do
+        expect(CelllineSample.count).to be 3
       end
 
-      it 'Two cell line samples were imported' do
-        expect(CelllineSample.count).to be 2
+      it 'Only one material exists' do
+        expect(CelllineMaterial.count).to be 1
       end
     end
   end
@@ -198,3 +201,4 @@ RSpec.describe 'ImportCollection' do
     FileUtils.copy_file(src_location, target_location)
   end
 end
+# rubocop:enable RSpec/LetSetup

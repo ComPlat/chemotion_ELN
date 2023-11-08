@@ -27,7 +27,7 @@ class CelllineImporter
     material = @instances['CelllineMaterial'][material_uuid]
 
     sample = CelllineSample.create(
-      fields.except(@sample_exclude_properties)
+      fields.except('id', 'user_id')
       .merge(
         user_id: @current_user_id,
         cellline_material_id: material.id,
@@ -46,7 +46,8 @@ class CelllineImporter
 
   def create_cellline_materials
     @data.fetch('CelllineMaterial', {}).each do |uuid, fields|
-      material = CelllineMaterial.create(fields.except(@material_exclude_properties))
+      material = CelllineMaterial.find_by(name: fields['name'], source: fields['source'])
+      material ||= CelllineMaterial.create(fields.except('id'))
       update_instances!(uuid, material)
     end
   end
