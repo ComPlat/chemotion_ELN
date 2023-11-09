@@ -53,7 +53,6 @@ gem 'httparty'
 
 gem 'image_processing', '~> 1.8'
 gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
-gem 'mini_magick'
 
 gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
 gem 'jwt'
@@ -66,6 +65,7 @@ gem 'labimotion', '1.0.19'
 gem 'loofah', '2.21.3' # comes as dependency of rails-html-sanitizer but is explicitly used so it needs to be in the Gemfile
 
 gem 'mimemagic', '0.3.10'
+gem 'mini_magick' # comes as dependency of image_processing but is explicitly used so it needs to be in the Gemfile
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions
