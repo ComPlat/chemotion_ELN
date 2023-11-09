@@ -14,18 +14,22 @@ export default class ContainerDatasets extends Component {
     super(props);
     const { container } = props;
     this.state = {
+      originalContainer: JSON.parse(JSON.stringify(container)),
       container,
       modal: {
         show: false,
-        datasetContainer: null
-      }
+        datasetContainer: null,
+      },
     };
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      container: nextProps.container
-    });
+  componentDidUpdate(prevProps) {
+    if (this.props.container !== prevProps.container) {
+      this.setState({
+        container: this.props.container,
+        originalContainer: JSON.parse(JSON.stringify(this.props.container)),
+      });
+    }
   }
 
   handleModalOpen(datasetContainer) {
@@ -96,6 +100,12 @@ export default class ContainerDatasets extends Component {
     document.body.className = document.body.className.replace('modal-open', '');
   }
 
+  discardChanges = () => {
+    this.setState((prevState) => ({
+      container: JSON.parse(JSON.stringify(prevState.originalContainer)),
+    }));
+  };
+
   addButton() {
     const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
@@ -150,6 +160,7 @@ export default class ContainerDatasets extends Component {
             datasetContainer={modal.datasetContainer}
             analysisContainer={modal.analysisContainer}
             disabled={disabled}
+            onDiscard={this.discardChanges}
           />
         </div>
       );

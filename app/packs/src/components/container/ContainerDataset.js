@@ -57,31 +57,24 @@ export default class ContainerDataset extends Component {
   handleInputChange(type, event) {
     const { datasetContainer } = this.state;
     const { value } = event.target;
-
-    const updatedDatasetContainer = { ...datasetContainer };
-
     switch (type) {
       case 'name':
-        updatedDatasetContainer.name = value;
-        this.props.onNameChange(value);
+        datasetContainer.name = value;
         break;
       case 'instrument':
-        updatedDatasetContainer.extended_metadata = {
-          ...updatedDatasetContainer.extended_metadata,
-          instrument: value
-        };
+        datasetContainer.extended_metadata.instrument = value;
         break;
       case 'description':
-        updatedDatasetContainer.description = value;
+        datasetContainer.description = value;
         break;
       case 'dataset':
-        updatedDatasetContainer.dataset = value;
+        datasetContainer.dataset = value;
         break;
       default:
         console.warn(`Unhandled input type: ${type}`);
         break;
     }
-    this.setState({ datasetContainer: updatedDatasetContainer });
+    this.setState({ datasetContainer });
   }
 
   handleDSChange(ds) {
@@ -139,6 +132,8 @@ export default class ContainerDataset extends Component {
     this.setState({ datasetContainer });
   }
 
+  // the next method is used in ContainerDatasetModal.js please ignore eslint warning
+  // eslint-disable-next-line react/no-unused-class-component-methods
   handleSave() {
     const { datasetContainer } = this.state;
     const { onChange, onModalHide } = this.props;

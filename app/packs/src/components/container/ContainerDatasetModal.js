@@ -11,56 +11,34 @@ export default class ContainerDatasetModal extends Component {
     super(props);
 
     this.datasetInput = React.createRef();
-
-    this.originalDatasetContainer = { ...props.datasetContainer };
-
     this.state = {
       mode: 'attachments',
       isNameEditing: false,
-      datasetContainer: { ...props.datasetContainer },
     };
 
     this.handleSave = this.handleSave.bind(this);
+    this.handleDiscard = this.handleDiscard.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
-    this.discardChanges = this.discardChanges.bind(this);
   }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.datasetContainer !== this.props.datasetContainer) {
-      this.originalDatasetContainer = { ...this.props.datasetContainer };
-      this.setState({ datasetContainer: { ...this.props.datasetContainer } });
-    }
+  handleDiscard() {
+    this.props.onDiscard();
+    this.props.onHide();
   }
 
   handleSave() {
     this.datasetInput.current.handleSave();
-    // this.props.onChange(this.state.datasetContainer);
-    this.props.onHide();
   }
 
   handleSwitchMode(mode) {
     this.setState({ mode });
   }
 
-  handleNameChange = (newName) => {
-    this.setState((prevState) => ({
-      datasetContainer: {
-        ...prevState.datasetContainer,
-        name: newName,
-      }
-    }));
-  };
-
   toggleNameEditing = () => {
     this.setState((prevState) => ({
       isNameEditing: !prevState.isNameEditing,
     }));
   };
-
-  discardChanges() {
-    this.setState({ datasetContainer: this.originalDatasetContainer });
-    this.props.onHide();
-  }
 
   render() {
     const {
@@ -174,15 +152,15 @@ export default class ContainerDatasetModal extends Component {
               onModalHide={() => onHide()}
               onChange={onChange}
               mode={mode}
-              onNameChange={this.handleNameChange}
             />
           </Modal.Body>
           <Modal.Footer style={{ flexShrink: 0, width: '100%' }}>
-            <Button style={{ marginRight: '5px' }} onClick={this.discardChanges}>Discard Changes</Button>
+            <Button style={{ marginRight: '5px' }} onClick={this.handleDiscard}>Discard Changes</Button>
             <Button bsStyle="primary" onClick={this.handleSave}>Keep Changes</Button>
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               <small>
                 Changes are kept for this session. Remember to save the element itself to persist changes.
+                Discarding changes will discard changes for the entire session.
               </small>
             </div>
           </Modal.Footer>
@@ -203,6 +181,7 @@ ContainerDatasetModal.propTypes = {
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string.isRequired,
+  onDiscard: PropTypes.func.isRequired,
 };
 
 ContainerDatasetModal.defaultProps = {
