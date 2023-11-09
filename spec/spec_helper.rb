@@ -148,7 +148,6 @@ RSpec.configure do |config|
                        'User-Agent' => 'Google Chrome' })
       .to_return(status: 200, body: '', headers: {})
 
-
     example.run
   end
 

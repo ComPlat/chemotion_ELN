@@ -438,10 +438,13 @@ describe Chemotion::SampleAPI do
 
   describe 'GET /api/v1/samples/:id/annotation' do
     let(:seeded_sample_svg_file) do
-      Dir
-        .children(Rails.public_path.join('images', 'samples'))
-        .select { |filename| filename.ends_with?('.svg') }
-        .first
+      Rails
+        .public_path
+        .join('images', 'samples')
+        .children
+        .find { |file_as_pathname| file_as_pathname.extname == '.svg' }
+        .basename
+        .to_s
     end
     let(:annotation_file) { nil }
     let(:sample) do
@@ -450,10 +453,9 @@ describe Chemotion::SampleAPI do
         creator: user,
         collections: [collection],
         sample_svg_file: seeded_sample_svg_file,
-        sample_svg_annotation_file: annotation_file
+        sample_svg_annotation_file: annotation_file,
       )
     end
-
 
     it 'returns an svg string' do
       get "/api/v1/samples/#{sample.id}/annotation"
@@ -474,7 +476,7 @@ describe Chemotion::SampleAPI do
       # we reuse the existing filename as we only want to check if the endpoint does returns the contents of the file
       # as defined by sample.sample_svg_annotation_file
       let(:annotation_file) { seeded_sample_svg_file }
-      let(:expected_content) { File.read(Rails.public_path.join('images', 'samples', seeded_sample_svg_file)) }
+      let(:expected_content) { Rails.public_path.join('images', 'samples', seeded_sample_svg_file).read }
 
       it 'returns the content of the existing image' do
         get "/api/v1/samples/#{sample.id}/annotation"
