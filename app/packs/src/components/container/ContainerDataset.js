@@ -28,7 +28,7 @@ import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import ImageAnnotationModalSVG, { errorSvg } from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/components/ImageAnnotationModalSVG.js';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
