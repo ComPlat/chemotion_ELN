@@ -479,7 +479,7 @@ class Sample < ApplicationRecord
     return if sample_svg_annotation.blank?
     return unless sample_svg_annotation.start_with?(/\s*<\?xml/, /\s*<svg/)
 
-    prefix = sample_svg_file[0..-5] # cut off .svg suffice
+    prefix = sample_svg_file[0..-5] # cut off .svg suffix
     filename = "#{prefix}_annotation.svg"
 
     File.write(full_svg_path(filename), scrub(sample_svg_annotation))
