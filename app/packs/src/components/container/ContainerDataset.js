@@ -561,29 +561,12 @@ export default class ContainerDataset extends Component {
           <label>Attachments</label>
           {this.dropzone()}
           {this.attachments()}
-          <>
-            <HyperLinksSection
-              data={dataset_container.extended_metadata['hyperlinks']}
-              onAddLink={this.handleAddLink}
-              onRemoveLink={this.handleRemoveLink}
-              disabled={disabled}
-            ></HyperLinksSection>
-            <ImageAnnotationModalSVG
-              attachment={this.state.choosenAttachment}
-              isShow={this.state.imageEditModalShown}
-              handleSave={() => {
-                let newAnnotation = document
-                  .getElementById('svgEditId')
-                  .contentWindow.svgEditor.svgCanvas.getSvgString();
-                this.state.choosenAttachment.updatedAnnotation = newAnnotation;
-                this.setState({ imageEditModalShown: false });
-                this.props.onChange(this.props.dataset_container);
-              }}
-              handleOnClose={() => {
-                this.setState({ imageEditModalShown: false });
-              }}
-            />
-          </>
+          <HyperLinksSection
+            data={dataset_container.extended_metadata['hyperlinks']}
+            onAddLink={this.handleAddLink}
+            onRemoveLink={this.handleRemoveLink}
+            disabled={disabled}
+          />
         </Col>
         <Col md={12}>
           <GenericDSDetails
