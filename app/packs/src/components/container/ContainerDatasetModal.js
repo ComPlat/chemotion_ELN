@@ -127,27 +127,13 @@ export default class ContainerDatasetModal extends Component {
         <Modal
           show={show}
           bsSize="large"
+          dialogClassName="attachment-modal"
           onHide={() => (disabled ? onHide() : this.handleSave())}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            maxHeight: '95vh',
-            minHeight: '95vh',
-            overflow: 'hidden'
-          }}
         >
           <Modal.Header style={{ flexShrink: 0 }}>
-            <Modal.Title style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%'
-            }}
-            >
+            <Modal.Title>
               {this.state.isNameEditing ? (
-                <div style={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
+                <div className="attachment-name-input-div">
                   <input
                     type="text"
                     value={this.state.datasetContainer.name}
@@ -159,21 +145,12 @@ export default class ContainerDatasetModal extends Component {
                       }
                     }}
                     onChange={(e) => { this.handleNameChange(e.target.value); }}
-                    style={{
-                      fontWeight: 'bold',
-                      color: '#495057',
-                      width: '100%',
-                      border: 'none',
-                      borderBottom: '1px solid #ccc',
-                      padding: '2px 0',
-                    }}
+                    className="attachment-name-input"
                   />
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
-                  <span style={{ marginRight: '15px' }}>
-                    {datasetContainer.name}
-                  </span>
+                <div className="attachment-name-input-div">
+                  <span style={{ marginRight: '15px' }}>{datasetContainer.name}</span>
                   {!readOnly && (
                   <i
                     className="fa fa-pencil"
@@ -188,7 +165,7 @@ export default class ContainerDatasetModal extends Component {
             </Modal.Title>
 
           </Modal.Header>
-          <Modal.Body style={{ overflowY: 'auto', maxHeight: 'calc(90vh - 270px)', minHeight: 'calc(90vh - 270px)' }}>
+          <Modal.Body>
             <ContainerDataset
               ref={this.datasetInput}
               readOnly={readOnly}
@@ -201,12 +178,8 @@ export default class ContainerDatasetModal extends Component {
             />
           </Modal.Body>
           <Modal.Footer style={{ flexShrink: 0, width: '100%' }}>
-            <Button style={{ marginRight: '5px' }} onClick={this.discardChanges}>
-              Discard Changes
-            </Button>
-            <Button bsStyle="primary" onClick={this.handleSave}>
-              Keep Changes
-            </Button>
+            <Button style={{ marginRight: '5px' }} onClick={this.discardChanges}>Discard Changes</Button>
+            <Button bsStyle="primary" onClick={this.handleSave}>Keep Changes</Button>
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               <small>
                 Changes are kept for this session. Remember to save the element itself to persist changes.
