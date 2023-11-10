@@ -234,11 +234,13 @@ class Molecule < ApplicationRecord
     end
   end
 
-  def create_molecule_name_by_user(new_name, user_id)
-    return unless unique_molecule_name(new_name)
+  def create_molecule_name_by_user(new_names, user_id)
+    new_names.split(';').each do |new_name|
+      next unless unique_molecule_name(new_name)
 
-    molecule_names
-      .create(name: new_name, description: "defined by user #{user_id}")
+      molecule_names
+        .create(name: new_name, description: "defined by user #{user_id}")
+    end
   end
 
   def unique_molecule_name(new_name)

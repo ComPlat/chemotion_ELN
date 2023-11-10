@@ -210,7 +210,8 @@ module Import
     end
 
     def assign_molecule_name_id(sample, value)
-      molecule_name_id = MoleculeName.find_by(name: value).id
+      split_names = value.split(';')
+      molecule_name_id = MoleculeName.find_by(name: split_names[0]).id
       sample['molecule_name_id'] = molecule_name_id
     end
 
