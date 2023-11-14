@@ -655,14 +655,6 @@ export default class UserAuth extends Component {
     if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
       userLabel = <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>;
     }
-    let converterBtn = <span />;
-    if (UIStore.getState().hasConverter === true) {
-      converterBtn = (
-        <MenuItem eventKey="12" href="/converter_admin">
-          Converter Profile
-        </MenuItem>
-      );
-    }
 
     return (
       <div>
@@ -687,11 +679,13 @@ export default class UserAuth extends Component {
             {userLabel}
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            {converterBtn}
             <MenuItem eventKey="7" href="/command_n_control">
               My Devices
             </MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
+            <MenuItem eventKey="12" href="/converter_admin">
+              Converter Profile
+            </MenuItem>
             <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
           </NavDropdown>
           <NavItem

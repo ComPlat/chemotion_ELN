@@ -356,7 +356,7 @@ export default class GenericElDetails extends Component {
       genericEl.can_copy && !genericEl.isNew ? (
         <CopyElementModal element={genericEl} defCol={defCol} />
       ) : null;
-    const saveBtnDisplay = genericEl.changed ? '' : 'none';
+    const saveBtnDisplay = genericEl.changed && genericEl.can_update ? '' : 'none';
     const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;
     return (
       <div>
@@ -408,12 +408,8 @@ export default class GenericElDetails extends Component {
   render() {
     const { genericEl } = this.state;
     const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
-    const saveBtnDisplay =
-      (genericEl && genericEl.isNew) ||
-      (genericEl && genericEl.changed) ||
-      false
-        ? { display: '' }
-        : { display: 'none' };
+    // eslint-disable-next-line max-len
+    const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
 
     let tabContents = [
       i => this.propertiesTab(i),

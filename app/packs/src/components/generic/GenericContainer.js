@@ -33,7 +33,7 @@ const headerBtnGroup = (props) => {
   const { hasChemSpectra } = UIStore.getState();
   const toggleSpectraModal = (e) => {
     SpectraActions.ToggleModal();
-    SpectraActions.LoadSpectra.defer(spcInfo);
+    SpectraActions.LoadSpectra.defer(spcInfos);
   };
   return (
     <div className="upper-btn">
