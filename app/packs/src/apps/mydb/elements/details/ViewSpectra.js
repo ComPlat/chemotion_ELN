@@ -205,7 +205,7 @@ class ViewSpectra extends React.Component {
 
   formatPks({
     peaks, shift, layout, isAscend, decimal, body,
-    isIntensity, integration, curveSt
+    isIntensity, integration, curveSt, waveLength
   }) {
     const layoutOpsObj = SpectraOps[layout];
     if (!layoutOpsObj) {
@@ -226,6 +226,7 @@ class ViewSpectra extends React.Component {
     const { jcamp } = this.getContent();
     const { entity } = FN.buildData(jcamp);
     const { features } = entity;
+    const { temperature } = entity;
     const { observeFrequency } = Array.isArray(features)
       ? features[0]
       : (features.editPeak || features.autoPeak);
@@ -237,7 +238,16 @@ class ViewSpectra extends React.Component {
       : (features.editPeak || features.autoPeak);
     const boundary = { maxY, minY };
     const mBody = body || FN.peaksBody({
-      peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration: selectedIntegration
+      peaks,
+      layout,
+      decimal,
+      shift,
+      isAscend,
+      isIntensity,
+      boundary,
+      integration: selectedIntegration,
+      waveLength,
+      temperature
     });
 
     const { label, value, name } = selectedShift.ref;
@@ -332,7 +342,7 @@ class ViewSpectra extends React.Component {
 
   writeCommon({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
-    keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt
+    keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo();
@@ -353,7 +363,8 @@ class ViewSpectra extends React.Component {
         body,
         isIntensity,
         integration,
-        curveSt
+        curveSt,
+        waveLength
       });
     }
 
@@ -370,7 +381,7 @@ class ViewSpectra extends React.Component {
 
     const cb = () => (
       this.saveOp({
-        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt
+        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, waveLength
       })
     );
     handleSampleChanged(sample, cb);
