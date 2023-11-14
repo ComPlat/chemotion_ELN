@@ -251,7 +251,6 @@ const DetailSearch = () => {
 
   const rxnoChmosInput = (option, type, selectedValue, column) => {
     let options = type == 'chmos' ? chmos : rxnos;
-    if (options[0].value !== '') { options.unshift({ search: '', title: '', value: '', is_enabled: true }); }
     return (
       <FormGroup key={`${option.column}-${option.label}-${type}`}>
         {labelWithInfo(option)}
@@ -261,6 +260,7 @@ const DetailSearch = () => {
           treeData={options}
           placeholder="Select type"
           dropdownStyle={{ maxHeight: '250px' }}
+          allowClear
           onChange={handleFieldChanged(option, column, type)}
           filterTreeNode={filterTreeNode}
         />
@@ -574,7 +574,7 @@ const DetailSearch = () => {
   }
 
   const fieldsByType = (option, fields, keyLabel, i) => {
-    let multi_fields = ['stereo', 'xref', 'solvent'];
+    let multi_fields = ['stereo', 'xref', 'solvent', 'body'];
     let column = multi_fields.includes(option.column) ? `${option.column}_${option.opt}` : (option.column || option.field);
     column = option.key !== undefined ? `${column}_${option.key}` : column;
     const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(column) != -1 });

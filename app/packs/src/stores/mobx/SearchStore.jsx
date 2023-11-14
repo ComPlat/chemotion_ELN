@@ -65,7 +65,8 @@ export const SearchStore = types
     result_icon: types.optional(types.enumeration("result_icon", ["right", "down"]), "right"),
     error_message: types.optional(types.string, ""),
     tab_current_page: types.optional(types.array(types.frozen({})), []),
-    active_tab_key: types.optional(types.number, 0)
+    active_tab_key: types.optional(types.number, 0),
+    show_search_result_list: types.optional(types.boolean, false),
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
@@ -228,8 +229,22 @@ export const SearchStore = types
     handleCancel() {
       self.hideSearchModal();
       self.hideSearchResults();
-      self.clearSearchResults();
+      if (!self.show_search_result_list) {
+        self.clearSearchResults();
+      }
       self.active_tab_key = 0;
+    },
+    handleAdopt() {
+      self.hideSearchModal();
+      self.hideSearchResults();
+      self.active_tab_key = 0;
+      self.changeShowSearchResultListValue(true);
+    },
+    changeShowSearchResultListValue(value) {
+      self.show_search_result_list = value;
+      if (!value) {
+        self.clearSearchResults();
+      }
     }
   }))
   .views(self => ({
@@ -248,5 +263,6 @@ export const SearchStore = types
     get advancedSearchValues() { return values(self.advanced_search_values) },
     get detailSearchValues() { return values(self.detail_search_values) },
     get ketcherRailsValues() { return self.ketcher_rails_values },
+    get tabCurrentPage() { return values(self.tab_current_page) },
     get activeTabKey() { return self.active_tab_key },
   }));

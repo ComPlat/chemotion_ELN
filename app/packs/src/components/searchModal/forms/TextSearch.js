@@ -282,6 +282,9 @@ const TextSearch = () => {
               <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
+              <Button bsStyle="info" onClick={handleClear}>
+                Reset
+              </Button>
               <Button bsStyle="primary" id="advanced-search-button" onClick={handleSearch} style={{ marginRight: '20px' }} >
                 Search
               </Button>

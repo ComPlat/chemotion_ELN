@@ -10,6 +10,7 @@ import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSett
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import PropTypes from 'prop-types';
 
@@ -48,6 +49,8 @@ function getArrayFromLayout(layout, isVisible) {
 }
 
 export default class ElementsList extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -185,7 +188,8 @@ export default class ElementsList extends React.Component {
     if (forceUpdate) { this.forceUpdate(); }
   }
 
-  handleRemoveSearchResult() {
+  handleRemoveSearchResult(searchStore) {
+    searchStore.changeShowSearchResultListValue(false);
     UIActions.clearSearchById();
     const { currentCollection, isSync } = UIStore.getState();
     isSync ? UIActions.selectSyncCollection(currentCollection)
@@ -224,7 +228,7 @@ export default class ElementsList extends React.Component {
     if (UIStore.getState().currentSearchByID) {
       removeSearchResultAlert = (
         <Alert bsStyle="info" style={{ padding: '4px' }}>
-          <Button bsStyle="link" style={{ fontSize: '15px' }} onClick={this.handleRemoveSearchResult}>Remove search result</Button>
+          <Button bsStyle="link" style={{ fontSize: '15px' }} onClick={() => this.handleRemoveSearchResult(this.context.search)}>Remove search result</Button>
         </Alert>
       );
     }

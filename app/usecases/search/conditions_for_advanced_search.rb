@@ -144,14 +144,24 @@ module Usecases
         words
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def special_non_generic_field_options(filter)
         case filter['field']['column']
         when 'body'
-          @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(body) AS element'
-          @conditions[:joins] << "CROSS JOIN jsonb_array_elements(element -> 'value' -> 'ops') AS ops"
-          @conditions[:field] = "(ops ->> 'insert')::TEXT"
+          prop = "element_#{filter['field']['opt']}"
+          key = filter['field']['opt']
+          element_join = "CROSS JOIN jsonb_array_elements(body) AS #{prop}"
+          if @conditions[:joins].exclude?(element_join)
+            @conditions[:joins] << element_join
+            @conditions[:joins] << "CROSS JOIN jsonb_array_elements(#{prop} -> 'value' -> '#{key}') AS #{key}"
+          end
+          if filter['field']['opt'] == 'rows'
+            @conditions[:field] = 'rows::TEXT'
+            @conditions[:additional_condition] = "AND (#{prop} ->> 'type')::TEXT = 'table'"
+          else
+            @conditions[:field] = "(regexp_replace(#{key} ->> 'insert', '\r|\n', '', 'g'))::TEXT"
+          end
           @conditions[:condition_table] = ''
         when 'content'
           @conditions[:joins] <<
@@ -191,8 +201,8 @@ module Usecases
         when 'stereo'
           @conditions[:field] = "stereo ->> '#{filter['field']['opt']}'"
         when 'solvent'
-          joins_exists = @conditions[:joins].exclude?('CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent')
-          @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent' if joins_exists
+          cross_join_empty = @conditions[:joins].exclude?('CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent')
+          @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent' if cross_join_empty
           @conditions[:field] = "(prop_solvent ->> '#{filter['field']['opt']}')::TEXT"
           @conditions[:condition_table] = ''
         when 'boiling_point', 'melting_point'
@@ -204,7 +214,7 @@ module Usecases
             "AND #{field} <@ '[#{range.first.squish.to_f}, #{range.last.squish.to_f}]'::numrange"
         end
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       # rubocop:disable Metrics/AbcSize
 

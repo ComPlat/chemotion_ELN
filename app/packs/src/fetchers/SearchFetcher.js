@@ -127,9 +127,6 @@ export default class SearchFetcher {
               break;
           }
         });
-        if (result.research_plans === undefined) {
-          result.research_plans = { elements: [], totalElements: 0, ids: [] };
-        }
 
         return result;
       }).catch((errorMessage) => { console.log(errorMessage); });

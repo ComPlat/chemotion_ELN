@@ -2,8 +2,8 @@
   width: fit-content;
   height: fit-content;
   max-height: 87vh;
-  top: calc(calc(100% - 92vh));
-  left: calc(calc(100% - 90vw) / 2);
+  top: calc((100% - 92vh));
+  left: calc((100% - 90vw) / 2);
 }
 
 [dialogas=full-search] .modal-dialog {
@@ -69,7 +69,7 @@
 
 @media screen and (min-width: 1600px) {
   [dialogas=full-search].modal {
-    left: calc(calc(100% - 1400px) / 2);
+    left: calc((100% - 1400px) / 2);
   }
   [dialogas=full-search] .modal-dialog {
     width: 1400px !important;
@@ -342,7 +342,7 @@ i.fa.icon-right {
     padding-top: 5px;
     margin-top: -5px;
   }
-  .detail-search .form-group + .checkbox, .detail-search .form-group + .checkbox + .checkbox {
+  .detail-search .form-group + .checkbox, .detail-search .form-group + .checkbox + .checkbox, .detail-search .detail-search-headline + .checkbox {
     padding-top: 17px;
     margin-top: 10px;
   }

@@ -97,6 +97,7 @@ const AdvancedSearchRow = ({ idx }) => {
     if (!specialMatcherFields.includes(fieldColumn) && ['>', '<'].includes(searchValues['match']) && formElement != 'match') {
       searchValues['match'] = '=';
     }
+    if (value.opt == 'rows' && searchValues['match'] !== 'ILIKE') { searchValues['match'] = 'ILIKE' }
     searchStore.addAdvancedSearchValue(idx, searchValues);
   }
 

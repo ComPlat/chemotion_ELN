@@ -8,7 +8,7 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
 const SearchResultTabContent = ({ list, tabResult }) => {
   const searchStore = useContext(StoreContext).search;
-  let currentPage = searchStore.tab_current_page[list.index];
+  let currentPage = searchStore.tabCurrentPage.length >= 1 ? searchStore.tab_current_page[list.index] : undefined;
   let currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
 
   useEffect(() => {

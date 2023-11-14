@@ -44,7 +44,7 @@ module Chemotion
           end
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
-              sample reaction wellplate screen element
+              sample reaction wellplate screen element research_plan
             ]
             requires :ids, type: Array
             optional :total_elements, type: Integer

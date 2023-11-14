@@ -73,11 +73,11 @@ export default {
         value: {
           column: 'xref',
           opt: 'inventory_label',
-          label: 'Inventory label',
+          label: 'Inventory Label',
           type: 'text',
-          advanced: false,
+          advanced: true,
         },
-        label: 'Inventory label'
+        label: 'Inventory Label'
       },
       {
         value: {
@@ -244,6 +244,15 @@ export default {
           label: 'Solvents',
         },
         label: 'Solvents',
+      },
+      {
+        value: {
+          column: 'dry_solvent',
+          label: 'Dry solvent',
+          type: 'checkbox',
+          advanced: false,
+        },
+        label: 'Dry solvent'
       },
       {
         value: {
@@ -583,11 +592,22 @@ export default {
       {
         value: {
           column: 'body',
+          opt: 'ops',
           label: 'Text',
           type: 'text',
           advanced: true,
         },
         label: 'Text'
+      },
+      {
+        value: {
+          column: 'body',
+          opt: 'rows',
+          label: 'Table',
+          type: 'text',
+          advanced: true,
+        },
+        label: 'Table'
       },
       {
         value: {
