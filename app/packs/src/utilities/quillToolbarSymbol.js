@@ -380,6 +380,12 @@ const opsEmmissionHead = () => (
   ]
 );
 
+const opsXRDHead = () => (
+  [
+    { insert: 'XRD ' },
+  ]
+);
+
 const opsCommonHead = () => (
   []
 );
@@ -400,6 +406,7 @@ const SpectraOps = {
   Emissions: { head: opsEmmissionHead, tail: opsCommonTail },
   'DLS ACF': { head: opsCommonHead, tail: opsCommonTail },
   'DLS intensity': { head: opsDLSIntensityHead, tail: opsCommonTail },
+  'X-RAY DIFFRACTION': { head: opsXRDHead, tail: opsCommonHead }
 };
 
 const reactionAnalysesMacros = {
