@@ -20,10 +20,10 @@ class SharedMethods
     total_elements.fdiv(per_page).ceil
   end
 
-  def serialization_by_elements_and_page(elements)
+  def serialization_by_elements_and_page(elements, error)
     elements.each do |element|
       if element.first == :element_ids
-        serialize_generic_elements(element)
+        serialize_generic_elements(element, error)
       else
         paginated_ids = Kaminari.paginate_array(element.last).page(@params[:page]).per(@params[:per_page])
         @result[element.first.to_s.gsub('_ids', '').pluralize] = {
@@ -33,6 +33,7 @@ class SharedMethods
           perPage: @params[:per_page],
           pages: pages(element.last.size, @params[:per_page]),
           totalElements: element.last.size,
+          error: error,
         }
       end
     end
@@ -64,7 +65,7 @@ class SharedMethods
     serialized_sample_array
   end
 
-  def serialize_generic_elements(element)
+  def serialize_generic_elements(element, error)
     klasses = Labimotion::ElementKlass.where(is_active: true, is_generic: true)
     klasses.each do |klass|
       element_ids_for_klass = Labimotion::Element.where(id: element.last, element_klass_id: klass.id).pluck(:id)
@@ -81,6 +82,7 @@ class SharedMethods
         perPage: @page_size,
         pages: pages(element_ids_for_klass.size, @params[:per_page]),
         totalElements: element_ids_for_klass.size,
+        error: error,
       }
     end
   end

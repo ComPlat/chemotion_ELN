@@ -32,14 +32,17 @@ module Usecases
       def perform!
         scope = basic_scope
         elements_by_scope(scope)
-        @shared_methods.serialization_by_elements_and_page(@elements)
+        @shared_methods.serialization_by_elements_and_page(@elements, @conditions[:error])
       end
 
       private
 
       def basic_scope
+        return '' if @conditions[:error] != ''
+
+        filtered_query = @conditions[:query].gsub(/\A\ AND \s*/, '')
         query_with_condition =
-          @conditions[:value].present? ? [@conditions[:query]] + @conditions[:value] : @conditions[:query]
+          @conditions[:value].present? ? [filtered_query] + @conditions[:value] : filtered_query
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
 
         scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)

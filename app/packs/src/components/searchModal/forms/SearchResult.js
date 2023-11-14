@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Button } from 'react-bootstrap';
+import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Button, Alert } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
@@ -67,6 +67,12 @@ const SearchResult = ({ handleClear }) => {
     return resultObject;
   }
 
+  const showResultErrorMessage = () => {
+    if (searchStore.result_error_message) {
+      return <Alert bsStyle="danger" className="result-error-message">{searchStore.result_error_message}</Alert>;
+    }
+  }
+
   const SearchValuesList = () => {
     if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
       return (
@@ -82,6 +88,7 @@ const SearchResult = ({ handleClear }) => {
               <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
             )
           }
+          {showResultErrorMessage()}
         </div>
       );
     } else {

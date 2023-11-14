@@ -35,35 +35,32 @@ export default class SearchFetcher {
             case 'samples':
               if (samples && samples.totalElements && samples.totalElements > 0) {
                 result.samples.elements = samples.elements.map(s => (new Sample(s)));
-              } else { result.samples = { elements: [], totalElements: 0, ids: [] }; }
+              } else { result.samples = { elements: [], totalElements: 0, ids: [], error: result.samples.error }; }
               break;
             case 'reactions':
               if (reactions && reactions.totalElements && reactions.totalElements > 0) {
                 result.reactions.elements = reactions.elements.map(r => (new Reaction(r)));
-              } else { result.reactions = { elements: [], totalElements: 0, ids: [] }; }
+              } else { result.reactions = { elements: [], totalElements: 0, ids: [], error: result.reactions.error }; }
               break;
             case 'wellplates':
               if (wellplates && wellplates.totalElements && wellplates.totalElements > 0) {
                 result.wellplates.elements = wellplates.elements.map(s => (new Wellplate(s)));
-              } else { result.wellplates = { elements: [], totalElements: 0, ids: [] }; }
+              } else { result.wellplates = { elements: [], totalElements: 0, ids: [], error: result.wellplates.error }; }
               break;
             case 'screens':
               if (screens && screens.totalElements && screens.totalElements > 0) {
                 result.screens.elements = screens.elements.map(s => (new Screen(s)));
-              } else { result.screens = { elements: [], totalElements: 0, ids: [] }; }
+              } else { result.screens = { elements: [], totalElements: 0, ids: [], error: result.screens.error }; }
               break;
             case 'research_plans':
               if (research_plans && research_plans.totalElements && research_plans.totalElements > 0) {
                 result.research_plans.elements = research_plans.elements.map(s => (new ResearchPlan(s)));
-              } else { result.research_plans = { elements: [], totalElements: 0, ids: [] }; }
+              } else { result.research_plans = { elements: [], totalElements: 0, ids: [], error: result.research_plans.error }; }
               break;
             default:
               result[`${key}`].elements = json[`${key}`].elements.map(s => (new GenericEl(s)));
           }
         });
-        if (result.research_plans === undefined) {
-          result.research_plans = { elements: [], totalElements: 0, ids: [] };
-        }
 
         return result;
       }).catch((errorMessage) => { console.log(errorMessage); });

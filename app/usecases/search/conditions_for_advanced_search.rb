@@ -17,7 +17,7 @@ module Usecases
         @conditions = {
           joins: [], field: '', condition_table: '', first_condition: '',
           additional_condition: '', words: '', model_name: '', value: [],
-          query: ''
+          query: '', error: ''
         }
         @table_or_tab_types = {
           generics: false, chemicals: false, analyses: false, measurements: false
@@ -26,8 +26,10 @@ module Usecases
 
       def filter!
         @params.each_with_index do |filter, i|
+          @conditions[:error] = "Your search for #{filter['field']['column']} is not allowed"
           next unless table_or_detail_level_is_not_allowed(filter)
 
+          @conditions[:error] = ''
           basic_conditions_by_filter(filter)
           table_or_tab_types
           special_and_generic_conditions_by_filter(filter, i)
@@ -129,7 +131,10 @@ module Usecases
       end
 
       def sanitize_float_fields(filter)
-        fields = %w[boiling_point melting_point density molarity_value target_amount_value purity temperature duration]
+        fields = %w[
+          boiling_point melting_point density molarity_value target_amount_value purity
+          temperature duration molecular_mass
+        ]
         fields.include?(filter['field']['column']) && filter['field']['table'] != 'segments'
       end
 

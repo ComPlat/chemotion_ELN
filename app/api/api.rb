@@ -126,7 +126,8 @@ class API < Grape::API
     'samples' => %w[
       name short_label external_label xref content is_top_secret decoupled
       stereo boiling_point melting_point density molarity_value target_amount_value
-      description location purity solvent inventory_sample
+      description location purity solvent inventory_sample sum_formula molecular_mass
+      dry_solvent
     ],
     'reactions' => %w[
       name short_label status conditions rxno content temperature duration

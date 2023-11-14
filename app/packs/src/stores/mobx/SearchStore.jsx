@@ -67,15 +67,20 @@ export const SearchStore = types
     tab_current_page: types.optional(types.array(types.frozen({})), []),
     active_tab_key: types.optional(types.number, 0),
     show_search_result_list: types.optional(types.boolean, false),
+    result_error_message: types.optional(types.string, ""),
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
     // within an action
     loadSearchResults: flow(function* loadSearchResults(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params);
+      let errors = [];
       self.search_results.clear();
       self.tab_search_results.clear();
       Object.entries(result).forEach(([key, value]) => {
+        if (value.error !== undefined && value.error !== '') {
+          errors.push(value.error);
+        }
         let searchResult = SearchResult.create({
           id: key,
           results: {
@@ -89,6 +94,8 @@ export const SearchStore = types
         self.search_results.set(searchResult.id, searchResult)
         self.addSearchResult(key, value, value.ids.slice(0, 15))
       });
+      let uniqueErrors = new Set(errors);
+      uniqueErrors.forEach((e) => { self.result_error_message += e });
     }),
     loadSearchResultTab: flow(function* loadSearchResultTab(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchResultIds(params);
@@ -187,6 +194,7 @@ export const SearchStore = types
       self.search_results.clear();
       self.tab_search_results.clear();
       self.clearTabCurrentPage();
+      self.result_error_message = '';
     },
     clearSearchResults() {
       self.clearSearchAndTabResults();
@@ -199,6 +207,7 @@ export const SearchStore = types
       self.detail_search_values = [];
       self.active_tab_key = 0;
       self.resetKetcherRailsValues();
+      self.result_error_message = '';
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;

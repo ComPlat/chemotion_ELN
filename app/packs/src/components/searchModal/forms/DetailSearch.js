@@ -259,7 +259,7 @@ const DetailSearch = () => {
           value={selectedValue ? selectedValue[column].value : ''}
           treeData={options}
           placeholder="Select type"
-          dropdownStyle={{ maxHeight: '250px' }}
+          dropdownStyle={{ maxHeight: '250px', zIndex: '800000' }}
           allowClear
           onChange={handleFieldChanged(option, column, type)}
           filterTreeNode={filterTreeNode}
@@ -476,6 +476,7 @@ const DetailSearch = () => {
       case 'purity':
       case 'value_measurement':
       case 'solvent_ratio':
+      case 'molecular_mass':
         return '>=';
       case 'unit_measurement':
         return '=';
