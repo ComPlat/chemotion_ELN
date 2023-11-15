@@ -178,21 +178,21 @@ export const renderSortingAndFilteringUI = (
   handleFilterChange
 ) => (
   <div style={{
-    marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+    marginBottom: '25px', marginTop: '25px', display: 'flex', justifyContent: 'space-between'
   }}
   >
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div style={{ verticalAlign: 'center' }}>
       <label style={{ marginRight: '10px' }}>Sort by: </label>
       <select onChange={handleSortChange} className="sorting-row-style" style={{ width: '100px' }}>
         <option value="name">Name</option>
         <option value="size">Size</option>
         <option value="date">Date</option>
       </select>
-      <button onClick={toggleSortDirection} className="sort-icon-style" type="button">
+      <Button onClick={toggleSortDirection} className="sort-icon-style">
         {sortDirection === 'asc' ? '▲' : '▼'}
-      </button>
+      </Button>
     </div>
-    <div>
+    <div style={{ verticalAlign: 'center' }}>
       <label style={{ marginRight: '10px' }}>Filter: </label>
       <input
         type="text"

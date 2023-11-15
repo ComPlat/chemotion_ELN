@@ -23,9 +23,9 @@
 }
 
 .sort-icon-style {
-  margin-left: 10px;
-  cursor: pointer;
-  font-size: 20px;
+  margin-left: 5px;
+  cursor: auto;
+  font-size: 20px !important;
   color: #000;
   border-radius: 50%;
   padding: 5px;
@@ -33,9 +33,19 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.3s;
-  background: none;
-  border: none;
-  outline: inherit;
+  background: none !important;
+  border: none !important;
+  outline: inherit !important;
+}
+
+.sort-icon-style:focus {
+  box-shadow: none !important;
+}
+
+.sort-icon-style:hover {
+  color: #797979 !important;
+  transform: scale(1.1);
+  transition: color 0.3s, transform 0.3s
 }
 
 .attachment-row {
