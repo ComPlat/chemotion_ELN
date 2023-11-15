@@ -251,7 +251,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
         <Button
-          bsSize="xsmall"
+          bsSize="xs"
           bsStyle="danger"
           className="attachment-button-size"
           onClick={() => onDelete(attachment)}
@@ -303,7 +303,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           style={{
             display: styleEditorBtn,
           }}
-          bsSize="xsmall"
+          bsSize="xs"
           bsStyle="success"
           disabled={editDisable}
           onClick={() => this.handleEdit(attachment)}
@@ -333,14 +333,14 @@ export default class ResearchPlanDetailsAttachments extends Component {
         <ButtonGroup>
           <Button
             bsStyle="success"
-            bsSize="xsmall"
+            bsSize="xs"
             onClick={() => this.confirmAttachmentImport(attachment)}
           >
             Yes
           </Button>
           <Button
             bsStyle="warning"
-            bsSize="xsmall"
+            bsSize="xs"
             onClick={() => this.hideImportConfirm(attachment.id)}
           >
             No
@@ -354,7 +354,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         <OverlayTrigger placement="top" overlay={importTooltip}>
           <div style={{ float: 'right' }}>
             <Button
-              bsSize="xsmall"
+              bsSize="xs"
               bsStyle="success"
               disabled={importDisabled || extension !== 'xlsx'}
               ref={(ref) => {
@@ -399,7 +399,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return (
         <div>
           <Button
-            bsSize="xsmall"
+            bsSize="xs"
             bsStyle="danger"
             className="attachment-button-size"
             onClick={() => onUndoDelete(attachment)}
@@ -462,12 +462,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
             <option value="name">Name</option>
             <option value="size">Size</option>
           </select>
-          <div
+          <button
             onClick={this.toggleSortDirection}
             className="sort-icon-style"
+            type="button"
           >
             {isAscending ? '▲' : '▼'}
-          </div>
+          </button>
         </div>
         <div>
           <label style={{ marginRight: '10px' }}>Filter: </label>
