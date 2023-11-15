@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -252,7 +253,12 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
         {renderDropzone(this.props.onDrop)}
-        {renderSortingAndFilteringUI(sortDirection, this.handleSortChange, this.toggleSortDirection, this.handleFilterChange)}
+        {renderSortingAndFilteringUI(
+          sortDirection,
+          this.handleSortChange,
+          this.toggleSortDirection,
+          this.handleFilterChange
+        )}
         {filteredAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
@@ -316,9 +322,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
                       attachment,
                       extension,
                       attachmentEditor,
-                      attachment.aasm_state === 'oo_editing' && new Date().getTime() < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                       attachmentEditor ? '' : 'none',
-                      !attachmentEditor || attachment.aasm_state === 'oo_editing' || attachment.is_new || this.documentType(attachment.filename) === null,
+                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                          || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
                     )}
                     {renderAnnotateImageButton(attachment, this)}
