@@ -8,7 +8,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
+import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
@@ -104,7 +104,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           </InputGroup>
 
         </FormGroup>
-        <SaveResearchPlanWarning visible={is_annotationUpdated} />
+        <SaveEditedImageWarning visible={is_annotationUpdated} />
         <Dropzone
           accept="image/*"
           multiple={false}
