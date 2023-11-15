@@ -13,11 +13,13 @@ export const isImageFile = (fileName) => {
   return acceptedImageTypes.includes(dataType);
 };
 
-export const formatFileSize = (sizeInKB) => {
-  if (sizeInKB >= 1024) {
-    return `${(sizeInKB / 1024).toFixed(2)} MB`;
+export const formatFileSize = (sizeInB) => {
+  if (sizeInB >= 1024 * 1024) {
+    return `${(sizeInB / (1024 * 1024)).toFixed(2)} MB`;
+  } if (sizeInB >= 1024) {
+    return `${(sizeInB / 1024).toFixed(1)} kB`;
   }
-  return `${sizeInKB} KB`;
+  return `${sizeInB} bytes`;
 };
 
 export const editorTooltip = (exts) => (
