@@ -11,7 +11,7 @@ import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlan
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Utils from 'src/utilities/Functions';
 import {
-  Button, ButtonGroup, Glyphicon, Overlay, OverlayTrigger, Tooltip
+  Button, ButtonGroup, Glyphicon, Overlay, OverlayTrigger, Tooltip, Dropdown, MenuItem
 } from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -24,41 +24,12 @@ const editorTooltip = (exts) => (
     {exts}
   </Tooltip>
 );
-const downloadTooltip = <Tooltip id="download_tooltip">Download original attachment</Tooltip>;
-const downloadAnnotationTooltip = <Tooltip id="download_tooltip">Download annotated attachment</Tooltip>;
 
 export default class ResearchPlanDetailsAttachments extends Component {
   static isImageFile(fileName) {
     const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
     const dataType = last(fileName.split('.'));
     return acceptedImageTypes.includes(dataType);
-  }
-
-  static renderDownloadAnnotatedImageButton(attachment) {
-    if (!ResearchPlanDetailsAttachments.isImageFile(attachment.filename)) {
-      return null;
-    }
-    return (
-      <OverlayTrigger placement="top" overlay={downloadAnnotationTooltip}>
-        <div>
-          <Button
-            bsSize="xsmall"
-            style={{ width: '25px', height: '25px' }}
-            className="button-right"
-            bsStyle="primary"
-            disabled={attachment.isNew}
-            onClick={() => {
-              Utils.downloadFile({
-                contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
-                name: attachment.filename
-              });
-            }}
-          >
-            <i className="fa fa-download" aria-hidden="true" />
-          </Button>
-        </div>
-      </OverlayTrigger>
-    );
   }
 
   constructor(props) {
@@ -141,6 +112,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.setState((prevState) => ({
       sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
     }), this.filterAndSortAttachments);
+  };
+
+  handleDownloadOriginal = (attachment) => {
+    this.props.onDownload(attachment);
+  };
+
+  handleDownloadAnnotated = (attachment) => {
+    const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
+    if (isImageFile && !attachment.isNew) {
+      Utils.downloadFile({
+        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+        name: attachment.filename
+      });
+    }
   };
 
   filterAndSortAttachments() {
@@ -235,6 +220,32 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
+  renderDownloadSplitButton = (attachment) => {
+    const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
+    return (
+      <Dropdown id={`dropdown-download-${attachment.id}`}>
+        <Dropdown.Toggle style={{ height: '25px' }} bsSize="xsmall" bsStyle="primary">
+          <i className="fa fa-download" aria-hidden="true" />
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          <MenuItem
+            eventKey="1"
+            onClick={() => this.handleDownloadOriginal(attachment)}
+          >
+            Download Original
+          </MenuItem>
+          <MenuItem
+            eventKey="2"
+            onClick={() => this.handleDownloadAnnotated(attachment)}
+            disabled={!isImageFile || attachment.isNew}
+          >
+            Download Annotated
+          </MenuItem>
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+  };
+
   renderRemoveAttachmentButton(attachment) {
     const { onDelete, readOnly } = this.props;
     return (
@@ -254,18 +265,18 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
-    const { choosenAttachment, imageEditModalShown } = this.state;
+    const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
     return (
       <ImageAnnotationModalSVG
-        attachment={choosenAttachment}
+        attachment={chosenAttachment}
         isShow={imageEditModalShown}
         handleSave={
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            choosenAttachment.updatedAnnotation = newAnnotation;
+            chosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
-            onEdit(choosenAttachment);
+            onEdit(chosenAttachment);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
@@ -274,13 +285,111 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderAnnotateImageButton(attachment) {
+    const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
     return (
       <ImageAnnotationEditButton
         parent={this}
         attachment={attachment}
-        horizontalAlignment="button-right"
-        style={{ width: '25px', height: '25px' }}
+        style={{
+          width: '25px',
+          height: '25px',
+          backgroundColor: !isImageFile ? '#C0C0C0' : '',
+          borderColor: !isImageFile ? '#C0C0C0' : ''
+        }}
+        disabled={!isImageFile}
       />
+    );
+  }
+
+  renderEditAttachmentButton(attachment, extension, attachmentEditor, isEditing, styleEditorBtn, editDisable) {
+    return (
+      <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
+        <Button
+          style={{
+            display: styleEditorBtn,
+            width: '25px',
+            height: '25px',
+          }}
+          bsSize="xsmall"
+          className="button-right"
+          bsStyle="success"
+          disabled={editDisable}
+          onClick={() => this.handleEdit(attachment)}
+        >
+          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
+  renderImportAttachmentButton(attachment) {
+    const { showImportConfirm } = this.state;
+    const { researchPlan } = this.props;
+    const show = showImportConfirm[attachment.id];
+    // TODO: import disabled when?
+    const importDisabled = researchPlan.changed;
+    const extension = last(attachment.filename.split('.'));
+
+    const importTooltip = importDisabled
+      ? <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip>
+      : <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
+
+    const confirmTooltip = (
+      <Tooltip placement="bottom" className="in" id="tooltip-bottom">
+        Import data from Spreadsheet?
+        <br />
+        <ButtonGroup>
+          <Button
+            bsStyle="success"
+            bsSize="xsmall"
+            onClick={() => this.confirmAttachmentImport(attachment)}
+          >
+            Yes
+          </Button>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            onClick={() => this.hideImportConfirm(attachment.id)}
+          >
+            No
+          </Button>
+        </ButtonGroup>
+      </Tooltip>
+    );
+
+    return (
+      <div>
+        <OverlayTrigger placement="top" overlay={importTooltip}>
+          <div style={{ float: 'right' }}>
+            <Button
+              bsSize="xsmall"
+              bsStyle="success"
+              disabled={importDisabled || extension !== 'xlsx'}
+              ref={(ref) => {
+                this.importButtonRefs[attachment.id] = ref;
+              }}
+              style={{
+                width: '25px',
+                height: '25px',
+                backgroundColor: (importDisabled || extension !== 'xlsx') ? '#C0C0C0' : '',
+                borderColor: (importDisabled || extension !== 'xlsx') ? '#C0C0C0' : '',
+              }}
+              onClick={() => this.showImportConfirm(attachment.id)}
+            >
+              <Glyphicon glyph="import" />
+            </Button>
+          </div>
+        </OverlayTrigger>
+        <Overlay
+          show={show}
+          placement="bottom"
+          rootClose
+          onHide={() => this.hideImportConfirm(attachment.id)}
+          target={this.importButtonRefs[attachment.id]}
+        >
+          {confirmTooltip}
+        </Overlay>
+      </div>
     );
   }
 
@@ -317,9 +426,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <div>
         <SaveResearchPlanWarning visible={isAnnotationUpdated} />
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          {this.renderRemoveAttachmentButton(attachment)}
-          {this.renderDownloadOriginalButton(attachment)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          {this.renderDownloadSplitButton(attachment)}
           {this.renderEditAttachmentButton(
             attachment,
             extension,
@@ -329,47 +437,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
             styleEditorBtn,
             editDisable
           )}
-          {ResearchPlanDetailsAttachments.renderDownloadAnnotatedImageButton(attachment)}
           {this.renderAnnotateImageButton(attachment)}
           {this.renderImportAttachmentButton(attachment)}
+          {this.renderRemoveAttachmentButton(attachment)}
         </div>
       </div>
-    );
-  }
-
-  renderEditAttachmentButton(attachment, extension, attachmentEditor, isEditing, styleEditorBtn, editDisable) {
-    return (
-      <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
-        <Button
-          style={{ display: styleEditorBtn, width: '25px', height: '25px' }}
-          bsSize="xsmall"
-          className="button-right"
-          bsStyle="success"
-          disabled={editDisable}
-          onClick={() => this.handleEdit(attachment)}
-        >
-
-          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-        </Button>
-      </OverlayTrigger>
-
-    );
-  }
-
-  renderDownloadOriginalButton(attachment) {
-    const { onDownload } = this.props;
-    return (
-      <OverlayTrigger placement="top" overlay={downloadTooltip}>
-        <Button
-          bsSize="xsmall"
-          className="button-right"
-          bsStyle="primary"
-          style={{ width: '25px', height: '25px' }}
-          onClick={() => onDownload(attachment)}
-        >
-          <i className="fa fa-download" aria-hidden="true" />
-        </Button>
-      </OverlayTrigger>
     );
   }
 
@@ -449,7 +521,27 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderAttachmentRow(attachment) {
-    const maxCharsWithoutTooltip = 50;
+    const maxCharsWithoutTooltip = 40;
+    const uploadDate = new Date(attachment.uploaded_at).toLocaleDateString("en-US")
+    const renderText = (
+      <div style={{
+        flex: '0.6',
+        marginLeft: '20px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        color: '#333',
+        fontSize: '16px',
+        fontWeight: 'bold',
+      }}
+      >
+        {attachment.filename}
+        <div style={{ fontSize: '12px', color: '#777' }}>
+          Added on:&nbsp;
+          {uploadDate}
+        </div>
+      </div>
+    );
 
     const renderTooltip = (
       <OverlayTrigger
@@ -458,34 +550,10 @@ export default class ResearchPlanDetailsAttachments extends Component {
           <Tooltip id={`tooltip-${attachment.id}`}>
             {attachment.filename}
           </Tooltip>
-      )}
+    )}
       >
-        <div style={{
-          flex: '0.5',
-          marginLeft: '20px',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          color: '#333',
-        }}
-        >
-          {attachment.filename}
-        </div>
+        {renderText}
       </OverlayTrigger>
-    );
-
-    const renderText = (
-      <div style={{
-        flex: '0.5',
-        marginLeft: '20px',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        color: '#333',
-      }}
-      >
-        {attachment.filename}
-      </div>
     );
 
     const formatFileSize = (sizeInKB) => {
@@ -550,7 +618,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           marginLeft: '10px',
         }}
         >
-          <span>
+          <span style={{ fontWeight: 'bold' }}>
             Size:&nbsp;
             <span style={{ fontWeight: 'bold', color: '#444' }}>
               {formatFileSize(attachment.filesize)}
@@ -564,80 +632,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
         </div>
       </div>
     );
-  }
-
-  renderImportAttachmentButton(attachment) {
-    const { showImportConfirm } = this.state;
-    const { researchPlan } = this.props;
-    const show = showImportConfirm[attachment.id];
-    // TODO: import disabled when?
-    const importDisabled = researchPlan.changed;
-    const extension = last(attachment.filename.split('.'));
-
-    const importTooltip = importDisabled
-      ? <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip>
-      : <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
-
-    const confirmTooltip = (
-      <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Spreadsheet?
-        <br />
-        <ButtonGroup>
-          <Button
-            bsStyle="success"
-            bsSize="xsmall"
-            onClick={() => this.confirmAttachmentImport(attachment)}
-          >
-            Yes
-          </Button>
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            onClick={() => this.hideImportConfirm(attachment.id)}
-          >
-            No
-          </Button>
-        </ButtonGroup>
-      </Tooltip>
-    );
-
-    if (extension === 'xlsx') {
-      return (
-        <div>
-          <OverlayTrigger placement="top" overlay={importTooltip}>
-            <div style={{ float: 'right' }}>
-              <Button
-                bsSize="xsmall"
-                bsStyle="success"
-                className="button-right"
-                disabled={importDisabled}
-                ref={(ref) => {
-                  this.importButtonRefs[attachment.id] = ref;
-                }}
-                style={{
-                  ...(importDisabled ? { pointerEvents: 'none' } : {}),
-                  width: '25px',
-                  height: '25px'
-                }}
-                onClick={() => this.showImportConfirm(attachment.id)}
-              >
-                <Glyphicon glyph="import" />
-              </Button>
-            </div>
-          </OverlayTrigger>
-          <Overlay
-            show={show}
-            placement="bottom"
-            rootClose
-            onHide={() => this.hideImportConfirm(attachment.id)}
-            target={this.importButtonRefs[attachment.id]}
-          >
-            {confirmTooltip}
-          </Overlay>
-        </div>
-      );
-    }
-    return true;
   }
 
   render() {

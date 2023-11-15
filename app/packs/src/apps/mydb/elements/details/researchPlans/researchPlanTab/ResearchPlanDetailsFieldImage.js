@@ -168,12 +168,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
     return (
       <ImageAnnotationModalSVG
-        attachment={this.state.choosenAttachment}
+        attachment={this.state.chosenAttachment}
         isShow={this.state.imageEditModalShown}
         handleSave={
           () => {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
+            this.state.chosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
             this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
           }
