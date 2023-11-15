@@ -14,6 +14,7 @@ export default class ContainerDatasetModal extends Component {
     this.state = {
       mode: 'attachments',
       isNameEditing: false,
+      localName: props.datasetContainer.name,
     };
 
     this.handleSave = this.handleSave.bind(this);
@@ -28,6 +29,11 @@ export default class ContainerDatasetModal extends Component {
 
   handleSave() {
     this.datasetInput.current.handleSave();
+    this.props.onChange({ ...this.props.datasetContainer, name: this.state.localName });
+  }
+
+  handleNameChange(newName) {
+    this.setState({ localName: newName });
   }
 
   handleSwitchMode(mode) {
@@ -114,7 +120,7 @@ export default class ContainerDatasetModal extends Component {
                 <div className="attachment-name-input-div">
                   <input
                     type="text"
-                    value={this.state.datasetContainer.name}
+                    value={this.state.localName}
                     onBlur={this.toggleNameEditing}
                     onKeyPress={(event) => {
                       if (event.key === 'Enter') {
@@ -128,7 +134,7 @@ export default class ContainerDatasetModal extends Component {
                 </div>
               ) : (
                 <div className="attachment-name-input-div">
-                  <span style={{ marginRight: '15px' }}>{datasetContainer.name}</span>
+                  <span style={{ marginRight: '15px' }}>{this.state.localName}</span>
                   {!readOnly && (
                   <i
                     className="fa fa-pencil"

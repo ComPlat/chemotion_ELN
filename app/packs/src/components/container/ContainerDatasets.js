@@ -34,7 +34,7 @@ export default class ContainerDatasets extends Component {
 
   handleModalOpen(datasetContainer) {
     const { modal } = this.state;
-    modal.datasetContainer = datasetContainer;
+    modal.datasetContainer = datasetContainer || {};
     modal.show = true;
     this.setState({ modal });
   }
@@ -151,6 +151,7 @@ export default class ContainerDatasets extends Component {
             </ListGroup>
             {this.addButton()}
           </Well>
+          {modal.show && modal.datasetContainer && (
           <ContainerDatasetModal
             onHide={() => this.handleModalHide()}
             onChange={(datasetContainer) => this.handleChange(datasetContainer)}
@@ -162,6 +163,7 @@ export default class ContainerDatasets extends Component {
             disabled={disabled}
             onDiscard={this.discardChanges}
           />
+          )}
         </div>
       );
     }
