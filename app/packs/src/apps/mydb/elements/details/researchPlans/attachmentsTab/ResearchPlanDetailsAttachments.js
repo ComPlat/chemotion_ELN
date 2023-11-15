@@ -522,7 +522,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderAttachmentRow(attachment) {
     const maxCharsWithoutTooltip = 40;
-    const uploadDate = new Date(attachment.uploaded_at).toLocaleDateString("en-US")
+    const uploadDate = new Date(attachment.created_at).toLocaleDateString("en-US")
     const renderText = (
       <div style={{
         flex: '0.6',
