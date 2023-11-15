@@ -529,15 +529,6 @@ export default class ContainerDataset extends Component {
     }
     return (
       <>
-        <FormGroup controlId="datasetName">
-          <ControlLabel>Name</ControlLabel>
-          <FormControl
-            type="text"
-            value={datasetContainer.name || ''}
-            disabled={readOnly || disabled}
-            onChange={(event) => this.handleInputChange('name', event)}
-          />
-        </FormGroup>
         <FormGroup controlId="datasetInstrument">
           <ControlLabel>Instrument</ControlLabel>
           <FormControl
