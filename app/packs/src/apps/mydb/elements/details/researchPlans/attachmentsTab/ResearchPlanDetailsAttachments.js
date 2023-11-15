@@ -1,37 +1,31 @@
 /* eslint-disable react/destructuring-assignment */
-import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ImageModal from 'src/components/common/ImageModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Utils from 'src/utilities/Functions';
-import {
-  Button, ButtonGroup, Glyphicon, Overlay, OverlayTrigger, Tooltip, Dropdown, MenuItem
-} from 'react-bootstrap';
-import { last, findKey, values } from 'lodash';
+import { Button } from 'react-bootstrap';
+import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
-import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
+import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 
-const editorTooltip = (exts) => (
-  <Tooltip id="editor_tooltip">
-    Available extensions:&nbsp;
-    {exts}
-  </Tooltip>
-);
+import {
+  renderDownloadSplitButton,
+  renderRemoveAttachmentButton,
+  renderAnnotateImageButton,
+  renderEditAttachmentButton,
+  renderImportAttachmentButton,
+  renderDropzone,
+  renderSortingAndFilteringUI,
+  formatFileSize,
+  isImageFile
+} from 'src/apps/mydb/elements/list/AttachmentList';
 
 export default class ResearchPlanDetailsAttachments extends Component {
-  static isImageFile(fileName) {
-    const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
-    const dataType = last(fileName.split('.'));
-    return acceptedImageTypes.includes(dataType);
-  }
-
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
@@ -43,10 +37,22 @@ export default class ResearchPlanDetailsAttachments extends Component {
       showImportConfirm: [],
       filteredAttachments: [...props.attachments],
       filterText: '',
-      sortBy: 'name'
+      sortBy: 'name',
+      sortDirection: 'asc',
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
+
+    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
+    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
+    this.handleEdit = this.handleEdit.bind(this);
+    this.onImport = this.onImport.bind(this);
+    this.handleFilterChange = this.handleFilterChange.bind(this);
+    this.handleSortChange = this.handleSortChange.bind(this);
+    this.toggleSortDirection = this.toggleSortDirection.bind(this);
+    this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
+    this.showImportConfirm = this.showImportConfirm.bind(this);
+    this.hideImportConfirm = this.hideImportConfirm.bind(this);
   }
 
   componentDidMount() {
@@ -64,7 +70,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     }
   }
 
-  /* eslint-disable no-param-reassign */
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
@@ -86,7 +91,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
         }
       });
   }
-  /* eslint-enable no-param-reassign */
 
   onImport(attachment) {
     const { researchPlan, onAttachmentImportComplete } = this.props;
@@ -119,8 +123,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
   };
 
   handleDownloadAnnotated = (attachment) => {
-    const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
-    if (isImageFile && !attachment.isNew) {
+    const isImage = isImageFile(attachment.filename);
+    if (isImage && !attachment.isNew) {
       Utils.downloadFile({
         contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
         name: attachment.filename
@@ -159,7 +163,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.setState({ filteredAttachments });
   }
 
-  /* eslint-disable no-param-reassign */
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments.map((attachment) => {
@@ -179,7 +182,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
       return attachment;
     });
   }
-  /* eslint-enable no-param-reassign */
 
   documentType(filename) {
     const { extension } = this.state;
@@ -220,49 +222,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
-  renderDownloadSplitButton = (attachment) => {
-    const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
-    return (
-      <Dropdown id={`dropdown-download-${attachment.id}`}>
-        <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
-          <i className="fa fa-download" aria-hidden="true" />
-        </Dropdown.Toggle>
-        <Dropdown.Menu>
-          <MenuItem
-            eventKey="1"
-            onClick={() => this.handleDownloadOriginal(attachment)}
-          >
-            Download Original
-          </MenuItem>
-          <MenuItem
-            eventKey="2"
-            onClick={() => this.handleDownloadAnnotated(attachment)}
-            disabled={!isImageFile || attachment.isNew}
-          >
-            Download Annotated
-          </MenuItem>
-        </Dropdown.Menu>
-      </Dropdown>
-    );
-  };
-
-  renderRemoveAttachmentButton(attachment) {
-    const { onDelete, readOnly } = this.props;
-    return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
-        <Button
-          bsSize="xs"
-          bsStyle="danger"
-          className="attachment-button-size"
-          onClick={() => onDelete(attachment)}
-          disabled={readOnly}
-        >
-          <i className="fa fa-trash-o" aria-hidden="true" />
-        </Button>
-      </OverlayTrigger>
-    );
-  }
-
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
@@ -283,299 +242,101 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  renderAnnotateImageButton(attachment) {
-    const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
-    return (
-      <ImageAnnotationEditButton
-        parent={this}
-        attachment={attachment}
-        className={`attachment-button-size ${!isImageFile ? 'attachment-gray-button' : ''}`}
-        disabled={!isImageFile}
-      />
-    );
-  }
-
-  renderEditAttachmentButton(attachment, extension, attachmentEditor, isEditing, styleEditorBtn, editDisable) {
-    return (
-      <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
-        <Button
-          className="attachment-button-size"
-          style={{
-            display: styleEditorBtn,
-          }}
-          bsSize="xs"
-          bsStyle="success"
-          disabled={editDisable}
-          onClick={() => this.handleEdit(attachment)}
-        >
-          <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-        </Button>
-      </OverlayTrigger>
-    );
-  }
-
-  renderImportAttachmentButton(attachment) {
-    const { showImportConfirm } = this.state;
-    const { researchPlan } = this.props;
-    const show = showImportConfirm[attachment.id];
-    // TODO: import disabled when?
-    const importDisabled = researchPlan.changed;
-    const extension = last(attachment.filename.split('.'));
-
-    const importTooltip = importDisabled
-      ? <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip>
-      : <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
-
-    const confirmTooltip = (
-      <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Spreadsheet?
-        <br />
-        <ButtonGroup>
-          <Button
-            bsStyle="success"
-            bsSize="xs"
-            onClick={() => this.confirmAttachmentImport(attachment)}
-          >
-            Yes
-          </Button>
-          <Button
-            bsStyle="warning"
-            bsSize="xs"
-            onClick={() => this.hideImportConfirm(attachment.id)}
-          >
-            No
-          </Button>
-        </ButtonGroup>
-      </Tooltip>
-    );
-
-    return (
-      <div>
-        <OverlayTrigger placement="top" overlay={importTooltip}>
-          <div style={{ float: 'right' }}>
-            <Button
-              bsSize="xs"
-              bsStyle="success"
-              disabled={importDisabled || extension !== 'xlsx'}
-              ref={(ref) => {
-                this.importButtonRefs[attachment.id] = ref;
-              }}
-              className={`attachment-button-size ${importDisabled || extension !== 'xlsx'
-                ? 'attachment-gray-button' : ''}`}
-              onClick={() => this.showImportConfirm(attachment.id)}
-            >
-              <Glyphicon glyph="import" />
-            </Button>
-          </div>
-        </OverlayTrigger>
-        <Overlay
-          show={show}
-          placement="bottom"
-          rootClose
-          onHide={() => this.hideImportConfirm(attachment.id)}
-          target={this.importButtonRefs[attachment.id]}
-        >
-          {confirmTooltip}
-        </Overlay>
-      </div>
-    );
-  }
-
-  renderActions(attachment) {
-    const { attachmentEditor, extension } = this.state;
+  render() {
+    const {
+      filteredAttachments, sortDirection, attachmentEditor, extension
+    } = this.state;
     const { onUndoDelete } = this.props;
 
-    const updateTime = new Date(attachment.updated_at);
-    updateTime.setTime(updateTime.getTime() + 15 * 60 * 1000);
-
-    const isEditing = attachment.aasm_state === 'oo_editing'
-      && new Date().getTime() < updateTime;
-
-    const docType = this.documentType(attachment.filename);
-    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
-    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
-    const isAnnotationUpdated = attachment.updatedAnnotation;
-    if (attachment.is_deleted) {
-      return (
-        <div>
-          <Button
-            bsSize="xs"
-            bsStyle="danger"
-            className="attachment-button-size"
-            onClick={() => onUndoDelete(attachment)}
-          >
-            <i className="fa fa-undo" aria-hidden="true" />
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        <SaveResearchPlanWarning visible={isAnnotationUpdated} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {this.renderDownloadSplitButton(attachment)}
-          {this.renderEditAttachmentButton(
-            attachment,
-            extension,
-            attachmentEditor,
-            isEditing,
-            styleEditorBtn,
-            styleEditorBtn,
-            editDisable
-          )}
-          {this.renderAnnotateImageButton(attachment)}
-          {this.renderImportAttachmentButton(attachment)}
-          {this.renderRemoveAttachmentButton(attachment)}
-        </div>
-      </div>
-    );
-  }
-
-  renderDropzone() {
-    return (
-      <Dropzone
-        onDrop={this.props.onDrop}
-        className="attachment-dropzone"
-      >
-        Drop files here, or click to upload.
-      </Dropzone>
-
-    );
-  }
-
-  renderSortingAndFilteringUI() {
-    const isAscending = this.state.sortDirection === 'asc';
-
-    return (
-      <div style={{
-        marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-      }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <label style={{ marginRight: '10px' }}>Sort by: </label>
-          <select
-            onChange={this.handleSortChange}
-            className="sorting-row-style"
-            style={{ width: '100px' }}
-          >
-            <option value="name">Name</option>
-            <option value="size">Size</option>
-          </select>
-          <button
-            onClick={this.toggleSortDirection}
-            className="sort-icon-style"
-            type="button"
-          >
-            {isAscending ? '▲' : '▼'}
-          </button>
-        </div>
-        <div>
-          <label style={{ marginRight: '10px' }}>Filter: </label>
-          <input
-            type="text"
-            placeholder="Filter by name..."
-            onChange={this.handleFilterChange}
-            className="sorting-row-style"
-            style={{ width: '250px' }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  renderAttachmentRow(attachment) {
-    const maxCharsWithoutTooltip = 40;
-    const uploadDate = new Date(attachment.created_at).toLocaleDateString('en-US');
-    const renderText = (
-      <div className="attachment-row-text">
-        {attachment.filename}
-        <div className="attachment-row-subtext">
-          Added on:&nbsp;
-          {uploadDate}
-        </div>
-      </div>
-    );
-    const renderTooltip = (
-      <OverlayTrigger
-        placement="top"
-        overlay={(
-          <Tooltip id={`tooltip-${attachment.id}`}>
-            {attachment.filename}
-          </Tooltip>
-    )}
-      >
-        {renderText}
-      </OverlayTrigger>
-    );
-
-    const formatFileSize = (sizeInKB) => {
-      if (sizeInKB >= 1024) {
-        return `${(sizeInKB / 1024).toFixed(2)} MB`;
-      }
-      return `${sizeInKB} KB`;
-    };
-
-    const fetchNeeded = false;
-    const hasPop = false;
-
-    return (
-      <div className="attachment-row">
-        <div className="attachment-row-image">
-          <ImageModal
-            imageStyle={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '5px',
-              objectFit: 'cover',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-            }}
-            hasPop={hasPop}
-            alt="thumbnail"
-            previewObject={{
-              src: attachment.preview,
-            }}
-            popObject={{
-              title: attachment.filename,
-              src: attachment.preview,
-              fetchNeeded,
-              fetchId: attachment.id,
-            }}
-          />
-        </div>
-
-        {attachment.filename.length > maxCharsWithoutTooltip ? renderTooltip : renderText}
-
-        <div className="attachment-row-size">
-          <span style={{ fontWeight: 'bold' }}>
-            Size:&nbsp;
-            <span style={{ fontWeight: 'bold', color: '#444' }}>
-              {formatFileSize(attachment.filesize)}
-            </span>
-          </span>
-        </div>
-
-        <div className="attachment-row-actions">
-          {this.renderActions(attachment)}
-        </div>
-      </div>
-    );
-  }
-
-  render() {
-    const { filteredAttachments } = this.state;
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
-        {this.renderDropzone()}
-        {this.renderSortingAndFilteringUI()}
+        {renderDropzone(this.props.onDrop)}
+        {renderSortingAndFilteringUI(sortDirection, this.handleSortChange, this.toggleSortDirection, this.handleFilterChange)}
         {filteredAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => this.renderAttachmentRow(attachment))
+          filteredAttachments.map((attachment) => (
+            <div className="attachment-row" key={attachment.id}>
+              <div className="attachment-row-image">
+                <ImageModal
+                  imageStyle={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '5px',
+                    objectFit: 'cover',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  }}
+                  hasPop={false}
+                  alt="thumbnail"
+                  previewObject={{
+                    src: attachment.preview,
+                  }}
+                  popObject={{
+                    title: attachment.filename,
+                    src: attachment.preview,
+                    fetchNeeded: false,
+                    fetchId: attachment.id,
+                  }}
+                />
+              </div>
+              <div className="attachment-row-text">
+                {attachment.filename}
+                <div className="attachment-row-subtext">
+                  Added on:&nbsp;
+                  {new Date(attachment.created_at).toLocaleDateString('en-US')}
+                </div>
+              </div>
+              <div className="attachment-row-size">
+                <span style={{ fontWeight: 'bold' }}>
+                  Size:&nbsp;
+                  <span style={{ fontWeight: 'bold', color: '#444' }}>
+                    {formatFileSize(attachment.filesize)}
+                  </span>
+                </span>
+              </div>
+              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {attachment.is_deleted ? (
+                  <Button
+                    bsSize="xs"
+                    bsStyle="danger"
+                    className="attachment-button-size"
+                    onClick={() => onUndoDelete(attachment)}
+                  >
+                    <i className="fa fa-undo" aria-hidden="true" />
+                  </Button>
+                ) : (
+                  <>
+                    {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+                    {renderDownloadSplitButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {renderEditAttachmentButton(
+                      attachment,
+                      extension,
+                      attachmentEditor,
+                      attachment.aasm_state === 'oo_editing' && new Date().getTime() < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      attachmentEditor ? '' : 'none',
+                      !attachmentEditor || attachment.aasm_state === 'oo_editing' || attachment.is_new || this.documentType(attachment.filename) === null,
+                      this.handleEdit
+                    )}
+                    {renderAnnotateImageButton(attachment, this)}
+                    {renderImportAttachmentButton(
+                      attachment,
+                      this.state.showImportConfirm,
+                      this.props.researchPlan,
+                      this.importButtonRefs,
+                      this.showImportConfirm,
+                      this.hideImportConfirm,
+                      this.confirmAttachmentImport
+                    )}
+                    {renderRemoveAttachmentButton(attachment, this.props.onDelete, this.props.readOnly)}
+                  </>
+                )}
+              </div>
+            </div>
+          ))
         )}
       </div>
     );
