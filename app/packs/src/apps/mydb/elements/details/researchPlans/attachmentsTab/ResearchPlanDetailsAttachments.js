@@ -155,6 +155,9 @@ export default class ResearchPlanDetailsAttachments extends Component {
         case 'size':
           comparison = a.filesize - b.filesize;
           break;
+        case 'date':
+          comparison = new Date(a.created_at) - new Date(b.created_at);
+          break;
         default:
           break;
       }

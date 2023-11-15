@@ -186,6 +186,7 @@ export const renderSortingAndFilteringUI = (
       <select onChange={handleSortChange} className="sorting-row-style" style={{ width: '100px' }}>
         <option value="name">Name</option>
         <option value="size">Size</option>
+        <option value="date">Date</option>
       </select>
       <button onClick={toggleSortDirection} className="sort-icon-style" type="button">
         {sortDirection === 'asc' ? '▲' : '▼'}
