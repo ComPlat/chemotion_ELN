@@ -1,0 +1,109 @@
+.attachment-dropzone {
+  width: 100%;
+  padding: 20px;
+  border: 2px dashed #cccccc;
+  text-align: center;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  background-color: #f7f7f7;
+}
+
+.sorting-row-style {
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  height: 35px;
+}
+
+.sort-icon-style {
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 20px;
+  color: #000;
+  border-radius: 50%;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.attachment-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.attachment-row-image {
+  flex: 0.1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.attachment-row-text {
+  flex: 0.6;
+  margin-left: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.attachment-row-subtext {
+  font-size: 12px;
+  color: #777;
+}
+
+.attachment-row-size {
+  flex: 0.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  margin-left: 10px;
+}
+
+.attachment-row-actions {
+  flex: 0.3;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.attachment-image-modal {
+  width: 60px;
+  height: 60px;
+  border-radius: 5px;
+  object-fit: cover;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.attachment-button-size {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.attachment-gray-button {
+  background-color: #c0c0c0 !important;
+  border-color: #c0c0c0 !important;
+}
+
+.attachment-main-container {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.no-attachments-text {
+  text-align: center;
+  font-size: 16px;
+  color: #888;
+}

@@ -224,7 +224,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const isImageFile = ResearchPlanDetailsAttachments.isImageFile(attachment.filename);
     return (
       <Dropdown id={`dropdown-download-${attachment.id}`}>
-        <Dropdown.Toggle style={{ height: '25px' }} bsSize="xsmall" bsStyle="primary">
+        <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
           <i className="fa fa-download" aria-hidden="true" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
@@ -253,8 +253,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
         <Button
           bsSize="xsmall"
           bsStyle="danger"
-          style={{ width: '25px', height: '25px' }}
-          className="button-right"
+          className="attachment-button-size"
           onClick={() => onDelete(attachment)}
           disabled={readOnly}
         >
@@ -290,12 +289,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <ImageAnnotationEditButton
         parent={this}
         attachment={attachment}
-        style={{
-          width: '25px',
-          height: '25px',
-          backgroundColor: !isImageFile ? '#C0C0C0' : '',
-          borderColor: !isImageFile ? '#C0C0C0' : ''
-        }}
+        className={`attachment-button-size ${!isImageFile ? 'attachment-gray-button' : ''}`}
         disabled={!isImageFile}
       />
     );
@@ -305,13 +299,11 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
         <Button
+          className="attachment-button-size"
           style={{
             display: styleEditorBtn,
-            width: '25px',
-            height: '25px',
           }}
           bsSize="xsmall"
-          className="button-right"
           bsStyle="success"
           disabled={editDisable}
           onClick={() => this.handleEdit(attachment)}
@@ -368,12 +360,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
               ref={(ref) => {
                 this.importButtonRefs[attachment.id] = ref;
               }}
-              style={{
-                width: '25px',
-                height: '25px',
-                backgroundColor: (importDisabled || extension !== 'xlsx') ? '#C0C0C0' : '',
-                borderColor: (importDisabled || extension !== 'xlsx') ? '#C0C0C0' : '',
-              }}
+              className={`attachment-button-size ${importDisabled || extension !== 'xlsx'
+                ? 'attachment-gray-button' : ''}`}
               onClick={() => this.showImportConfirm(attachment.id)}
             >
               <Glyphicon glyph="import" />
@@ -413,8 +401,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           <Button
             bsSize="xsmall"
             bsStyle="danger"
-            className="button-right"
-            style={{ width: '25px', height: '25px' }}
+            className="attachment-button-size"
             onClick={() => onUndoDelete(attachment)}
           >
             <i className="fa fa-undo" aria-hidden="true" />
@@ -426,7 +413,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <div>
         <SaveResearchPlanWarning visible={isAnnotationUpdated} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {this.renderDownloadSplitButton(attachment)}
           {this.renderEditAttachmentButton(
             attachment,
@@ -449,16 +436,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <Dropzone
         onDrop={this.props.onDrop}
-        className="research-plan-dropzone"
-        style={{
-          width: '100%',
-          padding: '20px',
-          border: '2px dashed #cccccc',
-          textAlign: 'center',
-          marginBottom: '20px',
-          borderRadius: '5px',
-          backgroundColor: '#f7f7f7'
-        }}
+        className="attachment-dropzone"
       >
         Drop files here, or click to upload.
       </Dropzone>
@@ -467,26 +445,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderSortingAndFilteringUI() {
-    const commonStyle = {
-      padding: '5px',
-      borderRadius: '5px',
-      border: '1px solid #ccc',
-      height: '35px'
-    };
-
-    const sortIconStyle = {
-      marginLeft: '10px',
-      cursor: 'pointer',
-      fontSize: '20px',
-      color: '#000',
-      borderRadius: '50%',
-      padding: '5px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'background-color 0.3s'
-    };
-
     const isAscending = this.state.sortDirection === 'asc';
 
     return (
@@ -498,12 +456,16 @@ export default class ResearchPlanDetailsAttachments extends Component {
           <label style={{ marginRight: '10px' }}>Sort by: </label>
           <select
             onChange={this.handleSortChange}
-            style={{ ...commonStyle, width: '100px' }}
+            className="sorting-row-style"
+            style={{ width: '100px' }}
           >
             <option value="name">Name</option>
             <option value="size">Size</option>
           </select>
-          <div onClick={this.toggleSortDirection} style={sortIconStyle}>
+          <div
+            onClick={this.toggleSortDirection}
+            className="sort-icon-style"
+          >
             {isAscending ? '▲' : '▼'}
           </div>
         </div>
@@ -513,7 +475,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
             type="text"
             placeholder="Filter by name..."
             onChange={this.handleFilterChange}
-            style={{ ...commonStyle, width: '250px' }}
+            className="sorting-row-style"
+            style={{ width: '250px' }}
           />
         </div>
       </div>
@@ -522,27 +485,16 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   renderAttachmentRow(attachment) {
     const maxCharsWithoutTooltip = 40;
-    const uploadDate = new Date(attachment.created_at).toLocaleDateString("en-US")
+    const uploadDate = new Date(attachment.created_at).toLocaleDateString('en-US');
     const renderText = (
-      <div style={{
-        flex: '0.6',
-        marginLeft: '20px',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        color: '#333',
-        fontSize: '16px',
-        fontWeight: 'bold',
-      }}
-      >
+      <div className="attachment-row-text">
         {attachment.filename}
-        <div style={{ fontSize: '12px', color: '#777' }}>
+        <div className="attachment-row-subtext">
           Added on:&nbsp;
           {uploadDate}
         </div>
       </div>
     );
-
     const renderTooltip = (
       <OverlayTrigger
         placement="top"
@@ -567,23 +519,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const hasPop = false;
 
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '10px',
-        padding: '10px',
-        borderRadius: '5px',
-        boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)',
-        transition: 'box-shadow 0.3s ease',
-      }}
-      >
-        <div style={{
-          flex: '0.1',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-        >
+      <div className="attachment-row">
+        <div className="attachment-row-image">
           <ImageModal
             imageStyle={{
               width: '60px',
@@ -609,25 +546,16 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
         {attachment.filename.length > maxCharsWithoutTooltip ? renderTooltip : renderText}
 
-        <div style={{
-          flex: '0.2',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#777',
-          marginLeft: '10px',
-        }}
-        >
+        <div className="attachment-row-size">
           <span style={{ fontWeight: 'bold' }}>
             Size:&nbsp;
             <span style={{ fontWeight: 'bold', color: '#444' }}>
               {formatFileSize(attachment.filesize)}
             </span>
           </span>
-
         </div>
 
-        <div style={{ flex: '0.3', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="attachment-row-actions">
           {this.renderActions(attachment)}
         </div>
       </div>
@@ -636,23 +564,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
 
   render() {
     const { filteredAttachments } = this.state;
-
     return (
-      <div style={{
-        padding: '20px', backgroundColor: '#ffffff', borderRadius: '5px', boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)'
-      }}
-      >
+      <div className="attachment-main-container">
         {this.renderImageEditModal()}
         {this.renderDropzone()}
         {this.renderSortingAndFilteringUI()}
-
         {filteredAttachments.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            fontSize: '16px',
-            color: '#888',
-          }}
-          >
+          <div className="no-attachments-text">
             There are currently no attachments.
           </div>
         ) : (

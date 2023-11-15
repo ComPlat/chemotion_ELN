@@ -18,6 +18,7 @@ export default class ImageAnnotationEditButton extends Component {
             bsSize="xs"
             bsStyle="warning"
             style={this.props.style}
+            className={this.props.className}
             onClick={() => {
               if (isActive) {
                 this.props.parent.setState({
@@ -56,10 +57,12 @@ export default class ImageAnnotationEditButton extends Component {
 ImageAnnotationEditButton.propTypes = {
   attachment: PropTypes.instanceOf(Attachment),
   parent: PropTypes.object.isRequired,
-  style: PropTypes.object
+  style: PropTypes.object,
+  className: PropTypes.string
 };
 
 ImageAnnotationEditButton.defaultProps = {
   attachment: null,
   style: {},
+  className: ''
 };
