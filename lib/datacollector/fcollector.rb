@@ -63,7 +63,7 @@ class Fcollector
           inspect_folder(device)
           @sftp = nil
         end
-      rescue => e
+      rescue StandardError => e
         log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
       end
     end
@@ -77,7 +77,7 @@ class Fcollector
   private
 
   def devices(use_sftp)
-    sql = <<~SQL
+    sql = <<~SQL.squish
       profiles."data"->>'method' = '#{self.class::FCOLL}watcher#{use_sftp ? 'sftp' : 'local'}'
     SQL
     Device.joins(:profile).where(sql).includes(:profile)

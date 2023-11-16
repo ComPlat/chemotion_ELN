@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 class CollectorHelperSet
   attr_reader :helper_set
 
   def initialize(from, cc_list)
     @helper_set = []
-    for cc in cc_list do
+    cc_list.each do |cc|
       h = CollectorHelper.new(from, cc)
       @helper_set.push(h) if h.sender_recipient_known?
     end

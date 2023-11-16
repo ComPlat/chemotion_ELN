@@ -7,7 +7,6 @@ class Filecollector < Fcollector
   private
 
   # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
 
   def inspect_folder(device)
     directory = device.profile.data['method_params']['dir']
@@ -15,7 +14,7 @@ class Filecollector < Fcollector
       @current_collector = DatacollectorFile.new(new_file_p, @sftp)
       error = CollectorError.find_by error_code: CollectorHelper.hash(
         @current_collector.path,
-        @sftp
+        @sftp,
       )
       begin
         stored = false
@@ -31,10 +30,10 @@ class Filecollector < Fcollector
           @current_collector.delete
           log_info("Recipient unknown. File deleted! >>> #{device.info}")
         end
-      rescue => e
+      rescue StandardError => e
         if stored
           CollectorHelper.write_error(
-            CollectorHelper.hash(@current_collector.path, @sftp)
+            CollectorHelper.hash(@current_collector.path, @sftp),
           )
         end
         log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
@@ -53,15 +52,13 @@ class Filecollector < Fcollector
         File.join(monitored_folder_p, f.name)
       end
     else
-      new_files_p = Dir.glob(File.join(monitored_folder_p, '*')).reject { |e|
+      new_files_p = Dir.glob(File.join(monitored_folder_p, '*')).reject do |e|
         File.directory?(e)
-      }
+      end
     end
     new_files_p.delete_if do |f|
       f.end_with?('.filepart', '.part')
     end
     new_files_p
   end
-
-  # rubocop:enable Metrics/MethodLength
 end
