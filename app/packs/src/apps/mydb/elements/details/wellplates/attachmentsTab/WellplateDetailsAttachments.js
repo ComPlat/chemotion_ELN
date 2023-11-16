@@ -1,7 +1,11 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import { FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel, ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover, Overlay } from 'react-bootstrap';
+import {
+  FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel,
+  ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover, Overlay
+} from 'react-bootstrap';
 import { last, findKey, values } from 'lodash';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageModal from 'src/components/common/ImageModal';
@@ -9,15 +13,41 @@ import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewAttachmentImage } from 'src/utilities/imageHelper';
 import Utils from 'src/utilities/Functions';
 
-const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
+const editorTooltip = (exts) => (
+  <Tooltip id="editor_tooltip">
+    Available extensions:
+    &nbsp;
+    {exts}
+  </Tooltip>
+);
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
 const imageStyle = { position: 'absolute', width: 60, height: 60 };
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
-    This template should be used to import well readouts.<br />
-    The <strong>red</strong> column may not be altered at all.<br />
-    The contents of the <strong>yellow</strong> columns may be altered, the headers may not.<br />
-    The <strong>green</strong> columns must contain at least one <i>_Value</i> and <i>_Unit</i> pair
+    This template should be used to import well readouts.
+    <br />
+    The&nbsp;
+    <strong>red</strong>
+    &nbsp;column may not be altered at all.
+    <br />
+    The contents of the&nbsp;
+    <strong>yellow</strong>
+    &nbsp;
+    columns may be altered, the headers may not.
+    <br />
+    The
+    &nbsp;
+    <strong>green</strong>
+    &nbsp;
+    columns must contain at least one
+    &nbsp;
+    <i>_Value</i>
+    &nbsp;
+    and
+    &nbsp;
+    <i>_Unit</i>
+    &nbsp;
+    pair
     with a matching prefix before the underscore.
     They may contain an arbitrary amount of readout pairs.
   </Popover>
@@ -48,29 +78,6 @@ export default class WellplateDetailsAttachments extends Component {
     this.editorInitial();
   }
 
-  editorInitial() {
-    EditorFetcher.initial()
-      .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
-      });
-  }
-
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, o => o.includes(ext));
-
-    if (typeof (docType) === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
   handleEdit(attachment) {
     const { onEdit } = this.state;
     const fileType = last(attachment.filename.split('.'));
@@ -79,7 +86,8 @@ export default class WellplateDetailsAttachments extends Component {
     EditorFetcher.startEditing({ attachment_id: attachment.id })
       .then((result) => {
         if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
+          const url = `/editor?id=${attachment.id}`
+          + `&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
           window.open(url, '_blank');
 
           attachment.aasm_state = 'oo_editing';
@@ -94,6 +102,29 @@ export default class WellplateDetailsAttachments extends Component {
 
   handleTemplateDownload() { // eslint-disable-line class-methods-use-this
     Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
+  }
+
+  editorInitial() {
+    EditorFetcher.initial()
+      .then((result) => {
+        this.setState({
+          attachmentEditor: result.installed,
+          extension: result.ext
+        });
+      });
+  }
+
+  documentType(filename) {
+    const { extension } = this.state;
+
+    const ext = last(filename.split('.'));
+    const docType = findKey(extension, (o) => o.includes(ext));
+
+    if (typeof (docType) === 'undefined' || !docType) {
+      return null;
+    }
+
+    return docType;
   }
 
   showImportConfirm(attachmentId) {
@@ -119,13 +150,14 @@ export default class WellplateDetailsAttachments extends Component {
     const importDisabled = this.props.wellplateChanged;
     const extension = last(attachment.filename.split('.'));
 
-    const importTooltip = importDisabled ?
-      <Tooltip id="import_tooltip">Wellplate must be saved before import</Tooltip> :
-      <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
+    const importTooltip = importDisabled
+      ? <Tooltip id="import_tooltip">Wellplate must be saved before import</Tooltip>
+      : <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
 
     const confirmTooltip = (
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Spreadsheet? This will overwrite existing Wellplate data.<br />
+        Import data from Spreadsheet? This will overwrite existing Wellplate data.
+        <br />
         <ButtonGroup>
           <Button
             bsStyle="danger"
@@ -148,7 +180,7 @@ export default class WellplateDetailsAttachments extends Component {
     if (extension === 'xlsx') {
       return (
         <div>
-          <OverlayTrigger placement="top" overlay={importTooltip} >
+          <OverlayTrigger placement="top" overlay={importTooltip}>
             <div style={{ float: 'right' }}>
               <Button
                 bsSize="xsmall"
@@ -183,7 +215,13 @@ export default class WellplateDetailsAttachments extends Component {
     const { onDelete } = this.state;
 
     return (
-      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => onDelete(attachment)} disabled={this.props.readOnly}>
+      <Button
+        bsSize="xsmall"
+        bsStyle="danger"
+        className="button-right"
+        onClick={() => onDelete(attachment)}
+        disabled={this.props.readOnly}
+      >
         <i className="fa fa-trash-o" aria-hidden="true" />
       </Button>
     );
@@ -236,7 +274,7 @@ export default class WellplateDetailsAttachments extends Component {
         <Row>
           <Col md={1}>
             <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
-              <div className="preview" style={{ width: '60px', height: '60px' }} >
+              <div className="preview" style={{ width: '60px', height: '60px' }}>
                 <ImageModal
                   imageStyle={imageStyle}
                   hasPop={hasPop}
@@ -258,7 +296,7 @@ export default class WellplateDetailsAttachments extends Component {
           </Col>
           <Col md={2}>
             {this.renderRemoveAttachmentButton(attachment)}
-            <OverlayTrigger placement="top" overlay={downloadTooltip} >
+            <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 bsSize="xsmall"
                 className="button-right"
@@ -268,7 +306,7 @@ export default class WellplateDetailsAttachments extends Component {
                 <i className="fa fa-download" aria-hidden="true" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))} >
+            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
               <Button
                 style={{ display: styleEditorBtn }}
                 bsSize="xsmall"
@@ -294,7 +332,7 @@ export default class WellplateDetailsAttachments extends Component {
         <div>
           {this.renderTemplateDownload()}
           <ListGroup>
-            {attachments.map(attachment => (
+            {attachments.map((attachment) => (
               <ListGroupItem key={attachment.id}>
                 {this.renderListGroupItem(attachment)}
               </ListGroupItem>
@@ -307,7 +345,8 @@ export default class WellplateDetailsAttachments extends Component {
       <div>
         {this.renderTemplateDownload()}
         <div>
-          There are currently no Datasets.<br />
+          There are currently no Datasets.
+          <br />
         </div>
       </div>
     );
@@ -320,7 +359,9 @@ export default class WellplateDetailsAttachments extends Component {
           bsStyle="primary"
           onClick={() => this.handleTemplateDownload()}
         >
-          <i className="fa fa-download" aria-hidden="true" /> Download Wellplate import template xlsx
+          <i className="fa fa-download" aria-hidden="true" />
+          &nbsp;
+          Download Wellplate import template xlsx
         </Button>
         <OverlayTrigger placement="bottom" overlay={templateInfo}>
           <Button
@@ -339,7 +380,7 @@ export default class WellplateDetailsAttachments extends Component {
     return (
       <div className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}>
         <Dropzone
-          onDrop={files => onDrop(files)}
+          onDrop={(files) => onDrop(files)}
           className="zone"
         >
           Drop Files, or Click to Select.
@@ -353,7 +394,6 @@ export default class WellplateDetailsAttachments extends Component {
       <Row>
         <Col md={12}>
           <FormGroup>
-            <ControlLabel>Files</ControlLabel>
             {this.renderAttachments()}
             {this.renderDropzone()}
           </FormGroup>
