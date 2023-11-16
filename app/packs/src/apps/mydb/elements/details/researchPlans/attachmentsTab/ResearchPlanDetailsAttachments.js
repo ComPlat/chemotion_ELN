@@ -342,7 +342,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                     {renderImportAttachmentButton(
                       attachment,
                       this.state.showImportConfirm,
-                      this.props.researchPlan,
+                      this.props.researchPlan.changed,
                       this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,

@@ -105,16 +105,16 @@ export const renderImportAttachmentButton = (
   confirmAttachmentImportFunction
 ) => {
   const show = showImportConfirm[attachment.id];
-  const importDisabled = researchPlan.changed;
+  const importDisabled = researchPlan;
   const extension = attachment.filename.split('.').pop();
 
   const importTooltip = importDisabled
-    ? <Tooltip id="import_tooltip">Research Plan must be saved before import</Tooltip>
-    : <Tooltip id="import_tooltip">Import spreadsheet as research plan table</Tooltip>;
+    ? <Tooltip id="import_tooltip">Element must be saved before import</Tooltip>
+    : <Tooltip id="import_tooltip">Import as element data</Tooltip>;
 
   const confirmTooltip = (
     <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-      Import data from Spreadsheet?
+      Import data from Spreadsheet? This will overwrite existing data.
       <br />
       <ButtonGroup>
         <Button

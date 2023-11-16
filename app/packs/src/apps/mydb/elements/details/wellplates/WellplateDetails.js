@@ -25,7 +25,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement'
+import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
@@ -71,22 +71,10 @@ export default class WellplateDetails extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onUIStoreChange(state) {
-    if (state.wellplate.activeTab !== this.state.activeTab) {
-      this.setState({
-        activeTab: state.wellplate.activeTab
-      });
-    }
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
   handleSegmentsChange(se) {
     const { wellplate } = this.state;
     const { segments } = wellplate;
-    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
     wellplate.segments = segments;
     wellplate.changed = true;
@@ -165,7 +153,7 @@ export default class WellplateDetails extends Component {
 
   handleTabChange(eventKey) {
     const showWellplate = (eventKey === 0);
-    this.setState(previousState => ({ ...previousState, activeTab: eventKey, showWellplate }));
+    this.setState((previousState) => ({ ...previousState, activeTab: eventKey, showWellplate }));
     UIActions.selectTab({ tabKey: eventKey, type: 'wellplate' });
   }
 
@@ -220,6 +208,18 @@ export default class WellplateDetails extends Component {
     this.forceUpdate();
   }
 
+  onUIStoreChange(state) {
+    if (state.wellplate.activeTab !== this.state.activeTab) {
+      this.setState({
+        activeTab: state.wellplate.activeTab
+      });
+    }
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
     const datetp = formatTimeStampsOfElement(wellplate || {});
@@ -230,7 +230,9 @@ export default class WellplateDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
           <span>
             <i className="icon-wellplate" />
-            &nbsp; <span>{wellplate.name}</span> &nbsp;
+            &nbsp;&nbsp;
+            <span>{wellplate.name}</span>
+            &nbsp;&nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right" />
@@ -255,7 +257,7 @@ export default class WellplateDetails extends Component {
     const { attachments } = wellplate;
     return (
       <ListGroup fill="true">
-        <ListGroupItem >
+        <ListGroupItem>
           <WellplateDetailsAttachments
             attachments={attachments}
             wellplateChanged={wellplate.isEdited}
@@ -272,7 +274,6 @@ export default class WellplateDetails extends Component {
     );
   } /* eslint-enable */
 
-
   render() {
     const {
       wellplate, showWellplate, visible
@@ -281,8 +282,8 @@ export default class WellplateDetails extends Component {
       wells, name, size, description
     } = wellplate;
     const readoutTitles = wellplate.readout_titles;
-    const submitLabel = wellplate.isNew ? 'Create' : 'Save';
-    const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
+    const exportButton = (wellplate && wellplate.isNew)
+      ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = {
       name, size, description, readoutTitles
     };
@@ -299,7 +300,7 @@ export default class WellplateDetails extends Component {
               size={size}
               readoutTitles={readoutTitles}
               wells={wells}
-              handleWellsChange={w => this.handleWellsChange(w)}
+              handleWellsChange={(w) => this.handleWellsChange(w)}
               cols={cols}
               width={60}
             />
@@ -315,7 +316,7 @@ export default class WellplateDetails extends Component {
             <WellplateList
               wells={wells}
               readoutTitles={readoutTitles}
-              handleWellsChange={w => this.handleWellsChange(w)}
+              handleWellsChange={(w) => this.handleWellsChange(w)}
             />
           </Well>
         </Tab>
@@ -327,11 +328,13 @@ export default class WellplateDetails extends Component {
           }
           <WellplateProperties
             {...properties}
-            changeProperties={c => this.handleChangeProperties(c)}
-            handleAddReadout={c => this.handleAddReadout(c)}
-            handleRemoveReadout={c => this.handleRemoveReadout(c)}
+            changeProperties={(c) => this.handleChangeProperties(c)}
+            handleAddReadout={(c) => this.handleAddReadout(c)}
+            handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
           />
-          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} /> {/*For samples and reactions (<element>): disabled={!<element>.can_update} */}
+          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
+          {' '}
+          {/* For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>
       ),
       analyses: (
@@ -376,16 +379,18 @@ export default class WellplateDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>
-              Close
-            </Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
-              {submitLabel}
-            </Button>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+            {
+              wellplate.changed ? (
+                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                  {wellplate.isNew ? 'Create' : 'Save'}
+                </Button>
+              ) : <div />
+            }
             {exportButton}
             <Button bsStyle="primary" onClick={() => this.handlePrint()}>
               Print Wells

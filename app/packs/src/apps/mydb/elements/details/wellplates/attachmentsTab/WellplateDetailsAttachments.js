@@ -1,55 +1,42 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Dropzone from 'react-dropzone';
-import {
-  FormGroup, Button, ButtonGroup, Row, Col, Tooltip, ControlLabel,
-  ListGroup, ListGroupItem, OverlayTrigger, Glyphicon, Popover, Overlay
-} from 'react-bootstrap';
-import { last, findKey, values } from 'lodash';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageModal from 'src/components/common/ImageModal';
-import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import { previewAttachmentImage } from 'src/utilities/imageHelper';
+import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
+import {
+  Button, ButtonGroup, OverlayTrigger, Popover
+} from 'react-bootstrap';
+import { last, findKey } from 'lodash';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 
-const editorTooltip = (exts) => (
-  <Tooltip id="editor_tooltip">
-    Available extensions:
-    &nbsp;
-    {exts}
-  </Tooltip>
-);
-const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
-const imageStyle = { position: 'absolute', width: 60, height: 60 };
+import {
+  renderDownloadSplitButton,
+  renderRemoveAttachmentButton,
+  renderAnnotateImageButton,
+  renderEditAttachmentButton,
+  renderImportAttachmentButton,
+  renderDropzone,
+  renderSortingAndFilteringUI,
+  formatFileSize,
+  isImageFile
+} from 'src/apps/mydb/elements/list/AttachmentList';
+
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
-    This template should be used to import well readouts.
-    <br />
-    The&nbsp;
+    This template should be used to import well readouts. The&nbsp;
     <strong>red</strong>
-    &nbsp;column may not be altered at all.
-    <br />
-    The contents of the&nbsp;
+    &nbsp;column may not be altered at all. The contents of the&nbsp;
     <strong>yellow</strong>
-    &nbsp;
-    columns may be altered, the headers may not.
-    <br />
-    The
-    &nbsp;
+    &nbsp;columns may be altered, the headers may not. The&nbsp;
     <strong>green</strong>
-    &nbsp;
-    columns must contain at least one
-    &nbsp;
+    &nbsp;columns must contain at least one&nbsp;
     <i>_Value</i>
-    &nbsp;
-    and
-    &nbsp;
+    &nbsp;and&nbsp;
     <i>_Unit</i>
-    &nbsp;
-    pair
-    with a matching prefix before the underscore.
-    They may contain an arbitrary amount of readout pairs.
+    &nbsp;pair with a matching prefix before the underscore. They may contain an arbitrary amount of readout pairs.
   </Popover>
 );
 
@@ -57,43 +44,62 @@ export default class WellplateDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
-    const {
-      attachments, wellplateChanged, onDrop, onDelete, onUndoDelete, onDownload, onImport, onEdit
-    } = props;
+
     this.state = {
-      onDrop,
-      onDelete,
-      onUndoDelete,
-      onDownload,
-      onImport,
-      onEdit,
       attachmentEditor: false,
       extension: null,
+      imageEditModalShown: false,
       showImportConfirm: [],
+      filteredAttachments: [...props.attachments],
+      filterText: '',
+      sortBy: 'name',
+      sortDirection: 'asc',
     };
     this.editorInitial = this.editorInitial.bind(this);
+    this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
+
+    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
+    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
+    this.handleEdit = this.handleEdit.bind(this);
+    this.handleFilterChange = this.handleFilterChange.bind(this);
+    this.handleSortChange = this.handleSortChange.bind(this);
+    this.toggleSortDirection = this.toggleSortDirection.bind(this);
+    this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
+    this.showImportConfirm = this.showImportConfirm.bind(this);
+    this.hideImportConfirm = this.hideImportConfirm.bind(this);
   }
 
   componentDidMount() {
     this.editorInitial();
+    this.createAttachmentPreviews();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { attachments } = this.props;
+    if (attachments !== prevProps.attachments) {
+      this.createAttachmentPreviews();
+    }
+    if (prevProps.attachments !== this.props.attachments) {
+      this.setState({ filteredAttachments: [...this.props.attachments] }, this.filterAndSortAttachments);
+    }
   }
 
   handleEdit(attachment) {
-    const { onEdit } = this.state;
     const fileType = last(attachment.filename.split('.'));
     const docType = this.documentType(attachment.filename);
 
     EditorFetcher.startEditing({ attachment_id: attachment.id })
       .then((result) => {
         if (result.token) {
-          const url = `/editor?id=${attachment.id}`
-          + `&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
+          const url = `/editor?id=${attachment.id}&docType=${docType}
+          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
+          &only_office_token=${result.only_office_token}`;
           window.open(url, '_blank');
 
           attachment.aasm_state = 'oo_editing';
           attachment.updated_at = new Date();
 
-          onEdit(attachment);
+          this.props.onEdit(attachment);
         } else {
           alert('Unauthorized to edit this file.');
         }
@@ -104,14 +110,80 @@ export default class WellplateDetailsAttachments extends Component {
     Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
   }
 
-  editorInitial() {
-    EditorFetcher.initial()
-      .then((result) => {
-        this.setState({
-          attachmentEditor: result.installed,
-          extension: result.ext
-        });
+  handleFilterChange = (e) => {
+    this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
+  };
+
+  handleSortChange = (e) => {
+    this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
+  };
+
+  toggleSortDirection = () => {
+    this.setState((prevState) => ({
+      sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
+    }), this.filterAndSortAttachments);
+  };
+
+  handleDownloadOriginal = (attachment) => {
+    this.props.onDownload(attachment);
+  };
+
+  handleDownloadAnnotated = (attachment) => {
+    const isImage = isImageFile(attachment.filename);
+    if (isImage && !attachment.isNew) {
+      Utils.downloadFile({
+        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+        name: attachment.filename
       });
+    }
+  };
+
+  filterAndSortAttachments() {
+    const { filterText, sortBy } = this.state;
+
+    const filteredAttachments = this.props.attachments.filter((
+      attachment
+    ) => attachment.filename.toLowerCase().includes(filterText.toLowerCase()));
+
+    filteredAttachments.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.filename.localeCompare(b.filename);
+          break;
+        case 'size':
+          comparison = a.filesize - b.filesize;
+          break;
+        case 'date':
+          comparison = new Date(a.created_at) - new Date(b.created_at);
+          break;
+        default:
+          break;
+      }
+      return this.state.sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    this.setState({ filteredAttachments });
+  }
+
+  createAttachmentPreviews() {
+    const { attachments } = this.props;
+    attachments.map((attachment) => {
+      if (attachment.thumb) {
+        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+          (result) => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
+              this.forceUpdate();
+            }
+          }
+        );
+      } else {
+        attachment.preview = '/images/wild_card/not_available.svg';
+        this.forceUpdate();
+      }
+      return attachment;
+    });
   }
 
   documentType(filename) {
@@ -120,11 +192,20 @@ export default class WellplateDetailsAttachments extends Component {
     const ext = last(filename.split('.'));
     const docType = findKey(extension, (o) => o.includes(ext));
 
-    if (typeof (docType) === 'undefined' || !docType) {
+    if (typeof docType === 'undefined' || !docType) {
       return null;
     }
 
     return docType;
+  }
+
+  editorInitial() {
+    EditorFetcher.initial().then((result) => {
+      this.setState({
+        attachmentEditor: result.installed,
+        extension: result.ext,
+      });
+    });
   }
 
   showImportConfirm(attachmentId) {
@@ -145,275 +226,190 @@ export default class WellplateDetailsAttachments extends Component {
     this.hideImportConfirm(attachment.id);
   }
 
-  renderImportAttachmentButton(attachment) {
-    const show = this.state.showImportConfirm[attachment.id];
-    const importDisabled = this.props.wellplateChanged;
-    const extension = last(attachment.filename.split('.'));
-
-    const importTooltip = importDisabled
-      ? <Tooltip id="import_tooltip">Wellplate must be saved before import</Tooltip>
-      : <Tooltip id="import_tooltip">Import attachment as Wellplate data</Tooltip>;
-
-    const confirmTooltip = (
-      <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Spreadsheet? This will overwrite existing Wellplate data.
-        <br />
-        <ButtonGroup>
-          <Button
-            bsStyle="danger"
-            bsSize="xsmall"
-            onClick={() => this.confirmAttachmentImport(attachment)}
-          >
-            Yes
-          </Button>
-          <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            onClick={() => this.hideImportConfirm(attachment.id)}
-          >
-            No
-          </Button>
-        </ButtonGroup>
-      </Tooltip>
-    );
-
-    if (extension === 'xlsx') {
-      return (
-        <div>
-          <OverlayTrigger placement="top" overlay={importTooltip}>
-            <div style={{ float: 'right' }}>
-              <Button
-                bsSize="xsmall"
-                bsStyle="success"
-                className="button-right"
-                disabled={importDisabled}
-                ref={(ref) => { this.importButtonRefs[attachment.id] = ref; }}
-                style={importDisabled ? { pointerEvents: 'none' } : {}}
-                onClick={() => this.showImportConfirm(attachment.id)}
-              >
-                <Glyphicon glyph="import" />
-              </Button>
-            </div>
-          </OverlayTrigger>
-          <Overlay
-            show={show}
-            placement="bottom"
-            rootClose
-            onHide={() => this.hideImportConfirm(attachment.id)}
-            target={this.importButtonRefs[attachment.id]}
-          >
-            {confirmTooltip}
-          </Overlay>
-
-        </div>
-      );
-    }
-    return true;
-  }
-
-  renderRemoveAttachmentButton(attachment) {
-    const { onDelete } = this.state;
-
+  renderImageEditModal() {
+    const { chosenAttachment, imageEditModalShown } = this.state;
+    const { onEdit } = this.props;
     return (
-      <Button
-        bsSize="xsmall"
-        bsStyle="danger"
-        className="button-right"
-        onClick={() => onDelete(attachment)}
-        disabled={this.props.readOnly}
-      >
-        <i className="fa fa-trash-o" aria-hidden="true" />
-      </Button>
-    );
-  }
-
-  renderListGroupItem(attachment) {
-    const {
-      attachmentEditor, extension, onUndoDelete, onDownload
-    } = this.state;
-
-    const updateTime = new Date(attachment.updated_at);
-    updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
-
-    const hasPop = false;
-    const fetchNeeded = false;
-    const fetchId = attachment.id;
-
-    const previewImg = previewAttachmentImage(attachment);
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime;
-
-    const docType = this.documentType(attachment.filename);
-    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null;
-    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : '';
-
-    if (attachment.is_deleted) {
-      return (
-        <div>
-          <Row>
-            <Col md={1} />
-            <Col md={9}>
-              <strike>{attachment.filename}</strike>
-            </Col>
-            <Col md={2}>
-              <Button
-                bsSize="xsmall"
-                bsStyle="danger"
-                className="button-right"
-                onClick={() => onUndoDelete(attachment)}
-              >
-                <i className="fa fa-undo" aria-hidden="true" />
-              </Button>
-            </Col>
-          </Row>
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        <Row>
-          <Col md={1}>
-            <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
-              <div className="preview" style={{ width: '60px', height: '60px' }}>
-                <ImageModal
-                  imageStyle={imageStyle}
-                  hasPop={hasPop}
-                  previewObject={{
-                    src: previewImg
-                  }}
-                  popObject={{
-                    title: attachment.filename,
-                    src: previewImg,
-                    fetchNeeded,
-                    fetchId
-                  }}
-                />
-              </div>
-            </div>
-          </Col>
-          <Col md={9}>
-            {attachment.filename}
-          </Col>
-          <Col md={2}>
-            {this.renderRemoveAttachmentButton(attachment)}
-            <OverlayTrigger placement="top" overlay={downloadTooltip}>
-              <Button
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="primary"
-                onClick={() => onDownload(attachment)}
-              >
-                <i className="fa fa-download" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
-            <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
-              <Button
-                style={{ display: styleEditorBtn }}
-                bsSize="xsmall"
-                className="button-right"
-                bsStyle="success"
-                disabled={editDisable}
-                onClick={() => this.handleEdit(attachment)}
-              >
-                <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-              </Button>
-            </OverlayTrigger>
-            {this.renderImportAttachmentButton(attachment)}
-          </Col>
-        </Row>
-      </div>
-    );
-  }
-
-  renderAttachments() {
-    const { attachments } = this.props;
-    if (attachments && attachments.length > 0) {
-      return (
-        <div>
-          {this.renderTemplateDownload()}
-          <ListGroup>
-            {attachments.map((attachment) => (
-              <ListGroupItem key={attachment.id}>
-                {this.renderListGroupItem(attachment)}
-              </ListGroupItem>
-            ))}
-          </ListGroup>
-        </div>
-      );
-    }
-    return (
-      <div>
-        {this.renderTemplateDownload()}
-        <div>
-          There are currently no Datasets.
-          <br />
-        </div>
-      </div>
+      <ImageAnnotationModalSVG
+        attachment={chosenAttachment}
+        isShow={imageEditModalShown}
+        handleSave={
+          () => {
+            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
+            chosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            onEdit(chosenAttachment);
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+      />
     );
   }
 
   renderTemplateDownload() {
     return (
-      <div style={{ marginBottom: '5px' }}>
-        <Button
-          bsStyle="primary"
-          onClick={() => this.handleTemplateDownload()}
-        >
-          <i className="fa fa-download" aria-hidden="true" />
-          &nbsp;
-          Download Wellplate import template xlsx
-        </Button>
-        <OverlayTrigger placement="bottom" overlay={templateInfo}>
+      <div>
+        <ButtonGroup style={{ marginBottom: '10px' }}>
           <Button
-            bsStyle="info"
+            bsStyle="primary"
+            onClick={() => this.handleTemplateDownload()}
           >
-            <i className="fa fa-info" aria-hidden="true" />
+            <i className="fa fa-download" aria-hidden="true" />
+            &nbsp;
+            Download Import Template xlsx
           </Button>
-        </OverlayTrigger>
-      </div>
-    );
-  }
-
-  renderDropzone() {
-    const { onDrop } = this.state;
-
-    return (
-      <div className={`research-plan-dropzone-${this.props.readOnly ? 'disable' : 'enable'}`}>
-        <Dropzone
-          onDrop={(files) => onDrop(files)}
-          className="zone"
-        >
-          Drop Files, or Click to Select.
-        </Dropzone>
+          <OverlayTrigger placement="bottom" overlay={templateInfo}>
+            <Button
+              bsStyle="info"
+            >
+              <i className="fa fa-info" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+        </ButtonGroup>
       </div>
     );
   }
 
   render() {
+    const {
+      filteredAttachments, sortDirection, attachmentEditor, extension
+    } = this.state;
+    const { onUndoDelete } = this.props;
+
     return (
-      <Row>
-        <Col md={12}>
-          <FormGroup>
-            {this.renderAttachments()}
-            {this.renderDropzone()}
-          </FormGroup>
-        </Col>
-      </Row>
+      <div className="attachment-main-container">
+        {this.renderTemplateDownload()}
+        {this.renderImageEditModal()}
+        {renderDropzone(this.props.onDrop)}
+        {renderSortingAndFilteringUI(
+          sortDirection,
+          this.handleSortChange,
+          this.toggleSortDirection,
+          this.handleFilterChange
+        )}
+        {filteredAttachments.length === 0 ? (
+          <div className="no-attachments-text">
+            There are currently no attachments.
+          </div>
+        ) : (
+          filteredAttachments.map((attachment) => (
+            <div className="attachment-row" key={attachment.id}>
+              <div className="attachment-row-image">
+                <ImageModal
+                  imageStyle={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '5px',
+                    objectFit: 'cover',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  }}
+                  hasPop={false}
+                  alt="thumbnail"
+                  previewObject={{
+                    src: attachment.preview,
+                  }}
+                  popObject={{
+                    title: attachment.filename,
+                    src: attachment.preview,
+                    fetchNeeded: false,
+                    fetchId: attachment.id,
+                  }}
+                />
+              </div>
+              <div className="attachment-row-text">
+                {attachment.filename}
+                <div className="attachment-row-subtext">
+                  Added on:&nbsp;
+                  {new Date(attachment.created_at).toLocaleDateString('en-GB')}
+                  ,&nbsp;
+                  {new Date(attachment.created_at).toLocaleTimeString(
+                    'en-GB',
+                    { hour: '2-digit', minute: '2-digit', hour12: true }
+                  )}
+
+                </div>
+              </div>
+              <div className="attachment-row-size">
+                <span style={{ fontWeight: 'bold' }}>
+                  Size:&nbsp;
+                  <span style={{ fontWeight: 'bold', color: '#444' }}>
+                    {formatFileSize(attachment.filesize)}
+                  </span>
+                </span>
+              </div>
+              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {attachment.is_deleted ? (
+                  <Button
+                    bsSize="xs"
+                    bsStyle="danger"
+                    className="attachment-button-size"
+                    onClick={() => onUndoDelete(attachment)}
+                  >
+                    <i className="fa fa-undo" aria-hidden="true" />
+                  </Button>
+                ) : (
+                  <>
+                    {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+                    {renderDownloadSplitButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {renderEditAttachmentButton(
+                      attachment,
+                      extension,
+                      attachmentEditor,
+                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                          < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      attachmentEditor ? '' : 'none',
+                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                          || attachment.is_new || this.documentType(attachment.filename) === null,
+                      this.handleEdit
+                    )}
+                    {renderAnnotateImageButton(attachment, this)}
+                    {renderImportAttachmentButton(
+                      attachment,
+                      this.state.showImportConfirm,
+                      this.props.wellplateChanged,
+                      this.importButtonRefs,
+                      this.showImportConfirm,
+                      this.hideImportConfirm,
+                      this.confirmAttachmentImport
+                    )}
+                    {renderRemoveAttachmentButton(attachment, this.props.onDelete, this.props.readOnly)}
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     );
   }
 }
 
 WellplateDetailsAttachments.propTypes = {
-  attachments: PropTypes.arrayOf(PropTypes.object).isRequired,
   wellplateChanged: PropTypes.bool.isRequired,
+  attachments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    aasm_state: PropTypes.string.isRequired,
+    content_type: PropTypes.string.isRequired,
+    filename: PropTypes.string.isRequired,
+    filesize: PropTypes.number.isRequired,
+    identifier: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    thumb: PropTypes.bool.isRequired
+  })),
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
-  onImport: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired
 };
 
 WellplateDetailsAttachments.defaultProps = {
+  attachments: [],
 };
