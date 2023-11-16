@@ -47,7 +47,7 @@ class DatacollectorFolder < DatacollectorObject
 
   def register_new_data(device, tmpzip)
     att = Attachment.new(
-      filename: @name + '.zip',
+      filename: "#{@name}.zip",
       created_by: device.id,
       created_for: recipient.id,
       content_type: 'application/zip',

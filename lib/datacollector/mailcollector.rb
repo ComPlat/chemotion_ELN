@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'net/imap'
 require 'mail'
 
 class Mailcollector
-
   def initialize
     raise 'No datacollector configuration!' unless Rails.configuration.datacollectors
 
@@ -21,20 +22,17 @@ class Mailcollector
     if response['name'] == 'OK'
       log_info('Login...')
       imap.select('INBOX')
-      imap.search(['NOT', 'SEEN']).each do |message_id|
-        begin
-          handle_new_mail(message_id, imap)
-        rescue => e
-          log_error e.message
-        end
-
+      imap.search(%w[NOT SEEN]).each do |message_id|
+        handle_new_mail(message_id, imap)
+      rescue StandardError => e
+        log_error e.message
       end
       imap.close
     else
-      log_error('Cannot login ' + @server)
+      log_error("Cannot login #{@server}")
       raise
     end
-  rescue => e
+  rescue StandardError => e
     log_error 'mail collector execute error:'
     log_error e.backtrace.join('\n')
     raise
@@ -50,99 +48,98 @@ class Mailcollector
     raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
     message = Mail.read_from_string raw_message
     helper_set = create_helper_set(envelope)
-    log_info 'Mail from ' + message.from.to_s
+    log_info "Mail from #{message.from}"
     unless helper_set
-      log_info message.from.to_s + ' Email format incorrect or sender unknown!'
+      log_info "#{message.from} Email format incorrect or sender unknown!"
       return nil
     end
-    for helper in helper_set.helper_set do
+    helper_set.helper_set.each do |helper|
       unless helper.sender
-        log_info message.from.to_s + ' Sender unknown!'
+        log_info "#{message.from} Sender unknown!"
         return nil
       end
       unless helper.recipient
-        log_info message.from.to_s + ' Recipient unknown!'
+        log_info "#{message.from} Recipient unknown!"
         return nil
       end
       if message.attachments
         handle_new_message(message, helper)
-        log_info message.from.to_s + ' Data stored!'
+        log_info "#{message.from} Data stored!"
       else
-        log_info message.from.to_s + ' No data!'
+        log_info "#{message.from} No data!"
       end
       imap.store(message_id, '+FLAGS', [:Deleted])
-      log_info message.from.to_s + ' Email processed!'
+      log_info "#{message.from} Email processed!"
     end
-  rescue => e
+  rescue StandardError => e
     log_error 'Error on mailcollector handle_new_mail'
     log_error e.backtrace.join('\n')
     raise
   end
 
   def handle_new_message(message, helper)
-    begin
-      dataset = helper.prepare_new_dataset(message.subject)
-      message.attachments.each do |attachment|
-        tempfile = Tempfile.new('mail_attachment')
-        tempfile.binmode
-        tempfile.write(attachment.decoded)
-        tempfile.rewind
-        att = Attachment.new(
-          filename: attachment.filename,
-          created_by: helper.sender.id,
-          created_for: helper.recipient.id,
-          file_path: tempfile.path,
-        )
+    dataset = helper.prepare_new_dataset(message.subject)
+    message.attachments.each do |attachment|
+      tempfile = Tempfile.new('mail_attachment')
+      tempfile.binmode
+      tempfile.write(attachment.decoded)
+      tempfile.rewind
+      att = Attachment.new(
+        filename: attachment.filename,
+        created_by: helper.sender.id,
+        created_for: helper.recipient.id,
+        file_path: tempfile.path,
+      )
 
-        att.save!
-        tempfile.close
-        tempfile.unlink
-        att.update!(attachable: dataset)
-      end
-    rescue => e
-      log_error 'Error on mailcollector handle_new_message:'
-      log_error e.backtrace.join('\n')
-      raise
+      att.save!
+      tempfile.close
+      tempfile.unlink
+      att.update!(attachable: dataset)
     end
+  rescue StandardError => e
+    log_error 'Error on mailcollector handle_new_message:'
+    log_error e.backtrace.join('\n')
+    raise
   end
 
   def is_email_eln_email?(mail_to)
-    begin
-      return mail_to.casecmp(@mail_address).zero? ||
-        (@aliases.any? { |s| s.casecmp(mail_to).zero? })
-    end
+    mail_to.casecmp(@mail_address).zero? ||
+      (@aliases.any? { |s| s.casecmp(mail_to).zero? })
   end
 
   def get_user(mail)
     user = User.find_by email: mail
-    user = User.find_by email: mail.downcase unless user
+    user ||= User.find_by email: mail.downcase
     user
   end
 
   def create_helper_set(envelope)
     helper = nil
     begin
-
       # Check if from is User or Device
-      from = envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s
+      from = "#{envelope.from[0].mailbox}@#{envelope.from[0].host}"
       from_user = get_user from
-      raise from + ' not registered' if from_user.nil?
+      raise "#{from} not registered" if from_user.nil?
+
       receiver = []
       if from_user.is_a?(User) && (!from_user.is_a?(Device) && !from_user.is_a?(Admin))
         receiver.push(from_user)
       else # Concatenate all receiver (cc & to)
         receiver.concat(envelope.cc) if envelope.cc
         receiver.concat(envelope.to) if envelope.to
-        receiver = receiver.map { |m| m.mailbox.to_s + '@' + m.host.to_s }
-        receiver = receiver.select { |m| !is_email_eln_email?(m) }
-        receiver = receiver.map { |m| get_user m }.select { |user| !user.nil? && !user.is_a?(Device) && !user.is_a?(Admin) }
+        receiver = receiver.map { |m| "#{m.mailbox}@#{m.host}" }
+        receiver = receiver.reject { |m| is_email_eln_email?(m) }
+        receiver = receiver.map do |m|
+                     get_user m
+                   end.select { |user| !user.nil? && !user.is_a?(Device) && !user.is_a?(Admin) }
       end
-      helper = CollectorHelperSet.new(
-        from_user,
-        receiver
-      ) unless receiver.length == 0
-
-    rescue => e
+      unless receiver.length.zero?
+        helper = CollectorHelperSet.new(
+          from_user,
+          receiver,
+        )
+      end
+    rescue StandardError => e
       log_error 'Error on mailcollector create_helper:'
       log_error e.backtrace.join('\n')
       raise
@@ -151,14 +148,14 @@ class Mailcollector
   end
 
   def log_info(message)
-    DCLogger.log.info(self.class.name) {
-      ' >>> ' + message
-    }
+    DCLogger.log.info(self.class.name) do
+      " >>> #{message}"
+    end
   end
 
   def log_error(message)
-    DCLogger.log.error(self.class.name) {
-      ' >>> ' + message
-    }
+    DCLogger.log.error(self.class.name) do
+      " >>> #{message}"
+    end
   end
 end
