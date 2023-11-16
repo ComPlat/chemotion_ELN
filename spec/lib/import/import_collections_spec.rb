@@ -171,6 +171,19 @@ RSpec.describe 'ImportCollection' do
         expect(attachment.attachment_data).not_to be_nil
       end
     end
+
+    describe 'import a collection with a chemical' do
+      let(:import_id) { 'collection_chemicals' }
+      let(:attachment) { create(:attachment, :with_chemicals_collection_zip) }
+
+      it 'successfully imported 1 chemical' do
+        importer.execute
+
+        collection = Collection.find_by(label: 'collection_with_chemical')
+        expect(collection).to be_present
+        expect(collection.samples.map(&:chemical).length).to eq(1)
+      end
+    end
   end
 
   def stub_rest_request(identifier)
