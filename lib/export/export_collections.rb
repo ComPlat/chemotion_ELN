@@ -125,6 +125,7 @@ module Export
           'user_id' => 'User'
         })
         fetch_samples collection
+        fetch_chemicals collection
         fetch_reactions collection
         # fetch_elements collection if @gt == false
         fetch_wellplates collection if @gt == false
@@ -134,6 +135,14 @@ module Export
     end
 
     private
+
+    def fetch_chemicals(collection)
+      chemicals = collection.samples.filter_map(&:chemical)
+      fetch_many(chemicals, {
+                   'id' => 'Chemical',
+                   'sample_id' => 'Sample',
+                 })
+    end
 
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
