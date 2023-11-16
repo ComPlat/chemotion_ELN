@@ -4,7 +4,7 @@ import {
   Form, FormControl, Radio, Grid, Row, Col
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import { GenericElCriteriaModal } from 'chem-generic-ui';
+import { GenericElCriteriaModal, clsInputGroup } from 'chem-generic-ui';
 
 import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -14,7 +14,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericElCriteria from 'src/components/generic/GenericElCriteria';
-import { clsInputGroup } from 'chem-generic-ui';
 
 export default class Search extends React.Component {
   constructor(props) {
