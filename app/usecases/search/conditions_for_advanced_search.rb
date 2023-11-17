@@ -92,6 +92,9 @@ module Usecases
             "#{@conditions[:first_condition]}#{@conditions[:condition_table]}#{@conditions[:field]} #{@match} ?
             #{@conditions[:additional_condition]}"
           end
+
+        @conditions[:words] = [@conditions[:words].join("\n")] if @conditions[:words].size > 1 && @match == '='
+
         @conditions[:words].collect { condition }.join(' OR ')
       end
 
@@ -189,13 +192,15 @@ module Usecases
           @conditions[:additional_condition] = "AND #{@table}.target_amount_unit = '#{filter['unit']}'"
         when 'readout_titles'
           @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
-          @conditions[:field] = 'titles::TEXT'
+          @conditions[:field] = "REPLACE(titles::TEXT, '\"', '')"
           @conditions[:condition_table] = ''
         when 'purification', 'dangerous_products'
           @conditions[:field] = "(#{@table}.#{filter['field']['column']})::TEXT"
           @conditions[:condition_table] = ''
         when 'iupac_name'
           @conditions[:field] = "#{filter['field']['table']}.#{filter['field']['column']}"
+          @conditions[:additional_condition] =
+            "OR #{filter['field']['table']}.sum_formular ILIKE '#{@conditions[:words][0]}'"
           @conditions[:condition_table] = ''
         when 'xref'
           @conditions[:field] = "xref ->> '#{filter['field']['opt']}'"
@@ -212,12 +217,15 @@ module Usecases
           @conditions[:field] = "(prop_solvent ->> '#{filter['field']['opt']}')::TEXT"
           @conditions[:condition_table] = ''
         when 'boiling_point', 'melting_point'
-          range = filter['value'].split(' ').split('-').flatten
+          range = filter['value'].split.split('-').flatten
           field = "#{@table}.#{filter['field']['column']}"
           @match = '!='
           @conditions[:words][0] = '(,)'
           @conditions[:additional_condition] =
             "AND #{field} <@ '[#{range.first.squish.to_f}, #{range.last.squish.to_f}]'::numrange"
+        when 'plain_text_description', 'plain_text_observation'
+          @conditions[:field] = "(regexp_replace(#{@table}.#{filter['field']['column']}, '\r|\n', '', 'g'))::TEXT"
+          @conditions[:condition_table] = ''
         end
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity

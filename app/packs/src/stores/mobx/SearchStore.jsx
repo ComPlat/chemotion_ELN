@@ -25,12 +25,13 @@ const defaultSearchValues = [{
   element_id: 0,
   field: {
     column: 'name',
-    label: 'Name',
+    label: 'Sample name',
   },
   value: '',
   smiles: '',
   sub_values: [],
-  unit: ''
+  unit: '',
+  validationState: null
 }];
 
 const defaultKetcherValues = {
@@ -64,23 +65,23 @@ export const SearchStore = types
     search_values: types.optional(types.array(types.string), []),
     search_icon: types.optional(types.enumeration("search_icon", ["right", "down"]), "down"),
     result_icon: types.optional(types.enumeration("result_icon", ["right", "down"]), "right"),
-    error_message: types.optional(types.string, ""),
+    error_messages: types.optional(types.array(types.string), []),
     tab_current_page: types.optional(types.array(types.frozen({})), []),
     active_tab_key: types.optional(types.number, 0),
     show_search_result_list: types.optional(types.boolean, false),
-    result_error_message: types.optional(types.string, ""),
+    result_error_messages: types.optional(types.array(types.string), []),
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
     // within an action
     loadSearchResults: flow(function* loadSearchResults(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params);
-      let errors = [];
       self.search_results.clear();
       self.tab_search_results.clear();
       Object.entries(result).forEach(([key, value]) => {
-        if (value.error !== undefined && value.error !== '') {
-          errors.push(value.error);
+        let errorExists = self.result_error_messages.find((e) => { return e == value.error });
+        if (value.error !== undefined && value.error !== '' && errorExists === undefined) {
+          self.result_error_messages.push(value.error);
         }
         let searchResult = SearchResult.create({
           id: key,
@@ -95,8 +96,6 @@ export const SearchStore = types
         self.search_results.set(searchResult.id, searchResult)
         self.addSearchResult(key, value, value.ids.slice(0, 15))
       });
-      let uniqueErrors = new Set(errors);
-      uniqueErrors.forEach((e) => { self.result_error_message += e });
     }),
     loadSearchResultTab: flow(function* loadSearchResultTab(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchResultIds(params);
@@ -195,20 +194,19 @@ export const SearchStore = types
       self.search_results.clear();
       self.tab_search_results.clear();
       self.clearTabCurrentPage();
-      self.result_error_message = '';
     },
     clearSearchResults() {
       self.clearSearchAndTabResults();
       self.hideSearchResults();
       self.search_filters.clear();
       self.search_values.clear();
-      self.changeErrorMessage('');
+      self.error_messages = [];
       self.clearTabCurrentPage();
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.active_tab_key = 0;
       self.resetKetcherRailsValues();
-      self.result_error_message = '';
+      self.result_error_messages = [];
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;
@@ -224,8 +222,13 @@ export const SearchStore = types
       self.search_values.clear();
       self.search_values = values;
     },
-    changeErrorMessage(message) {
-      self.error_message = message
+    addErrorMessage(message) {
+      self.error_messages.push(message);
+    },
+    removeErrorMessage(message) {
+      let neededFieldsMessage = 'Please fill out all needed fields';
+      let error_messages = self.error_messages.filter((m) => { return m != message && m != neededFieldsMessage });
+      self.error_messages = error_messages;
     },
     changeTabCurrentPage(key, index, id) {
       self.tab_current_page[id] = { [key]: index };
@@ -243,12 +246,14 @@ export const SearchStore = types
         self.clearSearchResults();
       }
       self.active_tab_key = 0;
+      self.result_error_messages = [];
     },
     handleAdopt() {
       self.hideSearchModal();
       self.hideSearchResults();
       self.active_tab_key = 0;
       self.changeShowSearchResultListValue(true);
+      self.result_error_messages = [];
     },
     changeShowSearchResultListValue(value) {
       self.show_search_result_list = value;
@@ -275,4 +280,6 @@ export const SearchStore = types
     get ketcherRailsValues() { return self.ketcher_rails_values },
     get tabCurrentPage() { return values(self.tab_current_page) },
     get activeTabKey() { return self.active_tab_key },
+    get errorMessages() { return values(self.error_messages) },
+    get resultErrorMessage() { return values(self.result_error_messages) },
   }));

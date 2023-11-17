@@ -29,7 +29,8 @@ const TextSearch = () => {
         link: 'OR', match: 'ILIKE',
         table: advancedValues[0].table,
         element_id: advancedValues[0].element_id,
-        field: '', value: '', smiles: '', sub_values: [], unit: ''
+        field: '', value: '', smiles: '', sub_values: [],
+        unit: '', validationState: null
       };
       searchStore.addAdvancedSearchValue(length + 1, searchValues);
     }
@@ -63,11 +64,12 @@ const TextSearch = () => {
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
     const filters = filterSearchValues();
-    searchStore.changeErrorMessage("Please fill out all needed fields");
+    let message = 'Please fill out all needed fields';
+    searchStore.addErrorMessage(message);
 
     if (filters.length > 0) {
       searchStore.showSearchResults();
-      searchStore.changeErrorMessage("");
+      searchStore.removeErrorMessage(message);
 
       const selection = {
         elementType: 'advanced',

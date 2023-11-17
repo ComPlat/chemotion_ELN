@@ -45,13 +45,15 @@ const KetcherRailsform = () => {
     if (molfile) {
       searchStore.changeKetcherRailsValue('queryMolfile', molfile);
     }
-    searchStore.changeErrorMessage("Please add a drawing. The drawing is empty");
+    let message = 'Please add a drawing. The drawing is empty';
+    searchStore.addErrorMessage(message);
+
     //// Check if blank molfile
     const molfileLines = molfile.match(/[^\r\n]+/g);
     //// If the first character ~ num of atoms is 0, we will not search
     if (molfileLines[1].trim()[0] != 0) {
       searchStore.showSearchResults();
-      searchStore.changeErrorMessage("");
+      searchStore.removeErrorMessage(message);
       structureSearch(molfile);
     }
   }

@@ -18,6 +18,7 @@ export default {
               label: 'Value',
               key: 'measurement',
               table: 'measurements',
+              info: 'Only numbers are allowed',
               type: 'text',
             },
             {

@@ -42,7 +42,8 @@ const DetailSearch = () => {
     value: '',
     smiles: '',
     sub_values: [],
-    unit: ''
+    unit: '',
+    validationState: null
   }];
 
   const addGenericFieldsByLayers = (layers, fields, segment) => {
@@ -144,8 +145,9 @@ const DetailSearch = () => {
   }
 
   const textInput = (option, type, selectedValue, column, keyLabel) => {
+    let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`}>
+      <FormGroup key={`${column}-${keyLabel}-${type}`} validationState={validationState}>
         {labelWithInfo(option)}
         <FormControl
           id={`input_${column}`}
@@ -271,8 +273,9 @@ const DetailSearch = () => {
 
   const textWithAddOnInput = (option, type, selectedValue, keyLabel) => {
     let column = option.column || option.field;
+    let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`}>
+      <FormGroup key={`${column}-${keyLabel}-${type}`} validationState={validationState}>
         {labelWithInfo(option)}
         <InputGroup>
           <FormControl
@@ -307,8 +310,9 @@ const DetailSearch = () => {
   const systemDefinedInput = (option, type, selectedValue, column, keyLabel) => {
     let units = optionsForSelect(option);
     let value = selectedValue ? selectedValue[column].unit : units[0].label;
+    let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
-      <FormGroup key={`${column}-${keyLabel}-${type}`}>
+      <FormGroup key={`${column}-${keyLabel}-${type}`} validationState={validationState}>
         {labelWithInfo(option)}
         <InputGroup>
           <FormControl
@@ -365,6 +369,7 @@ const DetailSearch = () => {
       let selectedFieldValue = condition ? selectedValue[column].sub_values[0][field.id] : '';
       let selectedUnitValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value_system : field.value_system;      
       selectedFieldValue = typeof selectedFieldValue === 'object' ? selectedFieldValue.value : selectedFieldValue;
+      let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
       let units = optionsForSelect(field);
       let formElement = '';
 
@@ -395,7 +400,7 @@ const DetailSearch = () => {
       }
       if (formElement) {
         subFields.push(
-          <FormGroup key={`${column}-${keyLabel}-${type}-${field.id}`}>
+          <FormGroup key={`${column}-${keyLabel}-${type}-${field.id}`} validationState={validationState}>
             <ControlLabel>{field.col_name}</ControlLabel>
             {formElement}
           </FormGroup>
@@ -410,8 +415,13 @@ const DetailSearch = () => {
 
     option.sub_fields.map((field) => {
       let subValue = selectedValue && selectedValue[column].sub_values[0][field.key] !== undefined ? selectedValue[column].sub_values[0][field.key] : '';
+      let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
       subFields.push(
-        <FormGroup key={`${column}-${keyLabel}-${field.key}`} className={`subfields-with-addon-left-${option.sub_fields.length}`}>
+        <FormGroup
+          key={`${column}-${keyLabel}-${field.key}`}
+          className={`subfields-with-addon-left-${option.sub_fields.length}`}
+          validationState={validationState}
+        >
           <InputGroup>
             <InputGroup.Addon>{field.addon}</InputGroup.Addon>
             <FormControl
@@ -487,6 +497,19 @@ const DetailSearch = () => {
     }
   }
 
+  const checkValueForNumber = (label, value) => {
+    let validationState = null;
+    let message = `${label}: Only numbers are allowed`;
+    searchStore.removeErrorMessage(message);
+
+    if (isNaN(Number(value))) {
+      searchStore.addErrorMessage(message);
+      validationState = 'error';
+    }
+
+    return validationState;
+  }
+
   const searchValueByStoreOrDefaultValue = (column) => {
     let index = searchStore.detailSearchValues.findIndex((f) => { return Object.keys(f).indexOf(column) != -1; });
     return (index !== -1 ? { ...searchStore.detailSearchValues[index][column] } : defaultDetailSearchValues[0]);
@@ -528,6 +551,10 @@ const DetailSearch = () => {
     searchValue.match = matchByField(column, type);
     searchValue.smiles = smiles;
 
+    if (['>=', '<@'].includes(searchValue.match)) {
+      searchValue.validationState = checkValueForNumber(option.label, value);
+    }
+
     if (type == 'system-defined' && searchValue.unit === '') {
       let units = optionsForSelect(option);
       searchValue.unit = units[0].label;
@@ -566,9 +593,9 @@ const DetailSearch = () => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
 
     if (option.sub_fields && subFieldId) {
-      if (searchValue.sub_values && searchValue.sub_values[0][subFieldId]) {
+      if (searchValue.sub_values.length >= 1 && searchValue.sub_values[0][subFieldId]) {
         searchValue.sub_values[0][subFieldId].value_system = newUnit;
-      } else if (searchValue.sub_values && !searchValue.sub_values[0][subFieldId]) {
+      } else if (searchValue.sub_values.length >= 1 && !searchValue.sub_values[0][subFieldId]) {
         searchValue.sub_values[0][subFieldId] = { value: '', value_system: newUnit };
       } else {
         searchValue.sub_values.push({ [subFieldId]: { value: '', value_system: newUnit } });

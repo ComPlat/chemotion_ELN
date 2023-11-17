@@ -10,8 +10,8 @@ const togglePanel = (store) => () => {
 }
 
 const showErrorMessage = (store) => {
-  if (store.error_message) {
-    return <Alert bsStyle="danger">{store.error_message}</Alert>;
+  if (store.errorMessages.length >= 1) {
+    return <Alert bsStyle="danger">{store.errorMessages.join(', ')}</Alert>;
   }
 }
 

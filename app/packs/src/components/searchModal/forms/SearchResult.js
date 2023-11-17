@@ -68,8 +68,8 @@ const SearchResult = ({ handleClear }) => {
   }
 
   const showResultErrorMessage = () => {
-    if (searchStore.result_error_message) {
-      return <Alert bsStyle="danger" className="result-error-message">{searchStore.result_error_message}</Alert>;
+    if (searchStore.resultErrorMessage.length >= 1) {
+      return <Alert bsStyle="danger" className="result-error-message">{searchStore.resultErrorMessage.join(', ')}</Alert>;
     }
   }
 

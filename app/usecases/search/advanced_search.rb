@@ -93,11 +93,11 @@ module Usecases
         @elements[:wellplate_ids] = @user_wellplates.by_screen_ids(@elements[:screen_ids]).uniq.pluck(:id)
         @elements[:sample_ids] = @user_samples.by_wellplate_ids(@elements[:wellplate_ids]).uniq.pluck(:id)
 
-        if @elements[:sample_ids].present?
-          @elements[:reaction_ids] = @user_reactions.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
-          @elements[:research_plan_ids] = @user_research_plans.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
-          @elements[:element_ids] = @user_elements.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
-        end
+        return if @elements[:sample_ids].blank?
+
+        @elements[:reaction_ids] = @user_reactions.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
+        @elements[:research_plan_ids] = @user_research_plans.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
+        @elements[:element_ids] = @user_elements.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
       end
 
       def researchplan_relations_element_ids

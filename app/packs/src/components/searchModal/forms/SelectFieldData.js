@@ -45,11 +45,11 @@ export default {
       {
         value: {
           column: 'name',
-          label: 'Name',
+          label: 'Sample name',
           type: 'text',
           advanced: true,
         },
-        label: 'Name'
+        label: 'Sample name'
       },
       {
         value: {
@@ -85,7 +85,7 @@ export default {
           label: 'Amount',
           type: 'system-defined',
           option_layers: 'amount',
-          info: 'Only works with the correct unit',
+          info: 'Works only with the correct unit. Only numbers are allowed',
           advanced: false,
         },
         label: 'Amount'
@@ -96,6 +96,7 @@ export default {
           label: 'Density',
           type: 'textWithAddOn',
           addon: 'g/ml',
+          info: 'Only numbers are allowed',
           advanced: false,
         },
         label: 'Density'
@@ -106,6 +107,7 @@ export default {
           label: 'Molarity',
           type: 'textWithAddOn',
           addon: 'M',
+          info: 'Only numbers are allowed',
           advanced: false,
         },
         label: 'Molarity'
@@ -115,6 +117,7 @@ export default {
           column: 'purity',
           label: 'Purity / Concentration',
           type: 'text',
+          info: 'Only numbers are allowed',
           advanced: false,
         },
         label: 'Purity / Concentration'
@@ -170,7 +173,7 @@ export default {
           label: 'Melting point',
           type: 'textWithAddOn',
           addon: '°C',
-          info: 'Numrange: input of 2 values, e.g. 100 - 200',
+          info: 'Numrange: input of 2 numbers, e.g. 100 - 200. Only numbers are allowed',
           advanced: false,
         },
         label: 'Melting point'
@@ -181,7 +184,7 @@ export default {
           label: 'Boiling point',
           type: 'textWithAddOn',
           addon: '°C',
-          info: 'Numrange: input of 2 values, e.g. 100 - 200',
+          info: 'Numrange: input of 2 numbers, e.g. 100 - 200. Only numbers are allowed',
           advanced: false,
         },
         label: 'Boiling point'
@@ -193,7 +196,7 @@ export default {
           label: 'Flash Point',
           type: 'system-defined',
           option_layers: 'temperature',
-          info: 'Only works with the correct temperature unit',
+          info: 'Works only with the correct temperature unit. Only numbers are allowed',
           advanced: false,
         },
         label: 'Flash Point'
@@ -271,6 +274,7 @@ export default {
           opt: 'ratio',
           label: 'Ratio',
           type: 'text',
+          info: 'Only numbers are allowed',
           advanced: false,
         },
         label: 'Ratio'
@@ -359,6 +363,7 @@ export default {
           label: 'Temperature',
           type: 'system-defined',
           option_layers: 'temperature',
+          info: 'Only numbers are allowed',
           advanced: true,
         },
         label: 'Temperature'
@@ -369,6 +374,7 @@ export default {
           label: 'Duration',
           type: 'system-defined',
           option_layers: 'duration',
+          info: 'Only numbers are allowed',
           advanced: true,
         },
         label: 'Duration'

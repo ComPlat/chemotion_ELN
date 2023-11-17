@@ -67,9 +67,11 @@ const AdvancedSearchRow = ({ idx }) => {
   }
 
   const checkValueForNumber = (value) => {
-    searchStore.changeErrorMessage('');
+    let message = 'Only numbers are allowed';
+    searchStore.removeErrorMessage(message);
+
     if (isNaN(Number(value))) {
-      searchStore.changeErrorMessage("Only numbers are allowed");
+      searchStore.addErrorMessage(message);
     }
   }
 
