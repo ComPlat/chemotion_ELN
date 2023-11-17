@@ -22,11 +22,23 @@ const collectSource = (connect, monitor) => ({
 class DatasetContainer extends Component {
   constructor(props) {
     super(props);
-    const inboxState = InboxStore.getState();
     this.state = {
       visible: false,
       deletingTooltip: false,
     }
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    InboxStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState(state);
   }
 
   attachmentCount() {
