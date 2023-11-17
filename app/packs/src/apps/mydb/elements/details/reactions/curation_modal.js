@@ -3,6 +3,9 @@ import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,To
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ReactionDetails from './ReactionDetails';
+
+
 
 export default class Curation_modal extends Component {
 
@@ -22,8 +25,8 @@ export default class Curation_modal extends Component {
 
     handleSubmit(closeView = false) {
       LoadingActions.start();
-  
       const { reaction } = this.props;
+      console.log(reaction);
       if (reaction && reaction.isNew) {
         ElementActions.createReaction(reaction);
       } else {
@@ -35,8 +38,8 @@ export default class Curation_modal extends Component {
     }
 
     handleDesc(){
-      const old_desc = this.clean_data(this.props.description)
-      const new_desc = old_desc.replaceAll("  ", " ")
+      const old_desc = this.clean_data(this.props.description);
+      const new_desc = old_desc.replaceAll("  ", " ");
       this.setState({ desc: new_desc});
     }
 
@@ -47,6 +50,17 @@ export default class Curation_modal extends Component {
     handleShow() {
       this.setState({ show: true });
     }
+
+    spell_check(){
+      var Typo = require("typo-js"); 
+      var dictionary = new Typo("en_US",false,false, { dictionaryPath: "typo/dictionaries" });
+      var is_spelled_correctly = dictionary.check("mispeled");
+      console.log( "Is 'mispelled' spelled correctly? " + is_spelled_correctly );
+      var is_spelled_correctly = dictionary.check("misspelled");
+      console.log( "Is 'misspelled' spelled correctly? " + is_spelled_correctly );
+      var array_of_suggestions = dictionary.suggest("mispeling");
+      console.log( "Spelling suggestions for 'mispeling': " + array_of_suggestions.join( ', ' ) );
+    }
     
     getHighlightedText(text, higlight) {
       // Split text on higlight term, include term itself into parts, ignore case
@@ -54,10 +68,7 @@ export default class Curation_modal extends Component {
       return parts.map((part, index) => (
         <React.Fragment key={index}>
           {part.toLowerCase() === higlight.toLowerCase() ? (
-            <b style={{ backgroundColor: "#e8bb49" }}>{part}</b>
-          ) : (
-            part
-          )}
+          <b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) : (part)}
         </React.Fragment>
       ));}
 
@@ -68,7 +79,7 @@ export default class Curation_modal extends Component {
             array_output = array_output.concat(element.insert);
         });
         const str_out = (array_output.join(""));
-        return str_out
+        return str_out;
     }
 
     render() {
@@ -90,17 +101,19 @@ export default class Curation_modal extends Component {
                     padding: "10px",
                     fontFamily: "Arial",
                     borderRadius: "10px",}}>
-                 <Compo value={this.state.desc} higlight={"  "} /> 
+                 <Compo value={this.state.desc} higlight={"e"} /> 
                 </div>  
                      
                 <div>
                     suggestion
                 </div>
                 <div className="row">
-                <Button onClick={this.handleDesc}>fix</Button>
-                <Button onClick={this.handleSubmit}> save and close </Button>
-                    <Button>Change</Button>
-                    <Button>Skip</Button>
+                  <Button onClick={this.spell_check}>fix</Button>
+                  <Button onClick={() => this.handleSubmit(true)}> 
+                    save and close
+                  </Button>
+                  <Button>Change</Button>
+                  <Button>Skip</Button>
                 </div>
             </Modal.Body>
             <Modal.Footer>
