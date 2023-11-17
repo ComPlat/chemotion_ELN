@@ -153,6 +153,9 @@
   max-height: 34.3vh;
   position: relative;
   border: 1px solid rgba(0, 0, 0, 0.4);
+  @media screen and (min-width: 1600px) {
+    max-height: 55vh;
+  }
 }
 
 .tab-spinner {

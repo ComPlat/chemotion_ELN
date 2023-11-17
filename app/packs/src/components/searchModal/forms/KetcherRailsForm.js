@@ -115,7 +115,7 @@ const KetcherRailsform = () => {
               src="/ketcher"
               title="Ketcher Rails"
               width="100%"
-              style={{ border: 'none', minHeight: '50.9vh' }}
+              style={{ border: 'none', minHeight: '53.9vh' }}
             />
             <Grid style={{ margin: 0, paddingLeft: 0 }}>
               <Row style={{ marginTop: '20px' }}>

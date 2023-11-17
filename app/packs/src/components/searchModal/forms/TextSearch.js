@@ -215,13 +215,15 @@ const TextSearch = () => {
     if (searchStore.searchResultVisible && filters.length > 0) {
       filters.map((val) => {
         let table = val.field.table || val.table;
+        let value = val.value;
         table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
+        value = value.replace(/[\n\r]/g, ' OR ');
 
         if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
           let values = searchValuesBySubFields(val, table);
           searchValues.push(...values);
         } else {
-          searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, val.value, val.unit].join(" "));
+          searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(" "));
         }
       });
     }

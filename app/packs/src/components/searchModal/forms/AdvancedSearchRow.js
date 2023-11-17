@@ -114,7 +114,7 @@ const AdvancedSearchRow = ({ idx }) => {
       type="text"
       value={selection.value}
       componentClass="textarea"
-      rows={2}
+      rows={1}
       className="value-select"
       placeholder="Search value"
       onChange={onChange('value')}

@@ -1,8 +1,7 @@
 [dialogas=full-search].modal {
   width: fit-content;
   height: fit-content;
-  max-height: 87vh;
-  top: calc((100% - 92vh));
+  top: calc(100% - 94vh);
   left: calc((100% - 90vw) / 2);
 }
 
@@ -64,15 +63,6 @@
 @media screen and (min-width: 768px) {
   [dialogas=full-search] .modal-header .window-minimize {
     margin-top: -22px;
-  }
-}
-
-@media screen and (min-width: 1600px) {
-  [dialogas=full-search].modal {
-    left: calc((100% - 1400px) / 2);
-  }
-  [dialogas=full-search] .modal-dialog {
-    width: 1400px !important;
   }
 }
 
@@ -148,7 +138,10 @@
 }
 
 .collapsible-search-result #tabList {
-  height: 42.8vh;
+  height: 46.8vh;
+  @media screen and (min-width: 1600px) {
+    height: 62vh;
+  }
 }
 
 .no-selected-search {
@@ -169,16 +162,23 @@ i.fa.icon-right {
 .advanced-search {
   margin-bottom: 39px;
   padding-left: 4px;
-  height: 49vh;
+  height: 58.5vh;
   position: relative;
+
+  @media screen and (min-width: 1600px) {
+    height: 70vh;    
+  }
 
   .scrollable-content {
     clear: both;
     overflow-y: auto;
-    height: calc(49vh - 65px);
+    height: calc(58.5vh - 65px);
     margin-top: 23px;
     .alert {
       margin-left: 15px;
+    }
+    @media screen and (min-width: 1600px) {
+      height: calc(70vh - 65px);
     }
   }
 
@@ -376,10 +376,6 @@ i.fa.icon-right {
     font-size: 1.5em;
     color: rgba(0, 0, 0, 0.6);
     margin-top: 20px;
-  }
-  .css-yk16xz-control, .css-1pahdxg-control {
-    min-height: 34px;
-    height: 34px;
   }
   .css-1wa3eu0-placeholder, .css-1uccc91-singleValue {
     top: 42%;
