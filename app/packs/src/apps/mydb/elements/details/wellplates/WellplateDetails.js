@@ -1,3 +1,6 @@
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
@@ -14,8 +17,10 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import Wellplate from 'src/apps/mydb/elements/details/wellplates/designerTab/Wellplate';
 import WellplateList from 'src/apps/mydb/elements/details/wellplates/listTab/WellplateList';
 import WellplateProperties from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateProperties';
-import WellplateDetailsContainers from 'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
-import WellplateDetailsAttachments from 'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
+import WellplateDetailsContainers from
+  'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
+import WellplateDetailsAttachments from
+  'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
@@ -32,8 +37,6 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
-const cols = 12;
-
 export default class WellplateDetails extends Component {
   constructor(props) {
     super(props);
@@ -42,7 +45,7 @@ export default class WellplateDetails extends Component {
       wellplate,
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
-      visible: Immutable.List(),
+      visible: Immutable.List(['designer', 'list', 'properties', 'analyses', 'attachments']),
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
@@ -202,7 +205,10 @@ export default class WellplateDetails extends Component {
 
     // update only this attachment
     wellplate.attachments.map((currentAttachment) => {
-      if (currentAttachment.id === attachment.id) return attachment;
+      if (currentAttachment.id === attachment.id) {
+        return attachment;
+      }
+      return currentAttachment;
     });
     this.setState({ wellplate });
     this.forceUpdate();
@@ -216,8 +222,7 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
+  onTabPositionChanged() {
   }
 
   wellplateHeader(wellplate) {
@@ -239,7 +244,13 @@ export default class WellplateDetails extends Component {
         <HeaderCommentSection element={wellplate} />
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: saveBtnDisplay }}>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.handleSubmit()}
+            style={{ display: saveBtnDisplay }}
+          >
             <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
@@ -301,7 +312,7 @@ export default class WellplateDetails extends Component {
               readoutTitles={readoutTitles}
               wells={wells}
               handleWellsChange={(w) => this.handleWellsChange(w)}
-              cols={cols}
+              cols={12}
               width={60}
             />
           </Well>
@@ -367,6 +378,7 @@ export default class WellplateDetails extends Component {
       if (tabContent) { tabContents.push(tabContent); }
     });
 
+    // eslint-disable-next-line react/destructuring-assignment
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
