@@ -40,6 +40,7 @@ const DetailSearch = () => {
       label: '',
     },
     value: '',
+    smiles: '',
     sub_values: [],
     unit: ''
   }];
@@ -479,6 +480,7 @@ const DetailSearch = () => {
       case 'molecular_mass':
         return '>=';
       case 'unit_measurement':
+      case 'solvent_smiles':
         return '=';
       default:
         return type == 'system-defined' ? '>=' : 'ILIKE';
@@ -492,7 +494,7 @@ const DetailSearch = () => {
 
   const handleSubFieldChanged = (id, option, column, type) => (e) => {
     let sub_values = { id: id, value: e.target.value };
-    setSearchStoreValues(e.target.value, option, column, type, sub_values);
+    setSearchStoreValues(e.target.value, option, column, type, sub_values, '');
   }
 
   const handleTableFieldChanged = (id, option, column, type) => (e) => {
@@ -508,20 +510,23 @@ const DetailSearch = () => {
     } else {
       subValue = { id: id, value: value };
     }
-    setSearchStoreValues(e.target.value, option, column, type, subValue);
+    setSearchStoreValues(e.target.value, option, column, type, subValue, '');
   }
 
   const handleFieldChanged = (option, column, type) => (e) => {
     let value = valueByType(type, e);
-    setSearchStoreValues(value, option, column, type, {});
+    let smiles = column == 'solvent_smiles' ? e.value.smiles : '';
+
+    setSearchStoreValues(value, option, column, type, {}, smiles);
   }
 
-  const setSearchStoreValues = (value, option, column, type, subValue) => {
+  const setSearchStoreValues = (value, option, column, type, subValue, smiles) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
     searchValue.field = option;
     searchValue.value = value;
     searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, value);
     searchValue.match = matchByField(column, type);
+    searchValue.smiles = smiles;
 
     if (type == 'system-defined' && searchValue.unit === '') {
       let units = optionsForSelect(option);

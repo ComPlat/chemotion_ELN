@@ -140,6 +140,7 @@ module Usecases
 
       def sanitize_words(filter)
         return [filter['value']] if filter['value'] == 'true'
+        return [filter['smiles']] if filter['field']['column'] == 'solvent'
         return [filter['value'].to_f] if sanitize_float_fields(filter)
 
         no_sanitizing_matches = ['=', '>=']
@@ -211,7 +212,7 @@ module Usecases
           @conditions[:field] = "(prop_solvent ->> '#{filter['field']['opt']}')::TEXT"
           @conditions[:condition_table] = ''
         when 'boiling_point', 'melting_point'
-          range = filter['value'].split('-')
+          range = filter['value'].split(' ').split('-').flatten
           field = "#{@table}.#{filter['field']['column']}"
           @match = '!='
           @conditions[:words][0] = '(,)'

@@ -166,17 +166,6 @@ export default {
       },
       {
         value: {
-          column: 'boiling_point',
-          label: 'Boiling point',
-          type: 'textWithAddOn',
-          addon: '°C',
-          info: 'Numrange: input of 2 values, e.g. 100 - 200',
-          advanced: false,
-        },
-        label: 'Boiling point'
-      },
-      {
-        value: {
           column: 'melting_point',
           label: 'Melting point',
           type: 'textWithAddOn',
@@ -185,6 +174,17 @@ export default {
           advanced: false,
         },
         label: 'Melting point'
+      },
+      {
+        value: {
+          column: 'boiling_point',
+          label: 'Boiling point',
+          type: 'textWithAddOn',
+          addon: '°C',
+          info: 'Numrange: input of 2 values, e.g. 100 - 200',
+          advanced: false,
+        },
+        label: 'Boiling point'
       },
       {
         value: {
@@ -257,7 +257,7 @@ export default {
       {
         value: {
           column: 'solvent',
-          opt: 'label',
+          opt: 'smiles',
           label: 'Label',
           type: 'solventSelect',
           option_layers: 'ionic_liquids',

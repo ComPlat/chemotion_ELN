@@ -40,6 +40,7 @@ module Chemotion
             optional :unit, type: String
             requires :field, type: Hash
             requires :value, type: String
+            optional :smiles, type: String
             optional :sub_values, type: Array
           end
           optional :id_params, type: Hash do

@@ -28,6 +28,7 @@ const defaultSearchValues = [{
     label: 'Name',
   },
   value: '',
+  smiles: '',
   sub_values: [],
   unit: ''
 }];

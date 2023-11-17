@@ -29,7 +29,7 @@ const TextSearch = () => {
         link: 'OR', match: 'ILIKE',
         table: advancedValues[0].table,
         element_id: advancedValues[0].element_id,
-        field: '', value: '', sub_values: [], unit: ''
+        field: '', value: '', smiles: '', sub_values: [], unit: ''
       };
       searchStore.addAdvancedSearchValue(length + 1, searchValues);
     }
