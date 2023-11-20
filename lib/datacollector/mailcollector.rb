@@ -102,7 +102,7 @@ class Mailcollector
     raise
   end
 
-  def is_email_eln_email?(mail_to)
+  def email_eln_email?(mail_to)
     mail_to.casecmp(@mail_address).zero? ||
       (@aliases.any? { |s| s.casecmp(mail_to).zero? })
   end
@@ -114,37 +114,29 @@ class Mailcollector
   end
 
   def create_helper_set(envelope)
-    helper = nil
-    begin
-      # Check if from is User or Device
-      from = "#{envelope.from[0].mailbox}@#{envelope.from[0].host}"
-      from_user = get_user from
-      raise "#{from} not registered" if from_user.nil?
+    # Check if from is User or Device
+    from = "#{envelope.from[0].mailbox}@#{envelope.from[0].host}"
+    from_user = get_user from
+    raise "#{from} not registered" if from_user.nil?
 
-      receiver = []
-      if from_user.is_a?(User) && (!from_user.is_a?(Device) && !from_user.is_a?(Admin))
-        receiver.push(from_user)
-      else # Concatenate all receiver (cc & to)
-        receiver.concat(envelope.cc) if envelope.cc
-        receiver.concat(envelope.to) if envelope.to
-        receiver = receiver.map { |m| "#{m.mailbox}@#{m.host}" }
-        receiver = receiver.reject { |m| is_email_eln_email?(m) }
-        receiver = receiver.map do |m|
-                     get_user m
-                   end.select { |user| !user.nil? && !user.is_a?(Device) && !user.is_a?(Admin) }
-      end
-      unless receiver.length.zero?
-        helper = CollectorHelperSet.new(
-          from_user,
-          receiver,
-        )
-      end
-    rescue StandardError => e
-      log_error 'Error on mailcollector create_helper:'
-      log_error e.backtrace.join('\n')
-      raise
+    receiver = []
+    if from_user.is_a?(User) && (!from_user.is_a?(Device) && !from_user.is_a?(Admin))
+      receiver.push(from_user)
+    else # Concatenate all receiver (cc & to)
+      receiver.concat(envelope.cc) if envelope.cc
+      receiver.concat(envelope.to) if envelope.to
+      receiver = receiver.map { |m| "#{m.mailbox}@#{m.host}" }
+                         .reject { |m| email_eln_email?(m) }
+                         .map { |m| get_user(m) }
+                         .select { |user| !user.nil? && !user.is_a?(Device) && !user.is_a?(Admin) }
     end
-    helper
+    return nil if receiver.empty?
+
+    CollectorHelperSet.new(from_user, receiver)
+  rescue StandardError => e
+    log_error 'Error on mailcollector create_helper:'
+    log_error e.backtrace.join('\n')
+    raise
   end
 
   def log_info(message)
