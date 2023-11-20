@@ -70,7 +70,7 @@ RSpec.configure do |config|
       'XEGUVFFZWHRVAV-SFOWXEAESA-N',
       'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
       'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
-      'XEGUVFFZWHRVAV-PVQJCKRUSA-N'
+      'XEGUVFFZWHRVAV-PVQJCKRUSA-N',
     ].each do |target|
       stub_request(:get, "#{hostname}#{inchi_path}#{target}/record/JSON")
         .with(headers: { 'Content-Type' => 'text/json' })
