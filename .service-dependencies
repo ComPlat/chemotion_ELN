@@ -1,5 +1,5 @@
 #syntax=v1
-CONVERTER=ComPlat/chemotion-converter-app@v1.1.0
+CONVERTER=ComPlat/chemotion-converter-app@v1.1.1
 KETCHER=ptrxyz/chemotion-ketchersvc@main
 SPECTRA=ComPlat/chem-spectra-app@0.14.0
 NMRIUMWRAPPER=NFDI4Chem/nmrium-react-wrapper@v0.4.0
