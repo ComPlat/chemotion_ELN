@@ -376,6 +376,11 @@ class ViewSpectra extends React.Component {
           ...ai.extended_metadata.content.ops,
           ...ops,
         ];
+        const firstOps = ai.extended_metadata.content.ops[0];
+        if (firstOps.insert && firstOps.insert === '\n') {
+          ai.extended_metadata.content.ops.shift();
+        }
+
       });
     });
 
