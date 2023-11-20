@@ -209,16 +209,31 @@ module Import
       "[#{lower_bound}, #{upper_bound}]"
     end
 
+    def assign_molecule_name_id(sample, value)
+      split_names = value.split(';')
+      molecule_name_id = MoleculeName.find_by(name: split_names[0]).id
+      sample['molecule_name_id'] = molecule_name_id
+    end
+
     def handle_sample_fields(sample, db_column, value)
-      if db_column == 'cas'
+      case db_column
+      when 'cas'
         sample['xref']['cas'] = value
+      when 'mn.name'
+        assign_molecule_name_id(sample, value)
       else
         sample[db_column] = value || ''
       end
     end
 
+    def process_fields(sample, db_column, field, row, molecule)
+      molecule.create_molecule_name_by_user(row[field], current_user_id) if field == 'molecule name'
+      process_sample_fields(sample, db_column, field, row)
+    end
+
     def process_sample_fields(sample, db_column, field, row)
-      return unless included_fields.include?(db_column) || db_column == 'cas'
+      additional_columns = %w[cas mn.name].freeze
+      return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
       excluded_column = %w[description solvent location external_label].freeze
       comparison_values = %w[melting_point boiling_point].freeze
@@ -273,7 +288,7 @@ module Import
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
         db_column = map_column.nil? || map_column[1] == "\"cas\"" ? field : map_column[0].sub('s.', '').delete!('"')
-        process_sample_fields(sample, db_column, field, row)
+        process_fields(sample, db_column, field, row, molecule)
       end
       validate_sample_and_save(sample, stereo, row)
     end
