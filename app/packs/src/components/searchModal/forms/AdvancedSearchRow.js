@@ -24,6 +24,9 @@ const AdvancedSearchRow = ({ idx }) => {
     mapperOptions = unitMapperFields;
   }
 
+  let display = selection.link == '' ? 'none' : 'table';
+  let selectedFieldOption = selection.field.label == 'Name' && selection.table == 'samples' ? fieldOptions[0].value : selection.field;
+
   const logicalOperators = [
     { value: "AND", label: "AND" },
     { value: "OR", label: "OR" }
@@ -106,8 +109,6 @@ const AdvancedSearchRow = ({ idx }) => {
   const filterTreeNode = (input, child) => {
     return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;
   };
-
-  let display = selection.link == '' ? 'none' : 'table';
 
   const defaultValueField = (
     <FormControl
@@ -236,7 +237,7 @@ const AdvancedSearchRow = ({ idx }) => {
           options={fieldOptions}
           isClearable={false}
           placeholder="Select search field"
-          value={selection.field}
+          value={selectedFieldOption}
           className="field-select-options"
           onChange={onChange('field')} />
       </div>
