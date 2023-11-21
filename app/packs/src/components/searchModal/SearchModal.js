@@ -6,11 +6,13 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import TextSearch from './forms/TextSearch';
 import KetcherRailsForm from './forms/KetcherRailsForm';
+import PublicationSearch from './forms/PublicationSearch';
 import NoFormSelected from './forms/NoFormSelected';
 
 const Components = {
   advanced: TextSearch,
   ketcher: KetcherRailsForm,
+  publication: PublicationSearch,
   empty: NoFormSelected
 }
 
@@ -27,7 +29,12 @@ const SearchModal = () => {
       value: 'ketcher',
       label: 'Structure search',
       id: 1,
-    }
+    },
+    {
+      value: 'publication',
+      label: 'PublicationSearch',
+      id: 2,
+    },
   ];
 
   const FormComponent = (block) => {
@@ -50,6 +57,7 @@ const SearchModal = () => {
 
   let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
   let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : '';
+  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : '';
   let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : '';
 
   return (
@@ -62,23 +70,36 @@ const SearchModal = () => {
         dialogClassName="searching"
       >
         <Modal.Header className="handle" closeButton>
-          <div className="col-md-6 col-sm-6">
+          <div className="col-md-4 col-sm-11">
             <Modal.Title>
               <i className="fa fa-arrows move" />
               Please select your search criteria
             </Modal.Title>
           </div>
-          <div className="col-md-5 col-sm-5">
+          <div className="col-md-7 col-sm-11">
             <ButtonGroup className="search-selection">
-              <Button onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[0])}
-                className={searchTypeTextClass}>
+              <Button
+                onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[0])}
+                className={searchTypeTextClass}
+              >
                 <span className="search-icon">
                   <i className="fa fa-align-justify" />
                 </span>
                 Text search
               </Button>
-              <Button onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[1])}
-                className={searchTypeStructureClass}>
+              <Button
+                onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[2])}
+                className={searchTypePublicationClass}
+              >
+                <span className="search-icon">
+                  <i className="fa fa-newspaper-o" />
+                </span>
+                Publication search
+              </Button>
+              <Button
+                onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[1])}
+                className={searchTypeStructureClass}
+              >
                 <span className="search-icon">
                   <img src="/images/wild_card/pubchem.svg" className="pubchem-logo" />
                 </span>

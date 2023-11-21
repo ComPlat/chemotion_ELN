@@ -25,13 +25,24 @@ const defaultSearchValues = [{
   element_id: 0,
   field: {
     column: 'name',
-    label: 'Sample name',
+    label: 'Name',
   },
   value: '',
   smiles: '',
   sub_values: [],
   unit: '',
   validationState: null
+}];
+
+const defaultPublicationValues = [{
+  link: '',
+  match: '=',
+  table: 'literatures',
+  field: {
+    column: 'doi',
+    label: 'DOI',
+  },
+  value: '',
 }];
 
 const defaultKetcherValues = {
@@ -56,6 +67,7 @@ export const SearchStore = types
     advanced_search_values: types.optional(types.array(types.frozen({})), defaultSearchValues),
     detail_search_values: types.optional(types.array(types.frozen({})), []),
     ketcher_rails_values: types.optional(types.frozen({}), defaultKetcherValues),
+    publication_search_values: types.optional(types.array(types.frozen({})), defaultPublicationValues),
     search_results: types.map(SearchResult),
     tab_search_results: types.map(SearchResult),
     search_result_panel_visible: types.optional(types.boolean, false),
@@ -123,12 +135,14 @@ export const SearchStore = types
     changeSearchType(e) {
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
+      self.resetPublicationSearchValue();
       self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
       self.active_tab_key = 0;
     },
     changeSearchElement(elementValues) {
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
+      self.resetPublicationSearchValue();
       self.search_element = elementValues;
       self.active_tab_key = 0;
     },
@@ -159,6 +173,12 @@ export const SearchStore = types
     },
     resetKetcherRailsValues() {
       self.ketcher_rails_values = defaultKetcherValues;
+    },
+    addPublicationSearchValue(id, values) {
+      self.publication_search_values[id] = values;
+    },
+    resetPublicationSearchValue() {
+      self.publication_search_values = defaultPublicationValues;
     },
     addSearchResult(key, result, ids) {
       let tabSearchResult = SearchResult.create({
@@ -206,6 +226,7 @@ export const SearchStore = types
       self.detail_search_values = [];
       self.active_tab_key = 0;
       self.resetKetcherRailsValues();
+      self.resetPublicationSearchValue();
       self.result_error_messages = [];
     },
     toggleSearch() {
@@ -223,7 +244,9 @@ export const SearchStore = types
       self.search_values = values;
     },
     addErrorMessage(message) {
-      self.error_messages.push(message);
+      if (!self.error_messages.includes(message)) {
+        self.error_messages.push(message);
+      }
     },
     removeErrorMessage(message) {
       let neededFieldsMessage = 'Please fill out all needed fields';
@@ -278,6 +301,7 @@ export const SearchStore = types
     get advancedSearchValues() { return values(self.advanced_search_values) },
     get detailSearchValues() { return values(self.detail_search_values) },
     get ketcherRailsValues() { return self.ketcher_rails_values },
+    get publicationSearchValues() { return values(self.publication_search_values) },
     get tabCurrentPage() { return values(self.tab_current_page) },
     get activeTabKey() { return self.active_tab_key },
     get errorMessages() { return values(self.error_messages) },

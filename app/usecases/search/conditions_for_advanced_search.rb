@@ -20,7 +20,7 @@ module Usecases
           query: '', error: ''
         }
         @table_or_tab_types = {
-          generics: false, chemicals: false, analyses: false, measurements: false
+          generics: false, chemicals: false, analyses: false, measurements: false, literatures: false
         }
       end
 
@@ -71,18 +71,23 @@ module Usecases
           analyses_tab_options(filter)
         elsif @table_or_tab_types[:measurements]
           measurements_tab_options(filter)
+        elsif @table_or_tab_types[:literatures]
+          literatures_tab_options(filter)
         else
           special_non_generic_field_options(filter)
         end
       end
 
+      # rubocop:disable Metrics/CyclomaticComplexity
       def table_or_tab_types
         @table_or_tab_types[:generics] = (@field_table.present? && @field_table == 'segments') ||
                                          (@table == 'elements' && %w[name short_label].exclude?(@conditions[:field]))
         @table_or_tab_types[:chemicals] = @field_table.present? && @field_table == 'chemicals'
         @table_or_tab_types[:analyses] = @field_table.present? && @field_table == 'containers'
         @table_or_tab_types[:measurements] = @field_table.present? && @field_table == 'measurements'
+        @table_or_tab_types[:literatures] = @table.present? && @table == 'literatures'
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
 
       def conditions
         condition =
@@ -106,7 +111,8 @@ module Usecases
       end
 
       def whitelisted_table(table:, column:, **_)
-        return true if %w[elements segments chemicals containers measurements molecules].include?(table)
+        tables = %w[elements segments chemicals containers measurements molecules literals literatures]
+        return true if tables.include?(table)
 
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
@@ -339,6 +345,13 @@ module Usecases
         @conditions[:condition_table] = ''
         @conditions[:field] = "#{@field_table}.#{filter['field']['column']}"
         field_table_inner_join = "INNER JOIN #{@field_table} ON #{@field_table}.sample_id = #{@table}.id"
+        @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
+      end
+
+      def literatures_tab_options(filter)
+        @conditions[:condition_table] = ''
+        @conditions[:field] = "#{@field_table}.#{filter['field']['column']}"
+        field_table_inner_join = 'INNER JOIN literals ON literals.literature_id = literatures.id'
         @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
       end
     end

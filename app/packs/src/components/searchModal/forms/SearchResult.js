@@ -100,6 +100,8 @@ const SearchResult = ({ handleClear }) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
     const counts = results.map((val) => {
+      if (val.id == 'literatures') { return 0; }
+
       return val.results.total_elements;
     });
     const sum = counts.reduce((a, b) => a + b, 0);

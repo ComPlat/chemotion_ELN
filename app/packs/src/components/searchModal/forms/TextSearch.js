@@ -1,6 +1,6 @@
 import React, { useEffect, useContext } from 'react';
 import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
+import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
@@ -35,63 +35,6 @@ const TextSearch = () => {
       searchStore.addAdvancedSearchValue(length + 1, searchValues);
     }
   }, [searchStore.advancedSearchValues]);
-
-  const filterSearchValues = () => {
-    let filteredOptions = [];
-    if (searchStore.detail_search_values.length >= 1) {
-      searchStore.detailSearchValues.map((f, i) => {
-        let values = { ...Object.values(f)[0] };
-        if (values.value != '') {
-          filteredOptions.push(values);
-        }
-      });
-      if (filteredOptions[0]) {
-        filteredOptions[0].link = '';
-      }
-    } else {
-      filteredOptions = searchStore.advancedSearchValues.filter((f, id) => {
-        return (f.field && f.link && f.value) ||
-          (id == 0 && f.field && f.value)
-      });
-    }
-    searchStore.changeSearchFilter(filteredOptions);
-    const storedFilter = searchStore.searchFilters;
-    return storedFilter.length == 0 ? [] : storedFilter[0].filters;
-  }
-
-  const handleSearch = () => {
-    const uiState = UIStore.getState();
-    const { currentCollection } = uiState;
-    const collectionId = currentCollection ? currentCollection.id : null;
-    const filters = filterSearchValues();
-    let message = 'Please fill out all needed fields';
-    searchStore.addErrorMessage(message);
-
-    if (filters.length > 0) {
-      searchStore.showSearchResults();
-      searchStore.removeErrorMessage(message);
-
-      const selection = {
-        elementType: 'advanced',
-        advanced_params: filters,
-        search_by_method: 'advanced',
-        page_size: uiState.number_of_results
-      };
-
-      searchStore.loadSearchResults({
-        selection,
-        collectionId: collectionId,
-        isSync: uiState.isSync,
-        moleculeSort: true,
-      });
-      searchStore.clearSearchAndTabResults();
-      searchValuesByFilters();
-    }
-  }
-
-  const handleClear = () => {
-    searchStore.clearSearchResults();
-  }
 
   const handleChangeElement = (element) => {
     const table = elnElements.includes(element) ? element : 'elements';
@@ -177,59 +120,6 @@ const TextSearch = () => {
     );
   }
 
-  const searchValuesBySubFields = (val, table) => {
-    let label = '';
-    let value = '';
-    let unit = '';
-    let match = val.match;
-    let searchValues = [];
-
-    val.field.sub_fields.map((sub) => {
-      if (sub.type == 'label') {
-        label = sub.value;
-      } else if (val.sub_values[0][sub.id]) {
-        let subContent = val.sub_values[0][sub.id];
-        if (subContent.value !== undefined) {
-          value = subContent.value;
-          unit = subContent.value_system;
-          label = sub.col_name;
-          match = '>=';
-        } else {
-          value = subContent;
-          label = label === '' ? sub.col_name : label;
-        }
-        searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${label.toLowerCase()}`, match, value, unit].join(" "));
-      } else if (val.sub_values[0][sub.key]) {
-        value = val.sub_values[0][sub.key];
-        searchValues.push([val.link, table, `${val.field.label.toLowerCase()}: ${sub.label.toLowerCase()}`, val.match, value, unit].join(" "));
-      }
-    });
-    return searchValues;
-  }
-
-  const searchValuesByFilters = () => {
-    const storedFilter = searchStore.searchFilters;
-    const filters = storedFilter.length == 0 ? [] : storedFilter[0].filters;
-    let searchValues = [];
-
-    if (searchStore.searchResultVisible && filters.length > 0) {
-      filters.map((val) => {
-        let table = val.field.table || val.table;
-        let value = val.value;
-        table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
-        value = value.replace(/[\n\r]/g, ' OR ');
-
-        if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
-          let values = searchValuesBySubFields(val, table);
-          searchValues.push(...values);
-        } else {
-          searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(" "));
-        }
-      });
-    }
-    searchStore.changeSearchValues(searchValues);
-  }
-
   const renderDynamicRow = () => {
     let dynamicRow = (<span />);
 
@@ -286,10 +176,10 @@ const TextSearch = () => {
               <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
-              <Button bsStyle="info" onClick={handleClear}>
+              <Button bsStyle="info" onClick={() => handleClear(searchStore)}>
                 Reset
               </Button>
-              <Button bsStyle="primary" id="advanced-search-button" onClick={handleSearch} style={{ marginRight: '20px' }} >
+              <Button bsStyle="primary" id="advanced-search-button" onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
                 Search
               </Button>
             </ButtonToolbar>
@@ -311,7 +201,7 @@ const TextSearch = () => {
         <Panel.Collapse>
           <Panel.Body style={{ minHeight: '120px' }}>
             <SearchResult
-              handleClear={handleClear}
+              handleClear={() => handleClear(searchStore)}
             />
           </Panel.Body>
         </Panel.Collapse>

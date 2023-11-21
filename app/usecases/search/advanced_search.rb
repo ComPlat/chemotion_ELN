@@ -30,7 +30,7 @@ module Usecases
       end
 
       def perform!
-        scope = basic_scope
+        scope = @conditions[:model_name] == Literature ? basic_literature_scope : basic_scope
         elements_by_scope(scope)
         @shared_methods.serialization_by_elements_and_page(@elements, @conditions[:error])
       end
@@ -40,9 +40,6 @@ module Usecases
       def basic_scope
         return '' if @conditions[:error] != ''
 
-        filtered_query = @conditions[:query].gsub(/\A\ AND \s*/, '')
-        query_with_condition =
-          @conditions[:value].present? ? [filtered_query] + @conditions[:value] : filtered_query
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
 
         scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)
@@ -51,6 +48,19 @@ module Usecases
         scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
         scope.pluck(:id)
+      end
+
+      def basic_literature_scope
+        return '' if @conditions[:error] != ''
+
+        @conditions[:model_name].where(query_with_condition)
+                                .joins(@conditions[:joins].join(' '))
+                                .pluck(:id)
+      end
+
+      def query_with_condition
+        filtered_query = @conditions[:query].gsub(/\A\ AND \s*/, '')
+        @conditions[:value].present? ? [filtered_query] + @conditions[:value] : filtered_query
       end
 
       def elements_by_scope(scope)
@@ -108,6 +118,13 @@ module Usecases
         @elements[:wellplate_ids] = ResearchPlansWellplate.get_wellplates(@elements[:research_plan_ids]).uniq
         @elements[:screen_ids] = @user_screens.by_wellplate_ids(@elements[:wellplate_ids]).pluck(:id).uniq
         @elements[:element_ids] = @user_elements.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
+      end
+
+      def literature_relations_element_ids
+        @elements[:sample_ids] = @user_samples.by_literature_ids(@elements[:literature_ids]).pluck(:id).uniq
+        @elements[:reaction_ids] = @user_reactions.by_literature_ids(@elements[:literature_ids]).uniq.pluck(:id)
+        @elements[:research_plan_ids] =
+          @user_research_plans.by_literature_ids(@elements[:literature_ids]).pluck(:id).uniq
       end
 
       def element_relations_element_ids

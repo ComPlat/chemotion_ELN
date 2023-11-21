@@ -89,11 +89,12 @@ class Reaction < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_rinchi_string, ->(query) { where('rinchi_string ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
-  scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
-  scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
-  scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
+  scope :by_material_ids, ->(ids) { joins(:starting_materials).where(samples: { id: ids }) }
+  scope :by_solvent_ids, ->(ids) { joins(:solvents).where(samples: { id: ids }) }
+  scope :by_reactant_ids, ->(ids) { joins(:reactants).where(samples: { id: ids }) }
+  scope :by_product_ids,  ->(ids) { joins(:products).where(samples: { id: ids }) }
   scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where(reactions_samples: { sample_id: ids }) }
+  scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }

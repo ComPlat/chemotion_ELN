@@ -43,6 +43,7 @@ class ResearchPlan < ApplicationRecord
       .where(id: ids)
       .where("(element -> 'value'->> 'reaction_id')::INT IS NOT NULL")
   }
+  scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
 
   after_create :create_root_container
 
@@ -58,6 +59,9 @@ class ResearchPlan < ApplicationRecord
 
   has_many :research_plans_screens, dependent: :destroy
   has_many :screens, through: :research_plans_screens
+
+  has_many :literals, as: :element, dependent: :destroy
+  has_many :literatures, through: :literals
 
   before_destroy :delete_attachment
   accepts_nested_attributes_for :collections_research_plans
