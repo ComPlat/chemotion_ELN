@@ -44,8 +44,12 @@ export default class WellplateDetailsAttachments extends Component {
   constructor(props) {
     super(props);
     this.importButtonRefs = [];
+    const {
+      onImport
+    } = props;
 
     this.state = {
+      onImport,
       attachmentEditor: false,
       extension: null,
       imageEditModalShown: false,
@@ -367,7 +371,7 @@ export default class WellplateDetailsAttachments extends Component {
                     {renderImportAttachmentButton(
                       attachment,
                       this.state.showImportConfirm,
-                      this.props.wellplateChanged,
+                      this.props.wellplate.changed,
                       this.importButtonRefs,
                       this.showImportConfirm,
                       this.hideImportConfirm,
@@ -386,7 +390,37 @@ export default class WellplateDetailsAttachments extends Component {
 }
 
 WellplateDetailsAttachments.propTypes = {
-  wellplateChanged: PropTypes.bool.isRequired,
+  wellplate: PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    changed: PropTypes.bool.isRequired,
+    body: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        type: PropTypes.string.isRequired,
+      })
+    ).isRequired,
+    attachments: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number
+        ]).isRequired,
+        aasm_state: PropTypes.string.isRequired,
+        content_type: PropTypes.string.isRequired,
+        filename: PropTypes.string.isRequired,
+        filesize: PropTypes.number.isRequired,
+        identifier: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number
+        ]).isRequired,
+        thumb: PropTypes.bool.isRequired
+      })
+    )
+  }).isRequired,
   attachments: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.oneOfType([
       PropTypes.string,
@@ -407,7 +441,8 @@ WellplateDetailsAttachments.propTypes = {
   onUndoDelete: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
-  readOnly: PropTypes.bool.isRequired
+  readOnly: PropTypes.bool.isRequired,
+  onImport: PropTypes.func.isRequired,
 };
 
 WellplateDetailsAttachments.defaultProps = {

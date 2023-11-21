@@ -1,6 +1,4 @@
 /* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
@@ -8,8 +6,8 @@ import {
   Well, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
-import Immutable from 'immutable';
 import { findIndex } from 'lodash';
+import Immutable from 'immutable';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -45,9 +43,11 @@ export default class WellplateDetails extends Component {
       wellplate,
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
-      visible: Immutable.List(['designer', 'list', 'properties', 'analyses', 'attachments']),
+      visible: Immutable.List(['']),
     };
+    this.handleWellplateChanged = this.handleWellplateChanged.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
@@ -99,10 +99,10 @@ export default class WellplateDetails extends Component {
     wellplate.updateChecksum();
   }
 
-  handleWellplateChanged(wellplate) {
-    this.setState({
-      wellplate
-    });
+  handleWellplateChanged(el) {
+    const wellplate = el;
+    wellplate.changed = true;
+    this.setState({ wellplate });
   }
 
   handlePrint() {
@@ -202,7 +202,7 @@ export default class WellplateDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { wellplate } = this.state;
-
+    wellplate.changed = true;
     // update only this attachment
     wellplate.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) {
@@ -214,15 +214,16 @@ export default class WellplateDetails extends Component {
     this.forceUpdate();
   }
 
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
   onUIStoreChange(state) {
     if (state.wellplate.activeTab !== this.state.activeTab) {
       this.setState({
         activeTab: state.wellplate.activeTab
       });
     }
-  }
-
-  onTabPositionChanged() {
   }
 
   wellplateHeader(wellplate) {
@@ -265,13 +266,12 @@ export default class WellplateDetails extends Component {
   }
 
   renderAttachmentsTab(wellplate) { /* eslint-disable react/jsx-no-bind */
-    const { attachments } = wellplate;
     return (
       <ListGroup fill="true">
         <ListGroupItem>
           <WellplateDetailsAttachments
-            attachments={attachments}
-            wellplateChanged={wellplate.isEdited}
+            wellplate={wellplate}
+            attachments={wellplate.attachments}
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
@@ -323,7 +323,7 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Well style={{ overflow: 'scroll', height: '100%', 'max-height': 'calc(100vh - 375px)' }}>
+          <Well style={{ overflow: 'scroll', height: '100%', maxHeight: 'calc(100vh - 375px)' }}>
             <WellplateList
               wells={wells}
               readoutTitles={readoutTitles}
