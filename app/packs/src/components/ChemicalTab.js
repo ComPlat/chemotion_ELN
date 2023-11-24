@@ -222,7 +222,7 @@ export default class ChemicalTab extends React.Component {
 
     const precautionaryPhrases = [];
     // eslint-disable-next-line no-restricted-syntax
-    for (const [key, value] of Object.entries(str.p_statements)) {
+    for (const [key, value] of Object.entries(str?.p_statements || {})) {
       // eslint-disable-next-line react/jsx-one-expression-per-line
       const st = <p key={key}>{key}:{value}</p>;
       precautionaryPhrases.push(st);
@@ -494,10 +494,17 @@ export default class ChemicalTab extends React.Component {
 
   numInputWithoutTable(data, label, parameter) {
     const value = data?.[parameter]?.value ?? 0;
-    const unit = data?.[parameter]?.unit ?? 'mg';
+    let unit; let field;
+    if (parameter === 'amount') {
+      unit = data?.[parameter]?.unit ?? 'mg';
+      field = 'chemical_amount_in_g';
+    } else if (parameter === 'volume') {
+      unit = data?.[parameter]?.unit ?? 'ml';
+      field = 'chemical_amount_in_l';
+    }
     return (
       <NumericInputUnit
-        field="inventory_amount"
+        field={field}
         inputDisabled={false}
         onInputChange={
           (newValue, newUnit) => this.handleMetricsChange(parameter, newValue, newUnit)
@@ -910,10 +917,13 @@ export default class ChemicalTab extends React.Component {
                 {this.numInputWithoutTable(data, 'Amount', 'amount')}
               </div>
               <div className="inventory-text-input">
-                {this.textInput(data, 'Price', 'price')}
+                {this.numInputWithoutTable(data, '', 'volume')}
               </div>
             </div>
             <div className="text-input-group">
+              <div className="inventory-text-input">
+                {this.textInput(data, 'Price', 'price')}
+              </div>
               <div className="text-input-person">
                 {this.textInput(data, 'Person', 'person')}
               </div>
