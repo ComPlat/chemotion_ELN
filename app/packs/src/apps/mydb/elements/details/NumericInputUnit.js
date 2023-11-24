@@ -61,12 +61,16 @@ export default function NumericInputUnit(props) {
     return [convertedValue, convertedUnit];
   };
 
-  const validateConversionForInventoryAmount = (valueToFormat) => {
-    const conversionMap = {
-      g: { convertedUnit: 'mg', conversionFactor: 1000 },
-      mg: { convertedUnit: 'μg', conversionFactor: 1000 },
-      μg: { convertedUnit: 'g', conversionFactor: 0.000001 }
-    };
+  const conversionMap = {
+    g: { convertedUnit: 'mg', conversionFactor: 1000 },
+    mg: { convertedUnit: 'μg', conversionFactor: 1000 },
+    μg: { convertedUnit: 'g', conversionFactor: 0.000001 },
+    l: { convertedUnit: 'ml', conversionFactor: 1000 },
+    ml: { convertedUnit: 'μl', conversionFactor: 1000 },
+    μl: { convertedUnit: 'l', conversionFactor: 0.000001 }
+  };
+
+  const convertValue = (valueToFormat, currentUnit) => {
     const { convertedUnit, conversionFactor } = conversionMap[currentUnit];
     const decimalPlaces = 7;
     const formattedValue = weightConversion(valueToFormat, conversionFactor);
@@ -77,8 +81,9 @@ export default function NumericInputUnit(props) {
   const toggleInput = () => {
     let [convertedValue, convertedUnit] = [value, currentUnit];
     switch (field) {
-      case 'inventory_amount':
-        [convertedValue, convertedUnit] = validateConversionForInventoryAmount(value);
+      case 'chemical_amount_in_g':
+      case 'chemical_amount_in_l':
+        [convertedValue, convertedUnit] = convertValue(value, currentUnit);
         break;
       case 'flash_point':
         [convertedValue, convertedUnit] = validateConversionForFlashPoint(value);
@@ -98,7 +103,7 @@ export default function NumericInputUnit(props) {
     setValue(newInput);
   };
 
-  const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
+  const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : <ControlLabel style={{ paddingTop: '15px' }} />;
   const bsSize = field === 'flash_point' ? 'small' : null;
 
   const unitSwitch = (
