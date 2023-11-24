@@ -112,8 +112,8 @@ describe Chemotion::ResearchPlanAPI do
     end
 
     describe 'GET /api/v1/research_plans/linked' do
-      let(:c) { create(:collection, label: 'C1', user: user) }
-      let(:research_plan) { create(:research_plan, :with_linked) }
+      let!(:c) { create(:collection, label: 'C1', user: user) }
+      let!(:research_plan) { create(:research_plan, :with_linked) }
 
       before do
         get '/api/v1/research_plans/linked', params: { id: 100, element: 'reaction' }
