@@ -88,6 +88,7 @@ module Import
         gate_collection if @gt == true
         import_collections if @gt == false
         import_samples
+        import_chemicals if @gt == false
         import_residues
         import_reactions
         import_reactions_samples
@@ -187,6 +188,21 @@ module Import
       end
     end
 
+    def import_chemicals
+      @data.fetch('Chemical', {}).each do |_uuid, fields|
+        sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+        next unless sample
+
+        chemical = Chemical.create!(fields.slice(
+          'cas',
+          'chemical_data',
+        ).merge(
+          sample_id: sample&.id,
+        ))
+        chemical.save!
+      end
+    end
+
     def import_samples
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
@@ -242,6 +258,7 @@ module Import
           'decoupled',
           'molecular_mass',
           'sum_formula',
+          'inventory_sample',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(

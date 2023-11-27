@@ -60,7 +60,7 @@ class ElementPolicy
   end
 
   def maximum_element_permission_level(sync_collections = SyncCollectionsUser.none)
-    sync_collections.pluck("#{@record.class.name.downcase}_detail_level").max || -1
+    sync_collections.pluck("#{Labimotion::Utils.element_name_dc(@record.class.to_s)}_detail_level").max || -1
   end
 
   def user_ids

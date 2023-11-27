@@ -168,6 +168,20 @@ RSpec.describe 'ImportCollection' do
       end
     end
 
+    describe 'import a collection with a chemical' do
+      let(:import_id) { 'collection_chemicals' }
+      let(:attachment) { create(:attachment, :with_chemicals_collection_zip) }
+
+      it 'successfully imported 1 chemical' do
+        importer.execute
+
+        collection = Collection.find_by(label: 'collection_with_chemical')
+        expect(collection).to be_present
+        expect(collection.samples.map(&:chemical).length).to eq(1)
+      end
+    end
+  end
+
     context 'with zip file including two cell line samples, material already existing' do
       let!(:cell_line) { create(:cellline_sample) }
       let(:import_id) { '20230629_two_cell_line_samples' }

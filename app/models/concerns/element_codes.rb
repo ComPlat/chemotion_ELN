@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ElementCodes
   extend ActiveSupport::Concern
 
@@ -8,8 +10,9 @@ module ElementCodes
     def source_class() @source_class||=self.class.name.demodulize.underscore end
 
     def code_logs
-       CodeLog.where(source: source_class).
-         where(source_id: id).order(created_at: 'DESC')
+      return [] if source_class == 'container' && containable_type == 'Labimotion::Element'
+
+      CodeLog.where(source: source_class).where(source_id: id).order(created_at: 'DESC')
     end
 
     def code_log() code_logs.first end

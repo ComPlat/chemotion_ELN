@@ -99,5 +99,9 @@ FactoryBot.define do
     trait :with_researchplan_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/20230113_research_plan_one_attachment.zip') }
     end
+
+    trait :with_chemicals_collection_zip do
+      file_path { Rails.root.join('spec/fixtures/import/collection_chemicals.zip') }
+    end
   end
 end

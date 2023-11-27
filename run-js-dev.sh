@@ -4,7 +4,7 @@ if [ ! -x yarn ]
 then
   npm install -g yarn
 fi
-asdf global nodejs 18.17.1
+asdf global nodejs 18.18.2
 yarn install
 
 echo "THIS WILL FAIL UNTIL THE RUBY GEMS ARE INSTALLED BY run-ruby-dev.sh. JUST TRY AGAIN AFTER INSTALLING THEM."

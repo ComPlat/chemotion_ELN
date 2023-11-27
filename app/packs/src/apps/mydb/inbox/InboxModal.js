@@ -1,15 +1,17 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Panel, Glyphicon, Pagination
+  Badge, Button, Panel, Glyphicon, Pagination, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 export default class InboxModal extends React.Component {
   constructor(props) {
@@ -30,6 +32,7 @@ export default class InboxModal extends React.Component {
     };
 
     this.onChange = this.onChange.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onClickInbox = this.onClickInbox.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
@@ -38,6 +41,7 @@ export default class InboxModal extends React.Component {
 
   componentDidMount() {
     InboxStore.listen(this.onChange);
+    UIStore.listen(this.onUIStoreChange);
     InboxActions.fetchInboxCount();
   }
 
@@ -56,6 +60,13 @@ export default class InboxModal extends React.Component {
   onChange(state) {
     this.setState(state);
     this.setState({ visible: state.inboxModalVisible });
+  }
+
+  onUIStoreChange(state) {
+    const { collectorAddress } = state;
+    if (collectorAddress !== this.state.collectorAddress) {
+      this.setState({ collectorAddress });
+    }
   }
 
   onClickInbox() {
@@ -184,9 +195,41 @@ export default class InboxModal extends React.Component {
     );
   }
 
+  infoMessage() {
+    const { collectorAddress } = this.state;
+    return (
+      <Tooltip id="assignButton">
+        You can send yourself files to your inbox by emailing them from your registered email to the following email address:
+        { ' ' }
+        {collectorAddress}
+        { ' ' }
+        . Click to copy the address to your clipboard.
+      </Tooltip>
+    );
+  }
+
+  collectorAddressInfoButton() {
+    const { collectorAddress } = this.state;
+
+    return (
+      <CopyToClipboard text={collectorAddress}>
+        <OverlayTrigger placement="top" overlay={this.infoMessage()}>
+          <Button
+            bsSize="xsmall"
+            className="btn btn-circle btn-sm btn-info button-right"
+          >
+            <Glyphicon glyph="info-sign" />
+          </Button>
+        </OverlayTrigger>
+      </CopyToClipboard>
+    );
+  }
+
   render() {
     const { showCollectionTree } = this.props;
-    const { visible, inboxVisible, numberOfAttachments } = this.state;
+    const {
+      visible, inboxVisible, numberOfAttachments, collectorAddress
+    } = this.state;
 
     const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
@@ -240,6 +283,7 @@ export default class InboxModal extends React.Component {
                 >
                   <Glyphicon bsSize="small" glyph="refresh" />
                 </Button>
+                {collectorAddress ? this.collectorAddressInfoButton() : null}
               </Panel.Heading>
               <Panel.Body>
                 <div>

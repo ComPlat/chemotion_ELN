@@ -1,20 +1,22 @@
+# frozen_string_literal: true
+
 class CollectorHelper
   attr_reader :sender, :sender_container, :recipient
 
   def initialize(from, cc = nil)
-    if from.is_a?(Device) && cc.is_a?(User)
+    if (from.is_a?(Device) && cc.is_a?(User)) || (from.is_a?(User) && from == cc)
       @sender = from
       @recipient = cc
       prepare_containers
     elsif cc
       @sender = Device.find_by email: from
-      @sender = Device.find_by email: from.downcase unless @sender
+      @sender ||= Device.find_by email: from.downcase
       @recipient = User.find_by email: cc
-      @recipient = User.find_by email: cc.downcase unless @recipient
+      @recipient ||= User.find_by email: cc.downcase
       prepare_containers if @sender && @recipient
     else
       @sender = User.find_by email: from
-      @sender = User.find_by email: from.downcase unless @sender
+      @sender ||= User.find_by email: from.downcase
       @recipient = @sender
       prepare_containers if @sender
     end
@@ -26,19 +28,21 @@ class CollectorHelper
 
   def prepare_new_dataset(subject)
     return nil unless sender_recipient_known?
+
     Container.create(
       name: subject,
       container_type: 'dataset',
-      parent: @sender_container
+      parent: @sender_container,
     )
   end
 
   def prepare_dataset(subject)
     return nil unless sender_recipient_known?
+
     Container.where(
       name: subject,
       container_type: 'dataset',
-      parent: @sender_container
+      parent: @sender_container,
     ).first_or_create
   end
 
@@ -65,14 +69,14 @@ class CollectorHelper
     unless @recipient.container
       @recipient.container = Container.create(
         name: 'inbox',
-        container_type: 'root'
+        container_type: 'root',
       )
     end
-    sender_box_id = 'sender_box_' + @sender.id.to_s
+    sender_box_id = "sender_box_#{@sender.id}"
     @sender_container = Container.where(
       name: @sender.first_name,
       container_type: sender_box_id,
-      parent_id: @recipient.container.id
+      parent_id: @recipient.container.id,
     ).first_or_create
   end
 end

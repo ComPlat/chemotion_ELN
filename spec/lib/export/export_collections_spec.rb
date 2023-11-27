@@ -186,8 +186,34 @@ RSpec.describe 'ExportCollection' do
       expect(elements_in_json[sample_material_join].values.second['cellline_sample_id']).to eq sample2_uuid
     end
   end
+  
+  context 'with a chemical' do
+    let(:chemical) { create(:chemical, sample_id: sample.id) }
 
-  def update_body_of_researchplan(research_plan, identifier_of_attachment)
+    before do
+      sample.save!
+      chemical.save!
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
+      export.prepare_data
+      export.to_file
+    end
+
+    it 'exported file exists' do
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      expect(File.exist?(file_path)).to be true
+    end
+
+    it 'Chemical key is present in export.json' do
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      export_json_content = Zip::File.open(file_path) do |files|
+        json_file = files.detect { |file| file.name == 'export.json' }
+        JSON.parse(json_file.get_input_stream.read)
+      end
+      expect(export_json_content).to have_key('Chemical')
+    end
+  end
+
+  def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {
         id: 'entry-003',

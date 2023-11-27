@@ -143,9 +143,10 @@ module Chemotion
       safety_section = safety_section(product_link)
       safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
       pictograms = safety_array[0].split(',')
+      verified_pictograms = pictograms.select { |pictogram| pictograms_hash.value?(pictogram) }
       { 'h_statements' => construct_h_statements(safety_array, 'merck'),
         'p_statements' => construct_p_statements(safety_array, 'merck'),
-        'pictograms' => pictograms }
+        'pictograms' => verified_pictograms }
     rescue StandardError
       'Could not find H and P phrases'
     end

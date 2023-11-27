@@ -9,22 +9,20 @@ class Foldercollector < Fcollector
   private
 
   def sleep_seconds(device)
-    30 || Rails.configuration.datacollectors.services &&
-      (Rails.configuration.datacollectors.services.find { |e|
+    30 || (Rails.configuration.datacollectors.services &&
+      (Rails.configuration.datacollectors.services.find do |e|
         e[:name] == device.profile.data['method']
-      } || {})[:watcher_sleep]
+      end || {})[:watcher_sleep])
   end
 
   def modification_time_diff(device, folder_p)
-    time_now = Time.now
-    time_diff =
-      case device.profile.data['method']
-      when 'folderwatcherlocal' then time_now - File.mtime(folder_p)
-      when 'folderwatchersftp' then
-        time_now - (Time.at @sftp.file.open(folder_p).stat.attributes[:mtime])
-      else 30
-      end
-    time_diff
+    time_now = Time.zone.now
+    case device.profile.data['method']
+    when 'folderwatcherlocal' then time_now - File.mtime(folder_p)
+    when 'folderwatchersftp'
+      time_now - (Time.zone.at @sftp.file.open(folder_p).stat.attributes[:mtime])
+    else 30
+    end
   end
 
   # rubocop:disable Metrics/CyclomaticComplexity
@@ -45,7 +43,7 @@ class Foldercollector < Fcollector
       @current_collector.files = list_files
       error = CollectorError.find_by error_code: CollectorHelper.hash(
         @current_collector.path,
-        @sftp
+        @sftp,
       )
       begin
         stored = false
@@ -66,10 +64,10 @@ class Foldercollector < Fcollector
           @current_collector.delete
           log_info("Recipient unknown. Folder deleted! >>> #{device.info}")
         end
-      rescue => e
+      rescue StandardError => e
         if stored
           CollectorHelper.write_error(
-            CollectorHelper.hash(@current_collector.path, @sftp)
+            CollectorHelper.hash(@current_collector.path, @sftp),
           )
         end
         log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
@@ -89,9 +87,9 @@ class Foldercollector < Fcollector
       )
       all_files.map!(&:name)
     else
-      all_files = Dir.entries(@current_collector.path).reject { |e|
+      all_files = Dir.entries(@current_collector.path).reject do |e|
         File.directory?(File.join(@current_collector.path, e))
-      }
+      end
     end
     all_files.delete_if do |f|
       f.end_with?('..', '.', '.filepart', '.part')
@@ -106,9 +104,9 @@ class Foldercollector < Fcollector
       )
       new_folders_p.map! { |dir| File.join(monitored_folder_p, dir.name) }
     else
-      new_folders_p = Dir.glob(File.join(monitored_folder_p, '*')).select { |e|
+      new_folders_p = Dir.glob(File.join(monitored_folder_p, '*')).select do |e|
         File.directory?(e)
-      }
+      end
     end
     new_folders_p
   end

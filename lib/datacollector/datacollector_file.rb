@@ -19,7 +19,7 @@ class DatacollectorFile < DatacollectorObject
   def attach(device)
     att = Attachment.new(
       filename: @name,
-      file_data: IO.binread(@path),
+      file_data: File.binread(@path),
       content_type: MimeMagic.by_path(@name)&.type,
       created_by: device.id,
       created_for: recipient.id,
@@ -52,7 +52,7 @@ class DatacollectorFile < DatacollectorObject
 
   def add_attach_to_container(device, attach, _ = false)
     helper = CollectorHelper.new(device, recipient)
-    dataset = helper.prepare_dataset(Time.now.strftime('%Y-%m-%d'))
+    dataset = helper.prepare_dataset(Time.zone.now.strftime('%Y-%m-%d'))
     attach.update!(attachable: dataset)
 
     # add notifications

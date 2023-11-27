@@ -30,6 +30,7 @@ gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'
 
+gem 'faker', require: false
 gem 'faraday'
 gem 'faraday-follow_redirects'
 gem 'faraday-multipart'
@@ -60,7 +61,7 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
-gem 'labimotion', '1.0.18'
+gem 'labimotion', '1.0.19'
 
 gem 'mimemagic', '0.3.10'
 
@@ -106,6 +107,8 @@ gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
+
+gem 'sentry-delayed_job'
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'shrine', '~> 3.0'
@@ -188,7 +191,6 @@ group :test do
   gem 'database_cleaner-active_record'
 
   gem 'factory_bot_rails'
-  gem 'faker'
 
   gem 'launchy'
 
