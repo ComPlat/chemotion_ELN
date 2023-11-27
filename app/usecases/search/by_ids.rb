@@ -33,7 +33,7 @@ module Usecases
       private
 
       def model_name(id_params)
-        id_params == 'element' ? Labimotion::Element : id_params[:model_name].camelize.constantize
+        id_params[:model_name] == 'element' ? Labimotion::Element : id_params[:model_name].camelize.constantize
       end
 
       def basic_scope

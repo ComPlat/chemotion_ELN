@@ -173,7 +173,7 @@ export default {
           label: 'Melting point',
           type: 'textWithAddOn',
           addon: '°C',
-          info: 'Numrange: input of 2 numbers, e.g. 100 - 200. Only numbers are allowed',
+          info: 'Numbers within a range: input of 2 numbers, e.g. 100 - 200. Only numbers are allowed',
           advanced: false,
         },
         label: 'Melting point'
@@ -184,7 +184,7 @@ export default {
           label: 'Boiling point',
           type: 'textWithAddOn',
           addon: '°C',
-          info: 'Numrange: input of 2 numbers, e.g. 100 - 200. Only numbers are allowed',
+          info: 'Numbers within a range: input of 2 numbers, e.g. 100 - 200. Only numbers are allowed',
           advanced: false,
         },
         label: 'Boiling point'

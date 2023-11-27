@@ -52,7 +52,7 @@ const handleSearch = (store, uiState) => {
   let message = 'Please fill out all needed fields';
   store.addErrorMessage(message);
 
-  if (filters.length > 0) {
+  if (filters.length > 0 && store.errorMessages.length == 1) {
     store.showSearchResults();
     store.removeErrorMessage(message);
 
@@ -114,7 +114,7 @@ const searchValuesByFilters = (store) => {
       let table = val.field.table || val.table;
       let value = val.value;
       table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
-      value = value.replace(/[\n\r]/g, ' OR ');
+      value = value != true ? value.replace(/[\n\r]/g, ' OR ') : value;
 
       if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
         let values = searchValuesBySubFields(val, table);

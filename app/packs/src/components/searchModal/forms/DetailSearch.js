@@ -498,11 +498,16 @@ const DetailSearch = () => {
   }
 
   const checkValueForNumber = (label, value) => {
+    if (value === '') { return null; }
+
     let validationState = null;
     let message = `${label}: Only numbers are allowed`;
     searchStore.removeErrorMessage(message);
 
-    if (isNaN(Number(value))) {
+    const regex = /^[0-9\s\-]+$/;
+    let numericCheck = label.includes('point') ? !regex.test(value) : isNaN(Number(value));
+
+    if (numericCheck) {
       searchStore.addErrorMessage(message);
       validationState = 'error';
     }
@@ -545,14 +550,15 @@ const DetailSearch = () => {
 
   const setSearchStoreValues = (value, option, column, type, subValue, smiles) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
+    let cleanedValue = ['>=', '<@'].includes(searchValue.match) ? value.replace(/,/g, '.') : value;
     searchValue.field = option;
-    searchValue.value = value;
-    searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, value);
+    searchValue.value = cleanedValue;
+    searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, cleanedValue);
     searchValue.match = matchByField(column, type);
     searchValue.smiles = smiles;
 
     if (['>=', '<@'].includes(searchValue.match)) {
-      searchValue.validationState = checkValueForNumber(option.label, value);
+      searchValue.validationState = checkValueForNumber(option.label, cleanedValue);
     }
 
     if (type == 'system-defined' && searchValue.unit === '') {

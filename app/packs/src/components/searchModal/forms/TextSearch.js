@@ -179,7 +179,8 @@ const TextSearch = () => {
               <Button bsStyle="info" onClick={() => handleClear(searchStore)}>
                 Reset
               </Button>
-              <Button bsStyle="primary" id="advanced-search-button" onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
+              <Button bsStyle="primary" id="advanced-search-button"
+                onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
                 Search
               </Button>
             </ButtonToolbar>

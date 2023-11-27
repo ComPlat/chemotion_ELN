@@ -1,7 +1,7 @@
 [dialogas=full-search].modal {
   width: fit-content;
   height: fit-content;
-  top: calc(100% - 94vh);
+  top: calc(100% - 95vh);
   left: calc((100% - 90vw) / 2);
 }
 
@@ -376,6 +376,10 @@ i.fa.icon-right {
     font-size: 1.5em;
     color: rgba(0, 0, 0, 0.6);
     margin-top: 20px;
+  }
+  .css-yk16xz-control, .css-1pahdxg-control {
+    min-height: 34px;
+    height: 34px;
   }
   .css-1wa3eu0-placeholder, .css-1uccc91-singleValue {
     top: 42%;
