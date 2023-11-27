@@ -29,7 +29,7 @@ export const editorTooltip = (exts) => (
   </Tooltip>
 );
 
-export const renderDownloadSplitButton = (attachment, handleDownloadOriginal, handleDownloadAnnotated) => (
+export const downloadButton = (attachment, handleDownloadOriginal, handleDownloadAnnotated) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa fa-download" aria-hidden="true" />
@@ -49,7 +49,7 @@ export const renderDownloadSplitButton = (attachment, handleDownloadOriginal, ha
   </Dropdown>
 );
 
-export const renderRemoveAttachmentButton = (attachment, onDelete, readOnly) => (
+export const removeButton = (attachment, onDelete, readOnly) => (
   <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
     <Button
       bsSize="xs"
@@ -63,7 +63,7 @@ export const renderRemoveAttachmentButton = (attachment, onDelete, readOnly) => 
   </OverlayTrigger>
 );
 
-export const renderAnnotateImageButton = (attachment, parent) => (
+export const annotateButton = (attachment, parent) => (
   <ImageAnnotationEditButton
     parent={parent}
     attachment={attachment}
@@ -72,7 +72,7 @@ export const renderAnnotateImageButton = (attachment, parent) => (
   />
 );
 
-export const renderEditAttachmentButton = (
+export const editButton = (
   attachment,
   extension,
   attachmentEditor,
@@ -95,7 +95,7 @@ export const renderEditAttachmentButton = (
   </OverlayTrigger>
 );
 
-export const renderImportAttachmentButton = (
+export const importButton = (
   attachment,
   showImportConfirm,
   researchPlan,
@@ -165,13 +165,13 @@ export const renderImportAttachmentButton = (
   );
 };
 
-export const renderDropzone = (onDrop) => (
+export const customDropzone = (onDrop) => (
   <Dropzone onDrop={onDrop} className="attachment-dropzone">
     Drop files here, or click to upload.
   </Dropzone>
 );
 
-export const renderSortingAndFilteringUI = (
+export const sortingAndFilteringUI = (
   sortDirection,
   handleSortChange,
   toggleSortDirection,

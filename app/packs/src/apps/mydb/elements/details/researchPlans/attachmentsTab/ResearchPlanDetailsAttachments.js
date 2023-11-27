@@ -15,13 +15,13 @@ import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 
 import {
-  renderDownloadSplitButton,
-  renderRemoveAttachmentButton,
-  renderAnnotateImageButton,
-  renderEditAttachmentButton,
-  renderImportAttachmentButton,
-  renderDropzone,
-  renderSortingAndFilteringUI,
+  downloadButton,
+  removeButton,
+  annotateButton,
+  editButton,
+  importButton,
+  customDropzone,
+  sortingAndFilteringUI,
   formatFileSize,
   isImageFile
 } from 'src/apps/mydb/elements/list/AttachmentList';
@@ -255,8 +255,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
-        {renderDropzone(this.props.onDrop)}
-        {renderSortingAndFilteringUI(
+        {customDropzone(this.props.onDrop)}
+        {sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
@@ -326,8 +326,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 ) : (
                   <>
                     {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
-                    {renderDownloadSplitButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
-                    {renderEditAttachmentButton(
+                    {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {editButton(
                       attachment,
                       extension,
                       attachmentEditor,
@@ -338,8 +338,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
                           || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
                     )}
-                    {renderAnnotateImageButton(attachment, this)}
-                    {renderImportAttachmentButton(
+                    {annotateButton(attachment, this)}
+                    {importButton(
                       attachment,
                       this.state.showImportConfirm,
                       this.props.researchPlan.changed,
@@ -348,7 +348,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                       this.hideImportConfirm,
                       this.confirmAttachmentImport
                     )}
-                    {renderRemoveAttachmentButton(attachment, this.props.onDelete, this.props.readOnly)}
+                    {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
                   </>
                 )}
               </div>
