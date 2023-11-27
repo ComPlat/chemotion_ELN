@@ -103,7 +103,11 @@
     }
 
     &.is-active {
-      background-color: #D3D3D3
+      background-color: #D3D3D3;
+
+      .root-label{
+        background-color: #D3D3D3 
+      }
     }
   }
 
