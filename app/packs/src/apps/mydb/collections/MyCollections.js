@@ -30,7 +30,7 @@ export default class MyCollections extends React.Component {
         isChange: false
       }
     }
-
+    this.addSubcollection=this.addSubcollection.bind(this);
     this.onStoreChange = this.onStoreChange.bind(this);
   }
 
@@ -117,7 +117,12 @@ export default class MyCollections extends React.Component {
       const { isChange } = this.state;
       return (
         <div className="root-actions">
-          {isChange && <Button id="save-collections-button" bsSize="xsmall" bsStyle="warning" onClick={this.bulkUpdate.bind(this)}> Save </Button>}
+          {isChange && <Button 
+          id="save-collections-button" 
+          bsSize="xsmall" 
+          bsStyle="warning" 
+          onMouseDown={(e)=>{e.stopPropagation();}}
+          onClick={this.bulkUpdate.bind(this)}> Save </Button>}
           {this.addCollectionButton(node)}
         </div>
       )
@@ -204,7 +209,8 @@ export default class MyCollections extends React.Component {
         id="add-new-collection-button"
         bsSize="xsmall"
         bsStyle="success"
-        onClick={this.addSubcollection.bind(this, node)}
+        onClick={(e)=>{this.addSubcollection(node);}}
+        onMouseDown={(e)=>{e.stopPropagation();}}
       >
         <i className="fa fa-plus"></i>
       </Button>
