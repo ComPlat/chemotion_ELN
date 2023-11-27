@@ -76,10 +76,11 @@ export default class MySharedCollections extends React.Component {
   label(node) {
     if (node.label == "My Shared Collections") {
       return (
-        <div className="root-label">
-          My Shared Collections
-        </div>
-      )
+        <FormControl 
+        value ="My Shared Collections" 
+        type="text" 
+        className="root-label" 
+        disabled/>);
     } else if (node.is_locked) {
       return (
         <FormControl className="collection-label" type="text"
