@@ -126,7 +126,9 @@ export default class MySharedCollections extends React.Component {
       return (
         <div className="root-actions">
           <Button bsSize="xsmall" bsStyle="warning"
-            onClick={this.bulkUpdate.bind(this)}>
+            onClick={this.bulkUpdate.bind(this)}
+            onMouseDown={(e)=>{e.stopPropagation();}}
+            >
             Update
           </Button>
         </div>
