@@ -180,7 +180,6 @@ RSpec.describe 'ImportCollection' do
         expect(collection.samples.map(&:chemical).length).to eq(1)
       end
     end
-  end
 
     context 'with zip file including two cell line samples, material already existing' do
       let!(:cell_line) { create(:cellline_sample) }
