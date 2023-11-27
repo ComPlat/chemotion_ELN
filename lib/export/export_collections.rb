@@ -171,6 +171,7 @@ module Export
           cellline_sample_id: @uuids[type][sample.id],
         }
       end
+    end
 
     def fetch_chemicals(collection)
       chemicals = collection.samples.filter_map(&:chemical)
