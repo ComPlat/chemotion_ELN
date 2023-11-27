@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/prefer-stateless-function */
 import React, { Component } from 'react';
 import { Modal, Button } from 'react-bootstrap';
@@ -58,7 +59,13 @@ export default class ImageAnnotationModalSVG extends Component {
                 paletteShadowDOM.querySelectorAll('#js-se-palette > div:nth-child(n+19)')
                   .forEach((elem) => { elem.setAttribute('style', 'display: none'); });
                 paletteShadowDOM.querySelector('#js-se-palette')?.setAttribute('style', 'width: auto');
-                paletteShadowDOM.querySelector('#palette_holder')?.setAttribute('style', 'display: flex; width: auto; flex-direction: row; margin-right: 12px;');
+                const paletteHolder = paletteShadowDOM.querySelector('#palette_holder');
+                if (paletteHolder) {
+                  paletteHolder.setAttribute(
+                    'style',
+                    'display: flex; width: auto; flex-direction: row; margin-right: 12px;'
+                  );
+                }
               }
 
               // hide some panels
@@ -153,7 +160,12 @@ export default class ImageAnnotationModalSVG extends Component {
               fetch(`/api/v1/attachments/${attachment.id}/annotation`).finally(() => {
                 // make sure the iframe is visible after the fetch is done
                 // no matter if it fails or not...
-                const newStyle = this.iframe?.getAttribute('style')?.replace('visibility: hidden', 'visibility: visible');
+                const iframeStyle = this.iframe?.getAttribute('style');
+                const visibleStyle = iframeStyle?.replace(
+                  'visibility: hidden',
+                  'visibility: visible'
+                );
+                const newStyle = visibleStyle;
                 this.iframe?.setAttribute('style', newStyle);
               }).then((res) => res.text())
                 .then((text) => {
@@ -174,7 +186,10 @@ export default class ImageAnnotationModalSVG extends Component {
                         return '';
                       }
                     };
-                    const errorSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><text fill="#000000" font-size="12" stroke="#FF0000" stroke-width="0" text-anchor="middle" transform="matrix(7.15604 0 0 7.15604 -3493.72 -3162.82)" x="622.37" xml:space="preserve" y="525.48">Loading error :(</text></svg>';
+                    const errorSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1920"'
+                    + ' height="1080"><text fill="#000000" font-size="12" stroke="#FF0000" stroke-width="0"'
+                    + ' text-anchor="middle" transform="matrix(7.15604 0 0 7.15604 -3493.72 -3162.82)"'
+                    + ' x="622.37" xml:space="preserve" y="525.48">Loading error :(</text></svg>';
                     const svgString = decodeURIComponent(safeParseJson(text)) || errorSVG;
                     svgEditor.svgCanvas.setSvgString(svgString);
                   }

@@ -1,7 +1,9 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem, ButtonGroup
+  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
+  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -18,10 +20,14 @@ import Utils from 'src/utilities/Functions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ResearchPlan from 'src/models/ResearchPlan';
-import ResearchPlanDetailsAttachments from 'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
-import ResearchPlanDetailsBody from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
-import ResearchPlanDetailsName from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
-import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
+import ResearchPlanDetailsAttachments from
+  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+import ResearchPlanDetailsBody from
+  'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
+import ResearchPlanDetailsName from
+  'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
+import ResearchPlanDetailsContainers from
+  'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
@@ -62,17 +68,6 @@ export default class ResearchPlanDetails extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
-  toggleFullScreen() {
-    this.props.toggleFullScreen();
-
-    // toogle update prop to notify react data grid for view change
-    this.setState({ update: !this.state.update });
   }
 
   handleResearchPlanChange(el) {
@@ -159,7 +154,7 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleBodyDelete(id, attachments) {
+  handleBodyDelete(id) {
     const { researchPlan } = this.state;
     researchPlan.removeFieldFromBody(id);
     this.setState({ researchPlan });
@@ -217,6 +212,51 @@ export default class ResearchPlanDetails extends Component {
     ResearchPlansFetcher.exportTable(researchPlan, field);
   }
 
+  handleCopyToMetadata(id, fieldName) {
+    const { researchPlan } = this.state;
+    const researchPlanMetadata = researchPlan.research_plan_metadata;
+    const args = { research_plan_id: researchPlanMetadata.research_plan_id };
+    const index = researchPlan.body.findIndex((field) => field.id === id);
+    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
+    if (fieldName === 'name') {
+      researchPlanMetadata.title = researchPlan.name;
+      args.title = researchPlan.name.trim();
+    } else if (fieldName === 'subject') {
+      researchPlanMetadata.subject = value;
+      args.subject = value;
+    } else {
+      const type = researchPlan.body[index]?.title?.trim() || '';
+      const newItem = this.newItemByType(fieldName, value, type);
+
+      const currentCollection = researchPlanMetadata[fieldName]
+        ? researchPlanMetadata[fieldName] : [];
+      const newCollection = currentCollection.concat(newItem);
+      researchPlanMetadata[fieldName] = newCollection;
+      args[`${fieldName}`] = researchPlanMetadata[fieldName];
+    }
+
+    ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
+      if (result.error) {
+        alert(result.error);
+      }
+    });
+  }
+
+  handleAttachmentImportComplete() {
+    this.setState({ activeTab: 0 });
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  toggleFullScreen() {
+    this.props.toggleFullScreen();
+
+    // toogle update prop to notify react data grid for view change
+    this.setState({ update: !this.state.update });
+  }
+
   dropWellplate(wellplate) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
@@ -270,39 +310,6 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  handleCopyToMetadata(id, fieldName) {
-    const { researchPlan } = this.state;
-    const researchPlanMetadata = researchPlan.research_plan_metadata;
-    const args = { research_plan_id: researchPlanMetadata.research_plan_id };
-    const index = researchPlan.body.findIndex((field) => field.id === id);
-    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
-    if (fieldName === 'name') {
-      researchPlanMetadata.title = researchPlan.name;
-      args.title = researchPlan.name.trim();
-    } else if (fieldName === 'subject') {
-      researchPlanMetadata.subject = value;
-      args.subject = value;
-    } else {
-      const type = researchPlan.body[index]?.title?.trim() || '';
-      const newItem = this.newItemByType(fieldName, value, type);
-
-      const currentCollection = researchPlanMetadata[fieldName]
-        ? researchPlanMetadata[fieldName] : [];
-      const newCollection = currentCollection.concat(newItem);
-      researchPlanMetadata[fieldName] = newCollection;
-      args[`${fieldName}`] = researchPlanMetadata[fieldName];
-    }
-
-    ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
-      if (result.error) {
-        alert(result.error);
-      }
-    });
-  }
-
-  handleAttachmentImportComplete() {
-    this.setState({ activeTab: 0 });
-  }
   // render functions
 
   renderExportButton(disabled) {
@@ -483,11 +490,9 @@ export default class ResearchPlanDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
           <span>
             <i className="fa fa-file-text-o" />
-            &nbsp;
-            {' '}
+            &nbsp;&nbsp;
             <span>{researchPlan.name}</span>
-            {' '}
-            &nbsp;
+            &nbsp;&nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
