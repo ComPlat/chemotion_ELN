@@ -73,10 +73,11 @@ export default class MyCollections extends React.Component {
   label(node) {
     if (node.id == -1) {
       return (
-        <div className="root-label">
-          My Collections
-        </div>
-      )
+        <FormControl 
+        value ="My Collections" 
+        type="text" 
+        className="root-label" 
+        disabled/>);
     } else {
       return (
         <FormControl
