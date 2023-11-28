@@ -115,19 +115,19 @@ class Reaction < ApplicationRecord
   has_many :collections, through: :collections_reactions
   accepts_nested_attributes_for :collections_reactions
 
-  has_many :reactions_samples, dependent: :destroy
+  has_many :reactions_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :samples, through: :reactions_samples, source: :sample
   has_many :sample_molecules, through: :samples, source: :molecule
 
-  has_many :reactions_starting_material_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_starting_material_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
   has_many :starting_material_molecules, through: :starting_materials, source: :molecule
 
-  has_many :reactions_solvent_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_solvent_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :solvents, through: :reactions_solvent_samples, source: :sample
   has_many :solvent_molecules, through: :solvents, source: :molecule
 
-  has_many :reactions_purification_solvent_samples, -> { order(position: :asc) },
+  has_many :reactions_purification_solvent_samples, -> { includes(:sample).order(position: :asc) },
            dependent: :destroy
   has_many :purification_solvents,
            through: :reactions_purification_solvent_samples,
@@ -136,13 +136,16 @@ class Reaction < ApplicationRecord
            through: :reactions_purification_solvent_samples,
            source: :sample
 
-  has_many :reactions_reactant_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_reactant_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
-  has_many :reactions_product_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_product_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
+
+  has_many :reactions_intermediate_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
+  has_many :intermediate_samples, through: :reactions_intermediate_samples, source: :sample
 
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
@@ -165,6 +168,10 @@ class Reaction < ApplicationRecord
   after_create :update_counter
 
   has_one :container, as: :containable
+
+  has_one :reaction_process, -> { includes(:reaction_process_steps) },
+          class_name: 'ReactionProcessEditor::ReactionProcess',
+          inverse_of: :reaction, dependent: :destroy
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)

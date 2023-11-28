@@ -872,6 +872,15 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["well_id"], name: "index_measurements_on_well_id"
   end
 
+  create_table "media", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "type"
+    t.string "sum_formula"
+    t.string "sample_name"
+    t.string "molecule_name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "messages", id: :serial, force: :cascade do |t|
     t.integer "channel_id"
     t.jsonb "content", null: false
@@ -1067,6 +1076,68 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
+  create_table "provenances", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.datetime "starts_at"
+    t.string "city"
+    t.string "doi"
+    t.string "patent"
+    t.string "publication_url"
+    t.string "username"
+    t.string "name"
+    t.string "orcid"
+    t.string "organization"
+    t.string "email"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "reaction_process_activities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_step_id"
+    t.string "activity_name"
+    t.integer "position"
+    t.json "workup"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.uuid "reaction_process_vessel_id"
+  end
+
+  create_table "reaction_process_defaults", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "user_id"
+    t.jsonb "default_conditions"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "reaction_process_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.uuid "reaction_process_vessel_id"
+    t.string "name"
+    t.integer "position"
+    t.boolean "locked"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "reaction_process_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.uuid "vessel_id"
+    t.string "preparations", default: [], array: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+  end
+
+  create_table "reaction_processes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "reaction_id"
+    t.jsonb "default_conditions"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+  end
+
   create_table "reactions", id: :serial, force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -1123,6 +1194,10 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.uuid "reaction_process_step_id"
+    t.string "intermediate_type"
+    t.datetime "created_at", precision: 6
+    t.datetime "updated_at", precision: 6
     t.integer "gas_type", default: 0
     t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
     t.float "conversion_rate"
@@ -1321,18 +1396,29 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
-    t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
     t.jsonb "log_data"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.boolean "dry_solvent", default: false
+    t.boolean "hide_in_eln"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
+  end
+
+  create_table "samples_preparations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.integer "sample_id"
+    t.string "preparations", array: true
+    t.string "equipment", array: true
+    t.string "details"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "scan_results", force: :cascade do |t|
@@ -1654,9 +1740,11 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.jsonb "providers"
     t.bigint "used_space", default: 0
     t.bigint "allocated_space", default: 0
+    t.string "jti"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["jti"], name: "index_users_on_jti"
     t.index ["name_abbreviation"], name: "index_users_on_name_abbreviation", unique: true, where: "(name_abbreviation IS NOT NULL)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
@@ -1999,8 +2087,8 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -2115,10 +2203,9 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
           select sum(calculate_element_space(s.sample_id, 'Sample')) into used_space_samples from (
               select distinct sample_id
               from collections_samples
-              where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-          
+
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
@@ -2132,12 +2219,6 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
               where collection_id in (select id from collections where user_id = userId)
           ) wp;
           used_space = used_space + COALESCE(used_space_wellplates,0);
-
-          select sum(calculate_element_space(wp.screen_id, 'Screen')) into used_space_screens from (
-              select distinct screen_id
-              from collections_screens
-              where collection_id in (select id from collections where user_id = userId)
-          ) wp;
           used_space = used_space + COALESCE(used_space_screens,0);
 
           select sum(calculate_element_space(rp.research_plan_id, 'ResearchPlan')) into used_space_research_plans from (
