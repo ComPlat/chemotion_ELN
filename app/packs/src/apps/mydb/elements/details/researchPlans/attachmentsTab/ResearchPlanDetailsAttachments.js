@@ -325,7 +325,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
                   </Button>
                 ) : (
                   <>
-                    {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
                     {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
                     {editButton(
                       attachment,
@@ -352,6 +351,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                   </>
                 )}
               </div>
+              {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
             </div>
           ))
         )}
