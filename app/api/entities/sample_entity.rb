@@ -26,6 +26,8 @@ module Entities
       expose! :gas_phase_data
       expose! :user_labels
       expose! :weight_percentage
+      expose! :editor_link_target
+      expose! :intermediate_type
     end
 
     # Level 1 attributes
@@ -80,6 +82,7 @@ module Entities
       expose! :sample_type
       expose! :sample_details,                                      anonymize_with: nil
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
+      expose! :reaction_step
     end
     # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 
@@ -162,6 +165,25 @@ module Entities
       return @reactions_sample if defined?(@reactions_sample)
 
       @reactions_sample = object.reactions_samples.first
+    end
+
+    def intermediate_type
+      intermediate_sample&.intermediate_type
+    end
+
+    def reaction_step
+      # Enhancement for IntermediateSamples which originate from the ReactionProcessEditor
+      # We want to present the position of the ReactionProcessStep in which the object (Sample) was saved.
+      intermediate_sample&.reaction_process_step&.step_number
+    end
+
+    def editor_link_target
+      # The link to the Reaction Process Editor (external to the ELN).
+      "#{ENV.fetch('REACTION_PROCESS_EDITOR_HOSTNAME')}/samples/#{object.id}?auth=#{object.creator.jti_auth_token}"
+    end
+
+    def intermediate_sample
+      ReactionsIntermediateSample.find_by(sample_id: object.id)
     end
   end
 end

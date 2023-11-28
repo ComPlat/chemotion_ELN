@@ -15,6 +15,7 @@
 #  description         :text             default("")
 #  dry_solvent         :boolean          default(FALSE)
 #  external_label      :string           default("")
+#  hide_in_eln         :boolean
 #  identifier          :string
 #  imported_readout    :string
 #  impurities          :string           default("")
@@ -192,7 +193,7 @@ class Sample < ApplicationRecord
       OR EXISTS (
         SELECT 1 FROM reactions_samples rs
         WHERE rs.sample_id = samples.id
-          AND rs.type IN ('ReactionsProductSample', 'ReactionsStartingMaterialSample')
+          AND rs.type IN ('ReactionsIntermediateSample', 'ReactionsProductSample', 'ReactionsStartingMaterialSample')
       )
     SQL
   }
@@ -220,6 +221,8 @@ class Sample < ApplicationRecord
     end
   }
 
+  scope :visible, -> { where(hide_in_eln: [nil, false]) }
+
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
@@ -236,6 +239,8 @@ class Sample < ApplicationRecord
   after_save :update_gas_material
   after_save :update_svg_for_reactions, unless: :skip_reaction_svg_update?
 
+  after_update_commit :update_intermediate_amounts_in_process_editor
+
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
@@ -244,7 +249,10 @@ class Sample < ApplicationRecord
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
+  has_many :reactions_intermediate_samples, dependent: :destroy
+
   has_many :elements_samples, dependent: :destroy, class_name: 'Labimotion::ElementsSample'
+  has_many :samples_preparations, dependent: :destroy, class_name: 'ReactionProcessEditor::SamplesPreparation'
 
   has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
@@ -280,6 +288,10 @@ class Sample < ApplicationRecord
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   belongs_to :molecule, optional: true
+
+  has_one :reaction_process,
+          class_name: 'ReactionProcessEditor::ReactionProcess',
+          inverse_of: :sample, dependent: :destroy
 
   accepts_nested_attributes_for :molecule_name
   accepts_nested_attributes_for :collections_samples
@@ -752,7 +764,7 @@ class Sample < ApplicationRecord
     return unless rel_reaction_id
 
     ReactionsSample.where(reaction_id: rel_reaction_id,
-                          type: %w[ReactionsProductSample ReactionsReactantSample
+                          type: %w[ReactionsProductSample ReactionsReactantSample ReactionsIntermediateSample
                                    ReactionsStartingMaterialSample]).find_each(&:update_equivalent)
   end
 
@@ -817,8 +829,8 @@ class Sample < ApplicationRecord
   end
 
   def set_boiling_melting_points
-    self.boiling_point = Range.new(-Float::INFINITY, Float::INFINITY, '()') if boiling_point.nil?
-    self.melting_point = Range.new(-Float::INFINITY, Float::INFINITY, '()') if melting_point.nil?
+    self.boiling_point ||= Range.new(-Float::INFINITY, Float::INFINITY, '()')
+    self.melting_point ||= Range.new(-Float::INFINITY, Float::INFINITY, '()')
   end
 
   def update_molecule_name
@@ -828,7 +840,7 @@ class Sample < ApplicationRecord
   end
 
   def has_molarity
-    molarity_value.present? && molarity_value.positive? && density.zero?
+    molarity_value&.positive? && density.zero?
   end
 
   def has_density
@@ -931,6 +943,10 @@ class Sample < ApplicationRecord
 
   def valid_molecular_weight?
     molecule&.molecular_weight.present? && molecule.molecular_weight.to_f.positive?
+  end
+
+  def update_intermediate_amounts_in_process_editor
+    Usecases::ReactionProcessEditor::Samples::UpdateIntermediateAmountsInWorkup.execute!(sample: self)
   end
 end
 # rubocop:enable Metrics/ClassLength

@@ -50,6 +50,7 @@ export function createGasPhaseReaction() {
     reactants: [],
     solvents: [],
     purification_solvents: [],
+    intermediate_samples: [],
     products: [],
   };
 

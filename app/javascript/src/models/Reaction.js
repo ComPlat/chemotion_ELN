@@ -147,6 +147,7 @@ export default class Reaction extends Element {
       purification_solvents: [],
       reactants: [],
       reactant_sbmm_samples: [],
+      intermediate_samples: [],
       rf_value: 0.00,
       role: '',
       user_labels: [],
@@ -228,6 +229,7 @@ export default class Reaction extends Element {
       materials: {
         starting_materials: this.starting_materials.map((s) => s.serializeMaterial()),
         reactants: this.reactants.map((s) => s.serializeMaterial()),
+        intermediate_samples: this.intermediate_samples.map(s => s.serializeMaterial()),
         solvents: this.solvents.map((s) => s.serializeMaterial()),
         purification_solvents: this.purification_solvents.map((s) => s.serializeMaterial()),
         products: this.products.map((s) => s.serializeMaterial()),
@@ -477,6 +479,14 @@ export default class Reaction extends Element {
     this._reactant_sbmm_samples = this._coerceToSbmmSamples(samples);
   }
 
+  get intermediate_samples() {
+    return this._intermediate_samples
+  }
+
+  set intermediate_samples(samples) {
+    this._intermediate_samples = this._coerceToSamples(samples);
+  }
+
   get products() {
     return this._products;
   }
@@ -489,6 +499,7 @@ export default class Reaction extends Element {
     return [
       ...this.starting_materials || [],
       ...this.reactants || [],
+      ...this.intermediate_samples || [],
       ...this.solvents || [],
       ...this.purification_solvents || [],
       ...this.products || [],
@@ -553,6 +564,13 @@ export default class Reaction extends Element {
         copiedSample._target_amount_value = null;
         copiedSample.equivalent = null;
       }
+      return copiedSample;
+    });
+    copy.intermediate_samples = this.intermediate_samples.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      copiedSample._real_amount_value = null;
+      copiedSample._target_amount_value = null;
+      copiedSample.equivalent = null;
       return copiedSample;
     });
 
@@ -1025,7 +1043,7 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material, refreshCoefficient) {
-    const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    const cats = ['starting_materials', 'reactants', 'intermediate_samples', 'solvents', 'products'];
     let i = 0;
     let group;
 
@@ -1068,7 +1086,7 @@ export default class Reaction extends Element {
     const referenceAmountMol = refMat.amount_mol;
 
     if (refMat && referenceAmountMol) {
-      ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
+      ['_starting_materials', '_reactants', '_solvents', '_products', '_intermediate_samples'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
@@ -1102,8 +1120,10 @@ export default class Reaction extends Element {
 
   get totalVolume() {
     let totalVolume = 0.0;
-    const materials = [...this.starting_materials,
+    const materials = [
+      ...this.starting_materials,
       ...this.reactants,
+      ...this.intermediate_samples,
       ...this.products,
       ...this.solvents];
     materials.map((m) => totalVolume += m.amount_l);
