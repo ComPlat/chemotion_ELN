@@ -9,6 +9,7 @@ require 'rspec/repeat'
 require 'webmock/rspec'
 
 require 'factory_bot_rails'
+require 'test_prof/recipes/rspec/factory_default'
 require 'faker'
 require 'capybara'
 require 'webdrivers'

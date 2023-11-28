@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: reactions_samples
@@ -31,7 +33,7 @@ class ReactionsSample < ApplicationRecord
   has_logidze
   acts_as_paranoid
   belongs_to :reaction, optional: true
-  belongs_to :sample, optional: true
+  belongs_to :sample, -> { includes %i[molecule residues] }, optional: true
 
   before_validation :set_default
 
@@ -80,4 +82,17 @@ class ReactionsProductSample < ReactionsSample
     eq = equivalent
     eq && !eq.nan? ? "#{(eq * 100).round} %" : '0 %'
   end
+end
+
+class ReactionsIntermediateSample < ReactionsSample
+  scope :visible, -> { joins(:sample).merge(Sample.visible) }
+
+  def reaction_step
+    # TODO: Provisional. replaces former attribute "step_number" which gets never updated (prone to age badly.)
+    # Write a spec, maybe move to some more appropriate place.
+    ::ReactionProcessEditor::ReactionProcessStep.find_by(id: reaction_process_step_id)&.step_number
+  end
+
+  include Reactable
+  include Tagging
 end

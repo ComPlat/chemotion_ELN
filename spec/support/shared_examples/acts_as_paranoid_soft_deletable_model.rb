@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Shared specs for models with the `acts_as_paranoid` features.
-RSpec.shared_examples 'acts_as_paranoid soft-deletable model' do
+RSpec.shared_examples 'acts_as_paranoid soft-deletable model' do |factory_name|
   it { is_expected.to have_db_column(:deleted_at) }
 
   describe 'has scopes' do
@@ -14,7 +14,8 @@ RSpec.shared_examples 'acts_as_paranoid soft-deletable model' do
   end
 
   context 'deleting instance' do
-    subject { create(described_class.to_s.underscore.to_sym) }
+    let(:factory_class) { factory_name || described_class.to_s.underscore.to_sym }
+    subject { create(factory_class) }
 
     it 'only soft-deletes' do
       expect { subject.destroy }.to change {

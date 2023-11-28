@@ -593,6 +593,9 @@ GEM
     rspec-expectations (3.13.5)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
+    rspec-its (1.3.0)
+      rspec-core (>= 3.0.0)
+      rspec-expectations (>= 3.0.0)
     rspec-mocks (3.13.5)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
@@ -737,6 +740,7 @@ GEM
     sys-filesystem (1.5.3)
       ffi (~> 1.1)
     temple (0.10.3)
+    test-prof (1.4.4)
     thor (1.4.0)
     tilt (2.6.0)
     timeout (0.4.3)
@@ -902,6 +906,7 @@ DEPENDENCIES
   roo
   rqrcode
   rspec
+  rspec-its
   rspec-rails
   rspec-repeat
   rtf
@@ -931,6 +936,7 @@ DEPENDENCIES
   spring
   stackprof
   sys-filesystem
+  test-prof (~> 1.0)
   thor
   thumbnailer!
   turbo-sprockets-rails4

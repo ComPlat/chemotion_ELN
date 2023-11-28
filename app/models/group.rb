@@ -37,12 +37,14 @@
 #  providers              :jsonb
 #  used_space             :bigint           default(0)
 #  allocated_space        :bigint           default(0)
+#  jti                    :string
 #
 # Indexes
 #
 #  index_users_on_confirmation_token    (confirmation_token) UNIQUE
 #  index_users_on_deleted_at            (deleted_at)
 #  index_users_on_email                 (email) UNIQUE
+#  index_users_on_jti                   (jti)
 #  index_users_on_name_abbreviation     (name_abbreviation) UNIQUE WHERE (name_abbreviation IS NOT NULL)
 #  index_users_on_reset_password_token  (reset_password_token) UNIQUE
 #  index_users_on_unlock_token          (unlock_token) UNIQUE

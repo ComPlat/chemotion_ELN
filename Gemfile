@@ -180,11 +180,14 @@ group :test do
   gem 'database_cleaner-active_record'
 
   gem 'factory_bot_rails'
+  gem 'test-prof', '~> 1.0'
 
   gem 'launchy'
 
   gem 'rspec-repeat'
 
+  # Convenient RSpec Syntax
+  gem 'rspec-its'
   gem 'shoulda-matchers'
 
   gem 'simplecov', require: false
