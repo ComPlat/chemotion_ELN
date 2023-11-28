@@ -22,6 +22,7 @@
 #  encrypted_password        :string           default(""), not null
 #  failed_attempts           :integer          default(0), not null
 #  first_name                :string           not null
+#  jti                       :string
 #  last_name                 :string           not null
 #  last_sign_in_at           :datetime
 #  last_sign_in_ip           :inet
@@ -51,6 +52,7 @@
 #  index_users_on_confirmation_token    (confirmation_token) UNIQUE
 #  index_users_on_deleted_at            (deleted_at)
 #  index_users_on_email                 (email) UNIQUE
+#  index_users_on_jti                   (jti)
 #  index_users_on_name_abbreviation     (name_abbreviation) UNIQUE WHERE (name_abbreviation IS NOT NULL)
 #  index_users_on_reset_password_token  (reset_password_token) UNIQUE
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
@@ -65,12 +67,17 @@ class User < ApplicationRecord
   attr_accessor :provider, :uid
 
   acts_as_paranoid
+
+  include Devise::JWT::RevocationStrategies::JTIMatcher
+
   # Include default devise modules. Others available are: :timeoutable
 
   devise :database_authenticatable, :registerable, :confirmable,
          :recoverable, :rememberable, :trackable, :validatable,
          :lockable, :omniauthable,
+         :jwt_authenticatable,
          :two_factor_authenticatable,
+         jwt_revocation_strategy: self,
          authentication_keys: [:login],
          otp_secret_encryption_key: Rails.application.config.otp_secret_encryption_key
 
@@ -80,6 +87,7 @@ class User < ApplicationRecord
   has_many :collections
   has_many :samples, -> { unscope(:order).distinct }, through: :collections
   has_many :reactions, through: :collections
+  has_many :reaction_processes, dependent: nil
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
@@ -115,6 +123,8 @@ class User < ApplicationRecord
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
   has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
+
+  has_one :reaction_process_defaults, class_name: 'ReactionProcessEditor::ReactionProcessDefaults', dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 
@@ -199,6 +209,7 @@ class User < ApplicationRecord
   def check_otp(otp_attempt)
     validate_and_consume_otp!(otp_attempt)
   end
+
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
     if (login = conditions.delete(:login))
@@ -469,6 +480,10 @@ class User < ApplicationRecord
     return 0 if default_admin.nil?
 
     default_admin.allocated_space
+  end
+
+  def jti_auth_token
+    JWT.encode({ sub: id, jti: jti }, Rails.application.secrets.secret_key_base)
   end
 
   private

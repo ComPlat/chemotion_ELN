@@ -21,5 +21,6 @@ module Entities
     expose! :conversion_rate
     expose! :weight_percentage_reference
     expose! :weight_percentage
+    expose! :intermediate_type
   end
 end

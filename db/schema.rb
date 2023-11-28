@@ -786,6 +786,15 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.time "deleted_at"
   end
 
+  create_table "fractions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "position"
+    t.uuid "parent_action_id"
+    t.uuid "consuming_action_id"
+    t.string "vials", default: [], array: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "info_support_links", force: :cascade do |t|
     t.string "label", null: false
     t.string "url", null: false
@@ -891,6 +900,15 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["well_id"], name: "index_measurements_on_well_id"
   end
 
+  create_table "media", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "type"
+    t.string "sum_formula"
+    t.string "name"
+    t.string "molecule_name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "messages", id: :serial, force: :cascade do |t|
     t.integer "channel_id"
     t.jsonb "content", null: false
@@ -982,6 +1000,35 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.datetime "updated_at", null: false
     t.index ["ancestry"], name: "index_ols_terms_on_ancestry", opclass: :varchar_pattern_ops
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
+  end
+
+  create_table "ontologies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "ontology_id"
+    t.string "name"
+    t.string "label"
+    t.string "link"
+    t.jsonb "roles", default: {}
+    t.string "detectors", default: [], array: true
+    t.string "solvents", default: [], array: true
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "stationary_phase", array: true
+    t.string "ontology_type"
+  end
+
+  create_table "ontology_device_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "ontology_id"
+    t.string "label"
+    t.jsonb "detectors"
+    t.jsonb "mobile_phase", default: [], array: true
+    t.jsonb "stationary_phase", default: [], array: true
+    t.jsonb "default_inject_volume"
+    t.string "description"
+    t.jsonb "steps"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "pg_search_documents", id: :serial, force: :cascade do |t|
@@ -1086,6 +1133,79 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
+  create_table "provenances", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.datetime "starts_at"
+    t.string "city"
+    t.string "doi"
+    t.string "patent"
+    t.string "publication_url"
+    t.string "username"
+    t.string "name"
+    t.string "orcid"
+    t.string "organization"
+    t.string "email"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "reaction_process_activities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_step_id"
+    t.string "activity_name"
+    t.integer "position"
+    t.json "workup"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.uuid "reaction_process_vessel_id"
+    t.jsonb "automation_response"
+    t.integer "automation_ordinal"
+  end
+
+  create_table "reaction_process_defaults", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "user_id"
+    t.jsonb "default_conditions"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "reaction_process_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.uuid "reaction_process_vessel_id"
+    t.string "name"
+    t.integer "position"
+    t.boolean "locked"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.string "automation_mode"
+    t.jsonb "automation_control"
+  end
+
+  create_table "reaction_process_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.uuid "vesselable_id"
+    t.string "preparations", default: [], array: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.string "vesselable_type"
+    t.string "cleanup"
+  end
+
+  create_table "reaction_processes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "reaction_id"
+    t.jsonb "default_conditions"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.integer "automation_ordinal"
+    t.integer "sample_id"
+    t.integer "user_id"
+    t.jsonb "sample_setup", default: {}
+    t.uuid "reaction_process_vessel_id"
+  end
+
   create_table "reactions", id: :serial, force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -1167,6 +1287,8 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.jsonb "log_data"
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
+    t.uuid "reaction_process_activity_id"
+    t.string "intermediate_type"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
@@ -1364,6 +1486,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
     t.jsonb "log_data"
+    t.boolean "hide_in_eln"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -1372,6 +1495,16 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["short_label"], name: "index_samples_on_short_label"
     t.index ["user_id"], name: "index_samples_on_user_id"
+  end
+
+  create_table "samples_preparations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "reaction_process_id"
+    t.integer "sample_id"
+    t.string "preparations", array: true
+    t.string "equipment", array: true
+    t.string "details"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "scan_results", force: :cascade do |t|
@@ -1681,9 +1814,11 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.integer "consumed_timestep"
     t.boolean "otp_required_for_login"
     t.string "otp_backup_codes", array: true
+    t.string "jti"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["jti"], name: "index_users_on_jti"
     t.index ["name_abbreviation"], name: "index_users_on_name_abbreviation", unique: true, where: "(name_abbreviation IS NOT NULL)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
@@ -1721,6 +1856,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.datetime "deleted_at"
     t.float "weight_amount"
     t.string "weight_unit"
+    t.string "automation_modes", array: true
     t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
     t.index ["name"], name: "index_vessel_templates_on_name", unique: true
   end
@@ -1823,21 +1959,6 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
          and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
          and upper(extended_metadata -> 'instrument') like upper($2 || '%')
          order by extended_metadata -> 'instrument' limit 10
-       $function$
-  SQL
-  create_function :collection_shared_names, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-       select array_to_json(array_agg(row_to_json(result))) from (
-       SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
-       sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
-       FROM sync_collections_users
-       INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
-       WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
-       group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
-       ) as result
        $function$
   SQL
   create_function :user_ids, sql_definition: <<-'SQL'
@@ -2051,24 +2172,6 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
           END;
           RETURN NEW;
       END;
-      $function$
-  SQL
-  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	if (TG_OP='INSERT') then
-      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
-      	end if;
-      	if (TG_OP='UPDATE') then
-      		if new.MOLFILE <> old.MOLFILE then
-      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
-      		end if;
-      	end if;
-      	return new;
-      end
       $function$
   SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
@@ -2702,6 +2805,24 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
       END;
       $function$
   SQL
+  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      begin
+      	if (TG_OP='INSERT') then
+      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
+      	end if;
+      	if (TG_OP='UPDATE') then
+      		if new.MOLFILE <> old.MOLFILE then
+      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
+      		end if;
+      	end if;
+      	return new;
+      end
+      $function$
+  SQL
 
 
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
@@ -2710,14 +2831,14 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
   create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
+  create_trigger :logidze_on_components, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_components BEFORE INSERT OR UPDATE ON public.components FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_containers, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_device_descriptions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_device_descriptions BEFORE INSERT OR UPDATE ON public.device_descriptions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_components, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_components BEFORE INSERT OR UPDATE ON public.components FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')

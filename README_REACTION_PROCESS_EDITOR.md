@@ -1,0 +1,227 @@
+# ReactionProcessEditor
+
+The Reaction Process Editor is a separate React project allowing to visually compose and edit the actual reaction processes. It uses and requires a running ELN instance as API backend.
+
+The Reaction Process Editor (RPE) is open source (MIT license) hosted on
+<https://github.com/ComPlat/reaction-process-editor>
+
+## Setup
+
+### Backend
+
+The ELN version required for the RPE has been merged into main. 
+The most recent developments and changes can be found in the ELN repository in branch
+`reaction-process-editor`. It try to keep it as up to date and rebase it to the most recent `main` as frequently as possible.
+
+
+It adds some ActiveRecord models, API access points, Grape Entity Serializing and last not least the definition of and the export to the generic Chemical Lab Automation Process Protocol (CLAP) reaction database format.
+
+For the proper functioning of the Frontend Editor
+
+* The db seeds in `db/seeds/process_editor.seed.rb` need to run (they are included in the regular `rake db:seed` run).
+
+* The RPE Frontend Hostname needs to be set as ENV['REACTION_PROCESS_EDITOR_HOSTNAME'] which needs to be defined in `.env`
+* (`export REACTION_PROCESS_EDITOR_HOSTNAME="http://localhost:4000"` in your shell will also work).
+
+#### Ontologies Editor & Import
+
+The RPE makes heavy use of so called Ontologies. 
+
+An Ontology can be an entity of any kind (e.g. Device, Vessel, Substance, Process, AutomationMode, Action type etc.) and is a globally defined concept with lots of Ontologies defined in a globally unique database. 
+
+See https://www.ebi.ac.uk/ols4/ontologies/chmo for an introduction. This public database serves as base in Ontology database which is also extended by custom tailoredand generic ontologies. 
+
+The Ontology AR-model thereby stores not only the ontology_id but specifies what roles an Ontology can serve as along with (optional) dependencies to other  Ontologies. 
+
+This directly translates to select options and defines in which forms and in which select-fields an Ontology is provided as well as which interdependencies are (dynamically) reflected.  I.E. certain Equipment (e.g. "Cannula") depends on type of an Action (e.g. "Liquid Transfer"). Certain Detectors are only available for certain actions (e.g. "BID", "EI-MS", "FID" only for "Gas Chromatography") and so on. 
+
+These dependencies are stored in a sophisticated and historically grown, rather complicated format. We had a bunch of Ontology definition files along with an ImportOntologies class (see below) to manage them. 
+
+Recently we have introduced an OntologyEditor in the RPE so the Ontologies can now easily be managed on th web page.
+
+
+### Manual Ontology Import (Legacy / mostly obsolete)
+
+Historically we placed CSV files containing those Ontology definition files in a dedicated directory and imported them manually. An SFTP sync with cron job import had been implemented but never been used and recently been removed. 
+
+The Importer is still present `Import::ReactionProcessEditor::ImportOntologies` and is now only used for seeding (with useful data checked in) or very rarely for manual interventions. 
+
+Additionally there are the required settings:
+
+```env
+REACTION_PROCESS_EDITOR_DATA_DIR='data/reaction-process-editor'
+REACTION_PROCESS_EDITOR_DEVICES_FILENAME="ChemASAP-Devices.csv"
+REACTION_PROCESS_EDITOR_DEVICENAME_PREFIX="ChemASAP_"
+REACTION_PROCESS_EDITOR_DEVICE_METHODS_SUFFIX='.lcm'
+```
+
+which are tailored to parsing the CSV files and should not be altered (except for maybe the DATA_DIR which was chosen to match the existing datacollector directories consistently).
+
+`REACTION_PROCESS_EDITOR_DATA_DIR` is the local directory where the CSV files need to be placed manually.
+
+The data needs to be structured as follows.
+`Devices.csv` carrying the index of the devices and their characteristics.
+A subdirectory `./devices` with the files of the individual devices defining their individual methods.
+
+This data is created externally by the automation lab team and we do not have to cope with it here.
+
+The whole process is now basically obsoleted. If you still need to know details, contact Christian Buggle <christian@buggle.net> or Patrick Hodapp <patrick.hodapp@kit.edu>.
+
+### Frontend
+
+The frontend is a plain React yarn app to be installed and started with `yarn install`, `yarn start`.
+It requires the hostname of the ELN backend along to be set in its `.env`. For details see the README there.
+
+## Structure
+
+### Data model
+
+[note: `Activity` and `ReactionProcessActivity` are used synonymously within this section]
+
+The basic structure both in frontend and backend is:
+Reaction <-1:1-> ReactionProcess <-1:n-> ReactionProcessStep <-1:n-> ReactionProcessActivity>
+
+#### The ReactionProcess
+
+The ReactionProcess is the root entity in the RPE. It maps 1:1 to a reaction with the purpose to separate RPE data from
+ELN code as much as possible. When a reaction is first accessed through the RPE API, its respective (initially empty)
+ReactionProcess will be created in the ELN database.
+
+#### The ReactionProcessStep
+
+A ReactionProcess typically consists of several ReactionProcessSteps. They contain a single swimlane of the reaction
+process, idealized "everything that happens within one and the same vessel". Consequently a ReactionProcessSteps
+can be assigned a vessel.
+
+#### The ReactionProcessActivity
+
+Each ReactionProcessStep consist of a multitude of ReactionProcessActivities. This is where the core of the the reaction process data lies.
+
+There are two basic types of ReactionProcessActivities
+
+1. "ACTION" (Add, Remove, Purification, Wait, …) These define everything that "can be done".
+2. "CONDITION". These define the changes in environment conditions, i.e. Temperature, Pressure, PH. Beyond, Motion and Equipment
+are also considered environment conditions in this model.
+
+Technically both are treated equally in defining the "Activities" within a process step (i.e. in the ReactionProcessStep has_many :reaction_process_activities association, ordered by their `position`), which each can be either an `Action` or a `Condition`.
+
+An ReactionProcessActivity carries these relevant attributes:
+
+* `action_name`: defines the type of the Activity, which can basically be any arbitrary string value describing the Activity. A set of are implemented and used for the required funcionalities: "ADD", "REMOVE", "MOTION", "PURIFICATION", "ANALYSIS", "SAVE", "TRANSFER", "WAIT", "DISCARD", "DEFINE_FRACTION", "CONDITION".
+
+* `position`: The order of the action within the associated reaction_process_step.
+
+* `workup`: This is were the actual Activity data is stored. It is used as a key value store, i.e. a hash to store the parameters of the Activity  where (by convention) the stored data semantically "matches" the functionality provided by the respective Activity. Most of this has been thoroughly
+discussed with NJung and is subject to further enhancements. Basically we use self-defined arbitraty key-value pairs describing
+the parameters and details of the respective Activity, e.g.
+`action_name: "ADD", workup: { acts_as:'SOLVENT', sample_id:'1', amount: { value: '100', unit; 'ml'} }`
+
+As they fulfill no external schema it is a bit hard to validate and keep track of them. In fact they are provided mostly
+by the the respective input fields in the frontend RPE which set them when filled out and sent as part of the request.
+The only actual validation (2023-12-11) is on `"ADD"` Activities validating that `workup[:sample_id]` is set.
+
+On the other hand this makes it very easy to handle and store arbitrary data and later transform them into CLAP format for further processing.
+
+### API endpoints
+
+The relevant API endpoints for ReactionProcess, ReactionProcessStep, ReactionProcessAction for the required behavior are mostly following REST / resource routing conventions.
+
+The "source of truth" is always the Database. All relevant changes will be persisted as soon as possible and all reaction process data will be refetched *entirely* by the Editor even after minimal changes.
+
+### Medium, Medium::MediumSamples, Medium::Additives, Medium::DiverseSolvent
+
+Apart from the Samples defined and provided by a given Reaction, we need "Medium", "Additives" and "Diverse Solvents" that will be offered to the User as Samples in the RPE UI.
+
+This is done via the DB-table "media" and the ruby model "Medium::Medium" as base class (STI) for "Medium::MediumSample"  "Medium::Additive",
+ "Medium::DiverseSolvents" (provided in UI Selects for adding Media). For ease of handling, `Medium` defines some void methods
+ mimicking the `Sample` model to provide consistent attributes (e.g. "short_label", "target_amount_value") for consistent handling in the Frontend UI.
+
+### Vessels
+
+The management of existing Vessels and VesselTemplates is happening in the backend, outside the scope of the RPE.
+The RPE only provides functions to assign a Vessel to a ReactionProcessStep and to certain ReactionProcessActions.
+
+### Noteworthy in API
+
+* The reaction data is initially fetched from the "/reactions/:id" Endpoint, which will implicitly and idempotently create a ReactionProcess for the given reaction when non-existant.
+
+## ReactionProcessEditor Frontend hints
+
+### Action Forms
+
+The most important part of the Editor Frontend is `ActivityForm.jsx`
+
+It consists of two parts, the general and the action specific fields.
+The general part has field "description".
+The generic part is split up into (at time of writing) 9 sub-forms which are selected in ActionForm depending on the "action_name" of the action. => ActionForm.jsx is a good place to lookup which action_names are in use semantically (i.e.well-defined and have an existing form partial implemented), and each of the 9 sub_partial (actionForms/generic/*Form.jsx) is a good place to lookup which workup are used semantically.
+
+The root frontend component of the Editor (i.e.. ReactionProcess data) is the ReactionProcessEditor.
+It is included from APP.js with "reaction" as the only prop.
+
+The ReactionProcessEditor stores the associated ReactionProcess as state,
+and (re)fetches the ReactionProcess from the backend by it's id whenever relevant changes occur.
+
+For details see the ReactionProcessEditor project and the relevante README there. 
+
+## Automation
+
+The ReactionProcessEditor and the CLAP export output file is tailored to serve the automation as required in the KIT automation lab.
+We have some events where the Lab needs to feedback intermediate results to the ReactionProcessEditor / ELN. This is done through the AutomationApi. 
+
+### Automation API authorization
+
+To use the Automation API you will need the credentials of an ELN ReactionProcessEditor::ApiUser and sign_in via
+
+* POST /api/v1/reaction_process_editor/sign_in
+  * using basic_auth. The response will carry an authorization header with a Bearer Token. The token can then subsequently be used to access the other endpoints with the Bearer Token in the authorization header.
+  * The Bearer Token has a lifetime of 24h.
+
+* POST /api/v1/reaction_process_editor/sign_in
+  * Can be used to sign out after a session.
+
+### Automation API endpoints
+
+There are currently 2 API endpoints serving for automation lab feedback. To access these endpoint you need to send along an Authorization Header with the Bearer Token as described above.
+
+* PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_response
+  * This endpoints serves to send automation feedback (which is currenty required in `Chromatography` Activities only). It accepts the parameter "response_json" with a json file containing the results of the automation in a specific JSON format, describing the vial-plates and vials as returned from the automation devices.
+
+* PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_status
+  * This endpoint serves to update the automation status, particularly to report the completed run of a ReactionProcessActivity. It accepts the parameter "automation_status". As of this writing, "COMPLETED" is the only accepted value, all others will be silently discarded.
+
+### AutomationControl & -status model
+
+The automation status model handles the synchronization of the Editor with the actual Reaction Process in the automation lab particularly for ReactionProcessActivities that need user feedback after having run.
+
+Each ReactionProcessActivity can be in one of the following states.
+
+* RUN
+  * The activity can run unrestrictedly.
+* HALT
+  * The process halts after running this activity and feedback will be provided by the automation lab.
+* AUTOMATION_RESPONDED
+  * The automation feedback has been received through the api (after a HALT) and user interaction is now required (most commonly applies in Chromatography activities).
+* HALT_RESOLVED_NEEDS_CONFIRMATION
+  * The required User feedback has been provided (e.g. selecting vials for pooling groups) but not yet comnfirmed. The automation response has been processed manually but can still be changed. The user needs to manually confirm the resolved response. This is a separate state for better handling.
+* HALT_RESOLVED
+  * The automation response has been processed and confirmed manually. This Action can now run/continue.
+* DEPENDS_ON_ACTION
+  * This Action depends on the completion of a previous Action.
+* DEPENDS_ON_STEP
+  * This Action depends on the completion of a preceding previous entire ReactionProcessStep.
+* COMPLETED
+  * This ReactionProcessActivity has completed successfully
+
+The ReactionProcessSteps subsequently manage their own status
+
+* STEP_CAN_RUN
+  * The ReactionProcessStep can run unrestrictedly.
+* STEP_COMPLETED
+  * All of the ReactionProcessStep's ReactionProcessActivities have been completed and thus the ReactionProcessStep itself is complete.
+* STEP_DEPENDS_ON_PRECEDING
+  * There is a ReactionProcessActivity in some prior ReactionProcessStep that HALTS the automation process (i.e. in status "HALT", "AUTOMATION_RESPONDED", "HALT_RESOLVED_NEEDS_CONFIRMATION" ). This is required to stop ReactionProcessSteps from running while there might still be a dependency to an earlier ReactionProcessSteps.
+* STEP_MANUAL_PROCEED
+  * A STEP_HALT_BY_PRECEDING status has been overridden by the user to allow a ReactionProcessStep to run in parallel.
+
+The ReactionProcessSteps status is determined mostly automatically; STEP_CAN_RUN, STEP_COMPLETED simply denote that a Step can run unrestrictedly or has been completed, respectively. ReactionProcessStep status evaluates to STEP_HALT_BY_PRECEDING when there is a ReactionProcessActivity in a prior ReactionProcessStep that (supposedly) requires halting the Automation.
+This can be overriden by the user to STEP_MANUAL_PROCEED when the user decides that a ReactionProcessStep can be performed in parallel without any actual/real dependencies to the ReactionProcess being halted. STEP_MANUAL_PROCEED will only apply when status evaluates to STEP_DEPENDS_ON_PRECEDING.
