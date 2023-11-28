@@ -27,7 +27,8 @@ export default class OrderModeHeader extends React.Component {
   renderNotDeletedContainer() {
     const { container } = this.props;
     const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
-    const kind = container.extended_metadata.kind.split('|')[1] || '';
+    const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
+    const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
     const contentOneLine = {
       ops: content.ops.map((x) => {
         const c = { ...x };
@@ -45,7 +46,7 @@ export default class OrderModeHeader extends React.Component {
             <div className="sub-title">
               Type:
               {' '}
-              {kind}
+              {titleKind}
             </div>
             <div className="sub-title">
               Status:
