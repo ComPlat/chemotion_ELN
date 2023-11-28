@@ -62,7 +62,7 @@ export default class WellplatesFetcher {
       }
       return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', json.wellplate.id, delFiles)();
     })
-      .then(() => BaseFetcher.updateAnnotationsInContainer(wellplate))
+      .then(() => BaseFetcher.updateAnnotations(wellplate))
       .then(() => WellplatesFetcher.fetchById(wellplate.id))
       .catch((errorMessage) => {
         console.log(errorMessage);
