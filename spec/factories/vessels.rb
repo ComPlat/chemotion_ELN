@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :vessel do
     creator factory: :person
     vessel_template
-    name { 'Vessel 1' }
-    description { 'description of vessel usage' }
+    sequence(:name) { |n| "Vessel #{n}" }
+    description { 'Big vessel for all kinds of activity' }
   end
 end
