@@ -161,15 +161,18 @@ export default class ResearchPlanDetails extends Component {
   }
 
   // handle attachment actions
-
   handleAttachmentDrop(files) {
-    const { researchPlan } = this.state;
-    researchPlan.changed = true;
-    files.forEach((file) => {
-      const attachment = Attachment.fromFile(file);
-      researchPlan.attachments.push(attachment);
+    this.setState((prevState) => {
+      const newAttachments = files.map((file) => Attachment.fromFile(file));
+      const updatedAttachments = prevState.researchPlan.attachments.concat(newAttachments);
+      const updatedResearchPlan = new ResearchPlan({
+        ...prevState.researchPlan,
+        attachments: updatedAttachments,
+        changed: true
+      });
+
+      return { researchPlan: updatedResearchPlan };
     });
-    this.setState({ researchPlan });
   }
 
   handleAttachmentDelete(attachment) {

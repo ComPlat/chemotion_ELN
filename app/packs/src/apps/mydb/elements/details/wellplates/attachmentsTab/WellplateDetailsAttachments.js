@@ -82,9 +82,7 @@ export default class WellplateDetailsAttachments extends Component {
     const { attachments } = this.props;
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
-    }
-    if (prevProps.attachments !== this.props.attachments) {
-      this.setState({ filteredAttachments: [...this.props.attachments] }, this.filterAndSortAttachments);
+      this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
     }
   }
 
@@ -396,6 +394,13 @@ WellplateDetailsAttachments.propTypes = {
       PropTypes.number
     ]).isRequired,
     changed: PropTypes.bool.isRequired,
+    body: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        type: PropTypes.string.isRequired,
+      })
+    ).isRequired,
     attachments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.oneOfType([

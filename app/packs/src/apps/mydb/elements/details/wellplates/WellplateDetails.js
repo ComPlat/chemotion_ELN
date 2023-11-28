@@ -161,15 +161,18 @@ export default class WellplateDetails extends Component {
   }
 
   // handle attachment actions
-
   handleAttachmentDrop(files) {
-    const { wellplate } = this.state;
-    wellplate.changed = true;
-    files.forEach((file) => {
-      const attachment = Attachment.fromFile(file);
-      wellplate.attachments.push(attachment);
+    this.setState((prevState) => {
+      const newAttachments = files.map((file) => Attachment.fromFile(file));
+      prevState.wellplate.attachments = [
+        ...prevState.wellplate.attachments || [],
+        ...newAttachments
+      ];
+
+      prevState.wellplate.changed = true;
+
+      return { wellplate: prevState.wellplate };
     });
-    this.setState({ wellplate });
   }
 
   handleAttachmentDelete(attachment) {

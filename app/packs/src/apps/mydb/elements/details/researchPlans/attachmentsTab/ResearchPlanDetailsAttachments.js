@@ -65,9 +65,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const { attachments } = this.props;
     if (attachments !== prevProps.attachments) {
       this.createAttachmentPreviews();
-    }
-    if (prevProps.attachments !== this.props.attachments) {
-      this.setState({ filteredAttachments: [...this.props.attachments] }, this.filterAndSortAttachments);
+      this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
     }
   }
 
