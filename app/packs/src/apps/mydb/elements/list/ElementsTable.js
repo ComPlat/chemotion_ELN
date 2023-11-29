@@ -174,7 +174,7 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = filters[type]?.group || 'none';
       // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.elementsSort = filters[type]?.sort || true;
+      this.state.elementsSort =  filters[type]?.sort ?? true;
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.sortDirection = filters[type]?.direction || 'DESC';
     }
