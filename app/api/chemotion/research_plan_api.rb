@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   # rubocop: disable Metrics/ClassLength
 
@@ -20,8 +22,8 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).research_plans
+            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                      .find(params[:collection_id]).research_plans
           rescue ActiveRecord::RecordNotFound
             ResearchPlan.none
           end
@@ -136,6 +138,17 @@ module Chemotion
             present ResearchPlanTableSchema.find(params[:id]).destroy, with: Entities::ResearchPlanTableSchemaEntity
           end
         end
+      end
+
+      desc 'Return element linked to research plan'
+      params do
+        requires :id, type: Integer, desc: 'Research plan id'
+        requires :element, type: String, desc: 'Sample or Reaction'
+      end
+
+      get 'linked' do
+        type = "#{params[:element]}_id"
+        ResearchPlan.where('body @> ?', [{ value: { type => params[:id] } }].to_json).select(:id, :name)
       end
 
       desc 'Return serialized research plan by id'

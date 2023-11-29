@@ -6,32 +6,43 @@ import Reaction from 'src/models/Reaction';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import ResearchPlansFetcher from './ResearchPlansFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
-  static fetchById(id) {
-    return fetch(`/api/v1/reactions/${id}.json`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then((json) => {
-        if (json.hasOwnProperty("reaction")) {
-          const reaction = new Reaction(json.reaction);
-          if (json.literatures && json.literatures.length > 0) {
-            const tliteratures = json.literatures.map(literature => new Literature(literature));
-            const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
-            reaction.literatures = lits;
+  static async fetchById(id) {
+    try {
+      const response = await fetch(`/api/v1/reactions/${id}.json`, {
+        credentials: 'same-origin'
+      }).then(response => response.json())
+        .then((json) => {
+          if (json.hasOwnProperty("reaction")) {
+            const reaction = new Reaction(json.reaction);
+            if (json.literatures && json.literatures.length > 0) {
+              const tliteratures = json.literatures.map(literature => new Literature(literature));
+              const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
+              reaction.literatures = lits;
+            }
+            if (json.research_plans && json.research_plans.length > 0) {
+              reaction.research_plans = json.research_plans;
+            }
+            reaction.updateMaxAmountOfProducts();
+            return reaction;
           }
-          reaction.updateMaxAmountOfProducts();
-          return reaction;
-        }
-        const rReaction = new Reaction(json.reaction);
-        if (json.error) {
-          rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
-        }
-        return rReaction;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          const rReaction = new Reaction(json.reaction);
+          if (json.error) {
+            rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
+          }
+          return rReaction;
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+      const researchPlans = await ResearchPlansFetcher.fetchResearchPlansForElements(id, response.type);
+      response['research_plans'] = researchPlans;
+      return response;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
@@ -78,10 +89,10 @@ export default class ReactionsFetcher {
       return Promise.all(tasks).then(() => {
         return promise();
       });
-    }    
-   
+    }
+
     return promise();
-  } 
+  }
 
   static updateAnnotationsInReaction(reaction){
      const tasks=[];
@@ -89,7 +100,7 @@ export default class ReactionsFetcher {
      return Promise.all(tasks);
   }
 
-  static update(reaction) {    
+  static update(reaction) {
     return ReactionsFetcher.create(reaction, 'put');
   }
 }

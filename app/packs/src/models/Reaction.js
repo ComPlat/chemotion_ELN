@@ -114,6 +114,7 @@ export default class Reaction extends Element {
       duration: '',
       durationDisplay: DurationDefault,
       literatures: {},
+      research_plans: {},
       name: '',
       observation: Reaction.quillDefault(),
       products: [],
@@ -175,6 +176,7 @@ export default class Reaction extends Element {
       durationCalc: this.durationCalc(),
       id: this.id,
       literatures: this.literatures,
+      research_plans: this.research_plans,
       materials: {
         starting_materials: this.starting_materials.map(s => s.serializeMaterial()),
         reactants: this.reactants.map(s => s.serializeMaterial()),
@@ -864,8 +866,16 @@ export default class Reaction extends Element {
     return this._literatures || {};
   }
 
+  get research_plans() {
+      return this._research_plans || {};
+    }
+
   set literatures(literatures) {
     this._literatures = literatures;
+  }
+
+  set research_plans(research_plans) {
+    this._research_plans = research_plans;
   }
 
   get totalVolume() {

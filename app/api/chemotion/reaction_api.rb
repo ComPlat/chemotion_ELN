@@ -91,6 +91,7 @@ module Chemotion
 
         get do
           reaction = Reaction.find(params[:id])
+          class_name = reaction&.class&.name
 
           {
             reaction: Entities::ReactionEntity.represent(
@@ -98,7 +99,7 @@ module Chemotion
               policy: @element_policy,
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
-            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction')),
+            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], class_name)),
           }
         end
       end
