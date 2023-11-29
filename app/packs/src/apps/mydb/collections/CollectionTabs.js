@@ -128,8 +128,11 @@ export default class CollectionTabs extends React.Component {
   label(node) {
     if (node.label === 'My Collections') {
       return (
-        <div className="root-label">My Collections</div>
-      );
+        <FormControl 
+        value ="My Collections" 
+        type="text" 
+        className="root-label" 
+        disabled/>);
     }
     return (
       <FormControl className="collection-label" type="text" value={node.label || ''} disabled />
