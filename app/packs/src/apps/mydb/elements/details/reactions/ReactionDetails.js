@@ -7,6 +7,7 @@ import {
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -279,6 +280,10 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
+    const rsPlanLabel = (reaction.isNew || _.isEmpty(reaction.research_plans)) ? null : (
+      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+    );
+
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
@@ -344,6 +349,7 @@ export default class ReactionDetails extends Component {
         </OverlayTrigger>
         <div style={{ display: "inline-block", marginLeft: "10px" }}>
           {colLabel}
+          {rsPlanLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
           <HeaderCommentSection element={reaction} />
         </div>
@@ -473,7 +479,6 @@ export default class ReactionDetails extends Component {
     const tabTitlesMap = {
       green_chemistry: 'Green Chemistry'
     }
-
 
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 

@@ -295,4 +295,17 @@ export default class ResearchPlansFetcher {
 
     return Promise.all(updateTasks);
   }
+
+  static fetchResearchPlansForElements(id, element) {
+    return fetch(`/api/v1/research_plans/linked?id=${id}&element=${element}`, {
+      credentials: 'same-origin',
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }
