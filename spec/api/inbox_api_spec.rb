@@ -56,13 +56,13 @@ describe Chemotion::InboxAPI do
     describe 'GET /api/v1/inbox' do
       context 'when fetching the inbox' do
         let!(:inbox_container_root) { create(:inbox_container_root) }
-        let!(:inbox_container_child1) do
+        let!(:inbox_container_child_first) do
           create(:inbox_container_with_attachments,
                  name: '1-Dev',
                  number_of_attachments: 2,
                  created_at: Time.zone.parse('2023-10-08 12:00:00'))
         end
-        let!(:inbox_container_child2) do
+        let!(:inbox_container_child_second) do
           create(:inbox_container_with_attachments,
                  name: '2-Dev',
                  number_of_attachments: 3,
@@ -70,8 +70,8 @@ describe Chemotion::InboxAPI do
         end
 
         before do
-          inbox_container_root.children << inbox_container_child1
-          inbox_container_root.children << inbox_container_child2
+          inbox_container_root.children << inbox_container_child_first
+          inbox_container_root.children << inbox_container_child_second
           inbox_container_root.save!
 
           user.container = inbox_container_root
@@ -83,8 +83,8 @@ describe Chemotion::InboxAPI do
           expect(JSON.parse(response.body)['inbox']['children'].size).to eq(2)
           expect(JSON.parse(response.body)['inbox']['children'].pluck('id')).to eq(
             [
-              inbox_container_child1.id,
-              inbox_container_child2.id,
+              inbox_container_child_first.id,
+              inbox_container_child_second.id,
             ],
           )
         end
@@ -94,8 +94,8 @@ describe Chemotion::InboxAPI do
 
           expect(JSON.parse(response.body)['inbox']['children'].pluck('id')).to eq(
             [
-              inbox_container_child2.id,
-              inbox_container_child1.id,
+              inbox_container_child_second.id,
+              inbox_container_child_first.id,
             ],
           )
         end

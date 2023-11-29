@@ -120,7 +120,6 @@ class InboxStore {
 
     const { currentPage, itemsPerPage, activeDeviceBoxId } = this.state;
     InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId });
-    // this.handleRefreshElements(filter.name);
   }
 
   handleFetchInboxCount(result) {

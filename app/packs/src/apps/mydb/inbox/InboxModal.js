@@ -134,12 +134,13 @@ export default class InboxModal extends React.Component {
   };
 
   renderSortButton() {
-    const { sortColumn } = this.state;
-    const sortTitle = sortColumn === 'name'
+    this.initState();
+
+    const sortTitle = this.state.sortColumn === 'name'
         ? `click to sort by creation date (descending) - currently sorted by name (ascending)`
         : `click to sort by name (ascending) - currently sorted by creation date (descending)`;
     const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = sortColumn === 'name' ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-desc' : 'fa-clock-o';
     const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
