@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
@@ -50,15 +51,24 @@ export default class InboxModal extends React.Component {
     this.initState();
   }
 
-  componentWillUnmount() {
-    InboxStore.unlisten(this.onChange);
-  }
-
   componentDidUpdate(prevProps, prevState) {
     const { currentPage, itemsPerPage } = this.state;
     if (prevState.currentPage !== currentPage
         || prevState.itemsPerPage !== itemsPerPage) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    }
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  handlePageChange(pageNumber) {
+    const { totalPages } = this.state;
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      this.setState({
+        currentPage: pageNumber
+      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
     }
   }
 
@@ -182,12 +192,6 @@ export default class InboxModal extends React.Component {
     this.setState({ colMdValue: newColMdValue });
   };
 
-  refreshInbox() {
-    const { currentPage, itemsPerPage } = this.state;
-    LoadingActions.start();
-    InboxActions.fetchInbox({ currentPage, itemsPerPage });
-  }
-
   handleMouseDown = (e) => {
     e.preventDefault();
 
@@ -208,6 +212,12 @@ export default class InboxModal extends React.Component {
     document.removeEventListener('mouseup', this.handleMouseUp);
   };
 
+  refreshInbox() {
+    const { currentPage, itemsPerPage } = this.state;
+    LoadingActions.start();
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
+  }
+
   lockedSubtrees() {
     const roots = this.state.lockedRoots;
 
@@ -218,7 +228,7 @@ export default class InboxModal extends React.Component {
     const { currentPage, totalPages } = this.state;
 
     if (totalPages <= 1) {
-      return;
+      return null;
     }
 
     const pageNumbers = [];
@@ -245,10 +255,22 @@ export default class InboxModal extends React.Component {
       <div className="list-pagination">
         <Pagination>
           <Pagination.First disabled={currentPage === 1} key="First" onClick={() => this.handlePageChange(1)} />
-          <Pagination.Prev disabled={currentPage === 1} key="Prev" onClick={() => this.handlePageChange(currentPage - 1)} />
+          <Pagination.Prev
+            disabled={currentPage === 1}
+            key="Prev"
+            onClick={() => this.handlePageChange(currentPage - 1)}
+          />
           {pageNumbers}
-          <Pagination.Next disabled={currentPage === totalPages} key="Next" onClick={() => this.handlePageChange(currentPage + 1)} />
-          <Pagination.Last disabled={currentPage === totalPages} key="Last" onClick={() => this.handlePageChange(totalPages)} />
+          <Pagination.Next
+            disabled={currentPage === totalPages}
+            key="Next"
+            onClick={() => this.handlePageChange(currentPage + 1)}
+          />
+          <Pagination.Last
+            disabled={currentPage === totalPages}
+            key="Last"
+            onClick={() => this.handlePageChange(totalPages)}
+          />
         </Pagination>
       </div>
     );
@@ -262,8 +284,7 @@ export default class InboxModal extends React.Component {
       inbox.children.sort((a, b) => {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
-
-      boxes = inbox.children.map(deviceBox => (
+      boxes = inbox.children.map((deviceBox) => (
         <DeviceBox
           key={`box_${deviceBox.id}`}
           device_box={deviceBox}
@@ -293,7 +314,8 @@ export default class InboxModal extends React.Component {
     const { collectorAddress } = this.state;
     return (
       <Tooltip id="assignButton">
-        You can send yourself files to your inbox by emailing them from your registered email to the following email address:
+        You can send yourself files to your inbox by emailing them
+        from your registered email to the following email address:
         { ' ' }
         {collectorAddress}
         { ' ' }
@@ -318,15 +340,13 @@ export default class InboxModal extends React.Component {
     );
   };
 
-  renderSizingIcons = () => {
-    return (
-      <div className="button-right">
-        {this.renderSizingIcon('fa-inbox', 'regular', 'Smaller Inbox')}
-        {this.renderSizingIcon('fa-inbox fa-lg', 'large', 'Regular Inbox')}
-        {this.renderSizingIcon('fa-inbox fa-2x', 'extra-large', 'Larger Inbox')}
-      </div>
-    );
-  }
+  renderSizingIcons = () => (
+    <div className="button-right">
+      {this.renderSizingIcon('fa-inbox', 'regular', 'Smaller Inbox')}
+      {this.renderSizingIcon('fa-inbox fa-lg', 'large', 'Regular Inbox')}
+      {this.renderSizingIcon('fa-inbox fa-2x', 'extra-large', 'Larger Inbox')}
+    </div>
+  );
 
   collectorAddressInfoButton() {
     const { collectorAddress } = this.state;
@@ -362,7 +382,9 @@ export default class InboxModal extends React.Component {
         >
           <div
             className={panelClass}
-            style={{ zIndex: 10, position: 'absolute', top: '70px', left: '10px' }}
+            style={{
+              zIndex: 10, position: 'absolute', top: '70px', left: '10px'
+            }}
           >
             <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading
