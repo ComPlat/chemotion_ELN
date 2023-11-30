@@ -137,13 +137,13 @@ export default class InboxModal extends React.Component {
     this.initState();
 
     const sortTitle = this.state.sortColumn === 'name'
-        ? `click to sort by creation date (descending) - currently sorted by name (ascending)`
-        : `click to sort by name (ascending) - currently sorted by creation date (descending)`;
+        ? `click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)`
+        : `click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)`;
     const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
     const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
-      <OverlayTrigger placement="top" overlay={sortTooltip}>
+      <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <button
             type="button"
             className="btn-inbox-sort"
@@ -238,6 +238,10 @@ export default class InboxModal extends React.Component {
 
     let boxes = '';
     if (inbox.children) {
+      inbox.children.sort((a, b) => {
+        if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
+      });
+
       boxes = inbox.children.map(deviceBox => (
         <DeviceBox
           key={`box_${deviceBox.id}`}
@@ -282,7 +286,7 @@ export default class InboxModal extends React.Component {
 
     return (
       <CopyToClipboard text={collectorAddress}>
-        <OverlayTrigger placement="top" overlay={this.infoMessage()}>
+        <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
           <Button
             bsSize="xsmall"
             className="btn btn-circle btn-sm btn-info button-right"
@@ -300,7 +304,7 @@ export default class InboxModal extends React.Component {
       visible, inboxVisible, numberOfAttachments, collectorAddress
     } = this.state;
 
-    const panelClass = showCollectionTree ? 'small-col col-md-6' : 'small-col col-md-5';
+    const panelClass = showCollectionTree ? 'small-col col-md-4' : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
 
     if (visible) {

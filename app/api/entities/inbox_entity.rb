@@ -36,9 +36,11 @@ module Entities
       [start_index, end_index]
     end
 
+    # here the datasets within the deviceBoxes are being sorted
+
     def sort_parent_objects(parent_objects)
-      sorted_parents = parent_objects.sort_by { |container, _| container.send(options[:sort_column]) }
-      options[:sort_column].eql?('created_at') ? sorted_parents.reverse : sorted_parents
+      sorted_parents = parent_objects.sort_by { |container, _| container.send(options[:dataset_sort_column]) }
+      options[:dataset_sort_column].eql?('created_at') ? sorted_parents.reverse : sorted_parents
     end
 
     def serialize_children(container_tree_hash)
@@ -65,7 +67,7 @@ module Entities
         attachable_type: 'Container',
         attachable_id: nil,
         created_for: object&.containable&.id,
-      ).order(created_at: :desc)
+      ).order("#{options[:sort_column]} #{options[:sort_direction]}")
     end
 
     def all_descendants_attachments
@@ -75,7 +77,7 @@ module Entities
                                                          FROM attachments AS sub_attachments
                                                          WHERE sub_attachments.attachable_id = attachments.attachable_id
                                                          LIMIT 50
-                                                       )").order(created_at: :desc)
+                                                       )").order("#{options[:sort_column]} #{options[:sort_direction]}")
     end
 
     def inbox_count

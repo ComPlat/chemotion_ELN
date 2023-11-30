@@ -5,7 +5,7 @@ class InboxService
     @container = container
   end
 
-  def to_hash(device_boxes, full_response = true)
+  def to_hash(device_boxes, sort_params, full_response = true)
     if full_response
       {
         inbox: {
@@ -16,7 +16,7 @@ class InboxService
             attachable_type: 'Container',
             attachable_id: nil,
             created_for: @container&.containable&.id,
-          ).order(created_at: :desc),
+          ).order("#{sort_params[:sort_column]} #{sort_params[:sort_direction]}"),
           inbox_count: Container.where(id: @container.descendant_ids)
                                 .joins(children: :attachments)
                                 .count('attachments.id'),
@@ -29,7 +29,7 @@ class InboxService
             attachable_type: 'Container',
             attachable_id: nil,
             created_for: @container&.containable&.id,
-          ).order(created_at: :desc),
+          ).order("#{sort_params[:sort_column]} #{sort_params[:sort_direction]}"),
           inbox_count: Container.where(id: @container.descendant_ids)
                                 .joins(children: :attachments)
                                 .count('attachments.id'),

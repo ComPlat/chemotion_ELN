@@ -4,6 +4,14 @@ module Chemotion
   class InboxAPI < Grape::API
     helpers ParamsHelpers
 
+    helpers do
+      def build_sort_params(params_sort_column)
+        sort_column = params_sort_column.eql?('created_at') ? params_sort_column : 'filename'
+        sort_direction = sort_column.eql?('created_at') ? 'DESC' : 'ASC'
+        { sort_column: sort_column, sort_direction: sort_direction }
+      end
+    end
+
     resource :inbox do
       params do
         requires :cnt_only, type: Boolean, desc: 'return count number only'
@@ -23,10 +31,9 @@ module Chemotion
                                           root: :inbox,
                                           only: [:inbox_count]
         else
-          sort_column = params[:sort_column].presence || 'name'
-          sort_direction = sort_column == 'created_at' ? 'DESC' : 'ASC'
+          sort_params = build_sort_params(params[:sort_column])
 
-          scope = current_user.container.children.order("#{sort_column} #{sort_direction}")
+          scope = current_user.container.children.order(:name)
 
           reset_pagination_page(scope)
 
@@ -35,7 +42,7 @@ module Chemotion
           end
 
           inbox_service = InboxService.new(current_user.container)
-          present inbox_service.to_hash(device_boxes, true)
+          present inbox_service.to_hash(device_boxes, sort_params, true)
         end
       end
 
@@ -52,20 +59,31 @@ module Chemotion
         if current_user.container.present?
           container = current_user.container.children.find params[:container_id]
 
-          sort_column = params[:sort_column].presence || 'name'
+          dataset_sort_column = params[:sort_column].presence || 'name'
+          sort_params = build_sort_params(params[:sort_column])
 
           Entities::InboxEntity.represent(container,
                                           root_container: false,
                                           dataset_page: params[:dataset_page],
-                                          sort_column: sort_column,
+                                          dataset_sort_column: dataset_sort_column,
+                                          sort_column: sort_params[:sort_column],
+                                          sort_direction: sort_params[:sort_direction],
                                           root: :inbox)
         end
       end
 
       desc 'Returns unlinked attachments for inbox'
+      params do
+        optional :sort_column, type: String, desc: 'sort unlinked attachments by creation time or name',
+                               values: %w[created_at name],
+                               default: 'name'
+      end
+
       get 'unlinked_attachments' do
+        sort_params = build_sort_params(params[:sort_column])
+
         inbox_service = InboxService.new(current_user.container)
-        present inbox_service.to_hash(nil, false)
+        present inbox_service.to_hash(nil, sort_params, false)
       end
 
       resource :samples do
