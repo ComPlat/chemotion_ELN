@@ -174,22 +174,34 @@ export default class InboxModal extends React.Component {
 
   handleSizingIconClick = (size) => {
     let newColMdValue;
-
     switch (size) {
-      case 'regular':
+      case 'Small':
         newColMdValue = 3;
         break;
-      case 'large':
+      case 'Medium':
         newColMdValue = 4;
         break;
-      case 'extra-large':
+      case 'Large':
         newColMdValue = 5;
         break;
       default:
         newColMdValue = 4;
     }
-
     this.setState({ colMdValue: newColMdValue });
+  };
+
+  getSizeLabel = () => {
+    const { colMdValue } = this.state;
+    switch (colMdValue) {
+      case 3:
+        return 'Small';
+      case 4:
+        return 'Medium';
+      case 5:
+        return 'Large';
+      default:
+        return 'Unknown';
+    }
   };
 
   handleMouseDown = (e) => {
@@ -315,38 +327,40 @@ export default class InboxModal extends React.Component {
     return (
       <Tooltip id="assignButton">
         You can send yourself files to your inbox by emailing them
-        from your registered email to the following email address:
-        { ' ' }
+        <br />
+        from your registered email to the following email address:&nbsp;
         {collectorAddress}
-        { ' ' }
-        . Click to copy the address to your clipboard.
+        .
+        <br />
+        Click to copy the address to your clipboard.
       </Tooltip>
     );
   }
 
-  renderSizingIcon = (iconClass, size, tooltipText) => {
-    const iconStyle = { verticalAlign: 'baseline', marginRight: '8px' };
+  renderSizingIcon = () => {
+    const tooltipText = `Change inbox size (Currently: ${this.getSizeLabel()})`;
+    const sizes = ['Small', 'Medium', 'Large'];
 
     return (
-      <OverlayTrigger placement="bottom" overlay={<Tooltip id={`${size}_inbox__tooltip`}>{tooltipText}</Tooltip>}>
-        <button
-          type="button"
-          className="btn-inbox-resize"
-          onClick={() => this.handleSizingIconClick(size)}
+      <OverlayTrigger placement="top" overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}>
+        <DropdownButton
+          title="Size"
+          className="header-button"
+          id="dropdown-size-button"
+          bsStyle="info"
+          bsSize="xs"
+          style={{ marginLeft: '10px' }}
+
         >
-          <i className={`fa ${iconClass}`} style={iconStyle} />
-        </button>
+          {sizes.map((size) => (
+            <MenuItem key={size} eventKey={size} onSelect={this.handleSizingIconClick}>
+              {size}
+            </MenuItem>
+          ))}
+        </DropdownButton>
       </OverlayTrigger>
     );
   };
-
-  renderSizingIcons = () => (
-    <div className="button-right">
-      {this.renderSizingIcon('fa-inbox', 'regular', 'Smaller Inbox')}
-      {this.renderSizingIcon('fa-inbox fa-lg', 'large', 'Regular Inbox')}
-      {this.renderSizingIcon('fa-inbox fa-2x', 'extra-large', 'Larger Inbox')}
-    </div>
-  );
 
   collectorAddressInfoButton() {
     const { collectorAddress } = this.state;
@@ -356,9 +370,9 @@ export default class InboxModal extends React.Component {
         <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
           <Button
             bsSize="xsmall"
-            className="btn btn-circle btn-sm btn-info button-right"
+            className="header-button"
           >
-            <Glyphicon glyph="info-sign" />
+            <i className="fa fa-info" />
           </Button>
         </OverlayTrigger>
       </CopyToClipboard>
@@ -392,42 +406,51 @@ export default class InboxModal extends React.Component {
                 id="draggableInbox"
                 onMouseDown={this.handleMouseDown}
               >
-                <button
-                  type="button"
-                  className="btn-inbox"
-                  onClick={() => this.onClickInbox()}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'
+                }}
                 >
-                  <i className="fa fa-inbox" />
-                  <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
-                </button>
-                {
+                  <div>
+                    <button
+                      type="button"
+                      className="btn-inbox"
+                      onClick={() => this.onClickInbox()}
+                    >
+                      <i className="fa fa-inbox" />
+                      <span style={{ marginLeft: '10px', marginRight: '5px', fontWeight: 'bold' }}>Inbox</span>
+                    </button>
+                    {
                   numberOfAttachments > 0 ? (
                     <Badge>
-                      {' '}
+                      &nbsp;
                       {numberOfAttachments}
-                      {' '}
+                      &nbsp;
                     </Badge>
                   ) : ''
                 }
-                <Button
-                  bsStyle="danger"
-                  bsSize="xsmall"
-                  className="button-right"
-                  onClick={InboxActions.toggleInboxModal}
-                >
-                  <i className="fa fa-times" />
-                </Button>
-                {this.renderSortButton()}
-                <Button
-                  bsStyle="success"
-                  bsSize="xsmall"
-                  className="button-right"
-                  onClick={() => this.refreshInbox()}
-                >
-                  <Glyphicon bsSize="small" glyph="refresh" />
-                </Button>
-                {collectorAddress ? this.collectorAddressInfoButton() : null}
-                {this.renderSizingIcons()}
+                  </div>
+                  <div>
+                    {this.renderSortButton()}
+                    {collectorAddress ? this.collectorAddressInfoButton() : null}
+                    {this.renderSizingIcon()}
+                    <Button
+                      bsStyle="success"
+                      bsSize="xs"
+                      className="header-button"
+                      onClick={() => this.refreshInbox()}
+                    >
+                      <i className="fa fa-refresh" />
+                    </Button>
+                    <Button
+                      bsStyle="danger"
+                      bsSize="xs"
+                      className="header-button"
+                      onClick={InboxActions.toggleInboxModal}
+                    >
+                      <i className="fa fa-close" />
+                    </Button>
+                  </div>
+                </div>
               </Panel.Heading>
               <Panel.Body>
                 <div>
