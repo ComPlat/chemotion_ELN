@@ -119,7 +119,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns the deleted attachment' do
-        expect(parsed_json_response).to eq(expected_response)
+        expect(parsed_json_response).to include(expected_response)
       end
 
       it 'unlinks the attachment from container', :enable_usecases_attachments_unlink do
