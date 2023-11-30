@@ -1,19 +1,21 @@
 import React from 'react';
-import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import {
+  Nav, Navbar, Tooltip, OverlayTrigger
+} from 'react-bootstrap';
 import UserAuth from 'src/components/navigation/UserAuth';
 import Search from 'src/components/navigation/search/Search';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
 import ContextActions from 'src/components/contextActions/ContextActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore'
+import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import NavNewSession from 'src/components/navigation/NavNewSession'
-import NavHead from 'src/components/navigation/NavHead'
+import NavNewSession from 'src/components/navigation/NavNewSession';
+import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
-import SearchFilter from 'src/components/navigation/search/SearchFilter.js'
+import SearchFilter from 'src/components/navigation/search/SearchFilter';
 import PropTypes from 'prop-types';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 
@@ -28,13 +30,13 @@ export default class Navigation extends React.Component {
       showAdvancedSearch: false,
       modalProps: {
         show: false,
-        title: "",
-        component: "",
+        title: '',
+        component: '',
         action: null,
         listSharedCollections: false,
       },
       omniauthProviders: []
-    }
+    };
     this.onChange = this.onChange.bind(this);
     this.onUIChange = this.onUIChange.bind(this);
     this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
@@ -42,7 +44,7 @@ export default class Navigation extends React.Component {
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange)
+    UIStore.listen(this.onUIChange);
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
     UserActions.fetchGenericEls();
@@ -50,13 +52,13 @@ export default class Navigation extends React.Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIChange)
+    UIStore.unlisten(this.onUIChange);
     UserStore.unlisten(this.onChange);
   }
 
   onChange(state) {
-    let newId = state.currentUser ? state.currentUser.id : null
-    let oldId = this.state.currentUser ? this.state.currentUser.id : null
+    const newId = state.currentUser ? state.currentUser.id : null;
+    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
     if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
@@ -92,7 +94,7 @@ export default class Navigation extends React.Component {
   }
 
   token() {
-    return DocumentHelper.getMetaContent("csrf-token")
+    return DocumentHelper.getMetaContent('csrf-token');
   }
 
   updateModalProps(modalProps) {
@@ -119,11 +121,11 @@ export default class Navigation extends React.Component {
   navHeader() {
     return (
       <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{ cursor: "pointer" }}>
+        <Navbar.Text style={{ cursor: 'pointer' }}>
           <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
             <i
               className="fa fa-list"
-              style={{ fontStyle: "normal", visibility: this.props.isHidden ? 'hidden' : 'visible' }}
+              style={{ fontStyle: 'normal', visibility: this.props.isHidden ? 'hidden' : 'visible' }}
               onClick={this.toggleCollectionTree}
             />
           </OverlayTrigger>
@@ -131,37 +133,53 @@ export default class Navigation extends React.Component {
         <Navbar.Text />
         <NavHead />
       </Navbar.Header>
-    )
+    );
   }
 
   render() {
-    const { modalProps, showAdvancedSearch, genericEls, omniauthProviders, extraRules } = this.state;
+    const {
+      modalProps, showAdvancedSearch, genericEls, omniauthProviders, extraRules
+    } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
-      ? <Navbar fluid className='navbar-custom'>
-        {this.navHeader()}
-        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-          <Search />
-          <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-          <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
-          <NavigationModal {...modalProps} />
-        </Nav>
-        <UserAuth />
-        <OpenCalendarButton />
-        <div style={{ clear: "both" }} />
-        <SearchFilter searchFunc={this.advancedSearch}
-          show={showAdvancedSearch} />
-      </Navbar>
-      : <Navbar fluid className='navbar-custom'>
-        {this.navHeader()}
-        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-          <Search noSubmit={true} />
-        </Nav>
-        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
-        <div style={{ clear: "both" }} />
-      </Navbar>
-    )
+      ? (
+        <Navbar fluid className="navbar-custom">
+          {this.navHeader()}
+          <Nav navbar className="navbar-form" style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
+            <Search />
+            <ManagingActions
+              updateModalProps={this.updateModalProps}
+              customClass={customClass}
+              genericEls={genericEls}
+            />
+            <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+            <NavigationModal {...modalProps} />
+          </Nav>
+          <UserAuth />
+          <OpenCalendarButton />
+          <div style={{ clear: 'both' }} />
+          <SearchFilter
+            searchFunc={this.advancedSearch}
+            show={showAdvancedSearch}
+          />
+        </Navbar>
+      )
+      : (
+        <Navbar fluid className="navbar-custom">
+          {this.navHeader()}
+          <Nav navbar className="navbar-form" style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
+            <Search noSubmit />
+          </Nav>
+          <NavNewSession
+            authenticityToken={this.token()}
+            omniauthProviders={omniauthProviders}
+            extraRules={extraRules}
+          />
+          <div style={{ clear: 'both' }} />
+        </Navbar>
+      )
+    );
   }
 }
 
