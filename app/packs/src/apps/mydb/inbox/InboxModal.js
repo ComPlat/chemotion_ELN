@@ -32,6 +32,7 @@ export default class InboxModal extends React.Component {
       totalPages: inboxState.totalPages,
       activeDeviceBoxId: inboxState.activeDeviceBoxId,
       sortColumn: 'name',
+      colMdValue: 4,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -161,6 +162,26 @@ export default class InboxModal extends React.Component {
     );
   }
 
+  handleSizingIconClick = (size) => {
+    let newColMdValue;
+
+    switch (size) {
+      case 'regular':
+        newColMdValue = 3;
+        break;
+      case 'large':
+        newColMdValue = 4;
+        break;
+      case 'extra-large':
+        newColMdValue = 5;
+        break;
+      default:
+        newColMdValue = 4;
+    }
+
+    this.setState({ colMdValue: newColMdValue });
+  };
+
   refreshInbox() {
     const { currentPage, itemsPerPage } = this.state;
     LoadingActions.start();
@@ -281,6 +302,32 @@ export default class InboxModal extends React.Component {
     );
   }
 
+  renderSizingIcon = (iconClass, size, tooltipText) => {
+    const iconStyle = { verticalAlign: 'baseline', marginRight: '8px' };
+
+    return (
+      <OverlayTrigger placement="bottom" overlay={<Tooltip id={`${size}_inbox__tooltip`}>{tooltipText}</Tooltip>}>
+        <button
+          type="button"
+          className="btn-inbox-resize"
+          onClick={() => this.handleSizingIconClick(size)}
+        >
+          <i className={`fa ${iconClass}`} style={iconStyle} />
+        </button>
+      </OverlayTrigger>
+    );
+  };
+
+  renderSizingIcons = () => {
+    return (
+      <div className="button-right">
+        {this.renderSizingIcon('fa-inbox', 'regular', 'Smaller Inbox')}
+        {this.renderSizingIcon('fa-inbox fa-lg', 'large', 'Regular Inbox')}
+        {this.renderSizingIcon('fa-inbox fa-2x', 'extra-large', 'Larger Inbox')}
+      </div>
+    );
+  }
+
   collectorAddressInfoButton() {
     const { collectorAddress } = this.state;
 
@@ -301,10 +348,10 @@ export default class InboxModal extends React.Component {
   render() {
     const { showCollectionTree } = this.props;
     const {
-      visible, inboxVisible, numberOfAttachments, collectorAddress
+      visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
     } = this.state;
 
-    const panelClass = showCollectionTree ? 'small-col col-md-4' : 'small-col col-md-5';
+    const panelClass = showCollectionTree ? `small-col col-md-${colMdValue}` : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
 
     if (visible) {
@@ -358,6 +405,7 @@ export default class InboxModal extends React.Component {
                   <Glyphicon bsSize="small" glyph="refresh" />
                 </Button>
                 {collectorAddress ? this.collectorAddressInfoButton() : null}
+                {this.renderSizingIcons()}
               </Panel.Heading>
               <Panel.Body>
                 <div>
