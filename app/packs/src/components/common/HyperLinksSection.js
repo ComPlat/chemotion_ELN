@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, FormControl, Table, ListGroup, ListGroupItem, Button } from 'react-bootstrap';
-
+import {
+  FormGroup, FormControl, Table, ListGroup, ListGroupItem, Button
+} from 'react-bootstrap';
 
 export default class HyperLinksSection extends Component {
   constructor(props) {
@@ -18,13 +19,13 @@ export default class HyperLinksSection extends Component {
   handleLinkInputChange(event) {
     const { value } = event.target;
 
-    this.setState({ link: value })
+    this.setState({ link: value });
   }
 
   handleAddLink() {
     const { link } = this.state;
     this.props.onAddLink(link);
-    this.setState({ link: null })
+    this.setState({ link: null });
   }
 
   renderHyperLinkInput() {
@@ -32,15 +33,15 @@ export default class HyperLinksSection extends Component {
     const { disabled } = this.props;
 
     if (disabled) {
-      return <div></div>;
+      return <div />;
     }
 
     return (
-      <FormGroup controlId='hyperlink' className="form-inline" >
+      <FormGroup controlId="hyperlink" className="form-inline">
         <FormControl
           type="text"
           value={link || ''}
-          onChange={event => this.handleLinkInputChange(event)}
+          onChange={(event) => this.handleLinkInputChange(event)}
           bsClass="form-control"
           bsSize="small"
           style={{ width: '90%' }}
@@ -61,7 +62,7 @@ export default class HyperLinksSection extends Component {
 
   renderHyperLinkList() {
     const { data } = this.props;
-    let hyperLinks = data
+    let hyperLinks = data;
     if (typeof hyperLinks === 'string' || hyperLinks instanceof String) {
       hyperLinks = JSON.parse(hyperLinks);
     }
@@ -71,23 +72,17 @@ export default class HyperLinksSection extends Component {
         <div className="list">
           <ListGroup>
             {
-              hyperLinks.map((link) => {
-                return (
-                  <ListGroupItem style={{ margin: 'unset', padding: 'unset' }}>
-                    {this.listLinkItem(link)}
-                  </ListGroupItem>
-                );
-              })
+              hyperLinks.map((link) => (
+                <ListGroupItem style={{ margin: 'unset', padding: 'unset' }}>
+                  {this.listLinkItem(link)}
+                </ListGroupItem>
+              ))
             }
           </ListGroup>
         </div>
       );
     }
-    return (
-      <div style={{ padding: 15 }}>
-        There are currently no Datasets.<br />
-      </div>
-    );
+    return null;
   }
 
   handleRemoveLink(link) {
@@ -111,7 +106,8 @@ export default class HyperLinksSection extends Component {
         <tbody>
           <tr>
             <td style={{ verticalAlign: 'middle' }}>
-              <a href={link} style={{ cursor: 'pointer' }} target="_blank">{link}</a><br />
+              <a href={link} style={{ cursor: 'pointer' }} target="_blank" rel="noreferrer">{link}</a>
+              <br />
               {this.removeLinkButton(link)}
             </td>
           </tr>

@@ -63,6 +63,21 @@ export const removeButton = (attachment, onDelete, readOnly) => (
   </OverlayTrigger>
 );
 
+export const moveBackButton = (attachment, onBack, readOnly) => (
+  <OverlayTrigger placement="top" overlay={<Tooltip id="back_tooltip">Move attachment back to inbox</Tooltip>}>
+    <Button
+      bsSize="xs"
+      bsStyle="danger"
+      className="attachment-button-size"
+      onClick={() => onBack(attachment)}
+      disabled={readOnly}
+    >
+      <i className="fa fa-backward" aria-hidden="true" />
+    </Button>
+  </OverlayTrigger>
+
+);
+
 export const annotateButton = (attachment, parent) => (
   <ImageAnnotationEditButton
     parent={parent}

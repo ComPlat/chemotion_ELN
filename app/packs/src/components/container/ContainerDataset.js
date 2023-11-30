@@ -1,26 +1,18 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import {
-  Row,
-  Col,
-  FormGroup,
-  FormControl,
-  ControlLabel,
-  Table,
-  ListGroup,
-  ListGroupItem,
-  Button,
-  Overlay,
-  Panel,
-  Accordion
+  Row, Col, FormGroup, FormControl, ControlLabel,
+  ListGroup, ListGroupItem, Button, Overlay, Panel,
 } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
+import EditorFetcher from 'src/fetchers/EditorFetcher';
+import ImageModal from 'src/components/common/ImageModal';
+import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import debounce from 'es6-promise-debounce';
-import { findIndex, cloneDeep } from 'lodash';
+import {
+  findIndex, cloneDeep, last, findKey
+} from 'lodash';
 import { absOlsTermId } from 'chem-generic-ui';
-
 import Utils from 'src/utilities/Functions';
-import { formatBytes } from 'src/utilities/MathUtils';
 import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -30,9 +22,20 @@ import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
-import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import PropTypes from 'prop-types';
+
+import {
+  downloadButton,
+  removeButton,
+  annotateButton,
+  editButton,
+  customDropzone,
+  sortingAndFilteringUI,
+  formatFileSize,
+  isImageFile,
+  moveBackButton
+} from 'src/apps/mydb/elements/list/AttachmentList';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -43,15 +46,47 @@ export default class ContainerDataset extends Component {
       instruments: null,
       valueBeforeFocus: null,
       timeoutReference: null,
-      link: null,
+      attachmentEditor: false,
+      extension: null,
+      imageEditModalShown: false,
+      filteredAttachments: [...props.datasetContainer.attachments],
+      filterText: '',
+      sortBy: 'name',
+      sortDirection: 'asc',
+      activeKey: null,
     };
-
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
     this.handleDSChange = this.handleDSChange.bind(this);
+    this.editorInitial = this.editorInitial.bind(this);
+    this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
+    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
+    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
+    this.handleEdit = this.handleEdit.bind(this);
+    this.handleFilterChange = this.handleFilterChange.bind(this);
+    this.handleSortChange = this.handleSortChange.bind(this);
+    this.toggleSortDirection = this.toggleSortDirection.bind(this);
+    this.handleSelect = this.handleSelect.bind(this);
+  }
+
+  componentDidMount() {
+    this.editorInitial();
+    this.createAttachmentPreviews();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { attachments } = this.props;
+    if (attachments !== prevProps.attachments) {
+      this.createAttachmentPreviews();
+      this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAndSortAttachments);
+    }
+  }
+
+  handleSelect(activeKey) {
+    this.setState({ activeKey });
   }
 
   handleInputChange(type, event) {
@@ -97,13 +132,6 @@ export default class ContainerDataset extends Component {
       datasetContainer.name = attachName;
     }
     this.setState({ datasetContainer });
-  }
-
-  handleAttachmentDownload(attachment) {
-    Utils.downloadFile({
-      contents: `/api/v1/attachments/${attachment.id}`,
-      name: attachment.filename,
-    });
   }
 
   handleAttachmentRemove(attachment) {
@@ -179,172 +207,85 @@ export default class ContainerDataset extends Component {
     this.setState({ datasetContainer });
   }
 
-  createAttachmentPreviews(datasetContainer) {
-    const { attachments } = datasetContainer;
-    const newAttachments = attachments.filter(
-      (attachment) => !attachment.preview
-    );
-
-    const updatedAttachments = newAttachments.map((attachment) => (attachment.thumb
-      ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
-        (result) => {
-          if (result != null) {
-            attachment.preview = `data:image/png;base64,${result}`;
-          }
-          return attachment;
-        }
-      )
-      : attachment));
-
-    Promise.all(updatedAttachments).then((attachments) => {
-      datasetContainer.attachments = attachments;
-
-      this.setState({
-        datasetContainer,
+  handleDownloadAnnotated = (attachment) => {
+    const isImage = isImageFile(attachment.filename);
+    if (isImage && !attachment.isNew) {
+      Utils.downloadFile({
+        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+        name: attachment.filename
       });
+    }
+  };
+
+  handleDownloadOriginal = (attachment) => {
+    Utils.downloadFile({
+      contents: `/api/v1/attachments/${attachment.id}`,
+      name: attachment.filename,
     });
+  };
+
+  handleEdit(attachment) {
+    const fileType = last(attachment.filename.split('.'));
+    const docType = this.documentType(attachment.filename);
+
+    EditorFetcher.startEditing({ attachment_id: attachment.id })
+      .then((result) => {
+        if (result.token) {
+          const url = `/editor?id=${attachment.id}&docType=${docType}
+          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
+          &only_office_token=${result.only_office_token}`;
+          window.open(url, '_blank');
+
+          attachment.aasm_state = 'oo_editing';
+          attachment.updated_at = new Date();
+
+          this.props.onChange(attachment);
+        } else {
+          alert('Unauthorized to edit this file.');
+        }
+      });
   }
 
-  listGroupItem(attachment) {
-    const { disabled } = this.props;
-    const preview = attachment.preview ? (
-      <tr>
-        <td rowSpan="2" width="128">
-          <img style={{ maxWidth: '100%', height: 'auto', display: 'block' }} src={attachment.preview} alt="" />
-        </td>
-      </tr>
-    ) : (
-      <tr>
-        <td rowSpan="2" width="128">
-          <img style={{ width: '128px', display: 'block' }} alt="" />
-        </td>
-      </tr>
-    );
-    if (attachment.is_deleted) {
-      return (
-        <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
-          <tbody>
-            {preview}
-            <tr>
-              <td>
-                <strike>{attachment.filename}</strike>
-              </td>
-              <td>
-                <Button
-                  bsSize="xsmall"
-                  bsStyle="danger"
-                  onClick={() => this.handleUndo(attachment)}
-                  disabled={disabled}
-                >
-                  <i className="fa fa-undo" aria-hidden="true" />
-                </Button>
-              </td>
-            </tr>
-          </tbody>
-        </Table>
-      );
-    }
-    return (
-      <Table className="borderless" style={{ marginBottom: 'unset', tableLayout: 'fixed' }}>
-        <tbody>
-          {preview}
-          <tr>
-            <td style={{ wordWrap: 'break-word' }}>
-              <button
-                onClick={() => this.handleAttachmentDownload(attachment)}
-                style={{
-                  cursor: 'pointer', border: 'none', background: 'none', padding: 0, margin: 0
-                }}
-                type="button"
-              >
-                {attachment.filename}
-              </button>
-            </td>
-            <td style={{ wordWrap: 'break-word' }}><span>{formatBytes(attachment.filesize)}</span></td>
-            <td style={{ wordWrap: 'break-word' }}>
-              {this.removeAttachmentButton(attachment)}
-              {this.attachmentBackToInboxButton(attachment)}
-            </td>
-          </tr>
-        </tbody>
-      </Table>
-    );
-  }
+  toggleSortDirection = () => {
+    this.setState((prevState) => ({
+      sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
+    }), this.filterAndSortAttachments);
+  };
 
-  attachments() {
-    const { datasetContainer } = this.state;
-    if (
-      datasetContainer.attachments
-      && datasetContainer.attachments.length > 0
-    ) {
-      return (
-        <div className="list">
-          <ListGroup>
-            {datasetContainer.attachments.map((attachment) => (
-              <ListGroupItem
-                key={attachment.id}
-                style={{ margin: 'unset', padding: 'unset' }}
-              >
-                {this.listGroupItem(attachment)}
-              </ListGroupItem>
-            ))}
-          </ListGroup>
-        </div>
-      );
-    }
-    return (
-      <div style={{ padding: 15 }}>
-        There are currently no Datasets.
-        <br />
-      </div>
-    );
-  }
+  handleFilterChange = (e) => {
+    this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
+  };
 
-  removeAttachmentButton(attachment) {
-    const { readOnly, disabled } = this.props;
-    if (!readOnly && !disabled) {
-      return (
-        <Button
-          bsSize="xsmall"
-          bsStyle="danger"
-          style={{ marginRight: 10 }}
-          onClick={() => this.handleAttachmentRemove(attachment)}
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      );
-    }
-  }
+  handleSortChange = (e) => {
+    this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
+  };
 
-  attachmentBackToInboxButton(attachment) {
-    const { readOnly } = this.props;
-    if (!readOnly && !attachment.is_new) {
-      return (
-        <Button
-          bsSize="xsmall"
-          bsStyle="danger"
-          onClick={() => this.handleAttachmentBackToInbox(attachment)}
-        >
-          <i className="fa fa-backward" />
-        </Button>
-      );
-    }
-  }
+  filterAndSortAttachments() {
+    const { filterText, sortBy } = this.state;
 
-  dropzone() {
-    const { readOnly, disabled } = this.props;
-    if (!readOnly && !disabled) {
-      return (
-        <Dropzone
-          onDrop={(files) => this.handleFileDrop(files)}
-          style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-        >
-          <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
-            Drop Files, or Click to Select.
-          </div>
-        </Dropzone>
-      );
-    }
+    const filteredAttachments = this.props.datasetContainer.attachments.filter((
+      attachment
+    ) => attachment.filename.toLowerCase().includes(filterText.toLowerCase()));
+
+    filteredAttachments.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.filename.localeCompare(b.filename);
+          break;
+        case 'size':
+          comparison = a.filesize - b.filesize;
+          break;
+        case 'date':
+          comparison = new Date(a.created_at) - new Date(b.created_at);
+          break;
+        default:
+          break;
+      }
+      return this.state.sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    this.setState({ filteredAttachments });
   }
 
   resetInstrumentComponent() {
@@ -421,6 +362,68 @@ export default class ContainerDataset extends Component {
     });
   }
 
+  createAttachmentPreviews() {
+    const { attachments } = this.props;
+    attachments.map((attachment) => {
+      if (attachment.thumb) {
+        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
+          (result) => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
+              this.forceUpdate();
+            }
+          }
+        );
+      } else {
+        attachment.preview = '/images/wild_card/not_available.svg';
+        this.forceUpdate();
+      }
+      return attachment;
+    });
+  }
+
+  documentType(filename) {
+    const { extension } = this.state;
+
+    const ext = last(filename.split('.'));
+    const docType = findKey(extension, (o) => o.includes(ext));
+
+    if (typeof docType === 'undefined' || !docType) {
+      return null;
+    }
+
+    return docType;
+  }
+
+  editorInitial() {
+    EditorFetcher.initial().then((result) => {
+      this.setState({
+        attachmentEditor: result.installed,
+        extension: result.ext,
+      });
+    });
+  }
+
+  renderImageEditModal() {
+    const { chosenAttachment, imageEditModalShown } = this.state;
+    const { onChange } = this.props;
+    return (
+      <ImageAnnotationModalSVG
+        attachment={chosenAttachment}
+        isShow={imageEditModalShown}
+        handleSave={
+          () => {
+            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
+            chosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({ imageEditModalShown: false });
+            onChange(chosenAttachment);
+          }
+        }
+        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+      />
+    );
+  }
+
   renderInstruments() {
     const { instruments, error } = this.state;
 
@@ -445,13 +448,13 @@ export default class ContainerDataset extends Component {
   }
 
   renderAttachments() {
-    const { datasetContainer } = this.state;
-
+    const {
+      datasetContainer, filteredAttachments, sortDirection, attachmentEditor, extension, activeKey
+    } = this.state;
     const groupedAttachments = {};
-    datasetContainer.attachments.forEach((attachment) => {
+    filteredAttachments.forEach((attachment) => {
       const { filename } = attachment;
       const nameWithoutExtension = filename.replace(/\.[^.]+$/, '');
-      // remove .peak format
       const nameWithoutPeak = nameWithoutExtension.replace(/\.peak$/, '');
       if (!groupedAttachments[nameWithoutPeak]) {
         groupedAttachments[nameWithoutPeak] = [];
@@ -460,7 +463,12 @@ export default class ContainerDataset extends Component {
     });
 
     const attachmentGroups = Object.entries(groupedAttachments).map(([name, attachments]) => (
-      <Panel key={name} eventKey={name}>
+      <Panel
+        key={name}
+        eventKey={name}
+        expanded={activeKey === name}
+        onSelect={this.handleSelect}
+      >
         <Panel.Heading>
           <Panel.Title toggle>{name}</Panel.Title>
         </Panel.Heading>
@@ -469,7 +477,83 @@ export default class ContainerDataset extends Component {
             <ListGroup>
               {attachments.map((attachment) => (
                 <ListGroupItem key={attachment.id}>
-                  {this.listGroupItem(attachment)}
+                  <div className="attachment-row" key={attachment.id}>
+                    <div className="attachment-row-image">
+                      <ImageModal
+                        imageStyle={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '5px',
+                          objectFit: 'cover',
+                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                        }}
+                        hasPop={false}
+                        alt="thumbnail"
+                        previewObject={{
+                          src: attachment.preview,
+                        }}
+                        popObject={{
+                          title: attachment.filename,
+                          src: attachment.preview,
+                          fetchNeeded: false,
+                          fetchId: attachment.id,
+                        }}
+                      />
+                    </div>
+                    <div className="attachment-row-text">
+                      {attachment.filename}
+                      <div className="attachment-row-subtext">
+                        Added on:&nbsp;
+                        {new Date(attachment.created_at).toLocaleDateString('en-GB')}
+                        ,&nbsp;
+                        {new Date(attachment.created_at).toLocaleTimeString(
+                          'en-GB',
+                          { hour: '2-digit', minute: '2-digit', hour12: true }
+                        )}
+
+                      </div>
+                    </div>
+                    <div className="attachment-row-size">
+                      <span style={{ fontWeight: 'bold' }}>
+                        Size:&nbsp;
+                        <span style={{ fontWeight: 'bold', color: '#444' }}>
+                          {formatFileSize(attachment.filesize)}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {attachment.is_deleted ? (
+                        <Button
+                          bsSize="xs"
+                          bsStyle="danger"
+                          className="attachment-button-size"
+                          onClick={() => this.handleUndo(attachment)}
+                        >
+                          <i className="fa fa-undo" aria-hidden="true" />
+                        </Button>
+                      ) : (
+                        <>
+                          {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                          {editButton(
+                            attachment,
+                            extension,
+                            attachmentEditor,
+                            attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                            attachmentEditor ? '' : 'none',
+                            !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                        || attachment.is_new || this.documentType(attachment.filename) === null,
+                            this.handleEdit
+                          )}
+                          {annotateButton(attachment, this)}
+                          {moveBackButton(attachment, this.handleAttachmentBackToInbox, this.props.readOnly)}
+                          {removeButton(attachment, this.handleAttachmentRemove, this.props.readOnly)}
+                        </>
+                      )}
+                    </div>
+                    {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+                  </div>
                 </ListGroupItem>
               ))}
             </ListGroup>
@@ -479,11 +563,18 @@ export default class ContainerDataset extends Component {
     ));
 
     return (
-      <>
-        {this.dropzone()}
-        <Accordion>
-          {attachmentGroups}
-        </Accordion>
+      <div className="attachment-main-container">
+        {this.renderImageEditModal()}
+        {customDropzone((files) => this.handleFileDrop(files))}
+        {sortingAndFilteringUI(
+          sortDirection,
+          this.handleSortChange,
+          this.toggleSortDirection,
+          this.handleFilterChange
+        )}
+        {attachmentGroups.length > 0 ? attachmentGroups : (
+          <div className="no-attachments-text">There are currently no attachments.</div>
+        )}
 
         <HyperLinksSection
           data={this.state.datasetContainer.extended_metadata.hyperlinks}
@@ -491,22 +582,7 @@ export default class ContainerDataset extends Component {
           onRemoveLink={this.handleRemoveLink}
           disabled={this.props.disabled}
         />
-        <ImageAnnotationModalSVG
-          attachment={this.state.chosenAttachment}
-          isShow={this.state.imageEditModalShown}
-          handleSave={() => {
-            const newAnnotation = document
-              .getElementById('svgEditId')
-              .contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.chosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
-            this.props.onChange(this.props.datasetContainer);
-          }}
-          handleOnClose={() => {
-            this.setState({ imageEditModalShown: false });
-          }}
-        />
-      </>
+      </div>
     );
   }
 
@@ -608,10 +684,26 @@ ContainerDataset.propTypes = {
   disabled: PropTypes.bool,
   kind: PropTypes.string.isRequired,
   mode: PropTypes.oneOf(['attachments', 'metadata']),
+  attachments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    aasm_state: PropTypes.string.isRequired,
+    content_type: PropTypes.string.isRequired,
+    filename: PropTypes.string.isRequired,
+    filesize: PropTypes.number.isRequired,
+    identifier: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    thumb: PropTypes.bool.isRequired
+  })),
 };
 
 ContainerDataset.defaultProps = {
   mode: 'attachments',
   disabled: false,
   readOnly: false,
+  attachments: [],
 };
