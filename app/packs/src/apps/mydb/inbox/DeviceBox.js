@@ -79,7 +79,12 @@ export default class DeviceBox extends React.Component {
         InboxActions.fetchInboxContainer(deviceBox.id, currentDeviceBoxPage);
       }
     }
-    this.setState({ visible: !visible, checkedDeviceAll: false, checkedDeviceIds: [], checkedIds: [] });
+    this.setState({
+      visible: !visible,
+      checkedDeviceAll: false,
+      checkedDeviceIds: [],
+      checkedIds: [],
+    });
   }
 
   handleDatasetSelect(datasetId) {
@@ -170,7 +175,7 @@ export default class DeviceBox extends React.Component {
       params.type = true;
     }
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState.inboxState,
       checkedDeviceAll: !this.state.checkedDeviceAll
     }));
@@ -243,7 +248,7 @@ export default class DeviceBox extends React.Component {
       <div>
         <input
           type="checkbox"
-          checked={checkedDeviceIds.length === currentItemsCount && currentItemsCount !== 0 }
+          checked={checkedDeviceIds.length === currentItemsCount && currentItemsCount !== 0}
           onChange={this.toggleSelectAllFiles}
         />
         <span className="g-marginLeft--10" style={{ fontWeight: 'bold' }}>
