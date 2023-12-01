@@ -174,7 +174,7 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = filters[type]?.group || 'none';
       // eslint-disable-next-line react/no-direct-mutation-state
-      this.state.elementsSort =  filters[type]?.sort ?? true;
+      this.state.elementsSort = filters[type]?.sort ?? true;
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.sortDirection = filters[type]?.direction || 'DESC';
     }
@@ -421,7 +421,8 @@ export default class ElementsTable extends React.Component {
     const sortDirectionText = sortDirection === 'ASC' ? 'ascending' : 'descending';
     const sortTitle = elementsSort
       ? `click to sort by update date (${sortDirectionText}) - currently sorted by ${sortColumn} (${sortDirectionText})`
-      : `click to sort by ${sortColumn} (${sortDirectionText}) - currently sorted by update date (${sortDirectionText})`;
+      : `click to sort by ${sortColumn} (${sortDirectionText})`
+      + ` - currently sorted by update date (${sortDirectionText})`;
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     let sortIconClass = 'fa-clock-o';
     if (elementsGroup !== 'none') {
@@ -550,8 +551,8 @@ export default class ElementsTable extends React.Component {
     }
 
     const filterTitle = filterCreatedAt === true
-        ? 'click to filter by update date - currently filtered by creation date'
-        : 'click to filter by creation date - currently filtered by update date';
+      ? 'click to filter by update date - currently filtered by creation date'
+      : 'click to filter by creation date - currently filtered by update date';
     const filterIconClass = filterCreatedAt === true ? 'fa-calendar' : 'fa-calendar-o';
 
     const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
@@ -571,7 +572,8 @@ export default class ElementsTable extends React.Component {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 5
+            gap: 5,
+            flexWrap: 'wrap'
           }}
         >
           <OverlayTrigger placement="top" overlay={filterTooltip}>
