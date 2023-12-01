@@ -65,9 +65,11 @@ module Usecases
       end
 
       def search_by_ids(ids)
-        @model_name.by_collection_id(@collection_id.to_i)
-                   .where(id: ids)
-                   .page(params[:page]).per(@params[:page_size])
+        scope =
+          @model_name.by_collection_id(@collection_id.to_i)
+                     .where(id: ids)
+        scope = scope.page(@params[:page]).per(@params[:page_size]) if ids.size > @params[:page_size].to_i
+        scope
       end
 
       def ids_by_params
