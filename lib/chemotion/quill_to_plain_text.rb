@@ -21,7 +21,7 @@ module Chemotion
                       else
                         '[]'
                       end
-          return "function(){   return delta(#{delta_ops}); } "
+          "function(){   return delta(#{delta_ops}); } "
         },
       )
       compose_schmooze_class

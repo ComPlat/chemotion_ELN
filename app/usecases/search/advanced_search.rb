@@ -70,7 +70,7 @@ module Usecases
           @elements[:element_ids] = scope
           element_relations_element_ids
         else
-          @elements["#{@conditions[:model_name].model_name.singular}_ids".to_sym] = scope
+          @elements[:"#{@conditions[:model_name].model_name.singular}_ids"] = scope
           send("#{@conditions[:model_name].to_s.downcase}_relations_element_ids")
         end
       end
