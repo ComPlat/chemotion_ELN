@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import ComputeTaskContainer from 'src/apps/mydb/elements/details/computeTasks/ComputeTaskContainer';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import DeviceDetails from 'src/apps/mydb/elements/details/devices/DeviceDetails';
@@ -17,14 +18,17 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
-import { Tabs, Tab, Label, Button } from 'react-bootstrap';
+import {
+  Tabs, Tab, Label, Button
+} from 'react-bootstrap';
 
 const tabInfoHash = {
   metadata: {
     title: 'Metadata',
     iconEl: (
       <span>
-        <i className="fa fa-file-text-o" />&nbsp;&nbsp;
+        <i className="fa fa-file-text-o" />
+        &nbsp;&nbsp;
         <i className="fa fa-book" />
       </span>
     )
@@ -33,7 +37,8 @@ const tabInfoHash = {
     title: 'Report',
     iconEl: (
       <span>
-        <i className="fa fa-file-text-o" />&nbsp;&nbsp;
+        <i className="fa fa-file-text-o" />
+        &nbsp;&nbsp;
         <i className="fa fa-pencil" />
       </span>
     )
@@ -125,17 +130,6 @@ export default class ElementDetails extends Component {
     ElementStore.unlisten(this.onDetailChange);
   }
 
-  onDetailChange(state) {
-    const { selecteds, activeKey, deletingElement, spectraMsg } = state;
-    this.setState(prevState => ({ ...prevState, selecteds, activeKey, deletingElement }));
-    this.checkSpectraMessage(spectraMsg);
-  }
-
-  toggleFullScreen() {
-    const { fullScreen } = this.state;
-    this.setState({ fullScreen: !fullScreen });
-  }
-
   handleResize() {
     const windowHeight = window.innerHeight || 1;
     if (this.state.fullScreen || windowHeight < 500) {
@@ -145,11 +139,26 @@ export default class ElementDetails extends Component {
     }
   }
 
+  onDetailChange(state) {
+    const {
+      selecteds, activeKey, deletingElement, spectraMsg
+    } = state;
+    this.setState((prevState) => ({
+      ...prevState, selecteds, activeKey, deletingElement
+    }));
+    this.checkSpectraMessage(spectraMsg);
+  }
+
+  toggleFullScreen() {
+    const { fullScreen } = this.state;
+    this.setState({ fullScreen: !fullScreen });
+  }
+
   checkSpectraMessage(spectraMsg) {
     if (spectraMsg) {
       const { showedSpcMsgID } = this.state;
       if (!showedSpcMsgID || showedSpcMsgID !== spectraMsg.message_id) {
-        this.setState({ showedSpcMsgID: spectraMsg.message_id })
+        this.setState({ showedSpcMsgID: spectraMsg.message_id });
         alert(spectraMsg.content.data);
       }
     }
@@ -245,7 +254,14 @@ export default class ElementDetails extends Component {
     if (tab.iconEl) { iconElement = tab.iconEl; }
     if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
     const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
-    return (<div>{icon} &nbsp; {title} </div>);
+    return (
+      <div>
+        {icon}
+        &nbsp;&nbsp;&nbsp;
+        {title}
+        &nbsp;
+      </div>
+    );
   }
 
   render() {
