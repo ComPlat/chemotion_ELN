@@ -4,6 +4,7 @@ import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } f
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
 import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSettings';
@@ -191,6 +192,7 @@ export default class ElementsList extends React.Component {
   handleRemoveSearchResult(searchStore) {
     searchStore.changeShowSearchResultListValue(false);
     UIActions.clearSearchById();
+    ElementActions.changeSorting(false);
     const { currentCollection, isSync } = UIStore.getState();
     isSync ? UIActions.selectSyncCollection(currentCollection)
       : UIActions.selectCollection(currentCollection);

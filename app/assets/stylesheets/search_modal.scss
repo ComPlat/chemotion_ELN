@@ -140,7 +140,7 @@
 .collapsible-search-result #tabList {
   height: 46.8vh;
   @media screen and (min-width: 1600px) {
-    height: 62vh;
+    height: 51vh;
   }
 }
 
@@ -166,7 +166,7 @@ i.fa.icon-right {
   position: relative;
 
   @media screen and (min-width: 1600px) {
-    height: 70vh;    
+    height: 65vh;    
   }
 
   .scrollable-content {
@@ -178,7 +178,7 @@ i.fa.icon-right {
       margin-left: 15px;
     }
     @media screen and (min-width: 1600px) {
-      height: calc(70vh - 65px);
+      height: calc(65vh - 65px);
     }
   }
 
