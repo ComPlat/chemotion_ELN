@@ -69,6 +69,7 @@ class InboxStore {
       setInboxVisible: InboxActions.setInboxVisible,
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
       handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
+      handleCountAttachmentsAfterDeletion: InboxActions.countAttachmentsAfterDeletion,
     });
   }
 
@@ -150,7 +151,6 @@ class InboxStore {
       });
     });
     this.setState(inbox);
-    this.countAttachments();
   }
 
   handlePrevClick() {
@@ -179,7 +179,7 @@ class InboxStore {
     }
 
     this.setState(inbox);
-    this.countAttachments();
+    // this.countAttachments();
   }
 
   handleRemoveDatasetFromList(dataset) {
@@ -195,8 +195,7 @@ class InboxStore {
       }
     })
 
-    this.setState(inbox)
-    this.countAttachments();
+    this.setState(inbox);
   }
 
   handleDeleteAttachment(payload) {
@@ -332,6 +331,20 @@ class InboxStore {
   countAttachments() {
     const { inbox } = this.state;
     this.state.numberOfAttachments = inbox.inbox_count + inbox.unlinked_attachments.length;
+  }
+
+  handleCountAttachmentsAfterDeletion(container) {
+    const { inbox } = this.state;
+    let attachmentCount = 0;
+
+    // Recursively count attachments in children
+    if (container.children && container.children.length > 0) {
+      container.children.forEach(child => {
+        attachmentCount += child.attachments.length;
+      });
+    }
+
+    this.state.numberOfAttachments = inbox.inbox_count + inbox.unlinked_attachments.length - attachmentCount;
   }
 
   handleCheckedAll(params) {

@@ -4,6 +4,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -56,6 +57,11 @@ export default class ContainerDatasets extends Component {
     this.handleModalOpen(dataset_container);
     this.props.onChange(container);
 
+  }
+
+  countAttachments () {
+    const { container } = this.state;
+    InboxActions.countAttachmentsAfterDeletion(container);
   }
 
   handleRemove(dataset_container) {
@@ -138,6 +144,7 @@ export default class ContainerDatasets extends Component {
               <ListGroupItem key="attachmentdropzone" disabled>
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                  countAttachments={() => this.countAttachments()}
                 />
               </ListGroupItem>
             </ListGroup>
@@ -164,6 +171,7 @@ export default class ContainerDatasets extends Component {
               <ListGroupItem key="attachmentdropzone" disabled>
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                  countAttachments={() => this.countAttachments()}
                 />
               </ListGroupItem>
             </ListGroup>
