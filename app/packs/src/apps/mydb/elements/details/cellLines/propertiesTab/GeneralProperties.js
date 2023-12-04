@@ -198,7 +198,7 @@ class GeneralProperties extends React.Component {
               {this.renderOptionalAttribute('Tissue', cellLineItem.tissue, (e) => {
                 cellLineDetailsStore.changeTissue(cellLineId, e.target.value);
               })}
-              {this.renderOptionalAttribute('GrowthMedium', cellLineItem.growthMedium, (e) => {
+              {this.renderOptionalAttribute('Growth medium', cellLineItem.growthMedium, (e) => {
                 cellLineDetailsStore.changeGrowthMedium(cellLineId, e.target.value);
               })}
               {this.renderOptionalAttribute('Mutation', cellLineItem.mutation, (e) => {
