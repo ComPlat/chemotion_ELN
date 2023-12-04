@@ -17,7 +17,7 @@ const dataTarget = {
   drop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    const {dataset_container, handleAddWithAttachments} = props;
+    const { handleAddWithAttachments, countAttachments } = props;
 
     switch (itemType) {
       case DragDropItemTypes.DATA:
@@ -33,6 +33,7 @@ const dataTarget = {
         InboxActions.removeDatasetFromList(item.dataset)
         break;
     }
+    countAttachments();
   }
 };
 

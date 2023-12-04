@@ -23,6 +23,10 @@ class InboxActions {
     return null;
   }
 
+  countAttachmentsAfterDeletion(container) {
+    return container;
+  }
+
   checkedAll(params) {
     return params;
   }
