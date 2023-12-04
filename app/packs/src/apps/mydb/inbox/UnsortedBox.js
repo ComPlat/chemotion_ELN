@@ -10,6 +10,7 @@ import Container from 'src/models/Container';
 import UnsortedDatasetModal from 'src/apps/mydb/inbox/UnsortedDatasetModal';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class UnsortedBox extends React.Component {
   constructor(props) {
@@ -146,6 +147,39 @@ export default class UnsortedBox extends React.Component {
     this.setState({ checkedAll: false });
   }
 
+  sortUnsortedItem = (currentItems) => {
+    const type = 'inbox';
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+    const sortColumn = filters[type]?.sort || 'created_at';
+
+    switch (sortColumn) {
+      case 'created_at':
+        return currentItems.slice().sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+
+          // Sort in descending order
+          return dateB - dateA;
+        });
+
+      case 'name':
+        return currentItems.slice().sort((a, b) => {
+          if (a.filename > b.filename) {
+            return 1;
+          }
+          if (a.filename < b.filename) {
+            return -1;
+          }
+          return 0;
+        });
+
+      default:
+        // Default case: return currentItems as they are
+        return currentItems.slice();
+    }
+  };
+
   render() {
     const { unsorted_box, largerInbox, fromCollectionTree } = this.props;
     const {
@@ -154,7 +188,7 @@ export default class UnsortedBox extends React.Component {
     const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
     const endIndex = startIndex + dataItemsPerPage;
     const totalPages = Math.ceil(unsorted_box.length / dataItemsPerPage);
-    const currentItems = unsorted_box.slice(startIndex, endIndex);
+    const currentItems = this.sortUnsortedItem(unsorted_box.slice(startIndex, endIndex));
 
     const renderCheckAll = (
       <div>
@@ -209,7 +243,7 @@ export default class UnsortedBox extends React.Component {
     );
 
 
-    const attachments = visible ? unsorted_box.slice(startIndex, endIndex).map((attachment) => (
+    const attachments = visible ? currentItems.map((attachment) => (
       <AttachmentContainer
         key={`attach_${attachment.id}`}
         sourceType={DragDropItemTypes.UNLINKED_DATA}
