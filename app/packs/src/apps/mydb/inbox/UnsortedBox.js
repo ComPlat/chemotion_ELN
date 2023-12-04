@@ -52,19 +52,10 @@ export default class UnsortedBox extends React.Component {
     InboxStore.unlisten(this.onChange);
   }
 
-  onChange(state) {
-    this.setState(state);
-  }
-
   handleClick() {
     const { visible } = this.state;
-    const { fromCollectionTree } = this.props;
 
     InboxActions.setActiveDeviceBoxId(-1);
-
-    if (fromCollectionTree) {
-      return;
-    }
 
     this.setState({ visible: !visible });
   }
@@ -98,53 +89,8 @@ export default class UnsortedBox extends React.Component {
     this.handleFileModalOpen(datasetContainer);
   }
 
-  hasChecked() {
-    const { checkedAll } = this.state;
-    return checkedAll;
-  }
-
-  toggleSelectAllCheckbox() {
-    const { checkedAll } = this.state;
-    const params = {
-      type: false,
-      range: 'all'
-    };
-    if (!checkedAll) {
-      params.type = true;
-    }
-    this.setState(prevState => ({ ...prevState.inboxState, checkedAll: !this.state.checkedAll }));
-    InboxActions.checkedAll(params);
-    InboxActions.checkedIds(params);
-  }
-
-  toggleTooltip() {
-    this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
-  }
-
-  deleteCheckedAttachment(unsortedBox) {
-    const { checkedIds, currentUnsortedBoxPage, dataItemsPerPage } = this.state;
-    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
-    const endIndex = startIndex + dataItemsPerPage;
-    const currentItems = unsortedBox.slice(startIndex, endIndex);
-    const currentItemsCount = currentItems.length;
-    const itemsDeleted = checkedIds.length;
-
-    checkedIds.forEach((checkedId) => {
-      // eslint-disable-next-line array-callback-return
-      unsortedBox.map((attachment) => {
-        if (checkedId === attachment.id) {
-          InboxActions.deleteAttachment(attachment, true);
-        }
-      });
-    });
-    if (currentUnsortedBoxPage > 1 && itemsDeleted === currentItemsCount) {
-      InboxActions.prevClick();
-    } else {
-      InboxActions.fetchInboxUnsorted();
-    }
-    checkedIds.length = 0;
-    this.toggleTooltip();
-    this.setState({ checkedAll: false });
+  onChange(state) {
+    this.setState(state);
   }
 
   sortUnsortedItem = (currentItems) => {
@@ -180,10 +126,54 @@ export default class UnsortedBox extends React.Component {
     }
   };
 
+  toggleSelectAllCheckbox() {
+    const { checkedAll } = this.state;
+    const params = {
+      type: false,
+      range: 'all'
+    };
+    if (!checkedAll) {
+      params.type = true;
+    }
+    this.setState((prevState) => ({ ...prevState.inboxState, checkedAll: !checkedAll }));
+    InboxActions.checkedAll(params);
+    InboxActions.checkedIds(params);
+  }
+
+  toggleTooltip() {
+    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+  }
+
+  deleteCheckedAttachment(unsortedBox) {
+    const { checkedIds, currentUnsortedBoxPage, dataItemsPerPage } = this.state;
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const currentItems = unsortedBox.slice(startIndex, endIndex);
+    const currentItemsCount = currentItems.length;
+    const itemsDeleted = checkedIds.length;
+
+    checkedIds.forEach((checkedId) => {
+      // eslint-disable-next-line array-callback-return
+      unsortedBox.map((attachment) => {
+        if (checkedId === attachment.id) {
+          InboxActions.deleteAttachment(attachment, true);
+        }
+      });
+    });
+    if (currentUnsortedBoxPage > 1 && itemsDeleted === currentItemsCount) {
+      InboxActions.prevClick();
+    } else {
+      InboxActions.fetchInboxUnsorted();
+    }
+    checkedIds.length = 0;
+    this.toggleTooltip();
+    this.setState({ checkedAll: false });
+  }
+
   render() {
-    const { unsorted_box, largerInbox, fromCollectionTree } = this.props;
+    const { unsorted_box, largerInbox } = this.props;
     const {
-      visible, modal, checkedAll, checkedIds, currentUnsortedBoxPage, dataItemsPerPage
+      visible, modal, checkedAll, checkedIds, currentUnsortedBoxPage, dataItemsPerPage, deletingTooltip
     } = this.state;
     const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
     const endIndex = startIndex + dataItemsPerPage;
@@ -216,7 +206,7 @@ export default class UnsortedBox extends React.Component {
         >
           &nbsp;
         </i>
-        {this.state.deletingTooltip ? (
+        {deletingTooltip ? (
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {`Delete ${checkedIds.length} attachment${checkedIds.length > 1 ? 's' : ''}?`}
             <ButtonGroup
@@ -241,7 +231,6 @@ export default class UnsortedBox extends React.Component {
         ) : null}
       </span>
     );
-
 
     const attachments = visible ? currentItems.map((attachment) => (
       <AttachmentContainer
@@ -308,7 +297,7 @@ export default class UnsortedBox extends React.Component {
           {uploadButton}
         </div>
         {
-          visible && !fromCollectionTree && unsorted_box.length > dataItemsPerPage ? (
+          visible && unsorted_box.length > dataItemsPerPage ? (
             <Pagination
               currentDataSetPage={currentUnsortedBoxPage}
               totalPages={totalPages}
@@ -340,11 +329,9 @@ UnsortedBox.propTypes = {
   unsorted_box: PropTypes.array.isRequired,
   largerInbox: PropTypes.bool,
   unsortedVisible: PropTypes.bool,
-  fromCollectionTree: PropTypes.bool,
 };
 
 UnsortedBox.defaultProps = {
   largerInbox: false,
   unsortedVisible: false,
-  fromCollectionTree: false,
 };

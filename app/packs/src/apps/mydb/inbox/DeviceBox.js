@@ -65,13 +65,8 @@ export default class DeviceBox extends React.Component {
 
   handleDeviceBoxClick(deviceBox) {
     const { visible, currentDeviceBoxPage } = this.state;
-    const { fromCollectionTree } = this.props;
 
     InboxActions.setActiveDeviceBoxId(deviceBox.id);
-
-    if (fromCollectionTree) {
-      return;
-    }
 
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
@@ -223,16 +218,11 @@ export default class DeviceBox extends React.Component {
   }
 
   deleteDeviceBox(deviceBox) {
-    const { fromCollectionTree } = this.props;
-    if (fromCollectionTree) {
-      return;
-    }
-
     InboxActions.deleteContainer(deviceBox);
   }
 
   render() {
-    const { device_box, largerInbox, fromCollectionTree } = this.props;
+    const { device_box, largerInbox } = this.props;
     const {
       visible, checkedDeviceAll, checkedDeviceIds, checkedIds, currentDeviceBoxPage, dataItemsPerPage,
     } = this.state;
@@ -335,7 +325,7 @@ export default class DeviceBox extends React.Component {
           <button
             type="button"
             className="btn-inbox"
-            onClick={!fromCollectionTree ? () => this.setState({ visible: !visible }) : null}
+            onClick={() => this.setState({ visible: !visible })}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -352,7 +342,7 @@ export default class DeviceBox extends React.Component {
           </button>
         </div>
         {
-          visible && !fromCollectionTree && device_box?.children_count > dataItemsPerPage ? (
+          visible && device_box?.children_count > dataItemsPerPage ? (
             <Pagination
               currentDataSetPage={currentDeviceBoxPage}
               totalPages={totalPages}
@@ -373,7 +363,7 @@ export default class DeviceBox extends React.Component {
             </tr>
           </tbody>
         </table>
-        <div>{visible && !fromCollectionTree ? datasets : null}</div>
+        <div>{visible ? datasets : null}</div>
       </div>
     );
   }
@@ -382,12 +372,10 @@ export default class DeviceBox extends React.Component {
 DeviceBox.propTypes = {
   device_box: PropTypes.object.isRequired,
   largerInbox: PropTypes.bool,
-  fromCollectionTree: PropTypes.bool,
   deviceBoxVisible: PropTypes.bool,
 };
 
 DeviceBox.defaultProps = {
   largerInbox: false,
-  fromCollectionTree: false,
   deviceBoxVisible: false,
 };
