@@ -48,7 +48,7 @@ class GeneralProperties extends React.Component {
     }
     return (
       <div>
-        <Row>
+        <Row className={"property-row"}>
           <Col componentClass={ControlLabel} sm={3}>{attributeName}</Col>
           <Col sm={9}>
             <FormControl
@@ -76,7 +76,7 @@ class GeneralProperties extends React.Component {
     ];
     return (
       <div>
-        <Row>
+        <Row className={"property-row"}>
           <Col componentClass={ControlLabel} sm={3}>Biosafety level</Col>
           <Col sm={9}>
             <Select
