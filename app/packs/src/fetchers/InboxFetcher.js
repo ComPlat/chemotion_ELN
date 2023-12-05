@@ -1,6 +1,15 @@
+import UserStore from 'src/stores/alt/stores/UserStore';
+
 export default class InboxFetcher {
   static fetchInbox(isCntOnly = false, queryParams = {}) {
-    const promise = fetch(`/api/v1/inbox?cnt_only=${isCntOnly}&page=${queryParams.currentPage || 1}&per_page=${queryParams.itemsPerPage || 20}`, {
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+    const sortColumn = filters.inbox?.sort || 'name';
+
+    // if the user has not updated its profile yet, we set the default sort to name
+    const addQuery = `&sort_column=${filters.inbox ? sortColumn : 'name'}`;
+
+    const promise = fetch(`/api/v1/inbox?cnt_only=${isCntOnly}&page=${queryParams.currentPage || 1}&per_page=${queryParams.itemsPerPage || 20}${addQuery}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())
@@ -13,7 +22,14 @@ export default class InboxFetcher {
   }
 
   static fetchInboxByContainer(containerId, currentContainerPage) {
-    const promise = fetch(`/api/v1/inbox/containers/${containerId}?dataset_page=${currentContainerPage || 1}`, {
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+    const sortColumn = filters.inbox?.sort || 'name';
+
+    // if the user has not updated its profile yet, we set the default sort to name
+    const addQuery = `&sort_column=${filters.inbox ? sortColumn : 'name'}`;
+
+    const promise = fetch(`/api/v1/inbox/containers/${containerId}?dataset_page=${currentContainerPage || 1}${addQuery}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())
