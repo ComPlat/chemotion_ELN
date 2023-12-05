@@ -334,7 +334,7 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
-    LoadingActions.start();
+    LoadingActions.start.defer();
     const { sample, validCas } = this.state;
     this.checkMolfileChange();
     if (!validCas) {
