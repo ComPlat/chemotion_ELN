@@ -379,12 +379,12 @@ export default class Sample extends Element {
     return this._contains_residues;
   }
 
-  title(selected = false) {
+  title() {
     const { profile } = UserStore.getState();
     const show_external_name = profile ? profile.show_external_name : false;
     const show_sample_name = profile ? profile.show_sample_name : false;
     const { external_label } = this;
-    const extLabelClass = this.highlight_label(!selected);
+    const extLabelClass = 'label--bold';
     const { name } = this;
     const { short_label } = this;
 
@@ -394,16 +394,6 @@ export default class Sample extends Element {
       return (name ? <span className={extLabelClass}>{name}</span> : short_label);
     }
     return short_label;
-  }
-
-  highlight_label(gray) {
-    let cssClass = null;
-    if (!gray) {
-      cssClass = 'label--bold';
-    } else {
-      cssClass = 'label--bold c-text--grey';
-    }
-    return cssClass;
   }
 
   get molecule_name_label() {
