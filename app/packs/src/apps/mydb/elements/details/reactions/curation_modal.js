@@ -72,6 +72,7 @@ export default class Curation_modal extends Component {
         }
         }  
       }
+      ms_words = this.uniq(ms_words)
       this.setState({mispelled_words: ms_words})
     }
     
@@ -94,6 +95,19 @@ export default class Curation_modal extends Component {
       }
       return test
     }
+
+    uniq(a) {
+      var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
+  
+      return a.filter(function(item) {
+          var type = typeof item;
+          if(type in prims)
+              return prims[type].hasOwnProperty(item) ? false : (prims[type][item] = true);
+          else
+              return objs.indexOf(item) >= 0 ? false : objs.push(item);
+      });
+  }
+
 
     clean_data(description){
         const array_input = Object.values(description);
