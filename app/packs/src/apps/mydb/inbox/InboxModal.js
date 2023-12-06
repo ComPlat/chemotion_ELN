@@ -2,7 +2,7 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Panel, Glyphicon, Pagination, OverlayTrigger, Tooltip
+  Badge, Button, Panel, Pagination, OverlayTrigger, Tooltip, DropdownButton, MenuItem
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -95,14 +95,37 @@ export default class InboxModal extends React.Component {
     }
   }
 
-  handlePageChange(pageNumber) {
-    const { totalPages } = this.state;
-    if (pageNumber > 0 && pageNumber <= totalPages) {
-      this.setState({
-        currentPage: pageNumber
-      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
+  handleSizingIconClick = (size) => {
+    let newColMdValue;
+    switch (size) {
+      case 'Small':
+        newColMdValue = 3;
+        break;
+      case 'Medium':
+        newColMdValue = 4;
+        break;
+      case 'Large':
+        newColMdValue = 5;
+        break;
+      default:
+        newColMdValue = 4;
     }
-  }
+    this.setState({ colMdValue: newColMdValue });
+  };
+
+  getSizeLabel = () => {
+    const { colMdValue } = this.state;
+    switch (colMdValue) {
+      case 3:
+        return 'Small';
+      case 4:
+        return 'Medium';
+      case 5:
+        return 'Large';
+      default:
+        return 'Unknown';
+    }
+  };
 
   initState = () => {
     const type = 'inbox';
@@ -148,17 +171,17 @@ export default class InboxModal extends React.Component {
     this.initState();
 
     const sortTitle = this.state.sortColumn === 'name'
-        ? `click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)`
-        : `click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)`;
+      ? 'click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)'
+      : 'click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)';
     const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
     const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <button
-            type="button"
-            className="btn-inbox-sort"
-            onClick={this.changeSortColumn}
+          type="button"
+          className="btn-inbox-sort"
+          onClick={this.changeSortColumn}
         >
           {sortIcon}
         </button>
@@ -172,37 +195,6 @@ export default class InboxModal extends React.Component {
     );
   }
 
-  handleSizingIconClick = (size) => {
-    let newColMdValue;
-    switch (size) {
-      case 'Small':
-        newColMdValue = 3;
-        break;
-      case 'Medium':
-        newColMdValue = 4;
-        break;
-      case 'Large':
-        newColMdValue = 5;
-        break;
-      default:
-        newColMdValue = 4;
-    }
-    this.setState({ colMdValue: newColMdValue });
-  };
-
-  getSizeLabel = () => {
-    const { colMdValue } = this.state;
-    switch (colMdValue) {
-      case 3:
-        return 'Small';
-      case 4:
-        return 'Medium';
-      case 5:
-        return 'Large';
-      default:
-        return 'Unknown';
-    }
-  };
 
   handleMouseDown = (e) => {
     e.preventDefault();
@@ -228,12 +220,6 @@ export default class InboxModal extends React.Component {
     const { currentPage, itemsPerPage } = this.state;
     LoadingActions.start();
     InboxActions.fetchInbox({ currentPage, itemsPerPage });
-  }
-
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
   }
 
   renderPagination = () => {
@@ -420,14 +406,14 @@ export default class InboxModal extends React.Component {
                       <span style={{ marginLeft: '10px', marginRight: '5px', fontWeight: 'bold' }}>Inbox</span>
                     </button>
                     {
-                  numberOfAttachments > 0 ? (
-                    <Badge>
-                      &nbsp;
-                      {numberOfAttachments}
-                      &nbsp;
-                    </Badge>
-                  ) : ''
-                }
+                      numberOfAttachments > 0 ? (
+                        <Badge>
+                          &nbsp;
+                          {numberOfAttachments}
+                          &nbsp;
+                        </Badge>
+                      ) : ''
+                    }
                   </div>
                   <div>
                     {this.renderSortButton()}
