@@ -4,6 +4,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReactionDetails from './ReactionDetails';
+import { array } from 'prop-types';
 
 
 
@@ -18,9 +19,11 @@ export default class Curation_modal extends Component {
       this.handleSubmit = this.handleSubmit.bind(this);
       this.state = {
         desc : this.clean_data(this.props.description),
-        show: false, 
-        reaction: reaction,
+        show : false, 
+        reaction : reaction,
+        mispelled_words : []
       }
+      this.setState({mispelled_words:[]})
     }
 
     handleSubmit(closeView = false) {
@@ -53,15 +56,13 @@ export default class Curation_modal extends Component {
 
     spell_check(description){
       // console.log(description)
-      var test ="this is a sentance"
       var Typo = require("typo-js"); 
       var dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typo/dictionaries" });
-      console.log(dictionary)
+      // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
       var ms_words = [];
       var word_array = description.split(' ')
-      console.log(word_array)
       for (let i = 0; i < word_array.length; i++){
-        var punctuation = /[\.,?!]/g;
+        var punctuation = /[\.,?!\(\)]/g;
          word_array[i] = word_array[i].replace(punctuation, "");
         if (word_array[i] == ""||  /\d/.test(word_array[i])){
         }
@@ -69,36 +70,29 @@ export default class Curation_modal extends Component {
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
         }
-        // console.log(word_array[i]);
-        // console.log(spell_checked_word);
-        }
-        
+        }  
       }
-      console.log(ms_words);
-      
-      // // this.getHighlightedText()
-
-      // var is_spelled_correctly = dictionary.check("mispeled");
-      // console.log( "Is 'mispelled' spelled correctly? " + is_spelled_correctly );
-      // var is_spelled_correctly = dictionary.check("misspelled");
-      // console.log( "Is 'misspelled' spelled correctly? " + is_spelled_correctly );
-      // var array_of_suggestions = dictionary.suggest("mispeling");
-      // console.log( "Spelling suggestions for 'mispeling': " + array_of_suggestions.join( ', ' ) );
-_
+      this.setState({mispelled_words: ms_words})
     }
     
-    getHighlightedText(text, higlight) {
+    getHighlightedText(text, highlight) {
       // Split text on higlight term, include term itself into parts, ignore case
-      var parts = text.split(new RegExp(`(${higlight})`, "gi"));
+        var parts = text.split(new RegExp(`(${highlight})`, "gi"));
       return parts.map((part, index) => (
         <React.Fragment key={index}>
-          {part.toLowerCase() === higlight.toLowerCase() ? (
+          {part.toLowerCase() === highlight.toLowerCase() ? (
           <b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) : (part)}
         </React.Fragment>
       ));}
 
-    highlight_misspelled_words_eng_dic(input){
-
+    highlight_mispelled_words(text,ms_word_array){
+      var test = []
+      for (let i = 0; i < ms_word_array.length; i++){
+        console.log(ms_word_array[i])
+         test[i] = this.getHighlightedText(text,ms_word_array[i])
+        console.log(test)
+      }
+      return test
     }
 
     clean_data(description){
@@ -112,8 +106,8 @@ _
     }
 
     render() {
-      const Compo = ({ higlight, value }) => {
-        return <p>{this.getHighlightedText(value, higlight)}</p>;
+      const Compo = ({ highlight, value }) => {
+        return <p>{this.highlight_mispelled_words(value, highlight)}</p>;
       };
       return (
         <div>
@@ -130,7 +124,7 @@ _
                     padding: "10px",
                     fontFamily: "Arial",
                     borderRadius: "10px",}}>
-                 <Compo value={this.state.desc} higlight={"e"} /> 
+                 <Compo value={this.state.desc} highlight={this.state.mispelled_words} /> 
                 </div>  
                      
                 <div>
