@@ -63,7 +63,7 @@ export default class Curation_modal extends Component {
       for (let i = 0; i < word_array.length; i++){
         var punctuation = /[\.,?!]/g;
          word_array[i] = word_array[i].replace(punctuation, "");
-        if (word_array[i] == ""){
+        if (word_array[i] == ""||  /\d/.test(word_array[i])){
         }
         else {var spell_checked_word = dictionary.check(word_array[i]);
         if (spell_checked_word == false){
