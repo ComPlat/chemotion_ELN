@@ -1,10 +1,12 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable camelcase */
 import React from 'react';
 import _ from 'lodash';
 
 import Element from 'src/models/Element';
 import Molecule from 'src/models/Molecule';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Container from 'src/models/Container.js';
+import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 
 const prepareRangeBound = (args = {}, field) => {
@@ -20,7 +22,8 @@ const prepareRangeBound = (args = {}, field) => {
     if (argsNew[`${field}_upperbound`] == null || argsNew[`${field}_upperbound`] == null) {
       argsNew[`${field}_display`] = (argsNew[`${field}_lowerbound`] || '').toString().trim();
     } else {
-      argsNew[`${field}_display`] = ((argsNew[`${field}_lowerbound`] || '').toString().concat(' – ', argsNew[`${field}_upperbound`])).trim();
+      argsNew[`${field}_display`] = ((argsNew[`${field}_lowerbound`] || '')
+        .toString().concat(' – ', argsNew[`${field}_upperbound`])).trim();
     }
   }
   return argsNew;
@@ -43,7 +46,13 @@ export default class Sample extends Element {
     this.melting_point = null;
   }
 
-  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false, keepResidueInfo = false, keepExternalLabel = true) {
+  static copyFromSampleAndCollectionId(
+    sample,
+    collection_id,
+    structure_only = false,
+    keepResidueInfo = false,
+    keepExternalLabel = true
+  ) {
     const newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
     if (sample.name) { newSample.name = sample.name; }
@@ -91,14 +100,15 @@ export default class Sample extends Element {
     // set default polymer data
     this.residues = [
       {
-        residue_type: 'polymer', custom_info: {
-          "formula": 'CH',
-          "loading": null,
-          "polymer_type": (this.decoupled ? "self_defined" : "polystyrene"),
-          "loading_type": "external",
-          "external_loading": 0.0,
-          "reaction_product": (this.reaction_product ? true : null),
-          "cross_linkage": null
+        residue_type: 'polymer',
+        custom_info: {
+          formula: 'CH',
+          loading: null,
+          polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+          loading_type: 'external',
+          external_loading: 0.0,
+          reaction_product: (this.reaction_product ? true : null),
+          cross_linkage: null
         }
       }
     ];
@@ -112,7 +122,7 @@ export default class Sample extends Element {
           Object.assign(residue.custom_info, {
             external_loading: 0.0,
             loading: null,
-            loading_type: "external"
+            loading_type: 'external'
           });
         });
       } else {
@@ -121,13 +131,13 @@ export default class Sample extends Element {
           Object.assign(residue, {
             residue_type: 'polymer',
             custom_info: {
-              "formula": 'CH',
-              "loading": (residue.custom_info ? residue.custom_info.loading : null),
-              "polymer_type": (this.decoupled ? "self_defined" : "polystyrene"),
-              "loading_type": "external",
-              "external_loading": 0.0,
-              "reaction_product": (this.reaction_product ? true : null),
-              "cross_linkage": null
+              formula: 'CH',
+              loading: (residue.custom_info ? residue.custom_info.loading : null),
+              polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+              loading_type: 'external',
+              external_loading: 0.0,
+              reaction_product: (this.reaction_product ? true : null),
+              cross_linkage: null
             }
           });
         });
@@ -198,12 +208,12 @@ export default class Sample extends Element {
   }
 
   getChildrenCount() {
-    return parseInt(Sample.children_count[this.id] || this.children_count);
+    return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
 
   buildSplitShortLabel() {
-    let children_count = this.getChildrenCount() + 1;
-    return this.short_label + "-" + children_count;
+    const children_count = this.getChildrenCount() + 1;
+    return `${this.short_label}-${children_count}`;
   }
 
   buildCopy() {
@@ -272,7 +282,7 @@ export default class Sample extends Element {
   }
 
   get isSplit() {
-    return this.is_split
+    return this.is_split;
   }
 
   set isSplit(is_split) {
@@ -280,7 +290,7 @@ export default class Sample extends Element {
   }
 
   serialize() {
-    let serialized = super.serialize({
+    const serialized = super.serialize({
       name: this.name,
       external_label: this.external_label,
       target_amount_value: this.target_amount_value,
@@ -321,7 +331,7 @@ export default class Sample extends Element {
       molecular_mass: this.molecular_mass,
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
-      segments: this.segments.map(s => s.serialize()),
+      segments: this.segments.map((s) => s.serialize()),
     });
 
     return serialized;
@@ -347,24 +357,20 @@ export default class Sample extends Element {
     this._contains_residues = value;
     if (value) {
       if (!this.residues.length) {
-
         this.setDefaultResidue();
       } else {
         this.residues[0]._destroy = undefined;
       }
 
-      this.elemental_compositions.map(function (item) {
-        if (item.composition_type == 'formula')
-          item._destroy = true;
+      this.elemental_compositions.map((item) => {
+        if (item.composition_type == 'formula') { item._destroy = true; }
       });
     } else {
       // this.sample_svg_file = '';
-      if (this.residues.length)
-        this.residues[0]._destroy = true; // delete residue info
+      if (this.residues.length) { this.residues[0]._destroy = true; } // delete residue info
 
-      this.elemental_compositions.map(function (item) {
-        if (item.composition_type == 'loading')
-          item._destroy = true;
+      this.elemental_compositions.map((item) => {
+        if (item.composition_type == 'loading') { item._destroy = true; }
       });
     }
   }
@@ -374,21 +380,20 @@ export default class Sample extends Element {
   }
 
   title(selected = false) {
-    const profile = UserStore.getState().profile
-    const show_external_name = profile ? profile.show_external_name : false
-    const show_sample_name = profile ? profile.show_sample_name : false
-    const external_label = this.external_label;
+    const { profile } = UserStore.getState();
+    const show_external_name = profile ? profile.show_external_name : false;
+    const show_sample_name = profile ? profile.show_sample_name : false;
+    const { external_label } = this;
     const extLabelClass = this.highlight_label(!selected);
-    const name = this.name;
-    const short_label = this.short_label;
+    const { name } = this;
+    const { short_label } = this;
 
     if (show_external_name) {
       return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
-    } else if(show_sample_name) {
+    } if (show_sample_name) {
       return (name ? <span className={extLabelClass}>{name}</span> : short_label);
-    } else {
-      return short_label;
     }
+    return short_label;
   }
 
   highlight_label(gray) {
@@ -442,11 +447,11 @@ export default class Sample extends Element {
   }
 
   set preferred_label(label) {
-
+    this._preferred_label = label;
   }
 
   set segments(segments) {
-    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+    this._segments = (segments && segments.map((s) => new Segment(s))) || [];
   }
 
   get segments() {
@@ -462,11 +467,10 @@ export default class Sample extends Element {
   }
 
   iupac_name_tag(length) {
-    let iupac_name = this.molecule.iupac_name || "";
-    return iupac_name.length > length ?
-      iupac_name.slice(0, length) + "..."
-      :
-      iupac_name
+    const iupac_name = this.molecule.iupac_name || '';
+    return iupac_name.length > length
+      ? `${iupac_name.slice(0, length)}...`
+      : iupac_name;
   }
 
   get location() {
@@ -548,15 +552,15 @@ export default class Sample extends Element {
       this.metrics = (this.metrics && this.metrics.replace(/(.{2}).{1}/, `$1${mp}`)) || 'mmmm';
     } else if (unit === 'mol/l') {
       if (this.metrics && this.metrics.length === 3) {
-        this.metrics = this.metrics + mp;
+        this.metrics += mp;
       } else {
         this.metrics = (this.metrics && this.metrics.replace(/(.{3}).{1}/, `$1${mp}`)) || 'mmmm';
       }
-    }
-    else {
+    } else {
       this.metrics = (this.metrics && this.metrics.replace(/(.{0}).{1}/, `$1${mp}`)) || 'mmmm';
     }
   }
+
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
@@ -598,7 +602,7 @@ export default class Sample extends Element {
   }
 
   get defined_part_amount() {
-    let mw = this.molecule_molecular_weight;
+    const mw = this.molecule_molecular_weight;
     return this.amount_mol * mw / 1000.0;
   }
 
@@ -608,7 +612,7 @@ export default class Sample extends Element {
     return ({
       value: this.amount_value,
       unit: this.amount_unit
-    })
+    });
   }
 
   get amount_value() {
@@ -650,7 +654,7 @@ export default class Sample extends Element {
   }
 
   set target_amount_value(amount_value) {
-    this._target_amount_value = amount_value
+    this._target_amount_value = amount_value;
   }
 
   get target_amount_unit() {
@@ -658,7 +662,7 @@ export default class Sample extends Element {
   }
 
   set target_amount_unit(amount_unit) {
-    this._target_amount_unit = amount_unit
+    this._target_amount_unit = amount_unit;
   }
 
   // real amount
@@ -668,7 +672,7 @@ export default class Sample extends Element {
   }
 
   set real_amount_value(amount_value) {
-    this._real_amount_value = amount_value
+    this._real_amount_value = amount_value;
   }
 
   get real_amount_unit() {
@@ -676,7 +680,7 @@ export default class Sample extends Element {
   }
 
   set real_amount_unit(amount_unit) {
-    this._real_amount_unit = amount_unit
+    this._real_amount_unit = amount_unit;
   }
 
   get amount_g() {
@@ -699,7 +703,7 @@ export default class Sample extends Element {
 
   convertGramToUnit(amount_g = 0, unit) {
     if (this.contains_residues) {
-      let loading = this.residues[0].custom_info.loading;
+      const { loading } = this.residues[0].custom_info;
       switch (unit) {
         case 'g':
           return amount_g;
@@ -718,8 +722,8 @@ export default class Sample extends Element {
             const purity = this.purity || 1.0;
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
-          } else if (this.has_density) {
-            const density = this.density;
+          } if (this.has_density) {
+            const { density } = this;
             return amount_g / (density * 1000);
           }
 
@@ -749,7 +753,7 @@ export default class Sample extends Element {
         case 'mg':
           return amountValue / 1000.0;
         case 'mol': {
-          const loading = this.residues[0].custom_info.loading;
+          const { loading } = this.residues[0].custom_info;
           if (!loading) return 0.0;
 
           return (amountValue / loading) * 1000.0;
@@ -767,7 +771,7 @@ export default class Sample extends Element {
           if (this.has_molarity) {
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
-          } else if (this.has_density) {
+          } if (this.has_density) {
             return amount_value * (this.density || 1.0) * 1000;
           }
           return 0;
@@ -822,15 +826,15 @@ export default class Sample extends Element {
   }
 
   get purity() {
-    return this._purity
+    return this._purity;
   }
 
   set purity(purity) {
-    this._purity = purity
+    this._purity = purity;
   }
 
   get molecule() {
-    return this._molecule
+    return this._molecule;
   }
 
   set molecule(molecule) {
@@ -888,30 +892,30 @@ export default class Sample extends Element {
 
   get error_loading() {
     // TODO: temporary disabled
-    //return this.contains_residues && !this.loading && !this.reaction_product;
+    // return this.contains_residues && !this.loading && !this.reaction_product;
     return false;
   }
 
-
   get isValid() {
-    return (this && ((this.molfile && !this.decoupled) || this.decoupled) &&
-      !this.error_loading && !this.error_polymer_type);
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled)
+      && !this.error_loading && !this.error_polymer_type);
   }
 
   get svgPath() {
     if (this.show_label) {
-      return `svg_text/${this.labelText}`
+      return `svg_text/${this.labelText}`;
     }
 
     if (this.sample_svg_file) {
       if (this.sample_svg_file === '***') {
-        return `/images/wild_card/no_image_180.svg`
+        return '/images/wild_card/no_image_180.svg';
       }
       return `/images/samples/${this.sample_svg_file}`;
     }
-    return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    return this.molecule && this.molecule.molecule_svg_file
+      ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
   }
-  //todo: have a dedicated Material Sample subclass
+  // todo: have a dedicated Material Sample subclass
 
   get labelText() {
     return this.name || this.molecule_formula || this.molecule.iupac_name;
@@ -955,10 +959,10 @@ export default class Sample extends Element {
     return params;
   }
 
-  //Container & Analyses routines
+  // Container & Analyses routines
   addAnalysis(analysis) {
     this.container.children.filter(
-      element => ~element.container_type.indexOf('analyses')
+      (element) => ~element.container_type.indexOf('analyses')
     )[0].children.push(analysis);
   }
 
@@ -974,7 +978,7 @@ export default class Sample extends Element {
   calculateMaxAmount(referenceSample) {
     const refAmount = referenceSample.amount_mol;
     const sampleCoeff = this.coefficient || 1.0;
-    const refCoeff = (referenceSample.coefficient || 1.0)
+    const refCoeff = (referenceSample.coefficient || 1.0);
     const coeffQuotient = sampleCoeff / refCoeff;
 
     this.maxAmount = refAmount * coeffQuotient * this.molecule_molecular_weight;
@@ -982,73 +986,69 @@ export default class Sample extends Element {
 
   get solvent() {
     try {
-      //handle the old solvent data
-      const jsonSolvent = JSON.parse(this._solvent)
-      let solv = []
+      // handle the old solvent data
+      const jsonSolvent = JSON.parse(this._solvent);
+      const solv = [];
       if (jsonSolvent) {
-        solv.push(jsonSolvent)
+        solv.push(jsonSolvent);
       }
-      return solv
+      return solv;
+    } catch (e) {
+      return this._solvent;
     }
-    catch (e) {}
-    return this._solvent
   }
 
   set solvent(solvent) {
-    this._solvent = solvent
+    this._solvent = solvent;
   }
 
   addSolvent(newSolvent) {
-    const molecule = newSolvent.molecule
+    const { molecule } = newSolvent;
     if (molecule) {
-      let tmpSolvents = []
+      const tmpSolvents = [];
       if (this.solvent) {
-        Object.assign(tmpSolvents, this.solvent)
+        Object.assign(tmpSolvents, this.solvent);
       }
-      const solventData = { label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1 }
-      const filtered = tmpSolvents.find((solv) => {
-        return (solv && solv.label === solventData.label &&
-          solv.smiles === solventData.smiles &&
-          solv.inchikey && solventData.inchikey)
-      })
+      const solventData = {
+        label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1
+      };
+      const filtered = tmpSolvents.find((solv) => (solv && solv.label === solventData.label
+          && solv.smiles === solventData.smiles
+          && solv.inchikey && solventData.inchikey));
       if (!filtered) {
-        tmpSolvents.push(solventData)
+        tmpSolvents.push(solventData);
       }
-      this.solvent = tmpSolvents
+      this.solvent = tmpSolvents;
     }
   }
 
   deleteSolvent(solventToDelete) {
-    let tmpSolvents = []
+    const tmpSolvents = [];
     if (this.solvent) {
-      Object.assign(tmpSolvents, this.solvent)
+      Object.assign(tmpSolvents, this.solvent);
     }
 
-    const filteredIndex = tmpSolvents.findIndex((solv) => {
-      return (solv.label === solventToDelete.label &&
-        solv.smiles === solventToDelete.smiles &&
-        solv.inchikey === solventToDelete.inchikey)
-    })
+    const filteredIndex = tmpSolvents.findIndex((solv) => (solv.label === solventToDelete.label
+        && solv.smiles === solventToDelete.smiles
+        && solv.inchikey === solventToDelete.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents.splice(filteredIndex, 1);
     }
-    this.solvent = tmpSolvents
+    this.solvent = tmpSolvents;
   }
 
   updateSolvent(solventToUpdate) {
-    let tmpSolvents = []
+    const tmpSolvents = [];
     if (this.solvent) {
-      Object.assign(tmpSolvents, this.solvent)
+      Object.assign(tmpSolvents, this.solvent);
     }
 
-    const filteredIndex = tmpSolvents.findIndex((solv) => {
-      return (solv.smiles === solventToUpdate.smiles &&
-        solv.inchikey && solventToUpdate.inchikey)
-    })
+    const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToUpdate.smiles
+        && solv.inchikey && solventToUpdate.inchikey));
     if (filteredIndex >= 0) {
-      tmpSolvents[filteredIndex] = solventToUpdate
+      tmpSolvents[filteredIndex] = solventToUpdate;
     }
-    this.solvent = tmpSolvents
+    this.solvent = tmpSolvents;
   }
 }
 
