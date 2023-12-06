@@ -9,22 +9,22 @@ class CollectionsCellline < ApplicationRecord
   include Collecting
 
   # Remove from collection and process associated elements (and update collection info tag)
-  def self.remove_in_collection(cellline_ids, collection_ids)
+  def self.remove_in_collection(cellline_id, collection_id)
     CollectionsCellline.find_by(
-      collection_id: collection_ids,
-      cellline_sample_id: cellline_ids,
+      collection_id: collection_id,
+      cellline_sample_id: cellline_id,
       deleted_at: nil,
-    ).destroy
+    )&.destroy
   end
 
-  def self.move_to_collection(cellline_ids, from_col_ids, to_col_id)
-    raise "could not find collection with #{to_col_id}" unless Collection.find_by(id: to_col_id)
+  def self.move_to_collection(cellline_ids, from_collection_id, to_colllection_id)
+    raise "could not find collection with #{to_colllection_id}" unless Collection.find_by(id: to_colllection_id)
 
     Array(cellline_ids).each do |cell_line_id|
-      next if to_col_id == from_col_ids
+      next if to_colllection_id == from_collection_id
 
-      CollectionsCellline.save_to_collection(cell_line_id, to_col_id)
-      CollectionsCellline.delete_in_collection(cell_line_id, from_col_ids)
+      CollectionsCellline.save_to_collection(cell_line_id, to_colllection_id)
+      CollectionsCellline.remove_in_collection(cell_line_id, from_collection_id)
     end
 
     CollectionsCellline.update_collection_tag(cellline_ids)
@@ -41,15 +41,6 @@ class CollectionsCellline < ApplicationRecord
       )
     end
     CollectionsCellline.update_collection_tag(cellline_ids)
-  end
-
-  def self.delete_in_collection(cell_line_id, coll_id)
-    old_entry = CollectionsCellline.find_by(
-      cellline_sample_id: cell_line_id,
-      collection_id: coll_id,
-      deleted_at: nil,
-    )
-    old_entry&.destroy
   end
 
   def self.save_to_collection(cell_line_id, to_col_id)
