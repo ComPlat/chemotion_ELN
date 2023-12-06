@@ -51,15 +51,40 @@ export default class Curation_modal extends Component {
       this.setState({ show: true });
     }
 
-    spell_check(){
+    spell_check(description){
+      // console.log(description)
+      var test ="this is a sentance"
       var Typo = require("typo-js"); 
-      var dictionary = new Typo("en_US",false,false, { dictionaryPath: "typo/dictionaries" });
-      var is_spelled_correctly = dictionary.check("mispeled");
-      console.log( "Is 'mispelled' spelled correctly? " + is_spelled_correctly );
-      var is_spelled_correctly = dictionary.check("misspelled");
-      console.log( "Is 'misspelled' spelled correctly? " + is_spelled_correctly );
-      var array_of_suggestions = dictionary.suggest("mispeling");
-      console.log( "Spelling suggestions for 'mispeling': " + array_of_suggestions.join( ', ' ) );
+      var dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typo/dictionaries" });
+      console.log(dictionary)
+      var ms_words = [];
+      var word_array = description.split(' ')
+      console.log(word_array)
+      for (let i = 0; i < word_array.length; i++){
+        var punctuation = /[\.,?!]/g;
+         word_array[i] = word_array[i].replace(punctuation, "");
+        if (word_array[i] == ""){
+        }
+        else {var spell_checked_word = dictionary.check(word_array[i]);
+        if (spell_checked_word == false){
+          ms_words.push(word_array[i]);
+        }
+        // console.log(word_array[i]);
+        // console.log(spell_checked_word);
+        }
+        
+      }
+      console.log(ms_words);
+      
+      // // this.getHighlightedText()
+
+      // var is_spelled_correctly = dictionary.check("mispeled");
+      // console.log( "Is 'mispelled' spelled correctly? " + is_spelled_correctly );
+      // var is_spelled_correctly = dictionary.check("misspelled");
+      // console.log( "Is 'misspelled' spelled correctly? " + is_spelled_correctly );
+      // var array_of_suggestions = dictionary.suggest("mispeling");
+      // console.log( "Spelling suggestions for 'mispeling': " + array_of_suggestions.join( ', ' ) );
+_
     }
     
     getHighlightedText(text, higlight) {
@@ -71,6 +96,10 @@ export default class Curation_modal extends Component {
           <b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) : (part)}
         </React.Fragment>
       ));}
+
+    highlight_misspelled_words_eng_dic(input){
+
+    }
 
     clean_data(description){
         const array_input = Object.values(description);
@@ -108,7 +137,7 @@ export default class Curation_modal extends Component {
                     suggestion
                 </div>
                 <div className="row">
-                  <Button onClick={this.spell_check}>fix</Button>
+                  <Button onClick={() =>this.spell_check(this.state.desc)}>fix</Button>
                   <Button onClick={() => this.handleSubmit(true)}> 
                     save and close
                   </Button>
