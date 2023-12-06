@@ -22,6 +22,7 @@ describe Chemotion::AttachmentAPI do
         'filesize' => attachment.filesize,
         'identifier' => attachment.identifier,
         'thumb' => attachment.thumb,
+        'thumbnail' => attachment.thumb ? Base64.encode64(attachment.read_thumbnail) : nil,
       },
     }
   end

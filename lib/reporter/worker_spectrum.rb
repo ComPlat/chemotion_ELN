@@ -30,7 +30,7 @@ module Reporter
       objects&.map do |obj|
         product_attrs << extract_products_attrs(obj) if obj[:role] != 'gp'
       end
-      product_attrs
+      product_attrs.compact_blank!
     end
 
     def extract_products_attrs(object)
@@ -65,7 +65,7 @@ module Reporter
       atts
     end
 
-    def replace_att_objs(product_attrs)
+    def replace_att_objs(product_attrs) # rubocop:disable Metrics/CyclomaticComplexity
       product_attrs&.map do |prd|
         att_objs = prd[:atts]&.map do |att|
           kind = att[:kind]
