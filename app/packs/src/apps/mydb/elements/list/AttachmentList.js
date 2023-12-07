@@ -22,13 +22,6 @@ export const formatFileSize = (sizeInB) => {
   return `${sizeInB} bytes`;
 };
 
-export const editorTooltip = (exts) => (
-  <Tooltip id="editor_tooltip">
-    Available extensions:&nbsp;
-    {exts}
-  </Tooltip>
-);
-
 export const downloadButton = (attachment, handleDownloadOriginal, handleDownloadAnnotated) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
@@ -95,36 +88,49 @@ export const editButton = (
   styleEditorBtn,
   editDisable,
   handleEdit
-) => (
-  <OverlayTrigger placement="left" overlay={editorTooltip(values(extension).join(','))}>
-    <Button
-      className="attachment-button-size"
-      style={{ display: styleEditorBtn }}
-      bsSize="xs"
-      bsStyle="success"
-      disabled={editDisable}
-      onClick={() => handleEdit(attachment)}
-    >
-      <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
-    </Button>
-  </OverlayTrigger>
-);
+) => {
+  const editorTooltip = (exts) => (
+    <Tooltip id="editor_tooltip">
+      {editDisable ? (
+        <span>
+          Editing is only available for these files:
+          <strong>{exts}</strong>
+        </span>
+      ) : (
+        <span>Edit attachment</span>
+      )}
+    </Tooltip>
+  );
+  return (
+    <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
+      <Button
+        className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
+        style={{ display: styleEditorBtn }}
+        bsSize="xs"
+        bsStyle="success"
+        disabled={editDisable}
+        onClick={() => handleEdit(attachment)}
+      >
+        <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+      </Button>
+    </OverlayTrigger>
+  );
+};
 
 export const importButton = (
   attachment,
   showImportConfirm,
-  researchPlan,
+  importDisabled,
   importButtonRefs,
   showImportConfirmFunction,
   hideImportConfirmFunction,
   confirmAttachmentImportFunction
 ) => {
   const show = showImportConfirm[attachment.id];
-  const importDisabled = researchPlan;
   const extension = attachment.filename.split('.').pop();
 
-  const importTooltip = importDisabled
-    ? <Tooltip id="import_tooltip">Element must be saved before import</Tooltip>
+  const importTooltip = importDisabled || extension !== 'xlsx'
+    ? <Tooltip id="import_tooltip">Invalid type for import or element must be saved before import</Tooltip>
     : <Tooltip id="import_tooltip">Import as element data</Tooltip>;
 
   const confirmTooltip = (
