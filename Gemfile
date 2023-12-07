@@ -64,6 +64,7 @@ gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 
 gem 'labimotion', '1.0.19'
 
 gem 'mimemagic', '0.3.10'
+gem 'mime-types'
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions

@@ -931,6 +931,7 @@ DEPENDENCIES
   listen
   memory_profiler
   meta_request
+  mime-types
   mimemagic (= 0.3.10)
   net-scp (= 3.0.0)
   net-sftp
@@ -1001,4 +1002,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   2.2.29
+   2.4.19
