@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: collections_celllines
+#
+#  id                 :bigint           not null, primary key
+#  collection_id      :integer
+#  cellline_sample_id :integer
+#  deleted_at         :datetime
+#
 class CollectionsCellline < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
