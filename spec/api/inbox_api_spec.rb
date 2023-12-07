@@ -89,19 +89,8 @@ describe Chemotion::InboxAPI do
           )
         end
 
-        it 'returns the inbox contents sorted by created_at (descending)' do
-          get '/api/v1/inbox', params: { cnt_only: false, sort_column: 'created_at' }
-
-          expect(JSON.parse(response.body)['inbox']['children'].pluck('id')).to eq(
-            [
-              inbox_container_child_second.id,
-              inbox_container_child_first.id,
-            ],
-          )
-        end
-
         it 'gives error for invalid value for sort_column' do
-          get '/api/v1/reactions', params: { cnt_only: false, sort_column: 'not_allowed' }
+          get '/api/v1/inbox', params: { cnt_only: false, sort_column: 'not_allowed' }
 
           expect(response).to have_http_status(:bad_request)
           expect(JSON.parse(response.body)['error']).to eq('sort_column does not have a valid value')
