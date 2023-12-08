@@ -433,7 +433,6 @@ class ElementActions {
   }
 
   generateEmptyCellLine(collectionId,template){
-    var c = new CellLine();
     const { currentUser } = UserStore.getState();
     if (!currentUser) {return }
 
