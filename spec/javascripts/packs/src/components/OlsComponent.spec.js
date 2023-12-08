@@ -47,7 +47,7 @@ describe('OlsComponent', () => {
     describe('when term contains one |', () => {
       const value = 'some | text';
 
-      it('hole text is used', () => {
+      it('whole text is used', () => {
         component.instance().OnSelectChange(value);
         expect(currentSelectedValue).toBe(value);
       });
@@ -55,7 +55,7 @@ describe('OlsComponent', () => {
     describe('when term contains three |', () => {
       const value = 'some | text | with | pipelines';
 
-      it('hole text is used', () => {
+      it('whole text is used', () => {
         component.instance().OnSelectChange(value);
         expect(currentSelectedValue).toBe(value);
       });
@@ -63,7 +63,7 @@ describe('OlsComponent', () => {
     describe('when term contains one $', () => {
       const value = 'some $ text';
 
-      it('hole text is used', () => {
+      it('whole text is used', () => {
         component.instance().OnSelectChange(value);
         expect(currentSelectedValue).toBe(value);
       });
@@ -71,7 +71,7 @@ describe('OlsComponent', () => {
     describe('when term contains three $', () => {
       const value = 'some $ text $ here $ again';
 
-      it('hole text is used', () => {
+      it('whole text is used', () => {
         component.instance().OnSelectChange(value);
         expect(currentSelectedValue).toBe(value);
       });
@@ -79,7 +79,7 @@ describe('OlsComponent', () => {
     describe('when term contains three $ last one is artifical id', () => {
       const value = 'another $ text $ for $550e8400-e29b-41d4-a716-446655440000';
 
-      it('hole text is used', () => {
+      it('whole text is used', () => {
         component.instance().OnSelectChange(value);
         expect(currentSelectedValue).toBe('another $ text $ for');
       });
