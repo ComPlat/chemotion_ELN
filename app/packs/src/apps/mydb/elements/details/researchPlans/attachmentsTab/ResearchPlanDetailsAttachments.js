@@ -298,13 +298,19 @@ export default class ResearchPlanDetailsAttachments extends Component {
                 )}
                 <div className="attachment-row-subtext">
                   Added on:&nbsp;
-                  {new Date(attachment.created_at).toLocaleDateString('en-GB')}
-                  ,&nbsp;
-                  {new Date(attachment.created_at).toLocaleTimeString(
-                    'en-GB',
-                    { hour: '2-digit', minute: '2-digit', hour12: true }
+                  {attachment.created_at && !Number.isNaN(new Date(attachment.created_at).getTime()) ? (
+                    <>
+                      {new Date(attachment.created_at).toLocaleDateString('en-GB')}
+                      ,
+                      &nbsp;
+                      {new Date(attachment.created_at).toLocaleTimeString(
+                        'en-GB',
+                        { hour: '2-digit', minute: '2-digit', hour12: true }
+                      )}
+                    </>
+                  ) : (
+                    'now!'
                   )}
-
                 </div>
               </div>
               <div className="attachment-row-size">
