@@ -165,12 +165,12 @@ export default class ContainerDatasetModal extends Component {
             />
           </Modal.Body>
           <Modal.Footer style={{ flexShrink: 0, width: '100%' }}>
-            <Button style={{ marginRight: '5px' }} onClick={this.handleDiscard}>Discard Changes</Button>
+            {/* <Button style={{ marginRight: '5px' }} onClick={this.handleDiscard}>Discard Changes</Button> */}
             <Button bsStyle="primary" onClick={this.handleSave}>Keep Changes</Button>
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               <small>
                 Changes are kept for this session. Remember to save the element itself to persist changes.
-                Discarding changes will discard changes for the entire session.
+                {/* Discarding changes will discard changes for the entire session. */}
               </small>
             </div>
           </Modal.Footer>
