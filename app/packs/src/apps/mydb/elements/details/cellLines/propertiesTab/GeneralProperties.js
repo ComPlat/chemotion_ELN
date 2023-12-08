@@ -213,7 +213,7 @@ class GeneralProperties extends React.Component {
                 cellLineItem.cryopreservationMedium,
                 (e) => { cellLineDetailsStore.changeCryoMedium(cellLineId, e.target.value); }
               )}
-              {this.renderOptionalAttribute('opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
+              {this.renderOptionalAttribute('Opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
                 cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value));
               })}
               {this.renderOptionalAttribute('Gender', cellLineItem.gender, (e) => {
