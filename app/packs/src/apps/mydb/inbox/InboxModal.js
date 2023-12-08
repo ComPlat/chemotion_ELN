@@ -99,7 +99,7 @@ export default class InboxModal extends React.Component {
     let newColMdValue;
     switch (size) {
       case 'Small':
-        newColMdValue = 3;
+        newColMdValue = 2;
         break;
       case 'Medium':
         newColMdValue = 4;
@@ -111,12 +111,14 @@ export default class InboxModal extends React.Component {
         newColMdValue = 4;
     }
     this.setState({ colMdValue: newColMdValue });
+
+    InboxActions.changeInboxSize(size);
   };
 
   getSizeLabel = () => {
     const { colMdValue } = this.state;
     switch (colMdValue) {
-      case 3:
+      case 2:
         return 'Small';
       case 4:
         return 'Medium';
@@ -340,24 +342,23 @@ export default class InboxModal extends React.Component {
     this.initState();
 
     const sortTitle = this.state.sortColumn === 'name'
-      ? 'click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)'
-      : 'click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)';
+      ? 'click to sort datasets and attachments by creation date (descending) - currently sorted alphabetically'
+      : 'click to sort datasets and attachments alphabetically - currently sorted by creation date (descending)';
     const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
     const sortIcon = <i className={`fa ${sortIconClass}`} />;
-    const sortContent = (
+    return (
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
-        <button
-          type="button"
-          className="btn-inbox-sort"
+        <Button
+          bsStyle="success"
+          bsSize="xs"
+          className="header-button"
           onClick={this.changeSortColumn}
         >
           {sortIcon}
-        </button>
+        </Button>
       </OverlayTrigger>
     );
-
-    return sortContent;
   }
 
   render() {
