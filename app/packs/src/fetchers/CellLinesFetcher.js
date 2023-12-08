@@ -37,7 +37,6 @@ const errorMessageParameter = {
 };
 
 export default class CellLinesFetcher {
-  static mockData = {};
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
@@ -139,7 +138,7 @@ export default class CellLinesFetcher {
         body: JSON.stringify(params)
       }))
       .then((response) => response.json())
-      .then((json) => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
+      .then(() => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
       .then(()=> CellLinesFetcher.fetchById(cellLineItem.id))
       .then((loadedCellLineSample) => {
         NotificationActions.add(successfullyUpdatedParameter);
