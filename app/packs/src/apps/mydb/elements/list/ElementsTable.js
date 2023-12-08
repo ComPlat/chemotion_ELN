@@ -21,7 +21,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
-import CellLineGroup from '../../../../models/cellLine/CellLineGroup';
+import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 
 export default class ElementsTable extends React.Component {
