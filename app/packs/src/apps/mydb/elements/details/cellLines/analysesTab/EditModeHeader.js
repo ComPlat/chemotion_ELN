@@ -3,8 +3,7 @@ import QuillViewer from 'src/components/QuillViewer';
 import PropTypes from 'prop-types';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
-import { Checkbox, Button } from 'react-bootstrap';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import { Button } from 'react-bootstrap';
 
 export default class EditModeHeader extends React.Component {
   handleUndoDeletionOfContainer(container, e) {
@@ -27,19 +26,12 @@ export default class EditModeHeader extends React.Component {
     }
   }
 
-  toggleContainerInReport(container, e) {
-    // To prevent showing the content of the restored analysis i will stop the event here
-    e.stopPropagation();
-    const { parent } = this.props;
-    // eslint-disable-next-line   no-param-reassign
-    container.extended_metadata.report = !container.extended_metadata.report;
-    parent.handleChange(container);
-  }
-
   renderDeletedContainer() {
     const { container } = this.props;
     const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
-    const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
+    const titleKind = kind
+      ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`)
+      : '';
 
     const status = container.extended_metadata.status && container.extended_metadata.status !== '';
     const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
@@ -162,6 +154,7 @@ EditModeHeader.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 
   }).isRequired,
+  readOnly: PropTypes.bool.isRequired,
   parent: PropTypes.shape({
     handleChange: PropTypes.func.isRequired
   }).isRequired,
