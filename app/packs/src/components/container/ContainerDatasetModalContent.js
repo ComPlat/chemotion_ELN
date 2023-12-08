@@ -505,7 +505,11 @@ export default class ContainerDatasetModalContent extends Component {
                 />
               </div>
               <div className="attachment-row-text">
-                {attachment.filename}
+                {attachment.is_deleted ? (
+                  <strike>{attachment.filename}</strike>
+                ) : (
+                  attachment.filename
+                )}
                 <div className="attachment-row-subtext">
                   Added on:&nbsp;
                   {new Date(attachment.created_at).toLocaleDateString('en-GB')}
