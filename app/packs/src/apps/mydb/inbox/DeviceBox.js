@@ -45,9 +45,17 @@ export default class DeviceBox extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { deviceBoxVisible } = this.props;
+    const { deviceBoxVisible, device_box } = this.props;
+    const { currentDeviceBoxPage } = this.state;
+
     if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
       this.setState({ visible: deviceBoxVisible });
+    }
+
+    if (deviceBoxVisible) {
+      if (Array.isArray(device_box.children) && !device_box.children.length) {
+        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
+      }
     }
   }
 
@@ -57,13 +65,8 @@ export default class DeviceBox extends React.Component {
 
   handleDeviceBoxClick(deviceBox) {
     const { visible, currentDeviceBoxPage } = this.state;
-    const { fromCollectionTree } = this.props;
 
     InboxActions.setActiveDeviceBoxId(deviceBox.id);
-
-    if (fromCollectionTree) {
-      return;
-    }
 
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
@@ -71,7 +74,12 @@ export default class DeviceBox extends React.Component {
         InboxActions.fetchInboxContainer(deviceBox.id, currentDeviceBoxPage);
       }
     }
-    this.setState({ visible: !visible, checkedDeviceAll: false, checkedDeviceIds: [], checkedIds: [] });
+    this.setState({
+      visible: !visible,
+      checkedDeviceAll: false,
+      checkedDeviceIds: [],
+      checkedIds: [],
+    });
   }
 
   handleDatasetSelect(datasetId) {
@@ -162,7 +170,7 @@ export default class DeviceBox extends React.Component {
       params.type = true;
     }
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState.inboxState,
       checkedDeviceAll: !this.state.checkedDeviceAll
     }));
@@ -209,68 +217,12 @@ export default class DeviceBox extends React.Component {
     this.toggleTooltip();
   }
 
-  deleteCheckedDataset(device_box) {
-    const { checkedDeviceIds, currentDeviceBoxPage, checkedIds } = this.state;
-
-    const currentItemsCount = device_box.children.length;
-    const itemsDeleted = checkedDeviceIds.length;
-
-    checkedDeviceIds.forEach((checkedDeviceId) => {
-      const datasetToDelete = device_box.children.find((dataset) => dataset.id === checkedDeviceId);
-      if (datasetToDelete) {
-        InboxActions.deleteContainer(datasetToDelete, true);
-      }
-    });
-
-    checkedIds.forEach((checkedId) => {
-      device_box.children.forEach((dataset) => {
-        const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
-        if (attachmentToDelete) {
-          InboxActions.deleteAttachment(attachmentToDelete, false);
-        }
-      });
-    });
-
-    const params = {
-      checkedDeviceIds: [],
-      checkedIds: [],
-    };
-    InboxActions.checkedDeviceIds(params);
-
-    if (currentDeviceBoxPage > 1 && itemsDeleted === currentItemsCount) {
-      this.handlePrevClick(device_box);
-    }
-
-    this.toggleTooltip();
-  }
-
-  handlePrevClick = (deviceBox) => {
-    const { currentDeviceBoxPage } = this.state;
-    const updatedPage = currentDeviceBoxPage - 1;
-    this.setState({ currentDeviceBoxPage: updatedPage });
-    LoadingActions.start();
-    InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
-  };
-
-  handleNextClick = (deviceBox) => {
-    const { currentDeviceBoxPage } = this.state;
-    const updatedPage = currentDeviceBoxPage + 1;
-    this.setState({ currentDeviceBoxPage: updatedPage });
-    LoadingActions.start();
-    InboxActions.fetchInboxContainer(deviceBox.id, updatedPage);
-  };
-
   deleteDeviceBox(deviceBox) {
-    const { fromCollectionTree } = this.props;
-    if (fromCollectionTree) {
-      return;
-    }
-
     InboxActions.deleteContainer(deviceBox);
   }
 
   render() {
-    const { device_box, largerInbox, fromCollectionTree } = this.props;
+    const { device_box, largerInbox } = this.props;
     const {
       visible, checkedDeviceAll, checkedDeviceIds, checkedIds, currentDeviceBoxPage, dataItemsPerPage,
     } = this.state;
@@ -286,7 +238,7 @@ export default class DeviceBox extends React.Component {
       <div>
         <input
           type="checkbox"
-          checked={checkedDeviceIds.length === currentItemsCount && currentItemsCount !== 0 }
+          checked={checkedDeviceIds.length === currentItemsCount && currentItemsCount !== 0}
           onChange={this.toggleSelectAllFiles}
         />
         <span className="g-marginLeft--10" style={{ fontWeight: 'bold' }}>
@@ -325,10 +277,6 @@ export default class DeviceBox extends React.Component {
         ) : null}
       </span>
     );
-
-    device_box.children.sort((a, b) => {
-      if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
-    });
 
     const datasets = device_box.children.map((dataset) => (
       <DatasetContainer
@@ -377,7 +325,7 @@ export default class DeviceBox extends React.Component {
           <button
             type="button"
             className="btn-inbox"
-            onClick={!fromCollectionTree ? () => this.setState({ visible: !visible }) : null}
+            onClick={() => this.setState({ visible: !visible })}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -394,7 +342,7 @@ export default class DeviceBox extends React.Component {
           </button>
         </div>
         {
-          visible && !fromCollectionTree && device_box?.children_count > dataItemsPerPage ? (
+          visible && device_box?.children_count > dataItemsPerPage ? (
             <Pagination
               currentDataSetPage={currentDeviceBoxPage}
               totalPages={totalPages}
@@ -415,7 +363,7 @@ export default class DeviceBox extends React.Component {
             </tr>
           </tbody>
         </table>
-        <div>{visible && !fromCollectionTree ? datasets : null}</div>
+        <div>{visible ? datasets : null}</div>
       </div>
     );
   }
@@ -424,12 +372,10 @@ export default class DeviceBox extends React.Component {
 DeviceBox.propTypes = {
   device_box: PropTypes.object.isRequired,
   largerInbox: PropTypes.bool,
-  fromCollectionTree: PropTypes.bool,
   deviceBoxVisible: PropTypes.bool,
 };
 
 DeviceBox.defaultProps = {
   largerInbox: false,
-  fromCollectionTree: false,
   deviceBoxVisible: false,
 };
