@@ -141,14 +141,14 @@ export default class InboxModal extends React.Component {
   updateFilterAndUserProfile = (type, sort) => {
     InboxActions.changeInboxFilter({
       name: type,
-      sort: sort,
+      sort,
     });
 
     UserActions.updateUserProfile({
       data: {
         filters: {
           [type]: {
-            sort: sort,
+            sort,
           },
         },
       },
@@ -166,35 +166,6 @@ export default class InboxModal extends React.Component {
       this.updateFilterAndUserProfile(type, sort);
     });
   };
-
-  renderSortButton() {
-    this.initState();
-
-    const sortTitle = this.state.sortColumn === 'name'
-      ? 'click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)'
-      : 'click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)';
-    const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa ${sortIconClass}`} />;
-    const sortContent = (
-      <OverlayTrigger placement="bottom" overlay={sortTooltip}>
-        <button
-          type="button"
-          className="btn-inbox-sort"
-          onClick={this.changeSortColumn}
-        >
-          {sortIcon}
-        </button>
-      </OverlayTrigger>
-    );
-
-    return (
-      <>
-        {sortContent}
-      </>
-    );
-  }
-
 
   handleMouseDown = (e) => {
     e.preventDefault();
@@ -363,6 +334,30 @@ export default class InboxModal extends React.Component {
         </OverlayTrigger>
       </CopyToClipboard>
     );
+  }
+
+  renderSortButton() {
+    this.initState();
+
+    const sortTitle = this.state.sortColumn === 'name'
+      ? 'click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)'
+      : 'click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)';
+    const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
+    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
+    const sortContent = (
+      <OverlayTrigger placement="bottom" overlay={sortTooltip}>
+        <button
+          type="button"
+          className="btn-inbox-sort"
+          onClick={this.changeSortColumn}
+        >
+          {sortIcon}
+        </button>
+      </OverlayTrigger>
+    );
+
+    return sortContent;
   }
 
   render() {
