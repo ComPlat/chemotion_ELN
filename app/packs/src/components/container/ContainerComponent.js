@@ -166,6 +166,7 @@ export default class ContainerComponent extends Component {
     return (
       <div>
         <Col md={8}>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label>Name</label>
           <FormControl
             type="text"
@@ -178,6 +179,7 @@ export default class ContainerComponent extends Component {
         </Col>
         <Col md={4}>
           <div style={{ marginBottom: 11 }}>
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label>Status</label>
             <Select
               name="status"
@@ -219,6 +221,7 @@ export default class ContainerComponent extends Component {
           </FormGroup>
         </Col>
         <Col md={12}>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label>Datasets</label>
           <ContainerDatasets
             container={container}

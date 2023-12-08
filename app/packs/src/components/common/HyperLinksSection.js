@@ -1,7 +1,8 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, FormControl, Table, ListGroup, ListGroupItem, Button
+  FormGroup, FormControl, ListGroup, ListGroupItem, Button
 } from 'react-bootstrap';
 
 export default class HyperLinksSection extends Component {
@@ -26,6 +27,34 @@ export default class HyperLinksSection extends Component {
     const { link } = this.state;
     this.props.onAddLink(link);
     this.setState({ link: null });
+  }
+
+  handleRemoveLink(link) {
+    this.props.onRemoveLink(link);
+  }
+
+  removeLinkButton(link) {
+    const { readOnly, disabled } = this.props;
+    if (!readOnly && !disabled) {
+      return (
+        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemoveLink(link)}>
+          <i className="fa fa-trash-o" />
+        </Button>
+      );
+    }
+    return null;
+  }
+
+  listLinkItem(link) {
+    return (
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px'
+      }}
+      >
+        <a href={link} style={{ cursor: 'pointer' }} target="_blank" rel="noreferrer">{link}</a>
+        {this.removeLinkButton(link)}
+      </div>
+    );
   }
 
   renderHyperLinkInput() {
@@ -73,7 +102,7 @@ export default class HyperLinksSection extends Component {
           <ListGroup>
             {
               hyperLinks.map((link) => (
-                <ListGroupItem style={{ margin: 'unset', padding: 'unset' }}>
+                <ListGroupItem key={link} style={{ margin: 'unset', padding: 'unset' }}>
                   {this.listLinkItem(link)}
                 </ListGroupItem>
               ))
@@ -85,41 +114,11 @@ export default class HyperLinksSection extends Component {
     return null;
   }
 
-  handleRemoveLink(link) {
-    this.props.onRemoveLink(link);
-  }
-
-  removeLinkButton(link) {
-    const { readOnly, disabled } = this.props;
-    if (!readOnly && !disabled) {
-      return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemoveLink(link)}>
-          <i className="fa fa-trash-o" />
-        </Button>
-      );
-    }
-  }
-
-  listLinkItem(link) {
-    return (
-      <Table className="borderless" style={{ marginBottom: 'unset' }}>
-        <tbody>
-          <tr>
-            <td style={{ verticalAlign: 'middle' }}>
-              <a href={link} style={{ cursor: 'pointer' }} target="_blank" rel="noreferrer">{link}</a>
-              <br />
-              {this.removeLinkButton(link)}
-            </td>
-          </tr>
-        </tbody>
-      </Table>
-    );
-  }
-
   render() {
     return (
       <div>
-        <label>Hyperlinks: </label>
+        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+        <label>Hyperlinks</label>
         {this.renderHyperLinkInput()}
         {this.renderHyperLinkList()}
       </div>
@@ -131,5 +130,11 @@ HyperLinksSection.propTypes = {
   data: PropTypes.arrayOf(PropTypes.string).isRequired,
   onAddLink: PropTypes.func.isRequired,
   onRemoveLink: PropTypes.func.isRequired,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+};
+
+HyperLinksSection.defaultProps = {
+  disabled: false,
+  readOnly: false,
 };
