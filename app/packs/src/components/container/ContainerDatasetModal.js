@@ -29,7 +29,11 @@ export default class ContainerDatasetModal extends Component {
 
   handleSave() {
     this.datasetInput.current.handleSave();
-    this.props.onChange({ ...this.props.datasetContainer, name: this.state.localName });
+    this.props.onChange({
+      ...this.props.datasetContainer,
+      ...this.datasetInput.current.state.datasetContainer,
+      name: this.state.localName
+    });
   }
 
   handleNameChange(newName) {

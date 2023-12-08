@@ -118,8 +118,7 @@ export default class ContainerDatasetModalContent extends Component {
     const firstAttach = datasetContainer.attachments.length === 0;
     datasetContainer.attachments = datasetContainer.attachments.concat(attachments);
     if (firstAttach) {
-      const attachmentList = datasetContainer.attachments;
-      let attachName = attachmentList[attachmentList.length - 1].filename;
+      let attachName = attachments[0].filename;
       const splitted = attachName.split('.');
       if (splitted.length > 1) {
         splitted.splice(-1, 1);
@@ -127,7 +126,13 @@ export default class ContainerDatasetModalContent extends Component {
       }
       datasetContainer.name = attachName;
     }
-    this.setState({ datasetContainer });
+
+    this.setState({
+      datasetContainer,
+      filteredAttachments: [...datasetContainer.attachments]
+    }, () => {
+      this.props.onChange({ ...this.state.datasetContainer });
+    });
   }
 
   handleAttachmentRemove(attachment) {
