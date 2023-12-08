@@ -2,8 +2,9 @@
 import React, { Component } from 'react';
 import {
   Row, Col, FormGroup, FormControl, ControlLabel,
-  ListGroup, ListGroupItem, Button, Overlay, Panel,
+  ListGroupItem, Button, Overlay
 } from 'react-bootstrap';
+import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageModal from 'src/components/common/ImageModal';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -30,7 +31,6 @@ import {
   removeButton,
   annotateButton,
   editButton,
-  customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
   isImageFile,
@@ -53,7 +53,6 @@ export default class ContainerDatasetModalContent extends Component {
       filterText: '',
       sortBy: 'name',
       sortDirection: 'asc',
-      activeKey: null,
     };
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
@@ -69,7 +68,8 @@ export default class ContainerDatasetModalContent extends Component {
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
     this.toggleSortDirection = this.toggleSortDirection.bind(this);
-    this.handleSelect = this.handleSelect.bind(this);
+    this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
+    this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
   }
 
   componentDidMount() {
@@ -83,10 +83,6 @@ export default class ContainerDatasetModalContent extends Component {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAndSortAttachments);
     }
-  }
-
-  handleSelect(activeKey) {
-    this.setState({ activeKey });
   }
 
   handleInputChange(type, event) {
@@ -239,7 +235,7 @@ export default class ContainerDatasetModalContent extends Component {
           attachment.aasm_state = 'oo_editing';
           attachment.updated_at = new Date();
 
-          this.props.datasetContainer.onChange(attachment);
+          this.props.onChange(attachment);
         } else {
           alert('Unauthorized to edit this file.');
         }
@@ -404,9 +400,20 @@ export default class ContainerDatasetModalContent extends Component {
     });
   }
 
+  customDropzone() {
+    return (
+      <Dropzone
+        onDrop={(files) => this.handleFileDrop(files)}
+        className="attachment-dropzone"
+      >
+        Drop files here, or click to upload.
+      </Dropzone>
+    );
+  }
+
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
-    const { datasetContainer } = this.props;
+    const { onChange } = this.props;
     return (
       <ImageAnnotationModalSVG
         attachment={chosenAttachment}
@@ -416,7 +423,7 @@ export default class ContainerDatasetModalContent extends Component {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
             chosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
-            datasetContainer.onChange(chosenAttachment);
+            onChange(chosenAttachment);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
@@ -449,136 +456,104 @@ export default class ContainerDatasetModalContent extends Component {
 
   renderAttachments() {
     const {
-      datasetContainer, filteredAttachments, sortDirection, attachmentEditor, extension
+      filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const groupedAttachments = {};
-    filteredAttachments.forEach((attachment) => {
-      const { filename } = attachment;
-      const nameWithoutExtension = filename.replace(/\.[^.]+$/, '');
-      const nameWithoutPeak = nameWithoutExtension.replace(/\.peak$/, '');
-      if (!groupedAttachments[nameWithoutPeak]) {
-        groupedAttachments[nameWithoutPeak] = [];
-      }
-      groupedAttachments[nameWithoutPeak].push(attachment);
-    });
-
-    const attachmentGroups = Object.entries(groupedAttachments).map(([name, attachments]) => (
-      <Panel
-        key={name}
-        eventKey={name}
-        expanded={activeKey === name}
-        onSelect={this.handleSelect}
-      >
-        <Panel.Heading>
-          <Panel.Title toggle>{name}</Panel.Title>
-        </Panel.Heading>
-        <Panel.Collapse>
-          <Panel.Body>
-            <ListGroup>
-              {datasetContainer.attachments.map((attachment) => (
-                <ListGroupItem key={attachment.id}>
-                  <div className="attachment-row" key={attachment.id}>
-                    <div className="attachment-row-image">
-                      <ImageModal
-                        imageStyle={{
-                          width: '60px',
-                          height: '60px',
-                          borderRadius: '5px',
-                          objectFit: 'cover',
-                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                        }}
-                        hasPop={false}
-                        alt="thumbnail"
-                        previewObject={{
-                          src: attachment.preview,
-                        }}
-                        popObject={{
-                          title: attachment.filename,
-                          src: attachment.preview,
-                          fetchNeeded: false,
-                          fetchId: attachment.id,
-                        }}
-                      />
-                    </div>
-                    <div className="attachment-row-text">
-                      {attachment.filename}
-                      <div className="attachment-row-subtext">
-                        Added on:&nbsp;
-                        {new Date(attachment.created_at).toLocaleDateString('en-GB')}
-                        ,&nbsp;
-                        {new Date(attachment.created_at).toLocaleTimeString(
-                          'en-GB',
-                          { hour: '2-digit', minute: '2-digit', hour12: true }
-                        )}
-
-                      </div>
-                    </div>
-                    <div className="attachment-row-size">
-                      <span style={{ fontWeight: 'bold' }}>
-                        Size:&nbsp;
-                        <span style={{ fontWeight: 'bold', color: '#444' }}>
-                          {formatFileSize(attachment.filesize)}
-                        </span>
-                      </span>
-                    </div>
-                    <div
-                      className="attachment-row-actions"
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-                    >
-                      {attachment.is_deleted ? (
-                        <Button
-                          bsSize="xs"
-                          bsStyle="danger"
-                          className="attachment-button-size"
-                          onClick={() => this.handleUndo(attachment)}
-                        >
-                          <i className="fa fa-undo" aria-hidden="true" />
-                        </Button>
-                      ) : (
-                        <>
-                          {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
-                          {editButton(
-                            attachment,
-                            extension,
-                            attachmentEditor,
-                            attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                            attachmentEditor ? '' : 'none',
-                            !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                        || attachment.is_new || this.documentType(attachment.filename) === null,
-                            this.handleEdit
-                          )}
-                          {annotateButton(attachment, this)}
-                          {moveBackButton(attachment, this.handleAttachmentBackToInbox, this.props.readOnly)}
-                          {removeButton(attachment, this.handleAttachmentRemove, this.props.datasetContainer.readOnly)}
-                        </>
-                      )}
-                    </div>
-                    {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
-                  </div>
-                </ListGroupItem>
-              ))}
-            </ListGroup>
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
-    ));
 
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
-        {customDropzone((files) => this.handleFileDrop(files))}
+        {this.customDropzone()}
         {sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
           this.handleFilterChange
         )}
-        {attachmentGroups.length > 0 ? attachmentGroups : (
-          <div className="no-attachments-text">There are currently no attachments.</div>
-        )}
+        {filteredAttachments.length === 0 ? (
+          <div className="no-attachments-text">
+            There are currently no attachments.
+          </div>
+        ) : (
+          filteredAttachments.map((attachment) => (
+            <div className="attachment-row" key={attachment.id}>
+              <div className="attachment-row-image">
+                <ImageModal
+                  imageStyle={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '5px',
+                    objectFit: 'cover',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  }}
+                  hasPop={false}
+                  alt="thumbnail"
+                  previewObject={{
+                    src: attachment.preview,
+                  }}
+                  popObject={{
+                    title: attachment.filename,
+                    src: attachment.preview,
+                    fetchNeeded: false,
+                    fetchId: attachment.id,
+                  }}
+                />
+              </div>
+              <div className="attachment-row-text">
+                {attachment.filename}
+                <div className="attachment-row-subtext">
+                  Added on:&nbsp;
+                  {new Date(attachment.created_at).toLocaleDateString('en-GB')}
+                  ,&nbsp;
+                  {new Date(attachment.created_at).toLocaleTimeString(
+                    'en-GB',
+                    { hour: '2-digit', minute: '2-digit', hour12: true }
+                  )}
 
+                </div>
+              </div>
+              <div className="attachment-row-size">
+                <span style={{ fontWeight: 'bold' }}>
+                  Size:&nbsp;
+                  <span style={{ fontWeight: 'bold', color: '#444' }}>
+                    {formatFileSize(attachment.filesize)}
+                  </span>
+                </span>
+              </div>
+              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {attachment.is_deleted ? (
+                  <Button
+                    bsSize="xs"
+                    bsStyle="danger"
+                    className="attachment-button-size"
+                    onClick={() => this.handleUndo(attachment)}
+                  >
+                    <i className="fa fa-undo" aria-hidden="true" />
+                  </Button>
+                ) : (
+                  <>
+                    {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {editButton(
+                      attachment,
+                      extension,
+                      attachmentEditor,
+                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                      attachmentEditor ? '' : 'none',
+                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                        || attachment.is_new || this.documentType(attachment.filename) === null,
+                      this.handleEdit
+                    )}
+                    {annotateButton(attachment, this)}
+                    {moveBackButton(attachment, this.handleAttachmentBackToInbox, this.props.readOnly)}
+                    {removeButton(attachment, this.handleAttachmentRemove, this.props.readOnly)}
+                  </>
+                )}
+              </div>
+              {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+            </div>
+          ))
+        )}
         <HyperLinksSection
           data={this.state.datasetContainer.extended_metadata.hyperlinks}
           onAddLink={this.handleAddLink}
@@ -695,8 +670,6 @@ ContainerDatasetModalContent.propTypes = {
       ]).isRequired,
       thumb: PropTypes.bool.isRequired
     })),
-    onChange: PropTypes.func,
-    readOnly: PropTypes.bool,
   }).isRequired,
   onChange: PropTypes.func.isRequired,
   onModalHide: PropTypes.func.isRequired,
@@ -704,10 +677,26 @@ ContainerDatasetModalContent.propTypes = {
   disabled: PropTypes.bool,
   kind: PropTypes.string.isRequired,
   mode: PropTypes.oneOf(['attachments', 'metadata']),
+  attachments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    aasm_state: PropTypes.string.isRequired,
+    content_type: PropTypes.string.isRequired,
+    filename: PropTypes.string.isRequired,
+    filesize: PropTypes.number.isRequired,
+    identifier: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]).isRequired,
+    thumb: PropTypes.bool.isRequired
+  })),
 };
 
 ContainerDatasetModalContent.defaultProps = {
   mode: 'attachments',
   disabled: false,
   readOnly: false,
+  attachments: [],
 };
