@@ -28,7 +28,6 @@ class CellLineDetails extends React.Component {
       readOnly: this.isReadOnly()
     };
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
-    this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
   handleSubmit(cellLineItem) {
@@ -53,11 +52,6 @@ class CellLineDetails extends React.Component {
       cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
       DetailActions.close(cellLineItem, true);
     }
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  handleSegmentsChange() {
-
   }
 
   handleTabChange(eventKey) {
