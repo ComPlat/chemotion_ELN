@@ -11,7 +11,7 @@ import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 import {
   Panel, ButtonToolbar, Button,
-  Tabs, Tab
+  Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
@@ -65,14 +65,14 @@ class CellLineDetails extends React.Component {
 
   isReadOnly() {
     const { currentCollection, isSync } = UIStore.getState();
-    const {currentUser }= UserStore.getState();
+    const { currentUser } = UserStore.getState();
 
     return CollectionUtils.isReadOnly(
       currentCollection,
       currentUser.id,
-      isSync);
+      isSync
+    );
   }
-
 
   renderHeaderContent() {
     const { cellLineItem } = this.props;
@@ -126,6 +126,7 @@ class CellLineDetails extends React.Component {
       ? () => { this.handleSubmit(cellLineItem); DetailActions.close(cellLineItem, true); }
       : () => { this.handleSubmit(cellLineItem); };
 
+    const toolTipMessage = closeAfterClick ? 'save and close' : 'save';
     const icons = closeAfterClick
       ? (
         <div>
@@ -135,19 +136,16 @@ class CellLineDetails extends React.Component {
       )
       : <i className="fa fa-floppy-o" />;
 
-    const button = disabled
-      ? (
-        <Button disabled bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
+    return (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip>{toolTipMessage}</Tooltip>}
+      >
+        <Button disabled={disabled} bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
           {icons}
         </Button>
-      )
-      : (
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
-          {icons}
-        </Button>
-      );
-
-    return (button);
+      </OverlayTrigger>
+    );
   }
 
   renderCloseHeaderButton() {
