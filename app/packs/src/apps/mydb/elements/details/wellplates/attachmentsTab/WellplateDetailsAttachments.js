@@ -283,7 +283,8 @@ export default class WellplateDetailsAttachments extends Component {
         {this.renderTemplateDownload()}
         {this.renderImageEditModal()}
         {customDropzone(this.props.onDrop)}
-        {sortingAndFilteringUI(
+        {filteredAttachments.length > 0
+        && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,

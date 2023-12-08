@@ -254,7 +254,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
         {customDropzone(this.props.onDrop)}
-        {sortingAndFilteringUI(
+        {filteredAttachments.length > 0
+        && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,

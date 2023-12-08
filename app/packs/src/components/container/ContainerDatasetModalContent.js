@@ -468,7 +468,8 @@ export default class ContainerDatasetModalContent extends Component {
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
         {this.customDropzone()}
-        {sortingAndFilteringUI(
+        {filteredAttachments.length > 0
+        && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
