@@ -6,27 +6,36 @@ export default class CellLineGroup {
   static buildFromElements(cellLineElements = []) {
     const cellLineGroups = [];
     cellLineElements.forEach((cellLine) => {
-      let groupInFocus;
-      if (cellLineGroups.length === 0) {
-        groupInFocus = new CellLineGroup();
-        cellLineGroups.push(groupInFocus);
-      } else {
-        let matchingGroups = [];
-        cellLineGroups.forEach((g) => {
-          if (g.matchingGroup(cellLine)) {
-            matchingGroups = [g];
-          }
-        });
-        if (matchingGroups.length === 0) {
-          groupInFocus = new CellLineGroup();
-          cellLineGroups.push(groupInFocus);
-        } else {
-          groupInFocus = matchingGroups[0];
-        }
-      }
-      groupInFocus.cellLineItems.push(cellLine);
+      CellLineGroup.addCelllineToGroup(cellLine, cellLineGroups);
     });
+
     return cellLineGroups;
+  }
+
+  static addCelllineToGroup(cellLine, cellLineGroups) {
+    const matchingGroups = CellLineGroup.findMatchingGroups(cellLineGroups, cellLine);
+
+    if (matchingGroups.length === 0) {
+      CellLineGroup.addCellLineToNewGroup(cellLineGroups, cellLine);
+    } else {
+      matchingGroups[0].cellLineItems.push(cellLine);
+    }
+  }
+
+  static addCellLineToNewGroup(cellLineGroups, cellLine) {
+    const groupInFocus = new CellLineGroup();
+    cellLineGroups.push(groupInFocus);
+    groupInFocus.cellLineItems.push(cellLine);
+  }
+
+  static findMatchingGroups(cellLineGroups, cellLine) {
+    let matchingGroups = [];
+    cellLineGroups.forEach((g) => {
+      if (g.matchingGroup(cellLine)) {
+        matchingGroups = [g];
+      }
+    });
+    return matchingGroups;
   }
 
   matchingGroup(cellLineToCheck) {
