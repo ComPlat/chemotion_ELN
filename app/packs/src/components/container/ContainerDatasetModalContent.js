@@ -505,7 +505,7 @@ export default class ContainerDatasetModalContent extends Component {
                   }}
                 />
               </div>
-              <div className="attachment-row-text">
+              <div className="attachment-row-text" title={attachment.filename}>
                 {attachment.is_deleted ? (
                   <strike>{attachment.filename}</strike>
                 ) : (
