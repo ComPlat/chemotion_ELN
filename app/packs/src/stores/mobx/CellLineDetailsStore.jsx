@@ -1,8 +1,7 @@
 import { types } from 'mobx-state-tree';
 import Container from 'src/models/Container';
-import CellLine from 'src/models/cellLine/CellLine';
 
-const MAX_AMOUNT = 1000000000000000000;
+const MAX_AMOUNT = 10e17;
 
 const CellLineAnalysis = types
   .model({
