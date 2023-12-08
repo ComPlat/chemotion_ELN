@@ -37,7 +37,7 @@ import {
   moveBackButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
 
-export default class ContainerDataset extends Component {
+export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
     super();
     const datasetContainer = { ...props.datasetContainer };
@@ -78,8 +78,8 @@ export default class ContainerDataset extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { attachments } = this.props;
-    if (attachments !== prevProps.attachments) {
+    const { datasetContainer } = this.props;
+    if (datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAndSortAttachments);
     }
@@ -239,7 +239,7 @@ export default class ContainerDataset extends Component {
           attachment.aasm_state = 'oo_editing';
           attachment.updated_at = new Date();
 
-          this.props.onChange(attachment);
+          this.props.datasetContainer.onChange(attachment);
         } else {
           alert('Unauthorized to edit this file.');
         }
@@ -363,8 +363,8 @@ export default class ContainerDataset extends Component {
   }
 
   createAttachmentPreviews() {
-    const { attachments } = this.props;
-    attachments.map((attachment) => {
+    const { datasetContainer } = this.props;
+    datasetContainer.attachments.map((attachment) => {
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
           (result) => {
@@ -406,7 +406,7 @@ export default class ContainerDataset extends Component {
 
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
-    const { onChange } = this.props;
+    const { datasetContainer } = this.props;
     return (
       <ImageAnnotationModalSVG
         attachment={chosenAttachment}
@@ -416,7 +416,7 @@ export default class ContainerDataset extends Component {
             const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
             chosenAttachment.updatedAnnotation = newAnnotation;
             this.setState({ imageEditModalShown: false });
-            onChange(chosenAttachment);
+            datasetContainer.onChange(chosenAttachment);
           }
         }
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
@@ -449,7 +449,7 @@ export default class ContainerDataset extends Component {
 
   renderAttachments() {
     const {
-      datasetContainer, filteredAttachments, sortDirection, attachmentEditor, extension, activeKey
+      datasetContainer, filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
     const groupedAttachments = {};
     filteredAttachments.forEach((attachment) => {
@@ -475,7 +475,7 @@ export default class ContainerDataset extends Component {
         <Panel.Collapse>
           <Panel.Body>
             <ListGroup>
-              {attachments.map((attachment) => (
+              {datasetContainer.attachments.map((attachment) => (
                 <ListGroupItem key={attachment.id}>
                   <div className="attachment-row" key={attachment.id}>
                     <div className="attachment-row-image">
@@ -522,7 +522,10 @@ export default class ContainerDataset extends Component {
                         </span>
                       </span>
                     </div>
-                    <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div
+                      className="attachment-row-actions"
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                    >
                       {attachment.is_deleted ? (
                         <Button
                           bsSize="xs"
@@ -548,7 +551,7 @@ export default class ContainerDataset extends Component {
                           )}
                           {annotateButton(attachment, this)}
                           {moveBackButton(attachment, this.handleAttachmentBackToInbox, this.props.readOnly)}
-                          {removeButton(attachment, this.handleAttachmentRemove, this.props.readOnly)}
+                          {removeButton(attachment, this.handleAttachmentRemove, this.props.datasetContainer.readOnly)}
                         </>
                       )}
                     </div>
@@ -674,9 +677,26 @@ export default class ContainerDataset extends Component {
   }
 }
 
-ContainerDataset.propTypes = {
+ContainerDatasetModalContent.propTypes = {
   datasetContainer: PropTypes.shape({
     name: PropTypes.string.isRequired,
+    attachments: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number
+      ]).isRequired,
+      aasm_state: PropTypes.string.isRequired,
+      content_type: PropTypes.string.isRequired,
+      filename: PropTypes.string.isRequired,
+      filesize: PropTypes.number.isRequired,
+      identifier: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number
+      ]).isRequired,
+      thumb: PropTypes.bool.isRequired
+    })),
+    onChange: PropTypes.func,
+    readOnly: PropTypes.bool,
   }).isRequired,
   onChange: PropTypes.func.isRequired,
   onModalHide: PropTypes.func.isRequired,
@@ -684,26 +704,10 @@ ContainerDataset.propTypes = {
   disabled: PropTypes.bool,
   kind: PropTypes.string.isRequired,
   mode: PropTypes.oneOf(['attachments', 'metadata']),
-  attachments: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]).isRequired,
-    aasm_state: PropTypes.string.isRequired,
-    content_type: PropTypes.string.isRequired,
-    filename: PropTypes.string.isRequired,
-    filesize: PropTypes.number.isRequired,
-    identifier: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]).isRequired,
-    thumb: PropTypes.bool.isRequired
-  })),
 };
 
-ContainerDataset.defaultProps = {
+ContainerDatasetModalContent.defaultProps = {
   mode: 'attachments',
   disabled: false,
   readOnly: false,
-  attachments: [],
 };

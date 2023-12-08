@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Modal, ButtonGroup, OverlayTrigger, Tooltip, Button,
 } from 'react-bootstrap';
-import ContainerDataset from 'src/components/container/ContainerDataset';
+import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -150,7 +150,7 @@ export default class ContainerDatasetModal extends Component {
 
           </Modal.Header>
           <Modal.Body>
-            <ContainerDataset
+            <ContainerDatasetModalContent
               ref={this.datasetInput}
               readOnly={readOnly}
               datasetContainer={datasetContainer}
