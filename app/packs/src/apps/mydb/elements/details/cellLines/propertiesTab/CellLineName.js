@@ -85,7 +85,6 @@ export default class CellLineName extends React.Component {
               }}
               onInputChange={(e, action) => {
                 if (action.action === 'input-change') {
-                  console.log(`Setze auf ${e}`);
                   cellLineDetailsStore.changeCellLineName(id, e);
                 }
               }}
