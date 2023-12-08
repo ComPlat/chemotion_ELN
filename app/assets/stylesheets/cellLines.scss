@@ -28,7 +28,6 @@
     }
 }
 
-
 .cell-line-group{
     .group-entry{
         .elements{
@@ -108,7 +107,6 @@
         border-top: 1px solid #ddd;
         background: rgb(245, 245, 245);
         min-height: 50px;
-
         .quick-sample{
             margin-top: 5px;
             background-color: #337ab7;
@@ -122,7 +120,6 @@
                 border-color: #2e6da4;
             }
         }
-
         .detailed-info-off{
             margin: 5px;
             background-color: #5bc0de;
@@ -165,7 +162,6 @@
         font-size: 14px !important;
         margin-bottom: 8px;
         color: #555555 !important;
-        //box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
         transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
         font-family:arial, sans-serif !important;
     }
@@ -204,7 +200,6 @@
             .wrapper{
                 border-color: red !important;
             }
-            
         }
 
         li{
@@ -226,8 +221,6 @@
         }
     }
 }
-
-
 
 .cell-line-group-bottom-border {
     border-bottom-width: 1px;
@@ -252,11 +245,10 @@
     }
 }
 
-#cellLineDetailsTab{
+#cell-line-details-tab{
     .tab-content{
         margin-top: 20px;
     }
-
 }
 
 .tab-content{
@@ -279,9 +271,6 @@
     }
 }
 
-
-
-
 .floating{
     float:left;
 }
@@ -289,8 +278,6 @@
 .floating-right{
     float:right;
 }
-
-
 
 .property-block{
     width:20%;
@@ -333,11 +320,11 @@
     padding-top: 50px;
     margin-bottom: 25px;
 }
-.analysisContainer{
-    .chosenElement{
+.analysis-container{
+    .chosen-element{
         opacity: 0.1;
     }
-    .lastHoveredElement{
+    .last-hovered-element{
         border-width: 1px;
         border: #337ab7;
         border-style: dashed;

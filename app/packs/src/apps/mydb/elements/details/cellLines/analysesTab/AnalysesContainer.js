@@ -138,8 +138,8 @@ class AnalysesContainer extends Component {
       ), this)
       : containers.map(
         (container) => {
-          const chosenElementClass = container.id === draggingContainer ? 'chosenElement' : '';
-          const lastHoveredClass = lastHoveredContainer === container.id ? ' lastHoveredElement' : '';
+          const chosenElementClass = container.id === draggingContainer ? 'chosen-element' : '';
+          const lastHoveredClass = lastHoveredContainer === container.id ? ' last-hovered-element' : '';
           const styleClass = chosenElementClass + lastHoveredClass;
           return (
             <div className={styleClass} key={container.id}>
@@ -178,7 +178,7 @@ class AnalysesContainer extends Component {
 
   render() {
     return (
-      <div className="analysisContainer">
+      <div className="analysis-container">
         <div>
           {this.renderOrderModeButton()}
           {this.renderAddButton()}

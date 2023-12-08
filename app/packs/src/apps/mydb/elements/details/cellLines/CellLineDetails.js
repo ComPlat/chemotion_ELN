@@ -213,7 +213,7 @@ class CellLineDetails extends React.Component {
       >
         <Panel.Heading className="blue-background">{this.renderHeaderContent()}</Panel.Heading>
         <Panel.Body>
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cellLineDetailsTab">
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
             <Tab eventKey="tab1" title="Properties" key="tab1">
               <GeneralProperties
                 item={cellLineItem}
