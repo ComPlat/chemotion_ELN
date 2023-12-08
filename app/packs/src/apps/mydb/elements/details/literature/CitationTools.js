@@ -2,7 +2,7 @@ import { cellLineCitationTypeMap, CitationTypeMap } from 'src/apps/mydb/elements
 
 const getKeysOfMap = (citationMap) => Object.keys(citationMap).filter((e) => e !== 'uncategorized');
 
-const createCitationTypeMap = (type) => (type === 'cell_line' ? cellLineCitationTypeMap : CitationTypeMap);
+const createCitationTypeMap = (type) => (type === 'placeholder' ? cellLineCitationTypeMap : CitationTypeMap);
 
 export {
   getKeysOfMap,
