@@ -66,6 +66,8 @@ export default class ManagingActions extends React.Component {
     this.state = {
       currentUser,
       currentCollection: { id: 0 },
+      move_allowed: false,
+      assign_allowed: false,
       sharing_allowed: false,
       deletion_allowed: false,
       remove_allowed: false,
@@ -100,6 +102,8 @@ export default class ManagingActions extends React.Component {
     } = state;
     if (this.collectionChanged(state)) {
       this.setState({
+        move_allowed: false,
+        assign_allowed: false,
         sharing_allowed: false,
         deletion_allowed: false,
         remove_allowed: false,
@@ -199,17 +203,18 @@ export default class ManagingActions extends React.Component {
 
   render() {
     const {
-      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
+      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel, 
+      move_allowed, assign_allowed
     } = this.state;
     const { is_locked, is_shared, sharer, is_sync_to_me, label } = currentCollection;
     const isAll = is_locked && label === 'All';
     const noSel = !hasSel
 
-    const moveDisabled = noSel || isAll;
-    const assignDisabled = noSel;
+    const moveDisabled = noSel || !move_allowed;
+    const assignDisabled = noSel || !assign_allowed;
     const removeDisabled = noSel || isAll || !deletion_allowed; //!remove_allowed
     const deleteDisabled = noSel || !deletion_allowed;
-    const shareDisabled = noSel || !sharing_allowed;
+    const shareDisabled = noSel || !sharing_allowed || !move_allowed;
 
     return (
       <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
