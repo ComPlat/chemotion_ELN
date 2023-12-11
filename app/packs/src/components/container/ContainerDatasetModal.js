@@ -66,9 +66,11 @@ export default class ContainerDatasetModal extends Component {
         style={{
           pointerEvents: 'none',
           backgroundColor: mode !== 'attachments' ? '#E8E8E8' : undefined,
+          width: '120px'
         }}
         onClick={() => this.handleSwitchMode('attachments')}
       >
+        Attachments&nbsp;&nbsp;
         <i className="fa fa-paperclip" aria-hidden="true" />
       </Button>
     );
@@ -80,9 +82,11 @@ export default class ContainerDatasetModal extends Component {
         style={{
           pointerEvents: 'none',
           backgroundColor: mode !== 'metadata' ? '#E8E8E8' : undefined,
+          width: '120px'
         }}
       >
-        <i className="fa fa-database" aria-hidden="true" />
+        Metadata&nbsp;&nbsp;
+        <i className="fa fa-address-card" aria-hidden="true" />
 
       </Button>
     );
@@ -164,15 +168,22 @@ export default class ContainerDatasetModal extends Component {
               mode={mode}
             />
           </Modal.Body>
-          <Modal.Footer style={{ flexShrink: 0, width: '100%' }}>
+          <Modal.Footer style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, width: '100%'
+          }}
+          >
             {/* <Button style={{ marginRight: '5px' }} onClick={this.handleDiscard}>Discard Changes</Button> */}
-            <Button bsStyle="primary" onClick={this.handleSave}>Keep Changes</Button>
-            <div style={{ textAlign: 'center', marginTop: '10px' }}>
-              <small>
-                Changes are kept for this session. Remember to save the element itself to persist changes.
-                {/* Discarding changes will discard changes for the entire session. */}
-              </small>
-            </div>
+            <small style={{ alignSelf: 'center' }}>
+              Changes are kept for this session. Remember to save the element itself to persist changes.
+              {/* Discarding changes will discard changes for the entire session. */}
+            </small>
+            <Button
+              bsStyle="primary"
+              style={{ alignSelf: 'center', marginLeft: 'auto' }}
+              onClick={this.handleSave}
+            >
+              Keep Changes
+            </Button>
           </Modal.Footer>
         </Modal>
       );

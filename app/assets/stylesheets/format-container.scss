@@ -30,9 +30,9 @@
 
 .attachment-modal {
   top: 55% !important;
-  height: 90%;
+  height: 100%;
   margin: unset !important;
-  width: 50vw !important;
+  width: 70vw !important;
   .modal-content {
     height: 90%;
     .modal-title{
@@ -44,7 +44,7 @@
     .modal-body {
       height: 90%;
       overflow: auto;
-      max-height: calc(100% - 170px) !important;
+      max-height: calc(100% - 130px) !important;
     }
   }
 }

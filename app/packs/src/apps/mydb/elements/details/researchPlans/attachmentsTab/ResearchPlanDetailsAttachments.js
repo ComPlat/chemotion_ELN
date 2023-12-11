@@ -253,14 +253,20 @@ export default class ResearchPlanDetailsAttachments extends Component {
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
-        {customDropzone(this.props.onDrop)}
-        {attachments.length > 0
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ flex: '1', alignSelf: 'center' }}>
+            {customDropzone(this.props.onDrop)}
+          </div>
+          <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
+            {attachments.length > 0
         && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
           this.handleFilterChange
         )}
+          </div>
+        </div>
         {filteredAttachments.length === 0 ? (
           <div className="no-attachments-text">
             There are currently no attachments.
@@ -271,8 +277,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
               <div className="attachment-row-image">
                 <ImageModal
                   imageStyle={{
-                    width: '60px',
-                    height: '60px',
+                    width: '45px',
+                    height: '45px',
                     borderRadius: '5px',
                     objectFit: 'cover',
                     boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
@@ -298,31 +304,32 @@ export default class ResearchPlanDetailsAttachments extends Component {
                   attachment.filename
                 )}
                 <div className="attachment-row-subtext">
-                  Added on:&nbsp;
-                  {attachment.created_at && !Number.isNaN(new Date(attachment.created_at).getTime()) ? (
-                    <>
-                      {new Date(attachment.created_at).toLocaleDateString('en-GB')}
-                      ,
-                      &nbsp;
-                      {new Date(attachment.created_at).toLocaleTimeString(
-                        'en-GB',
-                        { hour: '2-digit', minute: '2-digit', hour12: true }
-                      )}
-                    </>
-                  ) : (
-                    'now!'
-                  )}
+                  <div>
+                    Added on:&nbsp;
+                    {attachment.created_at && !Number.isNaN(new Date(attachment.created_at).getTime()) ? (
+                      <>
+                        {new Date(attachment.created_at).toLocaleDateString('en-GB')}
+                        ,
+                        &nbsp;
+                        {new Date(attachment.created_at).toLocaleTimeString(
+                          'en-GB',
+                          { hour: '2-digit', minute: '2-digit', hour12: true }
+                        )}
+                      </>
+                    ) : (
+                      'now!'
+                    )}
+                  </div>
+                  &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+                  <div>
+                    Size:&nbsp;
+                    <span style={{ fontWeight: 'bold', color: '#444' }}>
+                      {formatFileSize(attachment.filesize)}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="attachment-row-size">
-                <span style={{ fontWeight: 'bold' }}>
-                  Size:&nbsp;
-                  <span style={{ fontWeight: 'bold', color: '#444' }}>
-                    {formatFileSize(attachment.filesize)}
-                  </span>
-                </span>
-              </div>
-              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 {attachment.is_deleted ? (
                   <Button
                     bsSize="xs"
@@ -356,6 +363,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                       this.hideImportConfirm,
                       this.confirmAttachmentImport
                     )}
+                    &nbsp;
                     {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
                   </>
                 )}
