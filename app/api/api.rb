@@ -203,6 +203,7 @@ class API < Grape::API
   mount Chemotion::AdminDeviceAPI
   mount Chemotion::AdminDeviceMetadataAPI
   mount Chemotion::ChemicalAPI
+  mount Chemotion::DeviceDescriptionAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {
