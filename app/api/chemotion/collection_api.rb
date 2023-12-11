@@ -238,7 +238,7 @@ module Chemotion
           share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
           share_screens = ElementsPolicy.new(current_user, screens).share?
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
-          share_cell_lines_plans = ElementsPolicy.new(current_user, cell_lines).share?
+          share_cell_lines = ElementsPolicy.new(current_user, cell_lines).share?
           share_elements = !(elements&.length > 0)
           elements.each do |k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?
@@ -250,7 +250,7 @@ module Chemotion
                             share_wellplates &&
                             share_screens &&
                             share_research_plans &&
-                            share_cell_lines_plans &&
+                            share_cell_lines &&
                             share_elements
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
 
