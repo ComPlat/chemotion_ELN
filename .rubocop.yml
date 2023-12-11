@@ -60,6 +60,7 @@ Metrics/BlockLength:
   Exclude:
   - 'spec/**/*_spec.rb'
   - 'app/api/chemotion/*_api.rb'
+  - 'app/api/reaction_process_editor/**/*_api.rb'
 
 Metrics/AbcSize:
   Max: 25
