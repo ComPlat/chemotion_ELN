@@ -50,7 +50,7 @@ const iupacNameTooltip = material => (
     <div>
       <div className="d-flex">
         <div>IUPAC&#58;&nbsp;</div>
-        <div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div>
+        <div style={{ wordBreak: 'break-all' }}>{material.molecule?.iupac_name || ''}</div>
       </div>
       <div className="d-flex">
         <div>Name&#58;&nbsp;</div>
@@ -154,7 +154,7 @@ class Material extends Component {
         precision={3}
         disabled={
           !permitOn(this.props.reaction)
-            || (this.props.materialGroup === 'products'
+          || (this.props.materialGroup === 'products'
             || (!material.reference && this.props.lockEquivColumn))
         }
         onChange={(loading) => this.handleLoadingChange(loading)}
@@ -216,6 +216,40 @@ class Material extends Component {
             )
         }
       </div>
+    );
+  }
+
+
+  materialStep(material) {
+    return (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="reactionStep">Reaction Step</Tooltip>}>
+        <td style={{ paddingRight: '4px' }}>
+          <NumeralInputWithUnitsCompo
+            precision={1}
+            value={material.reaction_step}
+            onChange={e => this.handleStepChange(e)}
+          />
+        </td>
+      </OverlayTrigger>
+    );
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  materialIntermediateType(material) {
+    return (
+      <td style={{ paddingRight: '4px' }}>
+        <FormControl
+          componentClass="select"
+          placeholder="select intermediate"
+          value={material.intermediate_type}
+          onChange={e => this.handleintermediateTypeChange(e)}
+        >
+          <option value="-">-</option>
+          <option value="CRUDE">Crude</option>
+          <option value="MIXTURE">Mixture</option>
+          <option value="INTERMEDIATE">Intermediate</option>
+        </FormControl>
+      </td>
     );
   }
 
@@ -922,6 +956,33 @@ class Material extends Component {
     }
   }
 
+  handleStepChange(e) {
+    const reactionStep = e.value;
+    console.log(e.value);
+    if (this.props.onChange) {
+      const event = {
+        reactionStep,
+        type: 'reactionStepChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId()
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleintermediateTypeChange(e) {
+    const intermediateType = e.target.value;
+    if (this.props.onChange) {
+      const event = {
+        intermediateType,
+        type: 'reactionIntermediateTypeChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId()
+      };
+      this.props.onChange(event);
+    }
+  }
+
   createParagraph(m) {
     const { materialGroup } = this.props;
     let molName = m.molecule_name_hash.label;
@@ -1146,15 +1207,16 @@ class Material extends Component {
                 onClick={() => deleteMaterial(material)}
               />
             </div>
-          </div>
+          </div >
           {materialGroup === 'products' && (
             <>
               {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
               {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
             </>
-          )}
+          )
+          }
         </div>
-      </div>
+      </div >
     );
 
     return (
@@ -1211,6 +1273,71 @@ class Material extends Component {
       currentPrecision
     );
     return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
+  }
+
+  intermediateMaterial() {
+    const { material, deleteMaterial, connectDragSource, connectDropTarget, reaction } = this.props;
+    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
+    // const mol = material.amount_mol;
+    const mw = material.decoupled ?
+      (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
+
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+
+    return (
+      <tr className="intermediate-material">
+        {compose(connectDragSource, connectDropTarget)(
+          <td className={`drag-source ${permitCls(reaction)}`} >
+            <span className="text-info fa fa-arrows" />
+          </td>,
+          { dropEffect: 'copy' }
+        )}
+
+        <td style={{ width: '25%', maxWidth: '50px' }}>
+          {this.materialNameWithIupac(material)}
+        </td>
+
+        <td>
+          {this.materialShowLabel(material)}
+        </td>
+
+        {this.materialStep(material)}
+        {this.materialIntermediateType(material)}
+
+        <td>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="molecular-weight-info">{mw} g/mol</Tooltip>}>
+            <div>
+              <NumeralInputWithUnitsCompo
+                key={material.id}
+                value={material.amount_g}
+                unit="g"
+                metricPrefix={metric}
+                metricPrefixes={metricPrefixes}
+                precision={4}
+                disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
+                onChange={this.handleAmountUnitChange}
+                onMetricsChange={this.handleMetricsChange}
+                bsStyle={material.error_mass ? 'error' : massBsStyle}
+              />
+            </div>
+          </OverlayTrigger>
+        </td>
+
+        {this.materialVolume(material)}
+
+        <td>
+          <Button
+            disabled={!permitOn(reaction)}
+            bsStyle="danger"
+            bsSize="small"
+            onClick={() => deleteMaterial(material)}
+          >
+            <i className="fa fa-trash-o" />
+          </Button>
+        </td>
+      </tr>
+    );
   }
 
   toggleTarget(isTarget) {
@@ -1365,12 +1492,8 @@ class Material extends Component {
     const isMixture = material.isMixture();
 
     // Skip shortLabel for reactants and solvents/purification_solvents, and mixtures
-    const skipIupacName = (
-      materialGroup === 'reactants'
-      || materialGroup === 'solvents'
-      || materialGroup === 'purification_solvents'
-      || isMixture
-    );
+    const skipIupacName = isMixture
+      || ['reactants', 'solvents', 'purification_solvents', 'intermediate_samples'].includes(materialGroup)
 
     let materialName = '';
     let moleculeIupacName = '';
@@ -1385,7 +1508,7 @@ class Material extends Component {
         materialDisplayName = material.name || material.short_label;
       } else {
         materialDisplayName = material.molecule_iupac_name || material.name;
-        if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
+        if (['solvents', 'purification_solvents', 'intermediate_samples'].includes(materialGroup)) {
           materialDisplayName = material.external_label || materialDisplayName;
         }
       }
@@ -1595,9 +1718,15 @@ class Material extends Component {
     const { materialGroup } = this.props;
 
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
-    return sp
-      ? this.solventMaterial()
-      : this.generalMaterial();
+    let component;
+    if (sp) {
+      component = this.solventMaterial();
+    } else if (materialGroup === 'intermediate_samples') {
+      component = this.intermediateMaterial();
+    } else {
+      component = this.generalMaterial();
+    }
+    return component;
   }
 }
 
