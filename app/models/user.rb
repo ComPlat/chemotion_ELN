@@ -61,9 +61,14 @@ class User < ApplicationRecord
   attr_accessor :provider, :uid
 
   acts_as_paranoid
+
+  include Devise::JWT::RevocationStrategies::JTIMatcher
+
   # Include default devise modules. Others available are: :timeoutable
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :trackable, :validatable, :lockable, :omniauthable, authentication_keys: [:login]
+         :recoverable, :rememberable, :trackable, :validatable, :lockable, :omniauthable,
+         :jwt_authenticatable, jwt_revocation_strategy: self, authentication_keys: [:login]
+
   has_one :profile, dependent: :destroy
   has_one :container, as: :containable
 
@@ -456,6 +461,10 @@ class User < ApplicationRecord
     return 0 if default_admin.nil?
 
     default_admin.allocated_space
+  end
+
+  def jti_auth_token
+    JWT.encode({ sub: id, jti: jti }, Rails.application.secrets.secret_key_base)
   end
 
   private

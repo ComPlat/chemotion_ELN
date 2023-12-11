@@ -8,7 +8,7 @@ module ReactionProcessEditor
     include Singleton
     # This is just hardcoded definining the available equipment (in the RPE UI) depending on action type.
     # These are subsets of OrdKit::Equipment::EquipmentType. It's important to use only constants fron
-    # the ORD (else ORD export will eventually write 'UNSEPCIFIED').
+    # the ORD (else ORD export will eventually write 'UNSEPCIFIED' or raise an Error).
     #
     # We define this backend as some of it is retrieved directly from ORD constants which are unknown in RPE UI.
 
@@ -16,8 +16,8 @@ module ReactionProcessEditor
       @all_ord_equipment ||= options_for(OrdKit::Equipment::EquipmentType.constants)
     end
 
-    def action_type_equipment
-      @action_type_equipment ||= {
+    def activity_type_equipment
+      @activity_type_equipment ||= {
         ADD: all_ord_equipment,
         SAVE: [],
         TRANSFER: all_ord_equipment,

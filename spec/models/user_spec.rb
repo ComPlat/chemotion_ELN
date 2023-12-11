@@ -75,6 +75,15 @@ RSpec.describe User do
       expect(group.valid?).to be true
     end
 
+    it '#jti_auth_token' do
+      user.save!
+      expect(
+        JWT.decode(user.jti_auth_token, Rails.application.secrets.secret_key_base),
+      ).to eq(
+        [{ 'jti' => user.jti, 'sub' => user.id }, { 'alg' => 'HS256' }],
+      )
+    end
+
     it 'validates the presence of email' do
       expect(build(:user, email: '')).not_to be_valid
     end

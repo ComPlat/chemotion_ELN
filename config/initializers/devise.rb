@@ -60,7 +60,8 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
   # given strategies, for example, `config.http_authenticatable = [:database]` will
   # enable it only for database authentication. The supported strategies are:
   # :database      = Support basic authentication with authentication key + password
-  # config.http_authenticatable = false
+
+  config.http_authenticatable = [:database]
 
   # If 401 status code should be returned for AJAX requests. True by default.
   # config.http_authenticatable_on_xhr = true
@@ -335,4 +336,15 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
   # When using OmniAuth, Devise cannot automatically set OmniAuth path,
   # so you need to do it manually. For the users scope, it would be:
   # config.omniauth_path_prefix = '/my_engine/users/auth'
+
+  config.jwt do |jwt|
+    jwt.secret = Rails.application.secrets.secret_key_base
+    jwt.dispatch_requests = [
+      ['POST', /^*sign_in$/],
+    ]
+    jwt.revocation_requests = [
+      ['DELETE', /^*sign_out$/],
+    ]
+    jwt.expiration_time = 1.day.to_i
+  end
 end

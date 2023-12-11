@@ -16,6 +16,7 @@ RSpec.describe ReactionProcessEditor::ReactionProcess do
   it { is_expected.to delegate_method(:creator).to(:reaction) }
   it { is_expected.to delegate_method(:reaction_svg_file).to(:reaction) }
   it { is_expected.to delegate_method(:short_label).to(:reaction) }
+  it { is_expected.to delegate_method(:collections).to(:reaction) }
 
   describe 'conditions' do
     let(:user_defaults) { create(:reaction_process_defaults, user: reaction_process.creator).default_conditions }

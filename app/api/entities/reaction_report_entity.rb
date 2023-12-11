@@ -10,6 +10,7 @@ module Entities
       expose! :reactants,                                       using: 'Entities::ReactionMaterialReportEntity'
       expose! :solvents,                                        using: 'Entities::ReactionMaterialReportEntity'
       expose! :starting_materials,                              using: 'Entities::ReactionMaterialReportEntity'
+      expose! :intermediate_samples,                            using: 'Entities::ReactionMaterialReportEntity'
       expose! :temperature_display_with_unit
     end
 

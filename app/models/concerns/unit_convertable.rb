@@ -41,14 +41,18 @@ module UnitConvertable
   end
 
   def convert_to_gram(value, unit)
-    if self.contains_residues
+    if contains_residues
       case unit
       when 'g'
         value
       when 'mg'
         value / 1000.0
       when 'mol'
-        value / loading * 1000.0 rescue 0.0
+        begin
+          value / loading * 1000.0
+        rescue StandardError
+          0.0
+        end
       else
         value
       end
@@ -67,9 +71,27 @@ module UnitConvertable
         else
           0
         end
+      when 'ml'
+        if has_molarity
+          mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+          value * molarity_value * mol_weight / 1000
+        elsif has_density
+          value * (density || 1.0)
+        else
+          0
+        end
       when 'mol'
         mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
         value / (purity || 1.0) * mol_weight
+      when 'mmol'
+        mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+        value / (purity || 1.0) * mol_weight * 1000
+      when 'mcmol'
+        mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+        value / (purity || 1.0) * mol_weight * 1000 * 1000
+      when 'nmol'
+        mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+        value / (purity || 1.0) * mol_weight * 1000 * 1000 * 1000
       else
         value
       end
@@ -93,8 +115,11 @@ module UnitConvertable
 
   def amount_mmol(type = 'target', gas_type = nil)
     value = self["#{type}_amount_value"] || 0.0
-    unit = self["#{type}_amount_unit"]
+    unit = self["#{type}_amount_unit"] || 'mmol'
     return value * 1000 if unit == 'mol'
+    return value if unit == 'mmol'
+    return value / 1000 if unit == 'mcmol'
+    return value / (1000 * 1000) if unit == 'nmol'
 
     if gas_type == 'feedstock' && %w[l g].include?(unit)
       calculate_feedstock_mmol(value, unit)
@@ -107,13 +132,13 @@ module UnitConvertable
   def amount_mg(type = 'target')
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
-    val_g = self.convert_to_gram(value, unit) * 1000.0
+    val_g = convert_to_gram(value, unit) * 1000.0
   end
 
   def amount_g(type = 'target')
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
-    val_g = self.convert_to_gram(value, unit)
+    val_g = convert_to_gram(value, unit)
   end
 
   def amount_ml(type = 'target')
@@ -122,8 +147,9 @@ module UnitConvertable
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
     return value * 1000 if unit == 'l'
+    return value if unit == 'ml'
 
-    val_g = self.convert_to_gram(value, unit)
-    self.convert_to_unit(val_g, 'l', true)
+    val_g = convert_to_gram(value, unit)
+    convert_to_unit(val_g, 'l', true)
   end
 end
