@@ -1,0 +1,21 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  database: chemotion_eln_dev
+  pool: 5
+  username: chemotion_eln_dev
+  password: chemotion
+  host: 127.0.0.1
+  port: 5432
+
+test:
+  adapter: postgresql
+  encoding: unicode
+  database: chemotion_eln_test
+  pool: 5
+  username: chemotion_eln_dev
+  password: chemotion
+  host: 127.0.0.1
+  port: 5432
+
+

@@ -36,6 +36,7 @@ module Chemotion
 
     config.autoload_paths += Dir[Rails.root.join('app')]
     config.autoload_paths += Dir[Rails.root.join('lib')]
+    config.autoload_paths += Dir[Rails.root.join('helpers')]
 
     config.active_job.queue_adapter = :delayed_job
 

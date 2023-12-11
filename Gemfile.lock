@@ -218,6 +218,9 @@ GEM
       railties (>= 4.1.0)
       responders
       warden (~> 1.2.3)
+    devise-jwt (0.12.1)
+      devise (~> 4.0)
+      warden-jwt_auth (~> 0.10)
     diff-lcs (1.6.2)
     docile (1.4.1)
     dotenv (2.8.1)
@@ -226,6 +229,12 @@ GEM
       railties (>= 3.2)
     down (5.4.2)
       addressable (~> 2.8)
+    dry-auto_inject (1.0.1)
+      dry-core (~> 1.0)
+      zeitwerk (~> 2.6)
+    dry-configurable (1.0.1)
+      dry-core (~> 1.0, < 2)
+      zeitwerk (~> 2.6)
     dry-core (1.0.0)
       concurrent-ruby (~> 1.0)
       zeitwerk (~> 2.6)
@@ -342,7 +351,7 @@ GEM
       bindata
       faraday (~> 2.0)
       faraday-follow_redirects
-    jwt (3.1.0)
+    jwt (2.10.2)
       base64
     kaminari (1.2.2)
       activesupport (>= 4.1.0)
@@ -590,7 +599,9 @@ GEM
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
       rspec-mocks (~> 3.13.0)
-    rspec-core (3.13.4)
+    rspec-collection_matchers (1.2.1)
+      rspec-expectations (>= 2.99.0.beta1)
+    rspec-core (3.13.5)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.5)
       diff-lcs (>= 1.2.0, < 2.0)
@@ -768,6 +779,11 @@ GEM
     version_gem (1.1.8)
     warden (1.2.9)
       rack (>= 2.0.9)
+    warden-jwt_auth (0.11.0)
+      dry-auto_inject (>= 0.8, < 2)
+      dry-configurable (>= 0.13, < 2)
+      jwt (~> 2.1)
+      warden (~> 1.2)
     web-console (4.2.1)
       actionview (>= 6.0.0)
       activemodel (>= 6.0.0)
@@ -841,6 +857,7 @@ DEPENDENCIES
   delayed_cron_job
   delayed_job_active_record
   devise
+  devise-jwt
   dotenv-rails
   ed25519
   factory_bot_rails
@@ -909,6 +926,7 @@ DEPENDENCIES
   roo
   rqrcode
   rspec
+  rspec-collection_matchers
   rspec-its
   rspec-rails
   rspec-repeat
