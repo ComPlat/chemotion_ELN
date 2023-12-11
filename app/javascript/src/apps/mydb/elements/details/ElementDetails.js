@@ -11,6 +11,7 @@ import React, { Component } from 'react';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
 import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
+import DeviceDescriptionDetails from 'src/apps/mydb/elements/details/deviceDescriptions/DeviceDescriptionDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
 import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -172,6 +173,12 @@ export default class ElementDetails extends Component {
         return (
           <ResearchPlanDetails
             researchPlan={el}
+            toggleFullScreen={this.toggleFullScreen}
+          />
+        );
+      case 'device_description':
+        return (
+          <DeviceDescriptionDetails
             toggleFullScreen={this.toggleFullScreen}
           />
         );

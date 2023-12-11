@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Chemotion
   class TextTemplateAPI < Grape::API
     resource :text_templates do

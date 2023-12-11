@@ -19,7 +19,8 @@ const elementList = () => {
     { name: 'wellplate', label: 'Wellplate' },
     { name: 'screen', label: 'Screen' },
     { name: 'research_plan', label: 'Research Plan' },
-    { name: 'cell_line', label: 'Cell Line' }
+    { name: 'cell_line', label: 'Cell Line' },
+    { name: 'device_description', label: 'Device Description' }
   ];
   let genericEls = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -70,11 +71,6 @@ export default class CreateButton extends React.Component {
     return this.filterParamsFromUIStateByElementType(uiState, "sample");
   }
 
-  getReactionId() {
-    let uiState = UIStore.getState();
-    return uiState.reaction.checkedIds.first();
-  }
-
   isCopySampleDisabled() {
     let sampleFilter = this.getSampleFilter();
     return !sampleFilter.all && sampleFilter.included_ids.size == 0;
@@ -92,6 +88,11 @@ export default class CreateButton extends React.Component {
     ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'copy_sample');
   }
 
+  getReactionId() {
+    let uiState = UIStore.getState();
+    return uiState.reaction.checkedIds.first();
+  }
+
   isCopyReactionDisabled() {
     let reactionId = this.getReactionId();
     return !reactionId;
@@ -100,6 +101,27 @@ export default class CreateButton extends React.Component {
   copyReaction() {
     let reactionId = this.getReactionId();
     ElementActions.copyReactionFromId(reactionId);
+  }
+
+  getDeviceDescriptionFilter() {
+    let uiState = UIStore.getState();
+    return this.filterParamsFromUIStateByElementType(uiState, "device_description");
+  }
+
+  isCopyDeviceDescriptionDisabled() {
+    let deviceDescriptionFilter = this.getDeviceDescriptionFilter();
+    return !deviceDescriptionFilter.all && deviceDescriptionFilter.included_ids.size == 0;
+  }
+
+  copyDeviceDescription() {
+    let deviceDescriptionFilter = this.getDeviceDescriptionFilter();
+    // Set limit to 1 because we are only interested in one device description
+    let params = {
+      ui_state: deviceDescriptionFilter,
+      limit: 1,
+    }
+
+    ClipboardActions.fetchDeviceDescriptionsByUIState(params, 'copy_device_description');
   }
 
   createWellplateFromSamples() {
@@ -182,8 +204,6 @@ export default class CreateButton extends React.Component {
     )
   }
 
-
-
   createScreenFromWellplates() {
     let uiState = UIStore.getState();
     let wellplateFilter = this.filterParamsFromUIStateByElementType(uiState, "wellplate");
@@ -222,7 +242,7 @@ export default class CreateButton extends React.Component {
   createBtn(type) {
     let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'];
+    const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'device_description'];
     if (!constEls.includes(type) && typeof genericEls !== 'undefined' && genericEls !== null && genericEls.length > 0) {
       const genericEl = (genericEls && genericEls.find(el => el.name == type)) || {};
       iconClass = `${genericEl.icon_name}`;
@@ -289,6 +309,9 @@ export default class CreateButton extends React.Component {
         </Dropdown.Item>
         <Dropdown.Item onClick={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>
           Copy Reaction
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.copyDeviceDescription()} disabled={this.isCopyDeviceDescriptionDisabled()}>
+          Copy Device Description
         </Dropdown.Item>
       </SplitButton>
     );

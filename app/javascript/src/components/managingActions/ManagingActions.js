@@ -19,7 +19,6 @@ import ManagingModalTopSecret from 'src/components/managingActions/ManagingModal
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
-
 export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
