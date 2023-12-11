@@ -248,13 +248,13 @@ export default class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
-    const { onUndoDelete } = this.props;
+    const { onUndoDelete, attachments } = this.props;
 
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
         {customDropzone(this.props.onDrop)}
-        {filteredAttachments.length > 0
+        {attachments.length > 0
         && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,

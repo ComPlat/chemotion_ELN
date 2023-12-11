@@ -463,12 +463,13 @@ export default class ContainerDatasetModalContent extends Component {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
     } = this.state;
+    const { datasetContainer } = this.props;
 
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
         {this.customDropzone()}
-        {filteredAttachments.length > 0
+        {datasetContainer.attachments.length > 0
         && sortingAndFilteringUI(
           sortDirection,
           this.handleSortChange,
