@@ -21,5 +21,8 @@ module Entities
     expose! :conversion_rate
     expose! :weight_percentage_reference
     expose! :weight_percentage
+    expose! :intermediate_type
+
+    expose! :sample, using: 'Entities::SampleEntity', merge: true
   end
 end

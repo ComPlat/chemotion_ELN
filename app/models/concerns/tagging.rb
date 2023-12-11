@@ -15,7 +15,7 @@ module Tagging
     klass = self.class.name
     case klass
     when 'ReactionsProductSample', 'ReactionsStartingMaterialSample',
-      'ReactionsSolventSample', 'ReactionsReactantSample'
+      'ReactionsSolventSample', 'ReactionsReactantSample', 'ReactionsIntermediateSample'
       args = { reaction_tag: reaction_id, resources_tag: true }
       element = 'sample'
     when 'Well'
