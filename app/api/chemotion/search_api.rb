@@ -363,7 +363,6 @@ module Chemotion
         user_reactions = Reaction.by_collection_id(collection_id)
         user_wellplates = Wellplate.by_collection_id(collection_id)
         user_screens = Screen.by_collection_id(collection_id)
-        user_cell_lines = CelllineSample.by_collection_id(collection_id)
         user_elements = Labimotion::Element.by_collection_id(collection_id)
 
         case scope&.first
