@@ -844,7 +844,7 @@ export default class Sample extends Element {
 
   get amount_mol() {
     if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
-    || this.gas_type === 'feedstock')) return this.amount_value;
+      || this.gas_type === 'feedstock')) return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
@@ -1015,7 +1015,7 @@ export default class Sample extends Element {
 
   get molecule_iupac_name() {
     return this.molecule_name_hash && this.molecule_name_hash.label
-        || this.molecule && this.molecule.iupac_name;
+      || this.molecule && this.molecule.iupac_name;
   }
 
   set molecule_iupac_name(iupac_name) {
@@ -1166,6 +1166,22 @@ export default class Sample extends Element {
     return this._equivalent;
   }
 
+  get intermediate_type() {
+    return this._intermediate_type;
+  }
+
+  set intermediate_type(intermediate_type) {
+    this._intermediate_type = intermediate_type;
+  }
+
+  get reaction_step() {
+    return this._reaction_step;
+  }
+
+  set reaction_step(reaction_step) {
+    this._reaction_step = reaction_step;
+  }
+
   set conc(conc) {
     this._conc = conc;
   }
@@ -1267,6 +1283,8 @@ export default class Sample extends Element {
       components: this.components && this.components.length > 0
         ? this.components.map((s) => s.serializeComponent())
         : [],
+      intermediate_type: this.intermediate_type,
+      reaction_step: this.reaction_step,
     };
     _.merge(params, extra_params);
     return params;
@@ -1352,8 +1370,8 @@ export default class Sample extends Element {
         label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1
       };
       const filtered = tmpSolvents.find((solv) => (solv && solv.label === solventData.label
-            && solv.smiles === solventData.smiles
-            && solv.inchikey && solventData.inchikey));
+        && solv.smiles === solventData.smiles
+        && solv.inchikey && solventData.inchikey));
       if (!filtered) {
         tmpSolvents.push(solventData);
       }
@@ -1368,8 +1386,8 @@ export default class Sample extends Element {
     }
 
     const filteredIndex = tmpSolvents.findIndex((solv) => (solv.label === solventToDelete.label
-            && solv.smiles === solventToDelete.smiles
-            && solv.inchikey === solventToDelete.inchikey));
+      && solv.smiles === solventToDelete.smiles
+      && solv.inchikey === solventToDelete.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents.splice(filteredIndex, 1);
     }
@@ -1383,7 +1401,7 @@ export default class Sample extends Element {
     }
 
     const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToUpdate.smiles
-              && solv.inchikey && solventToUpdate.inchikey));
+      && solv.inchikey && solventToUpdate.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents[filteredIndex] = solventToUpdate;
 
@@ -1427,8 +1445,8 @@ export default class Sample extends Element {
   async addMixtureComponent(newComponent) {
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
-                                || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
+      || component.molecule.inchikey === newComponent.molecule.inchikey
+      || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';

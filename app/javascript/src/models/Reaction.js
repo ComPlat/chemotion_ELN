@@ -130,6 +130,7 @@ export default class Reaction extends Element {
       purification: '',
       purification_solvents: [],
       reactants: [],
+      intermediate_samples: [],
       rf_value: 0.00,
       role: '',
       user_labels: [],
@@ -150,23 +151,19 @@ export default class Reaction extends Element {
       gaseous: false
     })
 
-
     reaction.short_label = this.buildReactionShortLabel()
     reaction.rxno = '';
     return reaction
   }
 
-
   static buildReactionShortLabel() {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return 'New Reaction'; }
-
 
     const number = currentUser.reactions_count + 1;
     const prefix = currentUser.reaction_name_prefix;
     return `${currentUser.initials}-${prefix}${number}`;
   }
-
 
   static get temperature_unit() {
     return TemperatureUnit;
@@ -196,6 +193,7 @@ export default class Reaction extends Element {
       materials: {
         starting_materials: this.starting_materials.map(s => s.serializeMaterial()),
         reactants: this.reactants.map(s => s.serializeMaterial()),
+        intermediate_samples: this.intermediate_samples.map(s => s.serializeMaterial()),
         solvents: this.solvents.map(s => s.serializeMaterial()),
         purification_solvents: this.purification_solvents.map(s => s.serializeMaterial()),
         products: this.products.map(s => s.serializeMaterial())
@@ -435,6 +433,14 @@ export default class Reaction extends Element {
     this._reactants = this._coerceToSamples(samples);
   }
 
+  get intermediate_samples() {
+    return this._intermediate_samples
+  }
+
+  set intermediate_samples(samples) {
+    this._intermediate_samples = this._coerceToSamples(samples);
+  }
+
   get products() {
     return this._products
   }
@@ -447,12 +453,12 @@ export default class Reaction extends Element {
     return [
       ...this.starting_materials || [],
       ...this.reactants || [],
+      ...this.intermediate_samples || [],
       ...this.solvents || [],
       ...this.purification_solvents || [],
       ...this.products || [],
     ];
   }
-
 
   buildCopy(params = {}) {
     const copy = super.buildCopy();
@@ -460,16 +466,22 @@ export default class Reaction extends Element {
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map(sample => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      copiedSample._real_amount_value = null; 
+      copiedSample._real_amount_value = null;
       return copiedSample;
     });
     copy.reactants = this.reactants.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.intermediate_samples = this.intermediate_samples.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
     );
     copy.solvents = this.solvents.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
     );
     copy.products = this.products.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
+    );
+    copy.intermediate_samples = this.intermediate_samples.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
     );
 
@@ -798,7 +810,7 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material, refreshCoefficient) {
-    const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    const cats = ['starting_materials', 'reactants', 'intermediate_samples', 'solvents', 'products'];
     let i = 0;
     let group;
 
@@ -828,7 +840,7 @@ export default class Reaction extends Element {
     let matGroup;
     const refMat = this.samples.find((sample) => sample.reference);
     if (refMat && refMat.amount_mol) {
-      ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
+      ['_starting_materials', '_reactants', '_solvents', '_products', 'intermediate_samples'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
@@ -871,13 +883,15 @@ export default class Reaction extends Element {
 
   get totalVolume() {
     let totalVolume = 0.0;
-    const materials = [...this.starting_materials,
+    const materials = [
+      ...this.starting_materials,
       ...this.reactants,
+      ...this.intermediate_samples,
       ...this.products,
       ...this.solvents];
-      materials.map(m => totalVolume += m.amount_l);
-      return totalVolume;
-    }
+    materials.map(m => totalVolume += m.amount_l);
+    return totalVolume;
+  }
 
   get purificationSolventVolume() {
     return this.totalVolumeForMaterialGroup(Reaction.PURIFICATION_SOLVENTS);
@@ -954,26 +968,26 @@ export default class Reaction extends Element {
     return this.calculateVolumeRatio(amountLiters, totalVolume);
   }
 
-    // overwrite isPendingToSave method in models/Element.js
-    get isPendingToSave() {
-      return !isEmpty(this) && (this.isNew || this.changed);
-    }
+  // overwrite isPendingToSave method in models/Element.js
+  get isPendingToSave() {
+    return !isEmpty(this) && (this.isNew || this.changed);
+  }
 
-    extractNameFromOri(origin) {
-      const ori = origin || this.origin;
-      const oriSLabel = ori && ori.short_label;
-      const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
-      const name = `According to General Procedure ${oriSLNum}`;
-      return name;
-    }
+  extractNameFromOri(origin) {
+    const ori = origin || this.origin;
+    const oriSLabel = ori && ori.short_label;
+    const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
+    const name = `According to General Procedure ${oriSLNum}`;
+    return name;
+  }
 
-    nameFromRole(role) {
-      let name = this.name;
-      const sLabel = this.short_label;
-      const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
+  nameFromRole(role) {
+    let name = this.name;
+    const sLabel = this.short_label;
+    const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
 
-      switch (role) {
-        case 'gp':
+    switch (role) {
+      case 'gp':
         name = `General Procedure ${sLNum}`;
         break;
       case 'parts':
@@ -984,26 +998,26 @@ export default class Reaction extends Element {
         break;
       default:
         break;
-      }
-      return name;
     }
+    return name;
+  }
 
-    set segments(segments) {
-      this._segments = (segments && segments.map(s => new Segment(s))) || [];
-    }
+  set segments(segments) {
+    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+  }
 
-    get segments() {
-      return this._segments || [];
-    }
+  get segments() {
+    return this._segments || [];
+  }
 
-    updateMaxAmountOfProducts() {
-      const startingMaterialsList = this.starting_materials.filter(sample => sample.reference);
-      if (startingMaterialsList.length == 0) { return; }
-      const referenceSample = startingMaterialsList[0];
+  updateMaxAmountOfProducts() {
+    const startingMaterialsList = this.starting_materials.filter(sample => sample.reference);
+    if (startingMaterialsList.length == 0) { return; }
+    const referenceSample = startingMaterialsList[0];
 
-      this.products.forEach(product => product.calculateMaxAmount(referenceSample));
+    this.products.forEach(product => product.calculateMaxAmount(referenceSample));
 
-    }
+  }
 
   findReactionVesselSizeCatalystMaterialValues() {
     const catalyst = this.findCatalystMaterial();

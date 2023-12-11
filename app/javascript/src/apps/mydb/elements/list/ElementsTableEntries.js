@@ -14,6 +14,8 @@ import ReactionRole from 'src/apps/mydb/elements/list/reaction/ReactionRole';
 import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVariations';
 import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
 
+import ReactionEditorLink from 'src/components/reaction_editor/ReactionEditorLink';
+
 export default class ElementsTableEntries extends Component {
   constructor(props) {
     super(props);
@@ -76,6 +78,7 @@ export default class ElementsTableEntries extends Component {
   renderElement(element, showDetails) {
     return (
       <div className="d-flex align-items-start">
+        <ReactionEditorLink reaction={element} />
         <div
           role="button"
           onClick={showDetails}
