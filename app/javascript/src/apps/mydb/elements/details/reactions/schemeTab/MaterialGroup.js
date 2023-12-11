@@ -163,6 +163,7 @@ function GeneralMaterialGroup({
 }) {
   const isReactants = materialGroup === 'reactants';
   const groupHeaders = { ...headers };
+  const isIntermediate = materialGroup === 'intermediate_samples';
 
   let reagentDd = null;
   if (isReactants) {
@@ -234,7 +235,16 @@ function GeneralMaterialGroup({
     groupHeaders.eq = yieldConversionRateFields();
   }
 
+  if (materialGroup === 'intermediate_samples') {
+    headers.group = 'Intermediates';
+    headers.ref = null;
+    headers.concn = null;
+    headers.eq = null;
+    headers.tr = null;
+  }
+
   const refTHead = (materialGroup !== 'products') ? groupHeaders.ref : null;
+
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction
@@ -247,7 +257,7 @@ function GeneralMaterialGroup({
     />
   );
 
-  return (
+  const materialsTable = (
     <ReorderableMaterialContainer
       materials={materials}
       materialGroup={materialGroup}
@@ -307,6 +317,43 @@ function GeneralMaterialGroup({
         </div>
       )}
     </ReorderableMaterialContainer>
+  );
+
+  const intermediatesTable = (
+    <table width="100%" className="reaction-scheme">
+      <colgroup>
+        <col style={{ width: '4%' }} />
+        <col style={{ width: '16%' }} />
+        <col style={{ width: '4%' }} />
+        <col style={{ width: '6%' }} />
+        <col style={{ width: '20%' }} />
+        <col style={{ width: '27%' }} />
+        <col style={{ width: '23%' }} />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>{addSampleButton}</th>
+          <th>{headers.group}</th>
+          <th>{headers.show_label}</th>
+          <th>{headers.reaction_step}</th>
+          <th>{headers.intermediate_type}</th>
+          {!isReactants && <th>{headers.amount}</th>}
+          <th> </th>
+          <th> </th>
+        </tr>
+      </thead>
+      <tbody>
+        {contents.map(item => item)}
+      </tbody>
+    </table>
+  );
+
+  return (
+    <div>
+      {
+        isIntermediate ? intermediatesTable : materialsTable
+      }
+    </div>
   );
 }
 
