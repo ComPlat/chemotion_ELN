@@ -77,6 +77,7 @@ const productLink = (product, active) => (
   </span>
 );
 
+import ReactionEditorLink from 'src/components/reaction_editor/ReactionEditorLink';
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
@@ -481,6 +482,7 @@ export default class ReactionDetails extends Component {
                       <i className="fa fa-floppy-o " />
                     </Button>
                   </OverlayTrigger>
+                <ReactionEditorLink reaction={reaction} />
                 </>
               )}
             {copyBtn}

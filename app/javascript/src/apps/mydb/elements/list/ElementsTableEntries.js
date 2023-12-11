@@ -17,6 +17,8 @@ import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVar
 import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
 import ImageModal from 'src/components/common/ImageModal';
 
+import ReactionEditorLink from 'src/components/reaction_editor/ReactionEditorLink';
+
 export default class ElementsTableEntries extends Component {
   constructor(props) {
     super(props);
@@ -85,6 +87,7 @@ export default class ElementsTableEntries extends Component {
   renderElement(element, showDetails) {
     return (
       <div className="d-flex align-items-start">
+        <ReactionEditorLink reaction={element} />
         <div
           role="button"
           onClick={showDetails}

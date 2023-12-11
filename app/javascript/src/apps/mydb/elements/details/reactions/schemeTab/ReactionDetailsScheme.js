@@ -229,7 +229,7 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
-  renderRolesOption({icon, label, variant}) {
+  renderRolesOption({ icon, label, variant }) {
     return (
       <>
         <i className={`fa ${icon} text-${variant} me-2`} />
@@ -249,7 +249,7 @@ export default class ReactionDetailsScheme extends React.Component {
         options={rolesOptions}
         formatOptionLabel={this.renderRolesOption}
         isClearable
-        value={rolesOptions.find(({value}) => value === role)}
+        value={rolesOptions.find(({ value }) => value === role)}
         onChange={this.onChangeRole}
       />
     );
@@ -326,8 +326,8 @@ export default class ReactionDetailsScheme extends React.Component {
   updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup) {
     const updatedSample = reaction.sampleById(srcMat.id);
     const conditions = tagGroup === 'solvents'
-    || ((srcGroup === 'reactants' || srcGroup === 'starting_materials') && tagGroup === 'products')
-    || ((srcGroup === 'products') && (tagGroup === 'reactants' || tagGroup === 'starting_materials'));
+      || ((srcGroup === 'reactants' || srcGroup === 'starting_materials') && tagGroup === 'products')
+      || ((srcGroup === 'products') && (tagGroup === 'reactants' || tagGroup === 'starting_materials'));
     if (conditions) {
       updatedSample.gas_type = 'off';
     }
@@ -493,6 +493,11 @@ export default class ReactionDetailsScheme extends React.Component {
       case 'VesselSizeChanged':
         onReactionChange(
           this.updatedReactionForVesselSizeChange()
+        );
+        break;
+      case 'reactionIntermediateTypeChanged':
+        this.onReactionChange(
+          this.updatedReactionForReactionIntermediateTypeChange(changeEvent)
         );
         break;
       default:
@@ -1015,7 +1020,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const newRelMolWeight = referenceComponent.relative_molecular_weight;
 
     if (Number.isFinite(preservedAmountMol) && preservedAmountMol > 0
-        && newRelMolWeight && newRelMolWeight > 0) {
+      && newRelMolWeight && newRelMolWeight > 0) {
       const newAmountG = preservedAmountMol * newRelMolWeight;
       updatedSample.setAmount({ value: newAmountG, unit: 'g' });
     }
@@ -1083,6 +1088,15 @@ export default class ReactionDetailsScheme extends React.Component {
         }
       }
     });
+  }
+
+  updatedReactionForReactionIntermediateTypeChange(changeEvent) {
+    const { sampleID, intermediateType } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.intermediate_type = intermediateType;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForIntermediateTypeChange.bind(this), updatedSample);
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -1486,7 +1500,7 @@ export default class ReactionDetailsScheme extends React.Component {
             }
           } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial && !sample.reference) {
             // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
-              sample.equivalent = 0.0;
+            sample.equivalent = 0.0;
           }
         }
         sample.reference = false;
@@ -1515,7 +1529,7 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.equivalent = updatedSample.equivalent;
       } else if (sample.id !== updatedSample.id) {
         if ((updatedSample.gas_type === 'feedstock' && sample.isFeedstock())
-        || (updatedSample.gas_type === 'catalyst' && sample.isCatalyst())) {
+          || (updatedSample.gas_type === 'catalyst' && sample.isCatalyst())) {
           sample.gas_type = 'off';
         }
         if (sample.isGas()) {
@@ -1606,7 +1620,19 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
     reaction.products = updateFunction(reaction.products, updatedSample, 'products', type);
+    reaction.intermediate_samples = updateFunction(reaction.intermediate_samples, updatedSample, 'intermediate_samples', type);
+
     return reaction;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  updatedSamplesForIntermediateTypeChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id && updatedSample.intermediate_type) {
+        sample.intermediate_type = updatedSample.intermediate_type;
+      }
+      return sample;
+    });
   }
 
   updateVesselSize(e) {
@@ -1903,6 +1929,22 @@ export default class ReactionDetailsScheme extends React.Component {
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
+          />
+
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="intermediate_samples"
+            materials={reaction.intermediate_samples}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            // showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+            // switchEquiv={this.switchEquiv}
+            // lockEquivColumn={lockEquivColumn}
+            headIndex={reaction.intermediate_samples.length}
           />
           <MaterialGroup
             reaction={reaction}
