@@ -28,6 +28,7 @@ class InboxStore {
       dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
+      inboxSize: 'Medium',
     };
 
     this.bindListeners({
@@ -71,6 +72,7 @@ class InboxStore {
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
       handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
       handleChangeInboxFilter: InboxActions.changeInboxFilter,
+      handleChangeInboxSize: InboxActions.changeInboxSize,
     });
   }
 
@@ -120,6 +122,10 @@ class InboxStore {
 
     const { currentPage, itemsPerPage, activeDeviceBoxId } = this.state;
     InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId });
+  }
+
+  handleChangeInboxSize(inboxSize) {
+    this.state.inboxSize = inboxSize;
   }
 
   handleFetchInboxCount(result) {

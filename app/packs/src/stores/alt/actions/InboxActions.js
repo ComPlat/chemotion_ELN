@@ -27,6 +27,10 @@ class InboxActions {
     return filter;
   }
 
+  changeInboxSize(size) {
+    return size;
+  }
+
   checkedAll(params) {
     return params;
   }
