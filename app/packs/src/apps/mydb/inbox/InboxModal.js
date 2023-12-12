@@ -1,7 +1,8 @@
+/* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Panel, Glyphicon, Pagination, OverlayTrigger, Tooltip
+  Badge, Button, Panel, Pagination, OverlayTrigger, Tooltip, DropdownButton, MenuItem
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -32,6 +33,7 @@ export default class InboxModal extends React.Component {
       totalPages: inboxState.totalPages,
       activeDeviceBoxId: inboxState.activeDeviceBoxId,
       sortColumn: 'name',
+      colMdValue: 4,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -49,15 +51,24 @@ export default class InboxModal extends React.Component {
     this.initState();
   }
 
-  componentWillUnmount() {
-    InboxStore.unlisten(this.onChange);
-  }
-
   componentDidUpdate(prevProps, prevState) {
     const { currentPage, itemsPerPage } = this.state;
     if (prevState.currentPage !== currentPage
         || prevState.itemsPerPage !== itemsPerPage) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    }
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  handlePageChange(pageNumber) {
+    const { totalPages } = this.state;
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      this.setState({
+        currentPage: pageNumber
+      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
     }
   }
 
@@ -84,14 +95,39 @@ export default class InboxModal extends React.Component {
     }
   }
 
-  handlePageChange(pageNumber) {
-    const { totalPages } = this.state;
-    if (pageNumber > 0 && pageNumber <= totalPages) {
-      this.setState({
-        currentPage: pageNumber
-      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
+  handleSizingIconClick = (size) => {
+    let newColMdValue;
+    switch (size) {
+      case 'Small':
+        newColMdValue = 2;
+        break;
+      case 'Medium':
+        newColMdValue = 4;
+        break;
+      case 'Large':
+        newColMdValue = 5;
+        break;
+      default:
+        newColMdValue = 4;
     }
-  }
+    this.setState({ colMdValue: newColMdValue });
+
+    InboxActions.changeInboxSize(size);
+  };
+
+  getSizeLabel = () => {
+    const { colMdValue } = this.state;
+    switch (colMdValue) {
+      case 2:
+        return 'Small';
+      case 4:
+        return 'Medium';
+      case 5:
+        return 'Large';
+      default:
+        return 'Unknown';
+    }
+  };
 
   initState = () => {
     const type = 'inbox';
@@ -107,14 +143,14 @@ export default class InboxModal extends React.Component {
   updateFilterAndUserProfile = (type, sort) => {
     InboxActions.changeInboxFilter({
       name: type,
-      sort: sort,
+      sort,
     });
 
     UserActions.updateUserProfile({
       data: {
         filters: {
           [type]: {
-            sort: sort,
+            sort,
           },
         },
       },
@@ -132,40 +168,6 @@ export default class InboxModal extends React.Component {
       this.updateFilterAndUserProfile(type, sort);
     });
   };
-
-  renderSortButton() {
-    this.initState();
-
-    const sortTitle = this.state.sortColumn === 'name'
-        ? `click to sort datasets and attachments by creation date (descending) - currently sorted by name (ascending)`
-        : `click to sort datasets and attachments by name (ascending) - currently sorted by creation date (descending)`;
-    const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa ${sortIconClass}`} />;
-    const sortContent = (
-      <OverlayTrigger placement="bottom" overlay={sortTooltip}>
-        <button
-            type="button"
-            className="btn-inbox-sort"
-            onClick={this.changeSortColumn}
-        >
-          {sortIcon}
-        </button>
-      </OverlayTrigger>
-    );
-
-    return (
-      <>
-        {sortContent}
-      </>
-    );
-  }
-
-  refreshInbox() {
-    const { currentPage, itemsPerPage } = this.state;
-    LoadingActions.start();
-    InboxActions.fetchInbox({ currentPage, itemsPerPage });
-  }
 
   handleMouseDown = (e) => {
     e.preventDefault();
@@ -187,17 +189,17 @@ export default class InboxModal extends React.Component {
     document.removeEventListener('mouseup', this.handleMouseUp);
   };
 
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
+  refreshInbox() {
+    const { currentPage, itemsPerPage } = this.state;
+    LoadingActions.start();
+    InboxActions.fetchInbox({ currentPage, itemsPerPage });
   }
 
   renderPagination = () => {
     const { currentPage, totalPages } = this.state;
 
     if (totalPages <= 1) {
-      return;
+      return null;
     }
 
     const pageNumbers = [];
@@ -224,10 +226,22 @@ export default class InboxModal extends React.Component {
       <div className="list-pagination">
         <Pagination>
           <Pagination.First disabled={currentPage === 1} key="First" onClick={() => this.handlePageChange(1)} />
-          <Pagination.Prev disabled={currentPage === 1} key="Prev" onClick={() => this.handlePageChange(currentPage - 1)} />
+          <Pagination.Prev
+            disabled={currentPage === 1}
+            key="Prev"
+            onClick={() => this.handlePageChange(currentPage - 1)}
+          />
           {pageNumbers}
-          <Pagination.Next disabled={currentPage === totalPages} key="Next" onClick={() => this.handlePageChange(currentPage + 1)} />
-          <Pagination.Last disabled={currentPage === totalPages} key="Last" onClick={() => this.handlePageChange(totalPages)} />
+          <Pagination.Next
+            disabled={currentPage === totalPages}
+            key="Next"
+            onClick={() => this.handlePageChange(currentPage + 1)}
+          />
+          <Pagination.Last
+            disabled={currentPage === totalPages}
+            key="Last"
+            onClick={() => this.handlePageChange(totalPages)}
+          />
         </Pagination>
       </div>
     );
@@ -241,8 +255,7 @@ export default class InboxModal extends React.Component {
       inbox.children.sort((a, b) => {
         if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
       });
-
-      boxes = inbox.children.map(deviceBox => (
+      boxes = inbox.children.map((deviceBox) => (
         <DeviceBox
           key={`box_${deviceBox.id}`}
           device_box={deviceBox}
@@ -272,14 +285,41 @@ export default class InboxModal extends React.Component {
     const { collectorAddress } = this.state;
     return (
       <Tooltip id="assignButton">
-        You can send yourself files to your inbox by emailing them from your registered email to the following email address:
-        { ' ' }
+        You can send yourself files to your inbox by emailing them
+        <br />
+        from your registered email to the following email address:&nbsp;
         {collectorAddress}
-        { ' ' }
-        . Click to copy the address to your clipboard.
+        .
+        <br />
+        Click to copy the address to your clipboard.
       </Tooltip>
     );
   }
+
+  renderSizingIcon = () => {
+    const tooltipText = `Change inbox size (Currently: ${this.getSizeLabel()})`;
+    const sizes = ['Small', 'Medium', 'Large'];
+
+    return (
+      <OverlayTrigger placement="top" overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}>
+        <DropdownButton
+          title="Size"
+          className="header-button"
+          id="dropdown-size-button"
+          bsStyle="info"
+          bsSize="xs"
+          style={{ marginLeft: '10px' }}
+
+        >
+          {sizes.map((size) => (
+            <MenuItem key={size} eventKey={size} onSelect={this.handleSizingIconClick}>
+              {size}
+            </MenuItem>
+          ))}
+        </DropdownButton>
+      </OverlayTrigger>
+    );
+  };
 
   collectorAddressInfoButton() {
     const { collectorAddress } = this.state;
@@ -289,22 +329,45 @@ export default class InboxModal extends React.Component {
         <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
           <Button
             bsSize="xsmall"
-            className="btn btn-circle btn-sm btn-info button-right"
+            className="header-button"
           >
-            <Glyphicon glyph="info-sign" />
+            <i className="fa fa-info" />
           </Button>
         </OverlayTrigger>
       </CopyToClipboard>
     );
   }
 
+  renderSortButton() {
+    this.initState();
+
+    const sortTitle = this.state.sortColumn === 'name'
+      ? 'click to sort datasets and attachments by creation date (descending) - currently sorted alphabetically'
+      : 'click to sort datasets and attachments alphabetically - currently sorted by creation date (descending)';
+    const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
+    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
+    return (
+      <OverlayTrigger placement="bottom" overlay={sortTooltip}>
+        <Button
+          bsStyle="success"
+          bsSize="xs"
+          className="header-button"
+          onClick={this.changeSortColumn}
+        >
+          {sortIcon}
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
   render() {
     const { showCollectionTree } = this.props;
     const {
-      visible, inboxVisible, numberOfAttachments, collectorAddress
+      visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
     } = this.state;
 
-    const panelClass = showCollectionTree ? 'small-col col-md-4' : 'small-col col-md-5';
+    const panelClass = showCollectionTree ? `small-col col-md-${colMdValue}` : 'small-col col-md-5';
     const inboxDisplay = inboxVisible ? '' : 'none';
 
     if (visible) {
@@ -315,7 +378,9 @@ export default class InboxModal extends React.Component {
         >
           <div
             className={panelClass}
-            style={{ zIndex: 10, position: 'absolute', top: '70px', left: '10px' }}
+            style={{
+              zIndex: 10, position: 'absolute', top: '70px', left: '10px'
+            }}
           >
             <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading
@@ -323,41 +388,51 @@ export default class InboxModal extends React.Component {
                 id="draggableInbox"
                 onMouseDown={this.handleMouseDown}
               >
-                <button
-                  type="button"
-                  className="btn-inbox"
-                  onClick={() => this.onClickInbox()}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'
+                }}
                 >
-                  <i className="fa fa-inbox" />
-                  <span style={{ marginLeft: '10px', marginRight: '5px' }}>Inbox</span>
-                </button>
-                {
-                  numberOfAttachments > 0 ? (
-                    <Badge>
-                      {' '}
-                      {numberOfAttachments}
-                      {' '}
-                    </Badge>
-                  ) : ''
-                }
-                <Button
-                  bsStyle="danger"
-                  bsSize="xsmall"
-                  className="button-right"
-                  onClick={InboxActions.toggleInboxModal}
-                >
-                  <i className="fa fa-times" />
-                </Button>
-                {this.renderSortButton()}
-                <Button
-                  bsStyle="success"
-                  bsSize="xsmall"
-                  className="button-right"
-                  onClick={() => this.refreshInbox()}
-                >
-                  <Glyphicon bsSize="small" glyph="refresh" />
-                </Button>
-                {collectorAddress ? this.collectorAddressInfoButton() : null}
+                  <div>
+                    <button
+                      type="button"
+                      className="btn-inbox"
+                      onClick={() => this.onClickInbox()}
+                    >
+                      <i className="fa fa-inbox" />
+                      <span style={{ marginLeft: '10px', marginRight: '5px', fontWeight: 'bold' }}>Inbox</span>
+                    </button>
+                    {
+                      numberOfAttachments > 0 ? (
+                        <Badge>
+                          &nbsp;
+                          {numberOfAttachments}
+                          &nbsp;
+                        </Badge>
+                      ) : ''
+                    }
+                  </div>
+                  <div>
+                    {this.renderSortButton()}
+                    {collectorAddress ? this.collectorAddressInfoButton() : null}
+                    {this.renderSizingIcon()}
+                    <Button
+                      bsStyle="success"
+                      bsSize="xs"
+                      className="header-button"
+                      onClick={() => this.refreshInbox()}
+                    >
+                      <i className="fa fa-refresh" />
+                    </Button>
+                    <Button
+                      bsStyle="danger"
+                      bsSize="xs"
+                      className="header-button"
+                      onClick={InboxActions.toggleInboxModal}
+                    >
+                      <i className="fa fa-close" />
+                    </Button>
+                  </div>
+                </div>
               </Panel.Heading>
               <Panel.Body>
                 <div>
