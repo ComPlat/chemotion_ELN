@@ -45,7 +45,7 @@ const ContentAtts = ({ prd, attThumbNails }) => {
     return (
       <div key={key}>
         <div>{att.kind}</div>
-        <Thumbnail thumb={thumb} />
+        <Thumbnail thumb={thumb || att.thumbnail} />
       </div>
     );
   });
