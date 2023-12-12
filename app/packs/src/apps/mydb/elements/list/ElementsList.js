@@ -205,7 +205,14 @@ export default class ElementsList extends React.Component {
       const value = visible.get(i);
 
       let iconClass = `icon-${value}`;
-      let ttl = (<Tooltip id="_tooltip_history" className="left_tooltip">{value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()))}</Tooltip>);
+      let ttl = (
+        <Tooltip
+          id="_tooltip_history"
+          className="left_tooltip"
+        >
+          {value && (value.replace('_', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()))}
+        </Tooltip>
+      );
       let genericEl = null;
 
       if (!constEls.includes(value)) {
