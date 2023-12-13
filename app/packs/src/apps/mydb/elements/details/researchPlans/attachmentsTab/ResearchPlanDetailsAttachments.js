@@ -6,7 +6,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/components/ImageAnnotationModalSVG.js';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import Utils from 'src/utilities/Functions';
 import {
@@ -78,6 +78,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
       extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
+      chosenAttachment: null,
+      chosenAttachmentAnnotation: null,
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -208,21 +210,34 @@ export default class ResearchPlanDetailsAttachments extends Component {
   }
 
   renderImageEditModal() {
-    const { choosenAttachment, imageEditModalShown } = this.state;
+    const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
+    let annotation = '';
+    if (chosenAttachment) {
+      if (chosenAttachment.updatedAnnotation) {
+        console.debug('use existing annotation')
+        annotation = chosenAttachment.updatedAnnotation;
+      } else {
+        console.debug('Use annotation from fetcher')
+        annotation = this.state.chosenAttachmentAnnotation
+      }
+    }
+
     return (
       <ImageAnnotationModalSVG
-        attachment={choosenAttachment}
-        isShow={imageEditModalShown}
+        annotation={annotation}
+        show={imageEditModalShown}
         handleSave={
-          () => {
-            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            choosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
-            onEdit(choosenAttachment);
+          (newAnnotation) => {
+            chosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({
+              imageEditModalShown: false,
+              chosenAttachment: chosenAttachment
+            });
+            onEdit(chosenAttachment);
           }
         }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+        handleClose={() => { this.setState({ imageEditModalShown: false }); }}
       />
     );
   }
@@ -230,7 +245,16 @@ export default class ResearchPlanDetailsAttachments extends Component {
   renderAnnotateImageButton(attachment) {
     return (
       <ImageAnnotationEditButton
-        parent={this}
+        onSelectAttachment={(attachment) => {
+          AttachmentFetcher.annotation(attachment.id).then((svg) => {
+            this.setState({
+              imageEditModalShown: true,
+              chosenAttachment: attachment,
+              chosenAttachmentAnnotation: svg || errorSvg,
+              imageName: attachment.filename,
+            })
+          });
+        }}
         attachment={attachment}
         horizontalAlignment="button-right"
       />
@@ -540,5 +564,5 @@ ResearchPlanDetailsAttachments.propTypes = {
 
 ResearchPlanDetailsAttachments.defaultProps = {
   attachments: [],
-  onAttachmentImportComplete: () => { }
+  onAttachmentImportComplete: () => {}
 };

@@ -28,7 +28,7 @@ import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/components/ImageAnnotationModalSVG.js';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -40,6 +40,8 @@ export default class ContainerDataset extends Component {
       valueBeforeFocus: null,
       timeoutReference: null,
       link: null,
+      chosenAttachment: null,
+      chosenAttachmentAnnotation: null,
     };
 
     this.timeout = 6e2; // 600ms timeout for input typing
@@ -59,13 +61,13 @@ export default class ContainerDataset extends Component {
     const updatedAttachments = newAttachments.map(attachment => {
       return attachment.thumb
         ? AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
-            result => {
-              if (result != null) {
-                attachment.preview = `data:image/png;base64,${result}`;
-              }
-              return attachment;
+          result => {
+            if (result != null) {
+              attachment.preview = `data:image/png;base64,${result}`;
             }
-          )
+            return attachment;
+          }
+        )
         : attachment;
     });
 
@@ -143,6 +145,28 @@ export default class ContainerDataset extends Component {
       InboxActions.backToInbox(attachment);
       dataset_container.attachments.splice(index, 1);
       onChange(dataset_container);
+    }
+  }
+
+  renderImageAnnotationButton(attachment) {
+    const { readOnly } = this.props;
+    if (!readOnly && !attachment.is_new) {
+      return (
+        <ImageAnnotationEditButton
+          onSelectAttachment={(selectedAttachment) => {
+            AttachmentFetcher.annotation(selectedAttachment.id).then((svg) => {
+              console.debug('Fetched SVG, showing the modal');
+              this.setState({
+                imageEditModalShown: true,
+                chosenAttachment: selectedAttachment,
+                chosenAttachmentAnnotation: svg || errorSvg,
+                imageName: selectedAttachment.filename,
+              });
+            });
+          }}
+          attachment={attachment}
+        />
+      );
     }
   }
 
@@ -437,7 +461,7 @@ export default class ContainerDataset extends Component {
   }
 
   render() {
-    const { dataset_container, showInstruments } = this.state;
+    const { chosenAttachment, dataset_container, showInstruments } = this.state;
     const { readOnly, disabled, kind } = this.props;
     const overlayAttributes = {
       style: {
@@ -462,6 +486,18 @@ export default class ContainerDataset extends Component {
     } else if (klass.ols_term_id !== undefined) {
       genericDS = GenericDS.buildEmpty(cloneDeep(klass), dataset_container.id);
     }
+
+    let annotation = '';
+    if (chosenAttachment) {
+      if (chosenAttachment.updatedAnnotation) {
+        console.debug('use existing annotation')
+        annotation = chosenAttachment.updatedAnnotation;
+      } else {
+        console.debug('Use annotation from fetcher')
+        annotation = this.state.chosenAttachmentAnnotation
+      }
+    }
+
     return (
       <Row>
         <Col md={6} className="col-base">
@@ -525,29 +561,12 @@ export default class ContainerDataset extends Component {
           <label>Attachments</label>
           {this.dropzone()}
           {this.attachments()}
-          <>
-            <HyperLinksSection
-              data={dataset_container.extended_metadata['hyperlinks']}
-              onAddLink={this.handleAddLink}
-              onRemoveLink={this.handleRemoveLink}
-              disabled={disabled}
-            ></HyperLinksSection>
-            <ImageAnnotationModalSVG
-              attachment={this.state.choosenAttachment}
-              isShow={this.state.imageEditModalShown}
-              handleSave={() => {
-                let newAnnotation = document
-                  .getElementById('svgEditId')
-                  .contentWindow.svgEditor.svgCanvas.getSvgString();
-                this.state.choosenAttachment.updatedAnnotation = newAnnotation;
-                this.setState({ imageEditModalShown: false });
-                this.props.onChange(this.props.dataset_container);
-              }}
-              handleOnClose={() => {
-                this.setState({ imageEditModalShown: false });
-              }}
-            />
-          </>
+          <HyperLinksSection
+            data={dataset_container.extended_metadata['hyperlinks']}
+            onAddLink={this.handleAddLink}
+            onRemoveLink={this.handleRemoveLink}
+            disabled={disabled}
+          />
         </Col>
         <Col md={12}>
           <GenericDSDetails
@@ -557,6 +576,21 @@ export default class ContainerDataset extends Component {
             onChange={this.handleDSChange}
           />
         </Col>
+        <ImageAnnotationModalSVG
+          annotation={annotation}
+          show={this.state.imageEditModalShown}
+          handleSave={
+            (newAnnotation) => {
+              chosenAttachment.updatedAnnotation = newAnnotation;
+              this.setState({
+                chosenAttachment: chosenAttachment,
+                imageEditModalShown: false
+              });
+              this.props.onChange(this.props.dataset_container);
+            }
+          }
+          handleClose={() => { this.setState({ imageEditModalShown: false }) }}
+        />
       </Row>
     );
   }

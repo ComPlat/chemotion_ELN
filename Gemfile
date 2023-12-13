@@ -62,8 +62,11 @@ gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
 gem 'labimotion', '1.0.19'
+# loofah comes as dependency of rails-html-sanitizer but is explicitly used so it needs to be in the Gemfile
+gem 'loofah', '2.21.3'
 
 gem 'mimemagic', '0.3.10'
+gem 'mini_magick' # comes as dependency of image_processing but is explicitly used so it needs to be in the Gemfile
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions

@@ -289,6 +289,30 @@ module Chemotion
             root: :sample,
           )
         end
+
+        namespace :annotation do
+          before do
+            @sample = Sample.find(params[:id])
+            @element_policy = ElementPolicy.new(current_user, @sample)
+            error!('401 Unauthorized', 401) unless @element_policy.update?
+          end
+          desc 'Fetch a new annotation svg for this sample'
+          get do
+            content_type('image/svg+xml')
+            env['api.format'] = :binary # send data as-is, otherwise it will be wrapped in quotes
+            if @sample.sample_svg_annotation_file.present?
+              return File.read(@sample.full_svg_path(@sample.sample_svg_annotation_file))
+            end
+
+            body Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
+          end
+
+          desc 'Delete an annotation'
+          delete do
+            Usecases::Samples::DeleteAnnotation.execute!(@sample)
+            body false
+          end
+        end
       end
 
       namespace :findByShortLabel do
@@ -323,8 +347,9 @@ module Chemotion
         optional :solvent, type: Array[Hash], desc: 'Sample solvent'
         optional :location, type: String, desc: 'Sample location'
         optional :molfile, type: String, desc: 'Sample molfile'
-        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
         optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
+        optional :sample_svg_annotation, type: String, desc: 'SVG code to update the annotation svg'
+        optional :sample_svg_file, type: String, desc: 'Sample SVG file'
         # optional :molecule, type: Hash, desc: "Sample molecule" do
         #   optional :id, type: Integer
         # end

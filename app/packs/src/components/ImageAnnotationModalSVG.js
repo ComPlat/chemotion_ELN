@@ -2,6 +2,8 @@
 import React, { Component } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 
+export const errorSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><text fill="#000000" font-size="12" stroke="#FF0000" stroke-width="0" text-anchor="middle" transform="matrix(7.15604 0 0 7.15604 -3493.72 -3162.82)" x="622.37" xml:space="preserve" y="525.48">Loading error :(</text></svg>';
+
 export default class ImageAnnotationModalSVG extends Component {
   constructor(props) {
     super(props);
@@ -15,7 +17,7 @@ export default class ImageAnnotationModalSVG extends Component {
       <Modal
         backdrop="static"
         bsSize="large"
-        show={this.props.isShow}
+        show={this.props.show}
         dialogClassName="attachment-dataset-modal"
       >
 
@@ -40,7 +42,6 @@ export default class ImageAnnotationModalSVG extends Component {
               const subDocument = subWindow.document;
               const { svgEditor } = subWindow;
               svgEditor.setBackground('white');
-              const { attachment } = this.props;
 
               // clear localStorage to prevent loading of previous SVGs
               localStorage.removeItem('svgedit-default');
@@ -86,7 +87,7 @@ export default class ImageAnnotationModalSVG extends Component {
               buttonsToRemoveOnSight = buttonsToRemoveOnSight.map((id) => {
                 // sometimes they are in the shadow DOM, sometimes not.... do not ask me why.
                 const elem = (subDocument.querySelector(`#main_button #${id}`)
-                            || subDocument.querySelector('#main_button')?.shadowRoot.querySelector(`#${id}`));
+                  || subDocument.querySelector('#main_button')?.shadowRoot.querySelector(`#${id}`));
                 if (elem) {
                   elem?.setAttribute('style', 'display: none');
                   elem?.remove();
@@ -150,38 +151,19 @@ export default class ImageAnnotationModalSVG extends Component {
                 }
               }, true);
 
-              fetch(`/api/v1/attachments/${attachment.id}/annotation`).finally(() => {
-                // make sure the iframe is visible after the fetch is done
-                // no matter if it fails or not...
-                const newStyle = this.iframe?.getAttribute('style')?.replace('visibility: hidden', 'visibility: visible');
-                this.iframe?.setAttribute('style', newStyle);
-              }).then((res) => res.text())
-                .then((text) => {
-                  if (attachment.updatedAnnotation) {
-                    svgEditor.svgCanvas.setSvgString(
-                      attachment.updatedAnnotation
-                    );
-                    this.setState({ canSave: true });
-                  } else {
-                    const safeParseJson = (str) => {
-                      try {
-                        const ret = JSON.parse(str);
-                        this.setState({ canSave: true });
-                        return ret;
-                      } catch (e) {
-                        console.log('Could not parse JSON when requesting attachment!', e);
-                        this.setState({ canSave: false });
-                        return '';
-                      }
-                    };
-                    const errorSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><text fill="#000000" font-size="12" stroke="#FF0000" stroke-width="0" text-anchor="middle" transform="matrix(7.15604 0 0 7.15604 -3493.72 -3162.82)" x="622.37" xml:space="preserve" y="525.48">Loading error :(</text></svg>';
-                    const svgString = decodeURIComponent(safeParseJson(text)) || errorSVG;
-                    svgEditor.svgCanvas.setSvgString(svgString);
-                  }
-                  // Zoom fit-to-canvas
-                  subDocument.querySelector('se-text[text="tools.fit_to_all"]')?.click();
-                  svgEditor.updateCanvas(false, false);
-                });
+              if (this.props.annotation != '') {
+                svgEditor.svgCanvas.setSvgString(this.props.annotation);
+                this.setState({ canSave: true });
+              } else {
+                this.setState({ canSave: false });
+              }
+
+              subDocument.querySelector('se-text[text="tools.fit_to_all"]')?.click();
+              svgEditor.updateCanvas(false, false);
+
+              // display the previously invisible iframe
+              const newStyle = this.iframe?.getAttribute('style')?.replace('visibility: hidden', 'visibility: visible');
+              this.iframe?.setAttribute('style', newStyle);
             }}
           />
         </Modal.Body>
@@ -190,8 +172,7 @@ export default class ImageAnnotationModalSVG extends Component {
             bsStyle="primary"
             onClick={() => {
               this.setState({ canSave: false });
-              const { handleOnClose } = this.props;
-              return handleOnClose();
+              return this.props.handleClose();
             }}
           >
             Discard changes and close
@@ -200,9 +181,13 @@ export default class ImageAnnotationModalSVG extends Component {
             bsStyle="warning"
             disabled={!this.state.canSave}
             onClick={() => {
+              const subWindow = document.getElementById('svgEditId').contentWindow;
+              const { svgEditor } = subWindow;
               this.setState({ canSave: false });
-              const { handleSave } = this.props;
-              return handleSave();
+              const resulting_annotation = svgEditor.svgCanvas.getSvgString();
+              console.debug('Resulting Annotation:');
+              console.debug(resulting_annotation);
+              return this.props.handleSave(resulting_annotation);
             }}
           >
             Accept changes
