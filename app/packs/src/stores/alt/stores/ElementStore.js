@@ -15,6 +15,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ClipboardStore from 'src/stores/alt/stores/ClipboardStore';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
+import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import Screen from 'src/models/Screen';
 
@@ -186,6 +187,7 @@ class ElementStore {
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
       handleCopyReaction: ElementActions.copyReaction,
+      handleCopyResearchPlan: ElementActions.copyResearchPlan,
       handleCopyElement: ElementActions.copyElement,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
@@ -984,6 +986,11 @@ class ElementStore {
   handleCopyReaction(result) {
     this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
     Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
+  }
+
+  handleCopyResearchPlan(result) {
+    this.changeCurrentElement(ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId));
+    Aviator.navigate(`/collection/${result.colId}/research_plan/copy`);
   }
 
   handleCopyElement(result) {

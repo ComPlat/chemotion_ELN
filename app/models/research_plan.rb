@@ -98,15 +98,27 @@ class ResearchPlan < ApplicationRecord
     svg_files
   end
 
+  def clone_existing_attachments(attachments, attachment_id, current_user_id)
+    attachments.each do |attach|
+      old_attach = Attachment.find attach[:id]
+      new_attach = old_attach.dup
+      new_attach.created_by = current_user_id
+      new_attach.created_for = current_user_id
+      new_attach.attachable_id = attachment_id
+      new_attach.identifier = nil
+      new_attach.save!
+    end
+  end
+
   private
+
   def delete_attachment
     if Rails.env.production?
-      attachments.each { |attachment|
+      attachments.each do |attachment|
         attachment.delay(run_at: 96.hours.from_now, queue: 'attachment_deletion').destroy!
-      }
+      end
     else
       attachments.each(&:destroy!)
     end
   end
-
 end

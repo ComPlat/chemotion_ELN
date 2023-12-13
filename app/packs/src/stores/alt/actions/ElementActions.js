@@ -627,6 +627,17 @@ class ElementActions {
     };
   }
 
+  copyResearchPlan(research_plan, colId) {
+    return (dispatch) => {
+      ResearchPlansFetcher.fetchById(research_plan.id)
+        .then((result) => {
+          dispatch({ research_plan: result, colId: colId });
+        }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   copyElement(element, colId) {
     return (
       { element: element, colId: colId }
