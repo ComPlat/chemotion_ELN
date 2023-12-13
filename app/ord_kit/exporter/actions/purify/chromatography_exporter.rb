@@ -1,0 +1,102 @@
+# frozen_string_literal: true
+
+module OrdKit
+  module Exporter
+    module Actions
+      module Purify
+        class ChromatographyExporter < OrdKit::Exporter::Actions::Purify::Base
+          def to_ord
+            { chromatography: OrdKit::ReactionProcessAction::ActionChromatography.new(
+              { steps: steps }.merge(automation[workup['automation']] || {}),
+            ) }
+          end
+
+          private
+
+          def automation
+            { AUTOMATED: {},
+              MANUAL: { manual: manual_fields },
+              SEMI_AUTOMATED: { semi_automated: semi_automated_fields } }.stringify_keys
+          end
+
+          def steps
+            Array(workup['chromatography_steps']).map do |chromatography_step|
+              OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep.new(
+                solvents: solvents_with_ratio(chromatography_step['solvents']),
+                amount: Metrics::AmountExporter.new(chromatography_step['amount']).to_ord,
+                step: ord_step(chromatography_step['step']),
+                prod: ord_prod(chromatography_step['prod']),
+                flow_rate: OrdKit::Exporter::Metrics::FlowRateExporter.new(chromatography_step['flow_rate']).to_ord,
+                duration: OrdKit::Time.new(
+                  value: chromatography_step['duration'].to_i / 1000,
+                  precision: nil,
+                  units: OrdKit::Time::TimeUnit::SECOND,
+                ),
+              )
+            end
+          end
+
+          def manual_fields
+            OrdKit::ReactionProcessAction::ActionChromatography::Manual.new(
+              material: Materials::MaterialExporter.new(workup['jar_material']).to_ord,
+              diameter: OrdKit::Exporter::Metrics::LengthExporter.new(workup['jar_diameter']).to_ord,
+              height: OrdKit::Exporter::Metrics::LengthExporter.new(workup['jar_height']).to_ord,
+              filling_height: OrdKit::Exporter::Metrics::LengthExporter.new(workup['jar_filling_height']).to_ord,
+            )
+          end
+
+          def semi_automated_fields
+            OrdKit::ReactionProcessAction::ActionChromatography::SemiAutomated.new(
+              equipment: equipment_device,
+              column_type: workup['column_type'],
+              detectors: detectors,
+              wavelength: OrdKit::Exporter::Metrics::WavelengthExporter.new(workup['wavelength']).to_ord,
+            )
+          end
+
+          def equipment_device
+            OrdKit::Equipment.new(
+              type: equipment_type(workup['device']),
+              details: '', # Currently n/a in ELN.
+            )
+          end
+
+          def equipment_type(name)
+            OrdKit::Analysis::AnalysisType.const_get name.to_s
+          rescue NameError
+            OrdKit::Analysis::AnalysisType::UNSPECIFIED
+          end
+
+          def detectors
+            Array(workup['detectors']).map do |detector|
+              Analysis::AnalysisType.const_get detector
+            rescue NameError
+              Analysis::AnalysisType::UNSPECIFIED
+            end
+          end
+
+          def ord_step(stepname)
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Step.const_get stepname.to_s
+          rescue NameError
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Step::UNSPECIFIED
+          end
+
+          def ord_prod(prodname)
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Prod.const_get prodname.to_s
+          rescue NameError
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Prod::PROD_UNSPECIFIED
+          end
+
+          def solvents_with_ratio(solvents)
+            Array(solvents).map do |solvent|
+              OrdKit::CompoundWithRatio.new(
+                compound: Compounds::PurifySampleOrDiverseSolventExporter.new(solvent['id']).to_ord,
+                ratio: solvent['ratio'].to_s,
+              )
+            end
+          end
+        end
+      end
+    end
+  end
+end
