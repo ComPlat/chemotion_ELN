@@ -11,7 +11,6 @@ import {
 import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
-
 import {
   downloadButton,
   removeButton,
@@ -23,6 +22,7 @@ import {
   formatFileSize,
   isImageFile
 } from 'src/apps/mydb/elements/list/AttachmentList';
+import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
@@ -156,9 +156,12 @@ export default class WellplateDetailsAttachments extends Component {
         case 'size':
           comparison = a.filesize - b.filesize;
           break;
-        case 'date':
-          comparison = new Date(a.created_at) - new Date(b.created_at);
+        case 'date': {
+          const dateA = parseDate(a.created_at);
+          const dateB = parseDate(b.created_at);
+          comparison = dateA.valueOf() - dateB.valueOf();
           break;
+        }
         default:
           break;
       }
@@ -334,20 +337,8 @@ export default class WellplateDetailsAttachments extends Component {
                 )}
                 <div className="attachment-row-subtext">
                   <div>
-                    Added on:&nbsp;
-                    {attachment.created_at && !Number.isNaN(new Date(attachment.created_at).getTime()) ? (
-                      <>
-                        {new Date(attachment.created_at).toLocaleDateString('en-GB')}
-                        ,
-                        &nbsp;
-                        {new Date(attachment.created_at).toLocaleTimeString(
-                          'en-GB',
-                          { hour: '2-digit', minute: '2-digit', hour12: true }
-                        )}
-                      </>
-                    ) : (
-                      'now!'
-                    )}
+                    Created:&nbsp;
+                    {formatDate(attachment.created_at)}
                   </div>
                   &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
                   <div>

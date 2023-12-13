@@ -25,7 +25,6 @@ import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import PropTypes from 'prop-types';
-
 import {
   downloadButton,
   removeButton,
@@ -36,6 +35,7 @@ import {
   isImageFile,
   moveBackButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
+import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
 export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
@@ -277,9 +277,12 @@ export default class ContainerDatasetModalContent extends Component {
         case 'size':
           comparison = a.filesize - b.filesize;
           break;
-        case 'date':
-          comparison = new Date(a.created_at) - new Date(b.created_at);
+        case 'date': {
+          const dateA = parseDate(a.created_at);
+          const dateB = parseDate(b.created_at);
+          comparison = dateA.valueOf() - dateB.valueOf();
           break;
+        }
         default:
           break;
       }
@@ -520,20 +523,8 @@ export default class ContainerDatasetModalContent extends Component {
                 )}
                 <div className="attachment-row-subtext">
                   <div>
-                    Added on:&nbsp;
-                    {attachment.created_at && !Number.isNaN(new Date(attachment.created_at).getTime()) ? (
-                      <>
-                        {new Date(attachment.created_at).toLocaleDateString('en-GB')}
-                        ,
-                        &nbsp;
-                        {new Date(attachment.created_at).toLocaleTimeString(
-                          'en-GB',
-                          { hour: '2-digit', minute: '2-digit', hour12: true }
-                        )}
-                      </>
-                    ) : (
-                      'now!'
-                    )}
+                    Created:&nbsp;
+                    {formatDate(attachment.created_at)}
                   </div>
                   &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
                   <div>
