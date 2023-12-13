@@ -3,18 +3,7 @@
 require 'rails_helper'
 
 describe Usecases::Samples::BuildEmptyAnnotation do
-  let(:seeded_sample_svg_file) do
-    Rails
-      .public_path
-      .join('images', 'samples')
-      .children
-      .find { |file_as_pathname| file_as_pathname.extname == '.svg' }
-      .basename
-      .to_s
-  end
-  let(:sample) do
-    create(:sample, sample_svg_file: seeded_sample_svg_file)
-  end
+  include_context 'sample annotation context'
 
   let(:dimensions) do
     MiniMagickImageAnalyser.new.get_image_dimensions(

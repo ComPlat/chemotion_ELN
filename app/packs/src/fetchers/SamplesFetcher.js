@@ -65,6 +65,18 @@ export default class SamplesFetcher {
     return promise;
   }
 
+  static deleteAnnotation(id) {
+    let promise = fetch('/api/v1/samples/' + id + '/annotation', {
+      credentials: 'same-origin',
+      method: 'delete'
+    }).then((response) => {
+      return response.text();
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
   static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
     queryParams.moleculeSort = moleculeSort;
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'samples', Sample);

@@ -436,6 +436,29 @@ describe Chemotion::SampleAPI do
     end
   end
 
+  describe 'DELETE /api/v1/samples/:id/annotation' do
+    include_context 'sample annotation context'
+
+    before do
+      sample_with_annotation.creator = user
+      sample_with_annotation.collections = [collection]
+      sample_with_annotation.save
+    end
+
+    it 'returns no_content status code' do
+      delete "/api/v1/samples/#{sample_with_annotation.id}/annotation"
+
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it 'executes the usecase' do
+      allow(Usecases::Samples::DeleteAnnotation).to receive(:execute!)
+      delete "/api/v1/samples/#{sample_with_annotation.id}/annotation"
+
+      expect(Usecases::Samples::DeleteAnnotation).to have_received(:execute!)
+    end
+  end
+
   describe 'GET /api/v1/samples/:id/annotation' do
     let(:seeded_sample_svg_file) do
       Rails

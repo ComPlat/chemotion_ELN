@@ -306,6 +306,12 @@ module Chemotion
 
             body Usecases::Samples::BuildEmptyAnnotation.new(sample: @sample).generate!
           end
+
+          desc 'Delete an annotation'
+          delete do
+            Usecases::Samples::DeleteAnnotation.execute!(@sample)
+            body false
+          end
         end
       end
 
