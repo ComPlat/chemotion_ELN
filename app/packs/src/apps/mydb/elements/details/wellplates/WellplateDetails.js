@@ -43,7 +43,7 @@ export default class WellplateDetails extends Component {
       wellplate,
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
-      visible: Immutable.List(['']),
+      visible: Immutable.List(),
     };
     this.handleWellplateChanged = this.handleWellplateChanged.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
