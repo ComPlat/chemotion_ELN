@@ -8,6 +8,7 @@ AllCops:
   DisplayCopNames: true
   TargetRubyVersion: 2.7.7
   Exclude:
+    - 'app/ord_kit/proto/*'
     - 'bin/*'
     - 'db/**/*'
     - 'db/schema.rb'

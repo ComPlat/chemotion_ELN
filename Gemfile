@@ -34,6 +34,9 @@ gem 'font-awesome-rails'
 gem 'fugit'
 gem 'fx'
 
+# Google protocol buffers for use in ORD.
+gem 'google-protobuf'
+
 gem 'grape'
 gem 'grape-entity'
 gem 'grape-kaminari'
