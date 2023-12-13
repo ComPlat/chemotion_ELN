@@ -5,6 +5,8 @@ require_relative 'boot'
 require 'rails/all'
 require 'dotenv'
 
+require './app/ord_kit/proto/ord_kit_reaction_pb'
+
 Dotenv.load
 
 # Require the gems listed in Gemfile, including any gems

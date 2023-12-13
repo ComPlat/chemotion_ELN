@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+module OrdKit
+  module Exporter
+    module Metrics
+      class PowerExporter < OrdKit::Exporter::Metrics::Base
+        def to_ord
+          Power.new(
+            value: value.to_f,
+            precision: nil,
+            units: units,
+          )
+        end
+
+        private
+
+        def units
+          Power::PowerUnit.const_get unit
+        rescue NameError
+          Power::PowerUnit::UNSPECIFIED
+        end
+      end
+    end
+  end
+end

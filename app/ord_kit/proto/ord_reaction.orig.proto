@@ -1,0 +1,1331 @@
+// Copyright 2020 Open Reaction Database Project Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Schema for the Open Reaction Database.
+syntax = "proto3";
+
+package ord;
+
+/**
+ * Throughout this schema, we introduce enums to encourage consistency in
+ * nomenclature and to avoid unnecessary downstream data processing that would
+ * otherwise be required to consolidate equivalent entries. However, we do
+ * not wish to restrict what users are able to specify if their synthesis
+ * does not fit cleanly into a pre-existing enum field. For that reason, many
+ * enums contain a CUSTOM field, which must be accompanied by setting the
+ * 'details' field, where appropriate).
+ *
+ * NOTE(kearnes): In many places, we deliberately violate the style guide for
+ * enums by nesting instead of prefixing; this is not done lightly. The primary
+ * consideration is API consistency and the ability to use unqualified strings
+ * as enum values. For instance, we want 'CUSTOM' to be a valid value for all
+ * enums that support custom types.
+ */
+message Reaction {
+  repeated ReactionIdentifier identifiers = 1;
+  // List of pure substances or mixtures that were added to the reaction vessel.
+  // This is a map instead of a repeated field to simplify reaction templating
+  // through the use of keys. String keys are simple descriptions and are
+  // present only for convenience.
+  map<string, ReactionInput> inputs = 2;
+  // The reaction setup specifies how the reaction was prepared, e.g., whether
+  // it was automated, whether it was run in a glove box.
+  ReactionSetup setup = 3;
+  // Reaction conditions predominantly include temperature, stirring, and
+  // pressure conditions, but also allow specification of flow, photochemistry,
+  // and electrochemistry conditions.
+  ReactionConditions conditions = 4;
+  // Reaction notes largely pertain to safety considerations.
+  ReactionNotes notes = 5;
+  repeated ReactionObservation observations = 6;
+  // Workup steps are listed in the order they are performed.
+  repeated ReactionWorkup workups = 7;
+  // Each reaction outcome contains all analyses and confirmed/expected product
+  // structures at a particular reaction time.
+  repeated ReactionOutcome outcomes = 8;
+  // Provenance contains details of the experimenter and record writer.
+  ReactionProvenance provenance = 9;
+  // Official ID for this reaction in the Open Reaction Database.
+  string reaction_id = 10;
+}
+
+/**
+ * Reaction identifiers define descriptions of the overall reaction.
+ * While we encourage the use of SMILES strings, these do not work well in
+ * all cases. The <reaction_smiles> field should be able to be derived
+ * from the information present in the ReactionInput and ReactionOutcome
+ * fields of any Reaction message.
+ */
+message ReactionIdentifier {
+  // Possible identifier types are listed in an enum for extensibility
+  enum ReactionIdentifierType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    REACTION_SMILES = 2;
+    REACTION_CXSMILES = 6;  // Extended SMILES.
+    RDFILE = 3;  // Reaction data file.
+    RINCHI = 4;  // Reaction InChI.
+    REACTION_TYPE = 5;  // Named reaction or reaction category.
+  }
+  ReactionIdentifierType type = 1;
+  string details = 2;
+  string value = 3;
+  // Whether identifier contains atom-to-atom mapping information. When True,
+  // we encourage users to specify how that mapping was obtained in the
+  // details field (e.g., manually, using NameRXN, using ChemDraw).
+  optional bool is_mapped = 4;
+}
+
+/**
+ * A reaction input is any pure substance, mixture, or solution that is
+ * added to the reaction vessel.
+ *
+ * For example, suppose we are adding 3 mL of a 4 M solution of NaOH in water.
+ * We would define one component for the solvent and one component for the
+ * solute with the correct respective amounts.
+ *
+ * input {
+ *   components: {
+ *     identifiers: {type: IDENTIFIER_SMILES, value: "O"}
+ *     identifiers: {type: IDENTIFIER_NAME, value: "water"}
+ *     volume: {value: 3, units: MILLILITER}
+ *     volume_includes_solutes: true
+ *   }
+ *   components: {
+ *     identifiers: {type: IDENTIFIER_SMILES, value: "[Na+].[OH-]"}
+ *     identifiers: {type: IDENTIFIER_NAME, value: "sodium hydroxide"}
+ *     moles: {value: 12, units: MILLIMOLES}
+ *   }
+ * }
+ */
+message ReactionInput {
+  // A component is any pure species that is added to the reaction, whether as
+  // a pure substance or in a mixture/solution.
+  repeated Compound components = 1;
+  // A crude component refers to a non-purified, non-isolated compound or
+  // mixture that is produced by a preceding reaction step.
+  repeated CrudeComponent crude_components = 2;
+  // The addition order is 1-indexed. Inputs with the same addition_order are
+  // assumed to be added simultaneously. One input with a lower addition_order
+  // than another was added earlier in the procedure.
+  int32 addition_order = 3;
+  // When the addition event took place in terms of the reaction time (or,
+  // in the case of flow chemistry, the residence time).
+  Time addition_time = 4;
+  message AdditionSpeed {
+    enum AdditionSpeedType {
+      // Unspecified.
+      UNSPECIFIED = 0;
+      ALL_AT_ONCE = 1;
+      FAST = 2;
+      SLOW = 3;
+      DROPWISE = 4;
+      CONTINUOUS = 5;
+      PORTIONWISE = 6;
+    }
+    AdditionSpeedType type = 1;
+    // Specify, e.g., portion sizes and intervals for PORTIONWISE.
+    string details = 2;
+  }
+  // The qualitative rate of addition.
+  AdditionSpeed addition_speed = 5;
+  // Quantitatively, how long addition took
+  Time addition_duration = 6;
+  // For continuous synthesis, we instead specify a flow rate.
+  FlowRate flow_rate = 7;
+  message AdditionDevice {
+    enum AdditionDeviceType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      NONE = 2;
+      SYRINGE = 3;
+      CANNULA = 4;
+      ADDITION_FUNNEL = 5;
+    }
+    AdditionDeviceType type = 1;
+    // Specify, e.g., "gas-tight" for SYRINGE or cannula material.
+    string details = 2;
+  }
+  // The device used for addition.
+  AdditionDevice addition_device = 8;
+  // Specify the temperature of the material being added.
+  // E.g., a cooled flask of a stock solution to be added at low temperature.
+  Temperature addition_temperature = 9;
+  // The texture immediately before addition.
+  Texture texture = 10;
+}
+
+/**
+ * The quantitative amount of a Compound used in a particular reaction.
+ * Compounds added in their pure form should have their value defined by
+ * mass, moles, or volume. Compounds prepared as solutions should be defined
+ * in terms of their volume. Compounds prepared on solid supports should
+ * define the total mass/volume including the support.
+ */
+message Amount {
+  oneof kind {
+    Mass mass = 1;
+    Moles moles = 2;
+    Volume volume = 3;
+    UnmeasuredAmount unmeasured = 5;
+  }
+  // Whether the volume measurement refers to the pure substance or to the
+  // total volume of the reaction input. An example of when this field should
+  // be TRUE is when stock solutions are prepared by adding solvent to a
+  // volumetric flask already containing solute(s).
+  optional bool volume_includes_solutes = 4;
+}
+
+/**
+ * Compounds may be defined with qualitative amounts in situations where a
+ * precise quantity is not measured or reported.
+ */
+message UnmeasuredAmount {
+  enum UnmeasuredAmountType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    // Solute species present at saturation limit. Should only be used for
+    // compounds when a solvent compound is also present in he same input.
+    SATURATED = 2;
+    // An unmeasured drop or scoop of compound intended to introduce it only
+    // at a catalytic (very low) concentration.
+    CATALYTIC = 3;
+    // Compound was titrated in, but the actual amount added was not recorded.
+    // Details of how the amount of compound added was decided, e.g., a change
+    // in color, should be included in the details field.
+    TITRATED = 4;
+  }
+  UnmeasuredAmountType type = 1;
+  // Full description of the unmeasured amount if more details are known.
+  string details = 2;
+}
+
+/**
+ * This qualitatively describes the apparent size and morphology of a Compound,
+ * a ProductCompound, or a ReactionInput.
+ */
+message Texture {
+  enum TextureType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    POWDER = 2;
+    CRYSTAL = 3;
+    OIL = 4;
+    AMORPHOUS_SOLID = 5;
+    FOAM = 6;
+    WAX = 7;
+    SEMI_SOLID = 8;
+    SOLID = 9;
+    LIQUID = 10;
+    GAS = 11;
+  }
+  TextureType type = 1;
+  // Specify texture forms such as "fine needles" for CRYSTAL,
+  // "viscous" for OIL, etc.
+  string details = 2;
+}
+
+/**
+ * Crude components are used in multi-step or multi-stage reactions (no strong
+ * distinction is made here) where one synthetic process must be described by
+ * multiple "Reaction" messages. In these cases, we often carry the crude
+ * product from one step/stage into the next. This message is only to be used
+ * when there is not complete isolation of an intermediate molecule; if there
+ * is complete isolation, then a regular Compound should be used with the
+ * SYNTHESIED preparation type.
+ */
+message CrudeComponent {
+  // The ID of the reaction that produced the crude. Note that this ID must be
+  // defined within the same Dataset; cross-references cannot exist between
+  // multiple datasets.
+  string reaction_id = 1;
+  // Whether that reaction's workup and purification steps were performed
+  // prior to addition.
+  optional bool includes_workup = 2;
+  // Whether the amount added in this reaction should be inferred from the
+  // previous step, i.e, if everything was added.
+  optional bool has_derived_amount = 3;
+  // If the entire crude mixture was not used, need to specify an amount.
+  Amount amount = 4;
+  Texture texture = 5;
+}
+
+/**
+ * A Compound defines both the identity of a pure species and a quantitative
+ * amount (mass, moles, volume). For compounds used in inputs, details can
+ * be provided about how it was prepared and from where it was purchased.
+ */
+message Compound {
+  // Set of identifiers used to uniquely define this compound.
+  // Solutions or mixed compounds should use the NAME identifier
+  // and list all constituent compounds in the "components" field.
+  repeated CompoundIdentifier identifiers = 1;
+  Amount amount = 2;
+  ReactionRole.ReactionRoleType reaction_role = 3;
+  // Whether this species is intended to be a limiting reactant.
+  optional bool is_limiting = 4;
+  repeated CompoundPreparation preparations = 5;
+  message Source {
+    // Name of the vendor or supplier the compound was purchased from.
+    string vendor = 1;
+    // Compound ID in the vendor database or catalog.
+    string catalog_id = 2;
+    // Batch/lot identification.
+    string lot = 3;
+  }
+  Source source = 6;
+  // Compounds can accommodate any number of features. These may include simple
+  // properties of the compound (e.g., molecular weight), heuristic estimates
+  // of physical properties (e.g., ClogP), optimized geometries (e.g., through
+  // DFT), and calculated stereoelectronic descriptors.
+  map<string, Data> features = 7;
+  // Compounds may be assayed for quality control; analytical data should be
+  // defined in the analyses map.
+  map<string, Analysis> analyses = 8;
+  Texture texture = 9;
+}
+
+message ReactionRole {
+  enum ReactionRoleType {
+    UNSPECIFIED = 0;
+    // A reactant is any compound that contributes atoms to a desired or
+    // observed product.
+    REACTANT = 1;
+    REAGENT = 2;
+    SOLVENT = 3;
+    CATALYST = 4;
+    // The workup role is used when defining quenches, buffer additives for
+    // liquid-liquid separations, etc.
+    WORKUP = 5;
+    // Internal standards can be included as part of a reaction input (when
+    // added prior to the start of the reaction) or as part of a workup
+    // step of addition.
+    INTERNAL_STANDARD = 6;
+    AUTHENTIC_STANDARD = 7;
+    // A product can be any species produced by the reaction, whether desired
+    // or undesired.
+    PRODUCT = 8;
+    // When there is one intended chemical equation:
+    // - Set `is_desired_product=True` to indicate a desired product.
+    // - Use BYPRODUCT to indicate a chemical species that is an expected result
+    // of the reaction but is not the product of interest.
+    // - Use SIDE_PRODUCT to indicate the product of a side reaction.
+    // - See https://doi.org/10.1021/op300317g for a discussion of these terms.
+    BYPRODUCT = 9;
+    SIDE_PRODUCT = 10;
+  }
+}
+
+/**
+ * Compounds may undergo additional preparation before being used in a
+ * reaction after being received from a supplier or vendor. We encourage
+ * the use of the 'preparation' enum when possible, even if the description
+ * is an oversimplification of the full procedure, which can be described
+ * in the 'details' field.
+ */
+message CompoundPreparation {
+  enum CompoundPreparationType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    NONE = 2;  // Compound used as received.
+    REPURIFIED = 3;  // Compound repurified (e.g., recrystallized).
+    SPARGED = 4;  // Compound sparged, most likely to be the case with solvents.
+    DRIED = 5;  // Moisture removed, e.g., using molecular sieves.
+    SYNTHESIZED = 6;  // Compound synthesized in-house.
+  }
+  CompoundPreparationType type = 1;
+  // Full description of how the received compound was prepared.
+  string details = 2;
+  // The ID of the reaction that produced this species. Note that this ID must
+  // be defined within the same Dataset; cross-references cannot exist between
+  // multiple datasets. Only to be used with the SYNTHESIZED preparation type.
+  // The referenced reaction should not merely be the procedure that was
+  // followed/reproduced, but the *exact* physical experiment.
+  string reaction_id = 3;
+}
+
+/**
+ * Compound identifiers uniquely define a single (pure) chemical species.
+ * While we encourage the use of SMILES strings, these do not work well in
+ * all cases (e.g., handling tautomerism, axial chirality). Multiple
+ * identifiers may be specified for a single compound to avoid ambiguity.
+ * We discourage chemicals from being defined only by a name. For compounds
+ * that are prepared or isolated as salts, the identifier should include
+ * specification of which salt.
+ */
+message CompoundIdentifier {
+  enum CompoundIdentifierType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    // Simplified molecular-input line-entry system.
+    SMILES = 2;
+    // IUPAC International Chemical Identifier.
+    INCHI = 3;
+    // Molblock from a MDL Molfile V3000.
+    MOLBLOCK = 4;
+    // Chemical name following IUPAC nomenclature recommendations.
+    IUPAC_NAME = 5;
+    // Any accepted common name, trade name, etc.
+    NAME = 6;
+    // Chemical Abstracts Service Registry Number (with hyphens).
+    CAS_NUMBER = 7;
+    // PubChem Compound ID number.
+    PUBCHEM_CID = 8;
+    // ChemSpider ID number.
+    CHEMSPIDER_ID = 9;
+    // ChemAxon extended SMILES
+    CXSMILES = 10;
+    // IUPAC International Chemical Identifier key
+    INCHI_KEY = 11;
+    // XYZ molecule file
+    XYZ = 12;
+    // UniProt ID (for enzymes)
+    UNIPROT_ID = 13;
+    // Protein data bank ID (for enzymes)
+    PDB_ID = 14;
+    // Amino acid sequence (for enzymes).
+    AMINO_ACID_SEQUENCE = 15;
+    // HELM; https://www.pistoiaalliance.org/helm-notation/.
+    HELM = 16;
+  }
+  CompoundIdentifierType type = 1;
+  string details = 2;
+  // Value of the compound identifier; certain types (e.g., PUBCHEM_CID) may
+  // cast the string as an integer for downstream processing and validation.
+  string value = 3;
+}
+
+/**
+ * The Vessel defines the primary container within which the reaction was
+ * performed, including the type of vessel, its primary material, any
+ * preparation steps or vessel attachments, and its volume.
+ */
+message Vessel {
+  // Vessel type (flask, vial, well-plate, etc.).
+  enum VesselType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    ROUND_BOTTOM_FLASK = 2;
+    VIAL = 3;
+    WELL_PLATE = 4;
+    MICROWAVE_VIAL = 5;
+    TUBE = 6;
+    CONTINUOUS_STIRRED_TANK_REACTOR = 7;
+    PACKED_BED_REACTOR = 8;
+    NMR_TUBE = 9;
+    PRESSURE_FLASK = 10;  // E.g., sealed tube
+    PRESSURE_REACTOR = 11;  // High-pressure (e.g., Parr bomb reactor)
+    ELECTROCHEMICAL_CELL = 12;
+  }
+  VesselType type = 1;
+  // Include details such as "multi-neck" for ROUND_BOTTOM_FLASK,
+  // "J. Young" for NMR_TUBE, etc.
+  string details = 2;
+  // Vessel material (glass, plastic, etc.).
+  VesselMaterial material = 3;
+  // How the vessel was prepared for the reaction.
+  repeated VesselPreparation preparations = 4;
+  // Vessel attachments (septum, cap, gas adapter, etc.).
+  repeated VesselAttachment attachments = 5;
+  // Size (volume) of the vessel.
+  Volume volume = 6;
+  // Identifier number for a microtiter plate or parallel reactor run.
+  string vessel_id = 7;
+  // If a well-plate was used, the position of the well for this experiment,
+  // e.g., "A4".
+  string position = 8;
+  string row = 9;
+  string col = 10;
+}
+
+message VesselMaterial {
+  enum VesselMaterialType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    GLASS = 2;
+    POLYPROPYLENE = 3;
+    PLASTIC = 4;
+    METAL = 5;
+    QUARTZ = 6;
+  }
+  VesselMaterialType type = 1;
+  string details = 2;
+}
+
+message VesselAttachment {
+  enum VesselAttachmentType {
+    UNSPECIFIED = 0;
+    NONE = 1;
+    CUSTOM = 2;
+    SEPTUM = 3;
+    CAP = 4;
+    MAT = 5;  // e.g. a covering for a well plate.
+    REFLUX_CONDENSER = 6;
+    VENT_NEEDLE = 7;
+    DEAN_STARK = 8;
+    VACUUM_TUBE = 9;
+    ADDITION_FUNNEL = 10;
+    DRYING_TUBE = 11;
+    ALUMINUM_FOIL = 12;
+    THERMOCOUPLE = 13;
+    BALLOON = 14;
+    GAS_ADAPTER = 15;  // E.g. a ground-glass adapter with a gas line.
+    PRESSURE_REGULATOR = 16;
+    RELEASE_VALVE = 17;
+  }
+  VesselAttachmentType type = 1;
+  // Include attachment specifications, e.g., "rubber" for SEPTUM,
+  // "Teflon" for CAP, "water jacket" for REFLUX_CONDENSER, etc.
+  // Also include sealing details, e.g., "electrical tape", "parafilm", etc.
+  string details = 2;
+}
+
+message VesselPreparation {
+  enum VesselPreparationType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    NONE = 2;
+    OVEN_DRIED = 3;
+    FLAME_DRIED = 4;
+    EVACUATED_BACKFILLED = 5;
+    PURGED = 6;
+  }
+  VesselPreparationType type = 1;
+  string details = 2;
+}
+
+message ReactionSetup {
+  Vessel vessel = 1;
+  // Specification of automated protocols.
+  optional bool is_automated = 2;
+  // Automated platform name, brand, or model number.
+  string automation_platform = 3;
+  // Raw automation code or synthetic recipe definition.
+  map<string, Data> automation_code = 4;
+  message ReactionEnvironment {
+    enum ReactionEnvironmentType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      FUME_HOOD = 2;
+      BENCH_TOP = 3;
+      GLOVE_BOX = 4;
+      GLOVE_BAG = 5;
+    }
+    ReactionEnvironmentType type = 1;
+    // Specify environment details, e.g., "nitrogen-filled" for GLOVE_BOX.
+    string details = 2;
+  }
+  // Specify reaction environment.
+  ReactionEnvironment environment = 5;
+}
+
+message ReactionConditions {
+  TemperatureConditions temperature = 1;
+  PressureConditions pressure = 2;
+  StirringConditions stirring = 3;
+  IlluminationConditions illumination = 4;
+  ElectrochemistryConditions electrochemistry = 5;
+  FlowConditions flow = 6;
+  optional bool reflux = 7;
+  optional float ph = 8;
+  // Boolean to describe whether the conditions cannot be
+  // represented by the static, single-step schema.
+  optional bool conditions_are_dynamic = 9;
+  // A catch-all string field for providing more information about
+  // the conditions (e.g., multiple stages)
+  string details = 10;
+}
+
+message TemperatureConditions {
+  message TemperatureControl {
+    enum TemperatureControlType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      AMBIENT = 2;
+      OIL_BATH = 3;
+      WATER_BATH = 4;
+      SAND_BATH = 5;
+      ICE_BATH = 6;
+      DRY_ALUMINUM_PLATE = 7;
+      MICROWAVE = 8;
+      DRY_ICE_BATH = 9;
+      AIR_FAN = 10;
+      LIQUID_NITROGEN = 11;
+    }
+    TemperatureControlType type = 1;
+    // Specify, e.g., ICE_BATH components (e.g., "ice water, salt"),
+    // MICROWAVE power, AIR_FAN speed, etc.
+    string details = 2;
+  }
+  TemperatureControl control = 1;
+  Temperature setpoint = 2;
+  message TemperatureMeasurement {
+    enum TemperatureMeasurementType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      THERMOCOUPLE_INTERNAL = 2;  // Physically in reaction solution.
+      THERMOCOUPLE_EXTERNAL = 3;  // On outside of vessel or, e.g., in oil bath.
+      INFRARED = 4;  // Contactless infrared probe.
+    }
+    TemperatureMeasurementType type = 1;
+    string details = 2;
+    Time time = 3;
+    Temperature temperature = 4;
+  }
+  repeated TemperatureMeasurement measurements = 3;
+}
+
+message PressureConditions {
+  message PressureControl {
+    enum PressureControlType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      AMBIENT = 2;
+      SLIGHT_POSITIVE = 3;  // E.g., 1-5 psi with a gas line inlet.
+      SEALED = 4;  // Fully sealed vessel (e.g., microwave vial, sealed tube).
+      PRESSURIZED = 5;  // High-pressure applied, e.g., in a bomb reactor.
+    }
+    PressureControlType type = 1;
+    // Include means of pressure control in "Attachment" when appropriate.
+    string details = 2;
+  }
+  PressureControl control = 1;
+  Pressure setpoint = 2;
+  message Atmosphere {
+    enum AtmosphereType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      AIR = 2;
+      NITROGEN = 3;
+      ARGON = 4;
+      OXYGEN = 5;
+      HYDROGEN = 6;
+      CARBON_MONOXIDE = 7;
+      CARBON_DIOXIDE = 8;
+      METHANE = 9;
+      AMMONIA = 10;
+      OZONE = 11;
+      ETHYLENE = 12;
+      ACETYLENE = 13;
+    }
+    AtmosphereType type = 1;
+    string details = 2;
+  }
+  Atmosphere atmosphere = 3;
+  message PressureMeasurement {
+    // TODO(ccoley) get input on how to expand this enum, among others
+    enum PressureMeasurementType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      PRESSURE_TRANSDUCER = 2;
+    }
+    PressureMeasurementType type = 1;
+    string details = 2;
+    Time time = 3;
+    Pressure pressure = 4;
+  }
+  repeated PressureMeasurement measurements = 4;
+}
+
+message StirringConditions {
+  enum StirringMethodType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    NONE = 2;
+    STIR_BAR = 3;
+    OVERHEAD_MIXER = 4;
+    AGITATION = 5;
+    BALL_MILLING = 6;
+    SONICATION = 7;
+  }
+  StirringMethodType type = 1;
+  // Specify, e.g., "egg-shape" for STIR_BAR.
+  string details = 2;
+  message StirringRate {
+    enum StirringRateType {
+      UNSPECIFIED = 0;
+      HIGH = 1;
+      MEDIUM = 2;
+      LOW = 3;
+    }
+    StirringRateType type = 1;
+    // Specify, e.g., "vigorous" for HIGH, or specify exact rpm in "rpm".
+    string details = 2;
+    int32 rpm = 3;
+  }
+  StirringRate rate = 3;
+}
+
+message IlluminationConditions {
+  enum IlluminationType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    AMBIENT = 2;
+    DARK = 3;
+    LED = 4;
+    HALOGEN_LAMP = 5;
+    DEUTERIUM_LAMP = 6;
+    SOLAR_SIMULATOR = 7;
+    BROAD_SPECTRUM = 8;
+  }
+  IlluminationType type = 1;
+  string details = 2;  // E.g. manufacturer, setup specifications, etc.
+  Wavelength peak_wavelength = 3;
+  string color = 4;
+  Length distance_to_vessel = 5;
+}
+
+message ElectrochemistryConditions {
+  enum ElectrochemistryType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    CONSTANT_CURRENT = 2;
+    CONSTANT_VOLTAGE = 3;
+  }
+  ElectrochemistryType type = 1;
+  string details = 2;
+  Current current = 3;
+  Voltage voltage = 4;
+  string anode_material = 5;
+  string cathode_material = 6;
+  Length electrode_separation = 7;
+  message ElectrochemistryMeasurement {
+    Time time = 1;
+    Current current = 2;
+    Voltage voltage = 3;
+  }
+  repeated ElectrochemistryMeasurement measurements = 8;
+  message ElectrochemistryCell {
+    enum ElectrochemistryCellType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      DIVIDED_CELL = 2;
+      UNDIVIDED_CELL = 3;
+    }
+    ElectrochemistryCellType type = 1;
+    // Include electrochemistry reaction-ware specifications, e.g., home-made
+    // vs. commercial cell and details.
+    string details = 2;
+  }
+  ElectrochemistryCell cell = 9;
+}
+
+message FlowConditions {
+  enum FlowType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    PLUG_FLOW_REACTOR = 2;
+    CONTINUOUS_STIRRED_TANK_REACTOR = 3;
+    PACKED_BED_REACTOR = 4;
+  }
+  FlowType type = 1;
+  string details = 2;
+  string pump_type = 3;
+  message Tubing {
+    enum TubingType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      STEEL = 2;
+      COPPER = 3;
+      PFA = 4;
+      FEP = 5;
+      TEFLONAF = 6;
+      PTFE = 7;
+      GLASS = 8;
+      QUARTZ = 9;
+      SILICON = 10;  // e.g., a chip-based microreactor
+      PDMS = 11;
+    }
+    TubingType type = 1;
+    string details = 2;
+    Length diameter = 3;
+  }
+  Tubing tubing = 4;
+}
+
+message ReactionNotes {
+  // Equivalent to "not single phase".
+  optional bool is_heterogeneous = 1;
+  // Qualitative precipitation. Could be desired or by-product.
+  optional bool forms_precipitate = 2;
+  // Qualitative exothermicity (primarily for safety).
+  optional bool is_exothermic = 3;
+  // Qualitative offgassing (primarily for safety).
+  optional bool offgasses = 4;
+  optional bool is_sensitive_to_moisture = 5;
+  optional bool is_sensitive_to_oxygen = 6;
+  optional bool is_sensitive_to_light = 7;
+  // Include additional sensitivity issues, e.g., shock or heat.
+  // Include toxicity and other safety warnings.
+  string safety_notes = 8;
+  // Overflow field for full procedure details
+  string procedure_details = 9;
+}
+
+message ReactionObservation {
+  Time time = 1;  // The reaction time at which the observation was made.
+  string comment = 2;  // e.g. what color is the reaction?
+  Data image = 3;
+}
+
+message ReactionWorkup {
+  enum ReactionWorkupType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    // Addition (quench, dilution, extraction solvent, internal standard, etc.)
+    // Specify composition/amount in "input".
+    // Often preceded by TEMPERATURE.
+    ADDITION = 2;
+    // Sampling (by mass of volume) a portion of the mixture, often for
+    // dilution in a subsequent ADDITION step prior to analysis. The vessel to
+    // which the aliquot is transferred can be specified in "details".
+    ALIQUOT = 3;
+    // Change of temperature.
+    // Specify conditions in "temperature".
+    TEMPERATURE = 4;
+    // Concentration step, often using a rotovap.
+    // Specify degree in "details" if appropriate, e.g., "to half volume".
+    CONCENTRATION = 5;
+    // Liquid extractions are often preceded by Additions. If there
+    // are multiple distinct additions prior to an extraction, it is
+    // assumed that the kept phases are pooled.
+    // Specify which phase to keep in "keep_phase".
+    EXTRACTION = 6;
+    // Filtration (can keep solid or filtrate).
+    // Specify which phase to keep in "keep phase".
+    FILTRATION = 7;
+    // Washing a solid or liquid, keeping the original phase.
+    // Specify "input" of rinse. Rinses performed in
+    // multiple stages should be given multiple workup steps
+    WASH = 8;
+    // Dried under vacuum.
+    // Specify temperature in "temperature".
+    DRY_IN_VACUUM = 9;
+    // Dried with chemical additive.
+    // Specify chemical additive in "input".
+    DRY_WITH_MATERIAL = 10;
+    // Purification by flash chromatography.
+    // Specify stationary and mobile phases (and gradients) in "details".
+    // Specify automation in "is_automated".
+    FLASH_CHROMATOGRAPHY = 11;
+    // Purification by other prep chromatography (e.g. prep TLC, prep HPLC).
+    // Specify method, stationary and mobile phases in "details".
+    // Specify automation in "is_automated".
+    OTHER_CHROMATOGRAPHY = 12;
+    // Scavenging step (e.g., pass through silica/alumina pad)
+    // Specify any material additives in "input".
+    SCAVENGING = 13;
+    // Waiting step. Specify "duration".
+    WAIT = 14;
+    // Mixing step. Specify "stirring"
+    STIRRING = 15;
+    // pH adjustments should specify "input" to define
+    // species used as well as "ph" for target ph
+    PH_ADJUST = 16;
+    // Redissolution considered to be a special form of addition.
+    // Specify "input"
+    DISSOLUTION = 17;
+    // Specify temperature in "temperature".
+    // Specify pressure and apparatus notes in "details".
+    DISTILLATION = 18;
+  }
+  ReactionWorkupType type = 1;
+  // Include step-specific details such as purpose of an addition, e.g.,
+  // "crystallization". Include method details, e.g., "layer diffusion".
+  string details = 2;
+  Time duration = 3;
+  ReactionInput input = 4;
+  // When aliquotting a portion of the reaction mixture, the amount is
+  // specified by mass or volume. Note that the amounts for additions should
+  // be described in the "input" field instead; these are only for aliquots.
+  Amount amount = 5;
+  TemperatureConditions temperature = 6;
+  string keep_phase = 7;
+  StirringConditions stirring = 8;
+  optional float target_ph = 9;
+  // Indicate automated workup/purification. Include specifications in
+  // "details", e.g., instrument manufacturer, solvent gradient
+  // (if applicable), column material and size, etc.
+  optional bool is_automated = 10;
+}
+
+/**
+ * The outcomes of a reaction describe the conversion, yield, and/or other
+ * analyses of the resulting product mixture after workup step(s). Each
+ * outcome is associated with a reaction/residence time. To allow for
+ * one Reaction message to contain the results of a full kinetic profiling
+ * experiment, this is a repeated field of the Reaction message.
+ *
+ * It is the parent message for product characterization and any analytical
+ * data.
+ */
+message ReactionOutcome {
+  // Reaction time (for flow, equivalent to residence time or spacetime).
+  Time reaction_time = 1;
+  // Conversion with respect to the sole limiting reactant. If there is
+  // ambiguity in which species the conversion is defined with respect to, the
+  // quantification of leftover starting materials should be defined as the
+  // quantification of multiple products, where the compound identity of those
+  // products matches the starting materials.
+  Percentage conversion = 2;
+  // The products observed in this reaction, including product-specific data
+  // defined in submessages. If the quantities of leftover starting materials
+  // are measured, these starting materials may also be defined as product
+  // species.
+  repeated ProductCompound products = 3;
+  // Analyses are stored in a map to associate each with a unique key.
+  // The key is cross-referenced in ProductCompound's ProductMeasurement
+  // messages to indicate which analyses were used to derive which performance
+  // values/metrics. The string used for the key carries no meaning outside of
+  // this cross-referencing.
+  map<string, Analysis> analyses = 4;
+}
+
+message ProductCompound {
+  // The identity of the product compound.
+  repeated CompoundIdentifier identifiers = 1;
+  optional bool is_desired_product = 2;
+  // Each ProductMeasurement describes a connection between this product and an
+  // Analysis. This includes information about how the identity of the
+  // product was confirmed. It also contains quantitative standardized
+  // performance metrics like quantitative yield as well as unstandardized
+  // (and unnormalized) metrics like an integrated UV peak area.
+  repeated ProductMeasurement measurements = 3;
+  string isolated_color = 4;
+  Texture texture = 5;
+  // Any features (e.g., calculated descriptors) of the product compound.
+  map<string, Data> features = 6;
+  // Specify the role the ProductCompound played in the reaction. This
+  // aids in constructing proper reaction SMILES and product lists.
+  // Species produced by the reaction should be identified as PRODUCT,
+  // whether desired or undesired. Recovered starting materials can be
+  // specified as REACTANT, REAGENT, CATALYST, etc. as appropriate.
+  ReactionRole.ReactionRoleType reaction_role = 7;
+}
+
+message ProductMeasurement {
+  // The key of the analysis used to calculate this product-specific
+  // measurement; this should cross-reference the outcome.analyses map.
+  string analysis_key = 1;
+  // The type of measurement. While each measurement is associated with a
+  // specific product compound and is cross-referenced to an analysis through
+  // the analysis_key, there is still ambiguity as to what a measurement
+  // truly represents. For example, an LCMS analysis can lead to a quantitative
+  // YIELD if an authentic standard and internal standard are used to obtain
+  // a calibration curve; sometimes, it is only used to obtain an uncalibrated
+  // "yield" that is better described as an peak AREA or integrated EIC
+  // COUNTS. Understanding the fidelity of the approach taken to measure
+  // the performance of a reaction is important for downstream learning tasks.
+  // Note that this message is intended to capture product-specific data
+  // extracted from an analysis. The raw analytical data (e.g., a full NMR
+  // spectrum) should be defined in an Analysis message. Even analyses
+  // of ostensibly pure compounds (e.g., HRMS) should have their results
+  // defined in the Analysis message (with is_of_isolated_species set
+  // to True) but with a cross-reference to a product via a ProductMessage
+  // (e.g., of type IDENTITY for HRMS).
+  enum ProductMeasurementType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    // An identity type indicates that the corresponding analysis was used
+    // to confirm the identity of the reported product.
+    IDENTITY = 2;
+    // Yields should only be reported as quantitative yields, e.g., measured
+    // using an isolated weight analysis, quantitative NMR with an internal
+    // standard, LC peak area with an internal standard and calibration curve
+    // obtained using an authentic standard.
+    YIELD = 3;
+    // Selectivites include enantiomeric excess/ratios, diastereomeric ratios,
+    // etc. The detailed type should be specified in selectivity_type.
+    SELECTIVITY = 4;
+    // The apparent purity of the product mixture accoridng to a specific
+    // analysis (e.g,. qNMR, LC).
+    PURITY = 5;
+    // Integrated peak area, e.g., as in an LC chromatogram.
+    AREA = 6;
+    // Raw counts, e.g., as in an EIC or TIC from a MS analysis. If an EIC,
+    // the m/z ratio(s) should be defined in the details.
+    COUNTS = 7;
+    // Intensity, e.g., of a TLC spot, ELSD, or GC FID.
+    INTENSITY = 8;
+    // Quantitative amount of this product as defined in the "amount" field,
+    // usually as a mass.
+    AMOUNT = 9;
+  }
+  ProductMeasurementType type = 2;
+  // Additional information about the measurement and, in particular, how it
+  // was calculated if that is ambiguous given the analysis type.
+  string details = 3;
+  // Whether an internal standard was used for this measurement to normalize
+  // it, e.g., for quantification of yield or relative peak area.
+  optional bool uses_internal_standard = 4;
+  // Whether the reported measurement has already been normalized to the
+  // internal standard, if an internal standard was used.
+  optional bool is_normalized = 5;
+  // Whether an authentic sample of a material was used for callibrating
+  // an analytical technique, e.g., for product identification by LCMS.
+  // "Authentic" refers to a sample of a compound whose structure has been
+  // proven by the accepted means (1H NMR, 13C NMR, IR, HRMS), and is now
+  // being used as a comparison for other analytical methods.
+  optional bool uses_authentic_standard = 6;
+  // Details about the authentic standard used, optionally including
+  // information about its precise salt form and source/vendor.
+  Compound authentic_standard = 7;
+  // The value for this measurement.
+  oneof value {
+    // A percentage value and its precision, as should be used for yields,
+    // purities, and some selectivities like EE. Note that a 50% yield
+    // corresponds to a percentage.value of 50 and not 0.5.
+    Percentage percentage = 8;
+    // A float value and its precision, as should be used for areas, counts,
+    // intensities, and some selectivities.
+    FloatValue float_value = 9;
+    // A string value, as should be used for measurements that cannot be
+    // captured as floats or percentages. For example, complex selectivities
+    // such as "2:1:1". Note that in the case of a 2:1:1 selectivity, however,
+    // it is preferable to define the 3 distinct products specifically and
+    // record the 3 product-specific measurements (e.g., peak areas) that
+    // were used to derive the "2:1:1" summary statistic.
+    string string_value = 10;
+    // Quantitative amount of this product. Measurements of this type should
+    // be linked to an analysis of type WEIGHT. Separate ProductMeasurement
+    // entries should be used to capture multiple amounts, such as mass and
+    // moles. However, since moles is derived from mass, recording just the
+    // mass is fine.
+    Amount amount = 11;
+  }
+  // A time to be used only when specifying the retention time at which a peak
+  // area or intensity was calculated, e.g., as in LC, LCMS, GC, or GCMS.
+  Time retention_time = 12;
+  // More details about how a particular performance metric (e.g., counts)
+  // was calculated from an analysis using mass spec. This includes
+  // distinguishing total ion current (TIC) counts from extracted ion
+  // chromatogram (EIC) counts and their corresponding mass ranges or masses.
+  message MassSpecMeasurementDetails {
+    enum MassSpecMeasurementType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      TIC = 2;
+      TIC_POSITIVE = 3;
+      TIC_NEGATIVE = 4;
+      EIC = 5;
+    }
+    MassSpecMeasurementType type = 1;
+    string details = 2;
+    // The lower bound of the m/z interval used to calculate the TIC counts.
+    optional float tic_minimum_mz = 3;
+    // The upper bound of the m/z interval used to calculate the TIC counts.
+    optional float tic_maximum_mz = 4;
+    // A list of m/z ratios that were used to calculate the peak area or
+    // intensity from an extracted ion chromatogram (EIC), e.g., from an LCMS
+    // analysis.
+    repeated float eic_masses = 5;
+  }
+  MassSpecMeasurementDetails mass_spec_details = 13;
+
+  // The more specific type of selectivity that is being reported, e.g., EE,
+  // ER, DR, EZ, ZE. EZ, ER, and DR assume that any product labeled as desired
+  // is first in the calculation, whereas EZ and ZE ratios are calculated as
+  // written. Only to be used when the type is SELECTIVITY.
+  message Selectivity {
+    enum SelectivityType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      EE = 2;  // Enantiomeric excess as a percentage (desired - undesired).
+      ER = 3;  // Enantiomeric ratio. (x:1) (desired / undesired).
+      DR = 4;  // Diasteromeric ratio. (x:1) (desired / undesired).
+      EZ = 5;  // Alkene geometry ratio. (x:1) (E / Z)
+      ZE = 6;  // Alkene geometry ratio. (x:1) (Z / E)
+    }
+    SelectivityType type = 1;
+    string details = 2;
+  }
+  Selectivity selectivity = 14;
+
+  // The wavelength used for e.g. LC quantification.
+  Wavelength wavelength = 15;
+}
+
+message DateTime {
+  string value = 1;
+}
+
+message Analysis {
+  // TODO(ccoley): Solicit more feedback from experimentalists
+  enum AnalysisType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    LC = 2;  // Liquid chromatography, including HPLC and UPLC.
+    GC = 3;  // Gas chromatography.
+    IR = 4;  // Infrared spectroscopy, including ReactIR.
+    NMR_1H = 5;  // 1H NMR spectroscopy.
+    NMR_13C = 6;  // 13C NMR spectroscopy.
+    NMR_OTHER = 7;  // Specify type and details in "details".
+    MP = 8;  // Melting point characterization.
+    UV = 9;  // Ultraviolet spectroscopy.
+    TLC = 10;  // Thin-layer chromatography.
+    MS = 11;  // Mass spectrometry.
+    HRMS = 12;  // High resolution mass spectrometry.
+    MSMS = 13;  // Two-dimensional mass spectrometry.
+    WEIGHT = 14;  // Weight of an isolated compound.
+    LCMS = 15;  // Combined LC/MS.
+    GCMS = 16;  // Combined GC/MS.
+    ELSD = 17;  // Evaporative light scattering detector.
+    CD = 18;  // Circular Dichroism.
+    SFC = 19;  // Supercritical fluid chromatography.
+    EPR = 20;  // Electron paramagnetic resonance spectroscopy.
+    XRD = 21;  // X-ray diffraction, including single-crystal XRD.
+    RAMAN = 22;  // Raman spectroscopy.
+    ED = 23;  // Electron diffraction, including MicroED.
+  }
+  AnalysisType type = 1;
+  // Any details about analysis (e.g., NMR type, columns, gradients).
+  string details = 2;
+  // Whether this analysis is intended to be of an isolated species. If false
+  // RSC Chemical Methods Ontology ID to define the analytical method with
+  // greater specificity. Defined at https://github.com/rsc-ontologies/rsc-cmo.
+  int32 chmo_id = 3;
+  // or unspecified, the assumption is that it is of a crude product mixture
+  // (or a partially worked-up product mixture).
+  optional bool is_of_isolated_species = 4;
+  // Data values or files (raw, processed, or annotated).
+  map<string, Data> data = 5;
+  string instrument_manufacturer = 6;
+  DateTime instrument_last_calibrated = 7;
+}
+
+message ReactionProvenance {
+  Person experimenter = 1;
+  string city = 2;
+  DateTime experiment_start = 3;
+  string doi = 4;
+  string patent = 5;
+  string publication_url = 6;
+  RecordEvent record_created = 7;
+  repeated RecordEvent record_modified = 8;
+  // Container for arbitrary reaction metadata; e.g., an internal project
+  // identifier.
+  map<string, Data> reaction_metadata = 9;
+  // Set to true for programmatically extracted data; e.g., text mining from
+  // patents. Set to false for manually curated data or template enumeration
+  // from structured data (like a spreadsheet).
+  optional bool is_mined = 10;
+}
+
+message Person {
+  string username = 1;
+  string name = 2;
+  string orcid = 3;
+  string organization = 4;
+  string email = 5;
+}
+
+message RecordEvent {
+  DateTime time = 1;
+  Person person = 2;
+  string details = 3;
+}
+
+/**
+ * To allow users to describe synthetic processes in whatever units they find
+ * most natural, we define a fixed list of allowable units for each measurement
+ * type. Upon submission to a centralized database, or using a validation and
+ * canonicalization script, we will convert all values to the default units
+ * (the first nonzero item in each enum).
+ *
+ * Each message also contains a `precision` field, which specifies the precision
+ * of the measurement in the same units as the measurement itself. Often the
+ * precision will be the standard deviation from an instrument calibration.
+ */
+message Time {
+  enum TimeUnit {
+    UNSPECIFIED = 0;
+    DAY = 4;
+    HOUR = 1;
+    MINUTE = 2;
+    SECOND = 3;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  TimeUnit units = 3;
+}
+message Mass {
+  enum MassUnit {
+    UNSPECIFIED = 0;
+    KILOGRAM = 1;
+    GRAM = 2;
+    MILLIGRAM = 3;
+    MICROGRAM = 4;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  MassUnit units = 3;
+}
+message Moles {
+  enum MolesUnit {
+    UNSPECIFIED = 0;
+    MOLE = 1;
+    MILLIMOLE = 2;
+    MICROMOLE = 3;
+    NANOMOLE = 4;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  MolesUnit units = 3;
+}
+message Volume {
+  enum VolumeUnit {
+    UNSPECIFIED = 0;
+    LITER = 1;
+    MILLILITER = 2;
+    MICROLITER = 3;
+    NANOLITER = 4;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  VolumeUnit units = 3;
+}
+message Concentration {
+  enum ConcentrationUnit {
+    UNSPECIFIED = 0;
+    MOLAR = 1;
+    MILLIMOLAR = 2;
+    MICROMOLAR = 3;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  ConcentrationUnit units = 3;
+}
+message Pressure {
+  enum PressureUnit {
+    UNSPECIFIED = 0;
+    BAR = 1;
+    ATMOSPHERE = 2;
+    PSI = 3;
+    KPSI = 4;
+    PASCAL = 5;
+    KILOPASCAL = 6;
+    TORR = 7;
+    MM_HG = 8;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  PressureUnit units = 3;
+}
+message Temperature {
+  enum TemperatureUnit {
+    UNSPECIFIED = 0;
+    CELSIUS = 1;
+    FAHRENHEIT = 2;
+    KELVIN = 3;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  TemperatureUnit units = 3;
+}
+message Current {
+  enum CurrentUnit {
+    UNSPECIFIED = 0;
+    AMPERE = 1;
+    MILLIAMPERE = 2;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  CurrentUnit units = 3;
+}
+message Voltage {
+  enum VoltageUnit {
+    UNSPECIFIED = 0;
+    VOLT = 1;
+    MILLIVOLT = 2;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  VoltageUnit units = 3;
+}
+message Length {
+  enum LengthUnit {
+    UNSPECIFIED = 0;
+    CENTIMETER = 1;
+    MILLIMETER = 2;
+    METER = 3;
+    INCH = 4;
+    FOOT = 5;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  LengthUnit units = 3;
+}
+message Wavelength {
+  enum WavelengthUnit {
+    UNSPECIFIED = 0;
+    NANOMETER = 1;
+    WAVENUMBER = 2;  // cm^{-1}
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  WavelengthUnit units = 3;
+}
+message FlowRate {
+  enum FlowRateUnit {
+    UNSPECIFIED = 0;
+    MICROLITER_PER_MINUTE = 1;
+    MICROLITER_PER_SECOND = 2;
+    MILLILITER_PER_MINUTE = 3;
+    MILLILITER_PER_SECOND = 4;
+    MICROLITER_PER_HOUR = 5;
+  }
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+  FlowRateUnit units = 3;
+}
+// Used for things like conversion and yield.
+message Percentage {
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+}
+// Wrapper for floats to include a precision.
+message FloatValue {
+  optional float value = 1;
+  // Precision of the measurement (with the same units as `value`).
+  optional float precision = 2;
+}
+
+// Data is a container for arbitrary data.
+message Data {
+  oneof kind {
+    float float_value = 1;
+    int32 integer_value = 2;
+    bytes bytes_value = 3;
+    string string_value = 4;
+    string url = 5;  // URL for data stored elsewhere.
+  }
+  // Description of these data (but avoid redundancy with map keys).
+  string description = 6;
+  // Description of the file format (if applicable); usually the file extension.
+  // For example, 'png' or 'tiff' for images. If empty, we assume string data.
+  string format = 7;
+}
