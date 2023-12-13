@@ -69,7 +69,7 @@ RSpec.describe ReactionProcessEditor::ReactionProcess do
   end
 
   describe '#saved_sample_ids' do
-    it 'merges actions sample_ids' do
+    it 'includes actions sample_ids' do
       reaction_process
       create_default(:reaction_process_step)
       activities = create_list(:reaction_process_activity_save, 3)

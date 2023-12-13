@@ -173,7 +173,8 @@ module ReactionProcessEditor
     end
 
     def save_sample_types
-      [{ value: 'CRUDE', label: 'Crude' },
+      [{ value: 'PURE', label: 'Pure' },
+       { value: 'CRUDE', label: 'Crude' },
        { value: 'MIXTURE', label: 'Mixture' },
        { value: 'INTERMEDIATE', label: 'Intermediate' }]
     end
