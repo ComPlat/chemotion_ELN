@@ -16,7 +16,8 @@ const elements = [
   { name: 'reaction', label: 'Reaction' },
   { name: 'wellplate', label: 'Wellplate' },
   { name: 'screen', label: 'Screen' },
-  { name: 'research_plan', label: 'Research Plan' }
+  { name: 'research_plan', label: 'Research Plan' },
+  { name: 'device_description', label: 'Device description' }
 ];
 
 export default class CollectionTabs extends React.Component {

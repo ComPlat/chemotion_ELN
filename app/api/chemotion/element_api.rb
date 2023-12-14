@@ -38,6 +38,9 @@ module Chemotion
         optional :cell_line, type: Hash do
           use :ui_state_params
         end
+        optional :device_description, type: Hash do
+          use :ui_state_params
+        end
         optional :selecteds, desc: 'Elements currently opened in detail tabs', type: Array do
           optional :type, type: String
           optional :id, type: Integer
