@@ -23,5 +23,6 @@ FactoryBot.define do
     factory :sample_text_template, class: SampleTextTemplate
     factory :screen_text_template, class: ScreenTextTemplate
     factory :wellplate_text_template, class: WellplateTextTemplate
+    factory :device_description_text_template, class: DeviceDescriptionTextTemplate
   end
 end

@@ -192,6 +192,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
+    t.integer "device_description_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
