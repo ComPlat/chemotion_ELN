@@ -97,6 +97,7 @@ module Chemotion
           optional :layout_detail_sample, type: Hash, profile_layout_hash: true
           optional :layout_detail_wellplate, type: Hash, profile_layout_hash: true
           optional :layout_detail_screen, type: Hash, profile_layout_hash: true
+          optional :layout_detail_device_description, type: Hash, profile_layout_hash: true
           optional :export_selection, type: Hash do
             optional :sample, type: [Boolean]
             optional :reaction, type: [Boolean]
@@ -134,6 +135,7 @@ module Chemotion
           'screen' => 4,
           'research_plan' => 5,
           'cell_line' => -1000,
+          'device_description' => -1100,
         } if data['layout'].nil?
 
         layout = data['layout'].select { |e| available_ements.include?(e) }

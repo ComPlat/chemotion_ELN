@@ -7,6 +7,7 @@ development:
       :screen: 4
       :research_plan: 5
       :cell_line: -1000
+      :device_description: -1100
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -54,6 +55,17 @@ development:
         1
       :analyses:
         2
+    :layout_detail_device_description:
+      :properties:
+        1
+      :detail:
+        2
+      :analyses:
+        3
+      :attachments:
+        4
+      :maintainance:
+        5
 
 production:
   :layout:
@@ -64,6 +76,7 @@ production:
       :screen: 4
       :research_plan: 5
       :cell_line: -1000
+      :device_description: -1100
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -111,6 +124,17 @@ production:
         1
       :analyses:
         2
+    :layout_detail_device_description:
+      :properties:
+        1
+      :detail:
+        2
+      :analyses:
+        3
+      :attachments:
+        4
+      :maintainance:
+        5
 
 test:
   :layout:
@@ -121,6 +145,7 @@ test:
       :screen: 4
       :research_plan: 5
       :cell_line: -1000
+      :device_description: -1100
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -168,3 +193,14 @@ test:
         1
       :analyses:
         2
+    :layout_detail_device_description:
+      :properties:
+        1
+      :detail:
+        2
+      :analyses:
+        3
+      :attachments:
+        4
+      :maintainance:
+        5
