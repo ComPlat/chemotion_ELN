@@ -93,7 +93,7 @@ export const segmentsByKlass = name => {
 
 export const elementNames = async (all = true, generics = null) => {
   const elnElements = all
-    ? ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line']
+    ? ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description']
     : [];
   try {
     if (generics?.length > 0) return elnElements.concat(generics?.map((el) => el.name));
