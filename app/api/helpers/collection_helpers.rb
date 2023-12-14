@@ -38,7 +38,8 @@ module CollectionHelpers
       :sample_detail_level, :reaction_detail_level,
       :wellplate_detail_level, :screen_detail_level,
       :researchplan_detail_level, :element_detail_level,
-      :celllinesample_detail_level
+      :celllinesample_detail_level,
+      :device_description_detail_level
     )&.symbolize_keys
     {
       permission_level: 0,
@@ -49,6 +50,7 @@ module CollectionHelpers
       researchplan_detail_level: 0,
       element_detail_level: 0,
       celllinesample_detail_level: 0,
+      device_description_detail_level: 0,
     }.merge(dl || {})
   end
 
@@ -123,6 +125,7 @@ module CollectionHelpers
       researchplan_detail_level: 10,
       element_detail_level: 10,
       celllinesample_detail_level: 10,
+      device_description_detail_level: 10,
     }
 
     @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
@@ -134,6 +137,7 @@ module CollectionHelpers
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:celllinesample_detail_level]
+    @dl_dd = @dl[:device_description_detail_level]
   end
 end
 # rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength

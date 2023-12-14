@@ -2,7 +2,70 @@
 
 module Chemotion
   class DeviceDescriptionAPI < Grape::API
+    include Grape::Kaminari
+    helpers ParamsHelpers
+    helpers CollectionHelpers
+
     resource :device_descriptions do
+      # Return serialized device description by collection id
+      params do
+        optional :collection_id, type: Integer
+        optional :sync_collection_id, type: Integer
+        optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
+      end
+      paginate per_page: 5, offset: 0
+      before do
+        params[:per_page].to_i > 50 && (params[:per_page] = 50)
+      end
+      get do
+        scope =
+          if params[:collection_id]
+            begin
+              Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                        .find(params[:collection_id]).device_descriptions
+            rescue ActiveRecord::RecordNotFound
+              DeviceDescription.none
+            end
+          elsif params[:sync_collection_id]
+            begin
+              current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+                          .collection.device_descriptions
+            rescue ActiveRecord::RecordNotFound
+              DeviceDescription.none
+            end
+          else
+            # All collection of current_user
+            DeviceDescription.joins(:collections)
+                             .where(collections: { user_id: current_user.id }).distinct
+          end
+        scope.order('created_at DESC')
+
+        from = params[:from_date]
+        to = params[:to_date]
+        by_created_at = params[:filter_created_at] || false
+
+        # scope = scope.includes_for_list_display
+        scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
+
+        reset_pagination_page(scope)
+
+        device_descriptions = paginate(scope).map do |device_description|
+          Entities::DeviceDescriptionEntity.represent(
+            device_description,
+            displayed_in_list: true,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
+                                                       .detail_levels,
+          )
+        end
+
+        { device_descriptions: device_descriptions }
+      end
+
       # create a device description
       params do
         optional :name, type: String

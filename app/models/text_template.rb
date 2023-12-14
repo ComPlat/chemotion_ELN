@@ -65,6 +65,9 @@ end
 class ElementTextTemplate < TextTemplate
 end
 
+class DeviceDescriptionTextTemplate < TextTemplate
+end
+
 class PredefinedTextTemplate < TextTemplate
   def self.init_seeds
     predefined_template_seeds_path = File.join(Rails.root, 'db', 'seeds', 'json', 'text_template_seeds.json')
