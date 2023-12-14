@@ -3,7 +3,24 @@
 describe Chemotion::DeviceDescriptionAPI do
   include_context 'api request authorization context'
 
+  let(:collection) { create(:collection, user_id: user.id, device_description_detail_level: 10) }
   let(:device_description) { create(:device_description) }
+
+  describe 'GET /api/v1/device_descriptions/' do
+    before do
+      CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
+    end
+
+    let(:params) do
+      { collection_id: collection.id }
+    end
+
+    it 'fetches device descriptions by collection id' do
+      get '/api/v1/device_descriptions/', params: params
+
+      expect(parsed_json_response['device_descriptions'].size).to be(1)
+    end
+  end
 
   describe 'POST /api/v1/device_descriptions' do
     let(:device_description_params) { attributes_for(:device_description) }

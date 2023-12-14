@@ -43,6 +43,6 @@
 #
 class DeviceDescription < ApplicationRecord
   belongs_to :device, optional: true
-  has_many :collections_device_descriptions, inverse_of: :description, dependent: :destroy
+  has_many :collections_device_descriptions, inverse_of: :device_description, dependent: :destroy
   has_many :collections, through: :collections_device_descriptions
 end
