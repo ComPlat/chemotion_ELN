@@ -96,7 +96,6 @@ class ElementStore {
         pages: null,
         perPage: null
       },
-
       cell_lines: {
         elements: [],
         totalElements: 0,
@@ -104,7 +103,7 @@ class ElementStore {
         pages: null,
         perPage: null
       },
-      device_description: {
+      device_descriptions: {
         elements: [],
         totalElements: 0,
         page: null,

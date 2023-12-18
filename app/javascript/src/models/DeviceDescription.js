@@ -4,7 +4,8 @@ export default class DeviceDescription extends Element {
   static buildEmpty(collectionID) {
     return new DeviceDescription({
       collection_id: collectionID,
-      name: '',
+      type: 'device_description',
+      name: 'New device description',
       short_label: '',
       vendor_name: '',
       vendor_id: '',
@@ -33,5 +34,17 @@ export default class DeviceDescription extends Element {
       application_version: '',
       description_for_methods_part: '',
     });
+  }
+
+  get name() {
+    return this._name;
+  }
+
+  set name(name) {
+    this._name = name;
+  }
+
+  title() {
+    return this.name;
   }
 }
