@@ -207,7 +207,7 @@ const headerBtnGroup = (
         ident={container.id}
       />
       <SpectraEditorButton
-        sample={sample}
+        element={sample}
         hasJcamp={hasJcamp}
         spcInfos={spcInfos}
         hasChemSpectra={hasChemSpectra}
