@@ -6,7 +6,10 @@ module Entities
     expose :filename, :identifier, :content_type, :thumb, :aasm_state, :filesize, :thumbnail
 
     def thumbnail
-      object.thumb ? Base64.encode64(object.read_thumbnail) : nil
+      return unless object.thumb
+
+      preview = object&.read_thumbnail
+      (preview && Base64.encode64(preview)) || 'not available'
     end
   end
 end
