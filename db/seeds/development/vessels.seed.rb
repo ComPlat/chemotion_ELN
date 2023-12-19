@@ -147,6 +147,8 @@ def create_vessels_and_vessel_templates
   small_vessel_sizes = [1, 5, 10, 20, 30, 35, 40, 45, 50, 60, 100]
   large_vessel_sizes = [150, 200, 250, 300, 350, 400, 450, 500, 550, 1000, 2000, 10_000, 20_000, 30_000]
 
+  weight_amounts = [20, 50, 100, 150, 200, 500, 1000, 1500]
+
   ActiveRecord::Base.transaction do
     vessel_names.each_with_index do |vessel_name, index|
       next if VesselTemplate.find_by(name: vessel_name)
@@ -160,6 +162,8 @@ def create_vessels_and_vessel_templates
           vessel_type: ord_vessel_types.sample,
           volume_amount: index < 21 ? small_vessel_sizes.sample : large_vessel_sizes.sample,
           volume_unit: 'ml',
+          weight_amount: weight_amounts.sample,
+          weight_unit: 'g'
         )
 
         description = "A #{vessel_template.vessel_type} with size " \
@@ -170,6 +174,8 @@ def create_vessels_and_vessel_templates
           name: Faker::Commerce.product_name,
           user_id: person.id,
           description: description,
+          bar_code: SecureRandom.hex(8),
+          qr_code: SecureRandom.hex(10),
           short_label: "#{person.name_abbreviation}-#{Faker::Name.first_name}",
         )
 

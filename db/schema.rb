@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_09_27_073435) do
+ActiveRecord::Schema.define(version: 2023_12_19_162631) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1322,11 +1322,13 @@ ActiveRecord::Schema.define(version: 2023_09_27_073435) do
     t.string "material_details"
     t.string "material_type"
     t.string "vessel_type"
-    t.integer "volume_amount"
+    t.float "volume_amount"
     t.string "volume_unit"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
+    t.float "weight_amount"
+    t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
   end
 
@@ -1339,6 +1341,8 @@ ActiveRecord::Schema.define(version: 2023_09_27_073435) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
+    t.string "bar_code"
+    t.string "qr_code"
     t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
     t.index ["user_id"], name: "index_vessels_on_user_id"
     t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
