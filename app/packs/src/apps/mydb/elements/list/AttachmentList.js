@@ -85,7 +85,6 @@ export const editButton = (
   extension,
   attachmentEditor,
   isEditing,
-  styleEditorBtn,
   editDisable,
   handleEdit
 ) => {
@@ -93,8 +92,11 @@ export const editButton = (
     <Tooltip id="editor_tooltip">
       {editDisable ? (
         <span>
-          Editing is only available for these files:
+          Editing is only available for these files:&nbsp;
           <strong>{exts}</strong>
+          .
+          <br />
+          Or you are not authorized to edit this file.
         </span>
       ) : (
         <span>Edit attachment</span>
@@ -105,7 +107,6 @@ export const editButton = (
     <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
       <Button
         className={`attachment-button-size ${editDisable ? 'attachment-gray-button' : ''}`}
-        style={{ display: styleEditorBtn }}
         bsSize="xs"
         bsStyle="success"
         disabled={editDisable}
@@ -164,6 +165,7 @@ export const importButton = (
             bsSize="xs"
             bsStyle="success"
             disabled={importDisabled || extension !== 'xlsx'}
+            // eslint-disable-next-line no-param-reassign
             ref={(ref) => { importButtonRefs[attachment.id] = ref; }}
             className={`attachment-button-size ${importDisabled
               || extension !== 'xlsx' ? 'attachment-gray-button' : ''}`}
@@ -203,9 +205,14 @@ export const sortingAndFilteringUI = (
   }}
   >
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label style={{ marginRight: '10px' }}>Sort: </label>
       <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
-        <select onChange={handleSortChange} className="sorting-row-style" style={{ width: '100px', marginRight: '10px' }}>
+        <select
+          onChange={handleSortChange}
+          className="sorting-row-style"
+          style={{ width: '100px', marginRight: '10px' }}
+        >
           <option value="name">Name</option>
           <option value="size">Size</option>
           <option value="date">Date</option>
@@ -221,6 +228,7 @@ export const sortingAndFilteringUI = (
     </div>
 
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label style={{ marginRight: '10px' }}>Filter: </label>
       <input
         type="text"

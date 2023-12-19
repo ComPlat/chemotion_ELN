@@ -555,7 +555,6 @@ export default class ContainerDatasetModalContent extends Component {
                       attachmentEditor,
                       attachment.aasm_state === 'oo_editing' && new Date().getTime()
                         < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                      attachmentEditor ? '' : 'none',
                       !attachmentEditor || attachment.aasm_state === 'oo_editing'
                         || attachment.is_new || this.documentType(attachment.filename) === null,
                       this.handleEdit
