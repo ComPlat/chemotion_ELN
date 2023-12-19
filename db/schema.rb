@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_08_10_100000) do
+ActiveRecord::Schema.define(version: 2023_12_18_191929) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -155,8 +155,10 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
+    t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
+    t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
   end
 
@@ -537,6 +539,15 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "deleted_at"
+  end
+
+  create_table "inventories", force: :cascade do |t|
+    t.string "prefix", null: false
+    t.string "name", null: false
+    t.integer "counter", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
@@ -1332,6 +1343,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "collections", "inventories"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
