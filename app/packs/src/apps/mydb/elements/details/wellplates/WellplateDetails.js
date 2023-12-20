@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
@@ -5,8 +6,8 @@ import {
   Well, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
-import Immutable from 'immutable';
 import { findIndex } from 'lodash';
+import Immutable from 'immutable';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -14,8 +15,10 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import Wellplate from 'src/apps/mydb/elements/details/wellplates/designerTab/Wellplate';
 import WellplateList from 'src/apps/mydb/elements/details/wellplates/listTab/WellplateList';
 import WellplateProperties from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateProperties';
-import WellplateDetailsContainers from 'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
-import WellplateDetailsAttachments from 'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
+import WellplateDetailsContainers from
+  'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
+import WellplateDetailsAttachments from
+  'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
@@ -25,14 +28,12 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement'
+import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-
-const cols = 12;
 
 export default class WellplateDetails extends Component {
   constructor(props) {
@@ -44,7 +45,9 @@ export default class WellplateDetails extends Component {
       showWellplate: true,
       visible: Immutable.List(),
     };
+    this.handleWellplateChanged = this.handleWellplateChanged.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
@@ -71,22 +74,10 @@ export default class WellplateDetails extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onUIStoreChange(state) {
-    if (state.wellplate.activeTab !== this.state.activeTab) {
-      this.setState({
-        activeTab: state.wellplate.activeTab
-      });
-    }
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
   handleSegmentsChange(se) {
     const { wellplate } = this.state;
     const { segments } = wellplate;
-    const idx = findIndex(segments, o => o.segment_klass_id === se.segment_klass_id);
+    const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
     wellplate.segments = segments;
     wellplate.changed = true;
@@ -108,10 +99,10 @@ export default class WellplateDetails extends Component {
     wellplate.updateChecksum();
   }
 
-  handleWellplateChanged(wellplate) {
-    this.setState({
-      wellplate
-    });
+  handleWellplateChanged(el) {
+    const wellplate = el;
+    wellplate.changed = true;
+    this.setState({ wellplate });
   }
 
   handlePrint() {
@@ -165,20 +156,23 @@ export default class WellplateDetails extends Component {
 
   handleTabChange(eventKey) {
     const showWellplate = (eventKey === 0);
-    this.setState(previousState => ({ ...previousState, activeTab: eventKey, showWellplate }));
+    this.setState((previousState) => ({ ...previousState, activeTab: eventKey, showWellplate }));
     UIActions.selectTab({ tabKey: eventKey, type: 'wellplate' });
   }
 
   // handle attachment actions
-
   handleAttachmentDrop(files) {
-    const { wellplate } = this.state;
-    wellplate.changed = true;
-    files.forEach((file) => {
-      const attachment = Attachment.fromFile(file);
-      wellplate.attachments.push(attachment);
+    this.setState((prevState) => {
+      const newAttachments = files.map((file) => Attachment.fromFile(file));
+      prevState.wellplate.attachments = [
+        ...prevState.wellplate.attachments || [],
+        ...newAttachments
+      ];
+
+      prevState.wellplate.changed = true;
+
+      return { wellplate: prevState.wellplate };
     });
-    this.setState({ wellplate });
   }
 
   handleAttachmentDelete(attachment) {
@@ -211,13 +205,28 @@ export default class WellplateDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { wellplate } = this.state;
-
+    wellplate.changed = true;
     // update only this attachment
     wellplate.attachments.map((currentAttachment) => {
-      if (currentAttachment.id === attachment.id) return attachment;
+      if (currentAttachment.id === attachment.id) {
+        return attachment;
+      }
+      return currentAttachment;
     });
     this.setState({ wellplate });
     this.forceUpdate();
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  onUIStoreChange(state) {
+    if (state.wellplate.activeTab !== this.state.activeTab) {
+      this.setState({
+        activeTab: state.wellplate.activeTab
+      });
+    }
   }
 
   wellplateHeader(wellplate) {
@@ -230,14 +239,22 @@ export default class WellplateDetails extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
           <span>
             <i className="icon-wellplate" />
-            &nbsp; <span>{wellplate.name}</span> &nbsp;
+            &nbsp;&nbsp;
+            <span>{wellplate.name}</span>
+            &nbsp;&nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right" />
         <HeaderCommentSection element={wellplate} />
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: saveBtnDisplay }}>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.handleSubmit()}
+            style={{ display: saveBtnDisplay }}
+          >
             <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
@@ -252,13 +269,12 @@ export default class WellplateDetails extends Component {
   }
 
   renderAttachmentsTab(wellplate) { /* eslint-disable react/jsx-no-bind */
-    const { attachments } = wellplate;
     return (
       <ListGroup fill="true">
-        <ListGroupItem >
+        <ListGroupItem>
           <WellplateDetailsAttachments
-            attachments={attachments}
-            wellplateChanged={wellplate.isEdited}
+            wellplate={wellplate}
+            attachments={wellplate.attachments}
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
@@ -272,7 +288,6 @@ export default class WellplateDetails extends Component {
     );
   } /* eslint-enable */
 
-
   render() {
     const {
       wellplate, showWellplate, visible
@@ -281,8 +296,8 @@ export default class WellplateDetails extends Component {
       wells, name, size, description
     } = wellplate;
     const readoutTitles = wellplate.readout_titles;
-    const submitLabel = wellplate.isNew ? 'Create' : 'Save';
-    const exportButton = (wellplate && wellplate.isNew) ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
+    const exportButton = (wellplate && wellplate.isNew)
+      ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = {
       name, size, description, readoutTitles
     };
@@ -299,8 +314,8 @@ export default class WellplateDetails extends Component {
               size={size}
               readoutTitles={readoutTitles}
               wells={wells}
-              handleWellsChange={w => this.handleWellsChange(w)}
-              cols={cols}
+              handleWellsChange={(w) => this.handleWellsChange(w)}
+              cols={12}
               width={60}
             />
           </Well>
@@ -311,11 +326,11 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Well style={{ overflow: 'scroll', height: '100%', 'max-height': 'calc(100vh - 375px)' }}>
+          <Well style={{ overflow: 'scroll', height: '100%', maxHeight: 'calc(100vh - 375px)' }}>
             <WellplateList
               wells={wells}
               readoutTitles={readoutTitles}
-              handleWellsChange={w => this.handleWellsChange(w)}
+              handleWellsChange={(w) => this.handleWellsChange(w)}
             />
           </Well>
         </Tab>
@@ -327,11 +342,13 @@ export default class WellplateDetails extends Component {
           }
           <WellplateProperties
             {...properties}
-            changeProperties={c => this.handleChangeProperties(c)}
-            handleAddReadout={c => this.handleAddReadout(c)}
-            handleRemoveReadout={c => this.handleRemoveReadout(c)}
+            changeProperties={(c) => this.handleChangeProperties(c)}
+            handleAddReadout={(c) => this.handleAddReadout(c)}
+            handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
           />
-          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} /> {/*For samples and reactions (<element>): disabled={!<element>.can_update} */}
+          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
+          {' '}
+          {/* For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>
       ),
       analyses: (
@@ -364,6 +381,7 @@ export default class WellplateDetails extends Component {
       if (tabContent) { tabContents.push(tabContent); }
     });
 
+    // eslint-disable-next-line react/destructuring-assignment
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
@@ -376,16 +394,18 @@ export default class WellplateDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)} id="wellplateDetailsTab">
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="wellplateDetailsTab">
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>
-              Close
-            </Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
-              {submitLabel}
-            </Button>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+            {
+              wellplate.changed ? (
+                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                  {wellplate.isNew ? 'Create' : 'Save'}
+                </Button>
+              ) : <div />
+            }
             {exportButton}
             <Button bsStyle="primary" onClick={() => this.handlePrint()}>
               Print Wells
