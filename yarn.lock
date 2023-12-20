@@ -2236,12 +2236,12 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@complat/chem-spectra-client@1.0.0-rc21":
-  version "1.0.0-rc21"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.0.0-rc21.tgz#da1b9ac0340b95cf31eb0da9b06f35c58b3620b6"
-  integrity sha512-Z/50cCy4SdadDUJDuL202BVciK6G1WCghLNgwbpI1Qq6v9myHBuhcprYUS6F3K6EradCKwZO5NXsjLn1Silazw==
+"@complat/chem-spectra-client@1.0.0-rc21.patch-1":
+  version "1.0.0-rc21.patch-1"
+  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.0.0-rc21.patch-1.tgz#8175a2de47af8eb0be5c5fb8e7df85720c6ef38f"
+  integrity sha512-WarXNnXuUbdUTfzimrXaYPPl2DgsobBZRntu8dJyNR478GsI1bCaiqDV9psGJbUbPruQslwtXoNA7Z8D+jHjUg==
   dependencies:
-    "@complat/react-spectra-editor" "1.0.0-rc21"
+    "@complat/react-spectra-editor" "1.0.0-rc21.patch-1"
     "@emotion/react" "^11.11.1"
     "@emotion/styled" "^11.11.0"
     "@mui/icons-material" "^5.14.9"
@@ -2259,14 +2259,14 @@
     redux-form "^8.3.7"
     redux-saga "^1.1.3"
 
-"@complat/react-spectra-editor@1.0.0-rc21":
-  version "1.0.0-rc21"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.0.0-rc21.tgz#3d62f3ed3eac788817e47f76c47df7289eebc9cc"
-  integrity sha512-2k/O3vmuRh/9N21qO9M8yKLMmGMQtEouF/lvKxuwFt1NsE7y+1SgWy9uAHX79yJxqi5Y/UDArjaS8VyqpgAB1A==
+"@complat/react-spectra-editor@1.0.0-rc21.patch-1":
+  version "1.0.0-rc21.patch-1"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.0.0-rc21.patch-1.tgz#87b2172203d3364b6811ebc33720f152ee76d557"
+  integrity sha512-/2UPOO6QEVuB+th4MjJtYNmU857dn6/tuaKTrJJR8q+s9juR4/OkahNNRS3xx6rnoAquZ8S1oVYnxnEjFY0oaA==
   dependencies:
     "@babel/preset-env" "^7.21.5"
     "@babel/preset-react" "^7.18.6"
-    "@complat/react-svg-file-zoom-pan" "1.1.2"
+    "@complat/react-svg-file-zoom-pan" "1.1.3"
     "@material-ui/core" "^4.10.0"
     "@material-ui/icons" "^4.10.0"
     "@mdi/js" "^4.7.95"
@@ -2298,10 +2298,10 @@
     reselect "^4.0.0"
     typescript "^5.0.4"
 
-"@complat/react-svg-file-zoom-pan@1.1.2", "react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.2.tgz#461897dcc501b2758383af1bd215e29153d8a642"
-  integrity sha512-D3aoTrzpUCUEkgY9SAYTfHuZ9nvOe4M+5Bn4iPKHNj00DfHg4lM9EywS5CkdX5/JSTXd7uYhVBITRCaQIsZRhg==
+"@complat/react-svg-file-zoom-pan@1.1.3", "react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.3.tgz#a3da916005b6d6ee18be2b1bce62745becf082be"
+  integrity sha512-gtb41KBr/hQjKR9v6HOvwnyGEM61lSNsyMHTCk1rMX4SYJjx8iXw0J7z30Ff9tw2oK6sgEiejlPtM7tkdQi3GQ==
   dependencies:
     babel-plugin-transform-object-rest-spread "^6.26.0"
     d3 "6.7.0"
