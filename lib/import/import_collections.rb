@@ -96,8 +96,8 @@ module Import
  #       import_elements_samples if @gt == false
         import_wellplates if @gt == false
         import_wells if @gt == false
-        import_screens if @gt == false
         import_research_plans if @gt == false
+        import_screens if @gt == false
         import_containers
         import_segments
         import_datasets
@@ -442,7 +442,7 @@ module Import
           'updated_at',
         ).merge(
           wellplate: @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil),
+          sample: @instances.fetch('Sample', nil)&.fetch(fields.fetch('sample_id'), nil),
         ))
 
         # add reaction to the @instances map
@@ -469,6 +469,9 @@ module Import
           ),
           wellplates: fetch_many(
             'Wellplate', 'ScreensWellplate', 'screen_id', 'wellplate_id', uuid
+          ),
+          research_plans: fetch_many(
+            'ResearchPlan', 'ResearchPlansScreen', 'screen_id', 'research_plan_id', uuid
           ),
         ))
 

@@ -263,6 +263,11 @@ module Export
                      'wellplate_id' => 'Wellplate',
                    })
 
+        fetch_many(screen.research_plans_screens, {
+                     'screen_id' => 'Screen',
+                     'research_plan_id' => 'ResearchPlan',
+                   })
+
         segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
         @segments += segment if segment.present?
 
