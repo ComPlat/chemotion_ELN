@@ -1,51 +1,109 @@
-# == Schema Information
-#
-# Table name: users
-#
-#  id                     :integer          not null, primary key
-#  email                  :string           default(""), not null
-#  encrypted_password     :string           default(""), not null
-#  reset_password_token   :string
-#  reset_password_sent_at :datetime
-#  remember_created_at    :datetime
-#  sign_in_count          :integer          default(0), not null
-#  current_sign_in_at     :datetime
-#  last_sign_in_at        :datetime
-#  current_sign_in_ip     :inet
-#  last_sign_in_ip        :inet
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  name                   :string
-#  first_name             :string           not null
-#  last_name              :string           not null
-#  deleted_at             :datetime
-#  counters               :hstore           not null
-#  name_abbreviation      :string(12)
-#  type                   :string           default("Person")
-#  reaction_name_prefix   :string(3)        default("R")
-#  confirmation_token     :string
-#  confirmed_at           :datetime
-#  confirmation_sent_at   :datetime
-#  unconfirmed_email      :string
-#  layout                 :hstore           not null
-#  selected_device_id     :integer
-#  failed_attempts        :integer          default(0), not null
-#  unlock_token           :string
-#  locked_at              :datetime
-#  account_active         :boolean
-#  matrix                 :integer          default(0)
-#  omniauth_provider      :string
-#  omniauth_uid           :string
-#
-# Indexes
-#
-#  index_users_on_confirmation_token    (confirmation_token) UNIQUE
-#  index_users_on_deleted_at            (deleted_at)
-#  index_users_on_email                 (email) UNIQUE
-#  index_users_on_name_abbreviation     (name_abbreviation) UNIQUE WHERE (name_abbreviation IS NOT NULL)
-#  index_users_on_reset_password_token  (reset_password_token) UNIQUE
-#  index_users_on_unlock_token          (unlock_token) UNIQUE
-#
+# frozen_string_literal: true
 
-class Device < User
+class Device < ApplicationRecord
+  acts_as_paranoid
+  # devise :database_authenticatable, :validatable
+
+  has_many :users_devices, dependent: :destroy
+  has_many :users, class_name: 'User', through: :users_devices
+  # has_many :users_groups, dependent: :destroy, foreign_key: :user_id
+  # has_many :groups, through: :users_groups
+
+  # has_many :users_admins, dependent: :destroy, foreign_key: :user_id
+  # has_many :admins, through: :users_admins, source: :admin
+
+  has_one :device_metadata, dependent: :destroy
+
+  validates :first_name, :last_name, presence: true
+  validates :name_abbreviation, uniqueness: true
+  validate :name_abbreviation_reserved_list, on: :create
+  validate :name_abbreviation_length, on: :create
+  validate :name_abbreviation_format, on: :create
+  validate :mail_checker
+
+  # before_create :create_email_and_password
+
+  scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
+  # scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
+
+  # scope :by_name, ->(query) {
+  #   where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
+  #         "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%",
+  #         "#{sanitize_sql_like(query.downcase)}%")
+  # }
+
+  # scope :by_exact_name_abbreviation, lambda { |query, case_insensitive = false|
+  #   if case_insensitive
+  #     where('LOWER(name_abbreviation) = ?', sanitize_sql_like(query.downcase).to_s)
+  #   else
+  #     where(name_abbreviation: query)
+  #   end
+  # }
+
+  # try to find a user by exact match of name_abbreviation
+  # fall back to insensitive match result unless multiple users are found.
+  # def self.try_find_by_name_abbreviation(name_abbreviation)
+  #   result = by_exact_name_abbreviation(name_abbreviation).first # try exact match, should be unique
+  #   if result.nil?
+  #     case_insensitive_result = by_exact_name_abbreviation(name_abbreviation, case_insensitive: true)
+  #     result = case_insensitive_result.size == 1 ? case_insensitive_result.first : nil
+  #   end
+  #   result
+  # end
+
+  def create_email_and_password
+    self.encrypted_password = Devise.friendly_token.first(8)
+    self.email = format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
+  end
+
+  def name_abbr_config
+    props = Rails.configuration.respond_to?(:user_props) ? (Rails.configuration.user_props&.name_abbr || {}) : {}
+    @name_abbr_config ||= props
+  end
+
+  def name_abbreviation_reserved_list
+    return unless (name_abbr_config[:reserved_list] || []).include?(name_abbreviation)
+
+    errors.add(:name_abbreviation, :reserved)
+  end
+
+  def name_abbreviation_format
+    format_abbr_default = /\A[a-zA-Z][a-zA-Z0-9\-_]*[a-zA-Z0-9]\Z/
+    format_err_msg_default = "Can be alphanumeric, middle '_' and '-' are allowed,"
+    format_err_msg_default += " but leading digit, or trailing '-' and '_' are not."
+
+    format_abbr = name_abbr_config[:format_abbr].presence || format_abbr_default.presence
+    format_err_msg = name_abbr_config[:format_abbr_err_msg].presence || format_err_msg_default.presence
+
+    return if name_abbreviation&.match?(format_abbr)
+
+    errors.add(:name_abbreviation, :invalid, message: format_err_msg)
+  end
+
+  def name_abbreviation_length
+    min_val = name_abbr_config[:length_device]&.first || 2
+    max_val = name_abbr_config[:length_device]&.last || 5
+
+    return unless name_abbreviation.blank? || !name_abbreviation.length.between?(min_val, max_val)
+
+    errors.add(:name_abbreviation, :wrong_length, min: min_val, max: max_val)
+  end
+
+  def mail_checker
+    MailChecker.valid?(email) || errors.add(
+      :email, 'from throwable email providers not accepted'
+    )
+  end
+
+  def name
+    "#{first_name} #{last_name}"
+  end
+
+  def initials
+    name_abbreviation
+  end
+
+  def info
+    "Device ID: #{id}, Name: #{first_name} #{last_name}"
+  end
 end
