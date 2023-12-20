@@ -92,8 +92,8 @@ module Import
         import_residues
         import_reactions
         import_reactions_samples
- #       import_elements if @gt == false
- #       import_elements_samples if @gt == false
+        # import_elements if @gt == false
+        # import_elements_samples if @gt == false
         import_wellplates if @gt == false
         import_wells if @gt == false
         import_research_plans if @gt == false
@@ -396,7 +396,6 @@ module Import
         end
       end
     end
-
 
     def import_elements
       Labimotion::Import.import_elements(@data, @instances, @gt, @current_user_id, method(:fetch_many), &method(:update_instances!))
