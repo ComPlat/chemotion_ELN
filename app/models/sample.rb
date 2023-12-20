@@ -704,7 +704,11 @@ private
 
   def scrub(value)
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
+    # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
+    Loofah.scrub_fragment(value, :strip).to_s
+          .gsub('viewbox', 'viewBox')
+          .gsub('lineargradient', 'linearGradient')
+          .gsub('radialgradient', 'radialGradient')
 #   value
   end
 
