@@ -168,7 +168,7 @@ const listNMROntology = (chmos, storedSet, parentIsNMR = false) => {
       } else {
         return storedSet;
       }
-    })
+    });
   } else {
     const { children, value } = chmos;
     let isNMR = parentIsNMR;
@@ -192,7 +192,7 @@ const listNMROntology = (chmos, storedSet, parentIsNMR = false) => {
   return storedSet;
 };
 
-const isNMRKind = (container, chmos=[]) => {
+const isNMRKind = (container, chmos = []) => {
   if (!(container && container.extended_metadata && container.extended_metadata.kind)) return false;
   const { extended_metadata } = container; // eslint-disable-line
   const { kind } = extended_metadata; // eslint-disable-line
@@ -200,8 +200,29 @@ const isNMRKind = (container, chmos=[]) => {
   const ontologies = Array.from(listNMROntology(chmos, setToBeStored));
   const filtered = ontologies.filter((ontology) => {
     return kind === ontology || kind.toLowerCase().includes(ontology);
-  })
+  });
   return filtered.length > 0;
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind }; // eslint-disable-line
+const cleaningNMRiumData = (nmriumData) => {
+  if (!nmriumData) return null;
+  const cleanedNMRiumData = { ...nmriumData };
+
+  const { data } = cleanedNMRiumData;
+  if (!data) return cleanedNMRiumData;
+
+  const { spectra } = data;
+  if (!spectra) return cleanedNMRiumData;
+
+  const newSpectra = spectra.map((spc) => {
+    const tmpSpc = { ...spc };
+    delete tmpSpc.originalData;
+    return tmpSpc;
+  });
+
+  data.spectra = [...newSpectra];
+
+  return cleanedNMRiumData;
+};
+
+export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData }; // eslint-disable-line

@@ -4,7 +4,7 @@ import {
 } from 'mocha';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
-  JcampIds, BuildSpcInfos,
+  JcampIds, BuildSpcInfos, cleaningNMRiumData,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
@@ -294,6 +294,65 @@ describe('SpectraHelper', () => {
           }
         ];
         expect(specInfo).toEqual(expectedValue);
+      });
+    });
+  });
+
+  describe('.cleaningNMRiumData()', () => {
+    describe('when there is no nmrium data', () => {
+      it('return null when nmrium data is null', () => {
+        const cleanedNMRiumData = cleaningNMRiumData(null);
+        expect(cleanedNMRiumData).toEqual(null);
+      });
+
+      it('return null when nmrium data is undefined', () => {
+        const cleanedNMRiumData = cleaningNMRiumData(undefined);
+        expect(cleanedNMRiumData).toEqual(null);
+      });
+    });
+
+    describe('when it is nmrium but there is no data value', () => {
+      it('return data when there is no data value', () => {
+        const nmriumData = {};
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(nmriumData);
+      });
+
+      it('return data when it has data value but data is null or undefined', () => {
+        let nmriumData = { data: null };
+        let cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(nmriumData);
+
+        nmriumData = { data: undefined };
+        cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(nmriumData);
+      });
+    });
+
+    describe('when it has data', () => {
+      it('return data when there is no spectra value', () => {
+        const nmriumData = { data: 'just a simple text' };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(nmriumData);
+      });
+
+      it('return data when spectra value is a empty array', () => {
+        const nmriumData = { data: { spectra: [] } };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(nmriumData);
+      });
+
+      it('return data when spectra do not have originalData value', () => {
+        const nmriumData = { data: { spectra: [ { x: [1.0, 2.0], y: [1.0, 2.0] } ] } };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(nmriumData);
+      });
+
+      it('remove originalData value', () => {
+        const nmriumData = { data: { spectra: [ { x: [1.0, 2.0], y: [1.0, 2.0], originalData: { x: [1.5, 2.5], y: [1.5, 2.5] } } ] } };
+        const expectedNmriumData = { data: { spectra: [ { x: [1.0, 2.0], y: [1.0, 2.0] } ] } };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData).toEqual(expectedNmriumData);
       });
     });
   });
