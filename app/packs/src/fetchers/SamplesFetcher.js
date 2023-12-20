@@ -6,7 +6,6 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
-
 export default class SamplesFetcher {
   static fetchSamplesByUIStateAndLimit(params) {
     const limit = params.limit ? limit : null;
@@ -15,7 +14,7 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -27,22 +26,18 @@ export default class SamplesFetcher {
         },
         limit: params.limit
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json.samples.map((s) => new Sample(s));
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => json.samples.map((s) => new Sample(s)))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchById(id) {
-    let promise = fetch('/api/v1/samples/' + id + '.json', {
+    const promise = fetch(`/api/v1/samples/${id}.json`, {
       credentials: 'same-origin'
     })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
+      .then((response) => response.json()).then((json) => {
         const rSample = new Sample(json.sample);
         if (json.error) {
           rSample.id = `${id}:error:Sample ${id} is not accessible!`;
@@ -55,8 +50,8 @@ export default class SamplesFetcher {
   }
 
   static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
-    queryParams.moleculeSort = moleculeSort;
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'samples', Sample);
+    const updatedQueryParams = { ...queryParams, moleculeSort };
+    return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, isSync, 'samples', Sample);
   }
 
   static findByShortLabel(shortLabel) {
@@ -66,7 +61,7 @@ export default class SamplesFetcher {
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' }
       }
-    ).then((response) => response.json()).catch(errorMessage => console.log(errorMessage))
+    ).then((response) => response.json()).catch((errorMessage) => console.log(errorMessage));
   }
 
   static update(sample) {
@@ -79,19 +74,17 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-    }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')   
-      .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
-      .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-          console.log(errorMessage);
+    }).then((response) => response.json())
+      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+        .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
+        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+        console.log(errorMessage);
       });
 
     if (files.length > 0) {
-      let tasks = [];
-      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => {
-        return promise();
-      });
+      const tasks = [];
+      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => promise());
     }
 
     return promise();
@@ -107,24 +100,22 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-    }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+    }).then((response) => response.json())
+      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    if (files.length > 0) {
-      let tasks = [];
-      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file)));
-      return Promise.all(tasks).then(() => {
-        return promise();
+        console.log(errorMessage);
       });
+    if (files.length > 0) {
+      const tasks = [];
+      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file)));
+      return Promise.all(tasks).then(() => promise());
     }
 
     return promise();
   }
 
   static splitAsSubsamples(params) {
-    let promise = fetch('/api/v1/samples/subsamples/', {
+    const promise = fetch('/api/v1/samples/subsamples/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -141,11 +132,7 @@ export default class SamplesFetcher {
           currentCollectionId: params.currentCollection.id
         }
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
 

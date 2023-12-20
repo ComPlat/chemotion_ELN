@@ -6,7 +6,7 @@ import Reaction from 'src/models/Reaction';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import ResearchPlansFetcher from './ResearchPlansFetcher';
+import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -14,12 +14,12 @@ export default class ReactionsFetcher {
     try {
       const response = await fetch(`/api/v1/reactions/${id}.json`, {
         credentials: 'same-origin'
-      }).then(response => response.json())
+      }).then((response) => response.json())
         .then((json) => {
-          if (json.hasOwnProperty("reaction")) {
+          if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
             if (json.literatures && json.literatures.length > 0) {
-              const tliteratures = json.literatures.map(literature => new Literature(literature));
+              const tliteratures = json.literatures.map((literature) => new Literature(literature));
               const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
               reaction.literatures = lits;
             }
@@ -38,7 +38,7 @@ export default class ReactionsFetcher {
           console.log(errorMessage);
         });
       const researchPlans = await ResearchPlansFetcher.fetchResearchPlansForElements(id, response.type);
-      response['research_plans'] = researchPlans;
+      response.research_plans = researchPlans;
       return response;
     } catch (error) {
       console.error(error);
@@ -56,7 +56,7 @@ export default class ReactionsFetcher {
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' }
       }
-    ).then((response) => response.json()).catch(errorMessage => console.log(errorMessage))
+    ).then((response) => response.json()).catch((errorMessage) => console.log(errorMessage));
   }
 
   static create(reaction, method = 'post') {
@@ -76,28 +76,26 @@ export default class ReactionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(reaction.serialize())
-    }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
-      .then(()=> ReactionsFetcher.updateAnnotationsInReaction(reaction))
+    }).then((response) => response.json())
+      .then((json) => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
+        .then(() => ReactionsFetcher.updateAnnotationsInReaction(reaction))
         .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+        console.log(errorMessage);
+      });
 
     if (allFiles.length > 0) {
-      let tasks = [];
-      allFiles.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => {
-        return promise();
-      });
+      const tasks = [];
+      allFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      return Promise.all(tasks).then(() => promise());
     }
 
     return promise();
   }
 
-  static updateAnnotationsInReaction(reaction){
-     const tasks=[];
-     reaction.products.forEach( e =>  tasks.push(BaseFetcher.updateAnnotationsInContainer(e)));
-     return Promise.all(tasks);
+  static updateAnnotationsInReaction(reaction) {
+    const tasks = [];
+    reaction.products.forEach((e) => tasks.push(BaseFetcher.updateAnnotationsInContainer(e)));
+    return Promise.all(tasks);
   }
 
   static update(reaction) {

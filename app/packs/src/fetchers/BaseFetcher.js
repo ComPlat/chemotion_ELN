@@ -79,9 +79,13 @@ export default class BaseFetcher {
         sort = filters.reaction?.sort || false;
         direction = filters.reaction?.direction || 'DESC';
 
-        sortColumn = group === 'none'
-            ? sort ? 'created_at' : 'updated_at'
-            : sort && group ? group : 'updated_at';
+        if (group === 'none') {
+          sortColumn = sort ? 'created_at' : 'updated_at';
+        } else if (sort && group) {
+          sortColumn = group;
+        } else {
+          sortColumn = 'updated_at';
+        }
 
         addQuery = `&sort_column=${sortColumn}&sort_direction=${direction}`;
 
@@ -143,5 +147,34 @@ export default class BaseFetcher {
       });
 
     return Promise.all(updateTasks);
+  }
+
+  static updateAnnotationsOfAttachments(element) {
+    const updateTasks = [];
+    element.attachments
+      .filter(((attach) => attach.hasOwnProperty('updatedAnnotation')))
+      .forEach((attach) => {
+        const data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        updateTasks.push(fetch(`/api/v1/attachments/${attach.id}/annotation`, {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          }));
+      });
+
+    return Promise.all(updateTasks);
+  }
+
+  static updateAnnotations(element) {
+    return Promise.all(
+      [
+        BaseFetcher.updateAnnotationsOfAttachments(element),
+        BaseFetcher.updateAnnotationsInContainer(element, [])
+      ]
+    );
   }
 }
