@@ -511,7 +511,10 @@ export default class AttachmentFetcher {
     waveLengthStr,
     cyclicvolta,
     curveIdx,
-    simulatenmr
+    simulatenmr,
+    previousSpcInfos,
+    isSaveCombined,
+    axesUnitsStr
   ) {
     const params = {
       attachmentId: attId,
@@ -529,6 +532,7 @@ export default class AttachmentFetcher {
       cyclicvolta: cyclicvolta,
       curveIdx: curveIdx,
       simulatenmr: simulatenmr,
+      axesUnits: axesUnitsStr,
     };
 
     const promise = fetch('/api/v1/attachments/save_spectrum/', {
@@ -541,7 +545,23 @@ export default class AttachmentFetcher {
       body: JSON.stringify(decamelizeKeys(params)),
     })
       .then(response => response.json())
-      .then(json => json)
+      .then((json) => {
+        if (!isSaveCombined) {
+          return json;
+        }
+        const oldSpcInfos = [...previousSpcInfos].filter((spc) => {
+          return spc.idx !== attId;
+        });
+        let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
+        const fetchedFilesIdxs = json.files.map((file) => (file.id));
+        jcampIds = [...jcampIds, ...fetchedFilesIdxs];
+  
+        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx).then((res) => {
+          return json;
+        }).catch((errMsg) => {
+          console.log(errMsg); // eslint-disable-line
+        });
+      })
       .catch(errorMessage => {
         console.log(errorMessage);
       });
@@ -635,6 +655,36 @@ export default class AttachmentFetcher {
       .then(response => response.json())
       .then(json => json)
       .catch(errorMessage => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static combineSpectra(jcampIds, curveIdx) {
+    const promise = fetch(
+      '/api/v1/chemspectra/file/combine_spectra',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify({
+          spectra_ids: jcampIds,
+          front_spectra_idx: curveIdx,
+        }),
+      },
+    )
+      .then((response) => {
+        return response.json();
+      })
+      .then((json) => {
+        return json;
+      })
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
 
