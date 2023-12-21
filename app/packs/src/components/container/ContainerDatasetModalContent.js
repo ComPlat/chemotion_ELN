@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import {
-  Row, Col, FormGroup, FormControl, ControlLabel,
+  FormGroup, FormControl, ControlLabel,
   ListGroupItem, Button, Overlay
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
@@ -34,7 +34,7 @@ import {
   formatFileSize,
   moveBackButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
-import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
@@ -50,8 +50,6 @@ export default class ContainerDatasetModalContent extends Component {
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
       filterText: '',
-      sortBy: 'name',
-      sortDirection: 'asc',
     };
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
@@ -63,8 +61,6 @@ export default class ContainerDatasetModalContent extends Component {
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
-    this.handleSortChange = this.handleSortChange.bind(this);
-    this.toggleSortDirection = this.toggleSortDirection.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
   }
@@ -78,7 +74,7 @@ export default class ContainerDatasetModalContent extends Component {
     const { datasetContainer } = this.props;
     if (datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
       this.createAttachmentPreviews();
-      this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAndSortAttachments);
+      this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAttachments);
     }
   }
 
@@ -227,47 +223,16 @@ export default class ContainerDatasetModalContent extends Component {
       });
   }
 
-  toggleSortDirection = () => {
-    this.setState((prevState) => ({
-      sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
-    }), this.filterAndSortAttachments);
-  };
-
   handleFilterChange = (e) => {
-    this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
+    this.setState({ filterText: e.target.value }, this.filterAttachments);
   };
 
-  handleSortChange = (e) => {
-    this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
-  };
-
-  filterAndSortAttachments() {
-    const { filterText, sortBy } = this.state;
+  filterAttachments() {
+    const { filterText } = this.state;
 
     const filteredAttachments = this.props.datasetContainer.attachments.filter((
       attachment
     ) => attachment.filename.toLowerCase().includes(filterText.toLowerCase()));
-
-    filteredAttachments.sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'name':
-          comparison = a.filename.localeCompare(b.filename);
-          break;
-        case 'size':
-          comparison = a.filesize - b.filesize;
-          break;
-        case 'date': {
-          const dateA = parseDate(a.created_at);
-          const dateB = parseDate(b.created_at);
-          comparison = dateA.valueOf() - dateB.valueOf();
-          break;
-        }
-        default:
-          break;
-      }
-      return this.state.sortDirection === 'asc' ? comparison : -comparison;
-    });
 
     this.setState({ filteredAttachments });
   }
@@ -462,7 +427,8 @@ export default class ContainerDatasetModalContent extends Component {
                 sortDirection,
                 this.handleSortChange,
                 this.toggleSortDirection,
-                this.handleFilterChange
+                this.handleFilterChange,
+                false
               )}
           </div>
         </div>
@@ -591,6 +557,7 @@ export default class ContainerDatasetModalContent extends Component {
               this.doneInstrumentTyping
             )}
             ref={(input) => {
+              // eslint-disable-next-line react/no-unused-class-component-methods
               this.autoComplete = input;
             }}
             autoComplete="off"
@@ -639,12 +606,10 @@ export default class ContainerDatasetModalContent extends Component {
     const { mode } = this.props;
 
     return (
-      <Row>
-        <Col md={12}>
-          {mode === 'attachments' && this.renderAttachments()}
-          {mode === 'metadata' && this.renderMetadata()}
-        </Col>
-      </Row>
+      <div>
+        {mode === 'attachments' && this.renderAttachments()}
+        {mode === 'metadata' && this.renderMetadata()}
+      </div>
     );
   }
 }

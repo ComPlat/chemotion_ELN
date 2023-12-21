@@ -216,34 +216,37 @@ export const sortingAndFilteringUI = (
   sortDirection,
   handleSortChange,
   toggleSortDirection,
-  handleFilterChange
+  handleFilterChange,
+  isSortingEnabled
 ) => (
   <div style={{
     marginBottom: '20px', display: 'flex', justifyContent: 'space-between',
   }}
   >
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label style={{ marginRight: '10px' }}>Sort: </label>
-      <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
-        <select
-          onChange={handleSortChange}
-          className="sorting-row-style"
-          style={{ width: '100px', marginRight: '10px' }}
-        >
-          <option value="name">Name</option>
-          <option value="size">Size</option>
-          <option value="date">Date</option>
-        </select>
-        <Button
-          style={{ marginRight: '10px', marginLeft: '-15px' }}
-          onClick={toggleSortDirection}
-          className="sort-icon-style"
-        >
-          {sortDirection === 'asc' ? '▲' : '▼'}
-        </Button>
+    {isSortingEnabled && (
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+        <label style={{ marginRight: '10px' }}>Sort: </label>
+        <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
+          <select
+            onChange={handleSortChange}
+            className="sorting-row-style"
+            style={{ width: '100px', marginRight: '10px' }}
+          >
+            <option value="name">Name</option>
+            <option value="size">Size</option>
+            <option value="date">Date</option>
+          </select>
+          <Button
+            style={{ marginRight: '10px', marginLeft: '-15px' }}
+            onClick={toggleSortDirection}
+            className="sort-icon-style"
+          >
+            {sortDirection === 'asc' ? '▲' : '▼'}
+          </Button>
+        </div>
       </div>
-    </div>
+    )}
 
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}

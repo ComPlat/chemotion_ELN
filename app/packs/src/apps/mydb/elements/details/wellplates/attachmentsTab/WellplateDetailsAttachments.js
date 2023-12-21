@@ -279,7 +279,8 @@ export default class WellplateDetailsAttachments extends Component {
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
-          this.handleFilterChange
+          this.handleFilterChange,
+          true
         )}
           </div>
         </div>
