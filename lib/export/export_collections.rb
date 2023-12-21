@@ -12,8 +12,8 @@ module Export
       @nested = nested
       @gt = gate
 
-      @file_path = Rails.public_path.join( format, "#{export_id}.#{format}")
-      @schema_file_path = Rails.public_path.join( 'json', 'schema.json')
+      @file_path = Rails.public_path.join(format, "#{export_id}.#{format}")
+      @schema_file_path = Rails.public_path.join('json', 'schema.json')
 
       @data = {}
       @uuids = {}
@@ -122,8 +122,8 @@ module Export
       collections.each do |collection|
         # fetch collection
         fetch_one(collection, {
-          'user_id' => 'User'
-        })
+                    'user_id' => 'User',
+                  })
         fetch_samples collection
         fetch_chemicals collection
         fetch_reactions collection
@@ -154,11 +154,11 @@ module Export
                    'fingerprint_id' => 'Fingerprint',
                    'created_by' => 'User',
                    'user_id' => 'User',
-      })
+                 })
       fetch_many(collection.collections_samples, {
                    'collection_id' => 'Collection',
                    'sample_id' => 'Sample',
-      })
+                 })
 
       # loop over samples and fetch sample properties
       samples.each do |sample|
@@ -167,10 +167,10 @@ module Export
         fetch_one(sample.molecule_name, {
                     'molecule_id' => 'Molecule',
                     'user_id' => 'User',
-        })
+                  })
         fetch_many(sample.residues, {
                      'sample_id' => 'Sample',
-        })
+                   })
 
         segment, @attachments = Labimotion::Export.fetch_segments(sample, @attachments, &method(:fetch_one))
         @segments += segment if segment.present?
@@ -224,7 +224,9 @@ module Export
     end
 
     def fetch_elements(collection)
-      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments, method(:fetch_many), method(:fetch_one), method(:fetch_containers))
+      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments,
+                                                                  method(:fetch_many), method(:fetch_one),
+                                                                  method(:fetch_containers))
     end
 
     def fetch_wellplates(collection)
@@ -261,6 +263,11 @@ module Export
         fetch_many(screen.screens_wellplates, {
                      'screen_id' => 'Screen',
                      'wellplate_id' => 'Wellplate',
+                   })
+
+        fetch_many(screen.research_plans_screens, {
+                     'screen_id' => 'Screen',
+                     'research_plan_id' => 'ResearchPlan',
                    })
 
         segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
@@ -339,7 +346,9 @@ module Export
                         'containable_id' => containable_type,
                         'parent_id' => 'Container',
                       })
-            @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset, &method(:fetch_one) ) if attachment_container.dataset.present?
+            if attachment_container.dataset.present?
+              @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset, &method(:fetch_one))
+            end
             fetch_many(attachment_container.attachments, {
                          'attachable_id' => 'Container',
                          'created_by' => 'User',
