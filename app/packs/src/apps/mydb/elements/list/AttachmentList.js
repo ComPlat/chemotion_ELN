@@ -6,8 +6,9 @@ import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPl
 import { values } from 'lodash';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
+import Utils from 'src/utilities/Functions';
 
-export const isImageFile = (fileName) => {
+const isImageFile = (fileName) => {
   const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
   const dataType = fileName.split('.').pop().toLowerCase();
   return acceptedImageTypes.includes(dataType);
@@ -22,7 +23,24 @@ export const formatFileSize = (sizeInB) => {
   return `${sizeInB} bytes`;
 };
 
-export const downloadButton = (attachment, handleDownloadOriginal, handleDownloadAnnotated) => (
+const handleDownloadAnnotated = (attachment) => {
+  const isImage = isImageFile(attachment.filename);
+  if (isImage && !attachment.isNew) {
+    Utils.downloadFile({
+      contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+      name: attachment.filename
+    });
+  }
+};
+
+const handleDownloadOriginal = (attachment) => {
+  Utils.downloadFile({
+    contents: `/api/v1/attachments/${attachment.id}`,
+    name: attachment.filename,
+  });
+};
+
+export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa fa-download" aria-hidden="true" />

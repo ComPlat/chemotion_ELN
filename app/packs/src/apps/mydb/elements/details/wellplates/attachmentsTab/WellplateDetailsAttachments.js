@@ -20,7 +20,6 @@ import {
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  isImageFile
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
@@ -62,8 +61,6 @@ export default class WellplateDetailsAttachments extends Component {
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
 
-    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
-    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
@@ -124,20 +121,6 @@ export default class WellplateDetailsAttachments extends Component {
     this.setState((prevState) => ({
       sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
     }), this.filterAndSortAttachments);
-  };
-
-  handleDownloadOriginal = (attachment) => {
-    this.props.onDownload(attachment);
-  };
-
-  handleDownloadAnnotated = (attachment) => {
-    const isImage = isImageFile(attachment.filename);
-    if (isImage && !attachment.isNew) {
-      Utils.downloadFile({
-        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
-        name: attachment.filename
-      });
-    }
   };
 
   filterAndSortAttachments() {
@@ -361,7 +344,7 @@ export default class WellplateDetailsAttachments extends Component {
                   </Button>
                 ) : (
                   <>
-                    {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {downloadButton(attachment)}
                     {editButton(
                       attachment,
                       extension,

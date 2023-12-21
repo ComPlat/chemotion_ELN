@@ -13,7 +13,6 @@ import {
   findIndex, cloneDeep, last, findKey
 } from 'lodash';
 import { absOlsTermId } from 'chem-generic-ui';
-import Utils from 'src/utilities/Functions';
 import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -32,7 +31,6 @@ import {
   editButton,
   sortingAndFilteringUI,
   formatFileSize,
-  isImageFile,
   moveBackButton
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
@@ -62,8 +60,6 @@ export default class ContainerDatasetModalContent extends Component {
     this.handleDSChange = this.handleDSChange.bind(this);
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
-    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
-    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
@@ -207,23 +203,6 @@ export default class ContainerDatasetModalContent extends Component {
     }
     this.setState({ datasetContainer });
   }
-
-  handleDownloadAnnotated = (attachment) => {
-    const isImage = isImageFile(attachment.filename);
-    if (isImage && !attachment.isNew) {
-      Utils.downloadFile({
-        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
-        name: attachment.filename
-      });
-    }
-  };
-
-  handleDownloadOriginal = (attachment) => {
-    Utils.downloadFile({
-      contents: `/api/v1/attachments/${attachment.id}`,
-      name: attachment.filename,
-    });
-  };
 
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
@@ -548,7 +527,7 @@ export default class ContainerDatasetModalContent extends Component {
                   </Button>
                 ) : (
                   <>
-                    {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {downloadButton(attachment)}
                     {editButton(
                       attachment,
                       extension,
