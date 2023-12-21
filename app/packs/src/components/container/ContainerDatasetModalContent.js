@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import {
@@ -428,6 +429,7 @@ export default class ContainerDatasetModalContent extends Component {
             <ListGroupItem
               onClick={() => this.selectInstrument()}
               onMouseEnter={() => this.focusInstrument(index)}
+              // eslint-disable-next-line react/no-array-index-key
               key={`instrument_${index}`}
               ref={`instrument_${index}`}
               header={instrument.name}
@@ -456,12 +458,12 @@ export default class ContainerDatasetModalContent extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {datasetContainer.attachments.length > 0
-        && sortingAndFilteringUI(
-          sortDirection,
-          this.handleSortChange,
-          this.toggleSortDirection,
-          this.handleFilterChange
-        )}
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange
+              )}
           </div>
         </div>
         {filteredAttachments.length === 0 ? (

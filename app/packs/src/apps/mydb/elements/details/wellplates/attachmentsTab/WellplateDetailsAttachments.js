@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
@@ -429,7 +430,6 @@ WellplateDetailsAttachments.propTypes = {
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
-  onDownload: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired,
   onImport: PropTypes.func.isRequired,
