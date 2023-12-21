@@ -481,7 +481,8 @@ class Sample < ApplicationRecord
     return unless sample_svg_annotation.start_with?(/\s*<\?xml/, /\s*<svg/)
 
     prefix = sample_svg_file[0..-5] # cut off .svg suffix
-    filename = "#{prefix}_annotation.svg"
+    random = SecureRandom.hex(5)
+    filename = "#{prefix}_#{random}_annotation.svg"
 
     File.write(full_svg_path(filename), scrub(sample_svg_annotation))
     self.sample_svg_annotation_file = filename
