@@ -64,6 +64,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
 import FastInput from 'src/apps/mydb/elements/details/samples/FastInput';
 import SampleAnnotationEditButton from 'src/apps/mydb/elements/details/samples/SampleAnnotationEditButton';
+import SampleAnnotationDeleteButton from 'src/apps/mydb/elements/details/samples/SampleAnnotationDeleteButton';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -970,9 +971,9 @@ export default class SampleDetails extends React.Component {
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span>
               <i className="icon-sample" />
-            &nbsp;&nbsp;
+              &nbsp;&nbsp;
               {sample.title()}
-            &nbsp;&nbsp;
+              &nbsp;&nbsp;
             </span>
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
@@ -1361,6 +1362,22 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  renderSampleAnnotationDeleteButton() {
+    return (
+      <SampleAnnotationDeleteButton
+        sample={this.state.sample}
+        clickHandler={(sample) => {
+          SamplesFetcher.deleteAnnotation(sample.id).then(() => {
+            SamplesFetcher.fetchById(sample.id).then((freshSample) => this.setState({ sample: freshSample }));
+          });
+        }}
+        horizontalAlignment="pull-left"
+        role="button"
+        tabIndex='2'
+      />
+    )
+  }
+
   renderSampleAnnotationEditModal() {
     const { annotation, sample, sampleAnnotationEditModalShown } = this.state;
     if (!annotation) { return ''; }
@@ -1401,6 +1418,7 @@ export default class SampleDetails extends React.Component {
         ? (
           <div>
             {this.renderSampleAnnotationEditButton()}
+            {this.renderSampleAnnotationDeleteButton()}
             <div
               className={className}
               onClick={this.showStructureEditor.bind(this)}
@@ -1597,18 +1615,18 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>
-          &nbsp;
-          <Button
-            bsSize="xsmall"
-            bsStyle="warning"
-            onClick={() => this.setState({ pageMessage: null })}
-          >
-            Close Alert
-          </Button>
-          <br />
-          {
+      <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <strong>Structure Alert</strong>
+        &nbsp;
+        <Button
+          bsSize="xsmall"
+          bsStyle="warning"
+          onClick={() => this.setState({ pageMessage: null })}
+        >
+          Close Alert
+        </Button>
+        <br />
+        {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
