@@ -1,5 +1,60 @@
 # Chemotion_ELN Changelog
 
+
+## [v1.8.1]
+> (2023-12-21)
+
+* Features and enhancements
+  * converter trigger on inbox items  ([#1583](https://github.com/ComPlat/chemotion_ELN/pull/1583))
+  * add the option to sort reaction list by updated time  ([#1461](https://github.com/ComPlat/chemotion_ELN/pull/1461))
+  * sample list for decoupled  ([#1612](https://github.com/ComPlat/chemotion_ELN/pull/1612))
+  * report peaks from XRD  ([#1614](https://github.com/ComPlat/chemotion_ELN/pull/1614))
+  * display mail collector address  ([#1529](https://github.com/ComPlat/chemotion_ELN/pull/1529))
+  * drag samples and elements to segment  ([#1623](https://github.com/ComPlat/chemotion_ELN/pull/1623))
+  * export/import collection with chemicals  ([#1604](https://github.com/ComPlat/chemotion_ELN/pull/1604))
+  * relax Mail collector rules  ([#1566](https://github.com/ComPlat/chemotion_ELN/pull/1566))
+  * add volume field in inventory tab  ([#1613](https://github.com/ComPlat/chemotion_ELN/pull/1613))
+  * show research plan links in reaction  ([#1575](https://github.com/ComPlat/chemotion_ELN/pull/1575))
+  * sorting option for datasets and attachments in the inbox by creation-time or name  ([#1446](https://github.com/ComPlat/chemotion_ELN/pull/1446))
+  * add the option to change the inbox sizing  ([#1645](https://github.com/ComPlat/chemotion_ELN/pull/1645))
+  * add chemspectra with ref peaks  ([#1596](https://github.com/ComPlat/chemotion_ELN/pull/1596))
+
+  UX/UI
+  * remove the inbox section from the side panel  ([#1593](https://github.com/ComPlat/chemotion_ELN/pull/1593))
+  * file size is listed in the analyses tab  ([#1601](https://github.com/ComPlat/chemotion_ELN/pull/1601))
+
+* Bug fixes
+  * bead not visible in preview and reaction details  ([#1607](https://github.com/ComPlat/chemotion_ELN/pull/1607))
+  * the attachment does not get deleted from the inbox when it is assigned to sample  ([#1631](https://github.com/ComPlat/chemotion_ELN/pull/1631))
+  * remove blank line when saving peak  ([#1629](https://github.com/ComPlat/chemotion_ELN/pull/1629))
+  * allow import of molecule_name on sample import for xslx format  ([#1598](https://github.com/ComPlat/chemotion_ELN/pull/1598))
+  * collection management right click on the add button to not drag things around  ([#1639](https://github.com/ComPlat/chemotion_ELN/pull/1639))
+  * reaction sort column value not being persistent for updated_at column  ([#1643](https://github.com/ComPlat/chemotion_ELN/pull/1643))
+  * si-spectra report generation to work even without preview  ([#1654](https://github.com/ComPlat/chemotion_ELN/pull/1654))
+  * camelcasing attributes for proper display of SVGs  ([#1670](https://github.com/ComPlat/chemotion_ELN/pull/1670))
+  * attached research_plans in screens not being imported from collection  ([#1671](https://github.com/ComPlat/chemotion_ELN/pull/1671))
+
+  ChemSpectra and NMRIUM
+  * correctly trigger action spinner when saving peaks to avoid race condition  ([#1651](https://github.com/ComPlat/chemotion_ELN/pull/1651))
+  * order of J value  ([#1649](https://github.com/ComPlat/chemotion_ELN/pull/1649))
+  * react-spectra-editor upd to correct molecule display with svg zoom pan  ([#1656](https://github.com/ComPlat/chemotion_ELN/pull/1656))
+  * prevent crash on CV layout  ([#1637](https://github.com/ComPlat/chemotion_ELN/pull/1637))
+  * update nmrglue in spectra-app to read some bruker file issue  ([#1603](https://github.com/ComPlat/chemotion_ELN/pull/1603))
+  * update react-spectra-editor version to fix `Add/remove multiplicity peak` buttons  ([#1630](https://github.com/ComPlat/chemotion_ELN/pull/1630))
+  * remove original data in nmrium file  ([#1661](https://github.com/ComPlat/chemotion_ELN/pull/1661))
+
+  UX/UI
+  * molecule title layout and element table header responsiveness  ([#1650](https://github.com/ComPlat/chemotion_ELN/pull/1650))
+
+
+* Chores
+  * upgrade-converter-to-v1.1.1  ([#1634](https://github.com/ComPlat/chemotion_ELN/pull/1634))
+  * Bump rmagick from 5.0.0 to 5.3.0  ([#1609](https://github.com/ComPlat/chemotion_ELN/pull/1609))
+  * upd node engine for dev container  ([#1635](https://github.com/ComPlat/chemotion_ELN/pull/1635))
+
+* CI
+  * improve Dev Setup by autorecognizing the installed tool versions  ([#1665](https://github.com/ComPlat/chemotion_ELN/pull/1665))
+
 ## [v1.8.0]
 > (2023-10-24)
 
