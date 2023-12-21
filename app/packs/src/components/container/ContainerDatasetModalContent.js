@@ -228,11 +228,10 @@ export default class ContainerDatasetModalContent extends Component {
   };
 
   filterAttachments() {
-    const { filterText } = this.state;
+    const filterTextLower = this.state.filterText.toLowerCase();
 
-    const filteredAttachments = this.props.datasetContainer.attachments.filter((
-      attachment
-    ) => attachment.filename.toLowerCase().includes(filterText.toLowerCase()));
+    const filteredAttachments = this.props.datasetContainer.attachments
+      .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
 
     this.setState({ filteredAttachments });
   }
