@@ -559,8 +559,17 @@ export default class ContainerDatasetModalContent extends Component {
     const { datasetContainer } = this.props;
 
     const renderGroup = (attachments, title) => (
-      <div style={{ marginLeft: '10px', marginTop: '10px' }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{title}</div>
+      <div style={{ marginTop: '10px' }}>
+        <div style={{
+          backgroundColor: '#D3D3D3',
+          fontWeight: 'bold',
+          marginBottom: '5px',
+          borderRadius: '5px',
+          padding: '5px'
+        }}
+        >
+          {title}
+        </div>
         {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
       </div>
     );
