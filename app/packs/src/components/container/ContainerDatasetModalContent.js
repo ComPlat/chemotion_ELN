@@ -38,7 +38,7 @@ import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
-    super();
+    super(props);
     const datasetContainer = { ...props.datasetContainer };
     this.state = {
       datasetContainer,
@@ -50,6 +50,13 @@ export default class ContainerDatasetModalContent extends Component {
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
       filterText: '',
+      attachmentGroups: {
+        Original: [],
+        BagitZip: [],
+        Combined: [],
+        Processed: {},
+        Attachments: []
+      }
     };
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
@@ -63,18 +70,29 @@ export default class ContainerDatasetModalContent extends Component {
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
+    this.classifyAttachments = this.classifyAttachments.bind(this);
+    this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
   }
 
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
+    this.setState({ attachmentGroups: this.classifyAttachments() });
+    this.setState({ attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments) });
   }
 
   componentDidUpdate(prevProps) {
-    const { datasetContainer } = this.props;
-    if (datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
+    if (this.props.datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
       this.createAttachmentPreviews();
-      this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAttachments);
+      this.setState({
+        filteredAttachments: [...this.props.datasetContainer.attachments],
+        attachmentGroups: this.classifyAttachments()
+      }, this.filterAttachments);
+    }
+    if (this.props.datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
+      this.setState({
+        attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
+      });
     }
   }
 
@@ -229,11 +247,54 @@ export default class ContainerDatasetModalContent extends Component {
 
   filterAttachments() {
     const filterTextLower = this.state.filterText.toLowerCase();
+    const filteredGroups = this.classifyAttachments(this.props.datasetContainer.attachments);
 
-    const filteredAttachments = this.props.datasetContainer.attachments
-      .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
+    Object.keys(filteredGroups).forEach((group) => {
+      if (Array.isArray(filteredGroups[group])) {
+        filteredGroups[group] = filteredGroups[group]
+          .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
+      } else {
+        Object.keys(filteredGroups[group]).forEach((subGroup) => {
+          filteredGroups[group][subGroup] = filteredGroups[group][subGroup]
+            .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
+        });
+      }
+    });
 
-    this.setState({ filteredAttachments });
+    this.setState({ attachmentGroups: filteredGroups });
+  }
+
+  classifyAttachments() {
+    const { datasetContainer } = this.props;
+    const groups = {
+      Original: [],
+      BagitZip: [],
+      Combined: [],
+      Processed: {},
+      Attachments: []
+    };
+
+    datasetContainer.attachments.forEach((attachment) => {
+      if (attachment.aasm_state === 'non_jcamp'
+      && (attachment.content_type === 'application/octet-stream'
+      || attachment.content_type === 'application/zip')) {
+        groups.Original.push(attachment);
+      } else if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
+        groups.BagitZip.push(attachment);
+      } else if (attachment.aasm_state === 'image' && attachment.filename.includes('.combined')) {
+        groups.Combined.push(attachment);
+      } else if (attachment.filename.includes('bagit')) {
+        const baseName = attachment.filename.split('_bagit')[0].trim();
+        if (!groups.Processed[baseName]) {
+          groups.Processed[baseName] = [];
+        }
+        groups.Processed[baseName].push(attachment);
+      } else {
+        groups.Attachments.push(attachment);
+      }
+    });
+
+    return groups;
   }
 
   resetInstrumentComponent() {
@@ -407,11 +468,102 @@ export default class ContainerDatasetModalContent extends Component {
     return <div />;
   }
 
+  renderAttachmentRow(attachment) {
+    const { extension, attachmentEditor } = this.state;
+    const { readOnly } = this.props;
+
+    return (
+      <div className="attachment-row" key={attachment.id}>
+        <div className="attachment-row-image">
+          <ImageModal
+            imageStyle={{
+              width: '45px',
+              height: '45px',
+              borderRadius: '5px',
+              objectFit: 'cover',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+            }}
+            hasPop={false}
+            alt="thumbnail"
+            previewObject={{
+              src: attachment.preview,
+            }}
+            popObject={{
+              title: attachment.filename,
+              src: attachment.preview,
+              fetchNeeded: false,
+              fetchId: attachment.id,
+            }}
+          />
+        </div>
+        <div className="attachment-row-text" title={attachment.filename}>
+          {attachment.is_deleted ? (
+            <strike>{attachment.filename}</strike>
+          ) : (
+            attachment.filename
+          )}
+          <div className="attachment-row-subtext">
+            <div>
+              Created:&nbsp;
+              {formatDate(attachment.created_at)}
+            </div>
+            &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+            <div>
+              Size:&nbsp;
+              <span style={{ fontWeight: 'bold', color: '#444' }}>
+                {formatFileSize(attachment.filesize)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          {attachment.is_deleted ? (
+            <Button
+              bsSize="xs"
+              bsStyle="danger"
+              className="attachment-button-size"
+              onClick={() => this.handleUndo(attachment)}
+            >
+              <i className="fa fa-undo" aria-hidden="true" />
+            </Button>
+          ) : (
+            <>
+              {downloadButton(attachment)}
+              {editButton(
+                attachment,
+                extension,
+                attachmentEditor,
+                attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                  || attachment.is_new || this.documentType(attachment.filename) === null,
+                this.handleEdit
+              )}
+              {annotateButton(attachment, this)}
+              {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
+              &nbsp;
+              {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
+            </>
+          )}
+        </div>
+        {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+      </div>
+    );
+  }
+
   renderAttachments() {
     const {
-      filteredAttachments, sortDirection, attachmentEditor, extension
+      filteredAttachments, sortDirection, attachmentGroups
     } = this.state;
     const { datasetContainer } = this.props;
+
+    const renderGroup = (attachments, title) => (
+      <div style={{ marginLeft: '10px', marginTop: '10px' }}>
+        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{title}</div>
+        {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
+      </div>
+    );
 
     return (
       <div className="attachment-main-container">
@@ -436,85 +588,14 @@ export default class ContainerDatasetModalContent extends Component {
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => (
-            <div className="attachment-row" key={attachment.id}>
-              <div className="attachment-row-image">
-                <ImageModal
-                  imageStyle={{
-                    width: '45px',
-                    height: '45px',
-                    borderRadius: '5px',
-                    objectFit: 'cover',
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  }}
-                  hasPop={false}
-                  alt="thumbnail"
-                  previewObject={{
-                    src: attachment.preview,
-                  }}
-                  popObject={{
-                    title: attachment.filename,
-                    src: attachment.preview,
-                    fetchNeeded: false,
-                    fetchId: attachment.id,
-                  }}
-                />
-              </div>
-              <div className="attachment-row-text" title={attachment.filename}>
-                {attachment.is_deleted ? (
-                  <strike>{attachment.filename}</strike>
-                ) : (
-                  attachment.filename
-                )}
-                <div className="attachment-row-subtext">
-                  <div>
-                    Created:&nbsp;
-                    {formatDate(attachment.created_at)}
-                  </div>
-                  &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-                  <div>
-                    Size:&nbsp;
-                    <span style={{ fontWeight: 'bold', color: '#444' }}>
-                      {formatFileSize(attachment.filesize)}
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {attachment.is_deleted ? (
-                  <Button
-                    bsSize="xs"
-                    bsStyle="danger"
-                    className="attachment-button-size"
-                    onClick={() => this.handleUndo(attachment)}
-                  >
-                    <i className="fa fa-undo" aria-hidden="true" />
-                  </Button>
-                ) : (
-                  <>
-                    {downloadButton(attachment)}
-                    {editButton(
-                      attachment,
-                      extension,
-                      attachmentEditor,
-                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                        || attachment.is_new || this.documentType(attachment.filename) === null,
-                      this.handleEdit
-                    )}
-                    {annotateButton(attachment, this)}
-                    {moveBackButton(attachment, this.handleAttachmentBackToInbox, this.props.readOnly)}
-                    &nbsp;
-                    {removeButton(attachment, this.handleAttachmentRemove, this.props.readOnly)}
-                  </>
-                )}
-              </div>
-              {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
-            </div>
-          ))
+          <div style={{ marginBottom: '20px' }}>
+            {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
+            {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
+            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
+            {Object.keys(attachmentGroups.Processed)
+              .map((groupName) => renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`))}
+            {attachmentGroups.Attachments.length > 0 && renderGroup(attachmentGroups.Attachments, 'Other Attachments')}
+          </div>
         )}
         <HyperLinksSection
           data={this.state.datasetContainer.extended_metadata.hyperlinks}
