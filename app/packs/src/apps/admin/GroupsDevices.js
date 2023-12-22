@@ -3,7 +3,7 @@ import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, Fo
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
 
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
 import AdminDeviceElement from 'src/apps/admin/AdminDeviceElement';
@@ -40,7 +40,7 @@ export default class GroupsDevices extends React.Component {
 
   componentDidMount() {
     this.fetch('Group');
-    this.fetch('Device');
+    this.fetchDevices();
   }
 
   componentWillUnmount() {
@@ -51,7 +51,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   handleDeviceChange() {
-    this.fetch('Device');
+    this.fetchDevices();
   }
 
   setGroupAdmin(groupRec, userRec, setAdmin = true) {
@@ -94,11 +94,11 @@ export default class GroupsDevices extends React.Component {
       });
   }
 
-  fetchDevices(type = 'Device') {
-    AdminFetcher.fetchGroupsDevices(type)
+  fetchDevices() {
+    AdminFetcher.fetchDevices()
       .then((result) => {
         this.setState({
-          devices: result.list
+          devices: result.devices
         });
       });
   }
@@ -173,11 +173,19 @@ export default class GroupsDevices extends React.Component {
       return Promise.resolve({ options: [] });
     }
 
-    return AdminFetcher.fetchUsersByNameType(input, actionType)
-      .then((res) => selectUserOptionFormater({ data: res, withType: false }))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    if (actionType == 'Device') {
+      return AdminFetcher.fetchDevicessByName(input)
+        .then((res) => selectDeviceOptionFormater({ data: res, withType: false }))
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    } else {
+      return AdminFetcher.fetchUsersByNameType(input, actionType)
+        .then((res) => selectUserOptionFormater({ data: res, withType: false }))
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    }    
   }
 
   createGroup() {
@@ -348,7 +356,7 @@ export default class GroupsDevices extends React.Component {
               groups.splice(idx, 1, result.root);
               this.setState({ groups });
             }
-            this.fetch('Device');
+            this.fetchDevices();
             break;
           case 'Device':
             if (isRoot === true) {
@@ -391,13 +399,14 @@ export default class GroupsDevices extends React.Component {
       add_users: userIds
     };
     let idx = -1;
+
     AdminFetcher.updateGroup(params)
       .then((result) => {
         switch (rootType) {
           case 'Group':
             idx = findIndex(groups, o => o.id === result.root.id);
             groups.splice(idx, 1, result.root);
-            this.fetch('Device');
+            this.fetchDevices();
             break;
           case 'Device':
             idx = findIndex(devices, o => o.id === result.root.id);

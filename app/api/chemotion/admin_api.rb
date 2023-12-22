@@ -28,13 +28,6 @@ module Chemotion
         end
       end
 
-      namespace :listDevices do
-        desc 'Find all devices'
-        get 'all' do
-          present Device.all.order('first_name, last_name'), with: Entities::DeviceEntity, root: 'devices'
-        end
-      end
-
       namespace :device do
         desc 'Get device by Id'
         params do
@@ -142,10 +135,10 @@ module Chemotion
         end
         post do
           device = Device.find(params[:id])
-          data = device.profile.data || {}
-          data.delete('method') if data['method']
-          data.delete('method_params') if data['method_params']
-          device.profile.update!(data: data)
+          config = device.datacollector_config || {}
+          config.delete('method') if config['method']
+          config.delete('method_params') if config['method_params']
+          device.update!(datacollector_config: config)
           present device, with: Entities::DeviceEntity, root: 'device'
         end
       end
@@ -154,7 +147,7 @@ module Chemotion
         desc 'Update device profile method'
         params do
           requires :id, type: Integer
-          requires :data, type: Hash do
+          requires :datacollector_config, type: Hash do
             requires :method, type: String
             requires :method_params, type: Hash do
               requires :dir, type: String
@@ -169,13 +162,13 @@ module Chemotion
         end
 
         after_validation do
-          @p_method = params[:data][:method]
-          user_level_selected = params.dig(:data, :method_params, :user_level_selected)
+          @p_method = params[:datacollector_config][:method]
+          user_level_selected = params.dig(:datacollector_config, :method_params, :user_level_selected)
           if @p_method.end_with?('local')
             p_dir = if user_level_selected
-                      params[:data][:method_params][:dir].gsub(%r{/\{UserSubDirectories\}}, '')
+                      params[:datacollector_config][:method_params][:dir].gsub(%r{/\{UserSubDirectories\}}, '')
                     else
-                      params[:data][:method_params][:dir]
+                      params[:datacollector_config][:method_params][:dir]
                     end
             @pn = Pathname.new(p_dir)
             error!('Dir is not a valid directory', 500) unless @pn.directory?
@@ -186,25 +179,23 @@ module Chemotion
             localpath = @pn.realpath.to_path.sub(localpath[:path], '') unless localpath.nil?
 
             error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
-
           end
 
           if @p_method.end_with?('sftp') && user_level_selected
-            params[:data][:method_params][:dir].chomp!('/{UserSubDirectories}')
+            params[:datacollector_config][:method_params][:dir].chomp!('/{UserSubDirectories}')
           end
 
-          key_path(params[:data][:method_params][:key_name]) if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
+          if @p_method.end_with?('sftp') && params[:datacollector_config][:method_params][:authen] == 'keyfile'
+            key_path(params[:datacollector_config][:method_params][:key_name])
+          end
         end
 
         post do
           device = Device.find(params[:id])
-          data = device.profile.data || {}
-          params[:data][:method_params][:dir] = @pn.realpath.to_path if @p_method.end_with?('local')
-          new_profile = {
-            data: data.merge(params[:data] || {})
-          }
-          device.profile.update!(**new_profile) &&
-            new_profile || error!('profile update failed', 500)
+          data = device.datacollector_config || {}
+          params[:datacollector_config][:method_params][:dir] = @pn.realpath.to_path if @p_method.end_with?('local')
+          device.datacollector_config = params[:datacollector_config]
+          device.save!
         end
       end
 
@@ -212,24 +203,43 @@ module Chemotion
         desc 'Edit device NoVNC settings'
         params do
           requires :id, type: Integer
-          requires :data, type: Hash do
-            optional :novnc, type: Hash do
-              optional :token, type: String
-              optional :target, type: String
-              optional :password, type: String
-            end
+          requires :novnc_settings, type: Hash do
+            optional :token, type: String
+            optional :target, type: String
+            optional :password, type: String
           end
         end
         put do
-          profile = Device.find(params[:id]).profile
-          if params[:data][:novnc][:target].present?
-            updated = profile.data.merge(params[:data] || {})
-            profile.update!(data: updated)
+          device = Device.find(params[:id])
+          if params[:novnc_settings][:target].present?
+            device.novnc_settings = params[:novnc_settings]
           else
-            profile.data.delete('novnc')
-            profile.save!
+            device.novnc_settings = {}
           end
+          device.save!
           status 204
+        end
+      end
+
+      resource :devices do
+        namespace :list do
+          desc 'fetch devices'
+          get do
+            devices = Device.all.order('first_name, last_name')
+            present devices, with: Entities::DeviceEntity, root: 'devices'
+          end
+        end
+
+        desc 'Find top (5) matched device by name'
+        params do
+          requires :name, type: String, desc: 'device name'
+          optional :limit, type: Integer, default: 5
+        end
+        get 'byname' do
+          return { devices: [] } if params[:name].blank?
+
+          devices = Device.by_name(params[:name]).limit(params[:limit])
+          present devices, with: Entities::DeviceEntity, root: 'devices'
         end
       end
 
@@ -258,8 +268,11 @@ module Chemotion
             @group_params = declared(params, include_missing: false)
             @root_type = @group_params.delete(:rootType)
             @group_params[:email] ||= format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
-            @group_params[:password] = Devise.friendly_token.first(8)
-            @group_params[:password_confirmation] = @group_params[:password]
+
+            if %w[Group].include?(@root_type)
+              @group_params[:password] = Devise.friendly_token.first(8)
+              @group_params[:password_confirmation] = @group_params[:password]
+            end
           end
           post do
             new_obj = Group.new(@group_params) if %w[Group].include?(@root_type)
@@ -267,7 +280,11 @@ module Chemotion
 
             begin
               new_obj.save!
-              present new_obj, with: Entities::GroupDeviceEntity
+              if new_obj.is_a?(Device)
+                present new_obj, with: Entities::DeviceEntity
+              else
+                present new_obj, with: Entities::GroupDeviceEntity
+              end
             rescue ActiveRecord::RecordInvalid => e
               { error: e.message }
             end
@@ -307,7 +324,12 @@ module Chemotion
               obj.users << Group.where(id: new_users) if %w[Group].include?(params[:actionType])
               obj.devices << Device.where(id: new_users) if %w[Device].include?(params[:actionType])
               obj.save!
-              present obj, with: Entities::GroupDeviceEntity, root: 'root'
+
+              if obj.is_a?(Device)
+                present obj, with: Entities::DeviceEntity, root: 'root'
+              else
+                present obj, with: Entities::GroupDeviceEntity, root: 'root'
+              end
             when 'NodeDel'
               obj = Group.find(params[:id]) if %w[Group].include?(params[:rootType])
               obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
@@ -316,7 +338,12 @@ module Chemotion
               obj.admins.delete(User.where(id: rm_users)) if %w[Group].include?(params[:rootType]) && %w[Person].include?(params[:actionType])
               obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
               User.gen_matrix(rm_users) if rm_users&.length&.positive?
-              present obj, with: Entities::GroupDeviceEntity, root: 'root'
+
+              if obj.is_a?(Device)
+                present obj, with: Entities::DeviceEntity, root: 'root'
+              else
+                present obj, with: Entities::GroupDeviceEntity, root: 'root'
+              end
             end
           end
         end
