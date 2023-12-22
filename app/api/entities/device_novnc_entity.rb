@@ -5,7 +5,7 @@ module Entities
     expose :novnc, documentation: { type: "Hash", desc: "device Novnc" }
 
     def novnc
-      result = object.profile.data['novnc'] || {}
+      result = object.novnc_settings || {}
       if (token = result.delete('token'))
         if ENV['NOVNC_SECRET'].present?
           token = JWT.encode(

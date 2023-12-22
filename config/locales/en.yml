@@ -42,3 +42,12 @@ en:
           attributes:
             base:
               sample_or_scan_data_required: SampleTask creation requires either a sample id or a file + measurement data
+
+        device:
+          attributes:
+            name_abbreviation:
+              taken: Is already in used
+              too_short: "Has to be #{min} to #{max} characters long"
+              invalid: "#{message}"
+              reserved: Is reserved, please change
+

@@ -4,6 +4,7 @@ module Entities
       expose :users, as: 'users', using: Entities::UserSimpleEntity
       expose :admins, as: 'admins', using: Entities::UserSimpleEntity
       expose :devices, as: 'devices', using: Entities::UserSimpleEntity
+      expose :groups, as: 'groups', using: Entities::UserSimpleEntity
       def data
         if object.respond_to? :profile
           object.profile.data  if object.profile.respond_to? :data

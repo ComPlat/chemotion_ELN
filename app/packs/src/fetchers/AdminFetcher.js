@@ -24,17 +24,6 @@ export default class AdminFetcher {
       });
   }
 
-  static fetchDevices() {
-    return fetch('/api/v1/admin/listDevices/all.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
   static fetchDeviceById(deviceId) {
     return fetch(`/api/v1/admin/device/${deviceId}`, {
       credentials: 'same-origin',
@@ -320,6 +309,35 @@ export default class AdminFetcher {
       .then((response) => response.json())
       .then((json) => json)
       .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static fetchDevices() {
+    return fetch(`/api/v1/admin/devices/list`, {
+      credentials: 'same-origin',
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      });
+  }
+
+  static fetchDevicessByName(name, limit = 5) {
+    return fetch(
+      `/api/v1/admin/devices/byname.json?${new URLSearchParams({
+        name,
+        limit,
+      })}`,
+      {
+        credentials: 'same-origin',
+        method: 'GET',
+      }
+    )
+      .then(response => response.json())
+      .then(json => json)
+      .catch(errorMessage => {
         console.log(errorMessage);
       });
   }

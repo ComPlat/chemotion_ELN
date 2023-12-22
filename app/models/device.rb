@@ -6,11 +6,12 @@ class Device < ApplicationRecord
 
   has_many :users_devices, dependent: :destroy
   has_many :users, class_name: 'User', through: :users_devices
-  # has_many :users_groups, dependent: :destroy, foreign_key: :user_id
-  # has_many :groups, through: :users_groups
 
-  # has_many :users_admins, dependent: :destroy, foreign_key: :user_id
-  # has_many :admins, through: :users_admins, source: :admin
+  has_many :users_groups, through: :users
+  has_many :groups, through: :users_groups
+
+  # has_many :users_admins, through: :users
+  # has_many :admins, through: :users_admins
 
   has_one :device_metadata, dependent: :destroy
 
@@ -21,16 +22,10 @@ class Device < ApplicationRecord
   validate :name_abbreviation_format, on: :create
   validate :mail_checker
 
-  # before_create :create_email_and_password
+  before_create :create_email_and_password
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
-  # scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
-
-  # scope :by_name, ->(query) {
-  #   where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
-  #         "#{sanitize_sql_like(query.downcase)}%", "#{sanitize_sql_like(query.downcase)}%",
-  #         "#{sanitize_sql_like(query.downcase)}%")
-  # }
+  scope :by_name, ->(query) { where('LOWER(name) ILIKE ?', "%#{sanitize_sql_like(query.downcase)}%") }
 
   # scope :by_exact_name_abbreviation, lambda { |query, case_insensitive = false|
   #   if case_insensitive
@@ -52,8 +47,9 @@ class Device < ApplicationRecord
   # end
 
   def create_email_and_password
+    self.name = "#{first_name} #{last_name}"
     self.encrypted_password = Devise.friendly_token.first(8)
-    self.email = format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
+    # self.email = format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
   end
 
   def name_abbr_config
@@ -95,15 +91,11 @@ class Device < ApplicationRecord
     )
   end
 
-  def name
-    "#{first_name} #{last_name}"
-  end
-
   def initials
     name_abbreviation
   end
 
   def info
-    "Device ID: #{id}, Name: #{first_name} #{last_name}"
+    "Device ID: #{id}, Name: #{name}"
   end
 end

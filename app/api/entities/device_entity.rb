@@ -2,15 +2,19 @@
 
 module Entities
   class DeviceEntity < Grape::Entity
-    expose :id, documentation: { type: "Integer", desc: "device id"}
-    expose :name, documentation: { type: "String", desc: "device name" }
-    expose :data, :name_abbreviation, :type
-    expose :device_metadata, using: Entities::DeviceMetadataEntity
-
-    def data
-      if object.respond_to? :profile
-        object.profile.data  if object.profile.respond_to? :data
-      end
-    end
+    expose :id
+    expose :name
+    expose :name_abbreviation
+    expose :initials
+    expose :email
+    expose :serial_number
+    expose :verification_status
+    expose :account_active
+    expose :visibility
+    expose :novnc_settings
+    expose :datacollector_config
+    expose :users, as: 'users', using: Entities::UserSimpleEntity
+    expose :groups, as: 'groups', using: Entities::UserSimpleEntity
+    expose :device_metadata
   end
 end

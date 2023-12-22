@@ -113,10 +113,10 @@ class ModelConfig extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedMethod: props.device.data.method || null,
-      selectedAuth: (props.device.data.method_params && props.device.data.method_params.authen)
+      selectedMethod: props.device.datacollector_config.method || null,
+      selectedAuth: (props.device.datacollector_config.method_params && props.device.datacollector_config.method_params.authen)
         || 'password',
-      userLevelSelected: (props.device.data.method_params && props.device.data.method_params.user_level_selected)
+      userLevelSelected: (props.device.datacollector_config.method_params && props.device.datacollector_config.method_params.user_level_selected)
         || false,
     };
     this.handleSave = this.handleSave.bind(this);
@@ -153,7 +153,7 @@ class ModelConfig extends Component {
     NotificationWarn({ device, msg: 'Warning: Unprocessable files will be deleted from the target directory!' });
     const params = {
       id: device.id,
-      data: {
+      datacollector_config: {
         method: selectedMethod,
         method_params: {
           authen: selectedAuth,
@@ -162,16 +162,16 @@ class ModelConfig extends Component {
       }
     };
     if (endsWith(selectedMethod, 'sftp')) {
-      params.data.method_params.host = this.refHost.value.trim();
-      params.data.method_params.user = this.refUser.value.trim();
+      params.datacollector_config.method_params.host = this.refHost.value.trim();
+      params.datacollector_config.method_params.user = this.refUser.value.trim();
       if (selectedAuth === 'keyfile') {
-        params.data.method_params.key_name = this.refKey.value.trim();
+        params.datacollector_config.method_params.key_name = this.refKey.value.trim();
       }
     }
     if (startsWith(selectedMethod, 'folder')) {
-      params.data.method_params.number_of_files = Math.trunc(this.refNumFiles.value);
+      params.datacollector_config.method_params.number_of_files = Math.trunc(this.refNumFiles.value);
     }
-    params.data.method_params.user_level_selected = userLevelSelected;
+    params.datacollector_config.method_params.user_level_selected = userLevelSelected;
     AdminFetcher.updateDeviceMethod(params)
       .then((result) => {
         if (result.error) {
@@ -209,7 +209,7 @@ class ModelConfig extends Component {
     const { selectedMethod, selectedAuth, userLevelSelected } = this.state;
     const rowStyle = { padding: '8px', display: 'flex' };
     const colStyle = { textAlign: 'right', marginTop: 'auto', marginBottom: 'auto' };
-    const methodParams = this.props.device.data.method_params;
+    const methodParams = this.props.device.datacollector_config.method_params;
     const inputDirectoryValue = userLevelSelected ? `${methodParams?.dir}/{UserSubDirectories}` : methodParams?.dir || '';
 
     return (
@@ -246,7 +246,7 @@ class ModelConfig extends Component {
                 placeholder="e.g. User"
                 required
                 readOnly={endsWith(selectedMethod, 'local')}
-                defaultValue={`${this.props.device.data.method_params && this.props.device.data.method_params.user ? this.props.device.data.method_params.user : ''}`}
+                defaultValue={`${this.props.device.datacollector_config.method_params && this.props.device.datacollector_config.method_params.user ? this.props.device.datacollector_config.method_params.user : ''}`}
               />
             </Col>
           </Row>
@@ -263,7 +263,7 @@ class ModelConfig extends Component {
                 placeholder="e.g. remote.address or localhost:2222"
                 required
                 readOnly={endsWith(selectedMethod, 'local')}
-                defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.host ? this.props.device.data.method_params.host : '')}`}
+                defaultValue={`${(this.props.device.datacollector_config.method_params && this.props.device.datacollector_config.method_params.host ? this.props.device.datacollector_config.method_params.host : '')}`}
               />
             </Col>
           </Row>
@@ -292,7 +292,7 @@ class ModelConfig extends Component {
                 placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
                 required
                 readOnly={endsWith(selectedMethod, 'local') || (selectedAuth === 'password')}
-                defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.key_name ? this.props.device.data.method_params.key_name : '')}`}
+                defaultValue={`${(this.props.device.datacollector_config.method_params && this.props.device.datacollector_config.method_params.key_name ? this.props.device.datacollector_config.method_params.key_name : '')}`}
               />
             </Col>
           </Row>
@@ -356,7 +356,7 @@ class ModelConfig extends Component {
                 placeholder="e.g. 10"
                 required
                 readOnly={startsWith(selectedMethod, 'file')}
-                defaultValue={`${(this.props.device.data.method_params ? this.props.device.data.method_params.number_of_files : 1)}`}
+                defaultValue={`${(this.props.device.datacollector_config.method_params ? this.props.device.datacollector_config.method_params.number_of_files : 1)}`}
               />&nbsp;<span className="fa fa-info-circle" aria-hidden="true">&nbsp;Folderwatcher: set to 0 for a varying number of files</span>
             </Col>
           </Row>
@@ -401,12 +401,12 @@ class BtnConnect extends Component {
   handleClick(device) {
     this.setState({ lock: true });
     const params = {
-      method: device.data.method,
-      dir: device.data.method_params.dir,
-      host: device.data.method_params.host,
-      user: device.data.method_params.user,
-      authen: device.data.method_params.authen || 'password',
-      key_name: device.data.method_params.key_name,
+      method: device.datacollector_config.method,
+      dir: device.datacollector_config.method_params.dir,
+      host: device.datacollector_config.method_params.host,
+      user: device.datacollector_config.method_params.user,
+      authen: device.datacollector_config.method_params.authen || 'password',
+      key_name: device.datacollector_config.method_params.key_name,
     };
     AdminFetcher.testSFTP(params)
       .then((result) => {
@@ -578,22 +578,22 @@ export default class DataCollector extends Component {
         </td>
         <td> {device.name} </td>
         <td>
-          {(device.data && device.data.method ? device.data.method : '')}
+          {(device.datacollector_config && device.datacollector_config.method ? device.datacollector_config.method : '')}
           &nbsp;
           {
-            endsWith(device.data.method, 'sftp') ? <BtnConnect device={device} btnTip={tipTestConnect} /> : null
+            endsWith(device.datacollector_config.method, 'sftp') ? <BtnConnect device={device} btnTip={tipTestConnect} /> : null
           }
         </td>
-        <td> {(device.data && device.data.method_params ? device.data.method_params.user : '')} </td>
-        <td> {(device.data && device.data.method_params ? device.data.method_params.host : '')} </td>
+        <td> {(device.datacollector_config && device.datacollector_config.method_params ? device.datacollector_config.method_params.user : '')} </td>
+        <td> {(device.datacollector_config && device.datacollector_config.method_params ? device.datacollector_config.method_params.host : '')} </td>
         <td>
-          {(device.data && device.data.method_params && device.data.method_params.authen ? device.data.method_params.authen : 'password')}
+          {(device.datacollector_config && device.datacollector_config.method_params && device.datacollector_config.method_params.authen ? device.datacollector_config.method_params.authen : 'password')}
         </td>
-        <td> {(device.data && device.data.method_params && device.data.method_params.key_name ? device.data.method_params.key_name : '')} </td>
-        <td> {(device.data && device.data.method_params ? device.data.method_params.dir : '')} </td>
+        <td> {(device.datacollector_config && device.datacollector_config.method_params && device.datacollector_config.method_params.key_name ? device.datacollector_config.method_params.key_name : '')} </td>
+        <td> {(device.datacollector_config && device.datacollector_config.method_params ? device.datacollector_config.method_params.dir : '')} </td>
         <td>
-          {(device.data && device.data.method_params && device.data.method_params.number_of_files ?
-            device.data.method_params.number_of_files : 0)}
+          {(device.datacollector_config && device.datacollector_config.method_params && device.datacollector_config.method_params.number_of_files ?
+            device.datacollector_config.method_params.number_of_files : 0)}
         </td>
         <td> {device.id} </td>
       </tr>
