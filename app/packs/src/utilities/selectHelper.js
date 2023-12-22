@@ -22,6 +22,22 @@ const selectUserOptionFormater = ({ data = {}, withType = false, currentUserId =
   return { options: usersEntries };
 };
 
+const filterCurrentDevice = (data, currentDeviceId = null) => {
+  const { devices } = data;
+  if (!currentDeviceId) { return devices || []; }
+  return (devices || []).filter((device) => device.id !== currentDeviceId);
+};
+
+const selectDeviceOptionFormater = ({ data = {}, withType = false, currentDeviceId = null }) => {
+  const devices = filterCurrentDevice(data, currentDeviceId);
+  const deviceEntries = (devices).map((device) => ({
+    value: device.id,
+    name: device.name,
+    label: `${device.name} (${device.initials})`,
+  }));
+  return { options: deviceEntries };
+};
+
 export {
-  selectUserOptionFormater
+  selectUserOptionFormater, selectDeviceOptionFormater
 };

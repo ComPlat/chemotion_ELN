@@ -22,18 +22,9 @@ export default class AdminDeviceElement extends React.Component {
   }
 
   fetch(type) {
-    AdminFetcher.fetchGroupsDevices(type)
+    AdminFetcher.fetchDevices(type)
       .then((result) => {
-        switch (type) {
-          case 'Group':
-            this.setState({ groups: result.list });
-            break;
-          case 'Device':
-            this.setState({ devices: result.list });
-            break;
-          default:
-            break;
-        }
+        this.setState({ devices: result.devices });
       });
   }
 

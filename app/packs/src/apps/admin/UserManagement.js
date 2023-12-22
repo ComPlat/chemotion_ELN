@@ -539,7 +539,7 @@ export default class UserManagement extends React.Component {
     // The backend doesn't validate user type because in the modal for adding a single users,
     // the user type cannot be invalid since it's selected from a dropdown.
     // However, when multiple users are created from a file, type can be any string.
-    const validTypes = ['Person', 'Device', 'Admin'];
+    const validTypes = ['Person', 'Admin'];
     let invalidTypeMessage = '';
     this.newUsers.forEach((user) => {
       const userType = user.data.type.trim();
@@ -758,7 +758,6 @@ export default class UserManagement extends React.Component {
                     <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
                       <option value="Person">Person</option>
                       <option value="Admin">Admin</option>
-                      <option value="Device">Device</option>
                     </FormControl>
                   </Col>
                 </FormGroup>
@@ -930,7 +929,6 @@ export default class UserManagement extends React.Component {
                   >
                     <option value="Person">Person</option>
                     <option value="Group">Group</option>
-                    <option value="Device">Device</option>
                     <option value="Admin">Admin</option>
                   </FormControl>
                 </Col>
@@ -1153,12 +1151,11 @@ export default class UserManagement extends React.Component {
           <th>
             <FormControl
               componentClass="select"
-              placeholder="Person-Device-Admin"
+              placeholder="Person-Admin"
               onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
             >
               <option value="">All</option>
               <option value="Person">Person</option>
-              <option value="Device">Device</option>
               <option value="Admin">Admin</option>
             </FormControl>
           </th>
