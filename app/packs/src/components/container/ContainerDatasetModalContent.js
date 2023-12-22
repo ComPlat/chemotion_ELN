@@ -565,6 +565,10 @@ export default class ContainerDatasetModalContent extends Component {
       </div>
     );
 
+    const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
+      (groupName) => attachmentGroups.Processed[groupName].length > 0
+    );
+
     return (
       <div className="attachment-main-container">
         {this.renderImageEditModal()}
@@ -592,8 +596,9 @@ export default class ContainerDatasetModalContent extends Component {
             {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
             {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
             {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
-            {Object.keys(attachmentGroups.Processed)
-              .map((groupName) => renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`))}
+            {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
+              .map((groupName) => attachmentGroups.Processed[groupName].length > 0
+            && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`))}
             {attachmentGroups.Attachments.length > 0 && renderGroup(attachmentGroups.Attachments, 'Other Attachments')}
           </div>
         )}
