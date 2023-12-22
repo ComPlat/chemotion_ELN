@@ -84,15 +84,13 @@ export default class ContainerDatasetModalContent extends Component {
   componentDidUpdate(prevProps) {
     if (this.props.datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
       this.createAttachmentPreviews();
+      const newAttachments = [...this.props.datasetContainer.attachments];
+      const newAttachmentGroups = this.classifyAttachments(newAttachments);
+
       this.setState({
-        filteredAttachments: [...this.props.datasetContainer.attachments],
-        attachmentGroups: this.classifyAttachments()
+        filteredAttachments: newAttachments,
+        attachmentGroups: newAttachmentGroups
       }, this.filterAttachments);
-    }
-    if (this.props.datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
-      this.setState({
-        attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
-      });
     }
   }
 
