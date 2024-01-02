@@ -62,6 +62,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
       updateDropDownThirdPartyApps: false,
       currentUser: '',
       attachmentToken: '',
+      publicURL: '',
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -74,6 +75,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.getThirdPartyAppName();
     this.getCurrentUser();
     this.initThirdPartyAppIPList();
+    this.initPublicURL();
   }
 
   componentDidUpdate(prevProps) {
@@ -192,6 +194,15 @@ export default class ResearchPlanDetailsAttachments extends Component {
     });
   }
 
+  initPublicURL() {
+      ThirdPartyAppFetcher.fetchPublicURL()
+      .then((result) => {
+        this.setState({
+          publicURL: result
+        })
+      });
+  }
+
   renderThirdPartyAppList(attachment) {
 
     return (
@@ -295,7 +306,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
           };
           NotificationActions.add(notification);
         } else {
-          const url = `${ip.obj}?token=${this.state.attachmentToken}`;
+          const url = `${ip.obj}?token=${this.state.attachmentToken}&url=${this.state.publicURL}`;
           window.open(url, '_blank');
         }
 
