@@ -116,6 +116,14 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static fetchPublicURL() {
+    return fetch('/api/v1/third_party_apps/public_IP.json', {
+      credentials: 'same-origin'
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static fetchAttachmentToken(attID, userID, nameThirdPartyApp) {
     const obj = { attID, userID, nameThirdPartyApp };
     const queryParams = new URLSearchParams(obj).toString();

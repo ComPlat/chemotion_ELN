@@ -203,6 +203,11 @@ module Chemotion
         { error: error_msg }
       end
 
+      desc 'get public ip address of ELN'
+      get 'public_IP' do
+        uri = URI.parse(ENV['PUBLIC_URL'] || 'http://localhost:3000')
+      end
+      
       desc 'create token for use in download public_api'
       params do
         requires :attID, type: String, desc: 'Attachment ID'
