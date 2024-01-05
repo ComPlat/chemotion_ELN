@@ -121,10 +121,10 @@ const SampleTaskInbox = ({}) => {
         </Panel.Heading>
         <Panel.Body>
           <div className="row sampleTaskCreationDropzones">
-            <div class="col-sm-6">
+            <div className="col-sm-6">
               {sampleDropzone(singleScanDropRef, 'Single Scan (weighing only compound)')}
             </div>
-            <div class="col-sm-6">
+            <div className="col-sm-6">
               {sampleDropzone(doubleScanDropRef, 'Double Scan (weighing vessel and vessel+compound to calculate difference')}
             </div>
           </div>

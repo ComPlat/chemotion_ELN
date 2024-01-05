@@ -55,8 +55,8 @@ export default class BaseFetcher {
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
     const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
-              + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-              + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
+      + `collection_id=${id}&page=${page}&per_page=${perPage}&`
+      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
     let addQuery = '';
     let userState;
     let group;
@@ -107,8 +107,8 @@ export default class BaseFetcher {
     return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
     }).then((response) => (
-      response.json().then((json) => ({
-        elements: json[type].map((r) => (new ElKlass(r))),
+      response.json().then(json => ({
+        elements: json[type].map(r => (new ElKlass(r))),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),

@@ -134,6 +134,8 @@ class ElementStore {
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleFetchBasedOnSearchResultIds: ElementActions.fetchBasedOnSearchResultIds,
+      handleDispatchSearchResult: ElementActions.dispatchSearchResult,
 
       handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
       handleFetchGenericElById: ElementActions.fetchGenericElById,
@@ -491,6 +493,18 @@ class ElementStore {
   // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
+  handleFetchBasedOnSearchResultIds(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
+  handleDispatchSearchResult(result) {
     Object.keys(result).forEach((key) => {
       this.state.elements[key] = result[key];
     });
@@ -1021,7 +1035,7 @@ class ElementStore {
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
-    const { currentSearchSelection } = uiState;
+    const { currentSearchSelection, currentSearchByID } = uiState;
 
     if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results;
@@ -1032,6 +1046,8 @@ class ElementStore {
         isSync: uiState.isSync,
         moleculeSort
       });
+    } else if (currentSearchByID != null) {
+      this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
@@ -1063,6 +1079,45 @@ class ElementStore {
     })
   }
 
+  handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
+    currentSearchByID.page_size = uiState.number_of_results;
+    const { filterCreatedAt, fromDate, toDate, productOnly } = uiState;
+    const { moleculeSort } = this.state;
+    const { page } = uiState[type];
+    let filterParams = {};
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    let modelName = !elnElements.includes(type) ? 'element' : type;
+
+    if (fromDate || toDate || productOnly) {
+      filterParams = {
+        filter_created_at: filterCreatedAt,
+        from_date: fromDate,
+        to_date: toDate,
+        product_only: productOnly,
+      }
+    }
+
+    const selection = {
+      elementType: 'by_ids',
+      id_params: {
+        model_name: `${modelName}`,
+        ids: currentSearchByID[`${type}s`].ids,
+        total_elements: currentSearchByID[`${type}s`].totalElements,
+        with_filter: true,
+      },
+      list_filter_params: filterParams,
+      search_by_method: 'search_by_ids',
+      page_size: currentSearchByID.page_size,
+    };
+
+    ElementActions.fetchBasedOnSearchResultIds.defer({
+      selection: selection,
+      collectionId: uiState.currentCollection.id,
+      page: page,
+      isSync: uiState.isSync,
+      moleculeSort
+    });
+  }
 
   // CurrentElement
   handleSetCurrentElement(result) {

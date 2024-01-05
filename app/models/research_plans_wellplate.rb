@@ -15,13 +15,20 @@
 #  index_research_plans_wellplates_on_wellplate_id      (wellplate_id)
 #
 
+# frozen_string_literal: true
+
 class ResearchPlansWellplate < ApplicationRecord
   acts_as_paranoid
   belongs_to :research_plan
   belongs_to :wellplate
 
-  def self.get_wellplates research_plan_ids
-    self.where(research_plan_id: research_plan_ids).pluck(:wellplate_id).compact.uniq
-  end
+  scope :get_wellplates, lambda { |research_plan_ids|
+    where(research_plan_id: research_plan_ids)
+      .pluck(:wellplate_id).compact.uniq
+  }
 
+  scope :get_research_plans, lambda { |wellplate_ids|
+    where(wellplate_id: wellplate_ids)
+      .pluck(:research_plan_id).compact.uniq
+  }
 end

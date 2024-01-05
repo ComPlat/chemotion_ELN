@@ -1,17 +1,17 @@
 import Immutable from 'immutable';
 import React from 'react';
-import {
-  Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip
-} from 'react-bootstrap';
+import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
 import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSettings';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import PropTypes from 'prop-types';
 
@@ -50,6 +50,8 @@ function getArrayFromLayout(layout, isVisible) {
 }
 
 export default class ElementsList extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -187,6 +189,31 @@ export default class ElementsList extends React.Component {
     if (forceUpdate) { this.forceUpdate(); }
   }
 
+  handleRemoveSearchResult(searchStore) {
+    searchStore.changeShowSearchResultListValue(false);
+    UIActions.clearSearchById();
+    ElementActions.changeSorting(false);
+    const { currentCollection, isSync } = UIStore.getState();
+    isSync ? UIActions.selectSyncCollection(currentCollection)
+      : UIActions.selectCollection(currentCollection);
+  }
+
+  handleTabSelect(tab) {
+    UserActions.selectTab(tab);
+
+    // TODO sollte in tab action handler
+    const uiState = UIStore.getState();
+    const type = this.state.visible.get(tab);
+
+    if (!uiState[type] || !uiState[type].page) { return; }
+
+    const { page } = uiState[type];
+
+    UIActions.setPagination({ type, page });
+
+    KeyboardActions.contextChange(type);
+  }
+
   initState() {
     this.onChange(ElementStore.getState());
   }
@@ -198,6 +225,15 @@ export default class ElementsList extends React.Component {
     const constEls = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     const { overview, showReport } = this.props;
     const elementState = this.state;
+
+    let removeSearchResultAlert = '';
+    if (UIStore.getState().currentSearchByID) {
+      removeSearchResultAlert = (
+        <Alert bsStyle="info" style={{ padding: '4px' }}>
+          <Button bsStyle="link" style={{ fontSize: '15px' }} onClick={() => this.handleRemoveSearchResult(this.context.search)}>Remove search result</Button>
+        </Alert>
+      );
+    }
 
     const navItems = [];
     const tabContents = [];
@@ -266,6 +302,7 @@ export default class ElementsList extends React.Component {
       >
         <Row className="clearfix">
           <Col sm={12}>
+            {removeSearchResultAlert}
             <Nav bsStyle="tabs">
               {navItems}
               <ElementsTableSettings

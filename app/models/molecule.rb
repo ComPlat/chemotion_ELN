@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: molecules
@@ -28,6 +30,8 @@
 #  index_molecules_on_deleted_at               (deleted_at)
 #  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
 #
+
+# rubocop:disable Metrics/ClassLength
 
 class Molecule < ApplicationRecord
   acts_as_paranoid
@@ -70,12 +74,12 @@ class Molecule < ApplicationRecord
     where('cano_smiles ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
 
-  scope :with_reactions, -> {
-    joins(:samples).joins("inner join reactions_samples rs on rs.sample_id = samples.id" ).uniq
+  scope :with_reactions, lambda {
+    joins(:samples).joins('inner join reactions_samples rs on rs.sample_id = samples.id')
   }
 
-  scope :with_wellplates, -> {
-    joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
+  scope :with_wellplates, lambda {
+    joins(:samples).joins('inner join wells w on w.sample_id = samples.id')
   }
 
   def self.find_or_create_dummy
@@ -294,3 +298,4 @@ private
     Rails.public_path.join('images', 'molecules', svg_file_name)
   end
 end
+# rubocop:enable Metrics/ClassLength
