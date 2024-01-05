@@ -1,6 +1,9 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon } from 'react-bootstrap';
+import {
+  Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon
+} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/utilities/routesUtils';
@@ -51,8 +54,16 @@ export default class EmbeddedWellplate extends Component {
       readoutTitles && readoutTitles.map((title) => {
         const key = title.id;
         return ([
-          <th style={this.cellStyle} key={`v_${key}`} width="15%">{title} Value</th>,
-          <th style={this.cellStyle} key={`u_${key}`} width="10%">{title} Unit</th>
+          <th style={this.cellStyle} key={`v_${key}`} width="15%">
+            {title}
+            &nbsp;
+            Value
+          </th>,
+          <th style={this.cellStyle} key={`u_${key}`} width="10%">
+            {title}
+            &nbsp;
+            Unit
+          </th>
         ]);
       })
     );
@@ -61,13 +72,14 @@ export default class EmbeddedWellplate extends Component {
   renderImportWellplateButton() {
     const importDisabled = this.props.researchPlan.changed;
     const show = this.state.showImportConfirm;
-    const tooltipText = importDisabled ?
-      'Please save the research plan before importing' : 'Import Wellplate data to ResearchPlan table'
+    const tooltipText = importDisabled
+      ? 'Please save the research plan before importing' : 'Import Wellplate data to ResearchPlan table';
     const importTooltip = <Tooltip id="import_tooltip">{tooltipText}</Tooltip>;
 
     const confirmTooltip = (
       <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-        Import data from Wellplate? This will create a table.<br />
+        Import data from Wellplate? This will create a table.
+        <br />
         <ButtonGroup>
           <Button bsStyle="success" bsSize="xsmall" onClick={() => this.confirmWellplateImport()}>
             Yes
@@ -80,7 +92,7 @@ export default class EmbeddedWellplate extends Component {
     );
 
     return ([
-      <OverlayTrigger key="overlay_trigger_import_button" placement="bottom" overlay={importTooltip} >
+      <OverlayTrigger key="overlay_trigger_import_button" placement="bottom" overlay={importTooltip}>
         <Button
           bsSize="xsmall"
           bsStyle="success"
@@ -130,7 +142,7 @@ export default class EmbeddedWellplate extends Component {
 
     // Wellplates that were just dragged in do not have samples assigned.
     // Saving the research plan and reloading it reloads the wellplates and fetches the samples as well
-    if (wells.every(well => well.is_new)) {
+    if (wells.every((well) => well.is_new)) {
       return (<p>Please save the newly assigned wellplate to the research plan first</p>);
     }
 
@@ -173,7 +185,10 @@ export default class EmbeddedWellplate extends Component {
 
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
-        Remove {wellplate.name} from ResearchPlan?<br />
+        Remove&nbsp;
+        {wellplate.name}
+        &nbsp;from ResearchPlan?
+        <br />
         <ButtonGroup>
           <Button bsStyle="danger" bsSize="xsmall" onClick={() => deleteWellplate(wellplate.id)}>
             Yes
@@ -190,12 +205,27 @@ export default class EmbeddedWellplate extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="WellplateDatesx">{titleTooltip}</Tooltip>}>
           <span>
             <i className="icon-wellplate" />
-            &nbsp; <span>{wellplate.short_label} {wellplate.name}</span> &nbsp;
+            &nbsp;&nbsp;
+            <span>
+              {wellplate.short_label}
+              &nbsp;
+              {wellplate.name}
+            </span>
+            &nbsp;&nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={wellplate} placement="right" />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Screen</Tooltip>}>
-          <Button ref={(button) => { this.target = button; }} bsStyle="danger" bsSize="xsmall" className="button-right" onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Screen</Tooltip>}
+        >
+          <Button
+            ref={(button) => { this.target = button; }}
+            bsStyle="danger"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
+          >
             <i className="fa fa-trash-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -213,8 +243,16 @@ export default class EmbeddedWellplate extends Component {
             <i className="fa fa-window-maximize" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="expand_wellplate">Show/hide Wellplate details</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.setState({ expanded: !this.state.expanded })}>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="expand_wellplate">Show/hide Wellplate details</Tooltip>}
+        >
+          <Button
+            bsStyle="info"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.setState({ expanded: !this.state.expanded })}
+          >
             <i className={expandIconClass} aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -227,7 +265,12 @@ export default class EmbeddedWellplate extends Component {
     const { wellplate } = this.props;
 
     return (
-      <Panel expanded={this.state.expanded} onToggle={() => {}} bsStyle="primary" className="eln-panel-detail wellplate-details">
+      <Panel
+        expanded={this.state.expanded}
+        onToggle={() => {}}
+        bsStyle="primary"
+        className="eln-panel-detail wellplate-details"
+      >
         {this.renderPanelHeading(wellplate)}
         <Panel.Collapse>
           <Panel.Body>

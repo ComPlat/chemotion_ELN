@@ -71,6 +71,7 @@ class DatasetContainer extends Component {
 
   render() {
     const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect, checkedIds } = this.props;
+    const { inboxSize } = InboxStore.getState();
 
     if (sourceType === DragDropItemTypes.DATASET) {
       const { visible, deletingTooltip } = this.state;
@@ -154,9 +155,14 @@ class DatasetContainer extends Component {
               </i>
               <span style={{ marginLeft: '8px' }}>{dataset.name}</span>
             </button>
-            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-              {formatDate(dataset.created_at)}
-            </span>
+            {
+              inboxSize && inboxSize !== 'Small'
+              && (
+                <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+                  {formatDate(dataset.created_at)}
+                </span>
+              )
+            }
           </div>
           <div>{visible ? attachments : null}</div>
         </div>,

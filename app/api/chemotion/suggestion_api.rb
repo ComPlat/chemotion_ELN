@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/ClassLength
+# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/ClassLength, Metrics/BlockLength
+
 module Chemotion
   # Input suggestion for free text search
   class SuggestionAPI < Grape::API
@@ -36,6 +37,8 @@ module Chemotion
           cell_line_sample_name: CelllineSample.by_sample_name(query, collection_id).pluck(:name),
         }
       end
+
+      # rubocop:disable Style/TrailingCommaInHashLiteral, Layout/LineLength
 
       def search_possibilities_by_type_user_and_collection(type)
         collection_id = @c_id
@@ -221,6 +224,7 @@ module Chemotion
         end
       end
     end
+    # rubocop:enable Style/TrailingCommaInHashLiteral, Layout/LineLength
 
     resource :suggestions do
       after_validation do
@@ -241,4 +245,4 @@ module Chemotion
     end
   end
 end
-# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/ClassLength
+# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/ClassLength, Metrics/BlockLength

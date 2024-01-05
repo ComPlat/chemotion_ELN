@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 # module API
 require 'grape-entity'
 require 'grape-swagger'
 
-# rubocop:disable Metrics/BlockLength,Naming/PredicateName, Naming/MethodParameterName
 class API < Grape::API
   format :json
   prefix :api
@@ -121,8 +122,23 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w[name short_label external_label xref],
+    'samples' => %w[
+      name short_label external_label xref content is_top_secret decoupled
+      stereo boiling_point melting_point density molarity_value target_amount_value
+      description location purity solvent inventory_sample sum_formula molecular_mass
+      dry_solvent
+    ],
+    'reactions' => %w[
+      name short_label status conditions rxno content temperature duration
+      role purification tlc_solvents tlc_description rf_value dangerous_products
+      plain_text_description plain_text_observation
+    ],
+    'wellplates' => %w[name short_label readout_titles content plain_text_description],
+    'screens' => %w[name collaborator requirements conditions result content plain_text_description],
+    'research_plans' => %w[name body content],
+    'elements' => %w[name short_label],
   }.freeze
+
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
   ELEMENTS = %w[research_plan screen wellplate reaction sample cell_line].freeze
@@ -192,4 +208,4 @@ class API < Grape::API
                               })
   end
 end
-# rubocop:enable Metrics/BlockLength,Naming/PredicateName, Naming/MethodParameterName
+# rubocop:enable Metrics/ClassLength

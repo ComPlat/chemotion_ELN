@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Performance/MethodObjectAsBlock, Layout/LineLength
+# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Performance/MethodObjectAsBlock
 module Export
   class ExportCollections
     attr_accessor :file_path
@@ -262,7 +262,8 @@ module Export
 
     def fetch_elements(collection)
       @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments,
-                                                                  method(:fetch_many), method(:fetch_one), method(:fetch_containers))
+                                                                  method(:fetch_many), method(:fetch_one),
+                                                                  method(:fetch_containers))
     end
 
     def fetch_wellplates(collection)
@@ -299,6 +300,11 @@ module Export
         fetch_many(screen.screens_wellplates, {
                      'screen_id' => 'Screen',
                      'wellplate_id' => 'Wellplate',
+                   })
+
+        fetch_many(screen.research_plans_screens, {
+                     'screen_id' => 'Screen',
+                     'research_plan_id' => 'ResearchPlan',
                    })
 
         segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
@@ -478,5 +484,5 @@ module Export
   end
 end
 
-# rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock, Layout/LineLength
+# rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock
 # rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity

@@ -37,6 +37,19 @@ class AttachmentContainer extends Component {
     };
     this.toggleAttachmentsCheckbox = this.toggleAttachmentsCheckbox.bind(this);
     this.isAttachmentChecked = this.isAttachmentChecked.bind(this);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    InboxStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState(state);
   }
 
   toggleTooltip() {
@@ -84,6 +97,7 @@ class AttachmentContainer extends Component {
     if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
+    const { inboxSize } = InboxStore.getState();
 
     const textStyle = {
       display: 'block',
@@ -168,9 +182,14 @@ class AttachmentContainer extends Component {
             {attachment.filename}
           </span>
         </OverlayTrigger>
-        <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-          {formatDate(attachment.created_at)}
-        </span>
+        {
+          inboxSize && inboxSize !== 'Small'
+          && (
+            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+              {formatDate(attachment.created_at)}
+            </span>
+          )
+        }
       </div>,
       { dropEffect: 'move' }
     );

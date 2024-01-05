@@ -58,10 +58,19 @@ class Screen < ApplicationRecord
 
   has_one :container, :as => :containable
 
+  before_save :description_to_plain_text
+
   accepts_nested_attributes_for :collections_screens
 
   def analyses
     self.container ? self.container.analyses : []
   end
 
+  private
+
+  def description_to_plain_text
+    return unless description_changed?
+
+    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
+  end
 end

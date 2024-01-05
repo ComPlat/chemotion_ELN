@@ -334,7 +334,7 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
-    LoadingActions.start();
+    LoadingActions.start.defer();
     const { sample, validCas } = this.state;
     this.checkMolfileChange();
     if (!validCas) {
@@ -961,21 +961,25 @@ export default class SampleDetails extends React.Component {
 
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="icon-sample" />
-            {sample.title()}
-          </span>
-        </OverlayTrigger>
-        <ShowUserLabels element={sample} />
-        <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-        {colLabel}
-        <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-        <PubchemLabels element={sample} />
-        <HeaderCommentSection element={sample} />
-        {sample.isNew
-          ? <FastInput fnHandle={this.handleFastInput} />
-          : null}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+            <span>
+              <i className="icon-sample" />
+            &nbsp;&nbsp;
+              {sample.title()}
+            &nbsp;&nbsp;
+            </span>
+          </OverlayTrigger>
+          <ShowUserLabels element={sample} />
+          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+          {colLabel}
+          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+          <PubchemLabels element={sample} />
+          <HeaderCommentSection element={sample} />
+          {sample.isNew
+            ? <FastInput fnHandle={this.handleFastInput} />
+            : null}
+        </div>
         <div style={{ marginLeft: 'auto' }}>
           <ConfirmClose el={sample} />
           <OverlayTrigger
@@ -1535,7 +1539,7 @@ export default class SampleDetails extends React.Component {
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
         <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
           <strong>Structure Alert</strong>
-&nbsp;
+          &nbsp;
           <Button
             bsSize="xsmall"
             bsStyle="warning"

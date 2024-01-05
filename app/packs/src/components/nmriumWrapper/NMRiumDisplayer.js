@@ -9,6 +9,7 @@ import { parseBase64ToArrayBuffer } from 'src/utilities/FetcherHelper';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
+import { cleaningNMRiumData } from 'src/utilities/SpectraHelper';
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
@@ -102,7 +103,8 @@ export default class NMRiumDisplayer extends React.Component {
       if (eventDataType === 'nmr-wrapper:data-change') {
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
-          const nmriumData = (eventData.data?.state || eventData.data) || null;
+          let nmriumData = (eventData.data?.state || eventData.data) || null;
+          nmriumData = cleaningNMRiumData(nmriumData);
           if (!nmriumData) {
             return;
           }

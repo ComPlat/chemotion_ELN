@@ -56,8 +56,8 @@ export default class BaseFetcher {
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
     const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
-              + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-              + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
+      + `collection_id=${id}&page=${page}&per_page=${perPage}&`
+      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
     let addQuery = '';
     let userState;
     let group;
@@ -80,9 +80,13 @@ export default class BaseFetcher {
         sort = filters.reaction?.sort || false;
         direction = filters.reaction?.direction || 'DESC';
 
-        sortColumn = group === 'none'
-            ? sort ? 'created_at' : 'updated_at'
-            : sort && group ? group : 'updated_at';
+        if (group === 'none') {
+          sortColumn = sort ? 'created_at' : 'updated_at';
+        } else if (sort && group) {
+          sortColumn = group;
+        } else {
+          sortColumn = 'updated_at';
+        }
 
         addQuery = `&sort_column=${sortColumn}&sort_direction=${direction}`;
 
@@ -106,10 +110,11 @@ export default class BaseFetcher {
     }).then((response) => (
       response.json().then((json) => ({
         elements: json[type].map((r) => {
-          if(type==="cell_lines"){
-            return CellLine.createFromRestResponse(id,r)
+          if (type === 'cell_lines') {
+            return CellLine.createFromRestResponse(id, r);
           }
-          return (new ElKlass(r))}),
+          return (new ElKlass(r));
+        }),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),
@@ -148,5 +153,34 @@ export default class BaseFetcher {
       });
 
     return Promise.all(updateTasks);
+  }
+
+  static updateAnnotationsOfAttachments(element) {
+    const updateTasks = [];
+    element.attachments
+      .filter(((attach) => attach.hasOwnProperty('updatedAnnotation')))
+      .forEach((attach) => {
+        const data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        updateTasks.push(fetch(`/api/v1/attachments/${attach.id}/annotation`, {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          }));
+      });
+
+    return Promise.all(updateTasks);
+  }
+
+  static updateAnnotations(element) {
+    return Promise.all(
+      [
+        BaseFetcher.updateAnnotationsOfAttachments(element),
+        BaseFetcher.updateAnnotationsInContainer(element, [])
+      ]
+    );
   }
 }

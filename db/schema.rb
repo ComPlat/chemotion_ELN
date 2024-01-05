@@ -321,6 +321,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
+    t.text "plain_text_content"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
@@ -899,6 +900,8 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.string "rxno"
     t.string "conditions"
     t.jsonb "variations", default: []
+    t.text "plain_text_description"
+    t.text "plain_text_observation"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1145,6 +1148,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.jsonb "component_graph_data", default: {}
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1356,6 +1360,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "deleted_at"
     t.string "short_label"
     t.jsonb "readout_titles", default: ["Readout"]
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
   end
 
@@ -1368,9 +1373,9 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "updated_at", null: false
     t.string "additive"
     t.datetime "deleted_at"
+    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
-    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
@@ -1565,6 +1570,29 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
             PERFORM generate_users_matrix(new.exclude_ids || old.exclude_ids);
       	  end if;
       	end if;
+        return new;
+      end
+      $function$
+  SQL
+  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
+       RETURNS TABLE(reaction_ids integer)
+       LANGUAGE sql
+      AS $function$
+          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
+           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
+           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
+           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
+           and s.molecule_id = m.id and m.id=$2)
+        $function$
+  SQL
+  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      begin
+      	update segment_klasses set identifier = gen_random_uuid() where identifier is null;
         return new;
       end
       $function$
