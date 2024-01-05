@@ -11326,6 +11326,11 @@ quill-delta-to-html@0.8.2:
   resolved "https://registry.npmjs.org/quill-delta-to-html/-/quill-delta-to-html-0.8.2.tgz"
   integrity sha1-pKU7qJIjzXSF5GTPPEUO1xWZ+cE=
 
+quill-delta-to-plaintext@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/quill-delta-to-plaintext/-/quill-delta-to-plaintext-1.0.0.tgz#90eb1b0f2124e191dd2b0d643fa127103a15ec05"
+  integrity sha512-KxZNYHgXYPi4bOgzSgPWbdQcodNY3WOgyunPMvWkTYX1I+tJNUFE1eBTNdbXGxHSAT+VQHChtu5JQ8eU5ZDeng==
+
 quill-delta@3.4.3:
   version "3.4.3"
   resolved "https://registry.npmjs.org/quill-delta/-/quill-delta-3.4.3.tgz"

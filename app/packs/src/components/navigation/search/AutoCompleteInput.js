@@ -239,6 +239,10 @@ export default class AutoCompleteInput extends React.Component {
       return 0
     }
 
+    if (UIStore.getState().currentSearchByID) {
+      UIActions.clearSearchById();
+    }
+
     let selection = {name: value, search_by_method: 'substring'}
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
       let selectedSuggestion = suggestions[suggestionFocus]
