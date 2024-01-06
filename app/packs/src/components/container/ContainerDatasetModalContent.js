@@ -606,7 +606,7 @@ export default class ContainerDatasetModalContent extends Component {
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
               .map((groupName) => attachmentGroups.Processed[groupName].length > 0
             && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`))}
-            {attachmentGroups.Attachments.length > 0 && renderGroup(attachmentGroups.Attachments, 'Other Attachments')}
+            {attachmentGroups.Attachments.length > 0 && renderGroup(attachmentGroups.Attachments, 'Attachments')}
           </div>
         )}
         <HyperLinksSection
