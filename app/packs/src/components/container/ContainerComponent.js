@@ -194,9 +194,9 @@ export default class ContainerComponent extends Component {
         </Col>
         <Col md={12}>
           <div style={{ marginBottom: 11 }}>
-            <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
+            <ControlLabel>{this.props.analysisMethodTitle}</ControlLabel>
             <OlsTreeSelect
-              selectName="chmo"
+              selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
               onSelectChange={(event) => this.handleInputChange('kind', event)}
               selectedDisable={readOnly || disabled || false}
@@ -235,6 +235,7 @@ export default class ContainerComponent extends Component {
             data={container.extended_metadata.hyperlinks ?? []}
             onAddLink={this.handleAddLink}
             onRemoveLink={this.handleRemoveLink}
+            readOnly={readOnly}
             disabled={disabled}
           />
         </Col>
@@ -244,6 +245,8 @@ export default class ContainerComponent extends Component {
 }
 
 ContainerComponent.propTypes = {
+  ontologyName: PropTypes.string,
+  analysisMethodTitle: PropTypes.string,
   templateType: PropTypes.string,
   onChange: PropTypes.func,
   readOnly: PropTypes.bool,
@@ -252,6 +255,8 @@ ContainerComponent.propTypes = {
 };
 
 ContainerComponent.defaultProps = {
+  ontologyName: 'chmo',
+  analysisMethodTitle: 'Type (Chemical Methods Ontology)',
   templateType: '',
   onChange: () => {},
   readOnly: false,

@@ -123,6 +123,17 @@ const sampleShowOrNew = (e) => {
   // UIActions.selectTab(1);
 };
 
+const cellLineShowOrNew = (e) => { 
+  if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
+     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
+  }else{
+    if(e.params.cellLineID){
+     e.params.cellLineId=e.params.cellLineID
+    }
+     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
+  }
+}
+
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
@@ -245,6 +256,7 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
+    
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
@@ -269,6 +281,9 @@ const elementShowOrNew = (e) => {
       break;
     case 'metadata':
       metadataShowOrNew(e);
+      break;
+    case 'cell_line':
+      cellLineShowOrNew(e);
       break;
     default:
       if (e && e.klassType == 'GenericEl') {
@@ -299,5 +314,6 @@ export {
   metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  cellLineShowOrNew
 };

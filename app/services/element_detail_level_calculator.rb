@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop: disable Metrics/CyclomaticComplexity
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
@@ -10,6 +11,7 @@ class ElementDetailLevelCalculator
     reaction_detail_level
     wellplate_detail_level
     screen_detail_level
+    celllinesample_detail_level
   ].freeze
 
   def initialize(user:, element:)
@@ -30,6 +32,7 @@ class ElementDetailLevelCalculator
     detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
     detail_levels[Screen] = all_collections_detail_levels.pluck(:screen_detail_level).max || 0
     detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
+    detail_levels[CelllineSample] = all_collections_detail_levels.pluck(:celllinesample_detail_level).max || 0
     detail_levels[Well] = detail_levels[Wellplate]
 
     detail_levels
@@ -70,3 +73,4 @@ class ElementDetailLevelCalculator
                                        .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 end
+# rubocop: enable Metrics/CyclomaticComplexity

@@ -111,6 +111,42 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.index ["user_id"], name: "index_calendar_entry_notifications_on_user_id"
   end
 
+  create_table "cellline_materials", force: :cascade do |t|
+    t.string "name"
+    t.string "source"
+    t.string "cell_type"
+    t.jsonb "organism"
+    t.jsonb "tissue"
+    t.jsonb "disease"
+    t.string "growth_medium"
+    t.string "biosafety_level"
+    t.string "variant"
+    t.string "mutation"
+    t.float "optimal_growth_temp"
+    t.string "cryo_pres_medium"
+    t.string "gender"
+    t.string "description"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "cellline_samples", force: :cascade do |t|
+    t.bigint "cellline_material_id"
+    t.bigint "cellline_sample_id"
+    t.bigint "amount"
+    t.string "unit"
+    t.integer "passage"
+    t.string "contamination"
+    t.string "name"
+    t.string "description"
+    t.bigint "user_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "short_label"
+  end
+
   create_table "channels", id: :serial, force: :cascade do |t|
     t.string "subject"
     t.jsonb "msg_template"
@@ -155,9 +191,16 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
+    t.integer "celllinesample_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["user_id"], name: "index_collections_on_user_id"
+  end
+
+  create_table "collections_celllines", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "cellline_sample_id"
+    t.datetime "deleted_at"
   end
 
   create_table "collections_elements", id: :serial, force: :cascade do |t|
@@ -982,8 +1025,8 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.integer "screen_id"
-    t.integer "research_plan_id"
+    t.bigint "screen_id", null: false
+    t.bigint "research_plan_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -992,8 +1035,8 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.integer "research_plan_id"
-    t.integer "wellplate_id"
+    t.bigint "research_plan_id", null: false
+    t.bigint "wellplate_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1206,6 +1249,7 @@ ActiveRecord::Schema.define(version: 2023_08_10_100000) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer "element_detail_level", default: 10
+    t.integer "celllinesample_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"

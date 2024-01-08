@@ -1,70 +1,99 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormControl, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Button, FormControl, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import uuid from 'uuid';
 import Literature from 'src/models/Literature';
-import { CitationType, CitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationType';
+import { getKeysOfMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
 
-const RefByUserInfo = ({ info, litype }) => {
+function RefByUserInfo({ info, litype }) {
   if (typeof (info) === 'undefined' || !info || info.length === 0) {
     return (<div />);
   }
   return (
     <OverlayTrigger
       placement="bottom"
-      overlay={
+      overlay={(
         <Tooltip id={`ref_by_user_${uuid.v4()}`} className="left_tooltip bs_tooltip">
           Reference added by
           {
-            Object.keys(info).map(lid => (litype[lid] ? ` ${info[lid]} (${CitationTypeMap[litype[lid]].def})` : info[lid])).join(', ')
+            Object.keys(info).map((lid) => (litype[lid]
+              ? ` ${info[lid]} (${CitationTypeMap[litype[lid]].def})`
+              : info[lid])).join(', ')
           }
         </Tooltip>
-      }
+      )}
     >
       <i className="fa fa-book" aria-hidden="true" />
     </OverlayTrigger>
   );
-};
+}
 
 const Cite = require('citation-js');
 
-const LiteralType = ({ val, handleInputChange, disabled = false }) => (
-  <FormControl
-    componentClass="select"
-    onChange={event => handleInputChange('litype', event)}
-    placeholder="type"
-    value={val}
-    disabled={disabled}
-  >
-    {CitationType.map(e => (<option key={`_litype_opt_${e}`} value={e}>{CitationTypeMap[e].def}</option>))}
-  </FormControl>
-);
+function LiteralType({
+  val,
+  handleInputChange,
+  disabled = false,
+  citationMap
+}) {
+  return (
+    <FormControl
+      componentClass="select"
+      onChange={(event) => handleInputChange('litype', event)}
+      placeholder="type"
+      value={val}
+      disabled={disabled}
+    >
+      {getKeysOfMap(citationMap).map(
+        (e) => (
+          <option
+            key={`_litype_opt_${e}`}
+            value={e}
+          >
+            {citationMap[e].def}
+          </option>
+        )
+      )}
+    </FormControl>
+  );
+}
 
-const LiteratureInput = ({ literature, handleInputChange, field, placeholder }) => (
-  <FormControl
-    type="text"
-    onChange={event => handleInputChange(field, event)}
-    placeholder={placeholder}
-    value={literature[field] || ''}
-  />
-);
+function LiteratureInput({
+  literature, handleInputChange, field, placeholder, readOnly = false
+}) {
+  return (
+    <FormControl
+      type="text"
+      disabled={readOnly}
+      onChange={(event) => handleInputChange(field, event)}
+      placeholder={placeholder}
+      value={literature[field] || ''}
+    />
+  );
+}
 
-const isLiteratureValid = literature => (
+const isLiteratureValid = (literature) => (
   literature.title !== '' && literature.url.concat(literature.doi) !== ''
 );
 
-const AddButton = ({ onLiteratureAdd, literature, title }) => (
-  <Button
-    bsStyle="success"
-    bsSize="small"
-    onClick={() => onLiteratureAdd(literature)}
-    style={{ marginTop: 2 }}
-    disabled={!isLiteratureValid(literature)}
-    title={title}
-  >
-    <i className="fa fa-plus" />
-  </Button>
-);
+function AddButton({
+  onLiteratureAdd, literature, title, readOnly = false
+}) {
+  return (
+    <Button
+      bsStyle="success"
+      bsSize="small"
+      onClick={() => onLiteratureAdd(literature)}
+      style={{ marginTop: 2 }}
+      disabled={!isLiteratureValid(literature) || readOnly}
+      title={title}
+    >
+      <i className="fa fa-plus" />
+    </Button>
+  );
+}
 
 AddButton.propTypes = {
   onLiteratureAdd: PropTypes.func.isRequired,
@@ -119,12 +148,17 @@ const literatureContent = (literature, onlyText) => {
   } else if (onlyText) {
     content = literature.title || ' ';
   } else {
-    content = <span>{literature.title}{literature.year ? `, ${literature.year}` : null}</span>;
+    content = (
+      <span>
+        {literature.title}
+        {literature.year ? `, ${literature.year}` : null}
+      </span>
+    );
   }
   return content;
 };
 
-const Citation = ({ literature }) => {
+function Citation({ literature }) {
   const {
     title, doi, url, isbn
   } = literature;
@@ -132,19 +166,34 @@ const Citation = ({ literature }) => {
   const link = formatedDoi || url || isbn;
   const content = literatureContent(literature);
   return (
-    <a href={link} target="_blank" rel="noopener noreferrer" title={title} style={{ wordBreak: 'break-word' }} onClick={e => e.stopPropagation()}>{content}</a>
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={title}
+      style={{ wordBreak: 'break-word' }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {content}
+    </a>
   );
-};
+}
 Citation.propTypes = {
   literature: PropTypes.instanceOf(Literature).isRequired
 };
 
-const CitationUserRow = ({ literature, userId }) => (
-  <span>added by {userId && literature.user_id === userId ? 'me' : literature.user_name}
+function CitationUserRow({ literature, userId }) {
+  return (
+    <span>
+      added by
+      {userId && literature.user_id === userId ? 'me' : literature.user_name}
     &nbsp;
-    {(typeof literature.litype == 'undefined' || literature.litype == null || literature.litype == '') ? '' : `, type: ${literature.litype}`}
-  </span>
-);
+      {(typeof literature.litype === 'undefined' || literature.litype == null || literature.litype === '')
+        ? ''
+        : `, type: ${literature.litype}`}
+    </span>
+  );
+}
 
 CitationUserRow.propTypes = {
   literature: PropTypes.instanceOf(Literature).isRequired,
@@ -154,7 +203,7 @@ CitationUserRow.defaultProps = {
   userId: 0,
 };
 
-const groupByCitation = literatures => (
+const groupByCitation = (literatures) => (
   literatures.keySeq().toArray().sort((i, j) => {
     // group by literature id then sort by user id
     const a = literatures.get(i);
@@ -172,7 +221,7 @@ const groupByCitation = literatures => (
   }, [])
 );
 
-const sortByElement = literatures => (
+const sortByElement = (literatures) => (
   literatures.keySeq().toArray().sort((i, j) => {
     // group by literature id then sort by user id
     const a = literatures.get(i);
@@ -195,14 +244,14 @@ const sortByElement = literatures => (
   }, [])
 );
 
-const sortByReference = literatures => (
+const sortByReference = (literatures) => (
   literatures.keySeq().toArray().sort((i, j) => {
     // group by literature id then sort by user id
     const a = literatures.get(i);
     const b = literatures.get(j);
     if (a.id === b.id) {
-      return ((a.element_id === b.element_id && a.element_type === b.element_type) ?
-        (a.user_id - b.user_id) : (a.element_updated_at - b.element_updated_at));
+      return ((a.element_id === b.element_id && a.element_type === b.element_type)
+        ? (a.user_id - b.user_id) : (a.element_updated_at - b.element_updated_at));
     }
     return (a.id - b.id);
   }).reduce((acc, currentValue, i, array) => {

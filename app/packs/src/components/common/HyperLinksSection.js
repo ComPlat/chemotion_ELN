@@ -59,7 +59,7 @@ export default class HyperLinksSection extends Component {
 
   renderHyperLinkInput() {
     const { link } = this.state;
-    const { disabled } = this.props;
+    const { disabled,readOnly } = this.props;
 
     if (disabled) {
       return <div />;
@@ -73,13 +73,14 @@ export default class HyperLinksSection extends Component {
           onChange={(event) => this.handleLinkInputChange(event)}
           bsClass="form-control"
           bsSize="small"
+          disabled={disabled || readOnly}
           style={{ width: '90%' }}
         />
         <Button
           className="button-right"
           bsStyle="success"
           onClick={this.handleAddLink}
-          disabled={link == null}
+          disabled={link == null || readOnly}
           bsSize="small"
           style={{ width: '8%' }}
         >

@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 # update ElementTag when Element joint table association is updated
+# rubocop: disable Metrics/CyclomaticComplexity
 module Tagging
   extend ActiveSupport::Concern
 
@@ -22,14 +25,23 @@ module Tagging
       el = Labimotion::Element.find_by(id: element_id)
       return if el.nil?
 
-      args = deleted_at.nil? ? { element_tag: { "type": el.element_klass.name, "id": element_id } } : { element_tag: {} }
+      args = if deleted_at.nil?
+               { element_tag: { type: el.element_klass.name,
+                                id: element_id } }
+             else
+               { element_tag: {} }
+             end
       element = 'sample'
     when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'Labimotion::CollectionsElement',
       'CollectionsScreen', 'CollectionsResearchPlan'
       args = { collection_tag: true }
       element = Labimotion::Utils.elname_by_collection(klass)
+    when 'CollectionsCellline'
+      args = { collection_tag: true }
+      element = 'cellline_sample'
     end
+
     element && send(element)&.update_tag!(args)
   end
-  # handle_asynchronously :update_tag
 end
+# rubocop: enable Metrics/CyclomaticComplexity

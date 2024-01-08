@@ -6,19 +6,19 @@ module Chemotion
     namespace :ols_terms do
       desc 'Get List'
       params do
-        requires :name, type: String, desc: 'OLS Name', values: %w[chmo rxno]
+        requires :name, type: String, desc: 'OLS Name', values: %w[chmo rxno bao]
         optional :edited, type: Boolean, default: true, desc: 'Only list visible terms'
       end
 
       get 'list' do
         file = Rails.public_path.join(
           'ontologies',
-          "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}"
+          "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}",
         )
         unless File.exist?(file)
           file = Rails.public_path.join(
             'ontologies_default',
-            "#{params[:name]}#{params[:edited] ? '.default.edited.json' : '.default.json'}"
+            "#{params[:name]}#{params[:edited] ? '.default.edited.json' : '.default.json'}",
           )
         end
         result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
