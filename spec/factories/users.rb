@@ -19,7 +19,8 @@ FactoryBot.define do
       {
         samples: 0,
         reactions: 0,
-        wellplates: 0
+        wellplates: 0,
+        celllines: 0,
       }
     end
 
@@ -32,9 +33,10 @@ FactoryBot.define do
           'reaction' => 2,
           'wellplate' => 3,
           'screen' => 4,
-          'research_plan' => 5
+          'research_plan' => 5,
+          'cell_line' => -1000,
         }
-        profile.update_columns(data: data)
+        profile.update_columns(data: data) # rubocop:disable Rails/SkipsModelValidations
       end
     end
 

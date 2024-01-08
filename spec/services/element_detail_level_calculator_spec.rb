@@ -42,6 +42,7 @@ describe ElementDetailLevelCalculator do
         Screen => 0,
         Well => 0,
         Wellplate => 0,
+        CelllineSample => 0,
       })
     end
 

@@ -51,6 +51,13 @@ class UIStore {
         currentId: null,
         page: 1,
       },
+      cell_line: {
+        checkedAll: false,
+        checkedIds: List(),
+        uncheckedIds: List(),
+        currentId: null,
+        page: 1,
+      },
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -234,6 +241,7 @@ class UIStore {
     this.handleUncheckAllElements({ type: 'reaction', range: 'all' });
     this.handleUncheckAllElements({ type: 'wellplate', range: 'all' });
     this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
+    this.handleUncheckAllElements({ type: 'cell_line', range: 'all' });
     this.state.klasses?.forEach((klass) => { this.handleUncheckAllElements({ type: klass, range: 'all' }); });
   }
 
@@ -343,8 +351,14 @@ class UIStore {
               Object.assign(params, { page: state.research_plan.page }),
             );
           }
+          if (!isSync && layout.cell_line && layout.cell_line > 0) {
+            ElementActions.fetchCellLinesByCollectionId(
+              collection.id,
+              Object.assign(params, { page: state.cell_line.page }),
+            );
+          }
 
-          Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
+          Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].includes(l)).forEach((key) => {
             if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
               const page = state[key] ? state[key].page : 1;
               ElementActions.fetchGenericElsByCollectionId(

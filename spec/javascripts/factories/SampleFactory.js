@@ -17,7 +17,7 @@ export default class SampleFactory {
     constructor() {
       this.factory = factory;
   
-      this.factory.define("water_100g", Sample, async () => {
+      this.factory.define("SampleFactory.water_100g", Sample, async () => {
         const sample = Sample.buildEmpty(0);
         sample.amount_value=100;
         sample.molecule=new Molecule()

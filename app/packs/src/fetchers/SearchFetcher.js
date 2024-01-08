@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
+import CellLine from 'src/models/cellLine/CellLine';
 import Screen from 'src/models/Screen';
 import GenericEl from 'src/models/GenericEl';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -27,7 +28,7 @@ export default class SearchFetcher {
       })
     }).then(response => response.json())
       .then((json) => {
-        const { samples, reactions, wellplates, screens, research_plans } = json;
+        const { samples, reactions, wellplates, screens, research_plans, cell_lines } = json;
         const result = { ...json };
 
         Object.keys(json).forEach((key) => {
@@ -56,6 +57,11 @@ export default class SearchFetcher {
               if (research_plans && research_plans.totalElements && research_plans.totalElements > 0) {
                 result.research_plans.elements = research_plans.elements.map(s => (new ResearchPlan(s)));
               } else { result.research_plans = { elements: [], totalElements: 0, ids: [], error: result.research_plans.error }; }
+              break;
+            case 'cell_lines':
+              if (cell_lines && cell_lines.totalElements && cell_lines.totalElements > 0) {
+                result.cell_lines.elements = cell_lines.elements.map(s => (CellLine.createFromRestResponse(0, s)));
+              } else { result.cell_lines = { elements: [], totalElements: 0, ids: [] }; }
               break;
             default:
               result[`${key}`].elements = json[`${key}`].elements.map(s => (new GenericEl(s)));

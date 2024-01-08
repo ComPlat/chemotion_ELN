@@ -6,7 +6,6 @@
 require 'grape-entity'
 require 'grape-swagger'
 
-# rubocop:disable Metrics/BlockLength
 class API < Grape::API
   format :json
   prefix :api
@@ -18,7 +17,7 @@ class API < Grape::API
     def present(*args)
       options = args.count > 1 ? args.extract_options! : {}
 
-      options.merge!(current_user: current_user)
+      options[:current_user] = current_user
 
       super(*args, options)
     end
@@ -39,7 +38,7 @@ class API < Grape::API
       decoded_token = JsonWebToken.decode(current_token)
       user_id = decoded_token[:user_id]
 
-      User.find_by!(id: user_id)
+      User.find(user_id)
     rescue StandardError
       nil
     end
@@ -142,10 +141,10 @@ class API < Grape::API
 
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
-  ELEMENTS = %w[research_plan screen wellplate reaction sample].freeze
+  ELEMENTS = %w[research_plan screen wellplate reaction sample cell_line].freeze
 
   TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
-                     ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate]
+                     ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate].freeze
 
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
@@ -195,6 +194,7 @@ class API < Grape::API
   mount Chemotion::ChemicalAPI
   mount Chemotion::CalendarEntryAPI
   mount Chemotion::CommentAPI
+  mount Chemotion::CellLineAPI
   mount Labimotion::ConverterAPI
   mount Labimotion::GenericElementAPI
   mount Labimotion::GenericDatasetAPI

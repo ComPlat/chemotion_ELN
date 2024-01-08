@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Style/WordArray
+
 # require 'coveralls'
 # Coveralls.wear!
 require 'rspec/repeat'
@@ -72,6 +74,10 @@ RSpec.configure do |config|
       'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
       'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
       'XEGUVFFZWHRVAV-PVQJCKRUSA-N',
+      'OKKJLVBELUTLKV-UHFFFAOYSA-N',
+      'XBDQKXXYIPTUBI-UHFFFAOYSA-N',
+      'UHOVQNZJYSORNB-UHFFFAOYSA-N',
+      'RJUFJBKOKNCXHH-UHFFFAOYSA-N',
     ].each do |target|
       stub_request(:get, "#{hostname}#{inchi_path}#{target}/record/JSON")
         .with(headers: { 'Content-Type' => 'text/json' })
@@ -168,3 +174,4 @@ RSpec.configure do |config|
     repeat example, 3.times, verbose: true
   end
 end
+# rubocop:enable Style/WordArray

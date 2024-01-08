@@ -21,6 +21,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
+import CellLineGroup from 'src/models/cellLine/CellLineGroup';
+import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -659,7 +661,16 @@ export default class ElementsTable extends React.Component {
           type={type}
         />
       );
-    } else {
+    } else if (type === 'cell_line'){
+      elementsTableEntries = (
+        <CellLineContainer 
+        cellLineGroups={CellLineGroup.buildFromElements(elements)}
+      />
+      );
+    }
+    
+    
+    else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}

@@ -41,7 +41,7 @@ describe('ResearchPlanDetails', async () => {
     context('on non existing field', async () => {
       it(' expecting nothing was changed', async () => {
         const researchPlanWithImage = await ResearchPlanFactory.build(
-          'with_image_body_field'
+          'ResearchPlanFactory.with_image_body_field'
         );
         const wrapper = shallow(
           <ResearchPlanDetails
@@ -58,7 +58,7 @@ describe('ResearchPlanDetails', async () => {
     context('on non image field', async () => {
       it(' expected to be changed', async () => {
         const researchPlanWithoutImage = await ResearchPlanFactory.build(
-          'with_not_image_body_field'
+          'ResearchPlanFactory.with_not_image_body_field'
         );
 
         const wrapper = shallow(
@@ -92,9 +92,9 @@ describe('ResearchPlanDetails', async () => {
     context('replacing an image field for the first time', async () => {
       it('expecting to be replaced', async () => {
         const researchPlanWithImage = await ResearchPlanFactory.build(
-          'with_image_body_field'
+          'ResearchPlanFactory.with_image_body_field'
         );
-        const newImageAttachment = await AttachmentFactory.build('new', {
+        const newImageAttachment = await AttachmentFactory.build('AttachmentFactory.new', {
           id: uuid.v1(),
         });
 
@@ -132,51 +132,11 @@ describe('ResearchPlanDetails', async () => {
       'replacing an image field for the second time - replacing an temporary image',
       async () => {
         it('expecting to be replaced with old value in memory', async () => {
-          const attachmentToAdd = await AttachmentFactory.build('new', {
+          const attachmentToAdd = await AttachmentFactory.build('AttachmentFactory.new', {
             id: uuid.v1(),
           });
           const researchPlanWithImage = await ResearchPlanFactory.build(
-            'with_image_body_field'
-          );
-
-          const newValue = {
-            file_name: 'abc.png',
-            public_name: attachmentToAdd.identifier,
-            old_value: researchPlanWithImage.attachments[0].identifier,
-          };
-
-          const expectedField = {
-            id: FIELD_ID_IMAGE,
-            type: 'image',
-            value: newValue,
-          };
-
-          const wrapper = shallow(
-            <ResearchPlanDetails
-              researchPlan={researchPlanWithImage}
-              toggleFullScreen={() => {}}
-            />
-          );
-
-          wrapper
-            .instance()
-            .handleBodyChange(newValue, FIELD_ID_IMAGE, [attachmentToAdd]);
-
-          expect(researchPlanWithImage.changed).toEqual(true);
-          expect(researchPlanWithImage.attachments.length).toEqual(2);
-          expect(researchPlanWithImage.body).toEqual([expectedField]);
-        });
-      }
-    );
-    context(
-      'replacing an image field for the second time - replacing an temporary image',
-      async () => {
-        it('expecting to be replaced with old value in memory', async () => {
-          const attachmentToAdd = await AttachmentFactory.build('new', {
-            id: uuid.v1(),
-          });
-          const researchPlanWithImage = await ResearchPlanFactory.build(
-            'with_image_body_field'
+            'ResearchPlanFactory.with_image_body_field'
           );
 
           const newValue = {

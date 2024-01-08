@@ -24,7 +24,7 @@ module Chemotion
           #  polymer_type
           # ]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements by_ids advanced structure
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements cell_lines by_ids advanced structure
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -201,6 +201,7 @@ module Chemotion
         samples_data = serialize_samples(sample_ids, page, molecule_sort)
         screen_ids = elements.fetch(:screen_ids, [])
         wellplate_ids = elements.fetch(:wellplate_ids, [])
+        cell_line_ids = elements.fetch(:cell_line_ids, [])
         research_plan_ids = elements.fetch(:research_plan_ids, [])
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
@@ -216,6 +217,11 @@ module Chemotion
         paginated_screen_ids = Kaminari.paginate_array(screen_ids).page(page).per(page_size)
         serialized_screens = Screen.find(paginated_screen_ids).map do |screen|
           Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
+        end
+
+        paginated_cell_line_ids = Kaminari.paginate_array(cell_line_ids).page(page).per(page_size)
+        serialized_cell_lines = CelllineSample.find(paginated_cell_line_ids).map do |cell_line|
+          Entities::CellLineSampleEntity.represent(cell_line, displayed_in_list: true).serializable_hash
         end
 
         paginated_research_plan_ids = Kaminari.paginate_array(research_plan_ids).page(page).per(page_size)
@@ -255,6 +261,14 @@ module Chemotion
             pages: pages(screen_ids.size),
             perPage: page_size,
             ids: screen_ids,
+          },
+          cell_lines: {
+            elements: serialized_cell_lines,
+            totalElements: cell_line_ids.size,
+            page: page,
+            pages: pages(cell_line_ids.size),
+            perPage: page_size,
+            ids: cell_line_ids,
           },
           research_plans: {
             elements: serialized_research_plans,
@@ -345,6 +359,10 @@ module Chemotion
                   sample_structure_search
                 when 'advanced'
                   advanced_search(c_id)
+                when 'cell_line_material_name'
+                  CelllineSample.by_material_name(arg, c_id)
+                when 'cell_line_sample_name'
+                  CelllineSample.by_sample_name(arg, c_id)
                 end
 
         if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
@@ -426,12 +444,47 @@ module Chemotion
           ).uniq
 
           elements[:element_ids] = (scope&.element_ids).uniq
+        when CelllineSample
+          elements[:cell_line_ids] = scope&.ids
         end
         elements
       end
     end
 
     resource :search do
+      namespace :cell_lines do
+        desc 'Return all matched cell lines and associations for substring query'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          query = @params[:selection][:name]
+          collection_id = @params[:collection_id]
+          cell_lines =
+            case search_by_method
+            when 'cell_line_material_name'
+              CelllineSample.by_material_name(query, collection_id)
+            when 'cell_line_sample_name'
+              CelllineSample.by_sample_name(query, collection_id)
+            end
+
+          return unless cell_lines
+
+          elements_ids = elements_by_scope(cell_lines)
+
+          serialization_by_elements_and_page(
+            elements_ids,
+            params[:page],
+            params[:molecule_sort],
+          )
+        end
+      end
+
       namespace :all do
         desc 'Return all matched elements and associations for substring query'
         params do
