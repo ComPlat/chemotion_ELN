@@ -84,7 +84,7 @@ module Chemotion
 
       def compare_data_type_mapping(response) # rubocop:disable Metrics/AbcSize
         default_data_types = JSON.parse(response.body)
-        file_path = File.join('public', 'data_type.json')
+        file_path = Rails.configuration.path_spectra_data_type
 
         current_data_types = {}
         current_data_types = JSON.parse(File.read(file_path)) if File.exist?(file_path)

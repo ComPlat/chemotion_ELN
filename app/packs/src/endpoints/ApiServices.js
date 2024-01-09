@@ -6,4 +6,10 @@ const CommentManagementServices = {
   DELETE_COMMENT: (comment) => `/api/v1/comments/${comment.id}`,
 };
 
-export default CommentManagementServices;
+// path of the chemspectra data type file
+const SPECTRA_DATA_TYPE = '/data_type.json';
+
+export {
+  CommentManagementServices,
+  SPECTRA_DATA_TYPE,
+};

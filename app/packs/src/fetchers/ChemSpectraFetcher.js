@@ -1,3 +1,4 @@
+import { SPECTRA_DATA_TYPE } from 'src/endpoints/ApiServices';
 import 'whatwg-fetch';
 
 export default class ChemSpectraFetcher {
@@ -32,7 +33,7 @@ export default class ChemSpectraFetcher {
   }
 
   static fetchUpdatedSpectraLayouts() {
-    return fetch('/data_type.json')
+    return fetch(SPECTRA_DATA_TYPE)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Failed to fetch JSON');

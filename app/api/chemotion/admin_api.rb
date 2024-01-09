@@ -397,7 +397,7 @@ module Chemotion
       namespace :data_types do
         desc 'Update data types'
         put do
-          file_path = File.join('public', 'data_type.json')
+          file_path = Rails.configuration.path_spectra_data_type
           new_data_types = JSON.parse(request.body.read)
           begin
             File.write(file_path, JSON.pretty_generate(new_data_types))
