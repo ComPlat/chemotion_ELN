@@ -555,8 +555,8 @@ export default class ContainerDatasetModalContent extends Component {
     } = this.state;
     const { datasetContainer } = this.props;
 
-    const renderGroup = (attachments, title) => (
-      <div style={{ marginTop: '10px' }}>
+    const renderGroup = (attachments, title, key) => (
+      <div key={key} style={{ marginTop: '10px' }}>
         <div style={{
           backgroundColor: '#D3D3D3',
           fontWeight: 'bold',
@@ -604,7 +604,7 @@ export default class ContainerDatasetModalContent extends Component {
             {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
               .map((groupName) => attachmentGroups.Processed[groupName].length > 0
-            && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`))}
+            && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
             {attachmentGroups.Attachments.length > 0 && renderGroup(attachmentGroups.Attachments, 'Attachments')}
           </div>
         )}
@@ -728,7 +728,7 @@ ContainerDatasetModalContent.propTypes = {
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  kind: PropTypes.string.isRequired,
+  kind: PropTypes.string,
   mode: PropTypes.oneOf(['attachments', 'metadata']),
   attachments: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.oneOfType([
@@ -752,4 +752,5 @@ ContainerDatasetModalContent.defaultProps = {
   disabled: false,
   readOnly: false,
   attachments: [],
+  kind: null
 };

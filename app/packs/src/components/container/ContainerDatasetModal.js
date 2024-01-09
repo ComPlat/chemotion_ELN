@@ -201,11 +201,12 @@ ContainerDatasetModal.propTypes = {
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  kind: PropTypes.string.isRequired,
+  kind: PropTypes.string,
   onDiscard: PropTypes.func.isRequired,
 };
 
 ContainerDatasetModal.defaultProps = {
   readOnly: false,
   disabled: false,
+  kind: null,
 };
