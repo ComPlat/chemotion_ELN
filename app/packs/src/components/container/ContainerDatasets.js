@@ -100,12 +100,6 @@ export default class ContainerDatasets extends Component {
     document.body.className = document.body.className.replace('modal-open', '');
   }
 
-  discardChanges = () => {
-    this.setState((prevState) => ({
-      container: JSON.parse(JSON.stringify(prevState.originalContainer)),
-    }));
-  };
-
   addButton() {
     const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
@@ -162,7 +156,6 @@ export default class ContainerDatasets extends Component {
             datasetContainer={modal.datasetContainer}
             analysisContainer={modal.analysisContainer}
             disabled={disabled}
-            onDiscard={this.discardChanges}
           />
           )}
         </div>

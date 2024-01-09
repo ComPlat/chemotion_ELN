@@ -18,13 +18,16 @@ export default class ContainerDatasetModal extends Component {
     };
 
     this.handleSave = this.handleSave.bind(this);
-    this.handleDiscard = this.handleDiscard.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
+    this.handleModalClose = this.handleModalClose.bind(this);
   }
 
-  handleDiscard() {
-    this.props.onDiscard();
-    this.props.onHide();
+  handleModalClose(event) {
+    if (event && event.type === 'keydown' && event.key === 'Escape') {
+      this.handleSave();
+    } else {
+      this.props.onHide();
+    }
   }
 
   handleSave() {
@@ -120,7 +123,7 @@ export default class ContainerDatasetModal extends Component {
           show={show}
           bsSize="large"
           dialogClassName="attachment-modal"
-          onHide={() => (disabled ? onHide() : this.handleSave())}
+          onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
           <Modal.Header style={{ flexShrink: 0 }}>
             <Modal.Title>
@@ -172,18 +175,26 @@ export default class ContainerDatasetModal extends Component {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, width: '100%'
           }}
           >
-            {/* <Button style={{ marginRight: '5px' }} onClick={this.handleDiscard}>Discard Changes</Button> */}
-            <small style={{ alignSelf: 'center' }}>
-              Changes are kept for this session. Remember to save the element itself to persist changes.
-              {/* Discarding changes will discard changes for the entire session. */}
-            </small>
-            <Button
-              bsStyle="primary"
-              style={{ alignSelf: 'center', marginLeft: 'auto' }}
-              onClick={this.handleSave}
-            >
-              Keep Changes
-            </Button>
+            <div>
+              <small style={{ alignSelf: 'center' }}>
+                Changes are kept for this session. Remember to save the element itself to persist changes.
+              </small>
+            </div>
+            <div style={{ alignSelf: 'right', marginLeft: 'auto' }}>
+              {/* <Button
+                style={{ marginRight: '10px' }}
+                onClick={this.handleModalClose}
+              >
+                Discard Changes
+              </Button> */}
+              <Button
+                bsStyle="primary"
+                style={{ alignSelf: 'center', marginLeft: 'auto' }}
+                onClick={this.handleSave}
+              >
+                Keep Changes
+              </Button>
+            </div>
           </Modal.Footer>
         </Modal>
       );
@@ -202,7 +213,6 @@ ContainerDatasetModal.propTypes = {
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string,
-  onDiscard: PropTypes.func.isRequired,
 };
 
 ContainerDatasetModal.defaultProps = {
