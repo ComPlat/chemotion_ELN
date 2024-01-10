@@ -75,7 +75,7 @@ export default class ResearchPlansFetcher {
         json.research_plan.id,
         researchPlan.getMarkedAsDeletedAttachments()
       )().then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-        .then(() => ResearchPlansFetcher.updateAnnotations(researchPlan))
+        .then(() => BaseFetcher.updateAnnotations(researchPlan))
         .then(() => this.fetchById(researchPlan.id))))
       .catch((errorMessage) => { console.log(errorMessage); });
 
@@ -265,35 +265,6 @@ export default class ResearchPlansFetcher {
         updatedResearchPlan.attachments = json.attachments;
         return updatedResearchPlan;
       }).catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static updateAnnotations(researchPlan) {
-    return Promise.all(
-      [
-        ResearchPlansFetcher.updateAnnotationsOfAttachments(researchPlan),
-        BaseFetcher.updateAnnotationsInContainer(researchPlan, [])
-      ]
-    );
-  }
-
-  static updateAnnotationsOfAttachments(researchPlan) {
-    const updateTasks = [];
-    researchPlan.attachments
-      .filter(((attach) => attach.hasOwnProperty('updatedAnnotation')))
-      .forEach((attach) => {
-        const data = new FormData();
-        data.append('updated_svg_string', attach.updatedAnnotation);
-        updateTasks.push(fetch(`/api/v1/attachments/${attach.id}/annotation`, {
-          credentials: 'same-origin',
-          method: 'post',
-          body: data
-        })
-          .catch((errorMessage) => {
-            console.log(errorMessage);
-          }));
-      });
-
-    return Promise.all(updateTasks);
   }
 
   static fetchResearchPlansForElements(id, element) {

@@ -87,6 +87,8 @@ class Wellplate < ApplicationRecord
 
   has_one :container, as: :containable
 
+  before_save :description_to_plain_text
+
   accepts_nested_attributes_for :collections_wellplates
 
   def self.associated_by_user_id_and_screen_ids(user_id, screen_ids)
@@ -152,5 +154,13 @@ class Wellplate < ApplicationRecord
     user_label = user.name_abbreviation
 
     update(short_label: "#{user_label}-#{prefix}#{counter}")
+  end
+
+  private
+
+  def description_to_plain_text
+    return unless description_changed?
+
+    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
   end
 end

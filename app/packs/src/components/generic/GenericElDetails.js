@@ -356,8 +356,10 @@ export default class GenericElDetails extends Component {
       genericEl.can_copy && !genericEl.isNew ? (
         <CopyElementModal element={genericEl} defCol={defCol} />
       ) : null;
+
     const saveBtnDisplay = genericEl.changed && genericEl.can_update ? '' : 'none';
     const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;
+
     return (
       <div>
         <OverlayTrigger

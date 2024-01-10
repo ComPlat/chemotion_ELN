@@ -95,6 +95,13 @@ class ElementStore {
         pages: null,
         perPage: null
       },
+      cell_lines: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
     };
 
     this.state = {
@@ -134,16 +141,21 @@ class ElementStore {
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleFetchBasedOnSearchResultIds: ElementActions.fetchBasedOnSearchResultIds,
+      handleDispatchSearchResult: ElementActions.dispatchSearchResult,
 
       handleFetchGenericElsByCollectionId: ElementActions.fetchGenericElsByCollectionId,
       handleFetchGenericElById: ElementActions.fetchGenericElById,
       handleCreateGenericEl: ElementActions.createGenericEl,
+
+      handleCreateCellLine: ElementActions.createCellLine,
 
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+      handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -169,6 +181,7 @@ class ElementStore {
         ElementActions.tryFetchWellplateById,
         ElementActions.tryFetchGenericElById
       ],
+      handleFetchCellLineById:ElementActions.tryFetchCellLineElById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -211,13 +224,14 @@ class ElementStore {
           ElementActions.generateEmptyResearchPlan,
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
+          ElementActions.generateEmptyCellLine,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
           ElementActions.showComputedPropsTasks,
           ElementActions.showDeviceControl,
           ElementActions.showLiteratureDetail,
-          ElementActions.showPredictionContainer,
+          ElementActions.showPredictionContainer
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleFetchMetadata: ElementActions.fetchMetadata,
@@ -247,6 +261,7 @@ class ElementStore {
         ElementActions.updateWellplate,
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan,
+        ElementActions.updateCellLine,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -496,6 +511,18 @@ class ElementStore {
     });
   }
 
+  handleFetchBasedOnSearchResultIds(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
+  handleDispatchSearchResult(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
   handlefetchBasedOnStructureAndCollection(result) {
     Object.keys(result).forEach((key) => {
       this.state.elements[key] = result[key];
@@ -506,7 +533,7 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan, currentCollection } = ui_state;
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
     const params = {
       options,
@@ -516,7 +543,8 @@ class ElementStore {
       screen,
       research_plan,
       currentCollection,
-      selecteds
+      selecteds,
+      cell_line
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -563,10 +591,12 @@ class ElementStore {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
+        
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
+        if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
@@ -620,6 +650,9 @@ class ElementStore {
 
   handlefetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
+  }
+  handlefetchCellLinesByCollectionId(result) {
+    this.state.elements.cell_lines = result;
   }
 
   // -- Samples --
@@ -921,6 +954,15 @@ class ElementStore {
     }
   }
 
+  handleFetchCellLineById(result){
+    this.changeCurrentElement(result);
+  }
+
+  handleCreateCellLine(cellLine) {
+    this.handleRefreshElements('cell_line');
+    this.navigateToNewElement(cellLine);
+  }
+
   handleCloseWarning() {
     this.state.elementWarning = false
   }
@@ -1021,7 +1063,7 @@ class ElementStore {
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
-    const { currentSearchSelection } = uiState;
+    const { currentSearchSelection, currentSearchByID } = uiState;
 
     if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results;
@@ -1032,6 +1074,8 @@ class ElementStore {
         isSync: uiState.isSync,
         moleculeSort
       });
+    } else if (currentSearchByID != null) {
+      this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
@@ -1043,7 +1087,8 @@ class ElementStore {
         'fetchReactionsByCollectionId',
         'fetchWellplatesByCollectionId',
         'fetchScreensByCollectionId',
-        'fetchResearchPlansByCollectionId'
+        'fetchResearchPlansByCollectionId',
+        'fetchCellLinesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
         ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1063,6 +1108,45 @@ class ElementStore {
     })
   }
 
+  handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
+    currentSearchByID.page_size = uiState.number_of_results;
+    const { filterCreatedAt, fromDate, toDate, productOnly } = uiState;
+    const { moleculeSort } = this.state;
+    const { page } = uiState[type];
+    let filterParams = {};
+    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    let modelName = !elnElements.includes(type) ? 'element' : type;
+
+    if (fromDate || toDate || productOnly) {
+      filterParams = {
+        filter_created_at: filterCreatedAt,
+        from_date: fromDate,
+        to_date: toDate,
+        product_only: productOnly,
+      }
+    }
+
+    const selection = {
+      elementType: 'by_ids',
+      id_params: {
+        model_name: `${modelName}`,
+        ids: currentSearchByID[`${type}s`].ids,
+        total_elements: currentSearchByID[`${type}s`].totalElements,
+        with_filter: true,
+      },
+      list_filter_params: filterParams,
+      search_by_method: 'search_by_ids',
+      page_size: currentSearchByID.page_size,
+    };
+
+    ElementActions.fetchBasedOnSearchResultIds.defer({
+      selection: selection,
+      collectionId: uiState.currentCollection.id,
+      page: page,
+      isSync: uiState.isSync,
+      moleculeSort
+    });
+  }
 
   // CurrentElement
   handleSetCurrentElement(result) {
@@ -1241,6 +1325,10 @@ class ElementStore {
       case 'research_plan':
         this.handleRefreshElements('research_plan');
         this.handleUpdateResearchPlanAttaches(updatedElement);
+        break;
+      case 'cell_line':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('cell_line');
         break;
       case 'wellplate':
         fetchOls('wellplate');

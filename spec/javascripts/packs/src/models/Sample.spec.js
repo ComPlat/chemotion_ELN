@@ -2,8 +2,8 @@ import expect from 'expect';
 import SampleFactory from "factories/SampleFactory";
 
 describe('Sample', async () => {
-    const referenceSample = await SampleFactory.build("water_100g")
-    const product = await SampleFactory.build("water_100g")
+    const referenceSample = await SampleFactory.build("SampleFactory.water_100g")
+    const product = await SampleFactory.build("SampleFactory.water_100g")
 
     describe('Sample.calculateMaxAmount()', () => {
         context('when input is valid', () => {

@@ -18,6 +18,7 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import StickyDiv from 'react-stickydiv';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
+import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import {
   Tabs, Tab, Label, Button
 } from 'react-bootstrap';
@@ -226,6 +227,8 @@ export default class ElementDetails extends Component {
         return <ComputeTaskContainer task={el} />;
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
+      case 'cell_line':
+        return <CellLineDetails cellLineItem={el}  toggleFullScreen={this.toggleFullScreen}/>;
       default:
         return (
           <div style={{ textAlign: 'center' }}>

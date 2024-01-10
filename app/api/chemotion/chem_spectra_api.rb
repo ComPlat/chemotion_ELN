@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
+# rubocop:disable Metrics/ClassLength
+
 # Belong to Chemotion module
 module Chemotion
   # API for ChemSpectra manipulation
@@ -181,6 +182,56 @@ module Chemotion
         post 'refresh' do
           convert_for_refresh(params)
         end
+
+        desc 'Combine spectra'
+        params do
+          requires :spectra_ids, type: [Integer]
+          requires :front_spectra_idx, type: Integer # index of front spectra
+        end
+        post 'combine_spectra' do
+          pm = to_rails_snake_case(params)
+
+          list_file = []
+          list_file_names = []
+          container_id = -1
+          combined_image_filename = ''
+          Attachment.where(id: pm[:spectra_ids]).each do |att|
+            container = att.container
+            combined_image_filename = "#{container.name}.new_combined.png"
+            container_id = att.attachable_id
+            list_file_names.push(att.filename)
+            list_file.push(att.abs_path)
+          end
+
+          _, image = Chemotion::Jcamp::CombineImg.combine(
+            list_file, pm[:front_spectra_idx], list_file_names
+          )
+
+          content_type('application/json')
+          unless image.nil?
+            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
+            if att.nil?
+              att = Attachment.new(
+                bucket: container_id,
+                filename: combined_image_filename,
+                created_by: current_user.id,
+                created_for: current_user.id,
+                file_path: image.path,
+                attachable_type: 'Container',
+                attachable_id: container_id,
+              )
+              att.save!
+            else
+              att.update!(
+                file_path: image.path,
+                attachable_type: 'Container',
+                attachable_id: container_id,
+              )
+            end
+          end
+
+          { status: true }
+        end
       end
 
       resource :predict do
@@ -264,4 +315,4 @@ module Chemotion
   end
 end
 
-# rubocop: enable Metrics/ClassLength
+# rubocop:enable Metrics/ClassLength

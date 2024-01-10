@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: molecules
@@ -28,6 +30,8 @@
 #  index_molecules_on_deleted_at               (deleted_at)
 #  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
 #
+
+# rubocop:disable Metrics/ClassLength
 
 class Molecule < ApplicationRecord
   acts_as_paranoid
@@ -70,12 +74,12 @@ class Molecule < ApplicationRecord
     where('cano_smiles ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
 
-  scope :with_reactions, -> {
-    joins(:samples).joins("inner join reactions_samples rs on rs.sample_id = samples.id" ).uniq
+  scope :with_reactions, lambda {
+    joins(:samples).joins('inner join reactions_samples rs on rs.sample_id = samples.id')
   }
 
-  scope :with_wellplates, -> {
-    joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
+  scope :with_wellplates, lambda {
+    joins(:samples).joins('inner join wells w on w.sample_id = samples.id')
   }
 
   def self.find_or_create_dummy
@@ -174,9 +178,14 @@ class Molecule < ApplicationRecord
                       "#{SecureRandom.hex(64)}.svg"
                     end
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
+    # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
+    scrubbed_data = Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s
+                          .gsub('viewbox', 'viewBox')
+                          .gsub('lineargradient', 'linearGradient')
+                          .gsub('radialgradient', 'radialGradient')
     File.write(
       full_svg_path(svg_file_name),
-      Loofah.scrub_fragment(svg_data.encode('UTF-8'), :strip).to_s.gsub('viewbox', 'viewBox'),
+      scrubbed_data,
     )
 
     self.molecule_svg_file = svg_file_name
@@ -289,3 +298,4 @@ private
     Rails.public_path.join('images', 'molecules', svg_file_name)
   end
 end
+# rubocop:enable Metrics/ClassLength

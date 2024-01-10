@@ -2,6 +2,8 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations
+
 describe Chemotion::SearchAPI do
   include_context 'api request authorization context'
 
@@ -18,6 +20,7 @@ describe Chemotion::SearchAPI do
   let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: other_user) }
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
+  let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
@@ -39,20 +42,135 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 
+  describe 'POST /api/v1/search/cell_lines' do
+    let(:url) { '/api/v1/search/cell_lines' }
+    let(:result) { JSON.parse(response.body) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :cell_lines,
+          name: search_term,
+          search_by_method: search_method,
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    context 'when searching a cell line sample in correct collection by cell line material name' do
+      let(:search_term) { 'name-001' }
+      let(:search_method) { 'cell_line_material_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+
+    context 'when searching a cell line sample in correct collection by cell line sample name' do
+      let(:search_term) { 'other' }
+      let(:search_method) { 'cell_line_sample_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/all' do
     let(:url) { '/api/v1/search/all' }
+    let(:search_method) { 'substring' }
+    let(:result) { JSON.parse(response.body) }
     let(:params) do
       {
         selection: {
           elementType: :all,
           name: search_term,
-          search_by_method: :substring
+          search_by_method: :substring,
         },
-        collection_id: collection.id
+        collection_id: collection.id,
       }
     end
 
+    context 'when searching a cell line sample in correct collection by cell line material name' do
+      let(:search_term) { 'name-001' }
+      let(:search_method) { 'cell_line_material_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+
+    context 'when searching a cell line sample in correct collection by cell line sample name' do
+      let(:search_term) { 'cellline-search-example' }
+      let(:search_method) { 'cell_line_sample_name' }
+
+      it 'returns one cell line sample object' do
+        expect(result.dig('cell_lines', 'totalElements')).to eq 1
+        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+      end
+    end
+
     context 'when searching a sample in correct collection' do
+      let(:search_term) { 'SampleA' }
+
+      it 'returns the sample' do
+        expect(result.dig('samples', 'totalElements')).to eq 1
+        expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+      end
+
+      it 'returns referenced reaction of sample' do
+        expect(result.dig('reactions', 'totalElements')).to eq 1
+        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+      end
+
+      it 'returns referenced screen of sample' do
+        expect(result.dig('screens', 'totalElements')).to eq 1
+        expect(result.dig('screens', 'ids')).to eq [screen.id]
+      end
+
+      it 'returns referenced wellplate of sample' do
+        expect(result.dig('wellplates', 'totalElements')).to eq 1
+        expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/advanced' do
+    let(:url) { '/api/v1/search/advanced' }
+    let(:advanced_params) do
+      [
+        {
+          link: '',
+          match: 'LIKE',
+          table: 'samples',
+          element_id: 0,
+          field: {
+            column: 'name',
+            label: 'Name',
+          },
+          value: search_term,
+          sub_values: [],
+          unit: '',
+        },
+      ]
+    end
+    let(:params) do
+      {
+        selection: {
+          elementType: :advanced,
+          advanced_params: advanced_params,
+          search_by_method: :advanced,
+        },
+        collection_id: collection.id,
+        page: 1,
+        per_page: 15,
+        molecule_sort: true,
+      }
+    end
+
+    context 'when searching a name in samples in correct collection' do
       let(:search_term) { 'SampleA' }
 
       it 'returns the sample and all other objects referencing the sample from the requested collection' do
@@ -70,21 +188,27 @@ describe Chemotion::SearchAPI do
     end
   end
 
-  describe 'POST /api/v1/search/samples' do
-    let(:url) { '/api/v1/search/samples' }
+  describe 'POST /api/v1/search/structure' do
+    let(:url) { '/api/v1/search/structure' }
+    let(:params) do
+      {
+        selection: {
+          elementType: :structure,
+          molfile: molfile,
+          search_type: 'sub',
+          tanimoto_threshold: 0.7,
+          search_by_method: :structure,
+          structure_search: true,
+        },
+        collection_id: collection.id,
+        page: 1,
+        per_page: 15,
+        molecule_sort: true,
+      }
+    end
 
-    context 'when searching a sample in correct collection' do
-      let(:search_term) { 'SampleA' }
-      let(:params) do
-        {
-          selection: {
-            elementType: :samples,
-            name: search_term,
-            search_by_method: :substring
-          },
-          collection_id: collection.id
-        }
-      end
+    context 'when searching a molfile in samples in correct collection' do
+      let(:molfile) { sample_a.molfile }
 
       it 'returns the sample and all other objects referencing the sample from the requested collection' do
         result = JSON.parse(response.body)
@@ -95,6 +219,83 @@ describe Chemotion::SearchAPI do
         expect(result.dig('samples', 'ids')).to eq [sample_a.id]
         expect(result.dig('screens', 'totalElements')).to eq 1
         expect(result.dig('screens', 'ids')).to eq [screen.id]
+        expect(result.dig('wellplates', 'totalElements')).to eq 1
+        expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/by_ids' do
+    let(:url) { '/api/v1/search/by_ids' }
+    let(:id_params) do
+      {
+        model_name: 'sample',
+        ids: ids,
+        total_elements: 2,
+        with_filter: false,
+      }
+    end
+    let(:params) do
+      {
+        selection: {
+          elementType: :by_ids,
+          id_params: id_params,
+          list_filter_params: {},
+          search_by_method: 'search_by_ids',
+        },
+        collection_id: collection.id,
+        page: 1,
+        page_size: 15,
+        per_page: 15,
+        molecule_sort: true,
+      }
+    end
+
+    context 'when searching ids of search result in samples in correct collection' do
+      let(:ids) { [sample_a.id, sample_b.id] }
+
+      it 'returns the sample and all other objects referencing the sample from the requested collection' do
+        result = JSON.parse(response.body)
+
+        expect(result.dig('samples', 'totalElements')).to eq 2
+        expect(result.dig('samples', 'ids')).to eq [sample_a.id.to_s, sample_b.id.to_s]
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/samples' do
+    let(:url) { '/api/v1/search/samples' }
+
+    context 'when searching a sample in correct collection' do
+      let(:search_term) { 'SampleA' }
+      let(:result) { JSON.parse(response.body) }
+      let(:params) do
+        {
+          selection: {
+            elementType: :samples,
+            name: search_term,
+            search_by_method: :substring,
+          },
+          collection_id: collection.id,
+        }
+      end
+
+      it 'returns the sample' do
+        expect(result.dig('samples', 'totalElements')).to eq 1
+        expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+      end
+
+      it 'returns referenced reaction of sample' do
+        expect(result.dig('reactions', 'totalElements')).to eq 1
+        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+      end
+
+      it 'returns screen reaction of sample' do
+        expect(result.dig('screens', 'totalElements')).to eq 1
+        expect(result.dig('screens', 'ids')).to eq [screen.id]
+      end
+
+      it 'returns wellplate reaction of sample' do
         expect(result.dig('wellplates', 'totalElements')).to eq 1
         expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
       end
@@ -113,3 +314,4 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations

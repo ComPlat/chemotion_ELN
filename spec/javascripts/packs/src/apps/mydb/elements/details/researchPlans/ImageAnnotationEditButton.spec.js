@@ -21,8 +21,8 @@ describe('ImageAnnotationEditButton', () => {
 
       it('button is rendered but disabled', () => {
         expect(wrapper.html())
-          .toEqual('<span class=""><button disabled="" style="pointer-events:none" type="button" '
-           + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil" aria-hidden="true"></i></button></span>');
+          .toEqual('<span><button disabled="" type="button" '
+           + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></button></span>');
       });
     });
 
@@ -32,21 +32,13 @@ describe('ImageAnnotationEditButton', () => {
 
       it('button is rendered and not disabled', () => {
         expect(wrapper.html())
-          .toEqual('<button type="button" class="btn btn-xs btn-warning">'
-           + '<i class="fa fa-pencil" aria-hidden="true"></i></button>');
+          .toEqual('<span><button type="button" class="btn btn-xs btn-warning">'
+           + '<i class="fa fa-pencil-square-o" aria-hidden="true"></i></button></span>');
       });
     });
 
     context('with no attachment', () => {
       const wrapper = shallow(<ImageAnnotationEditButton attachment={null} parent={parent} />);
-
-      it('button is not rendered', () => {
-        expect(wrapper.html()).toEqual(null);
-      });
-    });
-
-    context('with not supported image type(gif)', () => {
-      const wrapper = shallow(<ImageAnnotationEditButton attachment={gifAttachment} parent={parent} />);
 
       it('button is not rendered', () => {
         expect(wrapper.html()).toEqual(null);

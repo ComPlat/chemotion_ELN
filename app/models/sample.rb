@@ -134,6 +134,7 @@ class Sample < ApplicationRecord
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_literature_ids,        ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
   scope :includes_for_list_display, -> { includes(:molecule_name, :tag, :comments, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
@@ -704,7 +705,11 @@ private
 
   def scrub(value)
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
+    # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
+    Loofah.scrub_fragment(value, :strip).to_s
+          .gsub('viewbox', 'viewBox')
+          .gsub('lineargradient', 'linearGradient')
+          .gsub('radialgradient', 'radialGradient')
 #   value
   end
 
