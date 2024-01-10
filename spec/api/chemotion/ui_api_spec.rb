@@ -19,7 +19,7 @@ describe Chemotion::UiAPI do
     describe 'without spectra config' do
       before do
         StubConfig.url = false
-        Rails.configuration.spectra.chemspectra = {}
+        Rails.configuration.spectra.chemspectra = StubConfig
         get '/api/v1/ui/initialize'
       end
 
