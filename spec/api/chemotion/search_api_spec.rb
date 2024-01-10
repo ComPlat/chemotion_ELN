@@ -80,13 +80,14 @@ describe Chemotion::SearchAPI do
   describe 'POST /api/v1/search/all' do
     let(:url) { '/api/v1/search/all' }
     let(:search_method) { 'substring' }
+    let(:search_by_method) { :substring }
     let(:result) { JSON.parse(response.body) }
     let(:params) do
       {
         selection: {
           elementType: :all,
           name: search_term,
-          search_by_method: :substring,
+          search_by_method: search_by_method,
         },
         collection_id: collection.id,
       }
@@ -95,6 +96,7 @@ describe Chemotion::SearchAPI do
     context 'when searching a cell line sample in correct collection by cell line material name' do
       let(:search_term) { 'name-001' }
       let(:search_method) { 'cell_line_material_name' }
+      let(:search_by_method) { :cell_line_material_name }
 
       it 'returns one cell line sample object' do
         expect(result.dig('cell_lines', 'totalElements')).to eq 1
@@ -105,6 +107,7 @@ describe Chemotion::SearchAPI do
     context 'when searching a cell line sample in correct collection by cell line sample name' do
       let(:search_term) { 'cellline-search-example' }
       let(:search_method) { 'cell_line_sample_name' }
+      let(:search_by_method) { :cell_line_sample_name }
 
       it 'returns one cell line sample object' do
         expect(result.dig('cell_lines', 'totalElements')).to eq 1
