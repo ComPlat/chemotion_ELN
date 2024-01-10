@@ -116,8 +116,19 @@ module Chemotion
           cyclic_volta: params[:cyclicvolta],
           jcamp_idx: params[:curve_idx],
           simulatenmr: params[:simulatenmr],
+          data_type_mapping: read_data_type_mapping,
           axes_units: params[:axes_units],
         }
+      end
+
+      def self.read_data_type_mapping
+        file_path = Rails.configuration.path_spectra_data_type
+        begin
+          return File.read(file_path) if File.exist?(file_path)
+        rescue Errno::EACCES
+          error!('read file error', 500)
+        end
+        ''
       end
 
       def self.stub_http(

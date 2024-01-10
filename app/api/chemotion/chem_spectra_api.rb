@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Belong to Chemotion module
-
 # rubocop:disable Metrics/ClassLength
+
+# Belong to Chemotion module
 module Chemotion
   # API for ChemSpectra manipulation
   class ChemSpectraAPI < Grape::API
@@ -81,6 +81,41 @@ module Chemotion
         rescue StandardError
           nil
         end
+      end
+
+      def compare_data_type_mapping(response) # rubocop:disable Metrics/AbcSize
+        default_data_types = JSON.parse(response.body)
+        file_path = Rails.configuration.path_spectra_data_type
+
+        current_data_types = {}
+        current_data_types = JSON.parse(File.read(file_path)) if File.exist?(file_path)
+
+        keys_to_check = default_data_types['datatypes'].keys
+        result = {
+          'default_data_types' => {},
+          'current_data_types' => {},
+        }
+        keys_to_check.each do |key|
+          current_values = current_data_types['datatypes'][key] || [] if current_data_types != {}
+          default_values = default_data_types['datatypes'][key] || []
+
+          if current_values.nil?
+            current_data_types = default_data_types
+            result['current_data_types'][key] = default_values
+          else
+            merged_values = (current_values | default_values).uniq
+            current_data_types['datatypes'][key] = merged_values
+            result['current_data_types'][key] = merged_values
+          end
+
+          result['default_data_types'][key] = default_values
+        end
+        save_data_types(file_path, current_data_types)
+        result
+      end
+
+      def save_data_types(file_path, current_data_types)
+        File.write(file_path, JSON.pretty_generate(current_data_types))
       end
     end
 
@@ -245,6 +280,25 @@ module Chemotion
 
           content_type('application/json')
           { smi: m[:smiles], mass: m[:mass], svg: m[:svg], status: true }
+        end
+      end
+
+      resource :spectra_layouts do
+        desc 'Get all spectra layouts and data types'
+        get do
+          url = Rails.configuration.spectra.chemspectra.url
+          if url
+            api_endpoint = "#{url}/api/v1/chemspectra/spectra_layouts"
+            response = HTTParty.get(api_endpoint)
+            case response.code
+            when 404
+              error_message = 'API endpoint not found'
+              error!(error_message, 404)
+            when 200
+              data_types = compare_data_type_mapping(response)
+              data_types
+            end
+          end
         end
       end
 
