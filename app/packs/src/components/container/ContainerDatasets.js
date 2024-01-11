@@ -14,7 +14,6 @@ export default class ContainerDatasets extends Component {
     super(props);
     const { container } = props;
     this.state = {
-      originalContainer: JSON.parse(JSON.stringify(container)),
       container,
       modal: {
         show: false,
@@ -27,7 +26,6 @@ export default class ContainerDatasets extends Component {
     if (this.props.container !== prevProps.container) {
       this.setState({
         container: this.props.container,
-        originalContainer: JSON.parse(JSON.stringify(this.props.container)),
       });
     }
   }
