@@ -55,7 +55,6 @@ export default class ContainerDatasetModalContent extends Component {
         BagitZip: [],
         Combined: [],
         Processed: {},
-        Attachments: []
       }
     };
     this.timeout = 6e2; // 600ms timeout for input typing
@@ -268,15 +267,10 @@ export default class ContainerDatasetModalContent extends Component {
       BagitZip: [],
       Combined: [],
       Processed: {},
-      Attachments: []
     };
 
     datasetContainer.attachments.forEach((attachment) => {
-      if (attachment.aasm_state === 'non_jcamp'
-      && (attachment.content_type === 'application/octet-stream'
-      || attachment.content_type === 'application/zip')) {
-        groups.Original.push(attachment);
-      } else if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
+      if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
         groups.BagitZip.push(attachment);
       } else if (attachment.aasm_state === 'image' && attachment.filename.includes('.combined')) {
         groups.Combined.push(attachment);
@@ -287,7 +281,7 @@ export default class ContainerDatasetModalContent extends Component {
         }
         groups.Processed[baseName].push(attachment);
       } else {
-        groups.Attachments.push(attachment);
+        groups.Original.push(attachment);
       }
     });
 
@@ -601,11 +595,10 @@ export default class ContainerDatasetModalContent extends Component {
           <div style={{ marginBottom: '20px' }}>
             {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
             {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
-            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
               .map((groupName) => attachmentGroups.Processed[groupName].length > 0
             && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
-            {attachmentGroups.Attachments.length > 0 && renderGroup(attachmentGroups.Attachments, 'Attachments')}
+            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
           </div>
         )}
         <HyperLinksSection
