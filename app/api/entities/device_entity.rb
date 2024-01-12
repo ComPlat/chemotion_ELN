@@ -14,6 +14,7 @@ module Entities
     expose :novnc_settings
     expose :datacollector_config
     expose :users, as: 'users', using: Entities::UserSimpleEntity
+    expose :people, as: 'people', using: Entities::UserSimpleEntity
     expose :groups, as: 'groups', using: Entities::UserSimpleEntity
     expose :device_metadata
   end

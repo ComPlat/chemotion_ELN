@@ -313,35 +313,6 @@ export default class AdminFetcher {
       });
   }
 
-  static fetchDevices() {
-    return fetch(`/api/v1/admin/devices/list`, {
-      credentials: 'same-origin',
-    })
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
-        console.log(errorMessage);
-      });
-  }
-
-  static fetchDevicessByName(name, limit = 5) {
-    return fetch(
-      `/api/v1/admin/devices/byname.json?${new URLSearchParams({
-        name,
-        limit,
-      })}`,
-      {
-        credentials: 'same-origin',
-        method: 'GET',
-      }
-    )
-      .then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => {
-        console.log(errorMessage);
-      });
-  }
-
   static fetchGroupsDevices(type) {
     return fetch(`/api/v1/admin/group_device/list?type=${type}`, {
       credentials: 'same-origin',
@@ -366,6 +337,23 @@ export default class AdminFetcher {
       .then((response) => response.json())
       .then((json) => json)
       .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static deleteGroupRelation(params = {}) {
+    return fetch(`/api/v1/admin/group_device/delete_relation/${params.id}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch(errorMessage => {
         console.log(errorMessage);
       });
   }
