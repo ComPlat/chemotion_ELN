@@ -38,14 +38,15 @@ export default class ContextActions extends React.Component {
 
   isCreateDisabled() {
     const { currentCollection } = this.state.uiState;
-    return !currentCollection?.canCreateElement();
+
+    return !currentCollection?.canCreateElement;
   }
 
   isDisabled() {
     const { currentCollection } = this.state.uiState;
 
     if (currentCollection) {
-      if (currentCollection.allCollection()
+      if (currentCollection.allCollection
         || (currentCollection.is_shared == true && currentCollection.permission_level < PermissionConst.ImportElements)) { return true; }
     }
 
