@@ -3,6 +3,7 @@ import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, Fo
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
 
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
@@ -95,7 +96,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   fetchDevices() {
-    AdminFetcher.fetchDevices()
+    AdminDeviceFetcher.fetchDevices()
       .then((result) => {
         this.setState({
           devices: result.devices
@@ -174,7 +175,7 @@ export default class GroupsDevices extends React.Component {
     }
 
     if (actionType == 'Device') {
-      return AdminFetcher.fetchDevicessByName(input)
+      return AdminDeviceFetcher.fetchDevicesByName(input)
         .then((res) => selectDeviceOptionFormater({ data: res, withType: false }))
         .catch((errorMessage) => {
           console.log(errorMessage);

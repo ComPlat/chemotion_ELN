@@ -6,6 +6,7 @@ import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import NovncConfigContainer from 'src/apps/admin/NovncConfigContainer';
 
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
@@ -250,7 +251,7 @@ export default class NovncSettings extends Component {
   }
 
   handleConfigModalClose() {
-    AdminFetcher.fetchDevices()
+    AdminDeviceFetcher.fetchDevices()
       .then((result) => {
         this.setState({
           devices: result.devices,
@@ -260,7 +261,7 @@ export default class NovncSettings extends Component {
   }
 
   handleDeviceListFetch() {
-    AdminFetcher.fetchDevices()
+    AdminDeviceFetcher.fetchDevices()
       .then((result) => {
         this.setState({
           devices: result.devices,

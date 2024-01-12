@@ -15,12 +15,27 @@ const filterCurrentUser = (data, currentUserId = null) => {
 const selectUserOptionFormater = ({ data = {}, withType = false, currentUserId = null }) => {
   const users = filterCurrentUser(data, currentUserId);
   const usersEntries = (users).map((user) => ({
+    id: user.id,
     value: user.id,
     name: user.name,
+    initials: user.initials,
     label: buildLabel(user, withType),
   }));
   return { options: usersEntries };
 };
+
+const selectedUserFormater = (users) => {
+  if (users.length < 1) { return { options: [] }; }
+
+  const usersEntries = (users).map((user) => ({
+    id: user.id,
+    value: user.id,
+    initials: user.initials,
+    name: user.name,
+    label: buildLabel(user, false),
+  }));
+  return { options: usersEntries };
+}
 
 const filterCurrentDevice = (data, currentDeviceId = null) => {
   const { devices } = data;
@@ -39,5 +54,5 @@ const selectDeviceOptionFormater = ({ data = {}, withType = false, currentDevice
 };
 
 export {
-  selectUserOptionFormater, selectDeviceOptionFormater
+  selectUserOptionFormater, selectDeviceOptionFormater, selectedUserFormater
 };

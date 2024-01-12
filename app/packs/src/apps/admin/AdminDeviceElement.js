@@ -1,6 +1,7 @@
 import React from 'react';
 import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table, Panel } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import DeleteGroupDeviceButton from 'src/apps/admin/DeleteGroupDeviceButton';
 
 export default class AdminDeviceElement extends React.Component {
@@ -22,7 +23,7 @@ export default class AdminDeviceElement extends React.Component {
   }
 
   fetch(type) {
-    AdminFetcher.fetchDevices(type)
+    AdminDeviceFetcher.fetchDevices(type)
       .then((result) => {
         this.setState({ devices: result.devices });
       });
