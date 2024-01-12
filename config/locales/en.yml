@@ -45,9 +45,10 @@ en:
 
         device:
           attributes:
+            name:
+              blank: Can't be blank
             name_abbreviation:
-              taken: Is already in used
-              too_short: "Has to be #{min} to #{max} characters long"
-              invalid: "#{message}"
+              in_use: Is already in use
+              wrong_length: "Has to be %{min} to %{max} characters long"
               reserved: Is reserved, please change
 

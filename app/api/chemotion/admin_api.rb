@@ -221,28 +221,6 @@ module Chemotion
         end
       end
 
-      resource :devices do
-        namespace :list do
-          desc 'fetch devices'
-          get do
-            devices = Device.all.order('first_name, last_name')
-            present devices, with: Entities::DeviceEntity, root: 'devices'
-          end
-        end
-
-        desc 'Find top (5) matched device by name'
-        params do
-          requires :name, type: String, desc: 'device name'
-          optional :limit, type: Integer, default: 5
-        end
-        get 'byname' do
-          return { devices: [] } if params[:name].blank?
-
-          devices = Device.by_name(params[:name]).limit(params[:limit])
-          present devices, with: Entities::DeviceEntity, root: 'devices'
-        end
-      end
-
       resource :group_device do
         namespace :list do
           desc 'fetch groups'
