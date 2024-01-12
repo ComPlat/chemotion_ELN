@@ -118,6 +118,15 @@ export default class CollectionSubtree extends React.Component {
     return (<div />);
   }
 
+  numbering(root) {
+    if (root?.children?.length > 0) {
+      return (
+        <span className='badge'>{root.children.length}</span>
+      );
+    }
+    return (<div />);
+  }
+
   takeOwnershipButton() {
     const root = this.state.root;
     const acls = root.acl;
@@ -199,7 +208,8 @@ export default class CollectionSubtree extends React.Component {
           {this.expandButton()}
           <SharedByIcon collection={root} />
           {gated}
-          {label}
+          {label} &nbsp;
+          {this.numbering(root)}
         </div>
         <ul style={style}>
           {this.subtrees()}

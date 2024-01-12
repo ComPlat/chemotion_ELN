@@ -49,8 +49,8 @@ class ElementDetailLevelCalculator
   end
 
   # All collections containing the element that were synced to the current user
-  def sync_collections_with_element
-    @sync_collections_with_element ||=
+  def collection_acl_with_element
+    @collection_acl_with_element ||=
      CollectionAcl.where(
         user_id: user_ids,
         collection_id: element.collections.ids,
@@ -65,10 +65,10 @@ class ElementDetailLevelCalculator
                                        .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 
-  # Returns an array of Hashes. One hash per collection from sync_collections_with_element.
+  # Returns an array of Hashes. One hash per collection from collection_acl_with_element.
   # Hash contains the all detail level attributes and their respective values
   def sync_collection_detail_levels
-    @sync_collection_detail_levels ||= sync_collections_with_element
+    @sync_collection_detail_levels ||= collection_acl_with_element
                                        .pluck(*DETAIL_LEVEL_FIELDS)
                                        .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
