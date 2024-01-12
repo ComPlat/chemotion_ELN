@@ -5,18 +5,15 @@ class Device < ApplicationRecord
   # devise :database_authenticatable, :validatable
 
   has_many :users_devices, dependent: :destroy
-  has_many :users, class_name: 'User', through: :users_devices
-
-  has_many :users_groups, through: :users
-  has_many :groups, through: :users_groups
-
-  # has_many :users_admins, through: :users
-  # has_many :admins, through: :users_admins
+  has_many :users, through: :users_devices
+  has_many :people, through: :users_devices, source: :user, class_name: 'Person'
+  has_many :groups, through: :users_devices, source: :user, class_name: 'Group'
 
   has_one :device_metadata, dependent: :destroy
 
-  validates :first_name, :last_name, presence: true
-  validates :name_abbreviation, uniqueness: true
+  # validates :first_name, :last_name, presence: true
+  validates :name, presence: true
+  validate :unique_name_abbreviation
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
@@ -47,9 +44,17 @@ class Device < ApplicationRecord
   # end
 
   def create_email_and_password
-    self.name = "#{first_name} #{last_name}"
-    self.encrypted_password = Devise.friendly_token.first(8)
+    # self.name = "#{first_name} #{last_name}"
+    self.encrypted_password = User.new(password: Devise.friendly_token.first(8)).encrypted_password
     # self.email = format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
+  end
+
+  def unique_name_abbreviation
+    devices = Device.unscoped.where('LOWER(name_abbreviation) = ?',
+                                    Device.sanitize_sql_like(name_abbreviation.downcase).to_s)
+    return if devices.blank? || (devices.size == 1 && devices.first.id == id)
+
+    errors.add(:name_abbreviation, :in_use)
   end
 
   def name_abbr_config
@@ -73,7 +78,7 @@ class Device < ApplicationRecord
 
     return if name_abbreviation&.match?(format_abbr)
 
-    errors.add(:name_abbreviation, :invalid, message: format_err_msg)
+    errors.add(:name_abbreviation, message: format_err_msg)
   end
 
   def name_abbreviation_length
@@ -82,7 +87,7 @@ class Device < ApplicationRecord
 
     return unless name_abbreviation.blank? || !name_abbreviation.length.between?(min_val, max_val)
 
-    errors.add(:name_abbreviation, :wrong_length, min: min_val, max: max_val)
+    errors.add(:name_abbreviation, :wrong_length, { min: min_val, max: max_val })
   end
 
   def mail_checker
