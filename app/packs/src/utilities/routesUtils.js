@@ -1,6 +1,5 @@
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';

@@ -54,7 +54,7 @@ export default class CollectionTabs extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
+    const children = state.myCollectionTree && state.myCollectionTree.length > 0 ? state.myCollectionTree : [{}];
 
     this.setState({
       tree: {

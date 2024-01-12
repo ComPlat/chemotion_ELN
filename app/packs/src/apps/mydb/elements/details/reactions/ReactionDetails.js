@@ -269,7 +269,7 @@ export default class ReactionDetails extends Component {
     const copyBtn = (reaction.can_copy === true && !reaction.isNew) ? (
       <CopyElementModal
         element={reaction}
-        defCol={currentCollection?.defCol()}
+        defCol={currentCollection?.defCol}
       />
     ) : null;
 

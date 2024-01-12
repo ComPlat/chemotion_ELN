@@ -6,7 +6,7 @@ import UserInfos from 'src/apps/mydb/collections/UserInfos';
 
 const SharedByIcon = ({ collection }) => {
   let collectionAcls = collection?.acl;
-  if (collectionAcls === undefined) return;
+  if (collectionAcls === undefined) return null;
 
   let sharedUsers = [];
   if (collection.ownedByMe()) {
@@ -15,12 +15,13 @@ const SharedByIcon = ({ collection }) => {
     sharedUsers.push(collection.user);
   }
 
-  if (sharedUsers && sharedUsers.length > 0)
+  if (sharedUsers && sharedUsers.length > 0) {
     return (
       <OverlayTrigger placement="bottom" overlay={UserInfos({ users: sharedUsers})}>
         <i className="fa fa-share-alt" style={{ float: "right", marginTop: '2px' }}></i>
       </OverlayTrigger>
     );
+  }
 
   return null;
 };
