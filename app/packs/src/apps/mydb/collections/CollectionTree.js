@@ -153,6 +153,7 @@ export default class CollectionTree extends React.Component {
              onClick={() => this.setState({ sharedToCollectionVisible: !sharedToCollectionVisible })}>
           <i className="fa fa-share-alt" />&nbsp;&nbsp;
           Shared by me &nbsp;
+          {this.collectionCount(sharedLabelledRoots)}
         </div>
       </div>
     )
@@ -181,6 +182,7 @@ export default class CollectionTree extends React.Component {
         >
           <i className="fa fa-share-alt" />&nbsp;&nbsp;
           Shared with me &nbsp;
+          {this.collectionCount(sharedLabelledRoots)}
         </div>
       </div>
     )
@@ -245,6 +247,14 @@ export default class CollectionTree extends React.Component {
       return;
     }
     AviatorNavigation({});
+  }
+
+  collectionCount(collection) {
+    if (collection.length > 0) {
+      return (
+        <span className='badge'>{collection.length}</span>
+      )
+    }
   }
 
   render() {
