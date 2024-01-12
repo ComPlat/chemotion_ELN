@@ -1,0 +1,108 @@
+[dialogas=draggable-modal].modal {
+  width: fit-content;
+  height: fit-content;
+  top: calc(100% - 95vh);
+  left: calc((100% - 90vw) / 2);
+}
+
+[dialogas=draggable-modal] .modal-dialog {
+  width: 90vw !important;
+  position: relative !important;
+  top: 0;
+  left: 0;
+  transform: none !important;
+  margin: 5px 20px 22px 15px;
+}
+
+[dialogas=draggable-modal] .modal-content {
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  height: fit-content;
+}
+
+[dialogas=draggable-modal] .modal-header {
+  background: #ddd;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  padding: 10px 15px 10px 0;
+}
+
+[dialogas=draggable-modal] .modal-header .close {
+  opacity: 0.4;
+  font-size: 25px;
+  line-height: 1.3;
+}
+
+[dialogas=draggable-modal] .modal-header .move {
+  margin-right: 15px;
+}
+
+[dialogas=draggable-modal] .modal-header .modal-title {
+  padding: 5px 0;
+}
+
+[dialogas=draggable-modal] .modal-header .window-minimize {
+  color: rgba(0, 0, 0, 0.4);
+  float: right;
+  margin-top: -62px;
+  margin-right: 15px;
+}
+
+[dialogas=draggable-modal] .modal-header .window-minimize:hover {
+  cursor: pointer;
+}
+
+[dialogas=draggable-modal] .modal-body {
+  padding: 0;
+}
+
+@media screen and (min-width: 768px) {
+  [dialogas=draggable-modal] .modal-header .window-minimize {
+    margin-top: -22px;
+  }
+}
+
+.draggable-modal-form-container {
+  display: block;
+}
+
+.draggable-modal-form-container.minimized {
+  display: none;
+}
+
+.draggable-modal-form-fields {
+  padding: 20px 15px;
+  height: 71.5vh;
+  position: relative;
+}
+
+.draggable-modal-form-fields .css-yk16xz-control, .form-fields .css-1pahdxg-control {
+  height: 34px;
+  min-height: 34px;
+}
+
+.draggable-modal-form-fields .device-multi-select .css-yk16xz-control {
+  height: auto;
+}
+
+.draggable-modal-form-fields .css-g1d714-ValueContainer {
+  position: unset;
+}
+
+.draggable-modal-form-fields div.css-1pahdxg-control {
+  z-index: 10000;
+}
+.draggable-modal-form-fields div.css-26l3qy-menu {
+  z-index: 10002;
+  margin-top: 0;
+}
+
+.draggable-modal-form-buttons button:last-child {
+  margin-right: 20px;
+}
+
+.draggable-modal-scrollable-content {
+  clear: both;
+  overflow-y: auto;
+  height: calc(69vh - 85px);
+  margin-bottom: 39px;
+}

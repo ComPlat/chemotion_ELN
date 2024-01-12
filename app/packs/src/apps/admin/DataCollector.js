@@ -22,6 +22,7 @@ import uuid from 'uuid';
 import Clipboard from 'clipboard';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 
 const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
 const tipEditConfig = <Tooltip id="edit_tooltip">edit config</Tooltip>;
@@ -495,7 +496,7 @@ export default class DataCollector extends Component {
   }
 
   handleConfigModalClose() {
-    AdminFetcher.fetchDevices()
+    AdminDeviceFetcher.fetchDevices()
       .then((result) => {
         this.setState({
           devices: result.devices,
@@ -505,7 +506,7 @@ export default class DataCollector extends Component {
   }
 
   handleDeviceListFetch() {
-    AdminFetcher.fetchDevices()
+    AdminDeviceFetcher.fetchDevices()
       .then((result) => {
         this.setState({
           devices: result.devices,
