@@ -120,25 +120,24 @@ export default class ContainerDatasetModalContent extends Component {
   }
 
   handleFileDrop(files) {
-    const { datasetContainer } = this.state;
-    const attachments = files.map((f) => Attachment.fromFile(f));
-    const firstAttach = datasetContainer.attachments.length === 0;
-    datasetContainer.attachments = datasetContainer.attachments.concat(attachments);
-    if (firstAttach) {
-      let attachName = attachments[0].filename;
-      const splitted = attachName.split('.');
-      if (splitted.length > 1) {
-        splitted.splice(-1, 1);
-        attachName = splitted.join('.');
-      }
-      datasetContainer.name = attachName;
-    }
+    this.setState((prevState) => {
+      const newAttachments = files.map((f) => {
+        const newAttachment = Attachment.fromFile(f);
+        newAttachment.is_pending = true;
+        return newAttachment;
+      });
 
-    this.setState({
-      datasetContainer,
-      filteredAttachments: [...datasetContainer.attachments]
+      const updatedAttachments = [...prevState.datasetContainer.attachments, ...newAttachments];
+      const updatedDatasetContainer = { ...prevState.datasetContainer, attachments: updatedAttachments };
+
+      return {
+        datasetContainer: updatedDatasetContainer,
+        filteredAttachments: updatedAttachments,
+        attachmentGroups: this.classifyAttachments(updatedAttachments),
+      };
     }, () => {
       this.props.onChange({ ...this.state.datasetContainer });
+      this.createAttachmentPreviews();
     });
   }
 
@@ -260,16 +259,22 @@ export default class ContainerDatasetModalContent extends Component {
     this.setState({ attachmentGroups: filteredGroups });
   }
 
-  classifyAttachments() {
-    const { datasetContainer } = this.props;
+  // eslint-disable-next-line class-methods-use-this
+  classifyAttachments(attachments) {
     const groups = {
       Original: [],
       BagitZip: [],
       Combined: [],
       Processed: {},
+      Pending: [],
     };
 
-    datasetContainer.attachments.forEach((attachment) => {
+    attachments.forEach((attachment) => {
+      if (attachment.is_pending) {
+        groups.Pending.push(attachment);
+        return;
+      }
+
       if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
         groups.BagitZip.push(attachment);
       } else if (attachment.aasm_state === 'image' && attachment.filename.includes('.combined')) {
@@ -593,6 +598,8 @@ export default class ContainerDatasetModalContent extends Component {
           </div>
         ) : (
           <div style={{ marginBottom: '20px' }}>
+            {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
+            && renderGroup(attachmentGroups.Pending, 'Pending:')}
             {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
             {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
