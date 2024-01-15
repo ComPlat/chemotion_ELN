@@ -25,7 +25,9 @@ class CollectionsSample < ApplicationRecord
 
   def self.remove_in_collection(element_ids, collection_ids)
     # Remove from collections
-    delete_in_collection_with_filter(element_ids, collection_ids)
+    error_message = delete_in_collection_with_filter(element_ids, collection_ids)
+    return error_message unless error_message.nil?
+
     # update sample tag with collection info
     update_tag_by_element_ids(element_ids)
   end
@@ -36,23 +38,35 @@ class CollectionsSample < ApplicationRecord
       next unless cid.is_a?(Integer)
       # TODO: sql function
       # from a collection, select sample_ids with neither wellplate nor reaction associated
-      ids = CollectionsSample.joins(
-        <<~SQL
-          left join reactions_samples rs
-          on rs.sample_id = collections_samples.sample_id and rs.deleted_at isnull
-          left join collections_reactions cr
-          on cr.collection_id = #{cid} and cr.reaction_id = rs.reaction_id and cr.deleted_at is null
-          left join wells w
-          on w.sample_id = collections_samples.sample_id and w.deleted_at isnull
-          left join collections_wellplates cw
-          on cw.collection_id = #{cid} and cw.wellplate_id = w.wellplate_id and cw.deleted_at is null
-        SQL
-      ).where(
-        "collections_samples.collection_id = #{cid} and collections_samples.sample_id in (?) and cw.id isnull and cr.id isnull",
-        sample_ids
-      ).pluck(:sample_id)
+      sample_reaction_ids = fetch_sample_ids('reaction', 'reactions_samples', cid, sample_ids)
+      message = generate_error_message('reaction') if sample_reaction_ids.empty?
+      return message unless message.empty?
+
+      sample_wellplate_ids = fetch_sample_ids('wellplate', 'wells', cid, sample_ids)
+      message = generate_error_message('wellplate') if sample_wellplate_ids.empty?
+      return message unless message.empty?
+
+      ids = sample_wellplate_ids + sample_reaction_ids
       delete_in_collection(ids, cid)
     end
+  end
+
+  def self.fetch_sample_ids(elementKlass, element, cid, sample_ids)
+    CollectionsSample.joins(
+      <<~SQL
+        left join #{element} el
+        on el.sample_id = collections_samples.sample_id and el.deleted_at is null
+        left join collections_#{elementKlass}s c
+        on c.collection_id = #{cid} and c.#{elementKlass}_id = el.#{elementKlass}_id and c.deleted_at is null
+      SQL
+      ).where(
+        "collections_samples.collection_id = #{cid} and collections_samples.sample_id in (?) and c.id is null",
+        sample_ids
+      ).pluck(:sample_id)
+  end
+
+  def self.generate_error_message element
+    "Sample cannot be deleted due to associated #{element}."
   end
 
   def self.create_in_collection(element_ids, collection_ids)

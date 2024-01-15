@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { downloadBlob } from 'src/utilities/FetcherHelper';
+import { notification } from 'src/apps/generic/Utils';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {
@@ -171,7 +172,16 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
       })
-    }).then(response => response)
+    }).then(response => response.json())
+      .then(response => {
+        if (response.error) {
+          notification({
+            title: 'Delete Error',
+            lvl: 'error',
+            msg: response.error,
+          });
+        }
+      })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
