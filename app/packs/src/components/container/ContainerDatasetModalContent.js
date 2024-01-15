@@ -7,7 +7,6 @@ import {
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ImageModal from 'src/components/common/ImageModal';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import debounce from 'es6-promise-debounce';
 import {
@@ -32,7 +31,8 @@ import {
   editButton,
   sortingAndFilteringUI,
   formatFileSize,
-  moveBackButton
+  moveBackButton,
+  attachmentThumbnail
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
@@ -470,29 +470,7 @@ export default class ContainerDatasetModalContent extends Component {
 
     return (
       <div className="attachment-row" key={attachment.id}>
-        <div className="attachment-row-image">
-          <ImageModal
-            imageStyle={{
-              width: '45px',
-              height: '45px',
-              borderRadius: '5px',
-              objectFit: 'cover',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-            }}
-            hasPop={false}
-            alt="thumbnail"
-            previewObject={{
-              src: attachment.preview,
-            }}
-            popObject={{
-              title: attachment.filename,
-              src: attachment.preview,
-              fetchNeeded: false,
-              fetchId: attachment.id,
-            }}
-          />
-        </div>
+        {attachmentThumbnail(attachment)}
         <div className="attachment-row-text" title={attachment.filename}>
           {attachment.is_deleted ? (
             <strike>{attachment.filename}</strike>
@@ -599,7 +577,7 @@ export default class ContainerDatasetModalContent extends Component {
         ) : (
           <div style={{ marginBottom: '20px' }}>
             {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
-            && renderGroup(attachmentGroups.Pending, 'Pending:')}
+            && renderGroup(attachmentGroups.Pending, 'Pending')}
             {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
             {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
             {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
