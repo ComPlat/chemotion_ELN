@@ -409,7 +409,7 @@ export default class GenericElDetails extends Component {
         : null;
     const copyBtn =
       genericEl.can_copy && !genericEl.isNew ? (
-        <CopyElementModal element={genericEl} defCol={defCol} />
+        <CopyElementModal element={genericEl} defCol={currentCollection?.defCol} />
       ) : null;
 
     const saveBtnDisplay = genericEl.changed && genericEl.can_update ? '' : 'none';
