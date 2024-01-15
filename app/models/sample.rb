@@ -213,7 +213,7 @@ class Sample < ApplicationRecord
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
 
-  has_many :sync_collections_users, through: :collections
+  # has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
   has_ancestry orphan_strategy: :adopt

@@ -9,13 +9,23 @@ module CollectionHelpers
     current_user.acl_collection_by_id(id)
   end
 
+  def check_permission_level_compatibility(collection, permission_level)
+    collection_id = collection.id
+    collection_permission_level =
+      CollectionAcl.find_by(collection_id: collection_id, user_id: current_user.id)&.permission_level
+    permission_level && collection_permission_level > permission_level
+  end
   # return the collection if current_user is associated to it (owned) or if acl exists
   # return nil if no association
   def fetch_collections_w_current_user(collection_id, permission_level = nil)
     collections = Collection.owned_by(user_ids).where(id: collection_id)
     return collections if collections.present?
 
-    Collection.shared_with(user_ids, permission_level).where(id: collection_id)
+    collections = Collection.shared_with(user_ids).where(id: collection_id)
+    return collections unless permission_level
+    return unless check_permission_level_compatibility(collections&.first, permission_level)
+
+    collections
   end
 
   def fetch_collection_w_current_user(collection_id, permission_level = nil)
@@ -30,27 +40,23 @@ module CollectionHelpers
   rescue ActiveRecord::RecordNotUnique
   end
 
-  # desc: given an id of coll or sync coll return detail levels as array
-  def detail_level_for_collection(id, is_sync = false)
-    dl = ((is_sync && SyncCollectionsUser) || Collection).find_by(
-      id: id.to_i, user_id: user_ids,
-    )&.slice(
-      :permission_level,
-      :sample_detail_level, :reaction_detail_level,
-      :wellplate_detail_level, :screen_detail_level,
-      :researchplan_detail_level, :element_detail_level,
-      :celllinesample_detail_level
-    )&.symbolize_keys
-    {
-      permission_level: 0,
-      sample_detail_level: 0,
-      reaction_detail_level: 0,
-      wellplate_detail_level: 0,
-      screen_detail_level: 0,
-      researchplan_detail_level: 0,
-      element_detail_level: 0,
-      celllinesample_detail_level: 0,
-    }.merge(dl || {})
+  # desc: associate an element to 'All' collection of current_user
+  def add_element_to_all_collection_of_current_user(element)
+    all_collection = Collection.get_all_collection_for_user(current_user.id)
+    add_element_to_a_collection(element, all_collection)
+  end
+
+  # desc: associate an element to a collection and the 'All' collection of the collection owner
+  # or to the current_user All collection if no collection is provided
+  def add_element_to_collection_n_all(element, collection)
+    unless collection
+      add_element_to_all_collection_of_current_user(element)
+      return
+    end
+    add_element_to_a_collection(element, collection)
+    # get the All collection of the collection owner
+    all_collection = Collection.get_all_collection_for_user(collection.user_id)
+    add_element_to_a_collection(element, all_collection)
   end
 
   # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
@@ -100,6 +106,35 @@ module CollectionHelpers
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:celllinesample_detail_level]
+  end
+
+  def create_acl_collection(user_id, collection_id, params)
+    currentCollection = params['ui_state']['currentCollection']
+    label = params[:newCollection] || currentCollection['label']
+
+    c_acl = CollectionAcl.find_or_create_by(
+      user_id: user_id,
+      collection_id: collection_id
+    )
+    c_acl.update(
+      label: label,
+      permission_level: currentCollection['permission_level'],
+      sample_detail_level: currentCollection['sample_detail_level'],
+      reaction_detail_level: currentCollection['reaction_detail_level'],
+      wellplate_detail_level: currentCollection['wellplate_detail_level'],
+      screen_detail_level: currentCollection['screen_detail_level'],
+    )
+  end
+
+  def create_classes_of_element(element)
+    if element == 'cell_line'
+      element_klass = CelllineSample
+      collections_element_klass = CollectionsCellline
+    else
+      collections_element_klass = "collections_#{element}".classify.constantize
+      element_klass = element.classify.constantize
+    end
+    [element_klass, collections_element_klass]
   end
 
   def element_class_ids(element, join_table, from_collection_id, ui_state)
