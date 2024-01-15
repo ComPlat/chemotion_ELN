@@ -8,7 +8,7 @@ require 'webmock/rspec'
 RSpec.describe Chemotion::Jcamp do
   WebMock.allow_net_connect!
 
-  Rails.configuration.spectra.chemspectra.url = 'https://example.com:80'
+  Rails.configuration.spectra.chemspectra.url = 'http://example.com'
   headers = { 'Content-Type' => /multipart\/form-data/ } # rubocop:disable Style/RegexpLiteral
 
   match_multipart_body = ->(request) do # rubocop:disable Style/Lambda
@@ -17,7 +17,7 @@ RSpec.describe Chemotion::Jcamp do
   end
 
   describe Chemotion::Jcamp::CreateImg do
-    url = 'https://example.com:80/zip_image'
+    url = 'http://example.com/zip_image'
     file_path = 'spec/fixtures/upload.txt'
 
     it 'stubs peak in image request' do
@@ -45,7 +45,7 @@ RSpec.describe Chemotion::Jcamp do
   end
 
   describe Chemotion::Jcamp::CombineImg do
-    url = 'https://example.com:80/combine_images'
+    url = 'http://example.com/combine_images'
     file_path = 'spec/fixtures/upload.txt'
 
     it 'stubs combine image request' do

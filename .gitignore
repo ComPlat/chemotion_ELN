@@ -95,6 +95,8 @@
 !/public/ontologies/rxno.default.json
 !/public/ontologies/rxno.default.edited.json
 
+/public/data_type.json
+
 /uploads/*
 !/public/attachments/.keep
 
