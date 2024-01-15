@@ -175,6 +175,7 @@ module Chemotion
             error!('401 Cannot remove elements from  \'All\' root collection', 401)
           end
 
+          message = ''
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state].delete(element)
             next if ui_state.blank?
@@ -185,18 +186,21 @@ module Chemotion
             collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
             collections_element_class.remove_in_collection(ids, from_collection.id)
           end
+          if message.blank?
+            Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
+              ui_state = params[:ui_state][klass.name]
+              next if ui_state.blank?
 
-          Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
-            ui_state = params[:ui_state][klass.name]
-            next if ui_state.blank?
+              ids = klass.elements.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+              next if ids.empty?
 
-            ids = klass.elements.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            next if ids.empty?
+              Labimotion::CollectionsElement.remove_in_collection(ids, from_collection.id)
+            end
 
-            Labimotion::CollectionsElement.remove_in_collection(ids, from_collection.id)
+            status 204
+          else
+            { error: message }
           end
-
-          status 204
         end
       end
 
