@@ -202,7 +202,7 @@ module Chemotion
             join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
           end
 
-          if message.blank?
+          if message.is_a?(Array)
             Labimotion::ElementKlass.find_each do |klass|
               ui_state = params[:ui_state][klass.name]
               next unless ui_state
@@ -217,7 +217,7 @@ module Chemotion
             end
             status 204
           else
-            { error: message }
+            message
           end
         end
       end
