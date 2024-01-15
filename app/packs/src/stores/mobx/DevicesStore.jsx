@@ -13,7 +13,17 @@ const newDevice = {
   visibility: false,
   people: [],
   groups: [],
-  datacollector_config: {},
+  datacollector_config: {
+    method: '',
+    method_params: {
+      dir: '',
+      host: '',
+      user: '',
+      authen: 'password',
+      number_of_files: '1',
+      key_name: '',
+    },
+  },
   novnc_settings: {},
   device_metadata: {},
   valid_name: null,
@@ -97,6 +107,15 @@ export const DevicesStore = types
     changeDevice(field, value) {
       let device = { ...self.device };
       device[field] = value;
+      self.setDevice(device);
+    },
+    changeDeviceDataCollectorConfig(field, value, method_params) {
+      let device = { ...self.device };
+      if (method_params) {
+        device.datacollector_config.method_params[field] = value;
+      } else {
+        device.datacollector_config[field] = value;
+      }
       self.setDevice(device);
     },
     errorMessage(errors) {

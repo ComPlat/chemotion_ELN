@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { Panel, Table, ButtonGroup, Button, Tooltip, OverlayTrigger, Popover } from 'react-bootstrap';
 import DeviceModal from './DeviceModal';
 import { observer } from 'mobx-react';
