@@ -62,3 +62,23 @@
 #device-form-tabs .nav-tabs li.disabled a {
   color: #ccc;
 }
+
+.device-datacollector-directory-list {
+  margin: 5px 0;
+  padding: 5px;
+  border: thin dashed darkred;
+}
+
+.device-datacollector-directory-list h6 {
+  margin: unset;
+}
+
+.device-datacollector-directory-list .input-group .form-control {
+  background-color: unset;
+  border: unset;
+  box-shadow: none;
+}
+
+.device-datacollector-directory-list .form-group {
+  margin-bottom: unset;
+}

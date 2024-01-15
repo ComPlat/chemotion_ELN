@@ -3,6 +3,7 @@ import { Modal, Button, ButtonToolbar, Alert, Tabs, Tab } from 'react-bootstrap'
 import Draggable from "react-draggable";
 import DevicePropertiesTab from './DevicePropertiesTab';
 import DeviceUserGroupsTab from './DeviceUserGroupsTab';
+import DeviceDataCollectorTab from './DeviceDataCollectorTab';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -154,7 +155,7 @@ const DeviceModal = () => {
                     key="tab-data-collector-3"
                     disabled={disableTab}
                   >
-                    Data Collector Einstellungen
+                    <DeviceDataCollectorTab />
                   </Tab>
                   <Tab
                     eventKey={4}
