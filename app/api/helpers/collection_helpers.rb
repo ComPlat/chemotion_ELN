@@ -5,13 +5,23 @@ module CollectionHelpers
     current_user.acl_collection_by_id(id)
   end
 
+  def check_permission_level_compatibility(collection, permission_level)
+    collection_id = collection.id
+    collection_permission_level =
+      CollectionAcl.find_by(collection_id: collection_id, user_id: current_user.id)&.permission_level
+    permission_level && collection_permission_level > permission_level
+  end
   # return the collection if current_user is associated to it (owned) or if acl exists
   # return nil if no association
   def fetch_collections_w_current_user(collection_id, permission_level = nil)
     collections = Collection.owned_by(user_ids).where(id: collection_id)
     return collections if collections.present?
 
-    Collection.shared_with(user_ids, permission_level).where(id: collection_id)
+    collections = Collection.shared_with(user_ids).where(id: collection_id)
+    return collections unless permission_level
+    return unless check_permission_level_compatibility(collections&.first, permission_level)
+
+    collections
   end
 
   def fetch_collection_w_current_user(collection_id, permission_level = nil)
@@ -153,7 +163,7 @@ module CollectionHelpers
   end
 
   def create_generic_elements(params, from_collection, to_collection_id)
-    ElementKlass.find_each do |klass|
+    Labimotion::ElementKlass.find_each do |klass|
       ui_state = params[:ui_state][klass.name]
       next unless ui_state
       ui_state = check_ui_state(ui_state)

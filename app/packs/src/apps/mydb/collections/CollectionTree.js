@@ -6,9 +6,7 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
-import { filterMySharedCollection, filterSharedWithMeCollection } from './CollectionTreeStructure'
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
@@ -241,6 +239,7 @@ export default class CollectionTree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
+    const { showCollectionManagement } = UIStore.getState();
 
     if (showCollectionManagement) {
       Aviator.navigate('/collection/management');

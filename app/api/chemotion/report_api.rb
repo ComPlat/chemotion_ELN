@@ -60,23 +60,26 @@ module Chemotion
         %i[sample reaction wellplate].each do |table|
           next unless (p_t = params[:uiState][table])
 
-        table_params = {
-          ui_state: params[:uiState],
-          c_id: c_id,
-        }
-
-        if params[:columns][:chemicals].blank?
-          generate_sheets_for_tables(%i[sample reaction wellplate], table_params, export)
+          ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+          next unless p_t[:checkedAll] || ids.present?
+          column_query = build_column_query(filter_column_selection(table), current_user.id)
+          sql_query = send("build_sql_#{table}_sample", column_query, c_id, ids, p_t[:checkedAll])
+          next unless sql_query
+          result = db_exec_query(sql_query)
+          export.generate_sheet_with_samples(table, result)
         end
 
         if params[:exportType] == 1 && params[:columns][:analyses].present?
-          generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:analyses], :analyses)
-        end
-
-        if params[:exportType] == 1 && params[:columns][:chemicals].present?
-          generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:chemicals],
-                                     :chemicals)
-          generate_sheets_for_tables(%i[reaction wellplate], table_params, export)
+          %i[sample].each do |table|
+            next unless (p_t = params[:uiState][table])
+            ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+            next unless p_t[:checkedAll] || ids
+            column_query = build_column_query(filter_column_selection("#{table}_analyses".to_sym), current_user.id)
+            sql_query = send("build_sql_#{table}_analyses", column_query, c_id, ids, p_t[:checkedAll])
+            next unless sql_query
+            result = db_exec_query(sql_query)
+            export.generate_analyses_sheet_with_samples("#{table}_analyses".to_sym, result, params[:columns][:analyses])
+          end
         end
 
         case export.file_extension

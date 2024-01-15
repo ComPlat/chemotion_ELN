@@ -347,7 +347,7 @@ export default class GenericElDetails extends Component {
     const { currentCollection } = UIStore.getState();
 
     const copyBtn = (genericEl.can_copy && !genericEl.isNew) ? (
-      <CopyElementModal element={genericEl} defCol={currentCollection?.defCol()} />
+      <CopyElementModal element={genericEl} defCol={currentCollection?.defCol} />
     ) : null;
     const saveBtnDisplay = genericEl.changed ? '' : 'none';
     const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;

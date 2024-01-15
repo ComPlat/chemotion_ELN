@@ -4,10 +4,6 @@ import PropTypes from 'prop-types';
 import {
   Panel, Label, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem
 } from 'react-bootstrap';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
-import { Panel, Label, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem } from 'react-bootstrap';
 import { researchPlanShowOrNew, AviatorNavigation } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
