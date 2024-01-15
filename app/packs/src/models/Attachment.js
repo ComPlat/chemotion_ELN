@@ -1,5 +1,5 @@
+/* eslint-disable no-underscore-dangle */
 import Element from 'src/models/Element';
-import { formatBytes } from 'src/utilities/MathUtils';
 
 export default class Attachment extends Element {
   static NO_PREVIEW_AVAILABLE_PATH = '/images/wild_card/not_available.svg';
