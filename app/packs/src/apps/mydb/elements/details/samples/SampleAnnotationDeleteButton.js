@@ -44,7 +44,7 @@ export default class SampleAnnotationDeleteButton extends Component {
           </Button>
         </OverlayTrigger>
         <Overlay
-          containter={this}
+          container={this}
           target={this.getTargetButton()}
           show={this.state.showTooltip}
           placement='bottom'
