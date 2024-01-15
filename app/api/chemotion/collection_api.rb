@@ -187,6 +187,7 @@ module Chemotion
             error!('401 Cannot remove elements from  \'All\' root collection', 401)
           end
 
+          message = ''
           API::ELEMENTS.each do |element|
             ui_state = params[:ui_state][element]
             next unless ui_state
@@ -201,21 +202,23 @@ module Chemotion
             join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
           end
 
-          klasses = Labimotion::ElementKlass.find_each do |klass|
-            ui_state = params[:ui_state][klass.name]
-            next unless ui_state
+          if message.blank?
+            Labimotion::ElementKlass.find_each do |klass|
+              ui_state = params[:ui_state][klass.name]
+              next unless ui_state
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
-            ui_state[:collection_ids] = from_collection.id
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-
-            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            Labimotion::CollectionsElement.remove_in_collection(ids, from_collection.id)
+              ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
+              ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
+              ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+              ui_state[:collection_ids] = from_collection.id
+              next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+              ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+              Labimotion::CollectionsElement.remove_in_collection(ids, from_collection.id)
+            end
+            status 204
+          else
+            { error: message }
           end
-
-          status 204
         end
       end
 
