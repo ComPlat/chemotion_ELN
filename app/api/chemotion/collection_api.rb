@@ -186,7 +186,8 @@ module Chemotion
             collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
             collections_element_class.remove_in_collection(ids, from_collection.id)
           end
-          if message.blank?
+
+          if message.is_a?(Array)
             Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
               ui_state = params[:ui_state][klass.name]
               next if ui_state.blank?
@@ -199,7 +200,7 @@ module Chemotion
 
             status 204
           else
-            { error: message }
+            message
           end
         end
       end
