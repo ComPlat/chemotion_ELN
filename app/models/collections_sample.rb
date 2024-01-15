@@ -40,11 +40,11 @@ class CollectionsSample < ApplicationRecord
       # from a collection, select sample_ids with neither wellplate nor reaction associated
       sample_reaction_ids = fetch_sample_ids('reaction', 'reactions_samples', cid, sample_ids)
       message = generate_error_message('reaction') if sample_reaction_ids.empty?
-      return message unless message.empty?
+      return message unless message.nil?
 
       sample_wellplate_ids = fetch_sample_ids('wellplate', 'wells', cid, sample_ids)
       message = generate_error_message('wellplate') if sample_wellplate_ids.empty?
-      return message unless message.empty?
+      return message unless message.nil?
 
       ids = sample_wellplate_ids + sample_reaction_ids
       delete_in_collection(ids, cid)
@@ -66,7 +66,7 @@ class CollectionsSample < ApplicationRecord
   end
 
   def self.generate_error_message element
-    "Sample cannot be deleted due to associated #{element}."
+    { error: "Sample cannot be deleted due to associated #{element}." }
   end
 
   def self.create_in_collection(element_ids, collection_ids)
