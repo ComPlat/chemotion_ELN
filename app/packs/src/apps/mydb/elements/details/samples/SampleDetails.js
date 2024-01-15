@@ -1013,7 +1013,7 @@ export default class SampleDetails extends React.Component {
     const copyBtn = (sample.can_copy && !sample.isNew) ? (
       <CopyElementModal
         element={sample}
-        defCol={currentCollection?.defCol()}
+        defCol={currentCollection?.defCol}
       />
     ) : null;
 
