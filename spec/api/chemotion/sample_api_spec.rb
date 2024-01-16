@@ -123,7 +123,7 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'POST /api/v1/samples/import/' do
-    before do
+    let :post_request do
       post(
         '/api/v1/samples/import/',
         params: params,
@@ -144,6 +144,10 @@ describe Chemotion::SampleAPI do
       end
 
       it 'is able to import new samples' do
+        expect(Sample.count).to eq 0
+        post_request
+        expect(Sample.count).to eq 3
+
         ids_from_response = JSON.parse(response.body)['data']
         ids_from_db = Sample.pluck(:id)
         expect(ids_from_response).to match_array(ids_from_db)
@@ -161,10 +165,11 @@ describe Chemotion::SampleAPI do
       end
 
       it 'is able to import new samples' do
+        post_request
+
         expect(
           JSON.parse(response.body)['message'],
         ).to eq "This file contains 2 Molecules.\n2 Molecules processed. "
-
         expect(JSON.parse(response.body)['sdf']).to be true
 
         expect(JSON.parse(response.body)['data'].count).to eq 2
@@ -427,6 +432,79 @@ describe Chemotion::SampleAPI do
             sample5.id, # should have been excluded
           ],
         )
+      end
+    end
+  end
+
+  describe 'DELETE /api/v1/samples/:id/annotation' do
+    include_context 'sample annotation context'
+
+    before do
+      sample_with_annotation.creator = user
+      sample_with_annotation.collections = [collection]
+      sample_with_annotation.save
+    end
+
+    it 'returns no_content status code' do
+      delete "/api/v1/samples/#{sample_with_annotation.id}/annotation"
+
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it 'executes the usecase' do
+      allow(Usecases::Samples::DeleteAnnotation).to receive(:execute!)
+      delete "/api/v1/samples/#{sample_with_annotation.id}/annotation"
+
+      expect(Usecases::Samples::DeleteAnnotation).to have_received(:execute!)
+    end
+  end
+
+  describe 'GET /api/v1/samples/:id/annotation' do
+    let(:seeded_sample_svg_file) do
+      Rails
+        .public_path
+        .join('images', 'samples')
+        .children
+        .find { |file_as_pathname| file_as_pathname.extname == '.svg' }
+        .basename
+        .to_s
+    end
+    let(:annotation_file) { nil }
+    let(:sample) do
+      create(
+        :sample,
+        creator: user,
+        collections: [collection],
+        sample_svg_file: seeded_sample_svg_file,
+        sample_svg_annotation_file: annotation_file,
+      )
+    end
+
+    it 'returns an svg string' do
+      get "/api/v1/samples/#{sample.id}/annotation"
+
+      expect(response.content_type).to be 'image/svg+xml'
+    end
+
+    context 'when the sample has no annotation image' do
+      it 'returns an annotatable SVG image with the existing sample svg in the background layer' do
+        get "/api/v1/samples/#{sample.id}/annotation"
+
+        expect(response.body).to start_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg")
+        expect(response.body).to include("xlink:href=\"/images/samples/#{sample.sample_svg_file}\"")
+      end
+    end
+
+    context 'when the sample already has an annotated image' do
+      # we reuse the existing filename as we only want to check if the endpoint does returns the contents of the file
+      # as defined by sample.sample_svg_annotation_file
+      let(:annotation_file) { seeded_sample_svg_file }
+      let(:expected_content) { Rails.public_path.join('images', 'samples', seeded_sample_svg_file).read }
+
+      it 'returns the content of the existing image' do
+        get "/api/v1/samples/#{sample.id}/annotation"
+
+        expect(response.body).to eq expected_content
       end
     end
   end

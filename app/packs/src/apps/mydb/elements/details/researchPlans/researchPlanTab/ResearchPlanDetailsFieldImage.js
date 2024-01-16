@@ -7,14 +7,19 @@ import {
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/components/ImageAnnotationModalSVG.js';
 import SaveResearchPlanWarning from 'src/apps/mydb/elements/details/researchPlans/SaveResearchPlanWarning';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 export default class ResearchPlanDetailsFieldImage extends Component {
   constructor(props) {
     super(props);
-    this.state = { imageEditModalShown: false, attachments: props.attachments };
+    this.state = {
+      imageEditModalShown: false,
+      attachments: props.attachments,
+      chosenAttachment: null,
+      chosenAttachmentAnnotation: null,
+    };
 
     this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
@@ -32,8 +37,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     if (state.selecteds.length < 1) return;
 
     // multiple items can be selected, we filter to only keep research plans
-    const researchPlans = state.selecteds.filter((element) => element
-        && element?.type === 'research_plan');
+    const researchPlans = state.selecteds.filter((element) => element.type === 'research_plan');
 
     // we find the reasearch plan that has our image entry
     const researchPlanWithImageEntry = researchPlans.find((element) => !!element.getBodyElementById(this.props?.field?.id));
@@ -97,7 +101,17 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             <InputGroup.Addon>%</InputGroup.Addon>
             <div className="image-annotation-button-researchplan">
               <ImageAnnotationEditButton
-                parent={this}
+                onSelectAttachment={(attachment) => {
+                  AttachmentFetcher.annotation(attachment.id).then((svg) => {
+                    console.debug('Fetched SVG, showing the modal');
+                    this.setState({
+                      imageEditModalShown: true,
+                      chosenAttachment: attachment,
+                      chosenAttachmentAnnotation: svg || errorSvg,
+                      imageName: attachment.filename,
+                    });
+                  });
+                }}
                 attachment={currentAttachment}
               />
             </div>
@@ -163,22 +177,36 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   renderImageEditModal() {
     if (this.isLegacyImage(this.props.field.value.public_name)) {
+      console.debug('its a legacy image, no annotation possible')
       return null;
     }
-
+    const { chosenAttachment } = this.state;
+    let annotation = '';
+    if (chosenAttachment) {
+      if (chosenAttachment.updatedAnnotation) {
+        console.debug('use existing annotation')
+        annotation = chosenAttachment.updatedAnnotation;
+      } else {
+        console.debug('Use annotation from fetcher')
+        annotation = this.state.chosenAttachmentAnnotation
+      }
+    }
+    console.debug(this.state);
     return (
       <ImageAnnotationModalSVG
-        attachment={this.state.choosenAttachment}
-        isShow={this.state.imageEditModalShown}
+        annotation={annotation}
+        show={this.state.imageEditModalShown}
         handleSave={
-          () => {
-            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.choosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
+          (newAnnotation) => {
+            chosenAttachment.updatedAnnotation = newAnnotation;
+            this.setState({
+              imageEditModalShown: false,
+              chosenAttachment: chosenAttachment
+            });
             this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
           }
         }
-        handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
+        handleClose={() => { this.setState({ imageEditModalShown: false }); }}
       />
     );
   }

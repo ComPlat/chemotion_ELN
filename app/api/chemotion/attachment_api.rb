@@ -182,7 +182,7 @@ module Chemotion
         { ok: false, statusText: ['File upload has error. Please try again!'] }
       end
 
-      desc 'get_annotation_of_attachment'
+      desc 'get annotation of attachment'
       get ':attachment_id/annotation' do
         loader = Usecases::Attachments::Annotation::AnnotationLoader.new
         return loader.get_annotation_of_attachment(params[:attachment_id])

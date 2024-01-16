@@ -4,16 +4,14 @@ module Usecases
   module Attachments
     module Annotation
       class AnnotationCreator
-        require_relative 'mini_magick_image_analyser'
-
         def initialize(image_analyzer = nil)
           @image_analyzer = image_analyzer || MiniMagickImageAnalyser.new
         end
 
         def create_derivative(tmp_path, original_file, db_id, result, _record)
           tmp_file = create_tmp_file(tmp_path, File.basename(original_file, '.*'))
-          dimension = get_image_dimension(original_file)
-          svg_string = create_annotation_string(dimension[0], dimension[1], db_id)
+          dimensions = get_image_dimension(original_file)
+          svg_string = create_annotation_string(dimensions[:width], dimensions[:height], db_id)
           File.write(tmp_file.path, svg_string)
           result[:annotation] = File.open(tmp_file.path, 'rb')
           result
@@ -25,20 +23,38 @@ module Usecases
         end
 
         def get_image_dimension(original)
-          @image_analyzer.get_image_dimension(original.path)
+          @image_analyzer.get_image_dimensions(original.path)
         end
 
-        def create_annotation_string(height, width, id)
-          "<svg width=\"#{width}\" height=\"#{height}\" " \
-            'xmlns="http://www.w3.org/2000/svg" ' \
-            'xmlns:svg="http://www.w3.org/2000/svg" ' \
-            'xmlns:xlink="http://www.w3.org/1999/xlink"> ' \
-            '<g class="layer"> <title>Image</title>' \
-            "<image height=\"#{height}\" id=\"original_image\" " \
-            "width=\"#{width}\" " \
-            "xlink:href=\"/api/v1/attachments/image/#{id}\"/>" \
-            '</g><g id="annotation" class="layer"><title>Annotation</title>' \
-            '</g> </svg>'
+        def create_annotation_string(width, height, id)
+          <<~ENDOFSTRING
+            <svg
+              width="#{width}"
+              height="#{height}"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlns:svg="http://www.w3.org/2000/svg"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+            >
+              <g
+                class="layer"
+                id="background"
+              >
+                <title>Image</title>
+                <image
+                  height="#{height}"
+                  width="#{width}"
+                  id="original_image"
+                  xlink:href="/api/v1/attachments/image/#{id}"
+                />
+              </g>
+              <g
+                class="layer"
+                id="annotation"
+              >
+                <title>Annotation</title>
+              </g>
+            </svg>
+          ENDOFSTRING
         end
       end
     end
