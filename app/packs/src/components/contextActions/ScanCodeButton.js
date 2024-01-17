@@ -135,7 +135,7 @@ export default class ScanCodeButton extends React.Component {
         if (code_log.source === 'container') {
           // open active analysis
           UIActions.selectTab({ tabKey: 1, type: code_log.root_code.source });
-          UIActions.selectActiveAnalysis(code_log.source_id);
+          UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: code_log.source_id });
           Aviator.navigate(`/collection/all/${code_log.root_code.source}/${code_log.root_code.source_id}`);
           this.close();
         } else {

@@ -35,8 +35,8 @@ class UIActions {
     return params;
   }
 
-  selectActiveAnalysis(index) {
-    return index;
+  selectActiveAnalysis(params) {
+    return params;
   }
 
   toggleAdvancedSearch(show) {
