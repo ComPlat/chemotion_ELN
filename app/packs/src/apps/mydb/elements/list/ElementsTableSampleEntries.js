@@ -360,7 +360,7 @@ export default class ElementsTableSampleEntries extends Component {
             />
           </td>
           <td
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', verticalAlign: 'middle' }}
             onClick={showDetails.bind(this, sample.id)}
           >
             {sample.title(selected)}
@@ -372,7 +372,9 @@ export default class ElementsTableSampleEntries extends Component {
               <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
               <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
               <GenericElementLabels element={sample} key={`${sample.id}_element`} />
-              <ElementCollectionLabels element={sample} key={`${sample.id}`} />
+              <div style={{ marginLeft: '5px', marginTop: '-1px' }}>
+                <ElementCollectionLabels element={sample} key={`${sample.id}`} />
+              </div>
               <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
               <TopSecretIcon element={sample} />
             </div>
