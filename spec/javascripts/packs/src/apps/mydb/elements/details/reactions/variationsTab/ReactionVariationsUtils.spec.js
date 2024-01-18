@@ -1,5 +1,6 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import SampleFactory from 'factories/SampleFactory';
+import Container from 'src/models/Container';
 import expect from 'expect';
 import {
   createVariationsRow,
@@ -7,8 +8,19 @@ import {
   addMissingMaterialsToVariations,
   updateYields,
   updateEquivalents,
-  getReferenceMaterial
+  getReferenceMaterial,
+  getVariationsRowName,
+  copyVariationsRow,
+  associateAnalysisWithVariationsRow,
+  updateAnalyses,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+
+function buildAnalysis(name) {
+  const analysis = Container.buildEmpty();
+  analysis.container_type = 'analysis';
+  analysis.name = name;
+  return analysis;
+}
 
 function getReactionMaterials(reaction) {
   return {
@@ -20,17 +32,16 @@ function getReactionMaterials(reaction) {
 }
 
 async function setUpMaterial() {
-  return SampleFactory.build('water_100g');
+  return SampleFactory.build('SampleFactory.water_100g');
 }
 async function setUpReaction() {
-  const reaction = await ReactionFactory.build('water+water=>water+water');
+  const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
-  reaction.reactants = [await SampleFactory.build('water_100g')];
-  const variations = [];
-  for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction));
+  reaction.reactants = [await SampleFactory.build('SampleFactory.water_100g')];
+  for (let i = 0; i < 3; i += 1) {
+    const variationsRow = createVariationsRow(reaction);
+    reaction.variations = [...reaction.variations, variationsRow];
   }
-  reaction.variations = variations;
   return reaction;
 }
 
@@ -84,5 +95,64 @@ describe('ReactionVariationsUtils', async () => {
     referenceMaterial.value = 2;
     const updatedVariations = updateEquivalents(reaction.variations);
     expect(updatedVariations[0].reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
+  });
+  it('assign correct name to variation', async () => {
+    const reaction = await setUpReaction();
+    reaction.short_label = 'foo';
+    reaction.variations.forEach((variation, index) => {
+      expect(getVariationsRowName(reaction, variation)).toBe(`foo-${index + 1}`);
+    });
+  });
+  it('copy variation without analyses and with correct ID', async () => {
+    const reaction = await setUpReaction();
+    const variation = reaction.variations[0];
+    variation.analyses.push(3141);
+    const copiedVariation = copyVariationsRow(reaction, variation);
+    expect(variation.analyses).toEqual([3141]);
+    expect(copiedVariation.analyses).toEqual([]);
+    expect(copiedVariation.id).toEqual(Math.max(...reaction.variations.map((v) => (v.id))) + 1);
+  });
+  it('associate analyses with variation', async () => {
+    let { variations } = await setUpReaction();
+    variations = associateAnalysisWithVariationsRow(variations, variations[0], 3141);
+    variations = associateAnalysisWithVariationsRow(variations, variations[0], 5926);
+    expect(variations[0].analyses).toEqual([3141, 5926]);
+    variations = associateAnalysisWithVariationsRow(variations, variations[1], 3141);
+    expect(variations[1].analyses).toEqual([3141]);
+    expect(variations[0].analyses).toEqual([5926]);
+    variations = associateAnalysisWithVariationsRow(variations, null, 3141);
+    expect(variations[1].analyses).toEqual([]);
+  });
+  describe('update analyses associated with variations', async () => {
+    let reaction;
+    let analysisFoo;
+    let analysisBar;
+    beforeEach(async () => {
+      reaction = await setUpReaction();
+      analysisFoo = buildAnalysis('foo');
+      analysisBar = buildAnalysis('bar');
+      reaction.container.children[0].children.push(analysisFoo);
+      reaction.container.children[0].children.push(analysisBar);
+    });
+    it('when no update is necessary', async () => {
+      let { variations } = reaction;
+      variations = associateAnalysisWithVariationsRow(variations, variations[0], analysisFoo.id);
+      variations = associateAnalysisWithVariationsRow(variations, variations[1], analysisBar.id);
+      expect(updateAnalyses(variations, reaction)).toEqual(variations);
+    });
+    it('when analysis is removed', async () => {
+      let { variations } = reaction;
+      variations = associateAnalysisWithVariationsRow(variations, variations[0], analysisFoo.id);
+      expect(updateAnalyses(variations, reaction)[0].analyses).toEqual([analysisFoo.id]);
+      reaction.container.children[0].children = reaction.container.children[0].children.filter((child) => child.id !== analysisFoo.id);
+      expect(updateAnalyses(variations, reaction)[0].analyses).toEqual([]);
+    });
+    it('when analysis is marked as deleted', async () => {
+      let { variations } = reaction;
+      variations = associateAnalysisWithVariationsRow(variations, variations[1], analysisBar.id);
+      expect(updateAnalyses(variations, reaction)[1].analyses).toEqual([analysisBar.id]);
+      analysisBar.is_deleted = true;
+      expect(updateAnalyses(variations, reaction)[1].analyses).toEqual([]);
+    });
   });
 });
