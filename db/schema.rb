@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_12_19_162631) do
+ActiveRecord::Schema.define(version: 2024_01_18_134628) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -773,6 +773,28 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "micromolecules", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "mixture_components", force: :cascade do |t|
+    t.bigint "mixture_id", null: false
+    t.string "sampleable_type", null: false
+    t.bigint "sampleable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["mixture_id"], name: "index_mixture_components_on_mixture_id"
+    t.index ["sampleable_type", "sampleable_id"], name: "index_mixture_components_on_sampleable"
+  end
+
+  create_table "mixtures", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -1049,8 +1071,8 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.bigint "screen_id", null: false
-    t.bigint "research_plan_id", null: false
+    t.integer "screen_id"
+    t.integer "research_plan_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1059,8 +1081,8 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.bigint "research_plan_id", null: false
-    t.bigint "wellplate_id", null: false
+    t.integer "research_plan_id"
+    t.integer "wellplate_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1133,11 +1155,14 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.string "sampleable_type"
+    t.bigint "sampleable_id"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
+    t.index ["sampleable_type", "sampleable_id"], name: "index_samples_on_sampleable"
     t.index ["user_id"], name: "index_samples_on_user_id"
   end
 
@@ -1429,9 +1454,9 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
     t.datetime "updated_at", null: false
     t.string "additive"
     t.datetime "deleted_at"
-    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
+    t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.index ["deleted_at"], name: "index_wells_on_deleted_at"
     t.index ["sample_id"], name: "index_wells_on_sample_id"
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
@@ -1439,9 +1464,24 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
 
   add_foreign_key "collections", "inventories"
   add_foreign_key "literals", "literatures"
+  add_foreign_key "mixture_components", "mixtures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  create_function :user_instrument, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+             select distinct extended_metadata -> 'instrument' as instrument from containers c
+             where c.container_type='dataset' and c.id in
+             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+             order by extended_metadata -> 'instrument' limit 10
+           $function$
+  SQL
   create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
@@ -1455,6 +1495,45 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
            WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
            group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
            ) as result
+           $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select $1 as id
+             union
+             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+             and users.type in ('Group') and users_groups.user_id = $1)
+           $function$
+  SQL
+  create_function :user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+             select row_to_json(result) from (
+            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           	   from users where id = $1
+         	   ) as result
+           $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+             begin
+             	if (in_user_id = in_current_user_id) then
+             		return null;
+             	else
+             		return (select row_to_json(result) from (
+             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+             		from users where id = $1
+             		) as result);
+             	end if;
+              end;
            $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-'SQL'
@@ -1490,6 +1569,16 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
               return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
           end;$function$
   SQL
+  create_function :group_user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
+  SQL
   create_function :generate_notifications, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
        RETURNS integer
@@ -1520,6 +1609,21 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
       	end case;
       	return in_message_id;
       end;$function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
   SQL
   create_function :generate_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
@@ -1556,58 +1660,6 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
       end
       $function$
   SQL
-  create_function :group_user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-             begin
-             	if (in_user_id = in_current_user_id) then
-             		return null;
-             	else
-             		return (select row_to_json(result) from (
-             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-             		from users where id = $1
-             		) as result);
-             	end if;
-              end;
-           $function$
-  SQL
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1631,64 +1683,15 @@ ActiveRecord::Schema.define(version: 2023_12_19_162631) do
       end
       $function$
   SQL
-  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
-       RETURNS TABLE(reaction_ids integer)
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
-           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
-           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
-           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
-           and s.molecule_id = m.id and m.id=$2)
-        $function$
-  SQL
-  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	update segment_klasses set identifier = gen_random_uuid() where identifier is null;
-        return new;
-      end
-      $function$
-  SQL
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-             select row_to_json(result) from (
-            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           	   from users where id = $1
-         	   ) as result
-           $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select $1 as id
-             union
-             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-             and users.type in ('Group') and users_groups.user_id = $1)
-           $function$
-  SQL
-  create_function :user_instrument, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-             select distinct extended_metadata -> 'instrument' as instrument from containers c
-             where c.container_type='dataset' and c.id in
-             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-             order by extended_metadata -> 'instrument' limit 10
-           $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
+         and l.element_type = $1 and l.element_id = $2
+       $function$
   SQL
 
 
