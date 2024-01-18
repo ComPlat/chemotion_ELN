@@ -1,6 +1,14 @@
 # Chemotion_ELN Changelog
 
 
+
+## [v1.8.2]
+> (2024-01-18)
+
+* Features and enhancements
+  *  feat: converter metadata  added to dataset download ([#1688](https://github.com/ComPlat/chemotion_ELN/pull/1688))
+
+
 ## [v1.8.1]
 > (2023-12-21)
 
