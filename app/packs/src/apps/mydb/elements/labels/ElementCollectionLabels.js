@@ -7,6 +7,7 @@ import uuid from 'uuid';
 import { AviatorNavigation } from 'src/utilities/routesUtils';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import SharedByIcon from 'src/components/common/SharedByIcon';
+import _ from 'lodash';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -88,8 +89,8 @@ export default class ElementCollectionLabels extends React.Component {
 
     const collectionOverlay = (
       <Popover className="collection-overlay" id="element-collections">
-        {this.renderCollectionsLabels("My Collections", labels)}
-        {this.renderCollectionsLabels("Shared Collections", shared_labels)}
+        {this.renderCollectionsLabels("My Collections", _.compact(labels))}
+        {this.renderCollectionsLabels("Shared Collections", _.compact(shared_labels))}
       </Popover>
     );
 
