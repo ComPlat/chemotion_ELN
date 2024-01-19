@@ -203,7 +203,7 @@ class Sample < ApplicationRecord
 
   belongs_to :sampleable, polymorphic: true, optional: true
   has_many :mixture_components, as: :sampleable
-  has_many :components, through: :mixture_components, source: :component, source_type: 'Sample'
+  has_many :components, through: :mixture_components, source: :component, source_type: 'Mixture'
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
