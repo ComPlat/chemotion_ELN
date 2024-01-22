@@ -453,6 +453,8 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :sampleable_type, type: String
+        optional :sampleable_id, type: Integer
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -475,7 +477,6 @@ module Chemotion
           dry_solvent: params[:dry_solvent],
           solvent: params[:solvent],
           location: params[:location],
-          molfile: params[:molfile],
           molecule_id: molecule_id,
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
@@ -484,12 +485,19 @@ module Chemotion
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
           xref: params[:xref],
-          stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id],
           decoupled: params[:decoupled],
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
+          sampleable_type: params[:sampleable_type],
+          sampleable_id: params[:sampleable_id],
+        }
+        micro_att = {
+          name: params[:name],
+          molfile: params[:molfile],
+          stereo: params[:stereo],
+
         }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
@@ -541,6 +549,13 @@ module Chemotion
         unless is_shared_collection
           all_coll = Collection.get_all_collection_for_user(current_user.id)
           sample.collections << all_coll
+        end
+
+        # assign sample to micromolecule
+        if params[:sampleable_type].nil? || params[:sampleable_type] == 'Micromolecule'
+          attributes[:sampleable_type] = 'Micromolecule'
+          micromolecule = Micromolecule.new(micro_att)
+          micromolecule.sample = sample
         end
 
         sample.container = update_datamodel(params[:container])
