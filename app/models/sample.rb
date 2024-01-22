@@ -160,7 +160,6 @@ class Sample < ApplicationRecord
     Sample.where(id: samples.map(&:id))
   }
 
-  before_validation :set_default_sampleable_type
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
@@ -203,7 +202,7 @@ class Sample < ApplicationRecord
 
   belongs_to :sampleable, polymorphic: true, optional: true
   has_many :mixture_components, as: :sampleable
-  has_many :components, through: :mixture_components, source: :component, source_type: 'Mixture'
+  has_many :mixtures, through: :mixture_components, source: :mixture
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
@@ -237,6 +236,7 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
+  delegate :molfile, :molfile_version, :stereo, to: :sampleable, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
 
@@ -565,10 +565,6 @@ class Sample < ApplicationRecord
   end
 
 private
-
-  def set_default_sampleable_type
-    self.sampleable_type ||= 'Micromolecule'
-  end
 
   def has_collections
     if self.collections_samples.blank?

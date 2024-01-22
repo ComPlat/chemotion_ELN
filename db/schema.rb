@@ -807,6 +807,9 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.string "name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.binary "molfile"
+    t.string "molfile_version", limit: 20
+    t.jsonb "stereo"
   end
 
   create_table "mixture_components", force: :cascade do |t|
