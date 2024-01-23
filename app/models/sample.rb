@@ -201,8 +201,6 @@ class Sample < ApplicationRecord
   has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :sampleable, polymorphic: true, optional: true
-  has_many :mixture_components, as: :sampleable
-  has_many :mixtures, through: :mixture_components, source: :mixture
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
