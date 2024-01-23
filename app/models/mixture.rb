@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Mixture < ApplicationRecord
-  has_many :mixture_components, as: :sampleable
-  has_many :components, through: :mixture_components, source: :sampleable, source_type: 'Sample'
+  has_one :sample, as: :sampleable
+  has_many :mixture_components
+  has_many :components, through: :mixture_components, source: :sample
 end

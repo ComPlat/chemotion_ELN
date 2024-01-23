@@ -814,12 +814,11 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
 
   create_table "mixture_components", force: :cascade do |t|
     t.bigint "mixture_id", null: false
-    t.string "sampleable_type", null: false
-    t.bigint "sampleable_id", null: false
+    t.bigint "sample_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["mixture_id"], name: "index_mixture_components_on_mixture_id"
-    t.index ["sampleable_type", "sampleable_id"], name: "index_mixture_components_on_sampleable"
+    t.index ["sample_id"], name: "index_mixture_components_on_sample_id"
   end
 
   create_table "mixtures", force: :cascade do |t|
@@ -1497,6 +1496,7 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
   add_foreign_key "collections", "inventories"
   add_foreign_key "literals", "literatures"
   add_foreign_key "mixture_components", "mixtures"
+  add_foreign_key "mixture_components", "samples"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
