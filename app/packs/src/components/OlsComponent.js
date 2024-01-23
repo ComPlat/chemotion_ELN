@@ -3,9 +3,8 @@ import TreeSelect from 'antd/lib/tree-select';
 import PropTypes from 'prop-types';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
-const filterTreeNode = (input, child) => {
-  return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;
-};
+const filterTreeNode = (input, child) => String(child.props.search && child.props.search.toLowerCase())
+  .indexOf(input && input.toLowerCase()) !== -1;
 export default class OlsTreeSelect extends Component {
   constructor(props) {
     super(props);
@@ -13,12 +12,28 @@ export default class OlsTreeSelect extends Component {
   }
 
   OnSelectChange(e) {
-    const sel = e || '';
-    this.props.onSelectChange(sel, this.props.selectName);
+    const cleanedOlsEntry = this.removeArtificalId(e || '');
+    this.props.onSelectChange(
+      cleanedOlsEntry,
+      this.props.selectName
+    );
+  }
+
+  removeArtificalId(value) {
+    const uuidCheckRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+    const parts = value.split('$');
+    if (parts.length === 1) { return value.trim(); }
+
+    if (!uuidCheckRegex.test(parts.slice(-1))) { return value.trim(); }
+
+    return parts
+      .slice(0, -1)
+      .join('$')
+      .trim();
   }
 
   render() {
-    const { rxnos, chmos } = UserStore.getState();
+    const { rxnos, chmos, bao } = UserStore.getState();
     let treeData = [];
     switch (this.props.selectName) {
       case 'rxno':
@@ -26,6 +41,9 @@ export default class OlsTreeSelect extends Component {
         break;
       case 'chmo':
         treeData = chmos;
+        break;
+      case 'bao':
+        treeData = bao;
         break;
       default:
         break;
@@ -42,7 +60,7 @@ export default class OlsTreeSelect extends Component {
         treeData={treeData}
         placeholder="Select..."
         allowClear
-        onChange={e => this.OnSelectChange(e)}
+        onChange={(e) => this.OnSelectChange(e)}
         disabled={this.props.selectedDisable}
         filterTreeNode={filterTreeNode}
       />

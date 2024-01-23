@@ -49,7 +49,7 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength,Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
 # rubocop: disable Metrics/MethodLength
 # rubocop: disable Metrics/AbcSize
 
@@ -70,6 +70,7 @@ class User < ApplicationRecord
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
+  has_many :cellline_samples, through: :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
@@ -271,7 +272,8 @@ class User < ApplicationRecord
           'reaction' => 2,
           'wellplate' => 3,
           'screen' => 4,
-          'research_plan' => 5
+          'research_plan' => 5,
+          'cell_line' => -1000,
         }) if (data['layout'].nil?)
         self.profile.update_columns(data: data)
       end
@@ -508,6 +510,6 @@ class Group < User
   end
 end
 
-# rubocop: enable Metrics/ClassLength
+# rubocop: enable Metrics/ClassLength,Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
 # rubocop: enable Metrics/MethodLength
 # rubocop: enable Metrics/AbcSize

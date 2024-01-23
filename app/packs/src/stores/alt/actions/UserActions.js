@@ -27,6 +27,16 @@ class UserActions {
         });
     };
   }
+  fetchOlsBao() {
+    return (dispatch) => {
+      UsersFetcher.fetchOls('bao')
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
 
   fetchCurrentUser() {
     return (dispatch) => {

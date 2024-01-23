@@ -20,7 +20,8 @@ const elementList = () => {
     { name: 'reaction', label: 'Reaction' },
     { name: 'wellplate', label: 'Wellplate' },
     { name: 'screen', label: 'Screen' },
-    { name: 'research_plan', label: 'Research Plan' }
+    { name: 'research_plan', label: 'Research Plan' },
+    { name: 'cell_line', label: 'Cell Line' }
   ];
   let genericEls = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -263,25 +264,10 @@ export default class CreateButton extends React.Component {
     const { isDisabled, customClass } = this.props;
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
-    const elements = [
-      { name: 'sample', label: 'Sample' },
-      { name: 'reaction', label: 'Reaction' },
-      { name: 'wellplate', label: 'Wellplate' },
-      { name: 'screen', label: 'Screen' },
-      { name: 'research_plan', label: 'Research Plan' }
-    ];
-    let genericEls = [];
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-      genericEls = UserStore.getState().genericEls || [];
-    }
-    const itemTables = [];
-    // eslint-disable-next-line max-len
-    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
-
-    sortedLayout?.forEach(([k]) => {
-      const el = elements.concat(genericEls).find((ael) => ael.name === k);
-      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    const { elements, genericEls, itemTables } = elementList();
+    
+    elements.concat(genericEls).forEach((el) => {
+      itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
     });
 
     return (

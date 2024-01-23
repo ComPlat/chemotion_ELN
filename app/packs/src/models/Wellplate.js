@@ -1,6 +1,8 @@
+/* eslint-disable camelcase */
+/* eslint-disable no-underscore-dangle */
 import Element from 'src/models/Element';
 import Well from 'src/models/Well';
-import Container from 'src/models/Container.js';
+import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 
 export default class Wellplate extends Element {
@@ -13,7 +15,7 @@ export default class Wellplate extends Element {
   static buildEmpty(collection_id) {
     return new Wellplate(
       {
-        collection_id: collection_id,
+        collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
         size: 96,
@@ -24,35 +26,31 @@ export default class Wellplate extends Element {
         segments: [],
         attachments: []
       }
-    )
+    );
   }
 
   static buildFromSamplesAndCollectionId(clipboardSamples, collection_id) {
-    let samples = clipboardSamples.map(sample => {
-      return sample.buildChild();
-    });
+    const samples = clipboardSamples.map((sample) => sample.buildChild());
 
-    let wells = samples.map(sample => {
-      return new Well({
-        sample: sample,
-        readouts: []
-      });
-    })
+    const wells = samples.map((sample) => new Well({
+      sample,
+      readouts: []
+    }));
 
     return new Wellplate(
       {
-        collection_id: collection_id,
+        collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
         size: 96,
         description: Wellplate.quillDefault(),
-        wells: wells,
+        wells,
         readout_titles: [],
         container: Container.init(),
         segments: [],
         attachments: [],
       }
-    )
+    );
   }
 
   get name() {
@@ -72,15 +70,15 @@ export default class Wellplate extends Element {
   }
 
   get wells() {
-    return this._wells
+    return this._wells;
   }
 
   set wells(wells) {
-    this._wells = wells.map(w => new Well(w));
+    this._wells = wells.map((w) => new Well(w));
   }
 
   set segments(segments) {
-    this._segments = (segments && segments.map(s => new Segment(s))) || [];
+    this._segments = (segments && segments.map((s) => new Segment(s))) || [];
   }
 
   get segments() {
@@ -92,11 +90,11 @@ export default class Wellplate extends Element {
       name: this.name,
       size: this.size,
       description: this.description,
-      wells: this.wells.map(w => w.serialize()),
+      wells: this.wells.map((w) => w.serialize()),
       readout_titles: this.readout_titles,
       container: this.container,
       attachments: this.attachments,
-      segments: this.segments.map(s => s.serialize())
+      segments: this.segments.map((s) => s.serialize())
     });
   }
 
@@ -127,7 +125,7 @@ export default class Wellplate extends Element {
   }
 
   title() {
-    const short_label = this.short_label ? this.short_label : ''
-    return this.name ? `${short_label} ${this.name}` : short_label
+    const short_label = this.short_label ? this.short_label : '';
+    return this.name ? `${short_label} ${this.name}` : short_label;
   }
 }

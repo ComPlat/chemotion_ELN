@@ -17,6 +17,7 @@ const collectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
+  const currentSearchByID = uiState.currentSearchByID;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   if (collectionId === 'all') {
@@ -35,6 +36,9 @@ const collectionShow = (e) => {
         collectionId: collection.id,
         isSync: !!collection.is_sync_to_me });
     } else {
+      if (currentSearchByID) {
+        UIActions.clearSearchById();
+      }
       UIActions.selectCollection(collection);
     }
 
@@ -62,6 +66,7 @@ const scollectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
+  const currentSearchByID = uiState.currentSearchByID;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   collectionPromise = CollectionStore.findBySId(collectionId);
@@ -77,6 +82,9 @@ const scollectionShow = (e) => {
         isSync: !!collection.is_sync_to_me });
     } else {
       UIActions.selectSyncCollection(collection);
+      if (currentSearchByID) {
+        UIActions.clearSearchById();
+      }
     }
 
     // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
@@ -114,6 +122,17 @@ const sampleShowOrNew = (e) => {
   }
   // UIActions.selectTab(1);
 };
+
+const cellLineShowOrNew = (e) => { 
+  if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
+     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
+  }else{
+    if(e.params.cellLineID){
+     e.params.cellLineId=e.params.cellLineID
+    }
+     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
+  }
+}
 
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
@@ -237,6 +256,7 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
+    
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
@@ -261,6 +281,9 @@ const elementShowOrNew = (e) => {
       break;
     case 'metadata':
       metadataShowOrNew(e);
+      break;
+    case 'cell_line':
+      cellLineShowOrNew(e);
       break;
     default:
       if (e && e.klassType == 'GenericEl') {
@@ -291,5 +314,6 @@ export {
   metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  cellLineShowOrNew
 };

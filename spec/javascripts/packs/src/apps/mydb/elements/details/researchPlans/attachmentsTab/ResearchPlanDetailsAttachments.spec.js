@@ -22,8 +22,9 @@ describe('ResearchPlanDetailsAttachments', async () => {
     describe('.when preview was changed', async () => {
       it('new preview is rendered', async () => {
         const researchPlanWithAttachment = await ResearchPlanFactory.build(
-          'with attachment_not_in_body'
+          'ResearchPlanFactory.with attachment_not_in_body'
         );
+
         sinon
           .stub(EditorFetcher, 'initial')
           .callsFake(() => new Promise(() => {}));

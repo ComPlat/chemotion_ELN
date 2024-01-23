@@ -95,6 +95,8 @@
 !/public/ontologies/rxno.default.json
 !/public/ontologies/rxno.default.edited.json
 
+/public/data_type.json
+
 /uploads/*
 !/public/attachments/.keep
 
@@ -194,3 +196,6 @@ public/sprite.png
 /public/svgedit
 
 !spec/fixtures/import/sample_import_template.xlsx
+
+# generic elements
+data/klasses.json
