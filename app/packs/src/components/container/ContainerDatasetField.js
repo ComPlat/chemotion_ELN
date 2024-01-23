@@ -126,13 +126,10 @@ class ContainerDatasetField extends Component {
       <div>
         {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
           ? <GenericDSMisType /> : null}
-        <button
-          style={{ background: 'none', border: 'none', textDecoration: 'underline' }}
-          onClick={() => handleModalOpen(datasetContainer)}
-          type="button"
-        >
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(datasetContainer)}>
           {datasetContainer.name || 'new'}
-        </button>
+        </a>
         <ButtonToolbar className="pull-right">
           {gdsDownload}
           <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>

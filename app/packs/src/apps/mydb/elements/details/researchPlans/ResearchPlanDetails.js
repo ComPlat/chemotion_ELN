@@ -1,4 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -16,7 +17,6 @@ import ResearchPlansLiteratures from 'src/apps/mydb/elements/details/literature/
 import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/ResearchPlanWellplates';
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
-import Utils from 'src/utilities/Functions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -188,10 +188,6 @@ export default class ResearchPlanDetails extends Component {
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.attachments[index].is_deleted = false;
     this.setState({ researchPlan });
-  }
-
-  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
-    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentEdit(attachment) {
@@ -475,7 +471,6 @@ export default class ResearchPlanDetails extends Component {
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onDownload={this.handleAttachmentDownload.bind(this)}
             onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
             readOnly={false}
@@ -600,6 +595,7 @@ export default class ResearchPlanDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
+    // eslint-disable-next-line react/destructuring-assignment
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (

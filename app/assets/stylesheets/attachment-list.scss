@@ -71,7 +71,14 @@
   display: flex;
   margin-left: 10px;
   align-items: center;
+  transition: transform 0.3s ease-in-out;
 }
+.attachment-row-image:hover {
+  transform: scale(6) translateX(20px);
+  z-index: 1000;
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 
 .attachment-row-text {
   flex: 0.7;
@@ -94,15 +101,6 @@
   display: flex;
   margin-right: 5px;
   justify-content: flex-end;
-}
-
-.attachment-image-modal {
-  width: 30px;
-  height: 30px;
-  border-radius: 5px;
-  object-fit: cover;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .attachment-button-size {
