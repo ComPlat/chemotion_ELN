@@ -701,7 +701,7 @@ export default class SampleForm extends React.Component {
     const { enableSampleDecoupled } = this.props;
     const minPadding = { padding: '4px 4px 4px 4px' };
 
-    if (sample.belongTo !== undefined) {
+    if (sample.belongTo !== undefined && sample.belongTo !== null) {
       // assign amount type for product samples of reaction to real
       this.assignAmountType(sample.belongTo, sample);
     }
