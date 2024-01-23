@@ -33,8 +33,8 @@ class PagesController < ApplicationController
 
   def update_user
     @user = current_user
-    @user.counters['reactions'] = params[:reactions_count].to_i
-    @user.reaction_name_prefix = params[:reaction_name_prefix]
+    @user.counters['reactions'] = params[:reactions_count].to_i if params[:reactions_count].present?
+    @user.reaction_name_prefix = params[:reaction_name_prefix] if params[:reactions_count].present?
     if @user.save
       flash['success'] = 'User settings is successfully saved!'
       redirect_to root_path

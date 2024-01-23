@@ -169,6 +169,7 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
+  before_save :update_inventory_label, if: :new_record?
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -649,6 +650,27 @@ private
       abbr = self.creator.name_abbreviation
       self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
     end
+  end
+
+  def find_collection_id
+    collection_ids = collections_samples.map(&:collection_id)
+    all_collection_id = Collection.where(id: collection_ids, label: 'All').pick(:id)
+    collection_ids.delete(all_collection_id)
+    # on sample create, sample is assigned only to the collection in which it will be created along with All collection
+    collection_ids.first
+  end
+
+  def update_inventory_label
+    collection_id = find_collection_id
+    return if collection_id.blank?
+
+    collection = Collection.find_by(id: collection_id)
+    inventory = collection.inventory
+    return if inventory.blank?
+
+    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
+    self['xref']['inventory_label'] =
+      "#{inventory['prefix']}-#{inventory['counter']}"
   end
 
   # rubocop: enable Metrics/AbcSize
