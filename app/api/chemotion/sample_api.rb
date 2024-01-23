@@ -455,6 +455,7 @@ module Chemotion
         optional :sum_formula, type: String
         optional :sampleable_type, type: String
         optional :sampleable_id, type: Integer
+        optional :mixture_components, type: Array, desc: 'sample ids for mixture components'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -499,6 +500,7 @@ module Chemotion
           stereo: params[:stereo],
 
         }
+        mix_att = { name: params[:name] }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
         boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
@@ -551,11 +553,26 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        # assign sample to micromolecule
+        # save sample as micromolecule (default)
         if params[:sampleable_type].nil? || params[:sampleable_type] == 'Micromolecule'
           attributes[:sampleable_type] = 'Micromolecule'
           micromolecule = Micromolecule.new(micro_att)
           micromolecule.sample = sample
+
+        # save sample as mixture component
+        elsif params[:sampleable_type] == 'MixtureComponent'
+          mixture_component = MixtureComponent.new
+          mixture_component.sample = sample
+
+        # save sample as mixture with associated components
+        elsif params[:sampleable_type] == 'Mixture'
+          mixture = Mixture.new(mix_att)
+
+          if params[:mixture_components].present?
+            component_samples = Sample.where(id: params[:mixture_components])
+            mixture.components << component_samples
+          end
+          mixture.sample = sample
         end
 
         sample.container = update_datamodel(params[:container])
