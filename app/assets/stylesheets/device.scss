@@ -22,6 +22,11 @@
   margin-right: 7px;
 }
 
+.btn.devices-button-group-clear, b.devices-button-group-clear {
+  margin-right: 7px;
+  color: #5fa95f;
+}
+
 .device-users-headline {
   font-weight: bold;
   margin-top: 5px;
@@ -36,7 +41,12 @@
   border-top: none;
 }
 
-.device-alert {
+hr.device-tablecell-hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.device-alert, .device-list-config {
   white-space: pre-line;
 }
 
@@ -81,4 +91,18 @@
 
 .device-datacollector-directory-list .form-group {
   margin-bottom: unset;
+}
+
+.form-with-columns {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.form-with-columns .col-full {
+  width: 100%;
+}
+
+.form-with-columns .col-half {
+  width: 49%;
 }

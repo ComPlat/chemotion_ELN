@@ -5,6 +5,8 @@ class MigrateDatacollectorAndNovncFields < ActiveRecord::Migration[6.1]
       profile_data = profile.present? && profile.data.present?
       datacollector = profile_data && profile.data['method'].present? ? profile.data : device.datacollector_config
       novnc =  profile_data && profile.data['novnc'].present? ? profile.data['novnc'] : device.novnc_settings
+      user_level_selected = datacollector['method_params']['user_level_selected'] rescue false
+      user_level_value = user_level_selected.present? ? user_level_selected : false
 
       device.update_columns(
         datacollector_method: (datacollector['method'] rescue nil),
@@ -14,6 +16,7 @@ class MigrateDatacollectorAndNovncFields < ActiveRecord::Migration[6.1]
         datacollector_authentication: (datacollector['method_params']['authen'] rescue nil),
         datacollector_number_of_files: (datacollector['method_params']['number_of_files'] rescue nil),
         datacollector_key_name: (datacollector['method_params']['key_name'] rescue nil),
+        datacollector_user_level_selected: user_level_value,
         novnc_token: (novnc['token'] rescue nil),
         novnc_target: (novnc['target'] rescue nil),
         novnc_password: (novnc['password'] rescue nil),
@@ -42,6 +45,7 @@ class MigrateDatacollectorAndNovncFields < ActiveRecord::Migration[6.1]
             authen: device.datacollector_authentication,
             number_of_files: device.datacollector_number_of_files,
             key_name: device.datacollector_key_name,
+            user_level_selected: device.datacollector_user_level_selected,
           }
         }
       end
@@ -64,6 +68,7 @@ class MigrateDatacollectorAndNovncFields < ActiveRecord::Migration[6.1]
         datacollector_authentication: nil,
         datacollector_number_of_files: nil,
         datacollector_key_name: nil,
+        datacollector_user_level_selected: false,
         novnc_token: nil,
         novnc_target: nil,
         novnc_password: nil,
