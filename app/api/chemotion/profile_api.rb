@@ -91,8 +91,14 @@ module Chemotion
 
       put do
         declared_params = declared(params, include_missing: false)
-        data = current_user.profile.data || {}
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+        # Find not declared generic layout details
+        generic_layouts = params[:data].select { |key, value| key.to_s.match(/^layout_detail_.+/) &&  !declared_params[:data].key?(key) }
+        generic_layouts = generic_layouts.select { |key, value| available_ements.include? key.delete_prefix("layout_detail_") }
+        # Set not declared generic layout details as declared
+        declared_params[:data] = declared_params[:data].merge(generic_layouts)
+
+        data = current_user.profile.data || {}
         data['layout'] = {
           'sample' => 1,
           'reaction' => 2,
