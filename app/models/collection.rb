@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+# rubocop:disable Metrics/AbcSize, Rails/HasManyOrHasOneDependent, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+
 # == Schema Information
 #
 # Table name: collections
@@ -33,6 +37,7 @@
 class Collection < ApplicationRecord
   acts_as_paranoid
   belongs_to :user, optional: true
+  belongs_to :inventory, optional: true
   has_ancestry
 
   has_many :collections_samples, dependent: :destroy
@@ -41,15 +46,16 @@ class Collection < ApplicationRecord
   has_many :collections_screens, dependent: :destroy
   has_many :collections_research_plans, dependent: :destroy
   has_many :collections_elements, dependent: :destroy, class_name: 'Labimotion::CollectionsElement'
-
+  has_many :collections_celllines, dependent: :destroy
   has_many :samples, through: :collections_samples
   has_many :reactions, through: :collections_reactions
   has_many :wellplates, through: :collections_wellplates
   has_many :screens, through: :collections_screens
   has_many :research_plans, through: :collections_research_plans
   has_many :elements, through: :collections_elements
+  has_many :cellline_samples, through: :collections_celllines
 
-  has_many :sync_collections_users, foreign_key: :collection_id, dependent: :destroy, inverse_of: :collection
+  has_many :sync_collections_users, dependent: :destroy, inverse_of: :collection
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   has_one :metadata
@@ -63,7 +69,7 @@ class Collection < ApplicationRecord
   scope :synchronized, -> { where(is_synchronized: true) }
   scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
   scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
-  scope :belongs_to_or_shared_by, ->(user_id, with_group = false) do
+  scope :belongs_to_or_shared_by, lambda { |user_id, with_group = false|
     if with_group.present?
       where(
         'user_id = ? OR shared_by_id = ? OR (user_id IN (?) AND is_locked = false)',
@@ -72,7 +78,7 @@ class Collection < ApplicationRecord
     else
       where('user_id = ? OR shared_by_id = ?', user_id, user_id)
     end
-  end
+  }
 
   default_scope { ordered }
 
@@ -89,13 +95,13 @@ class Collection < ApplicationRecord
   end
 
   def self.filter_collection_attributes(user_id, collection_attributes)
-    c_ids = collection_attributes.map { |ca| !ca['isNew'] && ca['id'].to_i || nil }.compact
-    filtered_cids = Collection.where(id: c_ids).map do |c|
+    c_ids = collection_attributes.filter_map { |ca| (!ca['isNew'] && ca['id'].to_i) || nil }
+    filtered_cids = Collection.where(id: c_ids).filter_map do |c|
       if (c.user_id == user_id && !c.is_shared) ||
          (c.is_shared && (c.shared_by_id == user_id || (c.user_id == user_id && c.permission_level == 10)))
         c.id
       end
-    end.compact
+    end
     collection_attributes.select { |ca| ca['isNew'] || filtered_cids.include?(ca['id'].to_i) }
   end
 
@@ -143,6 +149,33 @@ class Collection < ApplicationRecord
 
   def self.reject_shared(user_id, collection_id)
     Collection.where(id: collection_id, user_id: user_id, is_shared: true)
-              .each(&:destroy)
+              .find_each(&:destroy)
+  end
+
+  def self.collections_for_user(user_id)
+    Collection.where(user_id: user_id, shared_by_id: nil)
+  end
+
+  def self.collections_group_by_inventory(collections, inventory)
+    {
+      collections: collections,
+      inventory: {
+        id: inventory&.id,
+        prefix: inventory&.prefix,
+        name: inventory&.name,
+        counter: inventory&.counter,
+      },
+    }
+  end
+
+  def self.inventory_collections(user_id)
+    collections = collections_for_user(user_id).reject { |c| c.label == 'All' }
+    grouped_collections = collections.group_by { |c| c.inventory&.id }
+    grouped_collections.values.map do |collections_group|
+      collections = collections_group.map { |c| { id: c.id, label: c.label } }
+      inventory = collections_group.first&.inventory
+      collections_group_by_inventory(collections, inventory)
+    end
   end
 end
+# rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity

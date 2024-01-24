@@ -36,6 +36,7 @@ class App extends Component {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchOlsRxno();
     UserActions.fetchOlsChmo();
+    UserActions.fetchOlsBao();
     UserActions.fetchProfile();
     UserActions.fetchUserLabels();
     UserActions.fetchGenericEls();

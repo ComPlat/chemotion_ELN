@@ -6,14 +6,11 @@
 FROM --platform=linux/amd64 ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG VRUBY=2.7.7
-ARG VNODE=18.18.2
-ARG ASDF_BRANCH=v0.11.3
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
       imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
-      build-essential nodejs sudo postgresql-client libappindicator1 swig \
+      build-essential sudo postgresql-client libappindicator1 swig \
       gconf-service libasound2 libgconf-2-4 cmake \
       libnspr4 libnss3 libpango1.0-0 libxss1 xdg-utils tzdata libpq-dev \
       gtk2-engines-pixbuf \
@@ -49,18 +46,9 @@ RUN mkdir /home/chemotion-dev/node_modules
 
 SHELL ["/bin/bash", "-c"]
 
-RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch $ASDF_BRANCH
-
+# Even if asdf and the related tools are only installed by running run-ruby-dev.sh, we set the PATH variables here, so when we enter the container via docker exec, we have the path set correctly
 ENV ASDF_DIR=/home/chemotion-dev/.asdf
 ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-RUN asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
-RUN asdf install nodejs $VNODE
-RUN asdf global nodejs $VNODE
-
-RUN asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
-RUN asdf install ruby $VRUBY
-RUN asdf global ruby $VRUBY
 
 RUN echo 'network-timeout 600000' > /home/chemotion-dev/.yarnrc
 # use node modules from outside the application directory

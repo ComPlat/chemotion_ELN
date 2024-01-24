@@ -7,32 +7,59 @@
   max-height: calc(100vh - 250px);
 }
 
-.attachment-dataset-modal {
+.attachment-annotation-modal {
   height: 95%;
   top: 52% !important;
   margin: unset !important;
   width: calc(80vw) !important;
   .modal-content {
     height: 95%;
-    .modal-header .modal-title .btn-toolbar {
-      float: right;
+    .modal-title{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
     }
     .modal-body {
       height: 90%;
       overflow: auto;
-      .row {
-        height: 100%;
-        .col-base .desc {
-          min-height: 200px;
-        }
-        .col-full {
-          // height: 100%;
-          .list {
-            overflow: auto;
-            max-height: calc(100% - 70px) !important;
-          }
-        }
-      }
+      max-height: calc(100% - 130px) !important;
     }
   }
+}
+
+.attachment-modal {
+  top: 55% !important;
+  height: 100%;
+  margin: unset !important;
+  width: 70vw !important;
+  .modal-content {
+    height: 90%;
+    .modal-title{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .modal-body {
+      height: 90%;
+      overflow: auto;
+      max-height: calc(100% - 130px) !important;
+    }
+  }
+}
+
+.attachment-name-input-div {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+}
+
+.attachment-name-input {
+  font-weight: bold;
+  color: #495057;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  padding: 2px 0;
 }

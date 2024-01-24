@@ -36,7 +36,7 @@ module Reporter
 
       # - - - - - - - - - -
       def atts_content
-        @prd['atts'].map do |att|
+        @prd['atts']&.map do |att|
           att_content(att)
         end.compact
       end

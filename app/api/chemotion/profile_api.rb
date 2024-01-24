@@ -1,5 +1,7 @@
-module Chemotion
+# frozen_string_literal: true
+# rubocop: disable Style/MultilineIfModifier
 
+module Chemotion
   class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
       fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
@@ -91,8 +93,14 @@ module Chemotion
         declared_params = declared(params, include_missing: false)
         data = current_user.profile.data || {}
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
-
-        data['layout'] = { 'sample' => 1, 'reaction' => 2, 'wellplate' => 3, 'screen' => 4, 'research_plan' => 5 } if data['layout'].nil?
+        data['layout'] = {
+          'sample' => 1,
+          'reaction' => 2,
+          'wellplate' => 3,
+          'screen' => 4,
+          'research_plan' => 5,
+          'cell_line' => -1000,
+        } if data['layout'].nil?
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
@@ -111,3 +119,4 @@ module Chemotion
     end
   end
 end
+# rubocop: enable Style/MultilineIfModifier

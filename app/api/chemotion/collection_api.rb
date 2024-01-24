@@ -1,5 +1,5 @@
 module Chemotion
-  # rubocop: disable Metrics/ClassLength
+  # rubocop: disable Metrics/ClassLength, Style/MultilineIfModifier, Layout/MultilineMethodCallBraceLayout
 
   class CollectionAPI < Grape::API
     helpers CollectionHelpers
@@ -192,6 +192,9 @@ module Chemotion
             optional :research_plan, type: Hash do
               use :ui_state_params
             end
+            optional :cell_line, type: Hash do
+              use :ui_state_params
+            end
           end
           requires :collection_attributes, type: Hash do
             requires :permission_level, type: Integer
@@ -217,6 +220,9 @@ module Chemotion
           wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
           screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
           research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
+          cell_lines = CelllineSample.by_collection_id(@cid)
+                                     .by_ui_state(params[:elements_filter][:cell_line])
+                                     .for_user_n_groups(user_ids)
           elements = {}
           Labimotion::ElementKlass.find_each do |klass|
             elements[klass.name] = Labimotion::Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
@@ -227,20 +233,25 @@ module Chemotion
           top_secret_screen = screens.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
 
           is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
-
           share_samples = ElementsPolicy.new(current_user, samples).share?
           share_reactions = ElementsPolicy.new(current_user, reactions).share?
           share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
           share_screens = ElementsPolicy.new(current_user, screens).share?
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
+          share_cell_lines = ElementsPolicy.new(current_user, cell_lines).share?
           share_elements = !(elements&.length > 0)
           elements.each do |k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?
             break unless share_elements
           end
 
-          sharing_allowed = share_samples && share_reactions &&
-            share_wellplates && share_screens && share_research_plans && share_elements
+          sharing_allowed = share_samples &&
+                            share_reactions &&
+                            share_wellplates &&
+                            share_screens &&
+                            share_research_plans &&
+                            share_cell_lines &&
+                            share_elements
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
 
           @sample_ids = samples.pluck(:id)
@@ -248,6 +259,7 @@ module Chemotion
           @wellplate_ids = wellplates.pluck(:id)
           @screen_ids = screens.pluck(:id)
           @research_plan_ids = research_plans.pluck(:id)
+          @cell_line_ids = cell_lines.pluck(:id)
           @element_ids = elements&.transform_values { |v| v && v.pluck(:id) }
         end
 
@@ -261,6 +273,7 @@ module Chemotion
               User.where(email: val).pluck :id
             end
           end.flatten.compact.uniq
+
           Usecases::Sharing::ShareWithUsers.new(
             user_ids: uids,
             sample_ids: @sample_ids,
@@ -268,6 +281,7 @@ module Chemotion
             wellplate_ids: @wellplate_ids,
             screen_ids: @screen_ids,
             research_plan_ids: @research_plan_ids,
+            cell_line_ids: @cell_line_ids,
             element_ids: @element_ids,
             collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
           ).execute!
@@ -308,13 +322,15 @@ module Chemotion
             ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
             ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
-            element_klass = element.classify.constantize
-            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
-            collections_element_klass.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
+            classes = create_classes_of_element(element)
+            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            classes[1].move_to_collection(ids, from_collection.id, to_collection_id)
+            classes[1].remove_in_collection(
+              ids,
+              Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
@@ -360,10 +376,9 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
-            element_klass = element.classify.constantize
-            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.create_in_collection(ids, to_collection_id)
+            classes = create_classes_of_element(element)
+            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            classes[1].create_in_collection(ids, to_collection_id)
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
@@ -407,10 +422,9 @@ module Chemotion
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            collections_element_klass = ('collections_' + element).classify.constantize
-            element_klass = element.classify.constantize
-            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            collections_element_klass.remove_in_collection(ids, from_collection.id)
+            classes = create_classes_of_element(element)
+            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            classes[1].remove_in_collection(ids, from_collection.id)
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
@@ -534,6 +548,5 @@ module Chemotion
       end
     end
   end
-
-  # rubocop: enable Metrics/ClassLength
 end
+# rubocop: enable Metrics/ClassLength, Style/MultilineIfModifier, Layout/MultilineMethodCallBraceLayout

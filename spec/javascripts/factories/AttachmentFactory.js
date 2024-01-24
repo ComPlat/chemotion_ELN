@@ -5,7 +5,7 @@ import Element from 'src/models/Element';
 export default class AttachmentFactory {
   static instance = undefined;
 
-  static build(...args) {
+  static async build(...args) {
     if (AttachmentFactory.instance === undefined) {
       AttachmentFactory.instance = new AttachmentFactory();
     }
@@ -15,8 +15,9 @@ export default class AttachmentFactory {
 
   constructor() {
     this.factory = factory;
+  
 
-    this.factory.define('new', Attachment, {
+    this.factory.define('AttachmentFactory.new', Attachment, {
       id: parseInt(Element.buildID(), 10),
       is_new: true,
       updated_at: new Date(),

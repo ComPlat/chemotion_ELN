@@ -12,13 +12,14 @@ import {
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
+import CellLine from 'src/models/cellLine/CellLine';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
-import { CitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationType';
+import { createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
 
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
@@ -55,8 +56,9 @@ const checkElementStatus = (element) => {
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
-      literature: Literature.buildEmpty(),
+      literature: this.createEmptyLiterature(this.props.element.type),
       literatures: new Immutable.Map(),
       sortedIds: [],
     };
@@ -90,6 +92,12 @@ export default class DetailsTabLiteratures extends Component {
         }));
       });
     }
+  }
+
+  createEmptyLiterature(elementType) {
+    const literature = Literature.buildEmpty();
+    literature.litype = Object.keys(createCitationTypeMap(elementType))[0];
+    return literature;
   }
 
   handleInputChange(type, event) {
@@ -185,14 +193,14 @@ export default class DetailsTabLiteratures extends Component {
         },
       }).then((literatures) => {
         this.setState(() => ({
-          literature: Literature.buildEmpty(),
+          literature: this.createEmptyLiterature(this.props.element.type),
           literatures,
           sortedIds: groupByCitation(literatures),
           sorting: 'literature_id'
         }));
       }).catch((errorMessage) => {
         NotificationActions.add(notification(errorMessage.error));
-        this.setState({ literature: Literature.buildEmpty() });
+        this.setState({ literature: this.createEmptyLiterature(this.props.element.type) });
       });
     }
   }
@@ -268,6 +276,8 @@ export default class DetailsTabLiteratures extends Component {
     const { currentUser } = UserStore.getState();
     const isInvalidDoi = !(doiValid(literature.doi_isbn || ''));
     const isInvalidIsbn = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
+    const { readOnly } = this.props;
+    const citationTypeMap = createCitationTypeMap(this.props.element.type);
     return (
       <ListGroup fill="true">
         <ListGroupItem style={{ border: 'unset' }}>
@@ -277,11 +287,17 @@ export default class DetailsTabLiteratures extends Component {
                 handleInputChange={this.handleInputChange}
                 literature={literature}
                 field="doi_isbn"
+                readOnly={readOnly}
                 placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ... or ISBN: 978 ..."
               />
             </Col>
             <Col md={3} style={{ paddingRight: 0 }}>
-              <LiteralType handleInputChange={this.handleInputChange} disabled={false} val={literature.litype} />
+              <LiteralType
+                handleInputChange={this.handleInputChange}
+                disabled={readOnly}
+                val={literature.litype}
+                citationMap={citationTypeMap}
+              />
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button
@@ -290,7 +306,7 @@ export default class DetailsTabLiteratures extends Component {
                 style={{ marginTop: 2 }}
                 onClick={this.fetchMetadata}
                 title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
-                disabled={isInvalidDoi && isInvalidIsbn}
+                disabled={(isInvalidDoi && isInvalidIsbn) || readOnly}
               >
                 <i className="fa fa-plus" aria-hidden="true" />
               </Button>
@@ -303,6 +319,7 @@ export default class DetailsTabLiteratures extends Component {
                 handleInputChange={this.handleInputChange}
                 literature={literature}
                 field="title"
+                readOnly={readOnly}
                 placeholder="Title..."
               />
             </Col>
@@ -311,17 +328,22 @@ export default class DetailsTabLiteratures extends Component {
                 handleInputChange={this.handleInputChange}
                 literature={literature}
                 field="url"
+                readOnly={readOnly}
                 placeholder="URL..."
               />
             </Col>
             <Col md={1}>
-              <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
+              <AddButton
+                readOnly={readOnly}
+                onLiteratureAdd={this.handleLiteratureAdd}
+                literature={literature}
+              />
             </Col>
           </Row>
         </ListGroupItem>
         <ListGroupItem style={{ border: 'unset' }}>
           {
-            Object.keys(CitationTypeMap)
+            Object.keys(citationTypeMap)
               .map((e) => (
                 <CitationPanel
                   key={`_citation_panel_${e}`}
@@ -329,8 +351,11 @@ export default class DetailsTabLiteratures extends Component {
                   fnDelete={this.handleLiteratureRemove}
                   sortedIds={sortedIds}
                   rows={literatures}
+                  readOnly={readOnly}
                   uid={currentUser && currentUser.id}
                   fnUpdate={this.handleTypeUpdate}
+                  citationMap={citationTypeMap[e]}
+                  typeMap={citationTypeMap}
                 />
               ))
           }
@@ -344,7 +369,14 @@ DetailsTabLiteratures.propTypes = {
   element: PropTypes.oneOfType([
     PropTypes.instanceOf(ResearchPlan),
     PropTypes.instanceOf(Reaction),
+    PropTypes.instanceOf(CellLine),
     PropTypes.instanceOf(Sample)
   ]).isRequired,
-  literatures: PropTypes.array
+  literatures: PropTypes.array,
+  readOnly: PropTypes.bool
+};
+
+DetailsTabLiteratures.defaultProps = {
+  readOnly: false,
+  literatures: []
 };

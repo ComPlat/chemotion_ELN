@@ -95,11 +95,19 @@ class UIActions {
     return selection;
   }
 
+  setSearchById(selection) {
+    return selection;
+  }
+
   selectCollectionWithoutUpdating(collection) {
     return collection;
   }
 
   clearSearchSelection() {
+    return null;
+  }
+
+  clearSearchById() {
     return null;
   }
 

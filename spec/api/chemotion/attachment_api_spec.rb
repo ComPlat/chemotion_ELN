@@ -22,6 +22,9 @@ describe Chemotion::AttachmentAPI do
         'filesize' => attachment.filesize,
         'identifier' => attachment.identifier,
         'thumb' => attachment.thumb,
+        'thumbnail' => attachment.thumb ? Base64.encode64(attachment.read_thumbnail) : nil,
+        'created_at' => kind_of(String),
+        'updated_at' => kind_of(String),
       },
     }
   end
@@ -67,7 +70,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns the deleted attachment' do
-        expect(parsed_json_response).to eq(expected_response)
+        expect(parsed_json_response).to include(expected_response)
       end
 
       it 'deletes the attachment on database', :enable_usecases_attachments_delete do
@@ -116,7 +119,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'returns the deleted attachment' do
-        expect(parsed_json_response).to eq(expected_response)
+        expect(parsed_json_response).to include(expected_response)
       end
 
       it 'unlinks the attachment from container', :enable_usecases_attachments_unlink do

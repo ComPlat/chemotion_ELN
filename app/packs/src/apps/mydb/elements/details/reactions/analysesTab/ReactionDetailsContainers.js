@@ -4,7 +4,6 @@ import {
   PanelGroup,
   Panel,
   Button,
-  OverlayTrigger, SplitButton, ButtonGroup, MenuItem, Tooltip
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -22,8 +21,8 @@ import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
-
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -39,99 +38,6 @@ const nmrMsg = (reaction, container) => {
     const msg = cNmrCount(nmrStr);
     return (<div style={{ display: 'inline', color: 'black' }}>&nbsp;(<sup>13</sup>C: {msg})</div>);
   }
-};
-
-const SpectraEditorBtn = ({
-  element, spcInfos, hasJcamp, hasChemSpectra,
-  toggleSpectraModal, confirmRegenerate,
-  toggleNMRDisplayerModal, hasNMRium,
-}) => (
-  <span>
-    <OverlayTrigger
-      placement="bottom"
-      delayShow={500}
-      overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
-    >{spcInfos.length > 0 ? (
-      <ButtonGroup className="button-right">
-        <SplitButton
-          id="spectra-editor-split-button"
-          pullRight
-          bsStyle="info"
-          bsSize="xsmall"
-          title={<i className="fa fa-area-chart" />}
-          onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
-          onClick={toggleSpectraModal}
-          disabled={!(spcInfos.length > 0) || !hasChemSpectra}
-        >
-          <MenuItem
-            id="regenerate-spectra"
-            key="regenerate-spectra"
-            onSelect={(eventKey, event) => {
-              event.stopPropagation();
-              confirmRegenerate(event);
-            }}
-            disabled={!hasJcamp || !element.can_update}
-          >
-            <i className="fa fa-refresh" /> Reprocess
-          </MenuItem>
-        </SplitButton>
-      </ButtonGroup>
-      ) : (
-        <Button
-          bsStyle="warning"
-          bsSize="xsmall"
-          className="button-right"
-          onClick={confirmRegenerate}
-          disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
-        >
-          <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
-      </Button>
-    )}
-    </OverlayTrigger>
-    {
-      hasNMRium ? (
-        <OverlayTrigger
-          placement="top"
-          delayShow={500}
-          overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
-        >
-          <ButtonGroup className="button-right">
-            <Button
-              id="spectra-editor-split-button"
-              pullRight
-              bsStyle="info"
-              bsSize="xsmall"
-              onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
-              onClick={toggleNMRDisplayerModal}
-              disabled={!hasJcamp || !element.can_update}
-            >
-              <i className="fa fa-bar-chart"/>
-            </Button>
-          </ButtonGroup>
-        </OverlayTrigger>
-      ) : null
-    }
-  </span>
-);
-
-SpectraEditorBtn.propTypes = {
-  element: PropTypes.object,
-  hasJcamp: PropTypes.bool,
-  spcInfos: PropTypes.array,
-  hasChemSpectra: PropTypes.bool,
-  toggleSpectraModal: PropTypes.func.isRequired,
-  confirmRegenerate: PropTypes.func.isRequired,
-  toggleNMRDisplayerModal: PropTypes.func.isRequired,
-  hasNMRium: PropTypes.bool,
-};
-
-SpectraEditorBtn.defaultProps = {
-  hasJcamp: false,
-  spcInfos: [],
-  element: {},
-  hasChemSpectra: false,
-  hasEditedJcamp: false,
-  hasNMRium: false,
 };
 
 export default class ReactionDetailsContainers extends Component {
@@ -252,7 +158,7 @@ export default class ReactionDetailsContainers extends Component {
           <i className="fa fa-trash" />
         </Button>
         <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
-        <SpectraEditorBtn
+        <SpectraEditorButton
           element={reaction}
           hasJcamp={hasJcamp}
           spcInfos={spcInfos}

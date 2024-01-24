@@ -326,7 +326,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
             </Tooltip>
           )}
         >
-          <AddButton onClick={() => addRow()} />
+          {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
+          <span><AddButton onClick={() => addRow()} /></span>
         </OverlayTrigger>
         {' '}
         <FormGroup>
