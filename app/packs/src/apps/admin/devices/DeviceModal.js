@@ -4,6 +4,8 @@ import Draggable from "react-draggable";
 import DevicePropertiesTab from './DevicePropertiesTab';
 import DeviceUserGroupsTab from './DeviceUserGroupsTab';
 import DeviceDataCollectorTab from './DeviceDataCollectorTab';
+import DeviceNovncTab from './DeviceNovncTab';
+import { endsWith } from 'lodash';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -15,6 +17,10 @@ const DeviceModal = () => {
 
   const minimizedClass = devicesStore.modalMinimized ? ' minimized' : '';
   let deviceParams = {};
+  let datacollectorFields = [
+    'datacollector_method', 'datacollector_user', 'datacollector_host',
+    'datacollector_key_name', 'datacollector_dir'
+  ];
 
   const trimDeviceStringValues = () => {
     deviceParams = { ...device };
@@ -46,19 +52,66 @@ const DeviceModal = () => {
     return deviceParams;
   }
 
+  const anyDatacollectorFields = () => {
+    return datacollectorFields.filter(field => device[field] !== '' && device[field] !== null);
+  }
+
   const handleValidationState = () => {
-    let nameValue = device.name.trim() === '' ? 'error' : null;
+    let errorMessages = ['Please fill out all needed fields'];
+
+    const nameValue = device.name.trim() === '' ? 'error' : null;
+    if (nameValue) { errorMessages.push('Please enter a name'); }
     devicesStore.changeDevice('valid_name', nameValue);
-    let nameAbbreviationValue = device.name_abbreviation.trim() === '' ? 'error' : null;
+
+    const nameAbbreviationValue = device.name_abbreviation.trim() === '' ? 'error' : null;
+    if (nameAbbreviationValue) { errorMessages.push('Please enter a name abbreviation'); }
     devicesStore.changeDevice('valid_name_abbreviation', nameAbbreviationValue);
+
+    if (anyDatacollectorFields().length >= 1) {
+      devicesStore.changeDevice('datacollector_fields', true);
+    
+      const methodValue = !device.datacollector_method ? 'error' : null;
+      if (methodValue) { errorMessages.push('Please select watch method'); }
+      devicesStore.changeDevice('valid_datacollector_method', methodValue);
+    
+      const dirValue = !device.datacollector_dir ? 'error' : null;
+      if (dirValue) { errorMessages.push('Please enter a watch directory'); }
+      devicesStore.changeDevice('valid_datacollector_dir', dirValue);
+    
+      if (endsWith(device.datacollector_method, 'sftp')) {
+        const userValue = !device.datacollector_user ? 'error' : null;
+        if (userValue) { errorMessages.push('Please enter a user'); }
+        devicesStore.changeDevice('valid_datacollector_user', userValue);
+    
+        const hostValue = !device.datacollector_host ? 'error' : null;
+        if (hostValue) { errorMessages.push('Please enter a host'); }
+        devicesStore.changeDevice('valid_datacollector_host', hostValue);
+    
+        const keyNameValue =
+          device.datacollector_authentication === 'keyfile' && !device.datacollector_key_name ? 'error' : null;
+        if (keyNameValue) { errorMessages.push('Use key file, Please enter a key path'); }
+        devicesStore.changeDevice('valid_datacollector_key_name', keyNameValue);
+      }
+    } else {
+      devicesStore.changeDevice('datacollector_fields', false);
+    }
+
+    if (devicesStore.active_tab_key == 4) {
+      const novncTarget = !device.novnc_target ? 'error' : null;
+      if (novncTarget) { errorMessages.push('Please type a Target for the device'); }
+      devicesStore.changeDevice('valid_novnc_target', novncTarget);
+    }
+
+    return errorMessages;
   }
 
   const saveDevice = () => {
-    devicesStore.changeErrorMessage('Please fill out all needed fields');
-    handleValidationState();
+    let errorMessages = handleValidationState();
+    console.log(errorMessages);
+    devicesStore.changeErrorMessage(errorMessages.join('\n'));
     device = devicesStore.device;
 
-    if (device.valid_name === null && device.valid_name_abbreviation === null) {
+    if (errorMessages.length <= 1) {
       removeErrors();
 
       if (devicesStore.create_or_update == 'update') {
@@ -78,7 +131,7 @@ const DeviceModal = () => {
 
   const removeErrors = () => {
     devicesStore.changeErrorMessage('');
-    devicesStore.changeSuccess_message('');
+    devicesStore.changeSuccessMessage('');
   }
 
   const handleSelectTab = (key) => {
@@ -97,7 +150,7 @@ const DeviceModal = () => {
     if (devicesStore.error_message !== '') {
       return <Alert bsStyle="danger" className="device-alert">{devicesStore.error_message}</Alert>;
     } else if (devicesStore.success_message !== '') {
-      return <Alert bsStyle="success">{devicesStore.success_message}</Alert>;
+      return <Alert bsStyle="success" className="device-alert">{devicesStore.success_message}</Alert>;
     }
   }
 
@@ -163,7 +216,7 @@ const DeviceModal = () => {
                     key="tab-novnc-settings-4"
                     disabled={disableTab}
                   >
-                    NoVnc Settings Einstellungen
+                    <DeviceNovncTab />
                   </Tab>
                   <Tab
                     eventKey={5}

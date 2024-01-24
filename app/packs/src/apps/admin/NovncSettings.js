@@ -28,11 +28,11 @@ class ModelConfig extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedToken: props.device.novnc_settings.token || '',
-      selectedTarget: props.device.novnc_settings.target || '',
-      selectedPassword: props.device.novnc_settings.password || '',
-      inputToken: props.device.novnc_settings.token || '',
-      inputTarget: props.device.novnc_settings.target || ''
+      selectedToken: props.device.novnc_token || '',
+      selectedTarget: props.device.novnc_target || '',
+      selectedPassword: props.device.novnc_password || '',
+      inputToken: props.device.novnc_token || '',
+      inputTarget: props.device.novnc_target || ''
     };
     this.handleSave = this.handleSave.bind(this);
     this.updateTarget = this.updateTarget.bind(this);
@@ -47,16 +47,15 @@ class ModelConfig extends Component {
 
     const params = {
       id: device.id,
-      novnc_settings: {
-        token: selectedToken,
-        target: selectedTarget,
-        password: selectedPassword,
-      },
+      novnc_token: selectedToken,
+      novnc_target: selectedTarget,
+      novnc_password: selectedPassword,
+      datacollector_fields: false,
     };
 
-    params.novnc_settings.token = this.refToken.value;
-    params.novnc_settings.target = this.refTarget.value;
-    params.novnc_settings.password = this.refPassword.value;
+    params.novnc_token = this.refToken.value;
+    params.novnc_target = this.refTarget.value;
+    params.novnc_password = this.refPassword.value;
 
     if (missingTarget) {
       NotificationError({ device, msg: 'Please type a Target for the device!' });
@@ -86,9 +85,9 @@ class ModelConfig extends Component {
   render() {
     const rowStyle = { padding: '8px', display: 'flex' };
     const colStyle = { textAlign: 'right', marginTop: 'auto', marginBottom: 'auto' };
-    const storedTarget = this.props.device.novnc_settings.target;
-    const storedToken = this.props.device.novnc_settings.token;
-    const storedPassword = this.props.device.novnc_settings.password;
+    const storedTarget = this.props.device.novnc_target;
+    const storedToken = this.props.device.novnc_token;
+    const storedPassword = this.props.device.novnc_password;
     const { inputTarget, inputToken } = this.state;
     const missingTarget = !inputTarget;
 
@@ -203,11 +202,9 @@ class ModelConfig extends Component {
 ModelConfig.propTypes = {
   device: PropTypes.shape({
     name: PropTypes.string,
-    novnc_settings: PropTypes.shape({
-      target: PropTypes.string,
-      token: PropTypes.string,
-      password: PropTypes.string,
-    })
+    novnc_target: PropTypes.string,
+    novnc_token: PropTypes.string,
+    novnc_password: PropTypes.string,
   }).isRequired,
   isShow: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired
@@ -239,10 +236,6 @@ export default class NovncSettings extends Component {
     AdminFetcher.fetchDeviceById(device.id)
       .then((result) => {
         const selectedDevice = result.device;
-        const emptyData = { token: '', target: '', password: '' };
-        if (Object.keys(selectedDevice.novnc_settings).length < 1) {
-          selectedDevice.novnc_settings = emptyData;
-        }
         this.setState({
           selectedDevice: selectedDevice,
           showConfigModal: true
@@ -273,16 +266,18 @@ export default class NovncSettings extends Component {
     const { devices } = this.state;
     const params = {
       id,
-      novnc_settings: {
-        token: '',
-        target: '',
-        password: '',
-      },
+      novnc_token: '',
+      novnc_target: '',
+      novnc_password: '',
     };
     AdminFetcher.editNovncSettings(params)
       .then(() => {
         devices.map((dev) => {
-          if (dev.id === id) { dev.novnc_settings = {}; }
+          if (dev.id === id) {
+            dev.novnc_token = '';
+            dev.novnc_target = '';
+            dev.novnc_password = '';
+          }
         });
         this.setState({ devices });
       });
@@ -301,10 +296,10 @@ export default class NovncSettings extends Component {
     const { devices } = this.state;
 
     const renderTarget = (device) => {
-      if (device.novnc_settings && device.novnc_settings.token) {
-        return `${device.novnc_settings.target}?token=${device.novnc_settings.token}`;
-      } else if (device.novnc_settings && !device.novnc_settings.token) {
-        return device.novnc_settings.target;
+      if (device.novnc_target && device.novnc_token) {
+        return `${device.novnc_target}?token=${device.novnc_token}`;
+      } else if (device.novnc_target && !device.novnc_token) {
+        return device.novnc_target;
       }
       return 'Blank target';
     };

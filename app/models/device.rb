@@ -1,6 +1,17 @@
 # frozen_string_literal: true
 
 class Device < ApplicationRecord
+  attr_accessor :datacollector_fields
+
+  DATACOLLECTOR_ATTRIBUTES_TO_CHECK = %w[
+    datacollector_method datacollector_user datacollector_host
+    datacollector_key_name datacollector_dir
+  ].freeze
+
+  DATACOLLECTOR_SFTP_ATTRIBUTES = %w[
+    datacollector_method datacollector_dir datacollector_user datacollector_host
+  ].freeze
+
   acts_as_paranoid
   # devise :database_authenticatable, :validatable
 
@@ -18,6 +29,14 @@ class Device < ApplicationRecord
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
   validate :mail_checker
+
+  with_options unless: :datacollector_values_present? do
+    validate :datacollector_check_basics
+    validate :datacollector_check_sftp
+    validate :datacollector_check_keyfile
+    validate :datacollector_check_local_path
+    validate :datacollector_check_sftp_keyfile_path
+  end
 
   before_create :create_email_and_password
 
@@ -94,6 +113,82 @@ class Device < ApplicationRecord
     MailChecker.valid?(email) || errors.add(
       :email, 'from throwable email providers not accepted'
     )
+  end
+
+  def datacollector_values_present?
+    attributes.slice(*self.class::DATACOLLECTOR_ATTRIBUTES_TO_CHECK).values.none?(&:present?)
+  end
+
+  def datacollector_sftp_values_present?
+    attributes.slice(*self.class::DATACOLLECTOR_SFTP_ATTRIBUTES).values.all?(&:present?)
+  end
+
+  def datacollector_check_basics
+    errors.add(:datacollector_method, :blank) if datacollector_method.blank?
+    errors.add(:datacollector_dir, :blank) if datacollector_dir.blank?
+  end
+
+  def datacollector_check_sftp
+    return unless datacollector_method.present? && datacollector_method.end_with?('sftp')
+
+    errors.add(:datacollector_user, :blank) if datacollector_user.blank?
+    errors.add(:datacollector_host, :blank) if datacollector_host.blank?
+  end
+
+  def datacollector_check_keyfile
+    return unless datacollector_authentication == 'keyfile' && datacollector_key_name.blank?
+
+    errors.add(:datacollector_key_name, :blank)
+  end
+
+  def datacollector_pathname
+    return if datacollector_dir.blank?
+
+    Pathname.new(datacollector_dir)
+  end
+
+  def datacollector_localpath_config
+    return unless datacollector_pathname.directory?
+
+    localpath =
+      Rails.configuration.datacollectors.localcollectors.find do |e|
+        datacollector_pathname.realpath.to_path.start_with?(e[:path])
+      end
+
+    return if localpath.nil?
+
+    datacollector_pathname.realpath.to_path.sub(localpath[:path], '')
+  end
+
+  def datacollector_key_dir_path
+    return if datacollector_key_name.blank?
+
+    keydir = Rails.configuration.datacollectors.keydir
+
+    if keydir.start_with?('/')
+      Pathname.new(keydir).join(datacollector_key_name)
+    else
+      Rails.root.join(keydir, datacollector_key_name)
+    end
+  end
+
+  def datacollector_check_local_path
+    return if datacollector_method.blank? || datacollector_dir.blank?
+    return unless datacollector_method.end_with?('local')
+
+    if datacollector_pathname.directory? && datacollector_localpath_config.nil?
+      errors.add(:datacollector_dir, :whitelist)
+    elsif !datacollector_pathname.directory?
+      errors.add(:datacollector_dir, :invalid)
+    end
+  end
+
+  def datacollector_check_sftp_keyfile_path
+    return unless datacollector_sftp_values_present?
+    return unless datacollector_method.end_with?('sftp') && datacollector_authentication == 'keyfile'
+    return if datacollector_key_dir_path.file? && datacollector_key_dir_path.exist?
+
+    errors.add(:datacollector_key_name, :not_found)
   end
 
   def initials

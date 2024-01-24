@@ -22,6 +22,15 @@ export default class AdminDeviceFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static fetchDeviceById(deviceId) {
+    return fetch(
+      `/api/v1/admin_devices/${deviceId}`,
+      { ...this._httpOptions() }
+    ).then(response => response.json())
+      .then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static createDevice(device) {
     return fetch(
       `/api/v1/admin_devices`,
@@ -64,6 +73,17 @@ export default class AdminDeviceFetcher {
           device_id: deviceId
         }),
       }
+    ).then(response => response.json())
+      .then(json => json)
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
+  static testSFTP(device) {
+    return fetch('/api/v1/admin_devices/test_sftp',
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify(device),
+      },
     ).then(response => response.json())
       .then(json => json)
       .catch(errorMessage => console.log(errorMessage));

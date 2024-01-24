@@ -99,14 +99,14 @@ module Chemotion
       namespace :sftpDevice do # rubocop:disable Metrics/BlockLength
         desc 'Connect device via SFTP'
         params do
-          requires :method, type: String
-          requires :host, type: String
-          requires :user, type: String
-          requires :authen, type: String
-          optional :key_name, type: String
+          requires :datacollector_method, type: String
+          requires :datacollector_host, type: String
+          requires :datacollector_user, type: String
+          requires :datacollector_authentication, type: String
+          optional :datacollector_key_name, type: String
         end
         post do
-          case params[:authen]
+          case params[:datacollector_authentication]
           when 'password'
             credentials = Rails.configuration.datacollectors.sftpusers.select do |e|
               e[:user] == params[:user]
@@ -114,7 +114,7 @@ module Chemotion
             raise 'No match user credentials!' unless credentials
 
             connect_sftp_with_password(
-              host: params[:host],
+              host: params[:datacollector_host],
               user: credentials[:user],
               password: credentials[:password]
             )
@@ -147,28 +147,23 @@ module Chemotion
         desc 'Update device profile method'
         params do
           requires :id, type: Integer
-          requires :datacollector_config, type: Hash do
-            requires :method, type: String
-            requires :method_params, type: Hash do
-              requires :dir, type: String
-              optional :host, type: String
-              optional :user, type: String
-              optional :authen, type: String
-              optional :key_name, type: String
-              optional :number_of_files, type: Integer
-              optional :selected_user_level, type: Boolean
-            end
-          end
-        end
+          requires :datacollector_method, type: String
+          requires :datacollector_dir, type: String
+          optional :datacollector_host, type: String
+          optional :datacollector_user, type: String
+          optional :datacollector_authentication, type: String
+          optional :datacollector_key_name, type: String
+          optional :datacollector_number_of_files, type: Integer
+          optional :datacollector_user_level_selected, type: Boolean
 
         after_validation do
-          @p_method = params[:datacollector_config][:method]
-          user_level_selected = params.dig(:datacollector_config, :method_params, :user_level_selected)
+          @p_method = params[:datacollector_method]
+          user_level_selected = params[:datacollector_user_level_selected]
           if @p_method.end_with?('local')
             p_dir = if user_level_selected
-                      params[:datacollector_config][:method_params][:dir].gsub(%r{/\{UserSubDirectories\}}, '')
+                      params[:datacollector_dir].gsub(%r{/\{UserSubDirectories\}}, '')
                     else
-                      params[:datacollector_config][:method_params][:dir]
+                      params[:datacollector_dir]
                     end
             @pn = Pathname.new(p_dir)
             error!('Dir is not a valid directory', 500) unless @pn.directory?
@@ -182,20 +177,19 @@ module Chemotion
           end
 
           if @p_method.end_with?('sftp') && user_level_selected
-            params[:datacollector_config][:method_params][:dir].chomp!('/{UserSubDirectories}')
+            params[:datacollector_dir].chomp!('/{UserSubDirectories}')
           end
 
-          if @p_method.end_with?('sftp') && params[:datacollector_config][:method_params][:authen] == 'keyfile'
-            key_path(params[:datacollector_config][:method_params][:key_name])
+          if @p_method.end_with?('sftp') && params[:datacollector_authentication] == 'keyfile'
+            key_path(params[:datacollector_key_name])
           end
         end
 
         post do
           device = Device.find(params[:id])
-          data = device.datacollector_config || {}
-          params[:datacollector_config][:method_params][:dir] = @pn.realpath.to_path if @p_method.end_with?('local')
-          device.datacollector_config = params[:datacollector_config]
-          device.save!
+          params[:datacollector_dir] = @pn.realpath.to_path if @p_method.end_with?('local')
+          attributes = declared(params, include_missing: false)
+          device.update!(attributes)
         end
       end
 
@@ -203,20 +197,15 @@ module Chemotion
         desc 'Edit device NoVNC settings'
         params do
           requires :id, type: Integer
-          requires :novnc_settings, type: Hash do
-            optional :token, type: String
-            optional :target, type: String
-            optional :password, type: String
-          end
+          optional :novnc_token, type: String
+          optional :novnc_target, type: String
+          optional :novnc_password, type: String
+          optional :datacollector_fields, type: Boolean, default: false
         end
         put do
           device = Device.find(params[:id])
-          if params[:novnc_settings][:target].present?
-            device.novnc_settings = params[:novnc_settings]
-          else
-            device.novnc_settings = {}
-          end
-          device.save!
+          attributes = declared(params, include_missing: false)
+          device.update!(attributes)
           status 204
         end
       end
