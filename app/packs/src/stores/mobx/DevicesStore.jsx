@@ -13,21 +13,26 @@ const newDevice = {
   visibility: false,
   people: [],
   groups: [],
-  datacollector_config: {
-    method: '',
-    method_params: {
-      dir: '',
-      host: '',
-      user: '',
-      authen: 'password',
-      number_of_files: '1',
-      key_name: '',
-    },
-  },
-  novnc_settings: {},
+  datacollector_fields: false,
+  datacollector_method: '',
+  datacollector_dir: '',
+  datacollector_host: '',
+  datacollector_user: '',
+  datacollector_authentication: 'password',
+  datacollector_number_of_files: '1',
+  datacollector_key_name: '',
+  novnc_token: '',
+  novnc_target: '',
+  novnc_password: '',
   device_metadata: {},
   valid_name: null,
   valid_name_abbreviation: null,
+  valid_datacollector_method: null,
+  valid_datacollector_user: null,
+  valid_datacollector_host: null,
+  valid_datacollector_key_name: null,
+  valid_datacollector_dir: null,
+  valid_novnc_target: null,
 }
 
 export const DevicesStore = types
@@ -41,6 +46,7 @@ export const DevicesStore = types
     create_or_update: types.optional(types.string, 'create'),
     active_tab_key: types.optional(types.number, 1),
     is_loading: types.optional(types.boolean, false),
+    device_testing_id: types.optional(types.number, 0),
   })
   .actions(self => ({
     load: flow(function* loadDevices() {
@@ -51,7 +57,7 @@ export const DevicesStore = types
       let result = yield AdminDeviceFetcher.createDevice(params);
       if (result.errors) {
         self.changeErrorMessage(self.errorMessage(result.errors));
-      } else {
+      } else if (result) {
         self.setCreateOrUpdate('update');
         self.changeSuccess_message('Successfully saved');
         self.setDevice(result.device);
@@ -62,8 +68,15 @@ export const DevicesStore = types
       let result = yield AdminDeviceFetcher.updateDevice(params)
       if (result && result.errors) {
         self.changeErrorMessage(self.errorMessage(result.errors));
-      } else {
-        self.changeSuccess_message('Successfully saved');
+      } else if (result && result.error) {
+        self.changeErrorMessage(self.errorMessage({ key_file: [result.error] }));
+      } else if (result) {
+        let message = ['Successfully saved'];
+        if (result.device.datacollector_fields) {
+          message.push('Warning: Unprocessable files will be deleted from the target directory!');
+        };
+
+        self.changeSuccessMessage(message.join('\n'));
         self.setDevice(result.device);
         self.load();
       }
@@ -79,6 +92,16 @@ export const DevicesStore = types
       if (result) {
         self.setDevices(result.devices);
       }
+    }),
+    testSFTP: flow(function* testSFTP(device) {
+      let result = yield AdminDeviceFetcher.testSFTP(device)
+      let message = result && result.message ? `${device.name} - test connection: ${result.message}` : '';
+      if (result.status == 'error') {
+        self.changeErrorMessage(message);
+      } else if (result.status == 'success') {
+        self.changeSuccessMessage(message);
+      }
+      self.setDeviceTestingId(0);
     }),
     showDeviceModal() {
       self.device_modal_visible = true;
@@ -109,21 +132,36 @@ export const DevicesStore = types
       device[field] = value;
       self.setDevice(device);
     },
-    changeDeviceDataCollectorConfig(field, value, method_params) {
-      let device = { ...self.device };
-      if (method_params) {
-        device.datacollector_config.method_params[field] = value;
-      } else {
-        device.datacollector_config[field] = value;
-      }
-      self.setDevice(device);
+    clearDataCollector(device) {
+      let changedDevice = { ...device };
+      changedDevice.datacollector_fields = false;
+      changedDevice.datacollector_method = '';
+      changedDevice.datacollector_dir = '';
+      changedDevice.datacollector_host = '';
+      changedDevice.datacollector_user = '';
+      changedDevice.datacollector_authentication = '';
+      changedDevice.datacollector_number_of_files = '';
+      changedDevice.datacollector_key_name = '';
+      self.updateDevice(changedDevice);
+    },
+    clearNovncSettings(device) {
+      let changedDevice = { ...device };
+      changeDevice.novnc_token = '';
+      changeDevice.novnc_target = '';
+      changeDevice.novnc_password = '';
+      self.updateDevice(changeDevice);
     },
     errorMessage(errors) {
       let message = 'Validation failed:\n';
       Object.entries(errors).forEach(([key, value]) => {
-        let errorKey = key.split('_').join(' ');
+        let errorKey = key.replace('datacollector_', '').split('_').join(' ');
         if (key == 'name') { self.changeDevice('valid_name', 'error'); }
         if (key == 'name_abbreviation') { self.changeDevice('valid_name_abbreviation', 'error'); }
+        if (key == 'datacollector_method') { self.changeDevice('valid_datacollector_method', 'error'); }
+        if (key == 'datacollector_dir') { self.changeDevice('valid_datacollector_dir', 'error'); }
+        if (key == 'datacollector_user') { self.changeDevice('valid_datacollector_user', 'error'); }
+        if (key == 'datacollector_host') { self.changeDevice('valid_datacollector_host', 'error'); }
+        if (key == 'datacollector_key_name') { self.changeDevice('valid_datacollector_key_name', 'error'); }
         message += `${errorKey.charAt(0).toUpperCase() + errorKey.slice(1)}: ${value.join(', ')}\n`;
       });
       return message;
@@ -131,11 +169,14 @@ export const DevicesStore = types
     changeErrorMessage(message) {
       self.error_message = message;
     },
-    changeSuccess_message(message) {
+    changeSuccessMessage(message) {
       self.success_message = message;
     },
     setIsLoading(value) {
       self.is_loading = value;
+    },
+    setDeviceTestingId(value) {
+      self.device_testing_id = value;
     },
   }))
   .views(self => ({

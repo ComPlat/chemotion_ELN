@@ -7,6 +7,7 @@ class AddSingleFieldsOfDatacollectorAndNvncToDevices < ActiveRecord::Migration[6
     add_column :devices, :datacollector_authentication, :string
     add_column :devices, :datacollector_number_of_files, :string
     add_column :devices, :datacollector_key_name, :string
+    add_column :devices, :datacollector_user_level_selected, :boolean, default: false
     add_column :devices, :novnc_token, :string
     add_column :devices, :novnc_target, :string
     add_column :devices, :novnc_password, :string
