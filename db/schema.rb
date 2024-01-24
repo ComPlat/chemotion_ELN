@@ -10,11 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 2023_12_19_162631) do
-=======
-ActiveRecord::Schema.define(version: 2023_12_19_171103) do
->>>>>>> f6ba73b21 (Change device to independent model, migrate user data)
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -208,6 +204,15 @@ ActiveRecord::Schema.define(version: 2023_12_19_171103) do
     t.integer "collection_id"
     t.integer "cellline_sample_id"
     t.datetime "deleted_at"
+  end
+
+  create_table "collections_device_descriptions", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "device_description_id"
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_device_descriptions_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_device_descriptions_on_deleted_at"
+    t.index ["device_description_id", "collection_id"], name: "index_on_device_description_and_collection", unique: true
   end
 
   create_table "collections_elements", id: :serial, force: :cascade do |t|
@@ -461,13 +466,21 @@ ActiveRecord::Schema.define(version: 2023_12_19_171103) do
     t.string "encrypted_password"
     t.string "serial_number"
     t.string "verification_status", default: "none"
-    t.boolean "account_active"
+    t.boolean "account_active", default: false
     t.boolean "visibility", default: false
-    t.jsonb "novnc_settings", default: {}
-    t.jsonb "datacollector_config", default: {}
     t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "datacollector_method"
+    t.string "datacollector_dir"
+    t.string "datacollector_host"
+    t.string "datacollector_user"
+    t.string "datacollector_authentication"
+    t.string "datacollector_number_of_files"
+    t.string "datacollector_key_name"
+    t.string "novnc_token"
+    t.string "novnc_target"
+    t.string "novnc_password"
     t.index ["deleted_at"], name: "index_devices_on_deleted_at"
     t.index ["email"], name: "index_devices_on_email", unique: true
     t.index ["name_abbreviation"], name: "index_devices_on_name_abbreviation", unique: true, where: "(name_abbreviation IS NOT NULL)"
@@ -948,9 +961,9 @@ ActiveRecord::Schema.define(version: 2023_12_19_171103) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
-    t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
+    t.jsonb "variations", default: []
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1155,9 +1168,11 @@ ActiveRecord::Schema.define(version: 2023_12_19_171103) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
-    t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.boolean "dry_solvent", default: false
+    t.integer "element_form_type_id"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
+    t.index ["element_form_type_id"], name: "index_samples_on_element_form_type_id"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
@@ -1704,10 +1719,6 @@ ActiveRecord::Schema.define(version: 2023_12_19_171103) do
       end
       $function$
   SQL
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-
   create_function :literatures_by_element, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
        RETURNS TABLE(literatures text)
@@ -1718,6 +1729,7 @@ ActiveRecord::Schema.define(version: 2023_12_19_171103) do
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
+
 
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
