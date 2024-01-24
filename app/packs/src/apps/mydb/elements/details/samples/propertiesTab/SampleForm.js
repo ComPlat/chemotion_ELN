@@ -679,6 +679,18 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  assignAmountType(reaction, sample) {
+    // eslint-disable-next-line no-underscore-dangle
+    reaction._products.map((s) => {
+      if (s.id === sample.id) {
+        // eslint-disable-next-line no-param-reassign
+        sample.amountType = 'real';
+      }
+      return sample;
+    });
+  }
+
   render() {
     const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
@@ -688,6 +700,11 @@ export default class SampleForm extends React.Component {
     const densityBlocked = isDisabled ? true : !molarityBlocked;
     const { enableSampleDecoupled } = this.props;
     const minPadding = { padding: '4px 4px 4px 4px' };
+
+    if (sample.belongTo !== undefined && sample.belongTo !== null) {
+      // assign amount type for product samples of reaction to real
+      this.assignAmountType(sample.belongTo, sample);
+    }
 
     return (
       <Table responsive className="sample-form">
