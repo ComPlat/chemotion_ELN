@@ -62,7 +62,7 @@ export default class WellplatesFetcher {
       }
       return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', json.wellplate.id, delFiles)();
     })
-      .then(() => BaseFetcher.updateAnnotationsInContainer(wellplate))
+      .then(() => BaseFetcher.updateAnnotations(wellplate))
       .then(() => WellplatesFetcher.fetchById(wellplate.id))
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -89,16 +89,16 @@ export default class WellplatesFetcher {
       },
       body: JSON.stringify(wellplate.serialize())
     })
-    .then((response) => response.json())
-    .then((json) => {
-      if (files.length <= 0) {
-        return new Wellplate(json.wellplate);
-      }
-      return AttachmentFetcher.updateAttachables(files, 'Wellplate', json.wellplate.id, [])()
-        .then(() => new Wellplate(json.wellplate));
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      .then((response) => response.json())
+      .then((json) => {
+        if (files.length <= 0) {
+          return new Wellplate(json.wellplate);
+        }
+        return AttachmentFetcher.updateAttachables(files, 'Wellplate', json.wellplate.id, [])()
+          .then(() => new Wellplate(json.wellplate));
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     if (containerFiles.length > 0) {
       const tasks = [];

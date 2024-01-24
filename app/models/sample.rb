@@ -134,6 +134,7 @@ class Sample < ApplicationRecord
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_literature_ids,        ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
   scope :includes_for_list_display, -> { includes(:molecule_name, :tag, :comments, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
@@ -168,6 +169,7 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
+  before_save :update_inventory_label, if: :new_record?
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -650,6 +652,27 @@ private
     end
   end
 
+  def find_collection_id
+    collection_ids = collections_samples.map(&:collection_id)
+    all_collection_id = Collection.where(id: collection_ids, label: 'All').pick(:id)
+    collection_ids.delete(all_collection_id)
+    # on sample create, sample is assigned only to the collection in which it will be created along with All collection
+    collection_ids.first
+  end
+
+  def update_inventory_label
+    collection_id = find_collection_id
+    return if collection_id.blank?
+
+    collection = Collection.find_by(id: collection_id)
+    inventory = collection.inventory
+    return if inventory.blank?
+
+    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
+    self['xref']['inventory_label'] =
+      "#{inventory['prefix']}-#{inventory['counter']}"
+  end
+
   # rubocop: enable Metrics/AbcSize
   # rubocop: enable Metrics/CyclomaticComplexity
   # rubocop: enable Metrics/PerceivedComplexity
@@ -704,7 +727,11 @@ private
 
   def scrub(value)
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
+    # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
+    Loofah.scrub_fragment(value, :strip).to_s
+          .gsub('viewbox', 'viewBox')
+          .gsub('lineargradient', 'linearGradient')
+          .gsub('radialgradient', 'radialGradient')
 #   value
   end
 

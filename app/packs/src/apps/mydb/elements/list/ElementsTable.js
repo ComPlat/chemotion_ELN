@@ -21,6 +21,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
+import CellLineGroup from 'src/models/cellLine/CellLineGroup';
+import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -32,7 +34,7 @@ export default class ElementsTable extends React.Component {
       ui: {},
       collapseAll: false,
       moleculeSort: false,
-      advancedSearch: false,
+      searchResult: false,
       productOnly: false,
       page: null,
       pages: null,
@@ -49,6 +51,7 @@ export default class ElementsTable extends React.Component {
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
+    this.timer = null;
   }
 
   componentDidMount() {
@@ -77,16 +80,6 @@ export default class ElementsTable extends React.Component {
     }
   }
 
-  handleNumberOfResultsChange(event) {
-    const { value } = event.target;
-    const { type } = this.props;
-
-    if (parseInt(value, 10) > 0) {
-      UIActions.changeNumberOfResultsShown(value);
-      ElementActions.refreshElements(type);
-    }
-  }
-
   onChangeUI(state) {
     const { type } = this.props;
     if (typeof state[type] === 'undefined' || state[type] === null) {
@@ -94,24 +87,22 @@ export default class ElementsTable extends React.Component {
     }
     const { checkedIds, uncheckedIds, checkedAll } = state[type];
     const {
-      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+      filterCreatedAt, fromDate, toDate, number_of_results, currentSearchByID, productOnly
     } = state;
 
     // check if element details of any type are open at the moment
     const currentId = state.sample.currentId || state.reaction.currentId
       || state.wellplate.currentId;
 
-    let isAdvS = false;
-    if (currentSearchSelection && currentSearchSelection.search_by_method) {
-      isAdvS = currentSearchSelection.search_by_method === 'advanced';
-    }
+    let isSearchResult = currentSearchByID ? true : false;
 
-    const { currentStateProductOnly, advancedSearch } = this.state;
+    const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
       || fromDate || toDate || productOnly !== currentStateProductOnly
-      || isAdvS !== advancedSearch
+      || isSearchResult !== searchResult
     );
+    const moleculeSort = isSearchResult ? true : ElementStore.getState().moleculeSort;
 
     if (stateChange) {
       this.setState({
@@ -126,7 +117,8 @@ export default class ElementsTable extends React.Component {
           toDate
         },
         productOnly,
-        advancedSearch: isAdvS
+        searchResult: isSearchResult,
+        moleculeSort: moleculeSort
       });
     }
   }
@@ -281,6 +273,24 @@ export default class ElementsTable extends React.Component {
     UIActions.setProductOnly(!productOnly);
   }
 
+  handleNumberOfResultsChange(event) {
+    const { value } = event.target;
+
+    if (parseInt(value, 10) > 0) {
+      UIActions.changeNumberOfResultsShown(value);
+      this.handleDelayForNumberOfResults();
+    }
+  }
+
+  handleDelayForNumberOfResults() {
+    const { type } = this.props;
+
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      ElementActions.refreshElements(type);
+    }, 900);
+  }
+
   numberOfResultsInput() {
     const { ui } = this.state;
     return (
@@ -311,6 +321,7 @@ export default class ElementsTable extends React.Component {
     const items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
+
     items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
     if (page > 1) {
       items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
@@ -341,7 +352,7 @@ export default class ElementsTable extends React.Component {
           {items}
         </Pagination>
       </div>
-    );
+    )
   }
 
   renderSamplesHeader = () => {
@@ -650,7 +661,16 @@ export default class ElementsTable extends React.Component {
           type={type}
         />
       );
-    } else {
+    } else if (type === 'cell_line'){
+      elementsTableEntries = (
+        <CellLineContainer 
+        cellLineGroups={CellLineGroup.buildFromElements(elements)}
+      />
+      );
+    }
+    
+    
+    else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}

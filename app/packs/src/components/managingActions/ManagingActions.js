@@ -17,7 +17,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
 const upState = (state) => {
-  const { sample, reaction, screen, wellplate, research_plan } = state;
+  const { sample, reaction, screen, wellplate, research_plan, cell_line } = state;
   const stateObj = {
     sample: {
       checkedAll: sample ? sample.checkedAll : false,
@@ -43,6 +43,11 @@ const upState = (state) => {
       checkedAll: research_plan ? research_plan.checkedAll : false,
       checkedIds: research_plan ? research_plan.checkedIds : List(),
       uncheckedIds: research_plan ? research_plan.uncheckedIds : List(),
+    },
+    cell_line: {
+      checkedAll: cell_line ? cell_line.checkedAll : false,
+      checkedIds: cell_line ? cell_line.checkedIds : List(),
+      uncheckedIds: cell_line ? cell_line.uncheckedIds : List(),
     }
   };
 
@@ -96,7 +101,7 @@ export default class ManagingActions extends React.Component {
 
   onChange(state) {
     const {
-      sample, reaction, screen, wellplate, research_plan, genericEl, currentCollection
+       currentCollection
     } = state;
     if (this.collectionChanged(state)) {
       this.setState({
@@ -149,7 +154,7 @@ export default class ManagingActions extends React.Component {
 
   checkUIState(state) {
     const genericNames = (this.state.genericEls && this.state.genericEls.map(el => el.name)) || [];
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].concat(genericNames);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'].concat(genericNames);
     const result = elNames.find(el => (this.state[el] && state[el] && (
       state[el].checkedIds !== this.state[el].checkedIds ||
       state[el].checkedAll !== this.state[el].checkedAll ||

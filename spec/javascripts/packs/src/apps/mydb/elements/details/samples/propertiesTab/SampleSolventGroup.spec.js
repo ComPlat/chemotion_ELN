@@ -16,7 +16,7 @@ describe('SampleSolventGroup.render()', async () => {
   const dropSample = () => {};
   const deleteSolvent = () => {};
   const onChangeSolvent = () => {};
-  const sample = await SampleFactory.build('water_100g');
+  const sample = await SampleFactory.build('SampleFactory.water_100g');
   const materialGroup = 'none';
 
   describe('when sample has no solvents', async () => {
@@ -39,7 +39,7 @@ describe('SampleSolventGroup.render()', async () => {
   });
 
   describe('when sample has two solvents', async () => {
-    const sampleWithSolvents = await SampleFactory.build('water_100g');
+    const sampleWithSolvents = await SampleFactory.build('SampleFactory.water_100g');
     sampleWithSolvents.solvent = [{ label: 'water', ratio: 1.0 }, { label: 'ethanol', ratio: 2.0 }];
     const wrapper = shallow(
       <SampleSolventGroup

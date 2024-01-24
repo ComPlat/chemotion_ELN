@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Button, ButtonToolbar, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
@@ -9,39 +11,39 @@ import { absOlsTermId } from 'chem-generic-ui';
 import { GenericDSMisType } from 'src/apps/generic/Utils';
 
 const dataTarget = {
-  canDrop(props, monitor) {
+  canDrop(monitor) {
     const itemType = monitor.getItemType();
-    if (itemType == DragDropItemTypes.DATA ||
-      itemType == DragDropItemTypes.UNLINKED_DATA ||
-      itemType == DragDropItemTypes.DATASET) {
-      return true;
-    }
+    return itemType === DragDropItemTypes.DATA
+      || itemType === DragDropItemTypes.UNLINKED_DATA
+      || itemType === DragDropItemTypes.DATASET;
   },
 
   drop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    const { dataset_container, onChange } = props;
+    const { datasetContainer, onChange } = props;
 
     switch (itemType) {
       case DragDropItemTypes.DATA:
-        dataset_container.attachments.push(item.attachment)
-        onChange(dataset_container)
-        InboxActions.removeAttachmentFromList(item.attachment)
+        datasetContainer.attachments.push(item.attachment);
+        onChange(datasetContainer);
+        InboxActions.removeAttachmentFromList(item.attachment);
         break;
       case DragDropItemTypes.UNLINKED_DATA:
-        dataset_container.attachments.push(item.attachment)
-        InboxActions.removeUnlinkedAttachmentFromList(item.attachment)
+        datasetContainer.attachments.push(item.attachment);
+        InboxActions.removeUnlinkedAttachmentFromList(item.attachment);
         break;
       case DragDropItemTypes.DATASET:
-        item.dataset.attachments.forEach(attachment => {
-          dataset_container.attachments.push(attachment)
-        })
-        onChange(dataset_container)
-        InboxActions.removeDatasetFromList(item.dataset)
+        item.dataset.attachments.forEach((attachment) => {
+          datasetContainer.attachments.push(attachment);
+        });
+        onChange(datasetContainer);
+        InboxActions.removeDatasetFromList(item.dataset);
+        break;
+      default:
+        console.warn(`Unknown itemType: ${itemType}`);
         break;
     }
-
   }
 };
 
@@ -52,22 +54,24 @@ const collectTarget = (connect, monitor) => ({
 });
 
 class ContainerDatasetField extends Component {
-
-  removeButton(dataset_container) {
+  removeButton(datasetContainer) {
     const { readOnly, handleRemove, disabled } = this.props;
     if (!readOnly) {
       return (
-        <Button bsSize="xsmall"
+        <Button
+          bsSize="xsmall"
           bsStyle="danger"
-          onClick={() => handleRemove(dataset_container)}
-          disabled={disabled}>
-          <i className="fa fa-trash-o"></i>
+          onClick={() => handleRemove(datasetContainer)}
+          disabled={disabled}
+        >
+          <i className="fa fa-trash-o" />
         </Button>
       );
     }
+    return null;
   }
 
-  renderOverlay(color) {
+  static renderOverlay(color) {
     return (
       <div style={{
         position: 'absolute',
@@ -78,62 +82,97 @@ class ContainerDatasetField extends Component {
         zIndex: 1,
         opacity: 0.5,
         backgroundColor: color,
-      }} />
+      }}
+      />
     );
   }
 
   render() {
-    const { connectDropTarget, isOver, canDrop, dataset_container, handleUndo, kind,
-      handleModalOpen, disabled } = this.props;
-    if (dataset_container.is_deleted) {
+    const {
+      connectDropTarget, isOver, canDrop, datasetContainer, handleUndo, kind,
+      handleModalOpen, disabled
+    } = this.props;
+    if (datasetContainer.is_deleted) {
       return (
-        <div><strike>{dataset_container.name}</strike>
+        <div>
+          <strike>{datasetContainer.name}</strike>
 
           <Button
             className="pull-right"
             bsSize="xsmall"
             bsStyle="danger"
-            onClick={() => handleUndo(dataset_container)}
+            onClick={() => handleUndo(datasetContainer)}
             disabled={disabled}
           >
-            <i className="fa fa-undo"></i>
+            <i className="fa fa-undo" />
           </Button>
 
         </div>
-      )
-    } else {
-      const gds_download = (dataset_container.dataset == null || typeof dataset_container.dataset === 'undefined') ? (<span />) : (
+      );
+    }
+    const gdsDownload = (datasetContainer.dataset == null
+      || typeof datasetContainer.dataset === 'undefined') ? (<span />) : (
         <OverlayTrigger placement="top" overlay={<Tooltip id="download metadata">download metadata</Tooltip>}>
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => AttachmentFetcher.downloadDataset(dataset_container.id)}>
-            <i className="fa fa-download"></i>
+          <Button
+            bsSize="xsmall"
+            bsStyle="success"
+            onClick={() => AttachmentFetcher.downloadDataset(datasetContainer.id)}
+          >
+            <i className="fa fa-download" />
           </Button>
         </OverlayTrigger>
       );
-      return connectDropTarget(
-        <div>
-          {dataset_container.dataset && dataset_container.dataset.klass_ols !== absOlsTermId(kind) ? <GenericDSMisType /> : null}
-          <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(dataset_container)}>
-            {dataset_container.name || 'new'}
-          </a>
-          <ButtonToolbar className="pull-right">
-            {gds_download}
-            <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
-              <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(dataset_container.id)}>
-                <i className="fa fa-download"></i>
-              </Button>
-            </OverlayTrigger>
-            {this.removeButton(dataset_container)}
-          </ButtonToolbar>
-          {isOver && canDrop && this.renderOverlay('green')}
-        </div>
-      )
-    }
+    return connectDropTarget(
+      <div>
+        {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
+          ? <GenericDSMisType /> : null}
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(datasetContainer)}>
+          {datasetContainer.name || 'new'}
+        </a>
+        <ButtonToolbar className="pull-right">
+          {gdsDownload}
+          <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
+            <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
+              <i className="fa fa-download" />
+            </Button>
+          </OverlayTrigger>
+          {this.removeButton(datasetContainer)}
+        </ButtonToolbar>
+        {isOver && canDrop && this.renderOverlay('green')}
+      </div>
+    );
   }
 }
-
-export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.UNLINKED_DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(ContainerDatasetField);
 
 ContainerDatasetField.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
+  readOnly: PropTypes.bool,
+  handleRemove: PropTypes.func,
+  disabled: PropTypes.bool,
+  connectDropTarget: PropTypes.func.isRequired,
+  datasetContainer: PropTypes.shape({
+    is_deleted: PropTypes.bool,
+    name: PropTypes.string,
+    dataset: PropTypes.object,
+    id: PropTypes.number,
+  }).isRequired,
+  handleUndo: PropTypes.func.isRequired,
+  kind: PropTypes.string.isRequired,
+  handleModalOpen: PropTypes.func.isRequired,
 };
+
+ContainerDatasetField.defaultProps = {
+  readOnly: false,
+  handleRemove: () => {},
+  disabled: false,
+};
+
+const dropTargetTypes = [
+  DragDropItemTypes.DATA,
+  DragDropItemTypes.UNLINKED_DATA,
+  DragDropItemTypes.DATASET
+];
+
+export default DropTarget(dropTargetTypes, dataTarget, collectTarget)(ContainerDatasetField);

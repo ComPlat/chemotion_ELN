@@ -29,6 +29,9 @@ const TemperatureDefault = {
 };
 
 export const convertTemperature = (temperature, fromUnit, toUnit) => {
+  if (fromUnit === toUnit) {
+    return temperature;
+  }
   const conversionTable = {
     'K': {
       '°C': (t) => parseFloat(t) - 273.15,

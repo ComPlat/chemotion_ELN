@@ -48,7 +48,9 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-# rubocop: disable Metrics/ClassLength
+
+# rubocop: disable Metrics/ClassLength, Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
+# rubocop: disable Metrics/MethodLength
 # rubocop: disable Metrics/AbcSize
 # rubocop: disable Metrics/CyclicComplexity
 # rubocop: disable Metrics/PerceivedComplexity
@@ -71,9 +73,9 @@ class User < ApplicationRecord
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
   has_many :vessels, through: :collections
-
   # created vessels will be kept when the creator goes (dependent: nil).
   has_many :created_vessels, class_name: 'Vessel', inverse_of: :creator, dependent: nil
+  has_many :cellline_samples, through: :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
@@ -274,7 +276,7 @@ class User < ApplicationRecord
     profile = self.profile
     data = profile.data || {}
     file = Rails.root.join('db', 'chmo.default.profile.json')
-    result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
+    result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.file?(file)
     return if result.nil? || result['ols_terms'].nil?
 
     data['chmo'] = result['ols_terms']
@@ -288,6 +290,7 @@ class User < ApplicationRecord
                     'wellplate' => 3,
                     'screen' => 4,
                     'research_plan' => 5,
+                    'cell_line' => -1000,
                   })
     end
     self.profile.update_columns(data: data)
@@ -529,7 +532,8 @@ class Group < User
   end
 end
 
-# rubocop: enable Metrics/ClassLength
+# rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity, Performance/RedundantMerge, Style/MultilineIfModifier
+# rubocop: enable Metrics/MethodLength
 # rubocop: enable Metrics/AbcSize
 # rubocop: enable Metrics/CyclicComplexity
 # rubocop: enable Metrics/PerceivedComplexity
