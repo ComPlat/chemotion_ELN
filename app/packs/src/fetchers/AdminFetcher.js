@@ -35,54 +35,6 @@ export default class AdminFetcher {
       });
   }
 
-  static fetchDeviceMetadataByDeviceId(deviceId) {
-    return fetch(`/api/v1/admin/deviceMetadata/${deviceId}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  static postDeviceMetadata(params) {
-    return fetch('/api/v1/admin/deviceMetadata', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  static syncDeviceMetadataToDataCite(params) {
-    return fetch(
-      `/api/v1/admin/deviceMetadata/${params.device_id}/sync_to_data_cite`,
-      {
-        credentials: 'same-origin',
-        method: 'PUT',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      }
-    )
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
   static testSFTP(params) {
     return fetch('/api/v1/admin/sftpDevice/', {
       credentials: 'same-origin',

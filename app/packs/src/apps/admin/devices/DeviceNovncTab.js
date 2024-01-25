@@ -36,7 +36,7 @@ const DeviceNovncTab = () => {
   return (
     <Form className="form-with-columns">
       <FormGroup validationState={device.valid_novnc_target} className="col-half">
-        <ControlLabel>Target</ControlLabel>
+        <ControlLabel>Target *</ControlLabel>
         <FormControl
           type="text"
           value={device.novnc_target ? device.novnc_target : ''}

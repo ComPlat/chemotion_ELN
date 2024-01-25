@@ -24,7 +24,6 @@ const newDevice = {
   novnc_token: '',
   novnc_target: '',
   novnc_password: '',
-  device_metadata: {},
   valid_name: null,
   valid_name_abbreviation: null,
   valid_datacollector_method: null,
@@ -146,10 +145,10 @@ export const DevicesStore = types
     },
     clearNovncSettings(device) {
       let changedDevice = { ...device };
-      changeDevice.novnc_token = '';
-      changeDevice.novnc_target = '';
-      changeDevice.novnc_password = '';
-      self.updateDevice(changeDevice);
+      changedDevice.novnc_token = '';
+      changedDevice.novnc_target = '';
+      changedDevice.novnc_password = '';
+      self.updateDevice(changedDevice);
     },
     errorMessage(errors) {
       let message = 'Validation failed:\n';
