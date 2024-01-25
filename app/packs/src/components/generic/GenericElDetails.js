@@ -17,12 +17,12 @@ import {
 import _, { findIndex } from 'lodash';
 import Aviator from 'aviator';
 import { GenInterface, GenButtonReload } from 'chem-generic-ui';
-import DetailActions from '../../stores/alt/actions/DetailActions';
-import LoadingActions from '../../stores/alt/actions/LoadingActions';
-import ElementActions from '../../stores/alt/actions/ElementActions';
-import ElementStore from '../../stores/alt/stores/ElementStore';
-import UIActions from '../../stores/alt/actions/UIActions';
-import UIStore from '../../stores/alt/stores/UIStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import GenericElDetailsContainers from 'src/components/generic/GenericElDetailsContainers';
 import GenericEl from 'src/models/GenericEl';
@@ -33,11 +33,11 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from './SegmentDetails';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import ElementDetailSortTab from "../../apps/mydb/elements/details/ElementDetailSortTab";
+import ElementDetailSortTab from "src/apps/mydb/elements/details/ElementDetailSortTab";
 import Immutable from "immutable";
-import UserStore from '../../stores/alt/stores/UserStore';
-import UserActions from "../../stores/alt/actions/UserActions";
-import CollectionActions from "../../stores/alt/actions/CollectionActions";
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from "src/stores/alt/actions/UserActions";
+import CollectionActions from "src/stores/alt/actions/CollectionActions";
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
