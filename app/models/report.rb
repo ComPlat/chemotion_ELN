@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Layout/LineLength
+
 # == Schema Information
 #
 # Table name: reports
@@ -30,6 +32,8 @@
 #  index_reports_on_file_name            (file_name)
 #  index_reports_on_report_templates_id  (report_templates_id)
 #
+
+# rubocop:enable Layout/LineLength
 
 class Report < ApplicationRecord
   acts_as_paranoid
