@@ -7,6 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const DevicesList = () => {
   const devicesStore = useContext(StoreContext).devices;
+  const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
 
   useEffect(() => {
     devicesStore.load();
@@ -22,6 +23,7 @@ const DevicesList = () => {
   const showEditDeviceModal = (device) => {
     devicesStore.setCreateOrUpdate('update');
     devicesStore.setDevice(device);
+    deviceMetadataStore.load(device.id);
     devicesStore.showDeviceModal();
     devicesStore.changeErrorMessage('');
     devicesStore.changeSuccessMessage('');

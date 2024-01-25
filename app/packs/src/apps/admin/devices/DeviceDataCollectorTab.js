@@ -97,7 +97,7 @@ const DeviceDataCollectorTab = () => {
   return (
     <Form className="form-with-columns">
       <FormGroup validationState={device.valid_datacollector_method} className="col-full">
-        <ControlLabel>Watch method</ControlLabel>
+        <ControlLabel>Watch method *</ControlLabel>
         <Select
           isClearable
           value={methodValue}
@@ -107,7 +107,7 @@ const DeviceDataCollectorTab = () => {
       </FormGroup>
 
       <FormGroup validationState={device.valid_datacollector_user} className="col-half">
-        <ControlLabel>User</ControlLabel>
+        <ControlLabel>User *</ControlLabel>
         <FormControl
           type="text"
           value={userValue}
@@ -118,7 +118,7 @@ const DeviceDataCollectorTab = () => {
       </FormGroup>
 
       <FormGroup validationState={device.valid_datacollector_host} className="col-half">
-        <ControlLabel>Host</ControlLabel>
+        <ControlLabel>Host *</ControlLabel>
         <FormControl
           type="text"
           value={hostValue}
@@ -149,7 +149,7 @@ const DeviceDataCollectorTab = () => {
       </FormGroup>
 
       <FormGroup validationState={device.valid_datacollector_dir} className="col-full">
-        <ControlLabel>Watch directory</ControlLabel>
+        <ControlLabel>Watch directory *</ControlLabel>
         <FormControl
           type="text"
           value={dirValue}

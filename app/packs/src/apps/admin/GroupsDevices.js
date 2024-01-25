@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
+import AdminDeviceMetadataFetcher from 'src/fetchers/AdminDeviceMetadataFetcher';
 import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
 
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
@@ -105,7 +106,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   handlefetchDeviceMetadataByDeviceId(deviceID) {
-    AdminFetcher.fetchDeviceMetadataByDeviceId(deviceID)
+    AdminDeviceMetadataFetcher.fetchDeviceMetadataByDeviceId(deviceID)
       .then((result) => {
         if (result.device_metadata) {
           this.setState({
@@ -230,7 +231,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   syncDeviceMetadataFromDataCite(deviceId) {
-    AdminFetcher.postDeviceMetadata({
+    AdminDeviceMetadataFetcher.postDeviceMetadata({
       doi: this.doi.value.trim(),
       device_id: deviceId
     }).then((result) => {
@@ -246,7 +247,7 @@ export default class GroupsDevices extends React.Component {
   }
 
   syncDeviceMetadataToDataCite(deviceId) {
-    AdminFetcher.syncDeviceMetadataToDataCite({
+    AdminDeviceMetadataFetcher.syncDeviceMetadataToDataCite({
       device_id: deviceId
     }).then((result) => {
       if (result.error) {
@@ -261,7 +262,7 @@ export default class GroupsDevices extends React.Component {
 
   saveDeviceMetadata(deviceId) {
     // TODO: add Validations
-    AdminFetcher.postDeviceMetadata({
+    AdminDeviceMetadataFetcher.postDeviceMetadata({
       // TODO: add more Attributes:
       // t.string   "publisher"
 

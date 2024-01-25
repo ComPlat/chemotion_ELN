@@ -5,6 +5,7 @@ import DevicePropertiesTab from './DevicePropertiesTab';
 import DeviceUserGroupsTab from './DeviceUserGroupsTab';
 import DeviceDataCollectorTab from './DeviceDataCollectorTab';
 import DeviceNovncTab from './DeviceNovncTab';
+import DeviceMetadataTab from './DeviceMetadataTab';
 import { endsWith } from 'lodash';
 
 import { observer } from 'mobx-react';
@@ -12,8 +13,13 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const DeviceModal = () => {
   const devicesStore = useContext(StoreContext).devices;
+  const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
   let device = devicesStore.device;
   const disableTab = devicesStore.create_or_update == 'update' ? false : true;
+
+  const errorMessage = devicesStore.error_message + deviceMetadataStore.error_message;
+  const successMessage = devicesStore.success_message + deviceMetadataStore.success_message;
+  const withAlertClass = errorMessage || successMessage ? 'with-alert' : '';
 
   const minimizedClass = devicesStore.modalMinimized ? ' minimized' : '';
   let deviceParams = {};
@@ -105,6 +111,14 @@ const DeviceModal = () => {
     return errorMessages;
   }
 
+  const saveDeviceOrRelation = () => {
+    if (devicesStore.active_tab_key == 5) {
+      saveDeviceMetadata();
+    } else {
+      saveDevice();
+    }
+  }
+
   const saveDevice = () => {
     let errorMessages = handleValidationState();
     console.log(errorMessages);
@@ -122,16 +136,26 @@ const DeviceModal = () => {
     }
   }
 
+  const saveDeviceMetadata = () => {
+    // validation?
+    removeErrors();
+    const deviceMetadata = deviceMetadataStore.device_metadata;
+    deviceMetadataStore.updateDeviceMetadata(deviceMetadata);
+  }
+
   const handleCancel = () => {
     devicesStore.hideDeviceModal();
     devicesStore.clearDevice();
     devicesStore.setActiveTabKey(1);
+    deviceMetadataStore.clearDeviceMetadata();
     removeErrors();
   }
 
   const removeErrors = () => {
     devicesStore.changeErrorMessage('');
     devicesStore.changeSuccessMessage('');
+    deviceMetadataStore.changeErrorMessage('');
+    deviceMetadataStore.changeSuccessMessage('');
   }
 
   const handleSelectTab = (key) => {
@@ -147,10 +171,10 @@ const DeviceModal = () => {
   }
 
   const showMessage = () => {
-    if (devicesStore.error_message !== '') {
-      return <Alert bsStyle="danger" className="device-alert">{devicesStore.error_message}</Alert>;
-    } else if (devicesStore.success_message !== '') {
-      return <Alert bsStyle="success" className="device-alert">{devicesStore.success_message}</Alert>;
+    if (errorMessage !== '') {
+      return <Alert bsStyle="danger" className="device-alert">{errorMessage}</Alert>;
+    } else if (successMessage !== '') {
+      return <Alert bsStyle="success" className="device-alert">{successMessage}</Alert>;
     }
   }
 
@@ -178,8 +202,8 @@ const DeviceModal = () => {
         <Modal.Body>
           <div className={`draggable-modal-form-container${minimizedClass}`}>
             <div className="draggable-modal-form-fields">
-              <div className="draggable-modal-scrollable-content">
-                {showMessage()}
+              {showMessage()}
+              <div className={`draggable-modal-scrollable-content ${withAlertClass}`}>
                 <Tabs
                   activeKey={devicesStore.active_tab_key}
                   animation={false}
@@ -224,7 +248,7 @@ const DeviceModal = () => {
                     key="tab-metadata-5"
                     disabled={disableTab}
                   >
-                    Metadata
+                    <DeviceMetadataTab />
                   </Tab>
                 </Tabs>
               </div>
@@ -232,7 +256,7 @@ const DeviceModal = () => {
                 <Button bsStyle="warning" onClick={() => handleCancel()}>
                   Cancel
                 </Button>
-                <Button bsStyle="primary" onClick={saveDevice} >
+                <Button bsStyle="primary" onClick={saveDeviceOrRelation} >
                   Save
                 </Button>
               </ButtonToolbar>
