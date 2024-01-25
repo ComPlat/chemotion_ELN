@@ -63,6 +63,8 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
 import FastInput from 'src/apps/mydb/elements/details/samples/FastInput';
+import SampleAnnotationEditButton from 'src/apps/mydb/elements/details/samples/SampleAnnotationEditButton';
+import SampleAnnotationDeleteButton from 'src/apps/mydb/elements/details/samples/SampleAnnotationDeleteButton';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -75,6 +77,9 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import ImageAnnotationModalSVG, { errorSvg } from 'src/components/ImageAnnotationModalSVG.js';
+
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 const MWPrecision = 6;
 
@@ -111,28 +116,29 @@ export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sample: props.sample,
-      reaction: null,
-      materialGroup: null,
-      showStructureEditor: false,
-      loadingMolecule: false,
-      showElementalComposition: false,
-      showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
-      qrCodeSVG: '',
+      annotation: '',
       isCasLoading: false,
-      validCas: true,
-      showMolfileModal: false,
-      trackMolfile: props.sample.molfile,
-      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
-        || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
-      quickCreator: false,
-      showInchikey: false,
+      loadingMolecule: false,
+      materialGroup: null,
       pageMessage: null,
-      visible: Immutable.List(),
-      startExport: false,
-      sfn: UIStore.getState().hasSfn,
+      qrCodeSVG: '',
+      quickCreator: false,
+      reaction: null,
+      sample: props.sample,
+      sampleAnnotationEditModalShown: false,
       saveInventoryAction: false,
+      sfn: UIStore.getState().hasSfn,
+      showChemicalIdentifiers: false,
+      showElementalComposition: false,
+      showInchikey: false,
+      showMolfileModal: false,
+      showStructureEditor: false,
+      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined') || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
+      startExport: false,
+      trackMolfile: props.sample.molfile,
+      validCas: true,
+      visible: Immutable.List(),
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -174,8 +180,8 @@ export default class SampleDetails extends React.Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (
       (nextProps.sample.isNew
-       && (typeof (nextProps.sample.molfile) === 'undefined'
-        || (nextProps.sample.molfile || '').length === 0)
+        && (typeof (nextProps.sample.molfile) === 'undefined'
+          || (nextProps.sample.molfile || '').length === 0)
       )
       || (typeof (nextProps.sample.molfile) !== 'undefined' && nextProps.sample.molecule.inchikey === 'DUMMY')
     ) {
@@ -763,9 +769,9 @@ export default class SampleDetails extends React.Component {
           <b>Chemical identifiers</b>
           {sample.decoupled
             && (
-            <span className="text-danger">
-              &nbsp;[decoupled]
-            </span>
+              <span className="text-danger">
+                &nbsp;[decoupled]
+              </span>
             )}
         </Col>
         <div className="col-md-6">
@@ -965,9 +971,9 @@ export default class SampleDetails extends React.Component {
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span>
               <i className="icon-sample" />
-            &nbsp;&nbsp;
+              &nbsp;&nbsp;
               {sample.title()}
-            &nbsp;&nbsp;
+              &nbsp;&nbsp;
             </span>
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
@@ -1274,7 +1280,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
+            + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
         });
         break;
       case chmoConversions.nmr_13c.termId:
@@ -1283,7 +1289,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-          + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
+            + `&analyses_ids[]=${analysis.id}&type=nmr_analysis&size=small`
         });
         break;
       case 'Others':
@@ -1291,7 +1297,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${a1.id}&type=analysis&size=small`
+            + `&analyses_ids[]=${a1.id}&type=analysis&size=small`
         });
         break;
       case 'Others2x':
@@ -1300,7 +1306,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-                    + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&type=analysis&size=small`
+            + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&type=analysis&size=small`
         });
         break;
       case 'Others3x':
@@ -1310,7 +1316,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(sample);
         Utils.downloadFile({
           contents: `/api/v1/code_logs/print_analyses_codes?sample_id=${sample.id}`
-              + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&analyses_ids[]=${a3.id}&type=analysis&size=small`
+            + `&analyses_ids[]=${a1.id}&analyses_ids[]=${a2.id}&analyses_ids[]=${a3.id}&type=analysis&size=small`
         });
         break;
       default:
@@ -1329,27 +1335,99 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  renderSampleAnnotationEditButton() {
+    return (
+      <SampleAnnotationEditButton
+        sample={this.state.sample}
+        clickHandler={(sample) => {
+          if (sample.sample_svg_annotation) {
+            this.setState({
+              annotation: sample.sample_svg_annotation,
+              sampleAnnotationEditModalShown: true
+            })
+          } else {
+            SamplesFetcher.fetchAnnotation(sample.id).then(annotation => {
+              this.setState({
+                annotation,
+                sampleAnnotationEditModalShown: true
+              });
+            })
+          }
+        }}
+        horizontalAlignment="pull-left"
+        role="button"
+        tabIndex='0'
+      />
+    )
+  }
+
+  renderSampleAnnotationDeleteButton() {
+    return (
+      <SampleAnnotationDeleteButton
+        sample={this.state.sample}
+        clickHandler={(sample) => {
+          SamplesFetcher.deleteAnnotation(sample.id).then(() => {
+            SamplesFetcher.fetchById(sample.id).then((freshSample) => this.setState({ sample: freshSample }));
+          });
+        }}
+        horizontalAlignment="pull-left"
+        role="button"
+        tabIndex='2'
+      />
+    )
+  }
+
+  renderSampleAnnotationEditModal() {
+    const { annotation, sample, sampleAnnotationEditModalShown } = this.state;
+    if (!annotation) { return ''; }
+
+    return (
+      <ImageAnnotationModalSVG
+        annotation={annotation}
+        show={sampleAnnotationEditModalShown}
+        handleSave={
+          (newAnnotation) => {
+            const { sample } = this.state
+            sample.sample_svg_annotation = newAnnotation
+            this.setState({
+              sampleAnnotationEditModalShown: false,
+              sample
+            });
+          }
+        }
+        handleClose={() => { this.setState({ sampleAnnotationEditModalShown: false }); }}
+      />
+    );
+  }
+
   svgOrLoading(sample) {
     let svgPath = '';
     if (this.state.loadingMolecule) {
       svgPath = '/images/wild_card/loading-bubbles.svg';
     } else {
-      svgPath = sample.svgPath;
+      if (sample.sample_svg_annotation) {
+        svgPath = "data:image/svg+xml;base64," + btoa(sample.sample_svg_annotation);
+      } else {
+        svgPath = sample.svgAnnotationPath;
+      }
     }
     const className = svgPath ? 'svg-container' : 'svg-container-empty';
     return (
       sample.can_update
         ? (
-          <div
-            className={className}
-            onClick={this.showStructureEditor.bind(this)}
-            onKeyPress
-            role="button"
-            tabIndex="0"
-
-          >
-            <Glyphicon className="pull-right" glyph="pencil" />
-            <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+          <div>
+            {this.renderSampleAnnotationEditButton()}
+            {this.renderSampleAnnotationDeleteButton()}
+            <div
+              className={className}
+              onClick={this.showStructureEditor.bind(this)}
+              onKeyPress
+              role="button"
+              tabIndex="1"
+            >
+              <Glyphicon className="pull-right" glyph="pencil" />
+              <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+            </div>
           </div>
         )
         : (
@@ -1536,29 +1614,29 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>
-          &nbsp;
-          <Button
-            bsSize="xsmall"
-            bsStyle="warning"
-            onClick={() => this.setState({ pageMessage: null })}
-          >
-            Close Alert
-          </Button>
-          <br />
-          {
+      <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <strong>Structure Alert</strong>
+        &nbsp;
+        <Button
+          bsSize="xsmall"
+          bsStyle="warning"
+          onClick={() => this.setState({ pageMessage: null })}
+        >
+          Close Alert
+        </Button>
+        <br />
+        {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-          {
+        {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        </Alert>
-      ) : null;
+      </Alert>
+    ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
@@ -1590,6 +1668,7 @@ export default class SampleDetails extends React.Component {
           {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
+          {this.renderSampleAnnotationEditModal()}
           <CommentModal element={sample} />
         </Panel.Body>
       </Panel>

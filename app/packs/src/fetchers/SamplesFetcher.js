@@ -49,6 +49,29 @@ export default class SamplesFetcher {
     return promise;
   }
 
+  static fetchAnnotation(id) {
+    let promise = fetch('/api/v1/samples/' + id + '/annotation', {
+      credentials: 'same-origin'
+    }).then((response) => {
+      return response.text();
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
+  static deleteAnnotation(id) {
+    let promise = fetch('/api/v1/samples/' + id + '/annotation', {
+      credentials: 'same-origin',
+      method: 'delete'
+    }).then((response) => {
+      return response.text();
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
   static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
     const updatedQueryParams = { ...queryParams, moleculeSort };
     return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, isSync, 'samples', Sample);
@@ -74,12 +97,12 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-    }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
-        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    }).then(response => response.json())
+      .then(
+        json => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+                .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
+                .then(() => this.fetchById(json.sample.id))
+      ).catch(errorMessage => console.log(errorMessage) );
 
     if (files.length > 0) {
       const tasks = [];

@@ -2,48 +2,49 @@
 #
 # Table name: samples
 #
-#  id                  :integer          not null, primary key
-#  name                :string
-#  target_amount_value :float            default(0.0)
-#  target_amount_unit  :string           default("g")
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  description         :text             default("")
-#  molecule_id         :integer
-#  molfile             :binary
-#  purity              :float            default(1.0)
-#  deprecated_solvent  :string           default("")
-#  impurities          :string           default("")
-#  location            :string           default("")
-#  is_top_secret       :boolean          default(FALSE)
-#  ancestry            :string
-#  external_label      :string           default("")
-#  created_by          :integer
-#  short_label         :string
-#  real_amount_value   :float
-#  real_amount_unit    :string
-#  imported_readout    :string
-#  deleted_at          :datetime
-#  sample_svg_file     :string
-#  user_id             :integer
-#  identifier          :string
-#  density             :float            default(0.0)
-#  melting_point       :numrange
-#  boiling_point       :numrange
-#  fingerprint_id      :integer
-#  xref                :jsonb
-#  molarity_value      :float            default(0.0)
-#  molarity_unit       :string           default("M")
-#  molecule_name_id    :integer
-#  molfile_version     :string(20)
-#  stereo              :jsonb
-#  metrics             :string           default("mmm")
-#  decoupled           :boolean          default(FALSE), not null
-#  molecular_mass      :float
-#  sum_formula         :string
-#  solvent             :jsonb
-#  dry_solvent         :boolean          default(FALSE)
-#  inventory_sample    :boolean          default(FALSE)
+#  id                         :integer          not null, primary key
+#  name                       :string
+#  target_amount_value        :float            default(0.0)
+#  target_amount_unit         :string           default("g")
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  description                :text             default("")
+#  molecule_id                :integer
+#  molfile                    :binary
+#  purity                     :float            default(1.0)
+#  deprecated_solvent         :string           default("")
+#  impurities                 :string           default("")
+#  location                   :string           default("")
+#  is_top_secret              :boolean          default(FALSE)
+#  ancestry                   :string
+#  external_label             :string           default("")
+#  created_by                 :integer
+#  short_label                :string
+#  real_amount_value          :float
+#  real_amount_unit           :string
+#  imported_readout           :string
+#  deleted_at                 :datetime
+#  sample_svg_file            :string
+#  user_id                    :integer
+#  identifier                 :string
+#  density                    :float            default(0.0)
+#  melting_point              :numrange
+#  boiling_point              :numrange
+#  fingerprint_id             :integer
+#  xref                       :jsonb
+#  molarity_value             :float            default(0.0)
+#  molarity_unit              :string           default("M")
+#  molecule_name_id           :integer
+#  molfile_version            :string(20)
+#  stereo                     :jsonb
+#  metrics                    :string           default("mmm")
+#  decoupled                  :boolean          default(FALSE), not null
+#  molecular_mass             :float
+#  sum_formula                :string
+#  solvent                    :jsonb
+#  inventory_sample           :boolean          default(FALSE)
+#  sample_svg_annotation_file :string
+#  dry_solvent                :boolean          default(FALSE)
 #
 # Indexes
 #
@@ -160,14 +161,17 @@ class Sample < ApplicationRecord
     Sample.where(id: samples.map(&:id))
   }
 
+  attr_accessor :sample_svg_annotation
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
   before_save :check_molfile_polymer_section
   before_save :find_or_create_fingerprint
-  before_save :attach_svg, :init_elemental_compositions,
-              :set_loading_from_ea
+  before_save :attach_svg
+  before_save :attach_annotation
+  before_save :init_elemental_compositions
+  before_save :set_loading_from_ea
   before_save :auto_set_short_label
   before_save :update_inventory_label, if: :new_record?
   before_create :check_molecule_name
@@ -474,6 +478,18 @@ class Sample < ApplicationRecord
     end
   end
 
+  def attach_annotation
+    return if sample_svg_annotation.blank?
+    return unless sample_svg_annotation.start_with?(/\s*<\?xml/, /\s*<svg/)
+
+    prefix = sample_svg_file[0..-5] # cut off .svg suffix
+    random = SecureRandom.hex(5)
+    filename = "#{prefix}_#{random}_annotation.svg"
+
+    File.write(full_svg_path(filename), scrub(sample_svg_annotation))
+    self.sample_svg_annotation_file = filename
+  end
+
   def init_elemental_compositions
     residue = self.residues[0]
     return unless molecule_sum_formular.present?
@@ -560,7 +576,14 @@ class Sample < ApplicationRecord
     tag&.taggable_data&.fetch('user_labels', nil)
   end
 
-private
+  # build a full path of the sample svg, nil if not buildable
+  def full_svg_path(svg_file_name = sample_svg_file)
+    return unless svg_file_name
+
+    Rails.public_path.join('images', 'samples', svg_file_name)
+  end
+
+  private
 
   def has_collections
     if self.collections_samples.blank?
@@ -727,19 +750,13 @@ private
 
   def scrub(value)
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
+    Loofah::HTML5::SafeList::ALLOWED_ELEMENTS_WITH_LIBXML2.add('image')
     # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
     Loofah.scrub_fragment(value, :strip).to_s
           .gsub('viewbox', 'viewBox')
           .gsub('lineargradient', 'linearGradient')
           .gsub('radialgradient', 'radialGradient')
 #   value
-  end
-
-  # build a full path of the sample svg, nil if not buildable
-  def full_svg_path(svg_file_name = sample_svg_file)
-    return unless svg_file_name
-
-    Rails.public_path.join('images', 'samples', svg_file_name)
   end
 end
 # rubocop:enable Metrics/ClassLength
