@@ -173,9 +173,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return (
         <div className={`numeric-input-unit_${this.props.unit}`}>
           {labelWrap}
-          <InputGroup
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
-          >
+          <InputGroup>
             <FormControl
               type="text"
               bsClass="bs-form--compact form-control"
@@ -183,9 +181,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
               bsSize={bsSize}
               bsStyle={bsStyle}
               value={val() || ''}
-              onChange={event => this._handleInputValueChange(event)}
-              onFocus={event => this._handleInputValueFocus(event)}
-              onBlur={event => this._handleInputValueBlur(event)}
+              onChange={(event) => this._handleInputValueChange(event)}
+              onFocus={(event) => this._handleInputValueFocus(event)}
+              onBlur={(event) => this._handleInputValueBlur(event)}
               name={name}
             />
             {prefixSwitch}
@@ -196,7 +194,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     return (
       <div className="numeric-input-unit">
         {labelWrap}
-        <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
+        <div>
           <FormControl
             type="text"
             bsClass="bs-form--compact form-control"
@@ -204,10 +202,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
             bsSize={bsSize}
             bsStyle={bsStyle}
             value={val() || ''}
-            onChange={event => this._handleInputValueChange(event)}
-            onFocus={event => this._handleInputValueFocus(event)}
-            onBlur={event => this._handleInputValueBlur(event)}
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
+            onChange={(event) => this._handleInputValueChange(event)}
+            onFocus={(event) => this._handleInputValueFocus(event)}
+            onBlur={(event) => this._handleInputValueBlur(event)}
             name={name}
           />
         </div>
