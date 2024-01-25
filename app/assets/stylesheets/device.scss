@@ -26,6 +26,9 @@
   margin-right: 7px;
   color: #5fa95f;
 }
+.btn.devices-button-group-clear {
+  color: #d9534f;
+}
 
 .device-users-headline {
   font-weight: bold;
@@ -105,4 +108,30 @@ hr.device-tablecell-hr {
 
 .form-with-columns .col-half {
   width: 49%;
+}
+
+.form-with-columns .col-middle {
+  width: calc(47% - 50px);
+}
+
+.form-with-columns .col-small {
+  width: 50px;
+  align-self: flex-end;
+}
+
+.form-with-columns .col-small button {
+  display: block;
+}
+
+button.with-margin-bottom {
+  margin-bottom: 15px;
+}
+
+button.col-half {
+  max-height: 34px;
+  align-self: flex-end;
+}
+
+.clear-after-button {
+  clear: both;
 }
