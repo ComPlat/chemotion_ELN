@@ -14,8 +14,9 @@ import {
   OverlayTrigger,
   Tooltip,
 } from 'react-bootstrap';
-import { findIndex } from 'lodash';
+import _, { findIndex } from 'lodash';
 import Aviator from 'aviator';
+import Immutable from 'immutable';
 import { GenInterface, GenButtonReload, GenButtonExport } from 'chem-generic-ui';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -33,6 +34,10 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -47,12 +52,18 @@ const onNaviClick = (type, id) => {
 export default class GenericElDetails extends Component {
   constructor(props) {
     super(props);
+    // generic type
+    this.type = props.genericEl.type;
+
     this.state = {
       genericEl: props.genericEl,
       activeTab: 0,
+      // List of all visible segment tabs.
+      visible: Immutable.List()
     };
     this.onChangeUI = this.onChangeUI.bind(this);
     this.onChangeElement = this.onChangeElement.bind(this);
+    this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleReload = this.handleReload.bind(this);
     this.handleAttachmentDrop = this.handleAttachmentDrop.bind(this);
     this.handleAttachmentDelete = this.handleAttachmentDelete.bind(this);
@@ -65,6 +76,33 @@ export default class GenericElDetails extends Component {
     this.handleExport = this.handleExport.bind(this);
   }
 
+  /**
+   * This method retrieves values for the detailed
+   * layout. If the user profile lacks these values,
+   * they are automatically added.
+   */
+  setupDetailLayoutProfile() {
+
+    const userProfile = UserStore.getState().profile;
+    const layout = userProfile && userProfile.data && userProfile.data[`layout_detail_${this.type}`];
+    if(!layout) {
+      const layoutName = `data.layout_detail_${this.type}`;
+      const defaultLayout = {
+        properties: 1, analyses: 2, attachments: 3
+      };
+      const currentCollection = UIStore.getState().currentCollection;
+      let tabSegment = currentCollection?.tabs_segment;
+      _.set(tabSegment, `${this.type}`, defaultLayout);
+      tabSegment = { ...tabSegment, [`${this.type}`]: defaultLayout };
+      if (currentCollection && !currentCollection.is_sync_to_me) {
+        CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+      }
+      _.set(userProfile, layoutName, defaultLayout);
+
+      UserActions.updateUserProfile(userProfile);
+    }
+  }
+
   componentDidMount() {
     UIStore.listen(this.onChangeUI);
     ElementStore.listen(this.onChangeElement);
@@ -73,6 +111,14 @@ export default class GenericElDetails extends Component {
   componentWillUnmount() {
     UIStore.unlisten(this.onChangeUI);
     ElementStore.unlisten(this.onChangeElement);
+  }
+
+  /**
+   * Changes the visible segment tabs
+   * @param visible {Array} List of all visible segment tabs
+   */
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
   }
 
   onChangeElement(state) {
@@ -98,8 +144,7 @@ export default class GenericElDetails extends Component {
   }
 
   handleElChanged(el) {
-    let { genericEl } = this.state;
-    genericEl = el;
+    const genericEl = el;
     genericEl.changed = true;
     this.setState({ genericEl });
   }
@@ -418,20 +463,41 @@ export default class GenericElDetails extends Component {
   }
 
   render() {
-    const { genericEl } = this.state;
+    const { genericEl, visible } = this.state;
     const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
     // eslint-disable-next-line max-len
     const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
 
-    let tabContents = [
-      i => this.propertiesTab(i),
-      i => this.containersTab(i),
-      i => this.attachmentsTab(i),
-    ];
+    /**
+     *  tabContents is a object containing all (visible) segment tabs
+     */
+    let tabContents = {
+      properties: this.propertiesTab.bind(this),
+      analyses: this.containersTab.bind(this),
+      attachments: this.attachmentsTab.bind(this)
+  };
 
-    const tablen = tabContents.length;
-    const segTabs = SegmentTabs(genericEl, this.handleSegmentsChange, tablen);
-    tabContents = tabContents.concat(segTabs);
+    const segTabs = SegmentTabs(genericEl, this.handleSegmentsChange);
+    tabContents = _.merge(tabContents, segTabs);
+
+    const tabContentList = [];
+    const tabKeyContentList = [];
+
+    visible.forEach((value) => {
+      const tabContent = tabContents[value];
+      if (tabContent) {
+        tabKeyContentList.push(value);
+        tabContentList.push(tabContent(value));
+      }
+    });
+
+    const tabTitlesMap = {};
+
+    // Select 'activeTab' and ensure that it is visible
+    let activeTab = this.state.activeTab;
+    if(!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
+      activeTab = tabKeyContentList[0];
+    }
 
     return (
       <Panel
@@ -441,12 +507,20 @@ export default class GenericElDetails extends Component {
         <Panel.Heading>{this.header(genericEl)}</Panel.Heading>
         <Panel.Body>
           <ListGroup>
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={false}
+          />
             <Tabs
-              activeKey={this.state.activeTab}
+              activeKey={activeTab}
               onSelect={key => this.handleSelect(key, genericEl.type)}
               id="GenericElementDetailsXTab"
             >
-              {tabContents.map((e, i) => e(i))}
+
+              {tabContentList}
             </Tabs>
           </ListGroup>
           <hr />
