@@ -26,6 +26,7 @@ export default class SampleDetailsContainers extends Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.addButton = this.addButton.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.handleCommentTextChange = this.handleCommentTextChange.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
@@ -70,6 +71,14 @@ export default class SampleDetailsContainers extends Component {
     // });
 
     this.props.handleSampleChanged(sample);
+  }
+
+  handleCommentTextChange(e) {
+    const { sample } = this.props;
+
+    sample.container.description = e.target.value;
+
+    this.handleChange(sample.container);
   }
 
   handleAdd() {
@@ -220,6 +229,7 @@ export default class SampleDetailsContainers extends Component {
             orderContainers={orderContainers}
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
+            handleCommentTextChange={this.handleCommentTextChange}
             handleUndo={this.handleUndo}
             handleRemove={this.handleRemove}
             handleSubmit={handleSubmit}
