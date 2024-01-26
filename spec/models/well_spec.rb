@@ -6,7 +6,7 @@ RSpec.describe Well do
   let(:collection) { create(:collection) }
   let(:wellplate) { create(:wellplate, collections: [collection]) }
   let(:well) do
-    create(:well, sample_id: sample.id, wellplate_id: wellplate.id)
+    create(:well, wellplate_id: wellplate.id)
   end
 
   describe '.readouts()' do
@@ -18,10 +18,16 @@ RSpec.describe Well do
   end
 
   describe '.alphanumeric_position()' do
-    context 'when position is [1,1]' do
-      let(:well) do
-        create(:well, wellplate_id: wellplate.id, position_x: 1, position_y: 1)
+    context 'when position is [nil,nil]' do
+      let(:well) { create(:well, wellplate_id: wellplate.id, position_x: nil, position_y: nil) }
+
+      it 'returns the string A01' do
+        expect(well.alphanumeric_position).to eq('n/a')
       end
+    end
+
+    context 'when position is [1,1]' do
+      let(:well) { create(:well, wellplate_id: wellplate.id, position_x: 1, position_y: 1) }
 
       it 'returns the string A01' do
         expect(well.alphanumeric_position).to eq('A1')
@@ -29,34 +35,28 @@ RSpec.describe Well do
     end
 
     context 'when position is [30,30]' do
-      let(:well) do
-        create(:well, wellplate_id: wellplate.id, position_x: 30, position_y: 30)
-      end
+      let!(:well) { create(:well, wellplate_id: wellplate.id, position_x: 30, position_y: 30) }
 
       it 'returns the string AD30' do
-        expect(well.sortable_alphanumeric_position).to eq('AD30')
+        expect(well.alphanumeric_position).to eq('AD30')
       end
     end
   end
 
   describe '.sortable_alphanumeric_position()' do
     context 'when position is [1,1]' do
-      let(:well) do
-        create(:well, wellplate_id: wellplate.id, position_x: 1, position_y: 1)
-      end
+      let(:well) { create(:well, wellplate_id: wellplate.id, position_x: 1, position_y: 1) }
 
-      it 'returns the string A01' do
-        expect(well.sortable_alphanumeric_position).to eq('A01')
+      it 'returns the string A0001' do
+        expect(well.sortable_alphanumeric_position).to eq('A0001')
       end
     end
 
     context 'when position is [30,30]' do
-      let(:well) do
-        create(:well, wellplate_id: wellplate.id, position_x: 30, position_y: 30)
-      end
+      let(:well) { create(:well, wellplate_id: wellplate.id, position_x: 30, position_y: 30) }
 
-      it 'returns the string AD30' do
-        expect(well.sortable_alphanumeric_position).to eq('AD30')
+      it 'returns the string AD0030' do
+        expect(well.sortable_alphanumeric_position).to eq('AD0030')
       end
     end
   end
