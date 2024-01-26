@@ -4,12 +4,7 @@ require 'rails_helper'
 
 RSpec.describe Well do
   let(:collection) { create(:collection) }
-  let(:screen)     { create(:screen, collections: [collection]) }
-  let(:research_plan) { create(:research_plan, collections: [collection]) }
-  let(:wellplate) do
-    create(:wellplate, collections: [collection], screens: [screen], research_plans: [research_plan])
-  end
-  let(:sample) { create(:sample, collections: [collection]) }
+  let(:wellplate) { create(:wellplate, collections: [collection]) }
   let(:well) do
     create(:well, sample_id: sample.id, wellplate_id: wellplate.id)
   end
@@ -62,6 +57,29 @@ RSpec.describe Well do
 
       it 'returns the string AD30' do
         expect(well.sortable_alphanumeric_position).to eq('AD30')
+      end
+    end
+  end
+
+  describe '.get_samples_in_wellplates()' do
+    context 'when no sample is attached' do
+      it 'empty array is returned' do
+        expect(described_class.get_samples_in_wellplates(wellplate.id)).to eq([])
+      end
+    end
+
+    context 'when 3 samples are attached' do
+      let(:sample1) { create(:sample, collections: [collection]) }
+      let(:sample2) { create(:sample, collections: [collection]) }
+      let(:sample3) { create(:sample, collections: [collection]) }
+
+      let(:well1) { create(:well, sample_id: sample1.id, wellplate_id: wellplate.id) }
+      let(:well2) { create(:well, sample_id: sample2.id, wellplate_id: wellplate.id) }
+      let(:well3) { create(:well, sample_id: sample3.id, wellplate_id: wellplate.id) }
+
+      it 'three sample ids are returned' do
+        expected = [well1.sample_id, well2.sample_id, well3.sample_id]
+        expect(described_class.get_samples_in_wellplates(wellplate.id)).to eq(expected)
       end
     end
   end
