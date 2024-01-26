@@ -41,7 +41,7 @@ class Well < ApplicationRecord
 
   # translates well position within wellplate: X=2 Y=3 -> C2
   def alphanumeric_position
-    return 'n/a' if self.position_x.nil? || self.position_y.nil?
+    return 'n/a' if position_x.nil? || position_y.nil?
     row = ('A'..'ZZZZ').to_a[position_y - 1]
     "#{row}#{position_x}"
   end
