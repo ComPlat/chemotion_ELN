@@ -227,7 +227,7 @@ module Chemotion
                     Device.by_user_ids(user_ids).novnc.includes(:profile)
                   else
                     Device.by_user_ids(user_ids).novnc.where(id: params[:id]).includes(:profile)
-                  end.sort_by(&:name)
+                  end
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end
 

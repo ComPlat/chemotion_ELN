@@ -200,6 +200,16 @@ class CnC extends React.Component {
   }
 
   tree(dev, selectedId) {
+    const sortedDevices = dev.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
+
     return (
       <Col className="small-col collec-tree">
         <div className="tree-view">
@@ -208,7 +218,7 @@ class CnC extends React.Component {
           </div>
         </div>
         <div className="tree-wrapper">
-          {dev.map((device, index) => (
+          {sortedDevices.map((device, index) => (
             <div
               className="tree-view"
               key={`device${device.id}`}
