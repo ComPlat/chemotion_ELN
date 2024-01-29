@@ -12,7 +12,7 @@ module Usecases
 
       def execute!
         ActiveRecord::Base.transaction do
-          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments))
+          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments,:size))
           wellplate.set_short_label(user: @current_user)
           wellplate.reload
           wellplate.save_segments(segments: params[:segments], current_user_id: @current_user.id)
