@@ -419,9 +419,9 @@ module Import
           ),
         ))
 
-        if(fields.key?('width') && fields.key?('height')) then
-          wellplate.width=fields[:width].to_i
-          wellplate.height=fields[:height].to_i
+        if fields.key?('width') && fields.key?('height')
+          wellplate.width = fields['width'].to_i
+          wellplate.height = fields['height'].to_i
         end
 
         # create the root container like with samples
