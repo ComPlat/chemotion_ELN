@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_01_23_094936) do
+ActiveRecord::Schema.define(version: 2024_01_26_145309) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -194,6 +194,7 @@ ActiveRecord::Schema.define(version: 2024_01_23_094936) do
     t.jsonb "tabs_segment", default: {}
     t.bigint "inventory_id"
     t.integer "celllinesample_detail_level", default: 10
+    t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -782,21 +783,6 @@ ActiveRecord::Schema.define(version: 2024_01_23_094936) do
     t.jsonb "stereo"
   end
 
-  create_table "mixture_components", force: :cascade do |t|
-    t.bigint "mixture_id", null: false
-    t.bigint "sample_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["mixture_id"], name: "index_mixture_components_on_mixture_id"
-    t.index ["sample_id"], name: "index_mixture_components_on_sample_id"
-  end
-
-  create_table "mixtures", force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -1114,6 +1100,16 @@ ActiveRecord::Schema.define(version: 2024_01_23_094936) do
     t.index ["sample_id"], name: "index_sample_tasks_on_sample_id"
   end
 
+  create_table "sample_types", force: :cascade do |t|
+    t.bigint "sample_id", null: false
+    t.string "sampleable_type", null: false
+    t.bigint "sampleable_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_id"], name: "index_sample_types_on_sample_id"
+    t.index ["sampleable_type", "sampleable_id"], name: "index_sample_types_on_sampleable"
+  end
+
   create_table "samples", id: :serial, force: :cascade do |t|
     t.string "name"
     t.float "target_amount_value", default: 0.0
@@ -1157,14 +1153,15 @@ ActiveRecord::Schema.define(version: 2024_01_23_094936) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
-    t.string "sampleable_type"
-    t.bigint "sampleable_id"
+    t.bigint "mixture_id"
+    t.bigint "micromolecule_id"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
+    t.index ["micromolecule_id"], name: "index_samples_on_micromolecule_id"
+    t.index ["mixture_id"], name: "index_samples_on_mixture_id"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
-    t.index ["sampleable_type", "sampleable_id"], name: "index_samples_on_sampleable"
     t.index ["user_id"], name: "index_samples_on_user_id"
   end
 
@@ -1466,11 +1463,12 @@ ActiveRecord::Schema.define(version: 2024_01_23_094936) do
 
   add_foreign_key "collections", "inventories"
   add_foreign_key "literals", "literatures"
-  add_foreign_key "mixture_components", "mixtures"
-  add_foreign_key "mixture_components", "samples"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  add_foreign_key "sample_types", "samples"
+  add_foreign_key "samples", "samples", column: "micromolecule_id"
+  add_foreign_key "samples", "samples", column: "mixture_id"
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)

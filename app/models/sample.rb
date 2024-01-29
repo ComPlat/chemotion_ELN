@@ -200,7 +200,11 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
-  belongs_to :sampleable, polymorphic: true, optional: true
+  has_many :sample_types, as: :sampleable
+  belongs_to :micromolecule, optional: true
+  # self join mixture samples
+  belongs_to :mixture, class_name: 'Sample', optional: true
+  has_many :components, class_name: 'Sample', foreign_key: 'mixture_id'
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
@@ -234,7 +238,7 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
-  delegate :molfile, :molfile_version, :stereo, to: :sampleable, prefix: true, allow_nil: true
+  delegate :molfile, :molfile_version, :stereo, to: :micromolecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
 

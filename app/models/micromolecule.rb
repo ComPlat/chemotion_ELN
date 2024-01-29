@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 class Micromolecule < ApplicationRecord
-  has_one :sample, as: :sampleable
+  has_many :samples
 end

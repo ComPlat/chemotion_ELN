@@ -453,9 +453,8 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        optional :sampleable_type, type: String
-        optional :sampleable_id, type: Integer
         optional :mixture_components, type: Array, desc: 'sample ids for mixture components'
+        optional :is_mixture_component, type: Boolean, default: false
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -491,8 +490,6 @@ module Chemotion
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
-          sampleable_type: params[:sampleable_type],
-          sampleable_id: params[:sampleable_id],
         }
         micro_att = {
           name: params[:name],
@@ -553,26 +550,37 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        # save sample as micromolecule (default)
-        if params[:sampleable_type].nil? || params[:sampleable_type] == 'Micromolecule'
-          attributes[:sampleable_type] = 'Micromolecule'
+        # 1. save sample as micromolecule (default)
+        if params[:mixture_components].blank? && !params[:is_mixture_component]
           micromolecule = Micromolecule.new(micro_att)
-          micromolecule.sample = sample
+          micromolecule.samples << sample
+          micromolecule.save!
 
-        # save sample as mixture component
-        elsif params[:sampleable_type] == 'MixtureComponent'
-          mixture_component = MixtureComponent.new
-          mixture_component.sample = sample
+          sample_type = SampleType.new(sample: sample, sampleable: micromolecule)
+          sample_type.save!
 
-        # save sample as mixture with associated components
-        elsif params[:sampleable_type] == 'Mixture'
-          mixture = Mixture.new(mix_att)
+        # 2. save mixture
+        elsif params[:mixture_components].present?
+          component_sample_ids = params[:mixture_components]
+          component_samples = Sample.where(id: component_sample_ids)
 
-          if params[:mixture_components].present?
-            component_samples = Sample.where(id: params[:mixture_components])
-            mixture.components << component_samples
+          component_samples.each do |component_sample|
+            sample.components << component_sample
+
+            sample_type = SampleType.find_by(sample: component_sample, sampleable: component_sample)
+            if sample_type.nil?
+              sample_type = SampleType.new(sample: sample, sampleable: component_sample)
+              sample_type.save!
+            else
+              sample_type.update(sample: sample)
+            end
+            sample_type.save!
           end
-          mixture.sample = sample
+
+        # 3. save only mixture component
+        else
+          sample_type = SampleType.new(sample: sample, sampleable: sample)
+          sample_type.save!
         end
 
         sample.container = update_datamodel(params[:container])
