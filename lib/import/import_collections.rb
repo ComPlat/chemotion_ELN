@@ -405,9 +405,9 @@ module Import
     def import_wellplates
       @data.fetch('Wellplate', {}).each do |uuid, fields|
         # create the wellplate
+
         wellplate = Wellplate.create!(fields.slice(
           'name',
-          'size',
           'description',
           'short_label',
           'readout_titles',
@@ -418,6 +418,11 @@ module Import
             'Collection', 'CollectionsWellplate', 'wellplate_id', 'collection_id', uuid
           ),
         ))
+
+        if(fields.key?('width') && fields.key?('height')) then
+          wellplate.width=fields[:width].to_i
+          wellplate.height=fields[:height].to_i
+        end
 
         # create the root container like with samples
         wellplate.container = Container.create_root_container
