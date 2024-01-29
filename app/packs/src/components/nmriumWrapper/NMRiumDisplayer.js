@@ -427,6 +427,7 @@ export default class NMRiumDisplayer extends React.Component {
 
   renderModalTitle() {
     const { nmriumData } = this.state;
+    const { sample } = this.props;
     let hasSpectra = false;
     if (nmriumData) {
       const { version } = nmriumData;
@@ -454,7 +455,7 @@ export default class NMRiumDisplayer extends React.Component {
           </span>
         </Button>
         {
-          hasSpectra ?
+          hasSpectra && sample.can_update ? 
           (
             <Button
               bsStyle="success"
