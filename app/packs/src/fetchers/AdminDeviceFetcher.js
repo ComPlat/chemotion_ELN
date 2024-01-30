@@ -12,7 +12,7 @@ export default class AdminDeviceFetcher {
 
   static fetchDevicesByName(name, limit = 5) {
     return fetch(
-      `/api/v1/admin_devices/byname.json?${new URLSearchParams({
+      `/api/v1/admin_devices/byname?${new URLSearchParams({
         name,
         limit,
       })}`,

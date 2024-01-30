@@ -236,7 +236,7 @@ const DeviceModal = () => {
                   </Tab>
                   <Tab
                     eventKey={4}
-                    title="NoVnc Settings"
+                    title="NoVNC Settings"
                     key="tab-novnc-settings-4"
                     disabled={disableTab}
                   >

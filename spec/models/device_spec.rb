@@ -7,7 +7,7 @@ RSpec.describe Device, type: :model do
   let(:device) { create(:device) }
 
   before do
-    device.users << user
+    device.people << user
     device.save
   end
 
