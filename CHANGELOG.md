@@ -195,9 +195,9 @@
 
 * Fixes:
   * Report creation for shared reaction [#1412](https://github.com/ComPlat/chemotion_ELN/pull/1412)
-  * Collection tab profile [1411](https://github.com/ComPlat/chemotion_ELN/pull/1411) [1427](https://github.com/ComPlat/chemotion_ELN/pull/1427)
+  * Collection tab profile [#1411](https://github.com/ComPlat/chemotion_ELN/pull/1411) [1427](https://github.com/ComPlat/chemotion_ELN/pull/1427)
   * opening a dataset without making changes [#1410](https://github.com/ComPlat/chemotion_ELN/pull/1410)
-  * inbox (de)select boxes [#1416](in https://github.com/ComPlat/chemotion_ELN/pull/1416)
+  * inbox (de)select boxes [#1416](https://github.com/ComPlat/chemotion_ELN/pull/1416)
   * sort reaction list by creation date [#1429](https://github.com/ComPlat/chemotion_ELN/pull/1429)
   * change ref area and display shift ref [#1431]( https://github.com/ComPlat/chemotion_ELN/pull/1431)
   * total element count in list tabs [#1426]( https://github.com/ComPlat/chemotion_ELN/pull/1426)
