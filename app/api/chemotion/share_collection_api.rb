@@ -12,7 +12,7 @@ module Chemotion
         optional :collection_id, type: Integer, desc: 'Destination collection id'
         optional :newCollection, type: String, desc: 'Label for a new collection'
         optional :user_ids, type: Array
-        optional :newCollection, type: String
+        optional :currentCollection, type: Array
         optional :action, type: String
       end
 
@@ -29,7 +29,7 @@ module Chemotion
             create_elements(params, from_collection, to_collection_id)
             create_generic_elements(params, from_collection, to_collection_id)
             to_collection_id = to_collection_id ? to_collection_id : from_collection&.id
-            create_acl_collection(user[:value], to_collection_id, params)
+            create_acl_collection(user[:value], to_collection_id, params, from_collection&.label)
           end
         else
           create_elements(params, from_collection, to_collection_id)

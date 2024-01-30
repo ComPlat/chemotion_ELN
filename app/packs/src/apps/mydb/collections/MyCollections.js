@@ -73,11 +73,11 @@ export default class MyCollections extends React.Component {
   label(node) {
     if (node.id == -1) {
       return (
-        <FormControl 
-        value ="My Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
+        <FormControl
+          value ="My Collections"
+          type="text"
+          className="root-label"
+          disabled/>);
     } else {
       return (
         <FormControl
@@ -117,10 +117,10 @@ export default class MyCollections extends React.Component {
       const { isChange } = this.state;
       return (
         <div className="root-actions">
-          {isChange && <Button 
-          id="save-collections-button" 
-          bsSize="xsmall" 
-          bsStyle="warning" 
+          {isChange && <Button
+          id="save-collections-button"
+          bsSize="xsmall"
+          bsStyle="warning"
           onMouseDown={(e)=>{e.stopPropagation();}}
           onClick={this.bulkUpdate.bind(this)}> Save </Button>}
           {this.addCollectionButton(node)}
