@@ -4750,10 +4750,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chem-generic-ui@^1.0.11:
-  version "1.0.11"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.0.11.tgz#3ac832a935facf2dec86fdc07642f51510c8914e"
-  integrity sha512-JaEYA2ghquw/06M0Q1BzLRrmTFs8YY/89XRc2C3qO6T4HlhCw+mUDoAqNNhZJmOtTjksQTupklFZUIY8b44JgA==
+chem-generic-ui@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.1.1.tgz#6bfc9648803f3772324bc21f8fb552b514503361"
+  integrity sha512-6Sv4+liMXvt3CQRAL9WguFlD3mVXPiUcPq7MLQC31PN/xjRl2ZHjuZoI1MhQr90nVEmUDwQAjUmHc0lzKZuprg==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.1.2"
     "@fortawesome/free-regular-svg-icons" "^6.1.2"
