@@ -4,15 +4,16 @@
 #
 # Table name: wellplates
 #
-#  id             :integer          not null, primary key
-#  name           :string
-#  size           :integer
-#  description    :string
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  deleted_at     :datetime
-#  short_label    :string
-#  readout_titles :jsonb
+#  id                     :integer          not null, primary key
+#  name                   :string
+#  size                   :integer
+#  description            :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  deleted_at             :datetime
+#  short_label            :string
+#  readout_titles         :jsonb
+#  plain_text_description :text
 #
 # Indexes
 #

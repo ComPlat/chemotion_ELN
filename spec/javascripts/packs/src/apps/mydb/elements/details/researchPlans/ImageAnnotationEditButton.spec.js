@@ -12,33 +12,41 @@ Enzyme.configure({ adapter: new Adapter() });
 describe('ImageAnnotationEditButton', () => {
   const pngAttachment = new Attachment({ filename: 'example.png' });
   const gifAttachment = new Attachment({ filename: 'example.gif' });
-  const parent = {};
+  const onSelectAttachment = () => {};
 
   describe('.render()', () => {
     context('with not persisted attachment(png)', () => {
       pngAttachment.isNew = true;
-      const wrapper = shallow(<ImageAnnotationEditButton attachment={pngAttachment} parent={parent} />);
+      const wrapper = shallow(<ImageAnnotationEditButton attachment={pngAttachment} onSelectAttachment={onSelectAttachment} />);
 
       it('button is rendered but disabled', () => {
         expect(wrapper.html())
-          .toEqual('<span><button disabled="" type="button" '
-           + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></button></span>');
+          .toEqual('<span class=""><button disabled="" style="pointer-events:none" type="button" '
+            + 'class="btn btn-xs btn-warning"><i class="fa fa-pencil" aria-hidden="true"></i></button></span>');
       });
     });
 
     context('with persisted attachment(png)', () => {
       pngAttachment.isNew = false;
-      const wrapper = shallow(<ImageAnnotationEditButton attachment={pngAttachment} parent={parent} />);
+      const wrapper = shallow(<ImageAnnotationEditButton attachment={pngAttachment} onSelectAttachment={onSelectAttachment} />);
 
       it('button is rendered and not disabled', () => {
         expect(wrapper.html())
-          .toEqual('<span><button type="button" class="btn btn-xs btn-warning">'
-           + '<i class="fa fa-pencil-square-o" aria-hidden="true"></i></button></span>');
+          .toEqual('<button type="button" class="btn btn-xs btn-warning">'
+            + '<i class="fa fa-pencil" aria-hidden="true"></i></button>');
       });
     });
 
     context('with no attachment', () => {
-      const wrapper = shallow(<ImageAnnotationEditButton attachment={null} parent={parent} />);
+      const wrapper = shallow(<ImageAnnotationEditButton attachment={null} onSelectAttachment={onSelectAttachment} />);
+
+      it('button is not rendered', () => {
+        expect(wrapper.html()).toEqual(null);
+      });
+    });
+
+    context('with not supported image type(gif)', () => {
+      const wrapper = shallow(<ImageAnnotationEditButton attachment={gifAttachment} onSelectAttachment={onSelectAttachment} />);
 
       it('button is not rendered', () => {
         expect(wrapper.html()).toEqual(null);

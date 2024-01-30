@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Layout/LineLength
+
 # == Schema Information
 #
 # Table name: reports
@@ -20,8 +22,7 @@
 #  updated_at           :datetime         not null
 #  template             :string           default("standard")
 #  mol_serials          :text             default([])
-#  si_reaction_settings :text             default({"Name"=>true, "CAS"=>true, "Formula"=>true, "Smiles"=>true,
-#                                         "InCHI"=>true, "Molecular Mass"=>true, "Exact Mass"=>true, "EA"=>true})
+#  si_reaction_settings :text             default({"Name"=>true, "CAS"=>true, "Formula"=>true, "Smiles"=>true, "InCHI"=>true, "Molecular Mass"=>true, "Exact Mass"=>true, "EA"=>true})
 #  prd_atts             :text             default([])
 #  report_templates_id  :integer
 #
@@ -31,6 +32,8 @@
 #  index_reports_on_file_name            (file_name)
 #  index_reports_on_report_templates_id  (report_templates_id)
 #
+
+# rubocop:enable Layout/LineLength
 
 class Report < ApplicationRecord
   acts_as_paranoid
