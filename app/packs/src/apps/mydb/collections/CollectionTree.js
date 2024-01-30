@@ -7,6 +7,7 @@ import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
@@ -160,13 +161,14 @@ export default class CollectionTree extends React.Component {
   }
 
   sharedWithMeSubtrees() {
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     let { sharedCollectionTree, sharedWithCollectionVisible } = this.state;
-
 // TODO : remove this when we have a better way to handle this
     let sharedLabelledRoots = {};
     sharedLabelledRoots = sharedCollectionTree.map(e => {
+      const acl = e.collection_acls.find((acl) => (acl.collection_id === e.id) && (currentUser.id === acl.user_id));
       return update(e, {
-        label: { $set: <span>{e.label}</span> }
+        label: { $set: <span>{acl.label || e.label}</span> }
       })
     })
 

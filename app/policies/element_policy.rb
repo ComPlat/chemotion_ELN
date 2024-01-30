@@ -19,7 +19,7 @@ class ElementPolicy
   end
 
   def update?
-    maximum_permission_level(user_collections,user_scollections) >= 1
+    maximum_permission_level(user_collections, user_scollections) >= 1
   end
 
   def copy?
@@ -29,11 +29,11 @@ class ElementPolicy
   def share?
     return true unless record
 
-    maximum_permission_level(user_collections,user_scollections) >= 2
+    maximum_permission_level(user_collections, user_scollections) >= 2
   end
 
   def destroy?
-    maximum_permission_level(user_collections,user_scollections) >= 3
+    maximum_permission_level(user_collections, user_scollections) >= 3
   end
 
   def scope

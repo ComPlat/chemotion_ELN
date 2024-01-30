@@ -3,6 +3,7 @@ import { camelizeKeys } from 'humps';
 
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
+import { notification } from 'src/apps/generic/Utils';
 
 export default class UIFetcher {
   static initialize() {
@@ -26,6 +27,13 @@ export default class UIFetcher {
       body: JSON.stringify(params)
     }).then(response => response.json())
       .then((json) => {
+        if (json.error) {
+          notification({
+            title: 'Delete Error',
+            lvl: 'error',
+            msg: json.error,
+          });
+        }
         if (method === 'DELETE') { return json; }
         const samples = json.samples.map(s => new Sample(s));
         const reactions = json.reactions.map(r => new Reaction(r));

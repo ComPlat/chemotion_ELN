@@ -124,7 +124,7 @@ module CollectionHelpers
     top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
   end
 
-  def create_acl_collection(user_id, collection_id, params)
+  def create_acl_collection(user_id, collection_id, params, root_col_label)
     currentCollection = params['ui_state']['currentCollection']
     label = params[:newCollection] || currentCollection['label']
 
@@ -132,6 +132,7 @@ module CollectionHelpers
       user_id: user_id,
       collection_id: collection_id
     )
+    label = label.nil? ? root_col_label : label
     c_acl.update(
       label: label,
       permission_level: currentCollection['permission_level'],
@@ -169,12 +170,12 @@ module CollectionHelpers
       ui_state = check_ui_state(ui_state)
       next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-      ids = Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+      ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
       case params[:action]
       when 'move'
-        CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
+        Labimotion::CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
       else
-        CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
+        Labimotion::CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
       end
     end
   end

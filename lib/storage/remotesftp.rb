@@ -1,7 +1,7 @@
 require 'net/sftp'
 require 'storage'
 
-class RemoteSFTP < storage
+class RemoteSFTP < Storage
 
   def initialize
     super
