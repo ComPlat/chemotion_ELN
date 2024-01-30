@@ -424,8 +424,8 @@ export default class ManagingModalSharing extends React.Component {
         </FormGroup>
         <FormGroup controlId="label">
           <ControlLabel>Label</ControlLabel>
-          <FormControl id="label" type="text" placeholder="Label" name="label"
-             value={this.state.label || ''}
+          <FormControl required id="label" type="text" placeholder="Label" name="label"
+             value={this.state.label}
              onChange={(e) => { this.handleLabelChange(e); }}
           />
         </FormGroup>
