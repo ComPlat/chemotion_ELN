@@ -4,24 +4,24 @@ module Chemotion
   class AdminDeviceAPI < Grape::API
     helpers AdminHelpers
     resource :admin_devices do
-      # List all devices
-      get do
-        devices = Device.all.order('name')
-        present devices, with: Entities::DeviceEntity, root: 'devices'
-      end
-
-      # Find top (5) matched device by name
-      params do
-        requires :name, type: String, desc: 'device name'
-        optional :limit, type: Integer, default: 5
-      end
-      route_param :byname do
+      namespace :byname do
+        # Find top (5) matched device by name
+        params do
+          requires :name, type: String, desc: 'device name'
+          optional :limit, type: Integer, default: 5
+        end
         get do
           return { devices: [] } if params[:name].blank?
 
           devices = Device.by_name(params[:name]).limit(params[:limit])
           present devices, with: Entities::DeviceEntity, root: 'devices'
         end
+      end
+
+      # List all devices
+      get do
+        devices = Device.all.order('name')
+        present devices, with: Entities::DeviceEntity, root: 'devices'
       end
 
       # Find by device id

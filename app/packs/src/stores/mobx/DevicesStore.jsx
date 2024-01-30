@@ -52,6 +52,12 @@ export const DevicesStore = types
       let result = yield AdminDeviceFetcher.fetchDevices();
       self.setDevices(result.devices);
     }),
+    deviceById: flow(function* deviceById(deviceId) {
+      let result = yield AdminDeviceFetcher.fetchDeviceById(deviceId);
+      if (result) {
+        self.setDevice(result.device);
+      }
+    }),
     createDevice: flow(function* createDevice(params) {
       let result = yield AdminDeviceFetcher.createDevice(params);
       if (result.errors) {

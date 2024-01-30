@@ -294,7 +294,7 @@ const DevicesList = () => {
               <th width="22%">Actions</th>
               <th width="28%">Name</th>
               <th width="9%">Initial</th>
-              <th width="38%">Data Collector / Novnc</th>
+              <th width="38%">Data Collector / NoVNC</th>
             </tr>
           </thead>
           {listDevices()}
