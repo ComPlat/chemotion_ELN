@@ -744,6 +744,8 @@ GEM
       sentry-ruby (~> 5.11.0)
     sentry-ruby (5.11.0)
       concurrent-ruby (~> 1.0, >= 1.0.2)
+    shoulda-matchers (5.3.0)
+      activesupport (>= 5.2.0)
     shrine (3.4.0)
       content_disposition (~> 1.0)
       down (~> 5.1)
@@ -980,6 +982,7 @@ DEPENDENCIES
   sentry-delayed_job
   sentry-rails
   sentry-ruby
+  shoulda-matchers
   shrine (~> 3.0)
   simplecov
   simplecov-lcov
