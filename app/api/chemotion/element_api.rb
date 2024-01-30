@@ -79,12 +79,15 @@ module Chemotion
         deleted['sample'] += Sample.joins(sql_join).joins(:collections)
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
-        klasses = Labimotion::ElementKlass.find_each do |klass|
-          next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
-          deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
+        if deleted['sample'].blank?
+          { error: "Sample cannot be deleted due to association." }
+        else
+           Labimotion::ElementKlass.find_each do |klass|
+             next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
+             deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
+           end
+           { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
         end
-
-        { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
       end
 
       desc "return selected elements from the list. (only samples an reactions)"
