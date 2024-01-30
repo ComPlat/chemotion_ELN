@@ -13,7 +13,9 @@ const DeviceMetadataTab = () => {
   const deviceMetadata = deviceMetadataStore.device_metadata;
 
   useEffect(() => {
-    deviceMetadataStore.changeDeviceMetadata('device_id', device.id);
+    if (!deviceMetadata.device_id) {
+      deviceMetadataStore.changeDeviceMetadata('device_id', device.id);
+    }
   }, []);
 
   const dataCiteStateOptions = [
