@@ -480,7 +480,8 @@ export default class AttachmentFetcher {
     simulatenmr,
     previousSpcInfos,
     isSaveCombined,
-    axesUnitsStr
+    axesUnitsStr,
+    detector,
   ) {
     const params = {
       attachmentId: attId,
@@ -499,6 +500,7 @@ export default class AttachmentFetcher {
       curveIdx: curveIdx,
       simulatenmr: simulatenmr,
       axesUnits: axesUnitsStr,
+      detector
     };
 
     const promise = fetch('/api/v1/attachments/save_spectrum/', {
