@@ -277,7 +277,7 @@ export default class ResearchPlan extends Element {
     copy.is_new = true;
     copy.is_copy = true;
     copy.can_update = true;
-    copy.can_copy = false;
+    copy.can_copy = true;
 
     return copy;
   }
@@ -292,6 +292,10 @@ export default class ResearchPlan extends Element {
       body: research_plan.body,
     }
     const copy = research_plan.buildCopy(params);
+    copy.can_copy = false;
+    copy.changed = true;
+    copy.collection_id = collection_id;
+    copy.mode = 'edit';
     copy.attachments = attachments;
     copy.origin = { id: research_plan.id };
 

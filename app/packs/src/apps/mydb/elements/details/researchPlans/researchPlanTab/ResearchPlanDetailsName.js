@@ -53,6 +53,7 @@ export default class ResearchPlanDetailsName extends Component {
                   value={value || ''}
                   onChange={(event) => onChange(event.target.value)}
                   disabled={disabled}
+                  name="research_plan_name"
                 />
               </FormGroup>
             </Col>

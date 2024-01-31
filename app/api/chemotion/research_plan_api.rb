@@ -76,6 +76,7 @@ module Chemotion
           body: params[:body]
         }
 
+        attributes.delete(:can_copy)
         research_plan = ResearchPlan.new attributes
         research_plan.creator = current_user
         research_plan.container = update_datamodel(params[:container])

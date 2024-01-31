@@ -66,6 +66,7 @@ class ResearchPlan < ApplicationRecord
   before_destroy :delete_attachment
   accepts_nested_attributes_for :collections_research_plans
 
+  attr_accessor :can_copy
 
   unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path

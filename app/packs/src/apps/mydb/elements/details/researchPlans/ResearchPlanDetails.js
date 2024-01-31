@@ -635,7 +635,7 @@ export default class ResearchPlanDetails extends Component {
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              researchPlan.changed ? (
+              (researchPlan.changed || researchPlan.is_copy) ? (
                 <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
                   {researchPlan.isNew ? 'Create' : 'Save'}
                 </Button>
