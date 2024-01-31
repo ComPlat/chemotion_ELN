@@ -74,7 +74,7 @@ class CollectorHelper
     end
     sender_box_id = "sender_box_#{@sender.id}"
     @sender_container = Container.where(
-      name: @sender.first_name,
+      name: @sender.name,
       container_type: sender_box_id,
       parent_id: @recipient.container.id,
     ).first_or_create
