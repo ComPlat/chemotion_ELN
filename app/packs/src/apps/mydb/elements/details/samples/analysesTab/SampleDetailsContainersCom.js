@@ -34,7 +34,7 @@ function renderCommentButton(handleCommentButtonClick, disableMode = true) {
       placement="top"
       overlay={(
         <Tooltip id="analysisCommentBox">
-          please use this comment function for general remarks that relate to all analytical data
+          general remarks that relate to all analytical data
         </Tooltip>
       )}
     >
