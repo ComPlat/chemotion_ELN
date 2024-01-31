@@ -94,7 +94,7 @@ export default function SpectraEditorButton({
                   bsSize="xsmall"
                   onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}
                   onClick={toggleNMRDisplayerModal}
-                  disabled={!hasJcamp || !element.can_update}
+                  disabled={!hasJcamp}
                 >
                   <i className="fa fa-bar-chart" />
                 </Button>
