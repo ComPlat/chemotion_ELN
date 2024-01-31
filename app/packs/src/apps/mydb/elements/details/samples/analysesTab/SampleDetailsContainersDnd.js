@@ -2,8 +2,9 @@ import React from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import { HeaderDeleted, HeaderNormal } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
-
+import {
+  HeaderDeleted, HeaderNormal
+} from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 const orderSource = {
   beginDrag(props) {
     const { container, sample } = props;
@@ -50,7 +51,7 @@ const ContainerRow = ({
     style.opacity = 0.2;
   }
 
-  const oPanelCN = container.is_deleted ? "order-panel-delete" : "order-panel";
+  const oPanelCN = container.is_deleted ? 'order-panel-delete' : 'order-panel';
 
   return compose(connectDragSource, connectDropTarget)(
     <div className={oPanelCN} style={style}>
@@ -59,23 +60,27 @@ const ContainerRow = ({
       </div>
       {
         container.is_deleted
-          ? <HeaderDeleted
-            container={container}
-            handleUndo={handleUndo}
-            mode={mode}
-          />
-          : <HeaderNormal
-            sample={sample}
-            container={container}
-            mode={mode}
-            handleUndo={handleUndo}
-            readOnly={readOnly}
-            isDisabled={isDisabled}
-            handleRemove={handleRemove}
-            handleSubmit={handleSubmit}
-            handleAccordionOpen={handleAccordionOpen}
-            toggleAddToReport={toggleAddToReport}
-          />
+          ? (
+            <HeaderDeleted
+              container={container}
+              handleUndo={handleUndo}
+              mode={mode}
+            />
+          )
+          : (
+            <HeaderNormal
+              sample={sample}
+              container={container}
+              mode={mode}
+              handleUndo={handleUndo}
+              readOnly={readOnly}
+              isDisabled={isDisabled}
+              handleRemove={handleRemove}
+              handleSubmit={handleSubmit}
+              handleAccordionOpen={handleAccordionOpen}
+              toggleAddToReport={toggleAddToReport}
+            />
+          )
       }
     </div>,
   );

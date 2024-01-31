@@ -1,4 +1,7 @@
+/* eslint-disable react/function-component-definition */
+/* eslint-disable react/forbid-prop-types */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Button, Checkbox } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -6,8 +9,12 @@ import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
+import {
+  BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind
+} from 'src/utilities/SpectraHelper';
+import {
+  hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText
+} from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -25,15 +32,20 @@ const qCheckPass = () => (
 const qCheckFail = (msg, kind, atomNum = '') => (
   <div style={{ display: 'inline', color: 'red' }}>
     &nbsp;
-    (<sup>{atomNum}</sup>{kind} {msg})
+    (
+    <sup>{atomNum}</sup>
+    {kind}
+    &nbsp;
+    {msg}
+    )
   </div>
 );
 
 const qCheckMsg = (sample, container) => {
-  if (sample.molecule && container.extended_metadata &&
-    ((typeof container.extended_metadata.kind === 'undefined' || container.extended_metadata.kind == null ||
-      container.extended_metadata.kind.split('|').length < 2) ||
-      (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId
+  if (sample.molecule && container.extended_metadata
+    && ((typeof container.extended_metadata.kind === 'undefined' || container.extended_metadata.kind == null
+      || container.extended_metadata.kind.split('|').length < 2)
+      || (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId
         && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId
         && !container.extended_metadata.kind.split('|')[1].includes('mass spectrometry'))
     )) {
@@ -44,10 +56,10 @@ const qCheckMsg = (sample, container) => {
   if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
     const msg = hNmrCheckMsg(sample.molecule_formula, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'H', '1');
-  } else if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
+  } if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCheckMsg(sample.molecule_formula, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'C', '13');
-  } else if (container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')) {
+  } if (container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')) {
     const msg = msCheckMsg(sample.molecule.exact_molecular_weight, str);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
@@ -62,7 +74,8 @@ const editModeBtn = (toggleMode, isDisabled) => (
     disabled={isDisabled}
   >
     <span>
-      <i className="fa fa-edit" />&nbsp;
+      <i className="fa fa-edit" />
+      &nbsp;
       Edit mode
     </span>
   </Button>
@@ -76,19 +89,26 @@ const orderModeBtn = (toggleMode, isDisabled) => (
     disabled={isDisabled}
   >
     <span>
-      <i className="fa fa-reorder" />&nbsp;
+      <i className="fa fa-reorder" />
+      &nbsp;
       Order mode
     </span>
   </Button>
 );
 
-const AnalysisModeBtn = (mode, toggleMode, isDisabled) => {
+export const AnalysisModeBtn = (mode, toggleMode, isDisabled) => {
   switch (mode) {
     case 'order':
       return orderModeBtn(toggleMode, isDisabled);
     default:
       return editModeBtn(toggleMode, isDisabled);
   }
+};
+
+AnalysisModeBtn.propTypes = {
+  mode: PropTypes.string.isRequired,
+  toggleMode: PropTypes.func.isRequired,
+  isDisabled: PropTypes.bool.isRequired,
 };
 
 const undoBtn = (container, mode, handleUndo) => {
@@ -109,7 +129,7 @@ const undoBtn = (container, mode, handleUndo) => {
   return null;
 };
 
-const HeaderDeleted = ({ container, handleUndo, mode }) => {
+export const HeaderDeleted = ({ container, handleUndo, mode }) => {
   const mKind = container.extended_metadata.kind;
   const mStatus = container.extended_metadata.status;
   const kind = (mKind && mKind !== '') ? ` - Type: ${(mKind.split('|')[1] || mKind).trim()}` : '';
@@ -129,9 +149,21 @@ const HeaderDeleted = ({ container, handleUndo, mode }) => {
   );
 };
 
+HeaderDeleted.propTypes = {
+  container: PropTypes.object.isRequired,
+  handleUndo: PropTypes.func.isRequired,
+  mode: PropTypes.string.isRequired,
+};
+
 const headerBtnGroup = (
-  container, sample, mode, handleRemove, handleSubmit,
-  toggleAddToReport, isDisabled, readOnly,
+  container,
+  sample,
+  mode,
+  handleRemove,
+  handleSubmit,
+  toggleAddToReport,
+  isDisabled,
+  readOnly,
 ) => {
   if (mode !== 'edit') {
     return null;
@@ -157,13 +189,13 @@ const headerBtnGroup = (
     SpectraActions.LoadSpectra.defer(spcInfos); // going to fetch files base on spcInfos
   };
 
-  //process open NMRium
+  // process open NMRium
   const toggleNMRDisplayerModal = (e) => {
     const spcInfosForNMRDisplayer = BuildSpcInfosForNMRDisplayer(sample, container);
     e.stopPropagation();
     SpectraActions.ToggleModalNMRDisplayer();
     SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
-  }
+  };
 
   const jcampIds = JcampIds(container);
   const hasJcamp = jcampIds.orig.length > 0;
@@ -184,7 +216,7 @@ const headerBtnGroup = (
         LoadingActions.stop();
       });
     }
-  }
+  };
 
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
   const { chmos } = UserStore.getState();
@@ -233,7 +265,7 @@ const headerBtnGroup = (
   );
 };
 
-const HeaderNormal = ({
+export const HeaderNormal = ({
   sample, container, mode, readOnly, isDisabled, serial,
   handleRemove, handleSubmit, handleAccordionOpen, toggleAddToReport,
 }) => {
@@ -247,7 +279,7 @@ const HeaderNormal = ({
   const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
   const contentOneLine = {
     ops: content.ops.map((x) => {
-      const c = Object.assign({}, x);
+      const c = { ...x };
       if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
       return c;
     }),
@@ -283,13 +315,22 @@ const HeaderNormal = ({
       <div className="abstract">
         {
           headerBtnGroup(
-            container, sample, mode, handleRemove, handleSubmit,
-            toggleAddToReport, isDisabled, readOnly,
+            container,
+            sample,
+            mode,
+            handleRemove,
+            handleSubmit,
+            toggleAddToReport,
+            isDisabled,
+            readOnly,
           )
         }
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
-          <div className="sub-title">Type: {kind}</div>
+          <div className="sub-title">
+            Type:&nbsp;
+            {kind}
+          </div>
           <div className="sub-title">
             Status: {status} {qCheckMsg(sample, container)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {insText}
           </div>
@@ -305,4 +346,15 @@ const HeaderNormal = ({
   );
 };
 
-export { HeaderDeleted, HeaderNormal, AnalysisModeBtn };
+HeaderNormal.propTypes = {
+  sample: PropTypes.object.isRequired,
+  container: PropTypes.object.isRequired,
+  mode: PropTypes.string.isRequired,
+  readOnly: PropTypes.bool.isRequired,
+  isDisabled: PropTypes.bool.isRequired,
+  serial: PropTypes.number.isRequired,
+  handleRemove: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
+  handleAccordionOpen: PropTypes.func.isRequired,
+  toggleAddToReport: PropTypes.func.isRequired,
+};
