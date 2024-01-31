@@ -58,7 +58,7 @@ of the **[Karlsruhe Institute of Technology]**.
 [Changelog]: CHANGELOG.md
 
 [DFG]: https://www.dfg.de/en/
-[DFG Logo]: https://www.dfg.de/zentralablage/bilder/service/logos_corporate_design/logo_negativ_267.png
+[DFG Logo]: https://chemotion.net/img/logos/DFG_logo.png
 
 [Nicole Jung]: mailto:nicole.jung@kit.edu
 [Karlsruhe Institute of Technology]: https://www.kit.edu/english/
