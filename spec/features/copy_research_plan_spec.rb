@@ -3,22 +3,25 @@
 require 'rails_helper'
 
 describe 'Copy research plans' do
-  let!(:user1) { create(:user, first_name: 'Hello', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
-  let!(:user2) { create(:user, first_name: 'User2', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
+  let!(:user1) { create(:user, first_name: 'Hello', last_name: 'Complat', account_active: true) }
+  let!(:user2) { create(:user, first_name: 'User2', last_name: 'Complat', account_active: true) }
   let(:rp1) { create(:research_plan, creator: user1, name: 'RP 1', body: []) }
   let!(:col1) { create(:collection, user_id: user1.id, label: 'Col1') }
 
   let(:rp2) { create(:research_plan, creator: user1, name: 'RP 2', body: []) }
   let!(:root_share) { create(:collection, user: user1, shared_by_id: user2.id, is_shared: true, is_locked: true) }
-  let!(:cshare) { create(:collection, user: user1, label: 'share-col', permission_level: 10, shared_by_id: user2.id, is_shared: true, ancestry: root_share.id.to_s) }
+  let!(:col_share) do
+    create(:collection, user: user1, label: 'share-col', permission_level: 10, shared_by_id: user2.id,
+                        is_shared: true, ancestry: root_share.id.to_s)
+  end
 
   before do
     sign_in(user1)
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
-    svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
+    svg_path = Rails.root.join('spec/fixtures/images/molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
     CollectionsResearchPlan.find_or_create_by!(research_plan: rp1, collection: col1)
-    CollectionsResearchPlan.find_or_create_by!(research_plan: rp2, collection: cshare)
+    CollectionsResearchPlan.find_or_create_by!(research_plan: rp2, collection: col_share)
   end
 
   it 'new research plan', js: true do
