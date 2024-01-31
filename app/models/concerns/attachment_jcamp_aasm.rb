@@ -135,6 +135,7 @@ module AttachmentJcampProcess
     if att.nil?
       att = Attachment.children_of(self[:id]).new(
         filename: meta_filename,
+        con_state: Labimotion::ConState::READ,
         file_path: meta_tmp.path,
         created_by: created_by,
         created_for: created_for,
