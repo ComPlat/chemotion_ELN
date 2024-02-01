@@ -88,7 +88,6 @@ RSpec.describe Chemotion::AdminDeviceAPI do
         ).and_return(sftp_double)
 
         post '/api/v1/admin_devices/test_sftp', params: params
-
         expect(parsed_json_response['status']).to include('success')
       end
     end

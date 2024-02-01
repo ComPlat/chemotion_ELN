@@ -233,7 +233,7 @@ export default class NovncSettings extends Component {
   }
 
   handleConfigModalShow(device) {
-    AdminFetcher.fetchDeviceById(device.id)
+    AdminDeviceFetcher.fetchDeviceById(device.id)
       .then((result) => {
         const selectedDevice = result.device;
         this.setState({
