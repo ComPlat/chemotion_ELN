@@ -77,7 +77,6 @@ module Export
       ApplicationController.render(
         template: 'export/research_plan.haml',
         assigns: { name: @name, fields: @fields },
-        formats: [:docx],
         layout: false
       )
     end
