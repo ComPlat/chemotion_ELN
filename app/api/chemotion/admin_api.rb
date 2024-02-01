@@ -79,10 +79,19 @@ module Chemotion
         end
         post do
           device = Device.find(params[:id])
-          config = device.datacollector_config || {}
-          config.delete('method') if config['method']
-          config.delete('method_params') if config['method_params']
-          device.update!(datacollector_config: config)
+          device.datacollector_fields = false;
+          device.datacollector_method = '';
+          device.datacollector_dir = '';
+          device.datacollector_host = '';
+          device.datacollector_user = '';
+          device.datacollector_authentication = '';
+          device.datacollector_number_of_files = '';
+          device.datacollector_key_name = '';
+          # config = device.datacollector_config || {}
+          # config.delete('method') if config['method']
+          # config.delete('method_params') if config['method_params']
+          # device.update!(datacollector_config: config)
+          device.save!
           present device, with: Entities::DeviceEntity, root: 'device'
         end
       end

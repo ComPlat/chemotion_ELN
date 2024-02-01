@@ -121,7 +121,6 @@ const DeviceModal = () => {
 
   const saveDevice = () => {
     let errorMessages = handleValidationState();
-    console.log(errorMessages);
     devicesStore.changeErrorMessage(errorMessages.join('\n'));
     device = devicesStore.device;
 

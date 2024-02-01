@@ -158,7 +158,7 @@ const DeviceMetadataTab = () => {
       {createDeviceMetadataHeadline()}
 
       <FormGroup className="col-full">
-        <ControlLabel>State *</ControlLabel>
+        <ControlLabel>State</ControlLabel>
         <Select
           value={dataCiteStateValue}
           options={dataCiteStateOptions}
@@ -177,7 +177,7 @@ const DeviceMetadataTab = () => {
       </FormGroup>
 
       <FormGroup className="col-half">
-        <ControlLabel>Landing Page *</ControlLabel>
+        <ControlLabel>Landing Page</ControlLabel>
         <FormControl
           type="text"
           value={deviceMetadata.landing_page ? deviceMetadata.landing_page : ''}
@@ -187,7 +187,7 @@ const DeviceMetadataTab = () => {
       </FormGroup>
 
       <FormGroup className="col-half">
-        <ControlLabel>Name *</ControlLabel>
+        <ControlLabel>Name</ControlLabel>
         <FormControl
           type="text"
           value={deviceMetadata.name ? deviceMetadata.name : ''}

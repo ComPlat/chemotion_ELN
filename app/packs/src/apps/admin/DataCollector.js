@@ -470,7 +470,7 @@ export default class DataCollector extends Component {
   }
 
   handleConfigModalShow(device) {
-    AdminFetcher.fetchDeviceById(device.id)
+    AdminDeviceFetcher.fetchDeviceById(device.id)
       .then((result) => {
         if (result.device) {
           const selectedDevice = result.device;
