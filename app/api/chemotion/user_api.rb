@@ -225,9 +225,9 @@ module Chemotion
 
       get :novnc do
         devices = if params[:id] == '0'
-                    Device.by_user_ids(user_ids).novnc.includes(:profile)
+                    Device.by_user_ids(user_ids).where.not(novnc_target: nil).group('devices.id').order('devices.name')
                   else
-                    Device.by_user_ids(user_ids).novnc.where(id: params[:id]).includes(:profile)
+                    Device.by_user_ids(user_ids).where(id: params[:id]).group('devices.id')
                   end
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end

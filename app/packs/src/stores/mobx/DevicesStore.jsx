@@ -77,7 +77,7 @@ export const DevicesStore = types
         self.changeErrorMessage(self.errorMessage({ key_file: [result.error] }));
       } else if (result) {
         let message = ['Successfully saved'];
-        if (result.device.datacollector_fields) {
+        if (result.device.datacollector_fields && self.active_tab_key == 3) {
           message.push('Warning: Unprocessable files will be deleted from the target directory!');
         };
 
