@@ -359,6 +359,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           columnDefs={columnDefs}
           readOnlyEdit
           onCellEditRequest={updateRow}
+          domLayout="autoHeight"
           defaultColDef={{
             editable: true,
             sortable: true,
