@@ -10,13 +10,22 @@ function NavHead() {
           Documentation
           <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
         </MenuItem>
+        <MenuItem eventKey="14" href="https://chemotion.net/search" target="_blank">
+          Search documentation
+          <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
+        </MenuItem>
+        <MenuItem eventKey="11" href="https://chemotion.net/helpdesk" target="_blank">
+          Helpdesk - Contact Us
+          <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
+        </MenuItem>
+        <MenuItem eventKey="14" href="https://github.com/ComPlat/chemotion_ELN/issues" target="_blank">
+          Report an issue on Github
+          <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
+        </MenuItem>
+        <MenuItem divider />
         <MenuItem eventKey="15" href="https://www.chemotion.net" target="_blank">
           Chemotion.net
           <i className="fa fa-external-link " style={{ float: 'right' }} aria-hidden />
-        </MenuItem>
-        <MenuItem eventKey="14" href="https://github.com/ComPlat/chemotion_ELN/issues" target="_blank">
-          Complat on Github
-          <i className="fa fa-external-link" style={{ float: 'right' }} aria-hidden />
         </MenuItem>
         <MenuItem eventKey="15" href="https://www.chemotion-repository.net" target="_blank">
           Chemotion-Repository.net
@@ -28,7 +37,6 @@ function NavHead() {
         <MenuItem eventKey="16" href={isOnMydb ? '/home' : '/mydb'} target="_self">
           {isOnMydb ? 'Home' : 'ELN'}
         </MenuItem>
-        <MenuItem divider />
         <MenuItem eventKey="17" href="/about" target="_self">
           About
         </MenuItem>
