@@ -9,8 +9,8 @@ class Filecollector < Fcollector
   # rubocop:disable Metrics/AbcSize
 
   def inspect_folder(device)
-    directory = device.profile.data['method_params']['dir']
-    user_level_selected = device.profile.data['method_params']['user_level_selected']
+    directory = device.datacollector_dir
+    user_level_selected = device.datacollector_user_level_selected
 
     if user_level_selected
       inspect_user_folders(device, directory)
