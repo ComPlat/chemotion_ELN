@@ -55,9 +55,9 @@ function RowToolsCellRenderer({
 
 function CellRenderer({ value: cellData, enableEquivalent }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  let cellContent = `${Number(value)} [${unit}]`;
+  let cellContent = `${Number(value).toPrecision(4)} [${unit}]`;
   if (enableEquivalent) {
-    cellContent += `; ${Number(aux.equivalent)} [Equiv]`;
+    cellContent += `; ${Number(aux.equivalent).toPrecision(4)} [Equiv]`;
   }
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
