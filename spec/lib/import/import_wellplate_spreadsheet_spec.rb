@@ -39,7 +39,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
     context 'when wells are missing' do
       let(:expected_error_messsage) do
-        ['Well A03 is missing or at wrong position.', 'Well H09 is missing or at wrong position.'].join("\n")
+        ['Well A0003 is missing or at wrong position.', 'Well H0009 is missing or at wrong position.'].join("\n")
       end
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_wells.xlsx') }
 
