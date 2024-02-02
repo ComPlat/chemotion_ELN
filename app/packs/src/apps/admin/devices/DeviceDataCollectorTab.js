@@ -123,7 +123,7 @@ const DeviceDataCollectorTab = () => {
           type="text"
           value={hostValue}
           onChange={(event) => onChange('datacollector_host', event.target.value)}
-          placeholder="e.g. google.com"
+          placeholder="e.g. remote.address or localhost:2222"
           readOnly={endsWith(methodValueCheck, 'local')}
         />
       </FormGroup>

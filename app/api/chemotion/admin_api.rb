@@ -28,141 +28,6 @@ module Chemotion
         end
       end
 
-      namespace :device do
-        desc 'Get device by Id'
-        params do
-          requires :id, type: Integer, desc: 'device id'
-        end
-        route_param :id do
-          get do
-            present Device.find(params[:id]), with: Entities::DeviceEntity, root: 'device'
-          end
-        end
-      end
-
-      namespace :sftpDevice do # rubocop:disable Metrics/BlockLength
-        desc 'Connect device via SFTP'
-        params do
-          requires :datacollector_method, type: String
-          requires :datacollector_host, type: String
-          requires :datacollector_user, type: String
-          requires :datacollector_authentication, type: String
-          optional :datacollector_key_name, type: String
-        end
-        post do
-          case params[:datacollector_authentication]
-          when 'password'
-            credentials = Rails.configuration.datacollectors.sftpusers.select do |e|
-              e[:user] == params[:user]
-            end.first
-            raise 'No match user credentials!' unless credentials
-
-            connect_sftp_with_password(
-              host: params[:datacollector_host],
-              user: credentials[:user],
-              password: credentials[:password]
-            )
-          when 'keyfile'
-            connect_sftp_with_key(params)
-          end
-
-          { lvl: 'success', msg: 'Test connection successfully.' }
-        rescue StandardError => e
-          { lvl: 'error', msg: e.message }
-        end
-      end
-
-      namespace :removeDeviceMethod do
-        desc 'Remove device profile method'
-        params do
-          requires :id, type: Integer, desc: 'device id'
-        end
-        post do
-          device = Device.find(params[:id])
-          device.datacollector_fields = false;
-          device.datacollector_method = '';
-          device.datacollector_dir = '';
-          device.datacollector_host = '';
-          device.datacollector_user = '';
-          device.datacollector_authentication = '';
-          device.datacollector_number_of_files = '';
-          device.datacollector_key_name = '';
-          # config = device.datacollector_config || {}
-          # config.delete('method') if config['method']
-          # config.delete('method_params') if config['method_params']
-          # device.update!(datacollector_config: config)
-          device.save!
-          present device, with: Entities::DeviceEntity, root: 'device'
-        end
-      end
-
-      namespace :updateDeviceMethod do # rubocop:disable Metrics/BlockLength
-        desc 'Update device profile method'
-        params do
-          requires :id, type: Integer
-          requires :datacollector_method, type: String
-          requires :datacollector_dir, type: String
-          optional :datacollector_host, type: String
-          optional :datacollector_user, type: String
-          optional :datacollector_authentication, type: String
-          optional :datacollector_key_name, type: String
-          optional :datacollector_number_of_files, type: Integer
-          optional :datacollector_user_level_selected, type: Boolean
-
-        after_validation do
-          @p_method = params[:datacollector_method]
-          user_level_selected = params[:datacollector_user_level_selected]
-          if @p_method.end_with?('local')
-            p_dir = if user_level_selected
-                      params[:datacollector_dir].gsub(%r{/\{UserSubDirectories\}}, '')
-                    else
-                      params[:datacollector_dir]
-                    end
-            @pn = Pathname.new(p_dir)
-            error!('Dir is not a valid directory', 500) unless @pn.directory?
-
-            localpath = Rails.configuration.datacollectors.localcollectors.select do |e|
-              @pn.realpath.to_path.start_with?(e[:path])
-            end.first
-            localpath = @pn.realpath.to_path.sub(localpath[:path], '') unless localpath.nil?
-
-            error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
-          end
-
-          if @p_method.end_with?('sftp') && user_level_selected
-            params[:datacollector_dir].chomp!('/{UserSubDirectories}')
-          end
-
-          if @p_method.end_with?('sftp') && params[:datacollector_authentication] == 'keyfile'
-            key_path(params[:datacollector_key_name])
-          end
-        end
-
-        post do
-          device = Device.find(params[:id])
-          params[:datacollector_dir] = @pn.realpath.to_path if @p_method.end_with?('local')
-          attributes = declared(params, include_missing: false)
-          device.update!(attributes)
-        end
-      end
-
-      namespace :editNovncSettings do
-        desc 'Edit device NoVNC settings'
-        params do
-          requires :id, type: Integer
-          optional :novnc_token, type: String
-          optional :novnc_target, type: String
-          optional :novnc_password, type: String
-          optional :datacollector_fields, type: Boolean, default: false
-        end
-        put do
-          device = Device.find(params[:id])
-          attributes = declared(params, include_missing: false)
-          device.update!(attributes)
-          status 204
-        end
-      end
-
       resource :group_device do
         namespace :list do
           desc 'fetch groups'
@@ -238,8 +103,12 @@ module Chemotion
             when 'NodeAdd'
               obj = Group.find(params[:id]) if %w[Group].include?(params[:rootType])
               obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
-              new_users = (params[:add_users] || []).map(&:to_i) - obj.users.pluck(:id) if %w[Person Group].include?(params[:actionType])
-              new_users = (params[:add_users] || []).map(&:to_i) - obj.devices.pluck(:id) if %w[Device].include?(params[:actionType])
+              if %w[Person Group].include?(params[:actionType])
+                new_users = (params[:add_users] || []).map(&:to_i) - obj.users.pluck(:id)
+              end
+              if %w[Device].include?(params[:actionType])
+                new_users = (params[:add_users] || []).map(&:to_i) - obj.devices.pluck(:id)
+              end
               obj.users << Person.where(id: new_users) if %w[Person].include?(params[:actionType])
               obj.users << Group.where(id: new_users) if %w[Group].include?(params[:actionType])
               obj.devices << Device.where(id: new_users) if %w[Device].include?(params[:actionType])
@@ -255,7 +124,9 @@ module Chemotion
               obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
               rm_users = (params[:rm_users] || []).map(&:to_i)
               obj.users.delete(User.where(id: rm_users)) if %w[Person].include?(params[:actionType])
-              obj.admins.delete(User.where(id: rm_users)) if %w[Group].include?(params[:rootType]) && %w[Person].include?(params[:actionType])
+              if %w[Group].include?(params[:rootType]) && %w[Person].include?(params[:actionType])
+                obj.admins.delete(User.where(id: rm_users))
+              end
               obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
               User.gen_matrix(rm_users) if rm_users&.length&.positive?
 
@@ -278,7 +149,7 @@ module Chemotion
         end
         post do
           %i[enableIds disableIds].each do |cat|
-            next unless params[cat].present?
+            next if params[cat].blank?
 
             term_ids = params[cat].map { |t| t.split('|').first.strip }
             ids = OlsTerm.where(term_id: term_ids).pluck(:id)
@@ -287,7 +158,7 @@ module Chemotion
 
           result_all = Entities::OlsTermEntity.represent(
             OlsTerm.where(owl_name: params[:owl_name]).arrange_serializable(order: :label),
-            serializable: true
+            serializable: true,
           )
           OlsTerm.write_public_file(params[:owl_name], ols_terms: result_all)
 
@@ -304,7 +175,7 @@ module Chemotion
                 end as ancestry
               SQL
             ).arrange_serializable(order: :label),
-            serializable: true
+            serializable: true,
           ).unshift(
             'key': params[:owl_name], 'title': '-- Recently selected --', selectable: false, 'children': []
           )
@@ -312,7 +183,6 @@ module Chemotion
           status 204
         end
       end
-
 
       namespace :importOlsTerms do
         desc 'import OLS terms'
@@ -334,14 +204,14 @@ module Chemotion
             # write original owl
             result = Entities::OlsTermEntity.represent(
               OlsTerm.where(owl_name: owl_name).arrange_serializable(order: :label),
-              serializable: true
+              serializable: true,
             )
             OlsTerm.write_public_file(owl_name, ols_terms: result)
 
             # write edited owl
             result = Entities::OlsTermEntity.represent(
               OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(order: :label),
-              serializable: true
+              serializable: true,
             ).unshift(
               'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []
             )
@@ -371,7 +241,7 @@ module Chemotion
           present(
             Delayed::Job.select('id, queue, handler, run_at, failed_at, attempts, priority, last_error'),
             with: Entities::JobEntity,
-            root: :jobs
+            root: :jobs,
           )
         end
 
