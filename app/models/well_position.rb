@@ -12,10 +12,10 @@ class WellPosition
     new(x: x, y: y)
   end
 
-  def self.all
+  def self.fromDimension(width=12,height=8)
     positions = []
-    (1..12).each do |x|
-      (1..8).each do |y|
+    (1..width).each do |x|
+      (1..height).each do |y|
         positions.push(new(x: x, y: y))
       end
     end
@@ -24,7 +24,7 @@ class WellPosition
   end
 
   def initialize(x:, y:) # rubocop:disable Naming/MethodParameterName
-    raise "Invalid position - X = #{x}, Y = #{y}" unless x.in?(1..12) && y.in?(1..8)
+    raise "Invalid position - X = #{x}, Y = #{y}" unless x.in?(1..1000) && y.in?(1..1000)
 
     @x = x
     @y = y
@@ -41,9 +41,9 @@ class WellPosition
   end
 
   def alphanumeric_position
-    row = ('A'..'Z').to_a[y - 1] # -1 to account for 1 based positions
+    row = ('A'..'ZZZ').to_a[y - 1] # -1 to account for 1 based positions
 
-    "#{row}#{format('%02i', x)}"
+    "#{row}#{format('%04i', x)}"
   end
   alias_method :to_s, :alphanumeric_position # rubocop:disable Style/Alias
 end
