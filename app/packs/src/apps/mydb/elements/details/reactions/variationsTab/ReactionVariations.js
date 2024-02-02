@@ -270,6 +270,7 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
       lockPosition: 'left',
       editable: false,
       sortable: false,
+      minWidth: 140,
     },
 
     {
