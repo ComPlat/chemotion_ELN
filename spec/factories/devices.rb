@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :device do
     sequence(:email) { |n| "device#{n}@foo.bar" }
@@ -10,7 +12,7 @@ FactoryBot.define do
     trait :file_local do
       datacollector_fields { true }
       datacollector_method { 'filewatcherlocal' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_authentication { 'password' }
       datacollector_number_of_files { 1 }
     end
@@ -18,7 +20,7 @@ FactoryBot.define do
     trait :file_sftp do
       datacollector_fields { true }
       datacollector_method { 'filewatchersftp' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_user { ENV['DATACOLLECTOR_TEST_USER'].presence || 'testuser' }
       datacollector_host { '127.0.0.1' }
       datacollector_authentication { 'keyfile' }
@@ -29,7 +31,7 @@ FactoryBot.define do
     trait :file_sftp_password do
       datacollector_fields { true }
       datacollector_method { 'filewatchersftp' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_user { ENV['DATACOLLECTOR_TEST_USER'].presence || 'user1' }
       datacollector_host { '127.0.0.1' }
       datacollector_authentication { 'password' }
@@ -39,7 +41,7 @@ FactoryBot.define do
     trait :file_sftp_faulty do
       datacollector_fields { true }
       datacollector_method { 'filewatchersftp' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_user { 'dummy' }
       datacollector_host { '127.0.0.1' }
       datacollector_authentication { 'keyfile' }
@@ -50,7 +52,7 @@ FactoryBot.define do
     trait :folder_local do
       datacollector_fields { true }
       datacollector_method { 'folderwatcherlocal' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_authentication { 'password' }
       datacollector_number_of_files { 1 }
     end
@@ -58,7 +60,7 @@ FactoryBot.define do
     trait :folder_sftp do
       datacollector_fields { true }
       datacollector_method { 'folderwatchersftp' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_user { ENV['DATACOLLECTOR_TEST_USER'].presence || 'testuser' }
       datacollector_host { '127.0.0.1' }
       datacollector_authentication { 'keyfile' }
@@ -69,7 +71,7 @@ FactoryBot.define do
     trait :folder_sftp_faulty do
       datacollector_fields { true }
       datacollector_method { 'folderwatchersftp' }
-      datacollector_dir { "#{Rails.root}/tmp/datacollector/#{name_abbreviation}" }
+      datacollector_dir { Rails.root.join("/tmp/datacollector/#{name_abbreviation}") }
       datacollector_user { 'dummy' }
       datacollector_host { '127.0.0.1' }
       datacollector_authentication { 'keyfile' }
