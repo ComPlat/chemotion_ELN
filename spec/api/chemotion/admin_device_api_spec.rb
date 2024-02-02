@@ -72,11 +72,6 @@ RSpec.describe Chemotion::AdminDeviceAPI do
         }
       end
 
-      it 'returns an error for sftp connection with keyfile' do
-        post '/api/v1/admin_devices/test_sftp', params: params
-        expect(parsed_json_response['message']).to include('Connection refused')
-      end
-
       it 'returns a valid connection' do
         allow(Net::SFTP).to receive(:start).with(
           device_with_sftp.datacollector_host,

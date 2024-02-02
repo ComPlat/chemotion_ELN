@@ -17,12 +17,6 @@ export default class AdminGroupElement extends React.Component {
     this.toggleDevices = this.toggleDevices.bind(this);
   }
 
-  componentDidMount() {
-  }
-
-  componentWillUnmount() {
-  }
-
   setGroupAdmin(groupRec, userRec, setAdmin = true) {
     const { groups } = this.state;
     const params = {
@@ -102,7 +96,7 @@ export default class AdminGroupElement extends React.Component {
     const isAdmin = group.admins && group.admins.filter(a => (a.id === user.id)).length > 0;
     const adminTooltip = isAdmin === true ? 'set to normal user' : 'set to Administrator';
     return (
-      <td>
+      <>
         <ButtonGroup className="actions">
           <OverlayTrigger placement="top" overlay={<Tooltip id="userAdmin">{adminTooltip}</Tooltip>}>
             <Button
@@ -122,7 +116,7 @@ export default class AdminGroupElement extends React.Component {
             onChangeGroupData={this.props.onChangeGroupData} />
         </ButtonGroup>
         &nbsp;&nbsp;
-      </td>
+      </>
     );
   }
 

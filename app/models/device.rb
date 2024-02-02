@@ -43,29 +43,8 @@ class Device < ApplicationRecord
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :by_name, ->(query) { where('LOWER(name) ILIKE ?', "%#{sanitize_sql_like(query.downcase)}%") }
 
-  # scope :by_exact_name_abbreviation, lambda { |query, case_insensitive = false|
-  #   if case_insensitive
-  #     where('LOWER(name_abbreviation) = ?', sanitize_sql_like(query.downcase).to_s)
-  #   else
-  #     where(name_abbreviation: query)
-  #   end
-  # }
-
-  # try to find a user by exact match of name_abbreviation
-  # fall back to insensitive match result unless multiple users are found.
-  # def self.try_find_by_name_abbreviation(name_abbreviation)
-  #   result = by_exact_name_abbreviation(name_abbreviation).first # try exact match, should be unique
-  #   if result.nil?
-  #     case_insensitive_result = by_exact_name_abbreviation(name_abbreviation, case_insensitive: true)
-  #     result = case_insensitive_result.size == 1 ? case_insensitive_result.first : nil
-  #   end
-  #   result
-  # end
-
   def create_email_and_password
-    # self.name = "#{first_name} #{last_name}"
     self.encrypted_password = User.new(password: Devise.friendly_token.first(8)).encrypted_password
-    # self.email = format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
   end
 
   def unique_name_abbreviation

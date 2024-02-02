@@ -20,7 +20,7 @@ module Chemotion
 
       # List all devices
       get do
-        devices = Device.all.order('name')
+        devices = Device.order('name')
         present devices, with: Entities::DeviceEntity, root: 'devices'
       end
 
@@ -119,7 +119,7 @@ module Chemotion
           error!('device relation could not be deleted', 400) unless user_device.present? && user_device.destroy
 
           User.gen_matrix(user) if user.present?
-          devices = Device.all.order('name')
+          devices = Device.order('name')
           present devices, with: Entities::DeviceEntity, root: 'devices'
         end
       end

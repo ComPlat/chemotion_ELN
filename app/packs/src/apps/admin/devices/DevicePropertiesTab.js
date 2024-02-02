@@ -43,6 +43,15 @@ const DevicePropertiesTab = () => {
       </FormGroup>
 
       <FormGroup>
+        <ControlLabel>Email</ControlLabel>
+        <FormControl
+          type="text"
+          value={device.email}
+          readOnly={true}
+        />
+      </FormGroup>
+
+      <FormGroup>
         <ControlLabel>Serial number</ControlLabel>
         <FormControl
           type="text"
