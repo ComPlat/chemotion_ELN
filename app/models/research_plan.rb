@@ -107,6 +107,7 @@ class ResearchPlan < ApplicationRecord
       new_attach.created_for = current_user_id
       new_attach.attachable_id = attachment_id
       new_attach.identifier = nil
+      new_attach&.attachment_attacher&.create_derivatives
       new_attach.save!
     end
   end

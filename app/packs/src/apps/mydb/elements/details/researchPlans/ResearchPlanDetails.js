@@ -490,13 +490,13 @@ export default class ResearchPlanDetails extends Component {
 
   renderPanelHeading(researchPlan) {
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false &&
-    currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+    const rootCol = currentCollection && currentCollection.is_shared === false &&
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const copyBtn = (
       <CopyElementModal
         element={researchPlan}
-        defCol={defCol}
+        defCol={rootCol}
       />
     );
 
