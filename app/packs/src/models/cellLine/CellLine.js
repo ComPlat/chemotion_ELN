@@ -92,4 +92,12 @@ export default class CellLine extends Element {
     this.cellType = mobx.cellType;
     this.cryopreservationMedium = mobx.cryopreservationMedium;
   }
+
+  getNewAttachments(){
+    return [];
+  }
+
+  getMarkedAsDeletedAttachments(){
+    return [];
+  }
 }

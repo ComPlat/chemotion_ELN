@@ -74,7 +74,14 @@ export default class CellLinesFetcher {
       }))
 
       .then((response) => response.json())
-      .then((json) => { GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample'); return json; })
+      .then((json) => { GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample'); return json; }) 
+      .then((json) => {  AttachmentFetcher.updateAttachables(
+        cellLine.getNewAttachments(),
+        'Cellline',
+        json.id,
+        cellLine.getMarkedAsDeletedAttachments()
+      )();return json;
+    })
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .then((cellLineItem) => {
         NotificationActions.add(successfullyCreatedParameter);
@@ -139,6 +146,13 @@ export default class CellLinesFetcher {
       }))
       .then((response) => response.json())
       .then(() => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
+      .then((json) => {  AttachmentFetcher.updateAttachables(
+        cellLineItem.getNewAttachments(),
+        'Cellline',
+        cellLineItem.id,
+        cellLineItem.getMarkedAsDeletedAttachments()
+      )();return json;
+    })
       .then(()=> CellLinesFetcher.fetchById(cellLineItem.id))
       .then((loadedCellLineSample) => {
         NotificationActions.add(successfullyUpdatedParameter);
