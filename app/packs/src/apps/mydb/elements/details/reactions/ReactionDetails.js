@@ -23,6 +23,7 @@ import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
@@ -36,10 +37,12 @@ import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ReactionDetails extends Component {
@@ -53,6 +56,7 @@ export default class ReactionDetails extends Component {
       activeTab: UIStore.getState().reaction.activeTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
 
     // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
@@ -72,8 +76,11 @@ export default class ReactionDetails extends Component {
 
   componentDidMount() {
     const { reaction } = this.props;
+    const { currentUser } = this.state;
+
     UIStore.listen(this.onUIStoreChange);
-    if (!reaction.isNew) {
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
       CommentActions.fetchComments(reaction);
     }
   }
