@@ -79,6 +79,11 @@ FactoryBot.define do
       datacollector_number_of_files { 1 }
     end
 
+    trait :novnc_settings do
+      novnc_target { '127.0.0.1' }
+      novnc_token { 'test' }
+    end
+
     before(:create) do |device|
       keyfile = device.datacollector_key_name
 
