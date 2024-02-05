@@ -127,8 +127,8 @@ const cellLineShowOrNew = (e) => {
   if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
      ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
   }else{
-    if(e.params.cellLineID){
-     e.params.cellLineId=e.params.cellLineID
+    if(e.params.cell_lineID){
+     e.params.cellLineId=e.params.cell_lineID
     }
      ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
   }
