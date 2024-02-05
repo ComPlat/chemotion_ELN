@@ -41,14 +41,9 @@ class Device < ApplicationRecord
   end
 
   before_save :encrypt_novnc_password
-  before_create :create_email_and_password
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :by_name, ->(query) { where('LOWER(name) ILIKE ?', "%#{sanitize_sql_like(query.downcase)}%") }
-
-  def create_email_and_password
-    self.encrypted_password = User.new(password: Devise.friendly_token.first(8)).encrypted_password
-  end
 
   def unique_name_abbreviation
     devices = Device.unscoped.where('LOWER(name_abbreviation) = ?',
