@@ -10,9 +10,9 @@ module Usecases
         @current_user = current_user
       end
 
-      def execute!
+      def execute! # rubocop:disable Metrics/AbcSize
         ActiveRecord::Base.transaction do
-          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments,:size))
+          wellplate = Wellplate.create(params.except(:collection_id, :wells, :segments, :size))
           wellplate.set_short_label(user: @current_user)
           wellplate.reload
           wellplate.save_segments(segments: params[:segments], current_user_id: @current_user.id)

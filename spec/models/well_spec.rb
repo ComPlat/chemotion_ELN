@@ -69,16 +69,16 @@ RSpec.describe Well do
     end
 
     context 'when 3 samples are attached' do
-      let(:sample1) { create(:sample, collections: [collection]) }
-      let(:sample2) { create(:sample, collections: [collection]) }
-      let(:sample3) { create(:sample, collections: [collection]) }
+      let(:sample_one) { create(:sample, collections: [collection]) }
+      let(:sample_two) { create(:sample, collections: [collection]) }
+      let(:sample_three) { create(:sample, collections: [collection]) }
 
-      let(:well1) { create(:well, sample_id: sample1.id, wellplate_id: wellplate.id) }
-      let(:well2) { create(:well, sample_id: sample2.id, wellplate_id: wellplate.id) }
-      let(:well3) { create(:well, sample_id: sample3.id, wellplate_id: wellplate.id) }
+      let(:well_one) { create(:well, sample_id: sample_one.id, wellplate_id: wellplate.id) }
+      let(:well_two) { create(:well, sample_id: sample_two.id, wellplate_id: wellplate.id) }
+      let(:well_three) { create(:well, sample_id: sample_three.id, wellplate_id: wellplate.id) }
 
       it 'three sample ids are returned' do
-        expected = [well1.sample_id, well2.sample_id, well3.sample_id]
+        expected = [well_one.sample_id, well_two.sample_id, well_three.sample_id]
         expect(described_class.get_samples_in_wellplates(wellplate.id)).to eq(expected)
       end
     end

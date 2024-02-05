@@ -12,7 +12,7 @@ class WellPosition
     new(x: x, y: y)
   end
 
-  def self.fromDimension(width=12,height=8)
+  def self.from_dimension(width = 12, height = 8)
     positions = []
     (1..width).each do |x|
       (1..height).each do |y|
