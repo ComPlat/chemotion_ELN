@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_01_29_134421) do
+ActiveRecord::Schema.define(version: 2024_02_05_131406) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -463,7 +463,6 @@ ActiveRecord::Schema.define(version: 2024_01_29_134421) do
     t.string "first_name"
     t.string "last_name"
     t.string "email"
-    t.string "encrypted_password"
     t.string "serial_number"
     t.string "verification_status", default: "none"
     t.boolean "account_active", default: false
