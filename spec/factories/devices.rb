@@ -7,7 +7,6 @@ FactoryBot.define do
     last_name { 'One' }
     name { 'Device One' }
     sequence(:name_abbreviation) { "D#{SecureRandom.alphanumeric(3)}" }
-    encrypted_password { 'testtest' }
 
     trait :file_local do
       datacollector_fields { true }
