@@ -21,7 +21,7 @@ module Entities
     end
 
     def password
-      object.novnc_password
+      object.decrypted_novnc_password
     end
   end
 end

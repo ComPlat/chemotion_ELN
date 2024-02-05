@@ -3,6 +3,8 @@
 class Device < ApplicationRecord
   attr_accessor :datacollector_fields
 
+  include Encryptor
+
   DATACOLLECTOR_ATTRIBUTES_TO_CHECK = %w[
     datacollector_method datacollector_user datacollector_host
     datacollector_key_name datacollector_dir
@@ -38,6 +40,7 @@ class Device < ApplicationRecord
     validate :datacollector_check_sftp_keyfile_path
   end
 
+  before_save :encrypt_novnc_password
   before_create :create_email_and_password
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
@@ -172,6 +175,17 @@ class Device < ApplicationRecord
 
   def initials
     name_abbreviation
+  end
+
+  def decrypted_novnc_password
+    return if novnc_password.blank?
+
+    self.class.decrypt_value(novnc_password)
+  end
+
+  def encrypt_novnc_password
+    password = novnc_password.blank? ? '' : self.class.encrypt_value(novnc_password)
+    self.novnc_password = password
   end
 
   def info

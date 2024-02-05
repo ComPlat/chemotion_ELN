@@ -155,6 +155,7 @@ const DeviceModal = () => {
     devicesStore.changeSuccessMessage('');
     deviceMetadataStore.changeErrorMessage('');
     deviceMetadataStore.changeSuccessMessage('');
+    devicesStore.setChangeNovncPassword(false);
   }
 
   const handleSelectTab = (key) => {

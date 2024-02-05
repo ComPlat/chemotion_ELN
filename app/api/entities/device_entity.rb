@@ -22,8 +22,15 @@ module Entities
     expose :novnc_token
     expose :novnc_target
     expose :novnc_password
+    expose :novnc_password_decrypted
     expose :users, as: 'users', using: Entities::UserSimpleEntity
     expose :people, as: 'people', using: Entities::UserSimpleEntity
     expose :groups, as: 'groups', using: Entities::UserSimpleEntity
+
+    def novnc_password_decrypted
+      return if object.novnc_password.blank?
+
+      object.decrypted_novnc_password
+    end
   end
 end

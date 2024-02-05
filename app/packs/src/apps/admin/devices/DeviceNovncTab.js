@@ -10,6 +10,9 @@ const DeviceNovncTab = () => {
 
   const onChange = (field, value) => {
     let newValue = value ? value : '';
+    if (field == 'novnc_password') {
+      devicesStore.setChangeNovncPassword(true);
+    }
     devicesStore.changeDevice(field, newValue);
   }
 
@@ -32,6 +35,13 @@ const DeviceNovncTab = () => {
     }
     return 'You haven\'t edited the target so far';
   };
+
+  let passwordValue = ''
+  if (devicesStore.change_novnc_password) {
+    passwordValue = device.novnc_password
+  } else if (device.novnc_password_decrypted) {
+    passwordValue = device.novnc_password_decrypted;
+  }
 
   return (
     <Form className="form-with-columns">
@@ -73,7 +83,7 @@ const DeviceNovncTab = () => {
         <ControlLabel>Password</ControlLabel>
         <FormControl
           type="text"
-          value={device.novnc_password ? device.novnc_password : ''}
+          value={passwordValue}
           onChange={(event) => onChange('novnc_password', event.target.value)}
           placeholder="Password"
         />
@@ -83,3 +93,4 @@ const DeviceNovncTab = () => {
 }
 
 export default observer(DeviceNovncTab);
+

@@ -46,6 +46,7 @@ export const DevicesStore = types
     active_tab_key: types.optional(types.number, 1),
     is_loading: types.optional(types.boolean, false),
     device_testing_id: types.optional(types.number, 0),
+    change_novnc_password: types.optional(types.boolean, false),
   })
   .actions(self => ({
     load: flow(function* loadDevices() {
@@ -136,6 +137,9 @@ export const DevicesStore = types
       let device = { ...self.device };
       device[field] = value;
       self.setDevice(device);
+    },
+    setChangeNovncPassword(value) {
+      self.change_novnc_password = value;
     },
     clearDataCollector(device) {
       let changedDevice = { ...device };
