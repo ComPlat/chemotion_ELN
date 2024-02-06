@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
+import CellLineAttachments from 'src/apps/mydb/elements/details/cellLines/attachmentsTab/CellLineAttachments';
 
 import {
   Panel, ButtonToolbar, Button,
@@ -223,6 +224,12 @@ class CellLineDetails extends React.Component {
                 readOnly={readOnly}
                 element={cellLineItem}
                 literatures={cellLineItem.is_new === true ? cellLineItem.literatures : null}
+              />
+            </Tab>
+            <Tab eventKey="tab4" title="Attachments" key="tab4" disabled={cellLineItem.is_new}>
+              <CellLineAttachments
+                readOnly={readOnly}
+                element={cellLineItem}
               />
             </Tab>
           </Tabs>

@@ -6,6 +6,7 @@ export default class CellLine extends Element {
     if (collectionId === undefined || !Number.isInteger(Number(collectionId))) {
       throw new Error(`collection id is not valid: ${collectionId}`);
     }
+    this.attachments=[];
     const cellLine = new CellLine({
       container: Container.init(),
       collectionId: Number(collectionId),
