@@ -10,7 +10,6 @@ import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/resear
 import ResearchPlanDetailsFieldTable from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldReaction';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -157,7 +156,7 @@ export default class ResearchPlanDetailsField extends Component {
         <div className="research-plan-field-header">
           {/* TODO: make label editable */}
           <ControlLabel>{label}</ControlLabel>
-          <Button className="pull-right" bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id,this.props.attachments )}>
+          <Button className="pull-right" bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id,this.props.attachments )} data-cy="researchplan-item-delete">
             <i className="fa fa-times" />
           </Button>
           {copyToMetadataButton}

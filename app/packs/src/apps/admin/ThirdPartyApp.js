@@ -62,10 +62,10 @@ export default class ThirdPartyApp extends React.Component {
       });
   }
 
-  new(name, IPAddress) {
+  new(name, url) {
     ThirdPartyAppFetcher.newThirdPartyApp(
       name,
-      IPAddress)
+      url)
       .then((result) => {
         if (result.error) {
           this.setState({ messageNewThirdPartyAppModal: result.error });
@@ -77,11 +77,11 @@ export default class ThirdPartyApp extends React.Component {
     return true;
   }
 
-  edit(name, IPAddress) {
+  edit(name, url) {
     return ThirdPartyAppFetcher.editThirdPartyApp(
       this.state.currentID,
       name,
-      IPAddress)
+      url)
       .then((result) => {
         if (result.error) {
           return this.thirdPartyApps().then((res) => {
@@ -152,13 +152,11 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   checkInput(name, ip) {
-    return new Promise((resolve, reject) => {
-
     if (name.length < 1) {
       this.setState({
         errorMessageNewTPA: "name is shorter than 1 character"
       });
-      reject();
+      return false;
     }
 
     if ((ip.slice(0, 7) != "http://") &&
@@ -166,24 +164,16 @@ export default class ThirdPartyApp extends React.Component {
       this.setState({
         errorMessageNewTPA: "Begin of ip address has to be http:// or https://"
       });
-      reject();
+      return false;
     }
 
-    ThirdPartyAppFetcher.isNameUnique(name)
-      .then((result) => {
-        const message = JSON.parse(result).message
-        if (message == "Name is not unique") {
-          this.setState({
-            errorMessageNewTPA: "name is not unique"
-          });
-          reject();
-        } else {
-          resolve();
-        }
-      }) 
-
-    })
-
+    if (this.state.thirdPartyAppNames.includes(name)) {
+      this.setState({
+	errorMessageNewTPA: "Name already exists"
+      });
+      return false;
+    }
+    return true;
   }
 
   getThirdPartyAppNames() {
@@ -207,7 +197,7 @@ export default class ThirdPartyApp extends React.Component {
       .then((result) => {
         this.setState({
           currentName: result.name,
-          currentIP: result.IPAddress,
+          currentIP: result.url,
           currentID: key
         })
       });
@@ -239,25 +229,21 @@ export default class ThirdPartyApp extends React.Component {
 
 
   renderEditThirdPartyAppModal() {
-
     let nameRef = null;
-    let IPAddressRef = null;
+    let urlRef = null;
 
     const handleEdit = () => {
-
-      const IPAddress = IPAddressRef.value;
+      const url = urlRef.value;
       const name = nameRef.value;
-      this.checkInput(name, IPAddress)
-        .then(() => {
-          this.edit(name, IPAddress).then(() => {
+      if (this.checkInput(name, url)) {
+        this.edit(name, url)
+          .then(() => {
             this.getThirdPartyAppNames();
             this.closeEditThirdPartyAppModal();
             this.thirdPartyApps();
-          });
-        })
-        .catch(() => {
-        })
-
+          })
+          .catch(() => {});
+      }
     }
 
     const handleNameChange = (event) => {
@@ -296,7 +282,7 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => { IPAddressRef = ref; }} />
+                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => { urlRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -320,21 +306,16 @@ export default class ThirdPartyApp extends React.Component {
   renderMessageModal() {
 
     let nameRef = null;
-    let IPAddressRef = null;
+    let urlRef = null;
 
     const handleCreate = () => {
-
       this.getThirdPartyAppNames();
-      const IPAddress = IPAddressRef.value;
+      const url = urlRef.value;
       const name = nameRef.value;
-      this.checkInput(name, IPAddress)
-        .then(() => {
-          this.new(name, IPAddress);
-          this.closeNewThirdPartyAppModal();
-        })
-        .catch(() => {
-        });
-
+      if (this.checkInput(name, url)) {
+        this.new(name, url);
+        this.closeNewThirdPartyAppModal();
+      }
     }
 
     return (
@@ -362,7 +343,7 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" inputRef={(ref) => { IPAddressRef = ref; }} />
+                <FormControl type="text" name="IP address" inputRef={(ref) => { urlRef = ref; }} />
               </Col>
             </FormGroup>
 
@@ -435,7 +416,7 @@ export default class ThirdPartyApp extends React.Component {
                 </td>
 
                 <td>{entry.name}</td>
-                <td>{entry.IPAddress}</td>
+                <td>{entry.url}</td>
                 <td>{entry.id}</td>
               </tr>
             )

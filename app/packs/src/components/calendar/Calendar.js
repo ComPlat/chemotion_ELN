@@ -12,6 +12,17 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CalendarEvent, { setCurrentViewForEventRenderer } from 'src/components/calendar/CalendarEvent';
 
 const AllViews = Object.keys(Views).map((k) => Views[k]);
+
+const formats = {
+  agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  agendaDateFormat: 'ddd DD MMMM YYYY',
+  dayFormat: 'dddd DD',
+  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  monthHeaderFormat: 'MMMM YYYY',
+  dayHeaderFormat: 'dddd DD MMMM YYYY',
+  weekdayFormat: 'dddd',
+};
+
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(BaseCalendar);
 
@@ -86,6 +97,15 @@ function getWindowStyleOffsets(state) {
       throw new Error('Not implemented');
   }
 }
+
+const allDayAccessor = (event) => {
+  if ((event.start && event.start.getHours() === 0 && event.start.getMinutes() === 0)
+  && (event.end && event.end.getHours() === 0 && event.end.getMinutes() === 0) &&
+  moment(event.start).format() !== moment(event.end).format()) {
+    return true;
+  }
+  return false;
+};
 
 // see:
 //  https://react-bootstrap-v3.netlify.app/components/modal/
@@ -618,6 +638,12 @@ export default class Calendar extends React.Component {
 
   saveEntry() {
     const { currentEntry } = this.state;
+    const { title } = currentEntry;
+    if (!title) {
+      // eslint-disable-next-line no-alert
+      alert('Please enter a title.');
+      return;
+    }
     if (currentEntry.id) {
       CalendarActions.updateEntry(currentEntry);
     } else {
@@ -879,6 +905,8 @@ export default class Calendar extends React.Component {
                 scrollToTime={scrollTime}
                 eventPropGetter={(eventStyleGetter)}
                 showMultiDayTimes={false}
+                formats={formats}
+                allDayAccessor={allDayAccessor}
                 // enableAutoScroll={true}
               />
 

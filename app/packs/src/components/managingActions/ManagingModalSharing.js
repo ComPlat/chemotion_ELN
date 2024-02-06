@@ -11,7 +11,8 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import klasses from '../../../../../config/klasses.json';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import { elementNames } from 'src/apps/generic/Utils';
 
 export default class ManagingModalSharing extends React.Component {
 
@@ -66,6 +67,7 @@ export default class ManagingModalSharing extends React.Component {
     let isReactionSelectionEmpty = this.isElementSelectionEmpty(uiState.reaction);
     let isWellplateSelectionEmpty = this.isElementSelectionEmpty(uiState.wellplate);
     let isScreenSelectionEmpty = this.isElementSelectionEmpty(uiState.screen);
+    let isCelllineSelectionEmpty = this.isElementSelectionEmpty(uiState.cell_line);
 
     let isElementSelectionEmpty = false;
 
@@ -73,14 +75,17 @@ export default class ManagingModalSharing extends React.Component {
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
 
       // eslint-disable-next-line no-unused-expressions
-      klasses && klasses.forEach((klass) => {
+      elementNames(false).forEach((klass) => {
         isElementSelectionEmpty = isElementSelectionEmpty && this.isElementSelectionEmpty(uiState[`${klass}`]);
       });
     }
 
 
-    return isSampleSelectionEmpty && isReactionSelectionEmpty &&
-      isWellplateSelectionEmpty && isScreenSelectionEmpty &&
+    return isSampleSelectionEmpty &&
+      isReactionSelectionEmpty &&
+      isWellplateSelectionEmpty &&
+      isScreenSelectionEmpty &&
+      isCelllineSelectionEmpty &&
       isElementSelectionEmpty;
   }
 
@@ -120,7 +125,7 @@ export default class ManagingModalSharing extends React.Component {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    klasses && klasses.forEach((klass) => {
+    elementNames(false).forEach((klass) => {
       filterParams[`${klass}`] = {
         all: true,
         included_ids: [],
@@ -167,10 +172,16 @@ export default class ManagingModalSharing extends React.Component {
         excluded_ids: uiState.research_plan.uncheckedIds,
         collection_id: collectionId
       },
+      cell_line: {
+        all: uiState.cell_line.checkedAll,
+        included_ids: uiState.cell_line.checkedIds,
+        excluded_ids: uiState.cell_line.uncheckedIds,
+        collection_id: collectionId
+      },
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    klasses && klasses.forEach((klass) => {
+    elementNames(false).forEach((klass) => {
       filterParams[`${klass}`] = {
         all: uiState[`${klass}`].checkedAll,
         included_ids: uiState[`${klass}`].checkedIds,
@@ -286,18 +297,10 @@ export default class ManagingModalSharing extends React.Component {
       return Promise.resolve({ options: [] });
     }
 
-    return UsersFetcher.fetchUsersByName(input)
-      .then((res) => {
-        let usersEntries = res.users.filter(u => u.id != this.state.currentUser.id)
-          .map(u => {
-            return {
-              value: u.id,
-              name: u.name,
-              label: u.name + " (" + u.abb + ")"
-            }
-          });
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
+    return UsersFetcher.fetchUsersByName(input, 'Person,Group')
+      .then((res) => selectUserOptionFormater(
+        { data: res, withType: true, currentUserId: this.state.currentUser.id }
+      )).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }

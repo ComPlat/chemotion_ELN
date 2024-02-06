@@ -9,7 +9,7 @@ describe Chemotion::UserAPI do
   let(:alternative_user) { create(:person) }
 
   describe 'GET /api/v1/users/name' do
-    let(:query_param) { "name=#{name_param}" }
+    let(:query_param) { "name=#{name_param}&type=Group,Person" }
 
     before do
       create(:person, first_name: 'Jane', last_name: 'Doe')
@@ -28,13 +28,13 @@ describe Chemotion::UserAPI do
 
       it 'returns data from 2 people and 1 group' do
         expect(
-          JSON.parse(response.body)['users'].map { |u| u['user_type'] }
+          JSON.parse(response.body)['users'].pluck('type'),
         ).to contain_exactly('Person', 'Person', 'Group')
       end
     end
 
     context 'when name is missing' do
-      let(:query_param) {}
+      let(:query_param) { '' }
 
       it 'returns an empty array' do
         expect(JSON.parse(response.body)['error']).to eq('name is missing')
@@ -42,7 +42,7 @@ describe Chemotion::UserAPI do
     end
 
     context 'when name is empty' do
-      let(:name_param) {}
+      let(:name_param) { '' }
 
       it 'returns an empty array' do
         expect(JSON.parse(response.body)['users'].length).to eq(0)
@@ -84,7 +84,7 @@ describe Chemotion::UserAPI do
         let(:jwt_token) { 42 }
 
         it 'returns 401 unauthorized status code' do
-          expect(response.status).to eq 401
+          expect(response).to have_http_status :unauthorized
         end
       end
     end
@@ -146,7 +146,7 @@ describe Chemotion::UserAPI do
           'first_name' => 'My', 'last_name' => 'Fanclub',
           'email' => 'jane.s@fan.club',
           'name_abbreviation' => 'JFC', 'users' => [other_user.id]
-        }
+        },
       }
     end
 
@@ -159,19 +159,19 @@ describe Chemotion::UserAPI do
         Group.where(
           last_name: 'Fanclub',
           first_name: 'My', name_abbreviation: 'JFC'
-        )
+        ),
       ).not_to be_empty
       expect(
-        Group.find_by(name_abbreviation: 'JFC').users.pluck(:id)
+        Group.find_by(name_abbreviation: 'JFC').users.pluck(:id),
       ).to match_array [user.id, other_user.id]
       expect(
-        Group.find_by(name_abbreviation: 'JFC').admins
+        Group.find_by(name_abbreviation: 'JFC').admins,
       ).not_to be_empty
       expect(
-        Group.find_by(name_abbreviation: 'JFC').admins.first
+        Group.find_by(name_abbreviation: 'JFC').admins.first,
       ).to eq user
       expect(
-        user.administrated_accounts.where(name_abbreviation: 'JFC')
+        user.administrated_accounts.where(name_abbreviation: 'JFC'),
       ).not_to be_empty
     end
   end
@@ -198,7 +198,7 @@ describe Chemotion::UserAPI do
       let(:params) do
         {
           rm_users: [user.id, other_user.id],
-          add_users: [alternative_user.id]
+          add_users: [alternative_user.id],
         }
       end
 
@@ -244,7 +244,7 @@ describe Chemotion::UserAPI do
       let(:params) do
         {
           rm_users: [other_user.id, alternative_user.id],
-          add_users: [user.id]
+          add_users: [user.id],
         }
       end
 
@@ -254,12 +254,12 @@ describe Chemotion::UserAPI do
 
       it 'does not update a group of persons' do
         expect(
-          Group.find(group.id).users.pluck(:id)
+          Group.find(group.id).users.pluck(:id),
         ).to match_array([other_user.id, alternative_user.id])
       end
 
       it 'returns with unauthorized status' do
-        expect(response.status).to eq(401)
+        expect(response).to have_http_status(:unauthorized)
       end
 
       it 'returns with unauthorized message' do

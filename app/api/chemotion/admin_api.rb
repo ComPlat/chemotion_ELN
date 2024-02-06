@@ -58,7 +58,7 @@ module Chemotion
           end
         end
 
-        desc 'Sychronize chemotion deviceMetadata to DataCite'
+        desc 'Synchronize chemotion deviceMetadata to DataCite'
         params do
           requires :device_id, type: Integer, desc: 'device id'
         end
@@ -234,22 +234,6 @@ module Chemotion
           end
         end
 
-        namespace :name do
-          desc 'Find top 4 matched user names by type'
-          params do
-            requires :type, type: String, values: %w[Group Device User Person Admin]
-            requires :name, type: String, desc: 'user name'
-          end
-          get do
-            return { users: [] } if params[:name].blank?
-
-            users = User.where(type: params[:type])
-                        .by_name(params[:name])
-                        .limit(4)
-            present users, with: Entities::UserSimpleEntity, root: 'users'
-          end
-        end
-
         namespace :create do
           desc 'create a group of persons'
           params do
@@ -406,6 +390,19 @@ module Chemotion
             OlsTerm.write_public_file("#{owl_name}.edited", ols_terms: result)
 
             status 204
+          end
+        end
+      end
+
+      namespace :data_types do
+        desc 'Update data types'
+        put do
+          file_path = Rails.configuration.path_spectra_data_type
+          new_data_types = JSON.parse(request.body.read)
+          begin
+            File.write(file_path, JSON.pretty_generate(new_data_types))
+          rescue Errno::EACCES
+            error!('Save files error!', 500)
           end
         end
       end

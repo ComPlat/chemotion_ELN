@@ -4,12 +4,10 @@
 
 set -euo pipefail
 
-src1=$(node -e 'console.log(require.resolve("@citation-js/core/lib-mjs/util/fetchFile.js"))')
-src2=$(node -e 'console.log(require.resolve("@citation-js/core/lib-mjs/index.js"))')
-src3=$(node -e 'console.log(require.resolve("@citation-js/plugin-bibtex/lib-mjs/input/constants.js"))')
-src4=$(node -e 'console.log(require.resolve("@citation-js/plugin-wikidata/lib-mjs/entity.js"))')
+## ag-grid css
+src5=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid.css"))')
+src6=$(node -e 'console.log(require.resolve("ag-grid-community/styles/ag-grid-no-native-widgets.css"))')
 
-[[ -e "$src1" && -e "$src2" && -e "$src3" && -e "$src4" ]] || exit 1
 
 YEL='\033[0;33m'
 NOC='\033[0m'
@@ -17,17 +15,15 @@ yellow() {
   printf "${YEL}${1:-}${NOC}\n"
 }
 
-yellow "rewrite import for citation.js in:"
 
-yellow "$src1"
-sed -i "s~import { version } from '../../package.json';~import pkg from '../../package.json';const version = pkg.version;~" $src1
-yellow "$src2"
-sed -i "s~import { version } from '../package.json';~import pkg from '../package.json';const version = pkg.version;~" $src2
-yellow "$src3"
-sed -i "s~export { diacritics, commands } from './unicode.json';~import unicode from './unicode.json';export const diacritics = unicode.diacritics;export const commands = unicode.commands;~" $src3
-yellow "$src4"
-sed -i "s~import { props, ignoredProps } from './props';~import wikiprops from './props';const { props, ignoredProps } = wikiprops  ;~" $src4
-yellow "Done fixing import."
+
+yellow "$src5"
+sed -i "s~height: min~height: Min~" $src5
+sed -i "s~height: min~height: Min~" $src6
+yellow "Done fixing css."
+
+
+
 
 # move svgedit to public folder
 yellow "Adding symbolic link to svg editor in public folder"
@@ -36,3 +32,26 @@ node_modules_folder="$(node -e 'const p = require.resolve("@svgedit/svgcanvas");
 rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./public/svgedit
 
 yellow "Finished adding symbolic link to svg editor in public folder"
+
+# d3js source files
+src_d3=(
+  "@complat/react-spectra-editor/dist/components/common/draw.js"
+  "@complat/react-spectra-editor/dist/components/d3_line/line_focus.js"
+  "@complat/react-spectra-editor/dist/components/d3_multi/multi_focus.js"
+  "@complat/react-spectra-editor/dist/components/d3_rect/rect_focus.js"
+  "@complat/react-spectra-editor/dist/helpers/brush.js"
+  "@complat/react-spectra-editor/dist/helpers/compass.js"
+  "@complat/react-spectra-editor/dist/helpers/init.js"
+  "@complat/react-spectra-editor/dist/helpers/zoom.js"
+)
+
+# Rewrite import for d3.js
+for src_file in "${src_d3[@]}"; do
+  src=$(node -e "console.log(require.resolve('$src_file'))")
+  yellow "Rewriting import for d3.js in $src"
+  sed -i "s~const d3 = require('d3');~import('d3').then(d3 => {~" "$src"
+  if ! tail -n1 "$src" | grep -q "});"; then
+    echo -e "\n});" >> "$src"
+  fi
+  yellow "Done rewriting import for d3.js in $src"
+done

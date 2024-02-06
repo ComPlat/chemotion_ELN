@@ -7,7 +7,7 @@ FactoryBot.define do
         { "id"=>SecureRandom.uuid,
           "type"=>"richtext",
           "value"=>{ "ops"=>[{ "insert"=>"some text here\n" }] } },
-          
+
       ]
     end
 
@@ -20,6 +20,20 @@ FactoryBot.define do
               "file_name": "Screenshot from 2021-03-04 09-05-30.png",
               "public_name": "800ee110-3420-11ed-af52-2bf1404da86a"
             } }
+        ]
+      end
+    end
+
+    trait :with_linked do
+      name { 'Linked Research Plan' }
+
+      body do
+        [
+          {
+            'id' => SecureRandom.uuid,
+            'type' => 'reaction',
+            'value' => { 'reaction_id' => 100 },
+          },
         ]
       end
     end

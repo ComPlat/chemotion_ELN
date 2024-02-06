@@ -19,6 +19,9 @@ module Entities
       expose! :molecule_computed_props,                     using: 'Entities::ComputedPropEntity'
       expose! :sum_formula
       expose! :type
+      expose :comments,                                     using: 'Entities::CommentEntity'
+      expose :comment_count
+      expose :dry_solvent
     end
 
     # Level 1 attributes
@@ -58,7 +61,7 @@ module Entities
       expose! :real_amount_value,       unless: :displayed_in_list
       expose! :residues,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ResidueEntity'
       expose! :sample_svg_file
-      expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::SegmentEntity'
+      expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :showed_name
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
@@ -129,6 +132,10 @@ module Entities
 
     def type
       'sample'
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end

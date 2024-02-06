@@ -129,6 +129,7 @@
   .adv-search-row {
     display: flex;
     overflow: visible !important;
+    margin-left: 10px;
   }
 
   button {
@@ -142,17 +143,31 @@
 
   .link-select {
     margin: 5px;
-    flex: 0 0 117px
+    flex: 0 0 117px;
   }
 
   .match-select {
     margin: 5px;
-    flex: 0 0 150px
+    flex: 0 0 150px;
+  }
+
+  .value-field-select {
+    margin: 5px;
+    flex: 0 0 205px;
+
+    .ant-select {
+      width: 100%;
+    }
+    .ant-select-selection--single {
+      height: 34px;
+    }
+    .value-select-unit {
+      height: 34px;
+    }
   }
 
   .value-select {
     margin: 5px;
-    height: 60px;
   }
 
   .footer {
@@ -179,6 +194,17 @@
     padding: 25px;
     width: auto;
   }
+}
+
+.collection-tab-modal {
+  .modal-dialog {
+    width: 1200px;
+    overflow-y: scroll;
+  }
+}
+
+.collection-tab-modal-body {
+  position: sticky;
 }
 
 .status-select {
@@ -318,9 +344,19 @@
   cursor: pointer;
 }
 
+.btn-inbox-sort {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
 .dataset-pagination {
   text-align: center;
   margin-top: 5px;
+  margin-bottom: 10px;
 }
 
 .page-count {

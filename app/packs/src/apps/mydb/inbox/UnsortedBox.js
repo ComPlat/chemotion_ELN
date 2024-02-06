@@ -10,6 +10,7 @@ import Container from 'src/models/Container';
 import UnsortedDatasetModal from 'src/apps/mydb/inbox/UnsortedDatasetModal';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class UnsortedBox extends React.Component {
   constructor(props) {
@@ -26,7 +27,7 @@ export default class UnsortedBox extends React.Component {
         show: false,
         datasetContainer: null
       },
-      currentUnsortedBoxPage: 1,
+      currentUnsortedBoxPage: inboxState.currentUnsortedBoxPage,
       dataItemsPerPage: inboxState.dataItemsPerPage,
     };
     this.toggleSelectAllCheckbox = this.toggleSelectAllCheckbox.bind(this);
@@ -51,19 +52,10 @@ export default class UnsortedBox extends React.Component {
     InboxStore.unlisten(this.onChange);
   }
 
-  onChange(state) {
-    this.setState(state);
-  }
-
   handleClick() {
     const { visible } = this.state;
-    const { fromCollectionTree } = this.props;
 
     InboxActions.setActiveDeviceBoxId(-1);
-
-    if (fromCollectionTree) {
-      return;
-    }
 
     this.setState({ visible: !visible });
   }
@@ -84,15 +76,11 @@ export default class UnsortedBox extends React.Component {
   }
 
   handlePrevClick = () => {
-    this.setState((prevState) => ({
-      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage - 1,
-    }));
+    InboxActions.prevClick();
   };
 
   handleNextClick = () => {
-    this.setState((prevState) => ({
-      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage + 1,
-    }));
+    InboxActions.nextClick();
   };
 
   handleUploadButton() {
@@ -101,10 +89,42 @@ export default class UnsortedBox extends React.Component {
     this.handleFileModalOpen(datasetContainer);
   }
 
-  hasChecked() {
-    const { checkedAll } = this.state;
-    return checkedAll;
+  onChange(state) {
+    this.setState(state);
   }
+
+  sortUnsortedItem = (currentItems) => {
+    const type = 'inbox';
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+    const sortColumn = filters[type]?.sort || 'created_at';
+
+    switch (sortColumn) {
+      case 'created_at':
+        return currentItems.slice().sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+
+          // Sort in descending order
+          return dateB - dateA;
+        });
+
+      case 'name':
+        return currentItems.slice().sort((a, b) => {
+          if (a.filename > b.filename) {
+            return 1;
+          }
+          if (a.filename < b.filename) {
+            return -1;
+          }
+          return 0;
+        });
+
+      default:
+        // Default case: return currentItems as they are
+        return currentItems.slice();
+    }
+  };
 
   toggleSelectAllCheckbox() {
     const { checkedAll } = this.state;
@@ -115,17 +135,23 @@ export default class UnsortedBox extends React.Component {
     if (!checkedAll) {
       params.type = true;
     }
-    this.setState(prevState => ({ ...prevState.inboxState, checkedAll: !this.state.checkedAll }));
+    this.setState((prevState) => ({ ...prevState.inboxState, checkedAll: !checkedAll }));
     InboxActions.checkedAll(params);
     InboxActions.checkedIds(params);
   }
 
   toggleTooltip() {
-    this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
   }
 
   deleteCheckedAttachment(unsortedBox) {
-    const { checkedIds } = this.state;
+    const { checkedIds, currentUnsortedBoxPage, dataItemsPerPage } = this.state;
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const currentItems = unsortedBox.slice(startIndex, endIndex);
+    const currentItemsCount = currentItems.length;
+    const itemsDeleted = checkedIds.length;
+
     checkedIds.forEach((checkedId) => {
       // eslint-disable-next-line array-callback-return
       unsortedBox.map((attachment) => {
@@ -134,29 +160,38 @@ export default class UnsortedBox extends React.Component {
         }
       });
     });
+    if (currentUnsortedBoxPage > 1 && itemsDeleted === currentItemsCount) {
+      InboxActions.prevClick();
+    } else {
+      InboxActions.fetchInboxUnsorted();
+    }
     checkedIds.length = 0;
     this.toggleTooltip();
     this.setState({ checkedAll: false });
   }
 
   render() {
-    const { unsorted_box, largerInbox, fromCollectionTree } = this.props;
+    const { unsorted_box, largerInbox } = this.props;
     const {
-      visible, modal, checkedAll, currentUnsortedBoxPage, dataItemsPerPage
+      visible, modal, checkedAll, checkedIds, currentUnsortedBoxPage, dataItemsPerPage, deletingTooltip
     } = this.state;
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const totalPages = Math.ceil(unsorted_box.length / dataItemsPerPage);
+    const currentItems = this.sortUnsortedItem(unsorted_box.slice(startIndex, endIndex));
 
     const renderCheckAll = (
       <div>
         <input
           type="checkbox"
-          checked={checkedAll}
+          checked={checkedAll && checkedIds.length === currentItems.length}
           onChange={this.toggleSelectAllCheckbox}
         />
         <span
           className="g-marginLeft--10"
           style={{ fontWeight: 'bold' }}
         >
-          {this.hasChecked() ? 'Deselect all' : 'Select all'}
+          {checkedAll && checkedIds.length === currentItems.length ? 'Deselect all' : 'Select all'}
         </span>
       </div>
     );
@@ -171,10 +206,12 @@ export default class UnsortedBox extends React.Component {
         >
           &nbsp;
         </i>
-        {this.state.deletingTooltip ? (
+        {deletingTooltip ? (
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-            Delete this attachment?
-            <ButtonGroup>
+            {`Delete ${checkedIds.length} attachment${checkedIds.length > 1 ? 's' : ''}?`}
+            <ButtonGroup
+              style={{ marginLeft: '5px' }}
+            >
               <Button
                 bsStyle="danger"
                 bsSize="xsmall"
@@ -195,17 +232,14 @@ export default class UnsortedBox extends React.Component {
       </span>
     );
 
-    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
-    const endIndex = startIndex + dataItemsPerPage;
-    const totalPages = Math.ceil(unsorted_box.length / dataItemsPerPage);
-
-    const attachments = visible ? unsorted_box.slice(startIndex, endIndex).map((attachment) => (
+    const attachments = visible ? currentItems.map((attachment) => (
       <AttachmentContainer
         key={`attach_${attachment.id}`}
         sourceType={DragDropItemTypes.UNLINKED_DATA}
         attachment={attachment}
         largerInbox={largerInbox}
         fromUnsorted
+        isSelected={checkedIds.includes(attachment.id)}
       />
     )) : <div />;
 
@@ -263,7 +297,7 @@ export default class UnsortedBox extends React.Component {
           {uploadButton}
         </div>
         {
-          visible && !fromCollectionTree && unsorted_box.length > dataItemsPerPage ? (
+          visible && unsorted_box.length > dataItemsPerPage ? (
             <Pagination
               currentDataSetPage={currentUnsortedBoxPage}
               totalPages={totalPages}
@@ -295,11 +329,9 @@ UnsortedBox.propTypes = {
   unsorted_box: PropTypes.array.isRequired,
   largerInbox: PropTypes.bool,
   unsortedVisible: PropTypes.bool,
-  fromCollectionTree: PropTypes.bool,
 };
 
 UnsortedBox.defaultProps = {
   largerInbox: false,
   unsortedVisible: false,
-  fromCollectionTree: false,
 };

@@ -373,6 +373,9 @@ class ConverterAdmin extends Component {
         <main>
           {this.dispatchView()}
         </main>
+        <div>
+          <a href="/">Back to MyDB</a>
+        </div>
 
         <Modal show={this.state.createdModal}>
           <Modal.Header>

@@ -1,11 +1,16 @@
 #!/bin/bash
 
-if [ ! -x yarn ]
-then
-  npm install -g yarn
+if command -v yarn; then
+    echo '>>> yarn is installed -> continue'
+else
+    echo '>>> Missing yarn. Installing...'
+    npm install -g yarn
 fi
-asdf global nodejs 14.21.3
+
+echo '>>> Installing JS packages...'
 yarn install
 
+echo "=========================================================================================================="
 echo "THIS WILL FAIL UNTIL THE RUBY GEMS ARE INSTALLED BY run-ruby-dev.sh. JUST TRY AGAIN AFTER INSTALLING THEM."
+echo "=========================================================================================================="
 ./bin/webpack-dev-server

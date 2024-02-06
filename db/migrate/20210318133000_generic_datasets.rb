@@ -28,7 +28,7 @@ class GenericDatasets < ActiveRecord::Migration[4.2]
       end
     end
     Matrice.create(name: 'genericDataset', enabled: false, label: 'genericDataset', include_ids: [], exclude_ids: []) if Matrice.find_by(name: 'genericDataset').nil?
-    DatasetKlass.init_seeds
+    Labimotion::DatasetKlass.init_seeds
   end
 
   def self.down

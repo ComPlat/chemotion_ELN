@@ -23,6 +23,14 @@ class InboxActions {
     return null;
   }
 
+  changeInboxFilter(filter) {
+    return filter;
+  }
+
+  changeInboxSize(size) {
+    return size;
+  }
+
   checkedAll(params) {
     return params;
   }
@@ -35,11 +43,34 @@ class InboxActions {
     return params;
   }
 
+  checkedDeviceAll(params) {
+    return params;
+  }
+
+  checkedDeviceIds(params) {
+    return params;
+  }
+
+  checkDeviceAttachments(params) {
+    return params;
+  }
+
+  prevClick() {
+    return null;
+  }
+
+  nextClick() {
+    return null;
+  }
+
   fetchInbox(queryParams = {}) {
     return (dispatch) => {
       InboxFetcher.fetchInbox(false, queryParams)
         .then((result) => {
-          dispatch(result.inbox);
+          dispatch({
+            inbox: result.inbox,
+            activeDeviceBoxId: queryParams.activeDeviceBoxId,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -65,6 +96,17 @@ class InboxActions {
             inbox: result.inbox,
             currentContainerPage,
           });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchInboxUnsorted() {
+    return (dispatch) => {
+      InboxFetcher.fetchInboxUnsorted()
+        .then((result) => {
+          dispatch(result.inbox);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

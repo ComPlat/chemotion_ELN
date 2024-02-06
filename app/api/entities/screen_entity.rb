@@ -12,6 +12,7 @@ module Entities
       expose! :conditions
       expose! :requirements
       expose! :wellplates,                          using: 'Entities::WellplateEntity'
+      expose! :comment_count
     end
 
     with_options(anonymize_below: 10) do
@@ -21,7 +22,7 @@ module Entities
       expose! :container,             anonymize_with: nil, using: 'Entities::ContainerEntity'
       expose! :research_plans,        anonymize_with: [],  using: 'Entities::ResearchPlanEntity'
       expose! :component_graph_data,  anonymize_with: {}
-      expose! :segments,              anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :segments,              anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :tag,                   anonymize_with: nil, using: 'Entities::ElementTagEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
@@ -56,6 +57,10 @@ module Entities
 
     def wellplates
       displayed_in_list? ? [] : object.wellplates
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end

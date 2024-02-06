@@ -16,6 +16,7 @@ const rxnSettings = [
   { checked: true, text: 'observation' },
   { checked: true, text: 'analysis' },
   { checked: true, text: 'literature' },
+  { checked: true, text: 'variations' },
 ];
 
 const siRxnSettings = [

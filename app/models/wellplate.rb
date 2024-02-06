@@ -26,7 +26,7 @@ class Wellplate < ApplicationRecord
   include Collectable
   include ElementCodes
   include Taggable
-  include Segmentable
+  include Labimotion::Segmentable
 
   serialize :description, Hash
 
@@ -64,7 +64,7 @@ class Wellplate < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_ids, ->(ids) { joins(:samples).where('samples.id in (?)', ids) }
   scope :by_screen_ids, ->(ids) { joins(:screens).where('screens.id in (?)', ids) }
-  scope :includes_for_list_display, ->() { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag, :comments) }
 
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections, through: :collections_wellplates
@@ -83,7 +83,11 @@ class Wellplate < ApplicationRecord
 
   has_many :sync_collections_users, through: :collections
 
+  has_many :comments, as: :commentable, dependent: :destroy
+
   has_one :container, as: :containable
+
+  before_save :description_to_plain_text
 
   accepts_nested_attributes_for :collections_wellplates
 
@@ -150,5 +154,13 @@ class Wellplate < ApplicationRecord
     user_label = user.name_abbreviation
 
     update(short_label: "#{user_label}-#{prefix}#{counter}")
+  end
+
+  private
+
+  def description_to_plain_text
+    return unless description_changed?
+
+    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
   end
 end

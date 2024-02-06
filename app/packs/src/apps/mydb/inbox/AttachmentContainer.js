@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -10,6 +9,7 @@ import Utils from 'src/utilities/Functions';
 import MoveToAnalysisButton from 'src/apps/mydb/inbox/MoveToAnalysisButton';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 const dataSource = {
   beginDrag(props) {
@@ -37,6 +37,19 @@ class AttachmentContainer extends Component {
     };
     this.toggleAttachmentsCheckbox = this.toggleAttachmentsCheckbox.bind(this);
     this.isAttachmentChecked = this.isAttachmentChecked.bind(this);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    InboxStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState(state);
   }
 
   toggleTooltip() {
@@ -45,22 +58,31 @@ class AttachmentContainer extends Component {
 
   toggleAttachmentsCheckbox(id) {
     const { checkedIds } = this.state;
+    const { isSelected, attachment, sourceType } = this.props;
+    const attachmentId = attachment && attachment.id;
     const params = {
       type: false,
       ids: id,
-      range: 'child'
+      range: 'child',
+      isSelected,
     };
 
     if (ArrayUtils.isValNotInArray(checkedIds || [], params.ids)) {
       params.type = true;
     }
-    InboxActions.checkedIds(params);
-    InboxActions.checkedAll(params);
+
+    if (sourceType === DragDropItemTypes.DATA && attachmentId) {
+      InboxActions.checkDeviceAttachments(params);
+    } else {
+      InboxActions.checkedIds(params);
+      InboxActions.checkedAll(params);
+    }
   }
 
   isAttachmentChecked(attachment) {
+    const { isSelected } = this.props;
     const { checkedIds } = this.state;
-    return (ArrayUtils.isValInArray(checkedIds || [], attachment.id));
+    return (isSelected || ArrayUtils.isValInArray(checkedIds || [], attachment.id));
   }
 
 
@@ -75,6 +97,7 @@ class AttachmentContainer extends Component {
     if (sourceType !== DragDropItemTypes.DATA && sourceType !== DragDropItemTypes.UNLINKED_DATA) {
       return null;
     }
+    const { inboxSize } = InboxStore.getState();
 
     const textStyle = {
       display: 'block',
@@ -121,7 +144,7 @@ class AttachmentContainer extends Component {
     const checkBox = (
       <input
         type="checkbox"
-        checked={this.isAttachmentChecked(attachment)}
+        checked={this.props.isSelected}
         onChange={() => this.toggleAttachmentsCheckbox(attachmentId)}
       />
     );
@@ -159,9 +182,14 @@ class AttachmentContainer extends Component {
             {attachment.filename}
           </span>
         </OverlayTrigger>
-        <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-          {moment(attachment.created_at).format('DD.MM.YYYY HH:mm')}
-        </span>
+        {
+          inboxSize && inboxSize !== 'Small'
+          && (
+            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+              {formatDate(attachment.created_at)}
+            </span>
+          )
+        }
       </div>,
       { dropEffect: 'move' }
     );
@@ -181,6 +209,7 @@ AttachmentContainer.propTypes = {
   largerInbox: PropTypes.bool,
   sourceType: PropTypes.string,
   fromUnsorted: PropTypes.bool,
+  isSelected: PropTypes.bool.isRequired,
 };
 
 AttachmentContainer.defaultProps = {

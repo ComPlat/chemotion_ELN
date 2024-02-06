@@ -38,6 +38,7 @@ class LoadingStore {
           ElementActions.storeMetadata,
           InboxActions.fetchInbox,
           InboxActions.fetchInboxContainer,
+          InboxActions.fetchInboxUnsorted,
           PredictionActions.infer,
         ],
       handleStartLoadingWithProgress: LoadingActions.startLoadingWithProgress,

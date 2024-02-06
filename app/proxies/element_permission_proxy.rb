@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# rubocop: disable Metrics/CyclomaticComplexity, Lint/DuplicateBranch
 class ElementPermissionProxy
   attr_reader :user, :element, :detail_level
 
@@ -36,13 +39,13 @@ class ElementPermissionProxy
     # Fall 2: User besitzt mindestens einen Share, der das Element enthält...von diesen Shares nutzt man das maximale
     # Element Detaillevel
 
-    c.map { |cc| [cc.is_shared, cc.send("#{element.class.to_s.downcase}_detail_level")] }.each do |bool, dl|
+    c.map { |cc| [cc.is_shared, cc.send("#{Labimotion::Utils.element_name_dc(element.class.to_s)}_detail_level")] }.each do |bool, dl|
       return (@dl = max_detail_level) if !bool
       @dl = dl if dl > @dl
     end
 
     sc.each do |sc|
-      dl = sc.send("#{element.class.to_s.downcase}_detail_level")
+      dl = sc.send("#{Labimotion::Utils.element_name_dc(element.class.to_s)}_detail_level")
       @dl = dl if dl > @dl
     end
 
@@ -84,16 +87,19 @@ class ElementPermissionProxy
       10
     when ResearchPlan
       10
-    when Element
+    when Labimotion::Element
+      10
+    when CelllineSample
       10
     end
   end
 
   def user_collections_for_element
-  #    collection_ids = element.collections.pluck(:id)
-  #    Collection.where("id IN (?) AND user_id IN (?)", collection_ids, @user_ids)
+    #    collection_ids = element.collections.pluck(:id)
+    #    Collection.where("id IN (?) AND user_id IN (?)", collection_ids, @user_ids)
     element.collections.select { |c| @user_ids.include?(c.user_id) }
   end
+
   def sync_collections_users_for_element
     coll_ids = element.collections.map(&:id)
     element.collections.map(&:sync_collections_users).flatten.select do |sc|
@@ -101,3 +107,4 @@ class ElementPermissionProxy
     end
   end
 end
+# rubocop: enable Metrics/CyclomaticComplexity, Lint/DuplicateBranch

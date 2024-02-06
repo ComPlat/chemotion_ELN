@@ -8,6 +8,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers LiteratureHelpers
+    helpers ReflectionHelpers
 
     namespace :ui_state do
       desc 'Delete elements by UI state'
@@ -32,6 +33,9 @@ module Chemotion
           use :ui_state_params
         end
         optional :research_plan, type: Hash do
+          use :ui_state_params
+        end
+        optional :cell_line, type: Hash do
           use :ui_state_params
         end
         optional :selecteds, desc: 'Elements currently opened in detail tabs', type: Array do
@@ -72,20 +76,23 @@ module Chemotion
 
       desc "delete element from ui state selection."
       delete do
-
         deleted = { 'sample' => [] }
-        %w[sample reaction wellplate screen research_plan].each do |element|
+        %w[sample reaction wellplate screen research_plan cell_line].each do |element|
+          next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
-          deleted[element] = @collection.send(element + 's').by_ui_state(params[element]).destroy_all.map(&:id)
+
+          assoziation_name = get_assoziation_name_in_collections(element)
+          deleted[element] = @collection.send(assoziation_name).by_ui_state(params[element]).destroy_all.map(&:id)
         end
 
         # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
+
         sql_join = "inner join reactions_samples on reactions_samples.sample_id = samples.id"
         sql_join += " and reactions_samples.type in ('ReactionsSolventSample','ReactionsReactantSample')" unless params[:options][:deleteSubsamples]
         deleted['sample'] += Sample.joins(sql_join).joins(:collections)
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
-        klasses = ElementKlass.find_each do |klass|
+        klasses = Labimotion::ElementKlass.find_each do |klass|
           next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
           deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
         end

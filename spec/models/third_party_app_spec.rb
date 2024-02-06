@@ -6,8 +6,8 @@ RSpec.describe ThirdPartyApp, type: :model do
   describe '.all_names' do
     context 'when entries exist' do
       before do
-        described_class.create(IPAddress: "http://test.com", name: "Test1")
-        described_class.create(IPAddress: "http://test.com", name: "Test2")
+        described_class.create(url: "http://test.com", name: "Test1")
+        described_class.create(url: "http://test.com", name: "Test2")
       end
 
       it 'returns an array of names' do

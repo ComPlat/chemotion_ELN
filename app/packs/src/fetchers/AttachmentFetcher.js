@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import 'whatwg-fetch';
 import { decamelizeKeys } from 'humps';
 
@@ -15,80 +16,83 @@ const fileFromAttachment = (attachment, containerId) => {
 };
 
 export default class AttachmentFetcher {
-
   static fetchImageAttachment(params) {
     return fetch(`/api/v1/attachments/image/${params.id}`, {
       credentials: 'same-origin',
-      method: 'GET'
-    }).then(response => response.blob())
-      .then(blob => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .catch((errorMessage) => { console.log(errorMessage); });
+      method: 'GET',
+    })
+      .then((response) => response.blob())
+      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
-  static fetchImageAttachmentByIdentifier(params) {   
-    const urlParams=new URLSearchParams({
+  static fetchImageAttachmentByIdentifier(params) {
+    const urlParams = new URLSearchParams({
       identifier: params.identifier,
-      annotated: params.annotated}) 
-      
-    return fetch('/api/v1/attachments/image/-1?'+urlParams, {
+      annotated: params.annotated,
+    });
+
+    return fetch(`/api/v1/attachments/image/-1?${urlParams}`, {
       credentials: 'same-origin',
-      method: 'GET'
-    }).then(response => response.blob())
-      .then(blob => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .catch((errorMessage) => { console.log(errorMessage); });
+      method: 'GET',
+    })
+      .then((response) => response.blob())
+      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static fetchThumbnail(params) {
-    let promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
+    const promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
       credentials: 'same-origin',
-      method: 'GET'
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+      method: 'GET',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
 
   static fetchThumbnails(ids) {
-    let promise = fetch('/api/v1/attachments/thumbnails/', {
+    const promise = fetch('/api/v1/attachments/thumbnails/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ ids }),
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
 
   static fetchFiles(ids) {
-    let promise = fetch('/api/v1/attachments/files/', {
+    const promise = fetch('/api/v1/attachments/files/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ ids }),
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -100,17 +104,16 @@ export default class AttachmentFetcher {
     data.append('molfile', mol);
     data.append('mass', mass);
 
-    let promise = fetch('/api/v1/chemspectra/file/convert', {
+    const promise = fetch('/api/v1/chemspectra/file/convert', {
       credentials: 'same-origin',
       method: 'POST',
       body: data,
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -119,14 +122,15 @@ export default class AttachmentFetcher {
     if (container == null) return [];
     const allFiles = [];
     this.filterAllAttachments(allFiles, container.children);
-    return allFiles
+    return allFiles;
   }
 
   static filterAllAttachments(files, containers) {
     containers.forEach((container) => {
-      const tmpArray = (container.attachments || []).filter(a => a.is_new)
-        .map(a => fileFromAttachment(a, container.id));
-      files.push.apply(files, tmpArray);
+      const tmpArray = (container.attachments || [])
+        .filter((a) => a.is_new)
+        .map((a) => fileFromAttachment(a, container.id));
+      files.push(...tmpArray);
 
       if (container.children && container.children.length > 0) {
         this.filterAllAttachments(files, container.children);
@@ -137,17 +141,19 @@ export default class AttachmentFetcher {
   static updateAttachables(files, attachableType, attachableId, dels) {
     const data = new FormData();
     files.forEach((file) => {
+      data.append('attfilesIdentifier[]', file.id);
       data.append('files[]', file.file, file.name);
     });
     data.append('attachable_type', attachableType);
     data.append('attachable_id', attachableId);
+
     dels.forEach((f) => {
       data.append('del_files[]', f.id);
     });
     return () => fetch('/api/v1/attachable/update_attachments_attachable', {
       credentials: 'same-origin',
       method: 'post',
-      body: data
+      body: data,
     }).then((response) => {
       if (response.ok === false) {
         let msg = 'Files uploading failed: ';
@@ -156,22 +162,27 @@ export default class AttachmentFetcher {
         } else {
           msg += response.statusText;
         }
-        NotificationActions.add({ message: msg, level: 'error', position: 'tc' });
+        NotificationActions.add({
+          message: msg,
+          level: 'error',
+          position: 'tc',
+        });
       }
     });
   }
 
   static uploadToInbox(attachments) {
     const data = new FormData();
-    const files = (attachments).filter(f => f.is_new)
-      .map(f => fileFromAttachment(f, null));
+    const files = attachments
+      .filter((f) => f.is_new)
+      .map((f) => fileFromAttachment(f, null));
     files.forEach((file) => {
       data.append(file.id || file.name, file);
     });
     return () => fetch('/api/v1/attachments/upload_to_inbox', {
       credentials: 'same-origin',
       method: 'post',
-      body: data
+      body: data,
     }).then((response) => {
       if (response.ok === false) {
         let msg = 'Files uploading to Inbox failed: ';
@@ -182,7 +193,7 @@ export default class AttachmentFetcher {
         }
         NotificationActions.add({
           message: msg,
-          level: 'error'
+          level: 'error',
         });
       }
     });
@@ -197,17 +208,17 @@ export default class AttachmentFetcher {
       credentials: 'same-origin',
       contentType: 'application/json',
       method: 'post',
-      body: data
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      for (let i = 0; i < json.error_messages.length; i++) {
-        NotificationActions.add({
-          message: json.error_messages[i],
-          level: 'error'
-        });
-      }
-    });
+      body: data,
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        for (let i = 0; i < json.error_messages.length; i += 1) {
+          NotificationActions.add({
+            message: json.error_messages[i],
+            level: 'error',
+          });
+        }
+      });
   }
 
   static uploadCompleted(filename, key, checksum) {
@@ -216,90 +227,95 @@ export default class AttachmentFetcher {
       method: 'post',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ filename: filename, key: key, checksum: checksum }),
-    }).then(response => response.json())
+      body: JSON.stringify({
+        filename,
+        key,
+        checksum,
+      }),
+    })
+      .then((response) => response.json())
       .then((response) => {
         LoadingActions.stopLoadingWithProgress(filename);
-        if (response.ok == false) {
+        if (response.ok === false) {
           let msg = 'Files uploading failed: ';
-          if (response.status == 413) {
+          if (response.status === 413) {
             msg += 'File size limit exceeded.';
           } else {
             msg += response.statusText;
           }
 
-        NotificationActions.add({
-          message: msg,
-          level: 'error'
-        });
-      } else if(response.error_messages) {
-        for (let i = 0; i < response.error_messages.length; i++) {
           NotificationActions.add({
-            message: response.error_messages[i],
-            level: 'error'
+            message: msg,
+            level: 'error',
           });
+        } else if (response.error_messages) {
+          for (let i = 0; i < response.error_messages.length; i += 1) {
+            NotificationActions.add({
+              message: response.error_messages[i],
+              level: 'error',
+            });
+          }
         }
-      }
-    })
-  };
+      });
+  }
 
   static uploadChunk(chunk, counter, key, progress, filename) {
-    let body = { file: chunk, counter: counter, key: key };
+    const body = { file: chunk, counter, key };
     const formData = new FormData();
-    for (const name in body) {
+    Object.keys(body).forEach((name) => {
       formData.append(name, body[name]);
-    }
+    });
     return () => fetch('/api/v1/attachments/upload_chunk', {
       credentials: 'same-origin',
       method: 'post',
-      body: formData
+      body: formData,
     })
-      .then(response => response.json())
+      .then((response) => response.json())
       .then((response) => {
         LoadingActions.updateLoadingProgress(filename, progress);
-        if (response.ok == false) {
+        if (response.ok === false) {
           const msg = `Chunk uploading failed: ${response.statusText}`;
           NotificationActions.add({
             message: msg,
-            level: 'error'
+            level: 'error',
           });
         }
       });
-  };
+  }
 
   static async uploadFile(file) {
     LoadingActions.startLoadingWithProgress(file.name);
     const chunkSize = 100 * 1024 * 1024;
-    const chunksCount = file.size % chunkSize == 0
+    const chunksCount = file.size % chunkSize === 0
       ? file.size / chunkSize
       : Math.floor(file.size / chunkSize) + 1;
     let beginingOfTheChunk = 0;
     let endOfTheChunk = chunkSize;
-    let tasks = [];
+    const tasks = [];
     const key = file.id;
-    let spark = new SparkMD5.ArrayBuffer();
-    let totalStep = chunksCount + 1;
-    for (let counter = 1; counter <= chunksCount; counter++) {
-      let chunk = file.slice(beginingOfTheChunk, endOfTheChunk);
-      tasks.push(this.uploadChunk(chunk, counter, key, counter / totalStep, file.name)());
+    const spark = new SparkMD5.ArrayBuffer();
+    const totalStep = chunksCount + 1;
+    for (let counter = 1; counter <= chunksCount; counter += 1) {
+      const chunk = file.slice(beginingOfTheChunk, endOfTheChunk);
+      tasks.push(
+        this.uploadChunk(chunk, counter, key, counter / totalStep, file.name)()
+      );
       spark.append(await this.getFileContent(chunk));
       beginingOfTheChunk = endOfTheChunk;
       endOfTheChunk += chunkSize;
     }
 
-    let checksum = spark.end();
-    return Promise.all(tasks).then(() => {
-      return this.uploadCompleted(file.name, key, checksum)();
-    });
+    const checksum = spark.end();
+    return Promise.all(tasks).then(() => this.uploadCompleted(file.name, key, checksum)());
   }
 
   static getFileContent(file) {
-    let promise = new Promise(function (resolve, reject) {
-      var reader = new FileReader();
+    const promise = new Promise((resolve) => {
+      const reader = new FileReader();
       reader.onload = function (event) {
-        let buffer = new Uint8Array(event.target.result);
+        const buffer = new Uint8Array(event.target.result);
         resolve(buffer);
       };
 
@@ -310,70 +326,103 @@ export default class AttachmentFetcher {
   }
 
   static deleteAttachment(params) {
-    let promise = fetch(`/api/v1/attachments/${params.id}`, {
+    const promise = fetch(`/api/v1/attachments/${params.id}`, {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      return new Attachment(json.attachment);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((json) => new Attachment(json.attachment))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
 
   static deleteContainerLink(params) {
-    let promise = fetch(`/api/v1/attachments/link/${params.id}`, {
+    const promise = fetch(`/api/v1/attachments/link/${params.id}`, {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      return new Attachment(json.attachment);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((json) => new Attachment(json.attachment))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
 
+  static downloadDataset(id) {
+    let file_name = 'dataset.xlsx';
+    return fetch(`/api/v1/export_ds/dataset/${id}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+    })
+      .then((response) => {
+        const disposition = response.headers.get('Content-Disposition');
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          const matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) {
+            file_name = matches[1].replace(/['"]/g, '');
+          }
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const a = document.createElement('a');
+        a.style = 'display: none';
+        document.body.appendChild(a);
+        const url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = file_name;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   static downloadZip(id) {
-    let file_name = 'dataset.zip'
+    let file_name = 'dataset.zip';
     return fetch(`/api/v1/attachments/zip/${id}`, {
       credentials: 'same-origin',
       method: 'GET',
-    }).then((response) => {
-      const disposition = response.headers.get('Content-Disposition')
-      if (disposition && disposition.indexOf('attachment') !== -1) {
-        let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        let matches = filenameRegex.exec(disposition);
-        if (matches != null && matches[1]) {
-          file_name = matches[1].replace(/['"]/g, '');
+    })
+      .then((response) => {
+        const disposition = response.headers.get('Content-Disposition');
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          const matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) {
+            file_name = matches[1].replace(/['"]/g, '');
+          }
         }
-      }
-      return response.blob()
-    }).then((blob) => {
-      const a = document.createElement("a");
-      a.style = "display: none";
-      document.body.appendChild(a);
-      let url = window.URL.createObjectURL(blob);
-      a.href = url;
-      a.download = file_name
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+        return response.blob();
+      })
+      .then((blob) => {
+        const a = document.createElement('a');
+        a.style = 'display: none';
+        document.body.appendChild(a);
+        const url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = file_name;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   static downloadZipBySample(sampleId) {
@@ -381,38 +430,59 @@ export default class AttachmentFetcher {
     return fetch(`/api/v1/attachments/sample_analyses/${sampleId}`, {
       credentials: 'same-origin',
       method: 'GET',
-    }).then((response) => {
-      const disposition = response.headers.get('Content-Disposition');
-      if (disposition != null) {
-        if (disposition && disposition.indexOf('attachment') !== -1) {
-          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-          const matches = filenameRegex.exec(disposition);
-          if (matches != null && matches[1]) {
-            fileName = matches[1].replace(/['"]/g, '');
+    })
+      .then((response) => {
+        const disposition = response.headers.get('Content-Disposition');
+        if (disposition != null) {
+          if (disposition && disposition.indexOf('attachment') !== -1) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+              fileName = matches[1].replace(/['"]/g, '');
+            }
           }
-        }
 
-        return response.blob();
-      }
-      else {
+          return response.blob();
+        }
         NotificationActions.notifyExImportStatus('Analysis download', 204);
         return null;
-      }
-    }).then((blob) => {
-      if (blob && blob.type != null) {
-        const a = document.createElement('a');
-        a.style = 'display: none';
-        document.body.appendChild(a);
-        const url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
-    }).catch((errorMessage) => { console.log(errorMessage); });
+      })
+      .then((blob) => {
+        if (blob && blob.type != null) {
+          const a = document.createElement('a');
+          a.style = 'display: none';
+          document.body.appendChild(a);
+          const url = window.URL.createObjectURL(blob);
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
-  static saveSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr) {
+  static saveSpectrum(
+    attId,
+    peaksStr,
+    shift,
+    scan,
+    thres,
+    integration,
+    multiplicity,
+    predict,
+    keepPred,
+    waveLengthStr,
+    cyclicvolta,
+    curveIdx,
+    simulatenmr,
+    previousSpcInfos,
+    isSaveCombined,
+    axesUnitsStr,
+    detector,
+  ) {
     const params = {
       attachmentId: attId,
       peaksStr,
@@ -429,23 +499,37 @@ export default class AttachmentFetcher {
       cyclicvolta: cyclicvolta,
       curveIdx: curveIdx,
       simulatenmr: simulatenmr,
+      axesUnits: axesUnitsStr,
+      detector
     };
 
-    const promise = fetch(
-      '/api/v1/attachments/save_spectrum/',
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers:
-        {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(decamelizeKeys(params)),
+    const promise = fetch('/api/v1/attachments/save_spectrum/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
-    )
-      .then(response => response.json())
-      .then(json => json)
+      body: JSON.stringify(decamelizeKeys(params)),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        if (!isSaveCombined) {
+          return json;
+        }
+        const oldSpcInfos = [...previousSpcInfos].filter((spc) => {
+          return spc.idx !== attId;
+        });
+        let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
+        const fetchedFilesIdxs = json.files.map((file) => (file.id));
+        jcampIds = [...jcampIds, ...fetchedFilesIdxs];
+  
+        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx).then((res) => {
+          return json;
+        }).catch((errMsg) => {
+          console.log(errMsg); // eslint-disable-line
+        });
+      })
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -453,7 +537,19 @@ export default class AttachmentFetcher {
     return promise;
   }
 
-  static inferSpectrum(attId, peaksStr, shift, scan, thres, integration, multiplicity, predict, peaks, layout, keepPred) {
+  static inferSpectrum(
+    attId,
+    peaksStr,
+    shift,
+    scan,
+    thres,
+    integration,
+    multiplicity,
+    predict,
+    peaks,
+    layout,
+    keepPred
+  ) {
     const params = {
       attachmentId: attId,
       peaksStr,
@@ -471,21 +567,17 @@ export default class AttachmentFetcher {
       layout,
     };
 
-    const promise = fetch(
-      '/api/v1/attachments/infer/',
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers:
-        {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(decamelizeKeys(params)),
+    const promise = fetch('/api/v1/attachments/infer/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
-    )
-      .then(response => response.json())
-      .then(json => json)
+      body: JSON.stringify(decamelizeKeys(params)),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -494,24 +586,20 @@ export default class AttachmentFetcher {
   }
 
   static regenerateSpectrum(jcampIds) {
-    const promise = fetch(
-      '/api/v1/attachments/regenerate_spectrum/',
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers:
-        {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          original: jcampIds.orig,
-          generated: jcampIds.gene,
-        }),
+    const promise = fetch('/api/v1/attachments/regenerate_spectrum/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
-    )
-      .then(response => response.json())
-      .then(json => json)
+      body: JSON.stringify({
+        original: jcampIds.orig,
+        generated: jcampIds.gene,
+      }),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -520,8 +608,30 @@ export default class AttachmentFetcher {
   }
 
   static regenerateEditedSpectrum(jcampIds, molfile) {
+    const promise = fetch('/api/v1/attachments/regenerate_edited_spectrum/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        edited: jcampIds.edited,
+        molfile: molfile,
+      }),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static combineSpectra(jcampIds, curveIdx) {
     const promise = fetch(
-      '/api/v1/attachments/regenerate_edited_spectrum/',
+      '/api/v1/chemspectra/file/combine_spectra',
       {
         credentials: 'same-origin',
         method: 'POST',
@@ -531,13 +641,17 @@ export default class AttachmentFetcher {
             'Content-Type': 'application/json',
           },
         body: JSON.stringify({
-          edited: jcampIds.edited,
-          molfile: molfile
+          spectra_ids: jcampIds,
+          front_spectra_idx: curveIdx,
         }),
       },
     )
-      .then(response => response.json())
-      .then(json => json)
+      .then((response) => {
+        return response.json();
+      })
+      .then((json) => {
+        return json;
+      })
       .catch((errorMessage) => {
         console.log(errorMessage);
       });

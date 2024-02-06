@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/BlockLength
+
 require 'net/http'
 
 # Chemotion module
@@ -114,7 +116,20 @@ module Chemotion
           cyclic_volta: params[:cyclicvolta],
           jcamp_idx: params[:curve_idx],
           simulatenmr: params[:simulatenmr],
+          data_type_mapping: read_data_type_mapping,
+          axes_units: params[:axes_units],
+          detector: params[:detector],
         }
+      end
+
+      def self.read_data_type_mapping
+        file_path = Rails.configuration.path_spectra_data_type
+        begin
+          return File.read(file_path) if File.exist?(file_path)
+        rescue Errno::EACCES
+          error!('read file error', 500)
+        end
+        ''
       end
 
       def self.stub_http(
@@ -197,6 +212,43 @@ module Chemotion
         rsp = stub_peak_in_image(path)
         rsp_io = StringIO.new(rsp.body.to_s)
         Util.extract_zip(rsp_io)
+      end
+    end
+
+    # Combine multiple jcamps in one image
+    module CombineImg
+      include HTTParty
+
+      def self.stub_request(files, curve_idx, list_file_names)
+        response = nil
+        url = Rails.configuration.spectra.chemspectra.url
+        api_endpoint = "#{url}/combine_images"
+
+        files_to_read = files.map { |fname| File.open(fname) }
+        begin
+          response = HTTParty.post(
+            api_endpoint,
+            body: {
+              multipart: true,
+              files: files_to_read,
+              jcamp_idx: curve_idx,
+              list_file_names: list_file_names,
+            },
+          )
+        ensure
+          files_to_read.each(&:close)
+        end
+        response
+      end
+
+      def self.combine(files, curve_idx, list_file_names)
+        rsp = stub_request(files, curve_idx, list_file_names)
+        if rsp.code == 200
+          rsp_io = StringIO.new(rsp.body.to_s)
+          Util.extract_zip(rsp_io)
+        else # rubocop:disable Style/EmptyElse
+          nil
+        end
       end
     end
   end
@@ -403,3 +455,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop:enable Metrics/BlockLength

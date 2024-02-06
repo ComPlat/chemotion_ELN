@@ -15,9 +15,9 @@ export default class UsersFetcher {
   }
 
   static fetchElementKlassNames(genericOnly = true) {
-    let api = '/api/v1/public/element_klasses_name.json';
+    let api = '/api/v1/labimotion_hub/element_klasses_name.json';
     if (genericOnly) {
-      api = '/api/v1/public/element_klasses_name.json?generic_only=true';
+      api = '/api/v1/labimotion_hub/element_klasses_name.json?generic_only=true';
     }
 
     return fetch(api, {
@@ -35,9 +35,8 @@ export default class UsersFetcher {
     });
   }
 
-
-  static fetchUsersByName(name) {
-    const promise = fetch(`/api/v1/users/name.json?name=${name}`, {
+  static fetchUsersByName(name, type = 'Person') {
+    const promise = fetch(`/api/v1/users/name.json?${new URLSearchParams({ name, type })}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json()).then(json => json).catch((errorMessage) => {
@@ -167,6 +166,8 @@ export default class UsersFetcher {
         destroy_group: params.destroy_group,
         rm_users: params.rm_users,
         add_users: params.add_users,
+        add_admin: params.add_admin,
+        rm_admin: params.rm_admin,
       })
     }).then(response => response.json()).then(json => json).catch((errorMessage) => {
       console.log(errorMessage);

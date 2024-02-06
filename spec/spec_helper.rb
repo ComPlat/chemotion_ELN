@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+# rubocop:disable Style/WordArray
+
 # require 'coveralls'
 # Coveralls.wear!
 require 'rspec/repeat'
 require 'webmock/rspec'
 
 require 'factory_bot_rails'
+require 'faker'
 require 'capybara'
 require 'webdrivers'
 # require 'capybara/rspec'
@@ -70,7 +73,11 @@ RSpec.configure do |config|
       'XEGUVFFZWHRVAV-SFOWXEAESA-N',
       'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
       'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
-      'XEGUVFFZWHRVAV-PVQJCKRUSA-N'
+      'XEGUVFFZWHRVAV-PVQJCKRUSA-N',
+      'OKKJLVBELUTLKV-UHFFFAOYSA-N',
+      'XBDQKXXYIPTUBI-UHFFFAOYSA-N',
+      'UHOVQNZJYSORNB-UHFFFAOYSA-N',
+      'RJUFJBKOKNCXHH-UHFFFAOYSA-N',
     ].each do |target|
       stub_request(:get, "#{hostname}#{inchi_path}#{target}/record/JSON")
         .with(headers: { 'Content-Type' => 'text/json' })
@@ -167,3 +174,4 @@ RSpec.configure do |config|
     repeat example, 3.times, verbose: true
   end
 end
+# rubocop:enable Style/WordArray

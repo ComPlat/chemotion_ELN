@@ -64,6 +64,9 @@ module Chemotion
     end
     config.root_url = uri&.to_s
 
+    # path of public-asset file for chemspectra data_types
+    config.path_spectra_data_type = Rails.public_path.join('data_type.json').to_s.freeze
+
     # tmp assets fix
     sprite_file = Rails.public_path.join('sprite.png')
     sprite_source = Rails.public_path.join('assets', 'ketcherails', 'sprite*.png')

@@ -59,7 +59,7 @@ export default class TextRangeWithAddon extends Component {
     return (
       <FormGroup bsSize="small">
         <ControlLabel>{label}</ControlLabel>
-        <InputGroup>
+        <InputGroup data-cy={"cy_"+label}>
           <FormControl
             title={tipOnText}
             type="text"

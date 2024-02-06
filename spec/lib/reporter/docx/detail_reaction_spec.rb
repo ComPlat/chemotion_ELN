@@ -93,6 +93,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     Entities::ReactionReportEntity.represent(
       r1,
+      current_user: build(:user),
       detail_levels: ElementDetailLevelCalculator.new(user: user, element: r1).detail_levels
     ).serializable_hash
   end

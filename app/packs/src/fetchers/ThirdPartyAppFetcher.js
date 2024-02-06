@@ -10,27 +10,10 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static isNameUnique(name) {
-    const obj = {
-      name
-    };
-    return fetch('/api/v1/third_party_apps_administration/name_unique', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(obj)
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static newThirdPartyApp(name, IPAddress) {
+  static newThirdPartyApp(name, url) {
     const obj = {
       name,
-      IPAddress
+      url
     };
     return fetch('/api/v1/third_party_apps_administration/new_third_party_app', {
       credentials: 'same-origin',
@@ -45,10 +28,10 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static editThirdPartyApp(id, name, IPAddress) {
+  static editThirdPartyApp(id, name, url) {
     const obj = {
       id: id,
-      IPAddress: IPAddress,
+      url: url,
       name: name
     };
     return fetch('/api/v1/third_party_apps_administration/update_third_party_app', {
@@ -124,7 +107,7 @@ export default class ThirdPartyAppFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchAttachmentToken(attID, userID, nameThirdPartyApp) {
+  static fetchAttachmentToken(attID, nameThirdPartyApp, userID) {
     const obj = { attID, userID, nameThirdPartyApp };
     const queryParams = new URLSearchParams(obj).toString();
     const url = `/api/v1/third_party_apps/Token.json?${queryParams}`;

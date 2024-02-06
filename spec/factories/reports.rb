@@ -31,7 +31,8 @@ FactoryBot.define do
         tlc: true,
         observation: true,
         analysis: true,
-        literature: true }
+        literature: true,
+        variations: true }
     end
     objects do
       [

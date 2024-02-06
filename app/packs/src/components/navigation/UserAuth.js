@@ -1,8 +1,23 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
 import 'whatwg-fetch';
-import { Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Panel, Form, FormControl, FormGroup, ControlLabel, Col, Row } from 'react-bootstrap';
-import moment from 'moment';
+import {
+  Nav,
+  NavDropdown,
+  NavItem,
+  MenuItem,
+  Glyphicon,
+  Modal,
+  Button,
+  Table,
+  Panel,
+  Form,
+  FormControl,
+  FormGroup,
+  ControlLabel,
+  Col,
+  Row,
+} from 'react-bootstrap';
 import _ from 'lodash';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -14,6 +29,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/navigation/GroupElement';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -30,8 +46,8 @@ export default class UserAuth extends Component {
       showDeviceMetadataModal: false,
       device: {},
       deviceMetadata: {
-        dates: []
-      }
+        dates: [],
+      },
     };
 
     this.onChange = this.onChange.bind(this);
@@ -49,7 +65,6 @@ export default class UserAuth extends Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
-
   }
 
   componentDidMount() {
@@ -63,7 +78,7 @@ export default class UserAuth extends Component {
 
   onChange(state) {
     this.setState({
-      currentUser: state.currentUser
+      currentUser: state.currentUser,
     });
   }
 
@@ -72,35 +87,33 @@ export default class UserAuth extends Component {
   }
 
   promptTextCreator(label) {
-    return ("Share with \"" + label + "\"");
+    return `Share with "${label}"`;
   }
 
   handlefetchDeviceMetadataByDeviceId(deviceID) {
-    UsersFetcher.fetchDeviceMetadataByDeviceId(deviceID)
-      .then((result) => {
-        if (result.device_metadata) {
-          this.setState({
-            deviceMetadata: result.device_metadata
-          });
-        }
-      });
+    UsersFetcher.fetchDeviceMetadataByDeviceId(deviceID).then((result) => {
+      if (result.device_metadata) {
+        this.setState({
+          deviceMetadata: result.device_metadata,
+        });
+      }
+    });
   }
+
   // show modal
   handleShow() {
-    UsersFetcher.fetchCurrentGroup()
-      .then((result) => {
-        this.setState({
-          currentGroups: result.currentGroups,
-          showModal: true,
-          selectedUsers: null
-        });
+    UsersFetcher.fetchCurrentGroup().then((result) => {
+      this.setState({
+        currentGroups: result.currentGroups,
+        showModal: true,
+        selectedUsers: null,
       });
-    UsersFetcher.fetchCurrentDevices()
-      .then((result) => {
-        this.setState({
-          currentDevices: result.currentDevices
-        });
+    });
+    UsersFetcher.fetchCurrentDevices().then((result) => {
+      this.setState({
+        currentDevices: result.currentDevices,
       });
+    });
   }
 
   // hide modal
@@ -111,7 +124,7 @@ export default class UserAuth extends Component {
   handleDeviceMetadataModalShow(device) {
     this.setState({
       showDeviceMetadataModal: true,
-      device
+      device,
     });
     this.handlefetchDeviceMetadataByDeviceId(device.id);
   }
@@ -120,13 +133,13 @@ export default class UserAuth extends Component {
     this.setState({
       showDeviceMetadataModal: false,
       device: {},
-      deviceMetadata: {}
+      deviceMetadata: {},
     });
   }
 
   handleLabelShow() {
     this.setState({
-      showLabelModal: true
+      showLabelModal: true,
     });
   }
 
@@ -136,13 +149,12 @@ export default class UserAuth extends Component {
 
   // show modal Subscription
   handleSubscriptionShow() {
-    MessagesFetcher.fetchChannelWithUser()
-      .then((result) => {
-        this.setState({
-          showSubscription: true,
-          currentSubscriptions: result.channels
-        });
+    MessagesFetcher.fetchChannelWithUser().then((result) => {
+      this.setState({
+        showSubscription: true,
+        currentSubscriptions: result.channels,
       });
+    });
   }
 
   // hide modal Subscription
@@ -175,96 +187,127 @@ export default class UserAuth extends Component {
   subscribe(node) {
     const { currentSubscriptions } = this.state;
 
-    MessagesFetcher.subscribeChannel({ channel_id: node.id, subscribe: node.user_id == null })
-      .then((result) => {
-        if (result.error) {
-          // alert(result.error);
-          NotificationActions.add({
-            message: result.error,
-            level: 'error'
-          });
+    MessagesFetcher.subscribeChannel({
+      channel_id: node.id,
+      subscribe: node.user_id == null,
+    }).then((result) => {
+      if (result.error) {
+        // alert(result.error);
+        NotificationActions.add({
+          message: result.error,
+          level: 'error',
+        });
+      } else {
+        const actSubscription = _.filter(
+          this.state.currentSubscriptions,
+          (o) => o.id === result.channel_id
+        );
+        if (node.user_id != null) {
+          actSubscription[0].user_id = null;
         } else {
-          const actSubscription = _.filter(
-            this.state.currentSubscriptions,
-            o => o.id === result.channel_id
-          );
-          if (node.user_id != null) {
-            actSubscription[0].user_id = null;
-          } else {
-            actSubscription[0].user_id = result.user_id;
-          }
-          const idx = _.findIndex(this.state.currentSubscriptions, o => o.id === result.channel_id);
-          currentSubscriptions.splice(idx, 1, actSubscription[0]);
-          this.setState({ currentSubscriptions });
+          actSubscription[0].user_id = result.user_id;
         }
-      });
+        const idx = _.findIndex(
+          this.state.currentSubscriptions,
+          (o) => o.id === result.channel_id
+        );
+        currentSubscriptions.splice(idx, 1, actSubscription[0]);
+        this.setState({ currentSubscriptions });
+      }
+    });
   }
 
   // create new group
   // need to use the wording 'group_param' because of the definition of current api
   createGroup() {
     const {
-      groupFirstName, groupLastName, groupAbbreviation, currentUser, currentGroups
+      groupFirstName,
+      groupLastName,
+      groupAbbreviation,
+      currentUser,
+      currentGroups,
     } = this.state;
     const group_param = {
       first_name: groupFirstName,
       last_name: groupLastName,
       name_abbreviation: groupAbbreviation,
-      users: [currentUser.id]
+      users: [currentUser.id],
     };
 
-    UsersFetcher.createGroup({ group_param })
-      .then((result) => {
-        if (result.error) {
-          alert(result.error);
-        } else {
-          currentGroups.push(result.group);
-          this.setState({
-            currentGroups,
-          });
-        }
-      });
+    UsersFetcher.createGroup({ group_param }).then((result) => {
+      if (result.error) {
+        alert(result.error);
+      } else {
+        currentGroups.push(result.group);
+        this.setState({
+          currentGroups,
+        });
+      }
+    });
   }
 
   renderDeviceButtons(device) {
     return (
       <td>
-        <Button bsSize="xsmall" type="button" bsStyle="info" className="fa fa-laptop" onClick={() => this.handleDeviceMetadataModalShow(device)} />&nbsp;&nbsp;
+        <Button
+          bsSize="xsmall"
+          type="button"
+          bsStyle="info"
+          className="fa fa-laptop"
+          onClick={() => this.handleDeviceMetadataModalShow(device)}
+        />
+        &nbsp;&nbsp;
       </td>
     );
   }
 
   handleChange(currentGroups) {
-    this.setState({ currentGroups: currentGroups });
+    this.setState({ currentGroups });
   }
 
-  handleDeleteGroup = currentGroupId => {
-    const currentGroups = this.state.currentGroups.filter(cg => cg.id !== currentGroupId);
-    UsersFetcher.updateGroup({ id: currentGroupId, destroy_group: true })
+  handleDeleteGroup = (currentGroupId) => {
+    const currentGroups = this.state.currentGroups.filter(
+      (cg) => cg.id !== currentGroupId
+    );
+    UsersFetcher.updateGroup({ id: currentGroupId, destroy_group: true });
     this.setState({ currentGroups });
   };
 
   handleDeleteUser = (groupRec, userRec) => {
     let { currentGroups, currentUser } = this.state;
-    UsersFetcher.updateGroup({ id: groupRec.id, destroy_group: false, rm_users: [userRec.id] })
-      .then((result) => {
-        const findIdx = _.findIndex(result.group.users, function (o) { return o.id == currentUser.id; });
-        const findAdmin = _.findIndex(result.group.admins, function (o) { return o.id == currentUser.id; });
-        if (findIdx == -1 && findAdmin == -1) {
-          currentGroups = _.filter(this.state.currentGroups, o => o.id != result.group.id);
-        } else {
-          const idx = _.findIndex(currentGroups, function (o) { return o.id == result.group.id; });
-          currentGroups.splice(idx, 1, result.group);
-        }
-        this.setState({ currentGroups: currentGroups });
-      });
-  }
+    UsersFetcher.updateGroup({
+      id: groupRec.id,
+      destroy_group: false,
+      rm_users: [userRec.id],
+    }).then((result) => {
+      const findIdx = _.findIndex(
+        result.group.users,
+        (o) => o.id == currentUser.id
+      );
+      const findAdmin = _.findIndex(
+        result.group.admins,
+        (o) => o.id == currentUser.id
+      );
+      if (findIdx == -1 && findAdmin == -1) {
+        currentGroups = _.filter(
+          this.state.currentGroups,
+          (o) => o.id != result.group.id
+        );
+      } else {
+        const idx = _.findIndex(currentGroups, (o) => o.id == result.group.id);
+        currentGroups.splice(idx, 1, result.group);
+      }
+      this.setState({ currentGroups });
+    });
+  };
 
   // render modal
   renderModal() {
     const { showModal, currentGroups, currentDevices } = this.state;
 
     const modalStyle = {
+      justifyContent: 'center',
+      alignItems: 'center',
       overflowY: 'auto',
     };
 
@@ -274,27 +317,39 @@ export default class UserAuth extends Component {
     if (Object.keys(currentGroups).length <= 0) {
       tBodyGroups = '';
     } else {
-      tBodyGroups = currentGroups ? currentGroups.map(g => (
-        <GroupElement groupElement={g} key={g.id} currentState={this.state}
-          currentGroup={this.state.currentGroups}
-          onDeleteGroup={this.handleDeleteGroup}
-          onDeleteUser={this.handleDeleteUser}
-          onChangeData={this.handleChange}></GroupElement>
-      )) : '';
+      tBodyGroups = currentGroups
+        ? currentGroups.map((g) => (
+          <GroupElement
+            groupElement={g}
+            key={g.id}
+            currentState={this.state}
+            currentGroup={this.state.currentGroups}
+            onDeleteGroup={this.handleDeleteGroup}
+            onDeleteUser={this.handleDeleteUser}
+            onChangeData={this.handleChange}
+          />
+        ))
+        : '';
     }
 
     if (Object.keys(currentDevices).length <= 0) {
       tBodyDevices = '';
     } else {
-      tBodyDevices = currentDevices ? currentDevices.map(g => (
-        <tbody key={`tbody_${g.id}`}>
-          <tr key={`row_${g.id}`} id={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-            <td>{g.name}</td>
-            <td>{g.name_abbreviation}</td>
-            {this.renderDeviceButtons(g)}
-          </tr>
-        </tbody>
-      )) : '';
+      tBodyDevices = currentDevices
+        ? currentDevices.map((g) => (
+          <tbody key={`tbody_${g.id}`}>
+            <tr
+              key={`row_${g.id}`}
+              id={`row_${g.id}`}
+              style={{ fontWeight: 'bold' }}
+            >
+              <td>{g.name}</td>
+              <td>{g.name_abbreviation}</td>
+              {this.renderDeviceButtons(g)}
+            </tr>
+          </tbody>
+        ))
+        : '';
     }
 
     return (
@@ -302,6 +357,12 @@ export default class UserAuth extends Component {
         show={showModal}
         dialogClassName="importChemDrawModal"
         onHide={this.handleClose}
+        style={{
+          maxWidth: '80%',
+          maxHeight: '80%',
+          margin: 'auto',
+          overflowY: 'auto',
+        }}
       >
         <Modal.Header closeButton>
           <Modal.Title>My Groups & Devices</Modal.Title>
@@ -310,16 +371,18 @@ export default class UserAuth extends Component {
           <div>
             <Panel bsStyle="success">
               <Panel.Heading>
-                <Panel.Title>
-                  Create new group
-                </Panel.Title>
+                <Panel.Title>Create new group</Panel.Title>
               </Panel.Heading>
               <Panel.Body>
                 <Form inline>
                   <FormGroup controlId="formInlineFname">
-                    <ControlLabel>Name</ControlLabel>&nbsp;&nbsp;
+                    <ControlLabel>Name:</ControlLabel>
+                    &nbsp;&nbsp;
                     <FormControl
                       type="text"
+                      style={{
+                        marginRight: '5px',
+                      }}
                       placeholder="eg: AK"
                       onChange={this.handleInputChange.bind(this, 'first')}
                     />
@@ -328,18 +391,36 @@ export default class UserAuth extends Component {
                     <FormControl
                       type="text"
                       placeholder="J. Moriarty"
+                      style={{
+                        marginRight: '20px',
+                      }}
                       onChange={this.handleInputChange.bind(this, 'last')}
                     />
-                  </FormGroup>&nbsp;&nbsp;
+                  </FormGroup>
+                  &nbsp;&nbsp;
                   <FormGroup controlId="formInlineNameAbbr">
-                    <ControlLabel>Name abbreviation</ControlLabel>&nbsp;&nbsp;
+                    <ControlLabel>Name abbreviation:</ControlLabel>
+                    &nbsp;&nbsp;
                     <FormControl
                       type="text"
                       placeholder="AK-JM"
+                      style={{
+                        marginRight: '10px',
+                      }}
                       onChange={this.handleInputChange.bind(this, 'abbr')}
                     />
-                  </FormGroup>&nbsp;&nbsp;
-                  <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
+                  </FormGroup>
+                  &nbsp;&nbsp;
+                  <Button
+                    bsSize="small"
+                    bsStyle="success"
+                    onClick={() => this.createGroup()}
+                    style={{
+                      height: '32px',
+                      fontWeight: 'Bold',
+                      fontSize: '12px',
+                    }}
+                  >
                     Create new group
                   </Button>
                 </Form>
@@ -347,9 +428,7 @@ export default class UserAuth extends Component {
             </Panel>
             <Panel bsStyle="info">
               <Panel.Heading>
-                <Panel.Title>
-                  My Groups
-                </Panel.Title>
+                <Panel.Title>My Groups</Panel.Title>
               </Panel.Heading>
               <Panel.Body>
                 <Table responsive condensed hover>
@@ -367,9 +446,7 @@ export default class UserAuth extends Component {
             </Panel>
             <Panel bsStyle="info">
               <Panel.Heading>
-                <Panel.Title>
-                  My Devices
-                </Panel.Title>
+                <Panel.Title>My Devices</Panel.Title>
               </Panel.Heading>
               <Panel.Body>
                 <Table responsive condensed hover>
@@ -393,7 +470,7 @@ export default class UserAuth extends Component {
   // render modal
   renderSubscribeModal() {
     if (this.state.showSubscription) {
-      const tbody = this.state.currentSubscriptions.map(g => (
+      const tbody = this.state.currentSubscriptions.map((g) => (
         <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
           <td width="10%" style={{ border: 'none' }}>
             <Button
@@ -404,7 +481,9 @@ export default class UserAuth extends Component {
               {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
             </Button>
           </td>
-          <td width="90%" style={{ border: 'none' }}><div>{g.subject}</div></td>
+          <td width="90%" style={{ border: 'none' }}>
+            <div>{g.subject}</div>
+          </td>
         </tr>
       ));
 
@@ -419,16 +498,14 @@ export default class UserAuth extends Component {
           <Modal.Body style={{ overflow: 'auto' }}>
             <div>
               <Table>
-                <tbody>
-                  {tbody}
-                </tbody>
+                <tbody>{tbody}</tbody>
               </Table>
             </div>
           </Modal.Body>
         </Modal>
       );
     }
-    return (<div />);
+    return <div />;
   }
 
   renderDeviceMetadataModal() {
@@ -440,19 +517,22 @@ export default class UserAuth extends Component {
         onHide={this.handleDeviceMetadataModalClose}
       >
         <Modal.Header closeButton>
-          <Modal.Title>{device.name} Metadata</Modal.Title>
+          <Modal.Title>
+            {device.name}
+            {' '}
+            Metadata
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Panel bsStyle="success">
             <Panel.Heading>
-              <Panel.Title>
-                {title}
-              </Panel.Title>
+              <Panel.Title>{title}</Panel.Title>
             </Panel.Heading>
             <Panel.Body>
               <Form>
                 <FormGroup controlId="metadataFormDOI">
-                  <ControlLabel>DOI</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>DOI</ControlLabel>
+                  &nbsp;&nbsp;
                   <FormControl
                     type="text"
                     defaultValue={deviceMetadata.doi}
@@ -486,7 +566,8 @@ export default class UserAuth extends Component {
                   />
                 </FormGroup>
                 <FormGroup controlId="metadataFormName">
-                  <ControlLabel>Name</ControlLabel>&nbsp;&nbsp;
+                  <ControlLabel>Name</ControlLabel>
+                  &nbsp;&nbsp;
                   <FormControl
                     type="text"
                     defaultValue={deviceMetadata.name}
@@ -510,36 +591,43 @@ export default class UserAuth extends Component {
                   />
                 </FormGroup>
 
-                {deviceMetadata.dates && deviceMetadata.dates.map((dateItem, index) => (
-                  <div key={index}>
-                    <Col smOffset={0} sm={6}>
-                      <FormGroup>
-                        <ControlLabel>Date</ControlLabel>
-                        <FormControl
-                          type="text"
-                          defaultValue={dateItem.date}
-                          readonly="true"
-                        />
-                      </FormGroup>
-                    </Col>
-                    <Col smOffset={0} sm={6}>
-                      <FormGroup>
-                        <ControlLabel>DateType</ControlLabel>
-                        <FormControl
-                          type="text"
-                          defaultValue={dateItem.dateType}
-                          readonly="true"
-                        />
-                      </FormGroup>
-                    </Col>
-                  </div>
-                ))}
+                {deviceMetadata.dates
+                  && deviceMetadata.dates.map((dateItem, index) => (
+                    <div key={index}>
+                      <Col smOffset={0} sm={6}>
+                        <FormGroup>
+                          <ControlLabel>Date</ControlLabel>
+                          <FormControl
+                            type="text"
+                            defaultValue={dateItem.date}
+                            readonly="true"
+                          />
+                        </FormGroup>
+                      </Col>
+                      <Col smOffset={0} sm={6}>
+                        <FormGroup>
+                          <ControlLabel>DateType</ControlLabel>
+                          <FormControl
+                            type="text"
+                            defaultValue={dateItem.dateType}
+                            readonly="true"
+                          />
+                        </FormGroup>
+                      </Col>
+                    </div>
+                  ))}
 
                 <Row>
                   <Col smOffset={0} sm={12}>
-                    <p class="text-right">
-                      DataCiteVersion: {deviceMetadata.data_cite_version}<br />
-                      DataCiteUpdatedAt: {moment(deviceMetadata.data_cite_updated_at).format('YYYY-MM-DD HH:mm')}<br />
+                    <p className="text-right">
+                      DataCiteVersion:
+                      {' '}
+                      {deviceMetadata.data_cite_version}
+                      <br />
+                      DataCiteUpdatedAt:
+                      {' '}
+                      {formatDate(deviceMetadata.data_cite_updated_at)}
+                      <br />
                     </p>
                   </Col>
                 </Row>
@@ -553,43 +641,67 @@ export default class UserAuth extends Component {
 
   render() {
     const templatesLink = (
-      <MenuItem eventKey="2" href="/ketcher/common_templates">Template Management</MenuItem>
+      <MenuItem eventKey="2" href="/ketcher/common_templates">
+        Template Management
+      </MenuItem>
     );
     const moderatorLink = (
-      <MenuItem eventKey="6" href="/molecule_moderator">Molecule Moderator</MenuItem>
+      <MenuItem eventKey="6" href="/molecule_moderator">
+        Molecule Moderator
+      </MenuItem>
     );
 
-    let userLabel = (<span />);
+    let userLabel = <span />;
     if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
-      userLabel = (<MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>);
-    }
-    let converterBtn = (<span />);
-    if (UIStore.getState().hasConverter === true) {
-      converterBtn = (<MenuItem eventKey="12" href="/converter_admin">Converter Profile</MenuItem>);
+      userLabel = <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>;
     }
 
     return (
       <div>
         <Nav navbar pullRight>
-          <NavDropdown title={`${this.state.currentUser.name}`} id="bg-nested-dropdown">
-            <MenuItem eventKey="1" href="/pages/settings" >Account &amp; Profile</MenuItem>
-            {this.state.currentUser.is_templates_moderator ? templatesLink : null}
-            <MenuItem eventKey="3" href="/users/edit" >Change Password</MenuItem>
-            <MenuItem eventKey="5" href="/pages/affiliations" >My Affiliations</MenuItem>
+          <NavDropdown
+            title={`${this.state.currentUser.name}`}
+            id="bg-nested-dropdown"
+          >
+            <MenuItem eventKey="1" href="/pages/settings">
+              Account &amp; Profile
+            </MenuItem>
+            {this.state.currentUser.is_templates_moderator
+              ? templatesLink
+              : null}
+            <MenuItem eventKey="3" href="/users/edit">
+              Change Password
+            </MenuItem>
+            <MenuItem eventKey="5" href="/pages/affiliations">
+              My Affiliations
+            </MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
             {userLabel}
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            {converterBtn}
-            <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem>
+            <MenuItem eventKey="7" href="/command_n_control">
+              My Devices
+            </MenuItem>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
+            <MenuItem eventKey="12" href="/converter_admin">
+              Converter Profile
+            </MenuItem>
+            <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
           </NavDropdown>
-          <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
+          <NavItem
+            onClick={() => this.logout()}
+            style={{ marginRight: '5px' }}
+            className=""
+            title="Log out"
+          >
             <Glyphicon glyph="log-out" />
           </NavItem>
         </Nav>
         {this.renderModal()}
-        <UserLabelModal showLabelModal={this.state.showLabelModal} onHide={() => this.handleLabelClose()} />
+        <UserLabelModal
+          showLabelModal={this.state.showLabelModal}
+          onHide={() => this.handleLabelClose()}
+        />
         {this.renderSubscribeModal()}
         {this.renderDeviceMetadataModal()}
       </div>
@@ -600,4 +712,4 @@ export default class UserAuth extends Component {
 UserAuth.propTypes = {
   currentUser: PropTypes.object,
   selectUsers: PropTypes.bool,
-}
+};

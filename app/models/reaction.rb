@@ -41,6 +41,7 @@
 #  index_reactions_on_role            (role)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -49,7 +50,7 @@ class Reaction < ApplicationRecord
   include ElementCodes
   include Taggable
   include ReactionRinchi
-  include Segmentable
+  include Labimotion::Segmentable
 
   serialize :description, Hash
   serialize :observation, Hash
@@ -88,15 +89,16 @@ class Reaction < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_rinchi_string, ->(query) { where('rinchi_string ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
-  scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
-  scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
-  scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
+  scope :by_material_ids, ->(ids) { joins(:starting_materials).where(samples: { id: ids }) }
+  scope :by_solvent_ids, ->(ids) { joins(:solvents).where(samples: { id: ids }) }
+  scope :by_reactant_ids, ->(ids) { joins(:reactants).where(samples: { id: ids }) }
+  scope :by_product_ids,  ->(ids) { joins(:products).where(samples: { id: ids }) }
   scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where(reactions_samples: { sample_id: ids }) }
+  scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
-  scope :includes_for_list_display, -> { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag, :comments) }
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
@@ -137,6 +139,7 @@ class Reaction < ApplicationRecord
   has_many :sync_collections_users, through: :collections
 
   has_many :private_notes, as: :noteable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, presence: true
@@ -145,6 +148,8 @@ class Reaction < ApplicationRecord
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
+  before_save :description_to_plain_text
+  before_save :observation_to_plain_text
   before_create :auto_set_short_label
 
   after_create :update_counter
@@ -286,4 +291,17 @@ class Reaction < ApplicationRecord
     Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
     Loofah.scrub_fragment(value, :strip).to_s
   end
+
+  def description_to_plain_text
+    return unless description_changed?
+
+    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
+  end
+
+  def observation_to_plain_text
+    return unless observation_changed?
+
+    self.plain_text_observation = Chemotion::QuillToPlainText.new.convert(observation)
+  end
 end
+# rubocop:enable Metrics/ClassLength

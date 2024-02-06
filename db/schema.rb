@@ -10,11 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_03_090936) do
+ActiveRecord::Schema.define(version: 2024_01_29_134421) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "pgcrypto"
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
 
@@ -70,6 +71,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "aasm_state"
     t.bigint "filesize"
     t.jsonb "attachment_data"
+    t.integer "con_state"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -108,6 +110,42 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["calendar_entry_id"], name: "index_calendar_entry_notifications_on_calendar_entry_id"
     t.index ["user_id"], name: "index_calendar_entry_notifications_on_user_id"
+  end
+
+  create_table "cellline_materials", force: :cascade do |t|
+    t.string "name"
+    t.string "source"
+    t.string "cell_type"
+    t.jsonb "organism"
+    t.jsonb "tissue"
+    t.jsonb "disease"
+    t.string "growth_medium"
+    t.string "biosafety_level"
+    t.string "variant"
+    t.string "mutation"
+    t.float "optimal_growth_temp"
+    t.string "cryo_pres_medium"
+    t.string "gender"
+    t.string "description"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "cellline_samples", force: :cascade do |t|
+    t.bigint "cellline_material_id"
+    t.bigint "cellline_sample_id"
+    t.bigint "amount"
+    t.string "unit"
+    t.integer "passage"
+    t.string "contamination"
+    t.string "name"
+    t.string "description"
+    t.bigint "user_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "short_label"
   end
 
   create_table "channels", id: :serial, force: :cascade do |t|
@@ -153,9 +191,19 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.boolean "is_synchronized", default: false, null: false
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
+    t.jsonb "tabs_segment", default: {}
+    t.integer "celllinesample_detail_level", default: 10
+    t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
+    t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
+  end
+
+  create_table "collections_celllines", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "cellline_sample_id"
+    t.datetime "deleted_at"
   end
 
   create_table "collections_elements", id: :serial, force: :cascade do |t|
@@ -203,6 +251,18 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
   end
 
+  create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "collection_id"
+    t.uuid "vessel_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_vessels_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_vessels_on_deleted_at"
+    t.index ["vessel_id", "collection_id"], name: "index_collections_vessels_on_vessel_id_and_collection_id", unique: true
+    t.index ["vessel_id"], name: "index_collections_vessels_on_vessel_id"
+  end
+
   create_table "collections_wellplates", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "wellplate_id"
@@ -216,6 +276,22 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "error_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.string "content"
+    t.integer "created_by", null: false
+    t.string "section"
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
+    t.integer "commentable_id"
+    t.string "commentable_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
+    t.index ["created_by"], name: "index_comments_on_user"
+    t.index ["section"], name: "index_comments_on_section"
   end
 
   create_table "computed_props", id: :serial, force: :cascade do |t|
@@ -260,6 +336,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
+    t.text "plain_text_content"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
 
@@ -277,6 +354,14 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
+    t.string "identifier"
+    t.datetime "sync_time"
+    t.integer "updated_by"
+    t.integer "released_by"
+    t.integer "sync_by"
+    t.jsonb "admin_ids", default: {}
+    t.jsonb "user_ids", default: {}
+    t.string "version"
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -289,6 +374,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "version"
     t.index ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id"
   end
 
@@ -302,6 +388,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "uuid"
     t.string "klass_uuid"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
   end
 
   create_table "datasets_revisions", id: :serial, force: :cascade do |t|
@@ -313,6 +400,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
     t.index ["dataset_id"], name: "index_datasets_revisions_on_dataset_id"
   end
 
@@ -377,6 +465,14 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
+    t.string "identifier"
+    t.datetime "sync_time"
+    t.integer "updated_by"
+    t.integer "released_by"
+    t.integer "sync_by"
+    t.jsonb "admin_ids", default: {}
+    t.jsonb "user_ids", default: {}
+    t.string "version"
   end
 
   create_table "element_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -389,6 +485,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "version"
     t.index ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id"
   end
 
@@ -422,6 +519,18 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "deleted_at"
     t.string "uuid"
     t.string "klass_uuid"
+    t.jsonb "properties_release"
+  end
+
+  create_table "elements_elements", force: :cascade do |t|
+    t.integer "element_id"
+    t.integer "parent_id"
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.index ["element_id"], name: "index_elements_elements_on_element_id"
+    t.index ["parent_id"], name: "index_elements_elements_on_parent_id"
   end
 
   create_table "elements_revisions", id: :serial, force: :cascade do |t|
@@ -434,6 +543,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
     t.index ["element_id"], name: "index_elements_revisions_on_element_id"
   end
 
@@ -486,6 +596,15 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "deleted_at"
+  end
+
+  create_table "inventories", force: :cascade do |t|
+    t.string "prefix", null: false
+    t.string "name", null: false
+    t.integer "counter", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
@@ -804,9 +923,14 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
+    t.jsonb "variations", default: []
+    t.text "plain_text_description"
+    t.text "plain_text_observation"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
+    t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
     t.index ["role"], name: "index_reactions_on_role"
+    t.index ["rxno"], name: "index_reactions_on_rxno", order: :desc
   end
 
   create_table "reactions_samples", id: :serial, force: :cascade do |t|
@@ -1006,6 +1130,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
+    t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -1046,6 +1171,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.jsonb "component_graph_data", default: {}
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_screens_on_deleted_at"
   end
 
@@ -1072,6 +1198,14 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.string "uuid"
     t.jsonb "properties_release", default: {}
     t.datetime "released_at"
+    t.string "identifier"
+    t.datetime "sync_time"
+    t.integer "updated_by"
+    t.integer "released_by"
+    t.integer "sync_by"
+    t.jsonb "admin_ids", default: {}
+    t.jsonb "user_ids", default: {}
+    t.string "version"
   end
 
   create_table "segment_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -1084,6 +1218,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.string "version"
     t.index ["segment_klass_id"], name: "index_segment_klasses_revisions_on_segment_klass_id"
   end
 
@@ -1098,6 +1233,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "deleted_at"
     t.string "uuid"
     t.string "klass_uuid"
+    t.jsonb "properties_release"
   end
 
   create_table "segments_revisions", id: :serial, force: :cascade do |t|
@@ -1109,6 +1245,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
+    t.jsonb "properties_release"
     t.index ["segment_id"], name: "index_segments_revisions_on_segment_id"
   end
 
@@ -1135,6 +1272,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer "element_detail_level", default: 10
+    t.integer "celllinesample_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
@@ -1151,6 +1289,14 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
+  end
+
+  create_table "third_party_apps", force: :cascade do |t|
+    t.string "url"
+    t.string "name", limit: 100, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
@@ -1209,6 +1355,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.boolean "account_active"
     t.integer "matrix", default: 0
     t.jsonb "providers"
+    t.jsonb "inventory_labels", default: {}
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -1236,6 +1383,38 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.index ["user_id"], name: "index_users_groups_on_user_id"
   end
 
+  create_table "vessel_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "details"
+    t.string "material_details"
+    t.string "material_type"
+    t.string "vessel_type"
+    t.float "volume_amount"
+    t.string "volume_unit"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.float "weight_amount"
+    t.string "weight_unit"
+    t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
+  end
+
+  create_table "vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "vessel_template_id"
+    t.bigint "user_id"
+    t.string "name"
+    t.string "description"
+    t.string "short_label"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.string "bar_code"
+    t.string "qr_code"
+    t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
+    t.index ["user_id"], name: "index_vessels_on_user_id"
+    t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
+  end
+
   create_table "wellplates", id: :serial, force: :cascade do |t|
     t.string "name"
     t.integer "size"
@@ -1245,6 +1424,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.datetime "deleted_at"
     t.string "short_label"
     t.jsonb "readout_titles", default: ["Readout"]
+    t.text "plain_text_description"
     t.index ["deleted_at"], name: "index_wellplates_on_deleted_at"
   end
 
@@ -1265,6 +1445,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "collections", "inventories"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
@@ -1366,6 +1547,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
             )
             and sync_cols.user_id in (select user_ids(in_user_id))
         ) all_cols;
+
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
@@ -1391,6 +1573,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
       begin
       	select channel_type into i_channel_type
       	from channels where id = in_channel_id;
+
         case i_channel_type
       	when 9 then
       	  insert into notifications (message_id, user_id, created_at,updated_at)
@@ -1468,6 +1651,7 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
       	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
       	end if;
+
       	if (TG_OP='UPDATE') then
       	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
@@ -1486,8 +1670,8 @@ ActiveRecord::Schema.define(version: 2023_05_03_090936) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL

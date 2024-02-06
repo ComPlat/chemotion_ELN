@@ -15,6 +15,11 @@
       "command": "RAILS_ENV=test $(which bundle) exec rails server -b 0.0.0.0 -p 3000"
     },
     {
+      "label": "Rails - delayed job worker",
+      "type": "shell",
+      "command": "RAILS_ENV=development $(which bundle) exec rake jobs:work"
+    },
+    {
       "label": "RSpec - all",
       "type": "shell",
       "command": "RAILS_ENV=test $(which bundle) exec rspec"

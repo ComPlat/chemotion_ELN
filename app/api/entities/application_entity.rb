@@ -5,6 +5,7 @@ module Entities
     CUSTOM_ENTITY_OPTIONS = %i[anonymize_below anonymize_with].freeze
 
     format_with(:eln_timestamp) do |datetime|
+      # datetime.present? ? I18n.l(datetime, format: :eln_iso8601) : nil
       datetime.present? ? I18n.l(datetime, format: :eln_timestamp) : nil
     end
 

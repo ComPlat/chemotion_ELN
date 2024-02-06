@@ -13,7 +13,41 @@ import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
+import {
+  removeObsoleteMaterialsFromVariations,
+  addMissingMaterialsToVariations,
+  updateYields,
+  updateEquivalents,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+
 const TemperatureUnit = ['°C', '°F', 'K'];
+
+const TemperatureDefault = {
+  valueUnit: '°C',
+  userText: '',
+  data: []
+};
+
+export const convertTemperature = (temperature, fromUnit, toUnit) => {
+  if (fromUnit === toUnit) {
+    return temperature;
+  }
+  const conversionTable = {
+    'K': {
+      '°C': (t) => parseFloat(t) - 273.15,
+      '°F': (t) => (parseFloat(t) * 9 / 5) - 459.67
+    },
+    '°C': {
+      'K': (t) => parseFloat(t) + 273.15,
+      '°F': (t) => (parseFloat(t) * 1.8) + 32
+    },
+    '°F': {
+      'K': (t) => (parseFloat(t) + 459.67) * 5 / 9,
+      '°C': (t) => (parseFloat(t) - 32) / 1.8
+    }
+  };
+  return conversionTable[fromUnit][toUnit](temperature);
+};
 
 const MomentUnit = {
   'Week(s)': 'weeks',
@@ -46,7 +80,7 @@ const DurationDefault = {
   memUnit: 'Hour(s)'
 };
 
-const convertDuration = (value, unit, newUnit) => {
+export const convertDuration = (value, unit, newUnit) => {
   const d = moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
     .as(MomentUnit[newUnit]);
   return round(d, 1).toString();
@@ -74,12 +108,6 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
 
 export default class Reaction extends Element {
   static buildEmpty(collection_id) {
-    const temperatureDefault = {
-      'valueUnit': '°C',
-      'userText': '',
-      'data': []
-    }
-
     const reaction = new Reaction({
       collection_id,
       container: Container.init(),
@@ -89,6 +117,7 @@ export default class Reaction extends Element {
       duration: '',
       durationDisplay: DurationDefault,
       literatures: {},
+      research_plans: {},
       name: '',
       observation: Reaction.quillDefault(),
       products: [],
@@ -101,14 +130,15 @@ export default class Reaction extends Element {
       solvents: [],
       status: '',
       starting_materials: [],
-      temperature: temperatureDefault,
+      temperature: TemperatureDefault,
       timestamp_start: '',
       timestamp_stop: '',
       tlc_description: '',
       tlc_solvents: '',
       type: 'reaction',
       can_update: true,
-      can_copy: false
+      can_copy: false,
+      variations: []
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -149,6 +179,7 @@ export default class Reaction extends Element {
       durationCalc: this.durationCalc(),
       id: this.id,
       literatures: this.literatures,
+      research_plans: this.research_plans,
       materials: {
         starting_materials: this.starting_materials.map(s => s.serializeMaterial()),
         reactants: this.reactants.map(s => s.serializeMaterial()),
@@ -172,8 +203,72 @@ export default class Reaction extends Element {
       temperature: this.temperature,
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
-      segments: this.segments.map(s => s.serialize())
+      segments: this.segments.map(s => s.serialize()),
+      variations: this.variations
     });
+  }
+
+  set variations(variations) {
+    // variations data structure (also see Entities::ReactionVariationEntity):
+    // [
+    //   {
+    //     "id": <number>,
+    //     "properties": {
+    //         "temperature": {"value": <number>, "unit": <string>},
+    //         "duration": {"value": <number>, "unit": <string>}
+    //     },
+    //     "startingMaterials": {
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
+    //     },
+    //     "reactants": {
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
+    //     },
+    //     "products": {
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
+    //     },
+    //     "solvents": {
+    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+    //         ...
+    //     },
+    //   },
+    //   {
+    //     "id": "<number>",
+    //     ...
+    //   },
+    //   ...
+    // ]
+    if (!Array.isArray(variations) || !variations.length) {
+      this._variations = [];
+    } else {
+      const currentMaterials = {
+        startingMaterials: this.starting_materials,
+        reactants: this.reactants,
+        products: this.products,
+        solvents: this.solvents
+      };
+      // Keep set of materials up-to-date. Materials could have been added or removed in the scheme tab
+      // (of the reaction detail modal); these changes need to be reflected in the variations.
+      let updatedVariations = removeObsoleteMaterialsFromVariations(variations, currentMaterials);
+      updatedVariations = addMissingMaterialsToVariations(updatedVariations, currentMaterials);
+      // The products' yields need to be updated, since the products' amounts could have been edited in
+      // the variations tab (of the reaction detail modal).
+      updatedVariations = updateYields(updatedVariations, this.hasPolymers());
+      // A potential change in the reference material's amount needs to be reflected in the remaining materials' equivalents.
+      updatedVariations = updateEquivalents(updatedVariations);
+
+      this._variations = updatedVariations;
+    }
+  }
+
+  get variations() {
+    return this._variations;
   }
 
   // Reaction Duration
@@ -299,60 +394,22 @@ export default class Reaction extends Element {
   }
 
   convertTemperature(newUnit) {
-    let temperature = this._temperature
-    let oldUnit = temperature.valueUnit
-    temperature.valueUnit = newUnit
-
-    let convertFunc
-    switch (oldUnit) {
-      case "K":
-        convertFunc = this.convertFromKelvin
-        break
-      case "°F":
-        convertFunc = this.convertFromFarenheit
-        break
-      default:
-        convertFunc = this.convertFromCelcius
-        break
-    }
+    const temperature = this._temperature
+    const oldUnit = temperature.valueUnit;
+    temperature.valueUnit = newUnit;
 
     // If userText is number only, treat as normal temperature value
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
-      temperature.userText =
-        convertFunc(newUnit, temperature.userText).toFixed(2)
+      temperature.userText = convertTemperature(temperature.userText, oldUnit, newUnit).toFixed(2);
 
-      return temperature
+      return temperature;
     }
 
-    temperature.data.forEach(function (data, index, theArray) {
-      theArray[index].value = convertFunc(newUnit, data.value).toFixed(2)
-    })
+    temperature.data.forEach((data, index, theArray) => {
+      theArray[index].value = convertTemperature(data.value, oldUnit, newUnit).toFixed(2);
+    });
 
-    return temperature
-  }
-
-  convertFromKelvin(unit, temperature) {
-    if (unit == "°C") {
-      return (parseFloat(temperature) - 273.15)
-    } else { // Farenheit
-      return ((parseFloat(temperature) * 9 / 5) - 459.67)
-    }
-  }
-
-  convertFromFarenheit(unit, temperature) {
-    if (unit == "°C") {
-      return ((parseFloat(temperature) - 32) / 1.8)
-    } else { // Kelvin
-      return ((parseFloat(temperature) + 459.67) * 5 / 9)
-    }
-  }
-
-  convertFromCelcius(unit, temperature) {
-    if (unit == "°F") {
-      return ((parseFloat(temperature) * 1.8) + 32)
-    } else { // Kelvin
-      return (parseFloat(temperature) + 273.15)
-    }
+    return temperature;
   }
 
   get short_label() {
@@ -446,9 +503,11 @@ export default class Reaction extends Element {
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id) {
+    const target = Segment.buildCopy(reaction.segments);
     const params = {
       collection_id,
       role: 'parts',
+      segments: target,
       timestamp_start: '',
       timestamp_stop: '',
       rf_value: 0.00,
@@ -748,6 +807,10 @@ export default class Reaction extends Element {
     });
   }
 
+  getReferenceMaterial() {
+    return this.referenceMaterial;
+  }
+
   updateMaterial(material, refreshCoefficient) {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
@@ -806,16 +869,24 @@ export default class Reaction extends Element {
     return this._literatures || {};
   }
 
+  get research_plans() {
+      return this._research_plans || {};
+    }
+
   set literatures(literatures) {
     this._literatures = literatures;
+  }
+
+  set research_plans(research_plans) {
+    this._research_plans = research_plans;
   }
 
   get totalVolume() {
     let totalVolume = 0.0;
     const materials = [...this.starting_materials,
-    ...this.reactants,
-    ...this.products,
-    ...this.solvents];
+      ...this.reactants,
+      ...this.products,
+      ...this.solvents];
     materials.map(m => totalVolume += m.amount_l);
     return totalVolume;
   }

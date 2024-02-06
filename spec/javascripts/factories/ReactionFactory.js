@@ -17,14 +17,14 @@ export default class ReactionFactory {
     constructor() {
         this.factory = factory;
 
-        this.factory.define("water+water=>water+water", Reaction, async () => {
-            const startingMaterial_1 = await SampleFactory.build("water_100g")
+        this.factory.define("ReactionFactory.water+water=>water+water", Reaction, async () => {
+            const startingMaterial_1 = await SampleFactory.build("SampleFactory.water_100g")
             startingMaterial_1.coefficient = 1;
-            const startingMaterial_2 = await SampleFactory.build("water_100g")
+            const startingMaterial_2 = await SampleFactory.build("SampleFactory.water_100g")
             startingMaterial_1.coefficient = 5;
-            const product_1 = await SampleFactory.build("water_100g")
+            const product_1 = await SampleFactory.build("SampleFactory.water_100g")
             product_1.coefficient = 2;
-            const product_2 = await SampleFactory.build("water_100g")
+            const product_2 = await SampleFactory.build("SampleFactory.water_100g")
             product_2.coefficient = 4;
 
             const reaction = Reaction.buildEmpty();

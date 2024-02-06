@@ -21,7 +21,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7.7'
+          ruby-version: '3.3.0'
 
       - name: install linting dependencies
         # IMPORTANT: install rubocop first for pinning to take effect (`gem` doesn't resolve dependencies but simply installs gems in order)
@@ -49,7 +49,7 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:v1.6.0-1
+    container: complat/chemotion_eln_runner:main
 
     services:
       postgres:

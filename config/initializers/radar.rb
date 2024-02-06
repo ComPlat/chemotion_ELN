@@ -16,7 +16,6 @@ begin
     config.radar.softwareVersion = radar_config[:softwareVersion]
   end
 rescue StandardError => e
-  puts e.message
   Rails.application.configure do
     config.radar = nil
   end

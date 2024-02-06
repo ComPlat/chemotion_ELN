@@ -9,6 +9,7 @@ import { parseBase64ToArrayBuffer } from 'src/utilities/FetcherHelper';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
+import { cleaningNMRiumData } from 'src/utilities/SpectraHelper';
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
@@ -17,6 +18,7 @@ export default class NMRiumDisplayer extends React.Component {
     this.state = {
       ...SpectraStore.getState(),
       nmriumData: null,
+      is2D: false,
     };
 
     this.iframeRef = React.createRef();
@@ -89,6 +91,11 @@ export default class NMRiumDisplayer extends React.Component {
       return;
     }
 
+    const is2DNMR = (data) => {
+      const spectra = data?.spectra || [];
+      return spectra.some((spc) => spc.info?.dimension === 2);
+    };
+    
     if (event.origin === nmriumOrigin && event.data) {
       const eventData = event.data;
       const eventDataType = eventData.type;
@@ -96,17 +103,22 @@ export default class NMRiumDisplayer extends React.Component {
       if (eventDataType === 'nmr-wrapper:data-change') {
         const nmrWrapperActionType = eventData.data.actionType;
         if (nmrWrapperActionType !== '') {
-          const nmriumData = (eventData.data?.state || eventData.data) || null;
-          
+          let nmriumData = (eventData.data?.state || eventData.data) || null;
+          nmriumData = cleaningNMRiumData(nmriumData);
           if (!nmriumData) {
             return;
           }
-          
           const { version } = nmriumData;
           if (version > 3) {
-            this.setState({ nmriumData: nmriumData.data });
+            const is2D = is2DNMR(nmriumData.data);
+            if (is2D) {
+              this.setState({ nmriumData, is2D });
+            } else {
+              this.setState({ nmriumData: nmriumData.data, is2D });
+            }
           } else {
-            this.setState({ nmriumData });
+            const is2D = is2DNMR(nmriumData);
+            this.setState({ nmriumData, is2D });
           }
         }
       } else if (eventDataType === 'nmr-wrapper:action-response') {
@@ -176,10 +188,12 @@ export default class NMRiumDisplayer extends React.Component {
     }
     if (sample) {
       const { molfile } = sample;
-      const fileName =`${sample.id}.mol`;
-      const blobToBeSent = new Blob([molfile]);
-      const dataItem = new File([blobToBeSent], fileName);
-      data.data.push(dataItem);
+      if (molfile) {
+        const fileName = `${sample.id}.mol`;
+        const blobToBeSent = new Blob([molfile]);
+        const dataItem = new File([blobToBeSent], fileName);
+        data.data.push(dataItem);
+      }
     }
     return data;
   }
@@ -204,7 +218,7 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   savingNMRiumWrapperData(imageBlobData = false) {
-    const { nmriumData } = this.state;
+    const { nmriumData, is2D } = this.state;
     if (nmriumData === null || !imageBlobData) {
       return;
     }
@@ -226,7 +240,9 @@ export default class NMRiumDisplayer extends React.Component {
       return;
     }
 
-    this.prepareAnalysisMetadata(nmriumData);
+    if (!is2D) {
+      this.prepareAnalysisMetadata(nmriumData);
+    }
 
     const { sample, handleSampleChanged } = this.props;
 
@@ -236,7 +252,7 @@ export default class NMRiumDisplayer extends React.Component {
     const cb = () => (
       this.saveOp()
     );
-    LoadingActions.start.defer()
+    LoadingActions.start.defer();
     handleSampleChanged(sample, cb);
   }
 
@@ -325,20 +341,20 @@ export default class NMRiumDisplayer extends React.Component {
     if (displayingSpectra.length <= 0) {
       return { peaksBody: '', layout: '' };
     }
-
     const firstSpectrum = displayingSpectra[0];
+    let layout = firstSpectrum.nucleus;
     const { info } = firstSpectrum;
     if (info) {
-      const { dimension } = info;
+      const { dimension, nucleus } = info;
       if (dimension === 2) {
         return { peaksBody: '', layout: '' };
       }
+      layout = nucleus;
     }
 
     const firstSpectrumPeaks = firstSpectrum.peaks;
     const { values } = firstSpectrumPeaks;
     const peaks = values;
-    const layout = firstSpectrum.nucleus;
     const shift = { shifts: [{ enable: false, peak: false, ref: { label: false, name: '---', value: 0 } }] };
     const decimal = 2;
     const peaksBody = FN.peaksBody({
@@ -391,7 +407,7 @@ export default class NMRiumDisplayer extends React.Component {
   saveOp() {
     SpectraActions.ToggleModalNMRDisplayer.defer();
     const { handleSubmit } = this.props;
-    handleSubmit()
+    handleSubmit();
   }
 
   renderNMRium(nmriumWrapperHost) {
@@ -411,9 +427,19 @@ export default class NMRiumDisplayer extends React.Component {
 
   renderModalTitle() {
     const { nmriumData } = this.state;
+    const { sample } = this.props;
+    let readOnly = false;
+    if (sample.hasOwnProperty('can_update')) {
+      readOnly = !(sample.can_update);
+    }
     let hasSpectra = false;
-    if (nmriumData && nmriumData.spectra.length > 0) {
-      hasSpectra = true;
+    if (nmriumData) {
+      const { version } = nmriumData;
+      if (version > 3) {
+        hasSpectra = nmriumData.data.spectra.length > 0;
+      } else {
+        hasSpectra = nmriumData.spectra.length > 0;
+      }
     }
 
     return (
@@ -433,14 +459,14 @@ export default class NMRiumDisplayer extends React.Component {
           </span>
         </Button>
         {
-          hasSpectra ?
+          hasSpectra && !readOnly ? 
           (
             <Button
               bsStyle="success"
               bsSize="small"
               className="button-right"
               onClick={() => {
-                this.requestDataToBeSaved()
+                this.requestDataToBeSaved();
               }}
             >
               <span>

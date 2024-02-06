@@ -5,6 +5,7 @@ import Select from 'react-select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
@@ -96,15 +97,9 @@ export default class MatrixManagement extends React.Component {
     if (!input) {
       return Promise.resolve({ options: [] });
     }
-    return AdminFetcher.fetchUserGroupByName(input)
-      .then((res) => {
-        const usersEntries = res.users.map(u => ({
-          value: u.id,
-          name: u.name,
-          label: `${u.name} (${u.abb})`
-        }));
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
+    return AdminFetcher.fetchUsersByNameType(input, 'Person,Group')
+      .then((res) => selectUserOptionFormater({ data: res, withType: true }))
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }

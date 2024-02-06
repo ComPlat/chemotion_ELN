@@ -292,6 +292,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForExternalLabelChange(changeEvent)
         );
         break;
+      case 'drysolventChanged':
+        this.onReactionChange(
+          this.updatedReactionForDrySolventChange(changeEvent)
+        );
+        break;
       case 'externalLabelCompleted':
         const { reaction } = this.state;
         this.onReactionChange(reaction, { schemaChanged: true });
@@ -334,6 +339,15 @@ export default class ReactionDetailsScheme extends Component {
     updatedSample.external_label = externalLabel;
 
     return this.updatedReactionWithSample(this.updatedSamplesForExternalLabelChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForDrySolventChange(changeEvent) {
+    const { sampleID, dry_solvent } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.dry_solvent = dry_solvent;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForDrySolventChange.bind(this), updatedSample);
   }
 
   updatedReactionForReferenceChange(changeEvent) {
@@ -492,7 +506,7 @@ export default class ReactionDetailsScheme extends Component {
 
     updatedS.maxAmount = mFull;
 
-    if (errorMsg) {
+    if (errorMsg && !updatedS.decoupled) {
       updatedS.error_mass = true;
       NotificationActions.add({
         message: errorMsg,
@@ -526,6 +540,18 @@ export default class ReactionDetailsScheme extends Component {
     const newLoading = (newAmountMol / updatedS.amount_g) * 1000.0;
 
     updatedS.residues[0].custom_info.loading = newLoading;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  triggerNotification(isDecoupled) {
+    if (!isDecoupled) {
+      const errorMsg = 'Experimental mass value is larger than possible\n'
+      + 'by 100% conversion! Please check your data.';
+      NotificationActions.add({
+        message: errorMsg,
+        level: 'error',
+      });
+    }
   }
 
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
@@ -602,12 +628,7 @@ export default class ReactionDetailsScheme extends Component {
         } else if (materialGroup === 'products' && sample.amount_g > sample.maxAmount) {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = 1;
-          const errorMsg = 'Experimental mass value is larger than possible\n' +
-          'by 100% conversion! Please check your data.';
-          NotificationActions.add({
-            message: errorMsg,
-            level: 'error',
-          });
+          this.triggerNotification(sample.decoupled);
         }
       }
 
@@ -644,12 +665,7 @@ export default class ReactionDetailsScheme extends Component {
           sample.equivalent = sample.maxAmount !== 0 ? (sample.amount_g / sample.maxAmount) : 0;
           if (sample.amount_g > sample.maxAmount) {
             sample.equivalent = 1;
-            const errorMsg = 'Experimental mass value is larger than possible\n' +
-            'by 100% conversion! Please check your data.';
-            NotificationActions.add({
-              message: errorMsg,
-              level: 'error',
-            });
+            this.triggerNotification(sample.decoupled);
           }
         } else {
           // NB: sample equivalent independant of coeff
@@ -669,6 +685,17 @@ export default class ReactionDetailsScheme extends Component {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.external_label = updatedSample.external_label;
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForDrySolventChange(samples, updatedSample) {
+    const { referenceMaterial } = this.props.reaction;
+
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.dry_solvent = updatedSample.dry_solvent;
       }
       return sample;
     });

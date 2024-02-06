@@ -11,10 +11,8 @@ import OlsTerms from 'src/apps/admin/OlsTerms';
 import NovncSettings from 'src/apps/admin/NovncSettings';
 import MatrixManagement from 'src/apps/admin/MatrixManagement';
 import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
-import GenericElementAdmin from 'src/apps/admin/GenericElementAdmin';
-import SegmentElementAdmin from 'src/apps/admin/SegmentElementAdmin';
-import DatasetElementAdmin from 'src/apps/admin/DatasetElementAdmin';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
+import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 
@@ -65,18 +63,12 @@ class AdminHome extends React.Component {
       return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
       return this.renderTextTemplates();
-    } else if (pageIndex === 9) {
-      return this.renderContent(<GenericElementAdmin />);
-    } else if (pageIndex === 10) {
-      return this.renderContent(<SegmentElementAdmin />);
-    } else if (pageIndex === 11) {
-      return this.renderContent(<DatasetElementAdmin />);
     } else if (pageIndex === 12) {
       return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
       return this.renderDelayedJobs();
     } else if (pageIndex === 14) {
-      return this.renderConverterAdmin();
+      return this.renderChemSpectraLayouts();
     } else if (pageIndex === 15) {
       return this.renderThirdPartyApp();
     }
@@ -100,13 +92,11 @@ class AdminHome extends React.Component {
             <NavItem eventKey={6}>NoVNC Settings</NavItem>
             <NavItem eventKey={7}>UI features</NavItem>
             <NavItem eventKey={8}>Text Templates</NavItem>
-            <NavItem eventKey={9}>Generic Elements (BETA)</NavItem>
-            <NavItem eventKey={10}>Generic Segment (BETA)</NavItem>
-            <NavItem eventKey={11}>Generic Dataset (BETA)</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
 	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
+            <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
             <NavItem eventKey={15}>Third Party Apps </NavItem>
           </Nav>
         </Col>
@@ -218,6 +208,15 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <TemplateManagement />
+      </Col>
+    );
+  }
+
+  renderChemSpectraLayouts() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName}>
+        <ChemSpectraLayouts />
       </Col>
     );
   }

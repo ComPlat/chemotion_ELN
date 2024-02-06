@@ -1,5 +1,6 @@
 export default {
   WELL: 'well',
+  ELEMENT: 'element',
   SAMPLE: 'sample',
   MATERIAL: 'material',
   REACTION: 'reaction',
@@ -15,5 +16,6 @@ export default {
   CONTAINER: 'container',
   GENERALPROCEDURE: 'generalProcedure',
   ELEMENT_FIELD: 'element_field',
-  GENERIC_GRID: 'generic_grid'
+  GENERIC_GRID: 'generic_grid',
+  CELL_LINE: 'cell_line'
 };

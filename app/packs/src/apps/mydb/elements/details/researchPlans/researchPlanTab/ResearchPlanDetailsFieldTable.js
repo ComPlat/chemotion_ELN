@@ -239,7 +239,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
 
     const { field } = this.props;
-    params.columnApi.setColumnState(field.value.columnStates);
+    params.columnApi.columnModel.setColumnDefs(field.value.columns);
   }
 
   onSaveGridColumnState(params) {

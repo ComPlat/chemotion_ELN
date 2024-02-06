@@ -44,27 +44,17 @@ module Chemotion
         end
       end
 
-      namespace :element_klasses_name do
-        desc 'get klasses'
-        params do
-          optional :generic_only, type: Boolean, desc: 'list generic element only'
-        end
-        get do
-          list = ElementKlass.where(is_active: true) if params[:generic_only].present? && params[:generic_only] == true
-          unless params[:generic_only].present? && params[:generic_only] == true
-            list = ElementKlass.where(is_active: true)
-          end
-          list.pluck(:name)
-        end
-      end
 
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
           res = {}
           config = Devise.omniauth_configs
-          config.each { |k, _v| res[k] = { icon: File.basename(config[k].options[:icon] || '') } }
-          res
+          extra_rules = Matrice.extra_rules
+          config.each do |k, _v|
+            res[k] = { icon: File.basename(config[k].options[:icon] || ''), label: config[k].options[:label] }
+          end
+          { omniauth_providers: res, extra_rules: extra_rules }
         end
       end
 

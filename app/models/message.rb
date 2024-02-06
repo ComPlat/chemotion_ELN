@@ -25,6 +25,7 @@ class Message < ApplicationRecord
     content =  args[:message_content].presence || Channel.build_message(args)
     channel_id ||= content&.fetch('channel_id', false)
     return unless channel_id
+
     message = Message.create(
       content: content.as_json,
       channel_id: channel_id,

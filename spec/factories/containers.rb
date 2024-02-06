@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :container do
     name { 'root' }
@@ -6,37 +8,53 @@ FactoryBot.define do
     extended_metadata {}
     container_type { 'root' }
 
+    trait :with_jpg_in_dataset do
+      transient do
+        user_id { nil }
+      end
+
+      before(:create) do |container|
+        analyses = FactoryBot.create(:container, parent: container, container_type: 'analyses')
+        analysis = FactoryBot.create(:container, parent: analyses, container_type: 'analysis')
+        dataset = FactoryBot.create(:container, parent: analysis, container_type: 'dataset')
+        FactoryBot.create(:attachment, :with_image,
+                          attachable_id: dataset.id,
+                          created_for: FactoryBot.create(:user).id,
+                          attachable_type: 'Container')
+      end
+    end
+
     trait :with_analysis do
       after(:create) do |container|
         extended_metadata = {
           'kind' => 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)',
           'status' => 'Confirmed',
           'datasets' => [],
-          'content' => '{"ops": [{"insert": "analysis contents"}]}'
+          'content' => '{"ops": [{"insert": "analysis contents"}]}',
         }
 
         analyses = FactoryBot.create(:container, parent: container, container_type: 'analyses')
-        analysis = FactoryBot.create(:container, parent: analyses,
-                                                 container_type: 'analysis',
-                                                 name: 'new',
-                                                 description: 'analysis description',
-                                                 extended_metadata: extended_metadata)
+        FactoryBot.create(:container, parent: analyses,
+                                      container_type: 'analysis',
+                                      name: 'new',
+                                      description: 'analysis description',
+                                      extended_metadata: extended_metadata)
       end
     end
   end
 
-  factory :root_container, class: Container do
+  factory :root_container, class: 'Container' do
     name { 'root' }
     attachments { [] }
     description { '' }
     extended_metadata {}
     container_type { 'root' }
     after(:create) do |container|
-      analyses = FactoryBot.create(:container, parent: container, container_type: 'analyses')
+      FactoryBot.create(:container, parent: container, container_type: 'analyses')
     end
   end
 
-  factory :analysis_container, class: Container do
+  factory :analysis_container, class: 'Container' do
     sequence(:name) { |i| "Analysis #{i}" }
     attachments { [] }
     description { 'no description' }
@@ -48,13 +66,13 @@ FactoryBot.define do
         'instrument' => 'analysis instrument',
         'index' => '0',
         # 'datasets' => [],
-        'content' => '{"ops": [{"insert": "analysis contents"}]}'
+        'content' => '{"ops": [{"insert": "analysis contents"}]}',
       }.merge(analysis.extended_metadata || {})
     end
   end
 
   # Inbox container root
-  factory :inbox_container_root, class: Container do
+  factory :inbox_container_root, class: 'Container' do
     name { 'inbox' }
     containable_type { 'User' }
     description { '' }
@@ -63,7 +81,7 @@ FactoryBot.define do
   end
 
   # Inbox container with attachments
-  factory :inbox_container, class: Container do
+  factory :inbox_container, class: 'Container' do
     name { 'IR' }
     description { '' }
     extended_metadata {}
@@ -77,7 +95,7 @@ FactoryBot.define do
         FactoryBot.create_list(
           :attachment,
           files.number_of_attachments,
-          attachable: inbox_container
+          attachable: inbox_container,
         )
       end
     end

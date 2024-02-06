@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
+# rubocop: disable Metrics/ClassLength, Metrics/AbcSize, Performance/MethodObjectAsBlock
 module Export
   class ExportCollections
     attr_accessor :file_path
@@ -12,12 +12,14 @@ module Export
       @nested = nested
       @gt = gate
 
-      @file_path = Rails.public_path.join( format, "#{export_id}.#{format}")
-      @schema_file_path = Rails.public_path.join( 'json', 'schema.json')
+      @file_path = Rails.public_path.join(format, "#{export_id}.#{format}")
+      @schema_file_path = Rails.public_path.join('json', 'schema.json')
 
       @data = {}
       @uuids = {}
       @attachments = []
+      @segments = []
+      @datasets = []
       @images = []
     end
 
@@ -30,7 +32,7 @@ module Export
       builder.to_xml
     end
 
-    # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength,Metrics/CyclomaticComplexity
     def to_file
       case @format
       when 'json'
@@ -99,9 +101,9 @@ module Export
         @file_path
       end
     end
-    # rubocop:enable Metrics/AbcSize,Metrics/MethodLength,Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/MethodLength,Metrics/CyclomaticComplexity
 
-    def prepare_data
+    def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       # get the collections from the database, in order of ancestry, but with empty ancestry first
       collections = Collection.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST")).find(@collection_ids)
       # add decendants for nested collections
@@ -113,27 +115,75 @@ module Export
         collections += descendants
       end
 
+      Labimotion::Export.fetch_element_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Export.fetch_segment_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Export.fetch_dataset_klasses(&method(:fetch_many)) # rubocop:disable Performance/MethodObjectAsBlock
       # loop over all collections
       collections.each do |collection|
         # fetch collection
         fetch_one(collection, {
-          'user_id' => 'User'
-        })
-
+                    'user_id' => 'User',
+                  })
         fetch_samples collection
+        fetch_chemicals collection
         fetch_reactions collection
-        fetch_wellplates collection unless @gt == false
-        fetch_screens collection unless @gt == false
-        fetch_research_plans collection unless @gt == false
+        # fetch_elements collection if @gt == false
+        fetch_wellplates collection if @gt == false
+        fetch_screens collection if @gt == false
+        fetch_research_plans collection if @gt == false
+        add_cell_line_material_to_package collection if @gt == false
+        add_cell_line_sample_to_package collection if @gt == false
       end
     end
 
     private
 
+    def add_cell_line_material_to_package(collection)
+      type = 'CelllineMaterial'
+      collection.cellline_samples.each do |sample|
+        material = sample.cellline_material
+        next if uuid?(type, material.id)
+
+        uuid = uuid(type, material.id)
+        @data[type] = {} unless @data[type]
+        @data[type][uuid] = material.as_json
+      end
+    end
+
+    def add_cell_line_sample_to_package(collection)
+      type = 'CelllineSample'
+      collection.cellline_samples.each do |sample|
+        next if uuid?(type, sample.id)
+
+        uuid = uuid(type, sample.id)
+        @data[type] = {} unless @data[type]
+        @data[type][uuid] = sample.as_json
+        fetch_containers(sample)
+        @data['CollectionsCelllineSample'] = {} unless @data['CollectionsCelllineSample']
+        @data['CollectionsCelllineSample'][SecureRandom.uuid] = {
+          collection_id: @uuids['Collection'][collection.id],
+          cellline_sample_id: @uuids[type][sample.id],
+        }
+
+        @data['CelllineMaterialCelllineSample'] = {} unless @data['CelllineMaterialCelllineSample']
+        @data['CelllineMaterialCelllineSample'][SecureRandom.uuid] = {
+          cellline_material_id: @uuids['CelllineMaterial'][sample.cellline_material.id],
+          cellline_sample_id: @uuids[type][sample.id],
+        }
+      end
+    end
+
+    def fetch_chemicals(collection)
+      chemicals = collection.samples.filter_map(&:chemical)
+      fetch_many(chemicals, {
+                   'id' => 'Chemical',
+                   'sample_id' => 'Sample',
+                 })
+    end
+
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
       samples = collection.samples.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))
-
       # fetch samples
       fetch_many(samples, {
                    'molecule_name_id' => 'MoleculeName',
@@ -141,11 +191,11 @@ module Export
                    'fingerprint_id' => 'Fingerprint',
                    'created_by' => 'User',
                    'user_id' => 'User',
-      })
+                 })
       fetch_many(collection.collections_samples, {
                    'collection_id' => 'Collection',
                    'sample_id' => 'Sample',
-      })
+                 })
 
       # loop over samples and fetch sample properties
       samples.each do |sample|
@@ -154,10 +204,13 @@ module Export
         fetch_one(sample.molecule_name, {
                     'molecule_id' => 'Molecule',
                     'user_id' => 'User',
-        })
+                  })
         fetch_many(sample.residues, {
                      'sample_id' => 'Sample',
-        })
+                   })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(sample, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # fetch containers, attachments and literature
         fetch_containers(sample)
@@ -195,6 +248,9 @@ module Export
                      })
         end
 
+        segment, @attachments = Labimotion::Export.fetch_segments(reaction, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
+
         # fetch containers, attachments and literature
         fetch_containers(reaction)
         fetch_literals(reaction)
@@ -202,6 +258,12 @@ module Export
         # collect the reaction_svg_file
         fetch_image('reactions', reaction.reaction_svg_file)
       end
+    end
+
+    def fetch_elements(collection)
+      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments,
+                                                                  method(:fetch_many), method(:fetch_one),
+                                                                  method(:fetch_containers))
     end
 
     def fetch_wellplates(collection)
@@ -217,6 +279,9 @@ module Export
                      'sample_id' => 'Sample',
                      'wellplate_id' => 'Wellplate',
                    })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(wellplate, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         fetch_containers(wellplate)
       end
@@ -236,6 +301,14 @@ module Export
                      'screen_id' => 'Screen',
                      'wellplate_id' => 'Wellplate',
                    })
+
+        fetch_many(screen.research_plans_screens, {
+                     'screen_id' => 'Screen',
+                     'research_plan_id' => 'ResearchPlan',
+                   })
+
+        segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # fetch containers and attachments
         fetch_containers(screen)
@@ -260,6 +333,8 @@ module Export
                      'created_by' => 'User',
                      'created_for' => 'User',
                    })
+        segment, @attachments = Labimotion::Export.fetch_segments(research_plan, @attachments, &method(:fetch_one))
+        @segments += segment if segment.present?
 
         # add attachments to the list of attachments
         @attachments += research_plan.attachments
@@ -277,7 +352,6 @@ module Export
     # rubocop:disable Metrics/MethodLength
     def fetch_containers(containable)
       containable_type = containable.class.name
-
       # fetch root container
       root_container = containable.container
       fetch_one(containable.container, {
@@ -285,9 +359,9 @@ module Export
                   'parent_id' => 'Container',
                 })
 
-      unless root_container.nil?
+      unless root_container.nil? # rubocop:disable Style/GuardClause
         # fetch analyses container
-        analyses_container = root_container.children.where("container_type = 'analyses'").first()
+        analyses_container = root_container.children.where("container_type = 'analyses'").first
         fetch_one(analyses_container, {
                     'containable_id' => containable_type,
                     'parent_id' => 'Container',
@@ -295,6 +369,7 @@ module Export
 
         # fetch analysis_containers
         analysis_containers = analyses_container.children.where("container_type = 'analysis'")
+
         analysis_containers.each do |analysis_container|
           fetch_one(analysis_container, {
                       'containable_id' => containable_type,
@@ -308,6 +383,10 @@ module Export
                         'containable_id' => containable_type,
                         'parent_id' => 'Container',
                       })
+            if attachment_container.dataset.present?
+              @datasets += Labimotion::Export.fetch_datasets(attachment_container.dataset,
+                                                             &method(:fetch_one))
+            end
             fetch_many(attachment_container.attachments, {
                          'attachable_id' => 'Container',
                          'created_by' => 'User',
@@ -343,7 +422,7 @@ module Export
       end
     end
 
-    # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
     def fetch_one(instance, foreign_keys = {})
       return if instance.nil?
 
@@ -362,7 +441,6 @@ module Export
 
         # append updated json to @data
         @data[type] = {} unless @data.key?(type)
-
         # replace ids in the ancestry field
         if instance.respond_to?(:ancestry)
           ancestor_uuids = []
@@ -381,7 +459,6 @@ module Export
       end
       uuid
     end
-    # rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
 
     def fetch_image(image_path, image_file_name)
       return if image_file_name.blank?
@@ -407,5 +484,5 @@ module Export
   end
 end
 
-# rubocop: enable Metrics/ClassLength
-#
+# rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock
+# rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity

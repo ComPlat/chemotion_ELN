@@ -26,6 +26,11 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -44,7 +49,11 @@ export default class ScreenDetails extends Component {
   }
 
   componentDidMount() {
+    const { screen } = this.props;
     UIStore.listen(this.onUIStoreChange);
+    if (!screen.isNew) {
+      CommentActions.fetchComments(screen);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -74,7 +83,7 @@ export default class ScreenDetails extends Component {
     if (state.screen.activeTab != this.state.activeTab) {
       this.setState({
         activeTab: state.screen.activeTab
-      })
+      });
     }
   }
 
@@ -172,7 +181,8 @@ export default class ScreenDetails extends Component {
 
   screenHeader(screen) {
     const saveBtnDisplay = screen.isEdited ? '' : 'none';
-    const datetp = `Created at: ${screen.created_at} \n Updated at: ${screen.updated_at}`;
+    const datetp = formatTimeStampsOfElement(screen || {});
+    const { showCommentSection, comments } = this.props;
 
     return (
       <div>
@@ -183,6 +193,7 @@ export default class ScreenDetails extends Component {
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={screen} placement="right" />
+        <HeaderCommentSection element={screen} />
         <ConfirmClose el={screen} />
         <OverlayTrigger
           placement="bottom"
@@ -353,11 +364,17 @@ export default class ScreenDetails extends Component {
     const tabContentsMap = {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${screen.id}`}>
+          {
+            !screen.isNew && <CommentSection section="screen_properties" element={screen} />
+          }
           {this.propertiesFields(screen)}
         </Tab>
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${screen.id}`}>
+          {
+            !screen.isNew && <CommentSection section="screen_analyses" element={screen} />
+          }
           <ScreenDetailsContainers
             screen={screen}
             parent={this}
@@ -433,6 +450,7 @@ export default class ScreenDetails extends Component {
             <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
+          <CommentModal element={screen} />
         </Panel.Body>
       </Panel>
     );

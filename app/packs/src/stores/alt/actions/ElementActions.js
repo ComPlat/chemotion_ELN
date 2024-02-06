@@ -10,6 +10,7 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
@@ -24,6 +25,7 @@ import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
+import CellLine from 'src/models/cellLine/CellLine';
 import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Report from 'src/models/Report';
@@ -35,6 +37,7 @@ import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 import _ from 'lodash';
 
@@ -197,8 +200,29 @@ class ElementActions {
           NotificationActions.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
+  }
 
+  fetchBasedOnSearchResultIds(params) {
+    let uid;
+    NotificationActions.add({
+      title: "Searching ...",
+      level: "info",
+      position: "tc",
+      onAdd: function (notificationObject) { uid = notificationObject.uid; }
+    });
+    return (dispatch) => {
+      SearchFetcher.fetchBasedOnSearchResultIds(params)
+        .then((result) => {
+          dispatch(result);
+          NotificationActions.removeByUid(uid);
+        }).catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
 
+  dispatchSearchResult(result) {
+    return (dispatch) => {
+      dispatch(result);
+    }
   }
 
   // -- Generic --
@@ -298,6 +322,16 @@ class ElementActions {
         });
     };
   }
+  fetchCellLinesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      CellLinesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };   
+  }
 
   // -- Samples --
 
@@ -394,6 +428,40 @@ class ElementActions {
 
   generateEmptySample(collection_id) {
     return Sample.buildEmpty(collection_id)
+  }
+
+  tryFetchCellLineElById(cellLineId) {
+    return (dispatch) => {
+      CellLinesFetcher.fetchById(cellLineId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  createCellLine(params){
+    return (dispatch) => {
+      const { currentUser } = UserStore.getState();
+      CellLinesFetcher.create(params,currentUser)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptyCellLine(collectionId,template){
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) {return }
+
+    const cellLineSample= CellLine.buildEmpty(collectionId,`${currentUser.initials}-C${currentUser.cell_lines_count}`);
+    if(template){
+      cellLineSample.copyMaterialFrom(template);
+    }
+    return cellLineSample;
   }
 
   splitAsSubsamples(ui_state) {
@@ -745,6 +813,17 @@ class ElementActions {
     };
   }
 
+  updateCellLine(params){
+      return (dispatch) => {
+        CellLinesFetcher.update(params)
+          .then((result) => {
+            dispatch(result);
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+      };
+  }
+
   updateResearchPlan(params) {
     return (dispatch) => {
       ResearchPlansFetcher.update(params)
@@ -846,7 +925,7 @@ class ElementActions {
   // -- General --
 
   refreshElements(type) {
-    return type
+    return type;
   }
 
   deleteElements(options) {
@@ -905,6 +984,10 @@ class ElementActions {
 
   changeSorting(sort) {
     return sort;
+  }
+
+  changeElementsFilter(filter) {
+    return filter;
   }
 
   updateContainerContent(params) {

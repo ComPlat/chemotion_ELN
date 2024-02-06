@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
@@ -17,6 +18,11 @@ module Chemotion
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
+        optional :sort_column, type: String, desc: 'sort by created_at, updated_at, rinchi_short_key, or rxno',
+                               values: %w[created_at updated_at rinchi_short_key rxno],
+                               default: 'created_at'
+        optional :sort_direction, type: String, desc: 'sort direction',
+                                  values: %w[ASC DESC]
       end
       paginate per_page: 7, offset: 0
 
@@ -42,13 +48,17 @@ module Chemotion
                   end
                 else
                   Reaction.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('created_at DESC')
+                end
 
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        scope = scope.includes_for_list_display
+        sort_column = params[:sort_column].presence || 'created_at'
+        sort_direction = params[:sort_direction].presence ||
+                         (%w[created_at updated_at].include?(sort_column) ? 'DESC' : 'ASC')
+
+        scope = scope.includes_for_list_display.order("#{sort_column} #{sort_direction}")
         scope = scope.created_time_from(Time.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
@@ -72,13 +82,16 @@ module Chemotion
         requires :id, type: Integer, desc: 'Reaction id'
       end
       route_param :id do
-        before do
+        after_validation do
           @element_policy = ElementPolicy.new(current_user, Reaction.find(params[:id]))
           error!('401 Unauthorized', 401) unless @element_policy.read?
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
 
         get do
           reaction = Reaction.find(params[:id])
+          class_name = reaction&.class&.name
 
           {
             reaction: Entities::ReactionEntity.represent(
@@ -86,7 +99,7 @@ module Chemotion
               policy: @element_policy,
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
-            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], 'Reaction')),
+            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], class_name)),
           }
         end
       end
@@ -149,6 +162,7 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :segments, type: Array
+        optional :variations, type: [Hash]
       end
       route_param :id do
         after_validation do
@@ -214,6 +228,7 @@ module Chemotion
         requires :container, type: Hash
         optional :duration, type: String
         optional :rxno, type: String
+        optional :variations, type: [Hash]
       end
 
       post do
@@ -308,3 +323,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

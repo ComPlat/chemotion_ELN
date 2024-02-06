@@ -1,5 +1,5 @@
 import * as routesUtils from 'src/utilities/routesUtils';
-import klasses from '../../../../../config/klasses.json';
+import { elementNames } from 'src/apps/generic/Utils';
 
 
 const routes = {
@@ -69,6 +69,12 @@ const routes = {
     },
     '/:screenID': 'showOrNew'
   },
+  '/cell_line': {
+    target: {
+      showOrNew: routesUtils.cellLineShowOrNew
+    },
+    '/:cellLineID': 'showOrNew'
+  },
   '/devicesAnalysis': {
     target: {
       create: routesUtils.devicesAnalysisCreate,
@@ -105,7 +111,7 @@ const routes = {
   }
 };
 
-klasses && klasses.forEach((klass) => {
+elementNames(false).forEach((klass) => {
   const item = {};
   item['target'] = { showOrNew: routesUtils.genericElShowOrNew };
   item[`/:${klass}ID`] = 'showOrNew';

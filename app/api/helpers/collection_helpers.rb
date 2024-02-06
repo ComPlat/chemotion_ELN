@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+# rubocop:disable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
+
 module CollectionHelpers
   extend Grape::API::Helpers
 
@@ -8,7 +12,7 @@ module CollectionHelpers
   def fetch_collection_id_w_current_user(id, is_sync = false)
     if is_sync
       SyncCollectionsUser.find_by(
-        id: id.to_i, user_id: user_ids
+        id: id.to_i, user_id: user_ids,
       )&.collection_id
     else
       (Collection.find_by(id: id.to_i, user_id: user_ids) ||
@@ -27,13 +31,14 @@ module CollectionHelpers
 
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
-    dl = (is_sync && SyncCollectionsUser || Collection).find_by(
-      id: id.to_i, user_id: user_ids
+    dl = ((is_sync && SyncCollectionsUser) || Collection).find_by(
+      id: id.to_i, user_id: user_ids,
     )&.slice(
       :permission_level,
       :sample_detail_level, :reaction_detail_level,
       :wellplate_detail_level, :screen_detail_level,
-      :researchplan_detail_level, :element_detail_level
+      :researchplan_detail_level, :element_detail_level,
+      :celllinesample_detail_level
     )&.symbolize_keys
     {
       permission_level: 0,
@@ -43,6 +48,7 @@ module CollectionHelpers
       screen_detail_level: 0,
       researchplan_detail_level: 0,
       element_detail_level: 0,
+      celllinesample_detail_level: 0,
     }.merge(dl || {})
   end
 
@@ -76,21 +82,21 @@ module CollectionHelpers
   def fetch_collection_by_ui_state_params_and_pl(pl = 2)
     current_collection = params['ui_state']['currentCollection']
     @collection = if current_collection['is_sync_to_me']
-      Collection.joins(:sync_collections_users).where(
-        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
-        current_collection['id'],
-        user_ids,
-        pl
-      ).first
-    else
-      Collection.where(
-        'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?)) OR shared_by_id = ?)',
-        current_collection['id'],
-        user_ids,
-        pl,
-        current_user
-      ).first
-    end
+                    Collection.joins(:sync_collections_users).where(
+                      'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
+                      current_collection['id'],
+                      user_ids,
+                      pl,
+                    ).first
+                  else
+                    Collection.where(
+                      'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?)) OR shared_by_id = ?)',
+                      current_collection['id'],
+                      user_ids,
+                      pl,
+                      current_user,
+                    ).first
+                  end
     @collection
   end
 
@@ -116,6 +122,7 @@ module CollectionHelpers
       screen_detail_level: 10,
       researchplan_detail_level: 10,
       element_detail_level: 10,
+      celllinesample_detail_level: 10,
     }
 
     @dl = detail_level_for_collection(c_id, is_sync) unless @is_owned
@@ -126,5 +133,18 @@ module CollectionHelpers
     @dl_sc = @dl[:screen_detail_level]
     @dl_rp = @dl[:researchplan_detail_level]
     @dl_e = @dl[:element_detail_level]
+    @dl_cl = @dl[:celllinesample_detail_level]
+  end
+
+  def create_classes_of_element(element)
+    if element == 'cell_line'
+      element_klass = CelllineSample
+      collections_element_klass = CollectionsCellline
+    else
+      collections_element_klass = "collections_#{element}".classify.constantize
+      element_klass = element.classify.constantize
+    end
+    [element_klass, collections_element_klass]
   end
 end
+# rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength

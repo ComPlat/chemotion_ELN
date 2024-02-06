@@ -256,6 +256,7 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
                       auth_config.dig('orcid', 'client_id'),
                       auth_config.dig('orcid', 'client_secret'),
                       icon: auth_config.dig('orcid', 'icon'),
+                      label: auth_config.dig('orcid', 'label') || 'ORCID',
                       member: auth_config.dig('orcid', 'member'),
                       sandbox: auth_config.dig('orcid', 'sandbox'),
                       scope: auth_config.dig('orcid', 'sandbox')
@@ -271,7 +272,6 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
                       redirect_uri: auth_config.dig('chemotion_orcid', 'redirect_uri'),
                       strategy_class: OmniAuth::Strategies::ChemotionORCID
     end
-
     if auth_config.key?('shibboleth') && auth_config.dig('shibboleth', 'enable') == true
       config.omniauth :shibboleth, {
         request_type: 'header',
@@ -282,15 +282,15 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
           last_name: auth_config.dig('shibboleth', 'last_name') || 'sn',
         },
         icon: auth_config.dig('shibboleth', 'icon'),
+        label: auth_config.dig('shibboleth', 'label') || 'Shibboleth',
       }
     end
-
     if auth_config.key?('github') && auth_config.dig('github', 'enable') == true
       config.omniauth :github,
                       auth_config.dig('github', 'client_id'), auth_config.dig('github', 'client_secret'),
-                      scope: 'user,public_repo', icon: auth_config.dig('github', 'icon')
+                      scope: 'user,public_repo', icon: auth_config.dig('github', 'icon'),
+                      label: auth_config.dig('github', 'label') || 'GitHub'
     end
-
     if auth_config.key?('openid_connect') && auth_config.dig('openid_connect', 'enable') == true
       options = {
         port: 443,
@@ -308,7 +308,8 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
                       response_type: :code,
                       discovery: true,
                       client_options: options,
-                      icon: auth_config.dig('openid_connect', 'icon')
+                      icon: auth_config.dig('openid_connect', 'icon'),
+                      label: auth_config.dig('openid_connect', 'label') || 'OpenID Connect'
     end
   end
 

@@ -12,8 +12,8 @@ describe Chemotion::ThirdPartyAppAPI do
   describe 'List all third party apps API' do
     describe 'GET /third_party_apps/all' do
       before do
-        ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
-        ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test2')
+        ThirdPartyApp.create(url: 'http://test.com', name: 'Test1')
+        ThirdPartyApp.create(url: 'http://test.com', name: 'Test2')
       end
 
       it 'status of get request 200?' do
@@ -31,7 +31,7 @@ describe Chemotion::ThirdPartyAppAPI do
         get '/api/v1//third_party_apps/all'
         response_data = JSON.parse(response.body)
         arr = [response_data[0]['name'], response_data[1]['name'],
-               response_data[0]['IPAddress'], response_data[1]['IPAddress']]
+               response_data[0]['url'], response_data[1]['url']]
         expect(arr).to eq(['Test1', 'Test2', 'http://test.com', 'http://test.com'])
       end
     end
@@ -41,7 +41,7 @@ describe Chemotion::ThirdPartyAppAPI do
     describe 'POST /new_third_party_app' do
       let(:params) do
         {
-          IPAddress: 'http://127.0.0.1',
+          url: 'http://127.0.0.1',
           name: 'Example App',
         }
       end
@@ -53,15 +53,15 @@ describe Chemotion::ThirdPartyAppAPI do
 
       it 'Entries of new third party app correct?' do
         post '/api/v1/third_party_apps_administration/new_third_party_app', params: params
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params[:IPAddress], params[:name]])
+        tpas = [ThirdPartyApp.last.url, ThirdPartyApp.last.name]
+        expect(tpas).to eq([params[:url], params[:name]])
       end
     end
   end
 
   describe 'update_third_party_app API' do
     let(:tpa_id) do
-      ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
+      ThirdPartyApp.create(url: 'http://test.com', name: 'Test1')
       tpas = ThirdPartyApp.all
       tpa = tpas[0]
       tpa.id
@@ -71,7 +71,7 @@ describe Chemotion::ThirdPartyAppAPI do
       let(:params_all) do
         {
           id: tpa_id,
-          IPAddress: '127.0.0.1',
+          url: '127.0.0.1',
           name: 'Example App',
         }
       end
@@ -79,7 +79,7 @@ describe Chemotion::ThirdPartyAppAPI do
       let(:params_name) do
         {
           id: tpa_id,
-          IPAddress: 'http://test.com',
+          url: 'http://test.com',
           name: 'Example App',
         }
       end
@@ -87,34 +87,34 @@ describe Chemotion::ThirdPartyAppAPI do
       let(:params_ip) do
         {
           id: tpa_id,
-          IPAddress: '127.0.0.1',
+          url: '127.0.0.1',
           name: 'Test1',
         }
       end
 
       it 'Change of ip address & name successfull?' do
         post '/api/v1/third_party_apps_administration/update_third_party_app', params: params_all
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params_all[:IPAddress], params_all[:name]])
+        tpas = [ThirdPartyApp.last.url, ThirdPartyApp.last.name]
+        expect(tpas).to eq([params_all[:url], params_all[:name]])
       end
 
       it 'Change of name successfull?' do
         post '/api/v1/third_party_apps_administration/update_third_party_app', params: params_name
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params_name[:IPAddress], params_name[:name]])
+        tpas = [ThirdPartyApp.last.url, ThirdPartyApp.last.name]
+        expect(tpas).to eq([params_name[:url], params_name[:name]])
       end
 
       it 'Change of ip address successfull?' do
         post '/api/v1/third_party_apps_administration/update_third_party_app', params: params_ip
-        tpas = [ThirdPartyApp.last.IPAddress, ThirdPartyApp.last.name]
-        expect(tpas).to eq([params_ip[:IPAddress], params_ip[:name]])
+        tpas = [ThirdPartyApp.last.url, ThirdPartyApp.last.name]
+        expect(tpas).to eq([params_ip[:url], params_ip[:name]])
       end
     end
   end
 
   describe 'delete_third_party_app API' do
     let(:tpa_id) do
-      ThirdPartyApp.create(IPAddress: 'http://test.com', name: 'Test1')
+      ThirdPartyApp.create(url: 'http://test.com', name: 'Test1')
       tpas = ThirdPartyApp.all
       tpa = tpas[0]
       tpa.id
@@ -136,10 +136,10 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'get_by_id a third party app' do
     before do
-      ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
-      ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
-      ThirdPartyApp.create(IPAddress: 'http://test3.com', name: 'Test3')
-      ThirdPartyApp.create(IPAddress: 'http://test4.com', name: 'Test4')
+      ThirdPartyApp.create(url: 'http://test1.com', name: 'Test1')
+      ThirdPartyApp.create(url: 'http://test2.com', name: 'Test2')
+      ThirdPartyApp.create(url: 'http://test3.com', name: 'Test3')
+      ThirdPartyApp.create(url: 'http://test4.com', name: 'Test4')
     end
 
     let(:tpas) do
@@ -163,14 +163,14 @@ describe Chemotion::ThirdPartyAppAPI do
       it 'Is access by ID 1 of third party apps successfull?' do
         get '/api/v1/third_party_apps/get_by_id', params: params1
         response_data = JSON.parse(response.body)
-        res = [response_data['name'], response_data['IPAddress']]
+        res = [response_data['name'], response_data['url']]
         expect(res).to eq(['Test1', 'http://test1.com'])
       end
 
       it 'Is access by ID 3 of third party apps successfull?' do
         get '/api/v1/third_party_apps/get_by_id', params: params3
         response_data = JSON.parse(response.body)
-        res = [response_data['name'], response_data['IPAddress']]
+        res = [response_data['name'], response_data['url']]
         expect(res).to eq(['Test3', 'http://test3.com'])
       end
     end
@@ -178,8 +178,8 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'get names of all third party apps' do
     before do
-      ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
-      ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
+      ThirdPartyApp.create(url: 'http://test1.com', name: 'Test1')
+      ThirdPartyApp.create(url: 'http://test2.com', name: 'Test2')
     end
 
     describe 'GET /api/v1/names/all' do
@@ -194,8 +194,8 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'get ip address of a third party app by name' do
     before do
-      ThirdPartyApp.create(IPAddress: 'http://test1.com', name: 'Test1')
-      ThirdPartyApp.create(IPAddress: 'http://test2.com', name: 'Test2')
+      ThirdPartyApp.create(url: 'http://test1.com', name: 'Test1')
+      ThirdPartyApp.create(url: 'http://test2.com', name: 'Test2')
     end
 
     describe 'GET /IP' do

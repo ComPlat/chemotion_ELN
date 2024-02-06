@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import DragDropItemTypes from 'src/components/DragDropItemTypes';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
+import { formatDate } from 'src/utilities/timezoneHelper';
+import InboxStore from 'src/stores/alt/stores/InboxStore';
 
 const dataSource = {
   beginDrag(props) {
@@ -25,6 +26,19 @@ class DatasetContainer extends Component {
       visible: false,
       deletingTooltip: false,
     }
+    this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    InboxStore.listen(this.onChange);
+  }
+
+  componentWillUnmount() {
+    InboxStore.unlisten(this.onChange);
+  }
+
+  onChange(state) {
+    this.setState(state);
   }
 
   attachmentCount() {
@@ -56,7 +70,8 @@ class DatasetContainer extends Component {
   }
 
   render() {
-    const { connectDragSource, sourceType, dataset, largerInbox } = this.props;
+    const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect, checkedIds } = this.props;
+    const { inboxSize } = InboxStore.getState();
 
     if (sourceType === DragDropItemTypes.DATASET) {
       const { visible, deletingTooltip } = this.state;
@@ -66,6 +81,8 @@ class DatasetContainer extends Component {
           sourceType={DragDropItemTypes.DATA}
           attachment={attachment}
           largerInbox={largerInbox}
+          isSelected={checkedIds.includes(attachment.id)}
+          checked={isSelected}
         />
       ));
       const attCount = this.attachmentCount();
@@ -89,8 +106,10 @@ class DatasetContainer extends Component {
             <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} style={{ cursor: "pointer" }}>&nbsp;</i>
             {deletingTooltip ? (
               <Tooltip placement="bottom" className="in" id="tooltip-bottom">
-                Delete {attCount} attachment{attCount > 1 ? 's' : null}?
-                <ButtonGroup>
+                {`Delete ${attCount} attachment${attCount > 1 ? 's' : ''}?`}
+                <ButtonGroup
+                  style={{ marginLeft: '5px' }}
+                >
                   <Button
                     bsStyle="danger"
                     bsSize="xsmall"
@@ -110,9 +129,18 @@ class DatasetContainer extends Component {
             ) : null}
           </span>
         ) : null;
+      const datasetCheckbox = (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onDatasetSelect(dataset.id)}
+        />
+      );
+
       return connectDragSource(
         <div>
           <div style={textStyle}>
+            {datasetCheckbox}
             &nbsp;{trash}&nbsp;
             <button
               type="button"
@@ -127,9 +155,14 @@ class DatasetContainer extends Component {
               </i>
               <span style={{ marginLeft: '8px' }}>{dataset.name}</span>
             </button>
-            <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
-              {moment(dataset.created_at).format('DD.MM.YYYY HH:mm')}
-            </span>
+            {
+              inboxSize && inboxSize !== 'Small'
+              && (
+                <span className="text-info" style={{ float: 'right', display: largerInbox ? '' : 'none' }}>
+                  {formatDate(dataset.created_at)}
+                </span>
+              )
+            }
           </div>
           <div>{visible ? attachments : null}</div>
         </div>,
@@ -147,7 +180,9 @@ DatasetContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
   sourceType: PropTypes.string.isRequired,
-  largerInbox: PropTypes.bool
+  largerInbox: PropTypes.bool,
+  isSelected: PropTypes.bool.isRequired,
+  onDatasetSelect: PropTypes.func.isRequired,
 };
 
 DatasetContainer.defaultProps = {

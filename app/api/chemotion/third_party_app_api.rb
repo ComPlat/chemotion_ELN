@@ -138,12 +138,12 @@ module Chemotion
 
       desc 'create new third party app entry'
       params do
-        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
+        requires :url, type: String, desc: 'The url in order to redirect to the app.'
         requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
       end
       post '/new_third_party_app' do
         declared(params, include_missing: false)
-        ThirdPartyApp.create!(IPAddress: params[:IPAddress], name: params[:name])
+        ThirdPartyApp.create!(url: params[:url], name: params[:name])
         status 201
       rescue ActiveRecord::RecordInvalid
         error!('Unauthorized. User has to be admin.', 401)
@@ -152,13 +152,13 @@ module Chemotion
       desc 'update a third party app entry'
       params do
         requires :id, type: String, desc: 'The id of the app which should be updated'
-        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
+        requires :url, type: String, desc: 'The url in order to redirect to the app.'
         requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
       end
       post '/update_third_party_app' do
         declared(params, include_missing: false)
         entry = ThirdPartyApp.find(params[:id])
-        entry.update!(IPAddress: params[:IPAddress], name: params[:name])
+        entry.update!(url: params[:url], name: params[:name])
         status 201
       rescue ActiveRecord::RecordInvalid
         error!('Unauthorized. User has to be admin.', 401)
@@ -197,7 +197,7 @@ module Chemotion
       end
       get 'IP' do
         tpa = ThirdPartyApp.find_by(name: params[:name])
-        return tpa.IPAddress if tpa
+        return tpa.url if tpa
 
         error_msg = "Third party app with ID: #{id} not found"
         { error: error_msg }
@@ -211,22 +211,23 @@ module Chemotion
       desc 'create token for use in download public_api'
       params do
         requires :attID, type: String, desc: 'Attachment ID'
-        requires :userID, type: String, desc: 'User ID'
         requires :nameThirdPartyApp, type: String, desc: 'name of the third party app'
       end
       get 'Token' do
-        cache_key = "token/#{params[:attID]}/#{params[:userID]}/#{params[:nameThirdPartyApp]}"
-        payload = { attID: params[:attID], userID: params[:userID], nameThirdPartyApp: params[:nameThirdPartyApp] }
+        app = ThirdPartyApp.find_by(name: params[:nameThirdPartyApp])
+        cache_key = "token/#{params[:attID]}/#{current_user.id}/#{app.id}"
+        payload = { attID: params[:attID], userID: current_user.id, nameThirdPartyApp: params[:nameThirdPartyApp] }
         cached_token = encode_token(payload, params[:nameThirdPartyApp])
         Rails.cache.write(cache_key, cached_token, expires_in: 48.hours)
-        cached_token.token
+        address = app.url
+        "#{address}?token=#{cached_token.token}&url=#{CGI.escape(Rails.application.config.root_url)}"
       end
     end
 
     resource :names do
       desc 'Find all names of all third party app'
       get 'all' do
-        ThirdPartyApp.all_names
+        ThirdPartyApp.pluck :name
       end
     end
   end

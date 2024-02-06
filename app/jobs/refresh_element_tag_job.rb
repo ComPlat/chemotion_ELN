@@ -8,7 +8,7 @@ class RefreshElementTagJob < ApplicationJob
     Reaction.all.find_each(batch_size: 30) do |reaction|
       reaction.update_tag!(collection_tag: true)
     end
-    Element.all.find_each(batch_size: 30) do |el|
+    Labimotion::Element.all.find_each(batch_size: 30) do |el|
       el.update_tag!(collection_tag: true, analyses_tag: true)
     end
   end
