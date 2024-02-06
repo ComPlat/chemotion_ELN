@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/MethodLength, Metrics/BlockLength, Metrics/AbcSize, Metrics/ClassLength
+# rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/ClassLength
 
 # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/SafeNavigationChain, Style/RedundantParentheses
 
@@ -551,10 +551,9 @@ module Chemotion
             user: current_user,
             conditions: conditions,
           ).perform!
-          
-          results["cell_lines"]={:elements=>[], :ids=>[], :page=>1, :perPage=>15, :pages=>0, :totalElements=>0, :error=>""}
+
+          results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
           results
-          
         end
       end
 
@@ -701,4 +700,4 @@ end
 
 # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/SafeNavigationChain, Style/RedundantParentheses
 
-# rubocop:enable Metrics/MethodLength, Metrics/BlockLength, Metrics/AbcSize, Metrics/ClassLength
+# rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/ClassLength
