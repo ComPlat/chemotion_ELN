@@ -8,7 +8,7 @@ class MigrateDatacollectorAndNovncFields < ActiveRecord::Migration[6.1]
       user_level_selected = datacollector['method_params']['user_level_selected'] rescue false
       user_level_value = user_level_selected.present? ? user_level_selected : false
 
-      device.update_columns(
+      device.update(
         datacollector_method: (datacollector['method'] rescue nil),
         datacollector_dir: (datacollector['method_params']['dir'] rescue nil),
         datacollector_host: (datacollector['method_params']['host'] rescue nil),
@@ -54,7 +54,7 @@ class MigrateDatacollectorAndNovncFields < ActiveRecord::Migration[6.1]
         novnc_settings = {
           token: device.novnc_token,
           target: device.novnc_target,
-          password: device.novnc_password
+          password: device.encrypt_novnc_password
         }
       end
 
