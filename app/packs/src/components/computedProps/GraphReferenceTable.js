@@ -36,11 +36,11 @@ export default class GraphReferenceTable extends React.Component {
   }
 
   componentDidUpdate() {
-    if (this.gridColumnApi) this.autoSizeAll();
+    if (this.gridApi) this.autoSizeAll();
   }
 
   onGridReady(params) {
-    this.gridColumnApi = params.columnApi;
+    this.gridApi = params.api;
   }
 
   onRefsChanged(params) {
@@ -66,15 +66,14 @@ export default class GraphReferenceTable extends React.Component {
   }
 
   autoSizeAll() {
-    if (!this.api) return;
-    setTimeout(() => {
-      const allColumnIds = [];
-      this.gridColumnApi.getAllColumns().forEach((column) => {
-        allColumnIds.push(column.colId);
-      });
+    if (!this.gridApi) return;
+    if (this.gridApi.isDestroyed()) return;
+    const allColumnIds = [];
+    this.gridApi.getAllGridColumns().forEach((column) => {
+      allColumnIds.push(column.colId);
+    });
 
-      this.gridColumnApi.autoSizeColumns(allColumnIds);
-    }, 0);
+    this.gridApi.autoSizeColumns(allColumnIds);
   }
 
   render() {
@@ -96,7 +95,7 @@ export default class GraphReferenceTable extends React.Component {
         headerName: '',
         field: 'type',
         editable: false,
-        cellRendererFramework: TableEditBtn,
+        cellRenderer: TableEditBtn,
         cellRendererParams: {
           dataLength: data.length - 1,
           onEditBtnClick: this.onEditBtnClick

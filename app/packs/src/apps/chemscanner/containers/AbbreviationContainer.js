@@ -76,6 +76,7 @@ export default class AbbreviationManagementContainer extends React.Component {
   }
 
   onGridReady(e, newAbb) {
+    if (!e.api) return;
     e.api.sizeColumnsToFit();
 
     if (newAbb) {
@@ -117,7 +118,7 @@ export default class AbbreviationManagementContainer extends React.Component {
         }
       });
 
-      gridApi.updateRowData({ remove: dataList });
+      gridApi.applyTransaction({ remove: dataList });
     });
   }
 
@@ -143,7 +144,7 @@ export default class AbbreviationManagementContainer extends React.Component {
       if (keys.length === 0) return;
 
       const abbreviations = keys.map(k => ({ abb: k, smi: res[k] }));
-      gridApi.updateRowData({
+      gridApi.applyTransaction({
         add: abbreviations,
         addIndex: 0
       });
@@ -157,8 +158,8 @@ export default class AbbreviationManagementContainer extends React.Component {
       headerName: '',
       field: 'type',
       editable: false,
-      suppressFilter: true,
-      cellRendererFramework: RemoveRowBtn,
+      filter: false,
+      cellRenderer: RemoveRowBtn,
       cellRendererParams: {
         onClick: this.removeRow
       },
