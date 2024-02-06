@@ -20,6 +20,7 @@ const DeviceModal = () => {
   const errorMessage = devicesStore.error_message + deviceMetadataStore.error_message;
   const successMessage = devicesStore.success_message + deviceMetadataStore.success_message;
   const withAlertClass = errorMessage || successMessage ? 'with-alert' : '';
+  const buttonsWithAlertClass = errorMessage ? 'with-alert' : '';
 
   const minimizedClass = devicesStore.modalMinimized ? ' minimized' : '';
   let deviceParams = {};
@@ -252,7 +253,7 @@ const DeviceModal = () => {
                   </Tab>
                 </Tabs>
               </div>
-              <ButtonToolbar className="draggable-modal-form-buttons">
+              <ButtonToolbar className={`draggable-modal-form-buttons ${buttonsWithAlertClass}`}>
                 <Button bsStyle="warning" onClick={() => handleCancel()}>
                   Cancel
                 </Button>
