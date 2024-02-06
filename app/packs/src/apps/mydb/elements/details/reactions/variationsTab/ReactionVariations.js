@@ -55,9 +55,9 @@ function RowToolsCellRenderer({
 
 function CellRenderer({ value: cellData, enableEquivalent }) {
   const { value = '', unit = 'None', aux = {} } = cellData ?? {};
-  let cellContent = `${Number(value)} [${unit}]`;
+  let cellContent = `${Number(value).toPrecision(4)} [${unit}]`;
   if (enableEquivalent) {
-    cellContent += `; ${Number(aux.equivalent)} [Equiv]`;
+    cellContent += `; ${Number(aux.equivalent).toPrecision(4)} [Equiv]`;
   }
 
   let overlayContent = aux.coefficient ? `Coeff: ${aux.coefficient}` : '';
@@ -264,13 +264,12 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
   const columnDefs = [
     {
-      field: '',
+      field: null,
       cellRenderer: RowToolsCellRenderer,
       cellRendererParams: { copyRow, removeRow, reactionShortLabel: reaction.short_label },
       lockPosition: 'left',
       editable: false,
       sortable: false,
-      resizable: false,
     },
 
     {
@@ -359,10 +358,12 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
           columnDefs={columnDefs}
           readOnlyEdit
           onCellEditRequest={updateRow}
+          onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns(false)}
+          domLayout="autoHeight"
           defaultColDef={{
             editable: true,
             sortable: true,
-            resizable: true,
+            resizable: false,
             comparator: cellComparator,
             cellEditor: CellEditor,
             cellEditorParams: { enableEquivalent: false, allowNegativeValue: false },
