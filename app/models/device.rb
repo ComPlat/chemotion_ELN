@@ -175,11 +175,11 @@ class Device < ApplicationRecord
   def decrypted_novnc_password
     return if novnc_password.blank?
 
-    self.class.decrypt_value(novnc_password)
+    decrypt_value(novnc_password)
   end
 
   def encrypt_novnc_password
-    password = novnc_password.blank? ? '' : self.class.encrypt_value(novnc_password)
+    password = novnc_password.blank? ? '' : encrypt_value(novnc_password)
     self.novnc_password = password
   end
 

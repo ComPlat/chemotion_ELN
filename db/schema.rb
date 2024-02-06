@@ -206,15 +206,6 @@ ActiveRecord::Schema.define(version: 2024_02_05_131406) do
     t.datetime "deleted_at"
   end
 
-  create_table "collections_device_descriptions", force: :cascade do |t|
-    t.integer "collection_id"
-    t.integer "device_description_id"
-    t.datetime "deleted_at"
-    t.index ["collection_id"], name: "index_collections_device_descriptions_on_collection_id"
-    t.index ["deleted_at"], name: "index_collections_device_descriptions_on_deleted_at"
-    t.index ["device_description_id", "collection_id"], name: "index_on_device_description_and_collection", unique: true
-  end
-
   create_table "collections_elements", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "element_id"
@@ -1169,9 +1160,7 @@ ActiveRecord::Schema.define(version: 2024_02_05_131406) do
     t.jsonb "solvent"
     t.boolean "inventory_sample", default: false
     t.boolean "dry_solvent", default: false
-    t.integer "element_form_type_id"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
-    t.index ["element_form_type_id"], name: "index_samples_on_element_form_type_id"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
