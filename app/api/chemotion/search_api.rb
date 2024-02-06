@@ -545,12 +545,16 @@ module Chemotion
               params: params[:selection][:advanced_params],
             ).filter!
 
-          Usecases::Search::AdvancedSearch.new(
+          results = Usecases::Search::AdvancedSearch.new(
             collection_id: @c_id,
             params: params,
             user: current_user,
             conditions: conditions,
           ).perform!
+          
+          results["cell_lines"]={:elements=>[], :ids=>[], :page=>1, :perPage=>15, :pages=>0, :totalElements=>0, :error=>""}
+          results
+          
         end
       end
 
