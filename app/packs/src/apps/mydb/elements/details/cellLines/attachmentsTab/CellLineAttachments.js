@@ -3,9 +3,11 @@ import PropTypes from 'prop-types';
 
 export default class CellLineAttachments extends React.Component {
 
- render(){
-    return null;
- }
+  render() {    
+    return (
+      <div> Im Wellplate</div>
+    );
+  }
 }
 
 CellLineAttachments.propTypes = {
