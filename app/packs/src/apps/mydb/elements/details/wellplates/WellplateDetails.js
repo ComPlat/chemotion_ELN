@@ -24,6 +24,8 @@ import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
@@ -33,6 +35,7 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class WellplateDetails extends Component {
@@ -44,6 +47,7 @@ export default class WellplateDetails extends Component {
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
       visible: Immutable.List(),
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleWellplateChanged = this.handleWellplateChanged.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -54,8 +58,11 @@ export default class WellplateDetails extends Component {
 
   componentDidMount() {
     const { wellplate } = this.props;
+    const { currentUser } = this.state;
+
     UIStore.listen(this.onUIStoreChange);
-    if (!wellplate.isNew) {
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !wellplate.isNew) {
       CommentActions.fetchComments(wellplate);
     }
   }
