@@ -37,6 +37,9 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import { commentActivation } from 'src/utilities/CommentHelper';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -46,6 +49,7 @@ export default class ResearchPlanDetails extends Component {
       researchPlan,
       update: false,
       visible: Immutable.List(),
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -60,7 +64,9 @@ export default class ResearchPlanDetails extends Component {
 
   componentDidMount() {
     const { researchPlan } = this.props;
-    if (!researchPlan.isNew) {
+    const { currentUser } = this.state;
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !researchPlan.isNew) {
       CommentActions.fetchComments(researchPlan);
     }
   }
