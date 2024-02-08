@@ -249,9 +249,13 @@ class ViewSpectra extends React.Component {
       waveLength,
       temperature
     });
+    let solventDecimal = decimal
+    if (FN.is13CLayout(layout)){
+      solventDecimal = 2
+    }
 
     const { label, value, name } = selectedShift.ref;
-    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
+    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(solventDecimal)} ppm], ` : '';
     return [
       ...layoutOpsObj.head(freqStr, solvent),
       { insert: mBody },
