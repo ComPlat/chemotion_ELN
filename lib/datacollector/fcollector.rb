@@ -103,4 +103,18 @@ class Fcollector
       "#{@current_collector&.path} >>> #{message}"
     end
   end
+
+  def new_folders(monitored_folder_p)
+    if @sftp
+      new_folders_p = @sftp.dir.glob(monitored_folder_p, '*').select(
+        &:directory?
+      )
+      new_folders_p.map! { |dir| File.join(monitored_folder_p, dir.name) }
+    else
+      new_folders_p = Dir.glob(File.join(monitored_folder_p, '*')).select do |e|
+        File.directory?(e)
+      end
+    end
+    new_folders_p
+  end
 end

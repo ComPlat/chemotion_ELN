@@ -1,7 +1,22 @@
 /* eslint-disable react/no-multi-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, Table, Modal, Tooltip, OverlayTrigger, FormControl, InputGroup, FormGroup, DropdownButton, MenuItem, Row, Col } from 'react-bootstrap';
+import {
+  Panel,
+  Button,
+  Table,
+  Modal,
+  Tooltip,
+  OverlayTrigger,
+  FormControl,
+  InputGroup,
+  FormGroup,
+  DropdownButton,
+  MenuItem,
+  Row,
+  Col,
+  ControlLabel
+} from 'react-bootstrap';
 import { startsWith, endsWith } from 'lodash';
 import uuid from 'uuid';
 import Clipboard from 'clipboard';
@@ -101,14 +116,17 @@ class ModelConfig extends Component {
       selectedMethod: props.device.data.method || null,
       selectedAuth: (props.device.data.method_params && props.device.data.method_params.authen)
         || 'password',
+      userLevelSelected: (props.device.data.method_params && props.device.data.method_params.user_level_selected)
+        || false,
     };
     this.handleSave = this.handleSave.bind(this);
     this.handleSelectMethod = this.handleSelectMethod.bind(this);
     this.handleSelectAuth = this.handleSelectAuth.bind(this);
+    this.handleSelectUserLevel = this.handleSelectUserLevel.bind(this);
   }
 
   handleSave(device) {
-    const { selectedMethod, selectedAuth } = this.state;
+    const { selectedMethod, selectedAuth, userLevelSelected } = this.state;
 
     if (!selectedMethod) {
       NotificationError({ device, msg: 'Please select Data Collector Method!' });
@@ -153,6 +171,7 @@ class ModelConfig extends Component {
     if (startsWith(selectedMethod, 'folder')) {
       params.data.method_params.number_of_files = Math.trunc(this.refNumFiles.value);
     }
+    params.data.method_params.user_level_selected = userLevelSelected;
     AdminFetcher.updateDeviceMethod(params)
       .then((result) => {
         if (result.error) {
@@ -173,10 +192,25 @@ class ModelConfig extends Component {
     this.setState({ selectedAuth: e });
   }
 
+  handleSelectUserLevel = () => {
+    this.setState((prevState) => ({
+      userLevelSelected: !prevState.userLevelSelected,
+    }), () => {
+      const inputDirectoryText = '/{UserSubDirectories}';
+      if (this.state.userLevelSelected) {
+        this.refDirectory.value += inputDirectoryText;
+      } else {
+        this.refDirectory.value = this.refDirectory.value.replace(inputDirectoryText, '');
+      }
+    });
+  };
+
   render() {
-    const { selectedMethod, selectedAuth } = this.state;
+    const { selectedMethod, selectedAuth, userLevelSelected } = this.state;
     const rowStyle = { padding: '8px', display: 'flex' };
     const colStyle = { textAlign: 'right', marginTop: 'auto', marginBottom: 'auto' };
+    const methodParams = this.props.device.data.method_params;
+    const inputDirectoryValue = userLevelSelected ? `${methodParams?.dir}/{UserSubDirectories}` : methodParams?.dir || '';
 
     return (
       <Modal
@@ -274,8 +308,35 @@ class ModelConfig extends Component {
                 id="inputDirectory"
                 placeholder="e.g. /home/sftp/eln"
                 required
-                defaultValue={`${(this.props.device.data.method_params ? this.props.device.data.method_params.dir : '')}`}
+                defaultValue={inputDirectoryValue}
+                readOnly={userLevelSelected}
               />
+              <div className="form-check mt-2">
+                <OverlayTrigger
+                  placement="bottom"
+                  overlay={(
+                    <Tooltip id="enableUserLevel">
+                      If you choose this option, the system will gather files and folders from subdirectories within the
+                      directory you have specified. These subdirectories must align with user name abbreviations.
+                    </Tooltip>
+                  )}
+                >
+                  <div>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="checkboxEnableUserLevel"
+                      checked={userLevelSelected}
+                      onChange={this.handleSelectUserLevel}
+                    />
+                    <ControlLabel className="g-marginLeft--10" htmlFor="checkboxEnableUserLevel">
+                      Enable user level data collection
+                      {' '}
+                      <span className="glyphicon glyphicon-info-sign" />
+                    </ControlLabel>
+                  </div>
+                </OverlayTrigger>
+              </div>
               {
                 endsWith(selectedMethod, 'local') ? <ListLocalCollector localCollector={this.props.localCollector} /> : null
               }
@@ -319,6 +380,7 @@ ModelConfig.propTypes = {
         host: PropTypes.string,
         user: PropTypes.string,
         authen: PropTypes.string,
+        userLevelSelected: PropTypes.bool,
         key_name: PropTypes.string,
         number_of_files: PropTypes.number
       })
