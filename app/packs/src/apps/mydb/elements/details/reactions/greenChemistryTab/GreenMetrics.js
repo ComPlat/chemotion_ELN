@@ -39,9 +39,8 @@ export default class GreenMetrics extends React.Component {
 
   autoSizeAll() {
     if (!this.api) return;
-    setTimeout(() => {
-      this.api.sizeColumnsToFit();
-    }, 0);
+    if (this.api.isDestroyed()) return;
+    this.api.sizeColumnsToFit();
   }
 
   render() {

@@ -22,7 +22,7 @@ class ResearchPlan < ApplicationRecord
   validates :creator, :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :includes_for_list_display, -> { includes(:attachments, :comments) }
+  scope :includes_for_list_display, -> { includes(:attachments) }
   scope :by_sample_ids, lambda { |ids|
     joins('CROSS JOIN jsonb_array_elements(body) AS element')
       .where("(element -> 'value'->> 'sample_id')::INT = ANY(array[?])", ids)

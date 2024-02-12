@@ -118,6 +118,7 @@ module Chemotion
           simulatenmr: params[:simulatenmr],
           data_type_mapping: read_data_type_mapping,
           axes_units: params[:axes_units],
+          detector: params[:detector],
         }
       end
 

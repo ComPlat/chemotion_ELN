@@ -119,9 +119,9 @@ export default class SampleComputedProps extends React.Component {
       <div className="ag-theme-balham">
         <AgGridReact
           onGridReady={this.onGridReady}
-          enableColResize
-          suppressCellSelection
+          suppressCellFocus
           columnDefs={columnDefs}
+          defaultColDef={{ resizable: true }}
           editable={false}
           rowData={cprops}
           domLayout="autoHeight"

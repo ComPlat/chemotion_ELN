@@ -10,7 +10,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const TextSearch = () => {
-  const elnElements = ['samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
+  const elnElements = ['cell_line','samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
   const genericElements = UserStore.getState().genericEls || [];
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
@@ -54,7 +54,7 @@ const TextSearch = () => {
   const SelectSearchTable = () => {
     const layout = UserStore.getState().profile.data.layout;
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const elnElements = ['cell_line','sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
 
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0

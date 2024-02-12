@@ -163,14 +163,20 @@ module Chemotion
               optional :authen, type: String
               optional :key_name, type: String
               optional :number_of_files, type: Integer
+              optional :selected_user_level, type: Boolean
             end
           end
         end
 
         after_validation do
           @p_method = params[:data][:method]
+          user_level_selected = params.dig(:data, :method_params, :user_level_selected)
           if @p_method.end_with?('local')
-            p_dir = params[:data][:method_params][:dir]
+            p_dir = if user_level_selected
+                      params[:data][:method_params][:dir].gsub(%r{/\{UserSubDirectories\}}, '')
+                    else
+                      params[:data][:method_params][:dir]
+                    end
             @pn = Pathname.new(p_dir)
             error!('Dir is not a valid directory', 500) unless @pn.directory?
 
@@ -182,6 +188,11 @@ module Chemotion
             error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
 
           end
+
+          if @p_method.end_with?('sftp') && user_level_selected
+            params[:data][:method_params][:dir].chomp!('/{UserSubDirectories}')
+          end
+
           key_path(params[:data][:method_params][:key_name]) if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
         end
 

@@ -61,9 +61,10 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
-gem 'labimotion', '1.1.1'
+gem 'labimotion', '1.1.3'
 
 gem 'mimemagic', '0.3.10'
+gem 'mime-types'
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions
@@ -195,6 +196,8 @@ group :test do
   gem 'launchy'
 
   gem 'rspec-repeat'
+
+  gem 'shoulda-matchers'
 
   gem 'simplecov', require: false
   gem 'simplecov-lcov', require: false

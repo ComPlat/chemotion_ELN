@@ -2,7 +2,13 @@
 
 require 'rails_helper'
 
-RSpec.describe Collection, type: :model do
+RSpec.describe Collection do
+  it_behaves_like 'acts_as_paranoid soft-deletable model'
+
+  it { is_expected.to belong_to(:user).optional(true) }
+  it { is_expected.to have_many(:collections_vessels).dependent(:destroy) }
+  it { is_expected.to have_many(:vessels).through(:collections_vessels) }
+
   describe 'creation' do
     let(:collection) { create(:collection) }
 
@@ -58,7 +64,7 @@ RSpec.describe Collection, type: :model do
     end
 
     describe 'belongs_to_or_shared_by (with a group)' do
-      it 'returns own collections and unlocked collections owned through a group ' do
+      it 'returns own collections and unlocked collections owned through a group' do
         p1.collections.where(label: ['chemotion-repository.net', 'All']).destroy_all
         expect(described_class.belongs_to_or_shared_by(p1.id, [g1.id])).to match_array [collection_5]
       end
@@ -84,8 +90,6 @@ RSpec.describe Collection, type: :model do
     let(:c4_u1) { create(:collection, user_id: p1.id, parent: c1_u1) }
     let(:c1_u2) { create(:collection, user_id: p2.id) }
     let(:c2_u2) { create(:collection, user_id: p2.id, parent: c1_u2) }
-    let(:c3_u2) { create(:collection, user_id: p2.id, parent: c2_u2) }
-    let(:c4_u2) { create(:collection, user_id: p2.id, parent: c1_u2) }
 
     let(:valid_attr) do
       [
@@ -96,9 +100,9 @@ RSpec.describe Collection, type: :model do
             {
               'id' => 3.14,
               'label' => 'also new',
-              'isNew' => true
-            }
-          ]
+              'isNew' => true,
+            },
+          ],
         },
         {
           'id' => 0.412,
@@ -108,15 +112,15 @@ RSpec.describe Collection, type: :model do
             {
               'id' => c2_u1.id,
               'label' => c2_u1.label,
-              'children' => []
-            }
-          ]
+              'children' => [],
+            },
+          ],
         },
         {
           'id' => c4_u1.id,
           'label' => 'updated c4',
-          'children' => []
-        }
+          'children' => [],
+        },
       ]
     end
 

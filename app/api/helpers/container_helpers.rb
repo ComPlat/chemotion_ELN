@@ -15,6 +15,10 @@ module ContainerHelpers
                      end
     # root_container.save!
     # ODOT
+    unless container[:description].nil? || root_container.nil?
+      root_container[:description] = container[:description]
+      root_container.save!
+    end
     if container[:children] != nil && !container[:children].empty?
       create_or_update_containers(container[:children], root_container, current_user)
     end
