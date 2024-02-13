@@ -16,7 +16,7 @@ module Export
         when 'richtext'
           @fields << {
             type: field['type'],
-            text: Chemotion::QuillToHtml.new.convert(field['value']),
+            text: Chemotion::QuillToHtml.convert(field['value']),
           }
         when 'table'
           @fields << {

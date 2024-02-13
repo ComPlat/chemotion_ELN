@@ -142,7 +142,7 @@ module Export
     end
 
     def quill_to_html_to_string(delta)
-      html_content = Chemotion::QuillToHtml.new.convert(delta)
+      html_content = Chemotion::QuillToHtml.convert(delta)
       Nokogiri::HTML( html_content).text
     end
   end
