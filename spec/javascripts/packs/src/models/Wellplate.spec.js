@@ -1,9 +1,10 @@
 import expect from 'expect';
 import {
-  describe, it, context
+  describe, it
 } from 'mocha';
 import Wellplate from '../../../../../app/packs/src/models/Wellplate';
-import { wellplate2x3EmptyJson } from '../../../fixture/wellplates/wellplate_3_2_empty';
+import { wellplate2x3EmptyJson } from '../../../fixture/wellplates/wellplate_2_3_empty';
+import { wellplate8x12EmptyJson } from '../../../fixture/wellplates/wellplate_8_12_empty';
 
 describe('Wellplate', async () => {
   describe('constructor()', async () => {
@@ -16,5 +17,19 @@ describe('Wellplate', async () => {
         expect(wellplate.width).toEqual(3);
       });
     });
+  });
+  
+  describe('calculatePositionOfWellByIndex()', async () => {
+    const wellplate = new Wellplate(wellplate8x12EmptyJson);
+    context('with 12x8 wellplate', async () => {
+    context('when requested well is available', async () => {
+      it('returns position [1;1]', async () => {
+        expect(wellplate.calculatePositionOfWellByIndex(0)).toEqual({x:1,y:1});
+      });
+      it('returns position [12;8]', async () => {
+        expect(wellplate.calculatePositionOfWellByIndex(96)).toEqual({x:13,y:9});
+      });
+    });
+  });
   });
 });
