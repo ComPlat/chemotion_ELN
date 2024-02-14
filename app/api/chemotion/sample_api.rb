@@ -347,6 +347,8 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         # use :root_container_params
+        optional :mixture_components, type: Array, desc: 'sample ids for mixture components'
+        optional :is_mixture_component, type: Boolean, default: false
       end
 
       route_param :id do
@@ -392,6 +394,82 @@ module Chemotion
           attributes.delete(:boiling_point_upperbound)
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
+
+          micro_att = {
+            name: params[:name],
+            molfile: params[:molfile],
+            stereo: params[:stereo],
+          }
+
+          new_sampleable_type = params[:is_mixture_component] ? 'Sample' : 'Micromolecule'
+          current_sampleable_type = @sample.sample_types.first&.sampleable_type
+
+          if current_sampleable_type != new_sampleable_type
+
+            # CASE 1: Changed from micromolecule to mixture component
+            if current_sampleable_type == 'Micromolecule' && new_sampleable_type == 'Sample' && attributes[:mixture_components].nil?
+              # update sample type
+              sample_type = SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)
+              sample_type&.update(sampleable: @sample)
+              # delete micromolecule
+              @sample.micromolecule&.destroy
+            end
+
+            # CASE 2: Change from mixture component to micromolecule
+            if current_sampleable_type == 'Sample' && new_sampleable_type == 'Micromolecule'
+              # create micromolecule
+              micromolecule = Micromolecule.new(micro_att)
+              micromolecule.samples << @sample
+              micromolecule.save!
+              # update sample type
+              sample_type = SampleType.find_by(sample: @sample, sampleable: @sample)
+              sample_type&.update(sampleable: micromolecule)
+            end
+
+            # CASE 3: Change from micromolecule to mixture component and include components list
+            if current_sampleable_type == 'Micromolecule' && new_sampleable_type == 'Sample' && attributes[:mixture_components]
+              # Create or update sample types for the components
+              attributes[:mixture_components]&.each do |component_id|
+                component = Sample.find(component_id)
+                sample_type = SampleType.find_by(sample: component, sampleable: component)
+                if sample_type
+                  sample_type.update(sample: @sample)
+                else
+                  SampleType.create(sample: @sample, sampleable: component)
+                end
+              end
+            end
+          end
+
+          # CASE 4: Still a mixture component but the components list has changed
+          if new_sampleable_type == 'Sample' && attributes[:mixture_components].present?
+            existing_components = @sample.components
+
+            components_to_add = attributes[:mixture_components] - existing_components.pluck(:id)
+            components_to_remove = existing_components.pluck(:id) & attributes[:mixture_components]
+
+            # Create new sample types for the components to be added
+            components_to_add.each do |component_id|
+              component = Sample.find(component_id)
+              sample_type = SampleType.find_by(sample: component, sampleable: component)
+              if sample_type
+                sample_type.update(sample: @sample)
+              else
+                SampleType.create(sample: @sample, sampleable: component)
+              end
+            end
+
+            # Remove old components
+            components_to_remove.each do |component_id|
+              component = Sample.find(component_id)
+              sample_type = @sample.sample_types.find_by(sample: @sample, sampleable: component)
+              # saved as component without an associated mixture
+              sample_type&.update(sample: component)
+            end
+          end
+
+          attributes.delete(:is_mixture_component)
+          attributes.delete(:mixture_components)
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -497,7 +575,6 @@ module Chemotion
           stereo: params[:stereo],
 
         }
-        mix_att = { name: params[:name] }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
         boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
