@@ -27,7 +27,7 @@ describe('Wellplate', async () => {
         expect(wellplate.calculatePositionOfWellByIndex(0)).toEqual({x:1,y:1});
       });
       it('returns position [12;8]', async () => {
-        expect(wellplate.calculatePositionOfWellByIndex(96)).toEqual({x:13,y:9});
+        expect(wellplate.calculatePositionOfWellByIndex(95)).toEqual({x:12,y:8});
       });
     });
   });
