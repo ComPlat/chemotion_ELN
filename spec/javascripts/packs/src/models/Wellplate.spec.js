@@ -89,6 +89,24 @@ describe('Wellplate', async () => {
         expect(wellplate.width).toEqual(width);
       });
     });
+
+    context('when collection id and samples list with one samples was given', async () => {
+      const sampleMock= {};
+      sampleMock.buildChild=()=>{return {wasCopied:"yes"};}
+
+      const width = 1;
+      const height = 2;
+      const collectionId = 1;
+      const samples = [sampleMock];
+      const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId,width, height);
+     
+      it('sample was put in well [1;1]', async () => {
+        expect(wellplate.wells[0].sample.wasCopied).toEqual("yes");
+      });
+      it('other well is empty', async () => {
+        expect(wellplate.wells[1]).toBeUndefined();
+      });
+    });
   });
 
   describe('calculatePositionOfWellByIndex()', async () => {

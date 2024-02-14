@@ -38,8 +38,9 @@ export default class Wellplate extends Element {
       sample,
       readouts: []
     }));
+    
     const wellplate = Wellplate.buildEmpty(collection_id, width, height);
-    wellplate.well = wells;
+    wellplate.wells = wells;
 
     return wellplate;
   }
