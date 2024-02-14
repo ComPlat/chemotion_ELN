@@ -200,7 +200,7 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
-  has_many :sample_types, as: :sampleable
+  has_many :sample_types
   belongs_to :micromolecule, optional: true
   # self join mixture samples
   belongs_to :mixture, class_name: 'Sample', optional: true
