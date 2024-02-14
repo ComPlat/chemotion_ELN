@@ -8,7 +8,7 @@ import { wellplate8x12EmptyJson } from '../../../fixture/wellplates/wellplate_8_
 
 describe('Wellplate', async () => {
   describe('constructor()', async () => {
-    context('when input is valid and has no samples in wells', async () => {
+    context('when input is valid and has dimesion 3x2 and has no samples in wells', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
 
       it('created a wellplate of size 3 x 2', async () => {
@@ -16,20 +16,38 @@ describe('Wellplate', async () => {
         expect(wellplate.height).toEqual(2);
         expect(wellplate.width).toEqual(3);
       });
+
+      it('created wellplate has 6 wells with correct positions', async () => {
+        expect(wellplate.wells.length).toEqual(6);
+        expect(wellplate.wells[5].position).toEqual({ x: 3, y: 2 });
+      });
+    });
+    context('when input is valid and has dimesion 12x8 and has no samples in wells', async () => {
+      const wellplate = new Wellplate(wellplate8x12EmptyJson);
+
+      it('created a wellplate of size 12 x 8', async () => {
+        expect(wellplate.size).toEqual(96);
+        expect(wellplate.height).toEqual(8);
+        expect(wellplate.width).toEqual(12);
+      });
+
+      it('created wellplate has 96 wells with correct positions', async () => {
+        expect(wellplate.wells.length).toEqual(96);
+      });
     });
   });
-  
+
   describe('calculatePositionOfWellByIndex()', async () => {
     const wellplate = new Wellplate(wellplate8x12EmptyJson);
     context('with 12x8 wellplate', async () => {
-    context('when requested well is available', async () => {
-      it('returns position [1;1]', async () => {
-        expect(wellplate.calculatePositionOfWellByIndex(0)).toEqual({x:1,y:1});
-      });
-      it('returns position [12;8]', async () => {
-        expect(wellplate.calculatePositionOfWellByIndex(95)).toEqual({x:12,y:8});
+      context('when requested well is available', async () => {
+        it('returns position [1;1]', async () => {
+          expect(wellplate.calculatePositionOfWellByIndex(0)).toEqual({ x: 1, y: 1 });
+        });
+        it('returns position [12;8]', async () => {
+          expect(wellplate.calculatePositionOfWellByIndex(95)).toEqual({ x: 12, y: 8 });
+        });
       });
     });
-  });
   });
 });

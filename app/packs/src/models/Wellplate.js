@@ -8,7 +8,7 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
-    this.wells = this.initWellsWithPosition(this.wells, 96);
+    this.wells = this.initWellsWithPosition(this.wells, this.size);
     this._checksum = this.checksum();
   }
 
@@ -116,12 +116,13 @@ export default class Wellplate extends Element {
   }
 
   calculatePositionOfWellByIndex(i) { // eslint-disable-line class-methods-use-this
-    const cols = 12;
-    const remainder = (i + 1) % cols;
-    return {
-      x: (remainder === 0) ? cols : remainder,
-      y: Math.floor(i / cols) + 1
-    };
+    const columns = this.width;
+    const columnOfIndex = (i + 1) % columns;
+
+    const x = (columnOfIndex === 0) ? columns : columnOfIndex;
+    const y = Math.floor(i / columns) + 1;
+
+    return { x, y };
   }
 
   title() {
