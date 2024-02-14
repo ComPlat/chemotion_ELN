@@ -12,13 +12,15 @@ export default class Wellplate extends Element {
     this._checksum = this.checksum();
   }
 
-  static buildEmpty(collection_id) {
+  static buildEmpty(collection_id,width=12, height=8) {
     return new Wellplate(
       {
         collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
-        size: 96,
+        width: width,
+        height:height,
+        size: width*height,
         description: Wellplate.quillDefault(),
         wells: [],
         readout_titles: [],

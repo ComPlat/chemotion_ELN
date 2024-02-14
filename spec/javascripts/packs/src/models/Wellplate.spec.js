@@ -37,6 +37,33 @@ describe('Wellplate', async () => {
     });
   });
 
+  describe('buildEmpty()', async () => {
+    context('when only collection id was given', async () => {
+      const collectionId = 1;
+      const wellplate = Wellplate.buildEmpty(collectionId);
+
+      it('created a wellplate of size 12 x 8', async () => {
+        expect(wellplate.size).toEqual(96);
+        expect(wellplate.height).toEqual(8);
+        expect(wellplate.width).toEqual(12);
+      });
+
+    });
+    context('when collection id was given and size set to 5x6', async () => {
+      const collectionId = 1;
+      const width=5;
+      const height=6;
+      const wellplate = Wellplate.buildEmpty(collectionId,width,height);
+
+      it('created a wellplate of size 12 x 8', async () => {
+        expect(wellplate.size).toEqual(30);
+        expect(wellplate.height).toEqual(height);
+        expect(wellplate.width).toEqual(width);
+      });
+
+    });    
+  });
+
   describe('calculatePositionOfWellByIndex()', async () => {
     const wellplate = new Wellplate(wellplate8x12EmptyJson);
     context('with 12x8 wellplate', async () => {
