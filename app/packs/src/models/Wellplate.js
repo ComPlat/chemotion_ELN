@@ -12,15 +12,15 @@ export default class Wellplate extends Element {
     this._checksum = this.checksum();
   }
 
-  static buildEmpty(collection_id,width=12, height=8) {
+  static buildEmpty(collection_id, width = 12, height = 8) {
     return new Wellplate(
       {
         collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
-        width: width,
-        height:height,
-        size: width*height,
+        width,
+        height,
+        size: width * height,
         description: Wellplate.quillDefault(),
         wells: [],
         readout_titles: [],
@@ -31,28 +31,17 @@ export default class Wellplate extends Element {
     );
   }
 
-  static buildFromSamplesAndCollectionId(clipboardSamples, collection_id) {
+  static buildFromSamplesAndCollectionId(clipboardSamples, collection_id, width = 12, height = 8) {
     const samples = clipboardSamples.map((sample) => sample.buildChild());
 
     const wells = samples.map((sample) => new Well({
       sample,
       readouts: []
     }));
+    const wellplate = Wellplate.buildEmpty(collection_id, width, height);
+    wellplate.well = wells;
 
-    return new Wellplate(
-      {
-        collection_id,
-        type: 'wellplate',
-        name: 'New Wellplate',
-        size: 96,
-        description: Wellplate.quillDefault(),
-        wells,
-        readout_titles: [],
-        container: Container.init(),
-        segments: [],
-        attachments: [],
-      }
-    );
+    return wellplate;
   }
 
   get name() {

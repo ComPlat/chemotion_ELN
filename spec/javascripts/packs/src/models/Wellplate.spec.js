@@ -47,21 +47,48 @@ describe('Wellplate', async () => {
         expect(wellplate.height).toEqual(8);
         expect(wellplate.width).toEqual(12);
       });
-
     });
+
     context('when collection id was given and size set to 5x6', async () => {
       const collectionId = 1;
-      const width=5;
-      const height=6;
-      const wellplate = Wellplate.buildEmpty(collectionId,width,height);
+      const width = 5;
+      const height = 6;
+      const wellplate = Wellplate.buildEmpty(collectionId, width, height);
 
       it('created a wellplate of size 12 x 8', async () => {
         expect(wellplate.size).toEqual(30);
         expect(wellplate.height).toEqual(height);
         expect(wellplate.width).toEqual(width);
       });
+    });
+  });
 
-    });    
+  describe('buildFromSamplesAndCollectionId()', async () => {
+    context('when only collection id and empty samples list was given', async () => {
+      const collectionId = 1;
+      const samples = [];
+      const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId);
+
+      it('created a wellplate of size 12 x 8', async () => {
+        expect(wellplate.size).toEqual(96);
+        expect(wellplate.height).toEqual(8);
+        expect(wellplate.width).toEqual(12);
+      });
+    });
+
+    context('when collection id and dimension [7x3] was given and empty samples list was given', async () => {
+      const collectionId = 1;
+      const samples = [];
+      const width = 7;
+      const height = 3;
+      const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height);
+
+      it('created a wellplate of size 7 x 3', async () => {
+        expect(wellplate.size).toEqual(width * height);
+        expect(wellplate.height).toEqual(height);
+        expect(wellplate.width).toEqual(width);
+      });
+    });
   });
 
   describe('calculatePositionOfWellByIndex()', async () => {
