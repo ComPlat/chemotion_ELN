@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ListGroup, ListGroupItem, Collapse, Button, ButtonGroup } from 'react-bootstrap';
-import Sample from './models/Sample';
-import SampleTlcDetails from './SampleTlcDetails';
+import Sample from 'src/models/Sample';
+import SampleTlcDetails from 'src/components/SampleTlcDetails';
 
 
 export default class SampleTlcControl extends React.Component {

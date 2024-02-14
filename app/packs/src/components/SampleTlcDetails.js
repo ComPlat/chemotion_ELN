@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, FormControl, Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import Sample from './models/Sample';
+import Sample from 'src/models/Sample';
 
 const TlcColumnDetails = ({sample, onChangeRfValue, solvIndex, rfValue, deleteTlcColumn
 }) => {

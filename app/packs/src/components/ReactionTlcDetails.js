@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Tab, Tabs } from 'react-bootstrap';
-import Reaction from './models/Reaction';
-import SampleTlcControl from './SampleTlcControl';
+import Reaction from 'src/models/Reaction';
+import SampleTlcControl from 'src/components/SampleTlcControl';
 
 // eslint-disable-next-line react/prefer-stateless-function
 export default class ReactionTlcDetails extends Component {

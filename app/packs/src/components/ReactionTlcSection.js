@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Tabs, Tab } from 'react-bootstrap';
-import Reaction from './models/Reaction';
-import ReactionTlcDetails from './ReactionTlcDetails';
+import Reaction from 'src/models/Reaction';
+import ReactionTlcDetails from 'src/components/ReactionTlcDetails';
 
 export default class ReactionTlcSection extends Component {
   constructor(props) {

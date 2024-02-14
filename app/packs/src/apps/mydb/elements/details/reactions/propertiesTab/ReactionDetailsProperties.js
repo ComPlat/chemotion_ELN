@@ -13,8 +13,7 @@ import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/St
 import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
-import ReactionTlcSection from './ReactionTlcSection';
-import Sample from './models/Sample';
+import ReactionTlcSection from 'src/components/ReactionTlcSection';
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -162,7 +161,7 @@ export default class ReactionDetailsProperties extends Component {
           <ListGroupItem>
             <h4 className="list-group-item-heading" >TLC Control</h4>
             <Row>
-              <Col md={6}>
+              {/* <Col md={6}>
                 <FormGroup>
                   <ControlLabel>Solvents (parts)</ControlLabel>
                   <FormGroup>
@@ -199,7 +198,7 @@ export default class ReactionDetailsProperties extends Component {
                     onChange={event => this.props.onInputChange('rfValue', event)}
                   />
                 </FormGroup>
-              </Col>
+              </Col> */}
               <ReactionTlcSection
                 reaction={reaction}
                 onChange={onChange}

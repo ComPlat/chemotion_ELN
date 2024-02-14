@@ -74,25 +74,11 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(sample.serialize())
-<<<<<<< HEAD:app/packs/src/fetchers/SamplesFetcher.js
     }).then((response) => response.json())
       .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
         .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
         console.log(errorMessage);
-=======
-    }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(sample, sample.id, 'Sample')
-        .then(() => this.fetchById(sample.id))).catch((errorMessage) => {
-          console.log(sample);
-          console.log(errorMessage);
-        });
-    if (files.length > 0) {
-      let tasks = [];
-      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => {
-        return promise();
->>>>>>> add rf_value tlc_solvents sample property in reaction properties and sample property:app/packs/src/components/fetchers/SamplesFetcher.js
       });
 
     if (files.length > 0) {
