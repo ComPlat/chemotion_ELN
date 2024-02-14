@@ -32,13 +32,18 @@ export default class Wellplate extends Element {
   }
 
   static buildFromSamplesAndCollectionId(clipboardSamples, collection_id, width = 12, height = 8) {
+    if(clipboardSamples.length > width * height ){
+      throw new Error('Size of wellplate to small for samples!');
+    }
+
+
     const samples = clipboardSamples.map((sample) => sample.buildChild());
 
     const wells = samples.map((sample) => new Well({
       sample,
       readouts: []
     }));
-    
+
     const wellplate = Wellplate.buildEmpty(collection_id, width, height);
     wellplate.wells = wells;
 

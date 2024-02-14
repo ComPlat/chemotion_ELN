@@ -107,6 +107,22 @@ describe('Wellplate', async () => {
         expect(wellplate.wells[1]).toBeUndefined();
       });
     });
+
+    context('when collection id and samples list with one samples was given', async () => {
+      const sampleMock= {};
+      sampleMock.buildChild=()=>{return {wasCopied:"yes"};}
+
+      const width = 1;
+      const height = 2;
+      const collectionId = 1;
+      const samples = [sampleMock,sampleMock,sampleMock];
+     
+      it('sample was put in well [1;1]', async () => {
+        expect(() => Wellplate.buildFromSamplesAndCollectionId(samples, collectionId,width, height))
+        .toThrowError('Size of wellplate to small for samples!');
+      });
+     
+    });
   });
 
   describe('calculatePositionOfWellByIndex()', async () => {
