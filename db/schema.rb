@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_01_26_145309) do
+ActiveRecord::Schema.define(version: 2024_02_15_121136) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -192,7 +192,6 @@ ActiveRecord::Schema.define(version: 2024_01_26_145309) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
-    t.bigint "inventory_id"
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
@@ -1106,6 +1105,7 @@ ActiveRecord::Schema.define(version: 2024_01_26_145309) do
     t.bigint "sampleable_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.boolean "component_stock", default: false
     t.index ["sample_id"], name: "index_sample_types_on_sample_id"
     t.index ["sampleable_type", "sampleable_id"], name: "index_sample_types_on_sampleable"
   end
