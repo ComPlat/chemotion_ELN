@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+/* eslint-disable no-undef,no-shadow */
 import expect from 'expect';
 import {
   describe, it
@@ -147,9 +147,36 @@ describe('Wellplate', async () => {
         expect(wellplate.title()).toEqual('FM-WP1 Testwellplate');
       });
     });
+
+    context('with name set but no short label', async () => {
+      const wellplate = new Wellplate(wellplate8x12EmptyJson);
+      wellplate.short_label = undefined;
+      it('only name was returned', async () => {
+        expect(wellplate.title()).toEqual(' Testwellplate');
+      });
+    });
+
+    context('with short label set but no name', async () => {
+      const wellplate = new Wellplate(wellplate8x12EmptyJson);
+      wellplate.name = undefined;
+      it('only short label was returned', async () => {
+        expect(wellplate.title()).toEqual(wellplate.short_label);
+      });
+    });
+    context('without short label and  name', async () => {
+      const wellplate = new Wellplate(wellplate8x12EmptyJson);
+      wellplate.name = undefined;
+      wellplate.short_label = undefined;
+      it('empty string was returned', async () => {
+        expect(wellplate.title()).toEqual('');
+      });
+    });
   });
   describe('serialize()', async () => {
     const wellplate = new Wellplate(wellplate2x3EmptyJson);
+    const segmentMock = {};
+    segmentMock.serialize = () => 'mySegment';
+    wellplate.segments = [segmentMock];
 
     context('with short label and name set', async () => {
       const wellplateSerialized = wellplate.serialize();
@@ -168,6 +195,9 @@ describe('Wellplate', async () => {
       });
       it('amount of serialized wells are 6', async () => {
         expect(wellplateSerialized.wells.length).toEqual(6);
+      });
+      it('amount of serialized segments are 1', async () => {
+        expect(wellplateSerialized.segments.length).toEqual(1);
       });
     });
   });
