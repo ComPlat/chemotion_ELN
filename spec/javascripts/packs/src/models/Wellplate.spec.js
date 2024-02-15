@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import expect from 'expect';
 import {
   describe, it
@@ -8,18 +9,18 @@ import { wellplate8x12EmptyJson } from '../../../fixture/wellplates/wellplate_8_
 
 describe('Wellplate', async () => {
   describe('constructor()', async () => {
-    context('when input is valid and has dimesion 3x2 and has no samples in wells', async () => {
+    context('when input is valid and has dimesion 2x3 and has no samples in wells', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
 
-      it('created a wellplate of size 3 x 2', async () => {
+      it('created a wellplate of size 2 x 3', async () => {
         expect(wellplate.size).toEqual(6);
-        expect(wellplate.height).toEqual(2);
-        expect(wellplate.width).toEqual(3);
+        expect(wellplate.height).toEqual(3);
+        expect(wellplate.width).toEqual(2);
       });
 
       it('created wellplate has 6 wells with correct positions', async () => {
         expect(wellplate.wells.length).toEqual(6);
-        expect(wellplate.wells[5].position).toEqual({ x: 3, y: 2 });
+        expect(wellplate.wells[5].position).toEqual({ x: 2, y: 3 });
       });
     });
     context('when input is valid and has dimesion 12x8 and has no samples in wells', async () => {
@@ -91,17 +92,17 @@ describe('Wellplate', async () => {
     });
 
     context('when collection id and samples list with one samples was given', async () => {
-      const sampleMock= {};
-      sampleMock.buildChild=()=>{return {wasCopied:"yes"};}
+      const sampleMock = {};
+      sampleMock.buildChild = () => ({ wasCopied: 'yes' });
 
       const width = 1;
       const height = 2;
       const collectionId = 1;
       const samples = [sampleMock];
-      const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId,width, height);
-     
+      const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height);
+
       it('sample was put in well [1;1]', async () => {
-        expect(wellplate.wells[0].sample.wasCopied).toEqual("yes");
+        expect(wellplate.wells[0].sample.wasCopied).toEqual('yes');
       });
       it('other well is empty', async () => {
         expect(wellplate.wells[1]).toBeUndefined();
@@ -109,19 +110,18 @@ describe('Wellplate', async () => {
     });
 
     context('when collection id and samples list with one samples was given', async () => {
-      const sampleMock= {};
-      sampleMock.buildChild=()=>{return {wasCopied:"yes"};}
+      const sampleMock = {};
+      sampleMock.buildChild = () => ({ wasCopied: 'yes' });
 
       const width = 1;
       const height = 2;
       const collectionId = 1;
-      const samples = [sampleMock,sampleMock,sampleMock];
-     
+      const samples = [sampleMock, sampleMock, sampleMock];
+
       it('sample was put in well [1;1]', async () => {
-        expect(() => Wellplate.buildFromSamplesAndCollectionId(samples, collectionId,width, height))
-        .toThrowError('Size of wellplate to small for samples!');
+        expect(() => Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height))
+          .toThrowError('Size of wellplate to small for samples!');
       });
-     
     });
   });
 
@@ -135,6 +135,39 @@ describe('Wellplate', async () => {
         it('returns position [12;8]', async () => {
           expect(wellplate.calculatePositionOfWellByIndex(95)).toEqual({ x: 12, y: 8 });
         });
+      });
+    });
+  });
+
+  describe('title()', async () => {
+    const wellplate = new Wellplate(wellplate8x12EmptyJson);
+
+    context('with short label and name set', async () => {
+      it('name and short label returned ', async () => {
+        expect(wellplate.title()).toEqual('FM-WP1 Testwellplate');
+      });
+    });
+  });
+  describe('serialize()', async () => {
+    const wellplate = new Wellplate(wellplate2x3EmptyJson);
+
+    context('with short label and name set', async () => {
+      const wellplateSerialized = wellplate.serialize();
+      it('properties of wellplate correct serialized', async () => {
+        expect(wellplateSerialized.id).toEqual(1);
+        expect(wellplateSerialized.is_new).toEqual(false);
+        expect(wellplateSerialized.name).toEqual('Testwellplate 2x3');
+        expect(wellplateSerialized.size).toEqual(6);
+        expect(wellplateSerialized.description).toEqual('A test description for 2x3 plate');
+        expect(wellplateSerialized.type).toEqual('wellplate');
+        expect(wellplateSerialized.height).toEqual(3);
+        expect(wellplateSerialized.width).toEqual(2);
+
+        expect(wellplateSerialized.attachments).toBeUndefined();
+        expect(wellplateSerialized.collection_id).toBeUndefined();
+      });
+      it('amount of serialized wells are 6', async () => {
+        expect(wellplateSerialized.wells.length).toEqual(6);
       });
     });
   });
