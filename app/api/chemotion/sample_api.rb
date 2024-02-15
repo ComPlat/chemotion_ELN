@@ -347,8 +347,8 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         # use :root_container_params
-        optional :mixture_components, type: Array, desc: 'sample ids for mixture components'
-        optional :is_mixture_component, type: Boolean, default: false
+        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :mixture_components, type: Hash, desc: 'Sample ids and quantities for mixture components (subsamples)'
       end
 
       route_param :id do
@@ -401,75 +401,66 @@ module Chemotion
             stereo: params[:stereo],
           }
 
-          new_sampleable_type = params[:is_mixture_component] ? 'Sample' : 'Micromolecule'
-          current_sampleable_type = @sample.sample_types.first&.sampleable_type
+          new_sample_type = params[:sample_type]
+          current_sample_type = @sample.sample_types.first&.sampleable_type
+          current_sample_type = 'Mixture' if current_sample_type == 'Sample'
+          current_sample_type = 'ComponentStock' if @sample.sample_types.first&.component_stock?
 
-          if current_sampleable_type != new_sampleable_type
-
+          if current_sample_type != new_sample_type
             # CASE 1: Changed from micromolecule to mixture component
-            if current_sampleable_type == 'Micromolecule' && new_sampleable_type == 'Sample' && attributes[:mixture_components].nil?
+            if current_sample_type == 'Micromolecule' && new_sample_type == 'ComponentStock'
               # update sample type
-              sample_type = SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)
-              sample_type&.update(sampleable: @sample)
+              s_type = SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)
+              s_type.update(sampleable: nil, component_stock: true)
               # delete micromolecule
               @sample.micromolecule&.destroy
             end
 
-            # CASE 2: Change from mixture component to micromolecule
-            if current_sampleable_type == 'Sample' && new_sampleable_type == 'Micromolecule'
+            # CASE 2: Change from component stock to micromolecule
+            if current_sample_type == 'ComponentStock' && new_sample_type == 'Micromolecule'
               # create micromolecule
               micromolecule = Micromolecule.new(micro_att)
               micromolecule.samples << @sample
               micromolecule.save!
               # update sample type
-              sample_type = SampleType.find_by(sample: @sample, sampleable: @sample)
-              sample_type&.update(sampleable: micromolecule)
+              s_type = SampleType.find_by(sample: @sample, component_stock: true)
+              s_type.update(sampleable: micromolecule)
             end
 
-            # CASE 3: Change from micromolecule to mixture component and include components list
-            if current_sampleable_type == 'Micromolecule' && new_sampleable_type == 'Sample' && attributes[:mixture_components]
-              # Create or update sample types for the components
-              attributes[:mixture_components]&.each do |component_id|
+            # CASE 3: A mixture
+            if new_sample_type == 'Mixture'
+              # Delete micromolecule and sample type entry, if any
+              @sample.micromolecule&.destroy
+              SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)&.destroy
+
+              # add/delete components
+              existing_components = @sample.components
+              components_to_remove = existing_components.pluck(:id) - params[:mixture_components].keys.map(&:to_i)
+              components_to_add = params[:mixture_components].keys.map(&:to_i) - existing_components.pluck(:id)
+
+              components_to_remove.each do |component_id|
                 component = Sample.find(component_id)
-                sample_type = SampleType.find_by(sample: component, sampleable: component)
-                if sample_type
-                  sample_type.update(sample: @sample)
-                else
-                  SampleType.create(sample: @sample, sampleable: component)
-                end
+                component&.destroy
+              end
+
+              components_to_add.each do |component_id|
+                stock_component_sample = Sample.find_by(id: component_id)
+                next if stock_component_sample.blank?
+
+                subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+                SampleType.create(sample: @sample, sampleable: subsample, component_stock: false)
+              end
+
+              # TO DO: update subsamples
+              params[:mixture_components].each do |component_id, _component_quantities|
+                component = Sample.find(component_id)
+                # component.update_subsample
               end
             end
           end
 
-          # CASE 4: Still a mixture component but the components list has changed
-          if new_sampleable_type == 'Sample' && attributes[:mixture_components].present?
-            existing_components = @sample.components
-
-            components_to_add = attributes[:mixture_components] - existing_components.pluck(:id)
-            components_to_remove = existing_components.pluck(:id) & attributes[:mixture_components]
-
-            # Create new sample types for the components to be added
-            components_to_add.each do |component_id|
-              component = Sample.find(component_id)
-              sample_type = SampleType.find_by(sample: component, sampleable: component)
-              if sample_type
-                sample_type.update(sample: @sample)
-              else
-                SampleType.create(sample: @sample, sampleable: component)
-              end
-            end
-
-            # Remove old components
-            components_to_remove.each do |component_id|
-              component = Sample.find(component_id)
-              sample_type = @sample.sample_types.find_by(sample: @sample, sampleable: component)
-              # saved as component without an associated mixture
-              sample_type&.update(sample: component)
-            end
-          end
-
-          attributes.delete(:is_mixture_component)
           attributes.delete(:mixture_components)
+          attributes.delete(:sample_type)
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -531,8 +522,8 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        optional :mixture_components, type: Array, desc: 'sample ids for mixture components'
-        optional :is_mixture_component, type: Boolean, default: false
+        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :mixture_components, type: Hash, desc: 'Sample ids and quantities for component stock solutions'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -627,37 +618,34 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        # 1. save sample as micromolecule (default)
-        if params[:mixture_components].blank? && !params[:is_mixture_component]
+        # Save sample based on sample_type
+        case params[:sample_type]
+        when 'Mixture'
+          mixture_components = params[:mixture_components]
+          if mixture_components.present?
+            mixture_components.each do |component_id, _component_quantities|
+              stock_component_sample = Sample.find_by(id: component_id)
+              next if stock_component_sample.blank?
+
+              # Create subsample of each component stock
+              subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+
+              # TO DO: update subsample with the component_quantities
+              # subsample.update_subsample(component_quantities)
+
+              # Create SampleType entry for subsample
+              SampleType.create(sample: sample, sampleable: subsample, component_stock: false)
+            end
+          end
+
+        when 'ComponentStock'
+          SampleType.create(sample: sample, component_stock: true)
+
+        when 'Micromolecule'
           micromolecule = Micromolecule.new(micro_att)
           micromolecule.samples << sample
           micromolecule.save!
-
-          sample_type = SampleType.new(sample: sample, sampleable: micromolecule)
-          sample_type.save!
-
-        # 2. save mixture
-        elsif params[:mixture_components].present?
-          component_sample_ids = params[:mixture_components]
-          component_samples = Sample.where(id: component_sample_ids)
-
-          component_samples.each do |component_sample|
-            sample.components << component_sample
-
-            sample_type = SampleType.find_by(sample: component_sample, sampleable: component_sample)
-            if sample_type.nil?
-              sample_type = SampleType.new(sample: sample, sampleable: component_sample)
-              sample_type.save!
-            else
-              sample_type.update(sample: sample)
-            end
-            sample_type.save!
-          end
-
-        # 3. save only mixture component
-        else
-          sample_type = SampleType.new(sample: sample, sampleable: sample)
-          sample_type.save!
+          SampleType.create(sample: sample, sampleable: micromolecule, component_stock: false)
         end
 
         sample.container = update_datamodel(params[:container])

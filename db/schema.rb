@@ -1135,6 +1135,7 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.bigint "sampleable_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.boolean "component_stock", default: false
     t.index ["sample_id"], name: "index_sample_types_on_sample_id"
     t.index ["sampleable_type", "sampleable_id"], name: "index_sample_types_on_sampleable"
   end
