@@ -306,7 +306,7 @@ export default class WellplateDetails extends Component {
     const exportButton = (wellplate && wellplate.isNew)
       ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
     const properties = {
-      name, size, description, readoutTitles
+      name, size, description, readoutTitles, wellplate
     };
 
     const tabContentsMap = {

@@ -3,6 +3,7 @@ import { FormGroup, InputGroup, FormControl, ControlLabel, Button, ButtonGroup, 
 import PropTypes from 'prop-types';
 
 import QuillEditor from 'src/components/QuillEditor';
+import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown.js';
 
 export default class WellplateProperties extends Component {
   constructor(props) {
@@ -109,14 +110,14 @@ export default class WellplateProperties extends Component {
 
   render() {
     const {
-      name, size, description, readoutTitles
+      name, size, description, readoutTitles, wellplate
     } = this.props;
 
     return (
       <table width="100%">
         <tbody>
           <tr>
-            <td width="80%" className="padding-right">
+            <td width="70%" className="padding-right">
               <FormGroup>
                 <ControlLabel>Name</ControlLabel>
                 <FormControl
@@ -127,15 +128,10 @@ export default class WellplateProperties extends Component {
                 />
               </FormGroup>
             </td>
-            <td width="20%">
+            <td width="30%">
               <FormGroup>
                 <ControlLabel>Size</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={size || ''}
-                  onChange={event => this.handleInputChange('size', event)}
-                  disabled
-                />
+                <WellplateSizeDropdown wellplate={wellplate }/>
               </FormGroup>
             </td>
           </tr>
@@ -189,6 +185,7 @@ export default class WellplateProperties extends Component {
 }
 
 WellplateProperties.propTypes = { /* eslint-disable react/forbid-prop-types */
+  wellplate: PropTypes.object.isRequired,
   changeProperties: PropTypes.func.isRequired,
   handleAddReadout: PropTypes.func.isRequired,
   handleRemoveReadout: PropTypes.func.isRequired,
