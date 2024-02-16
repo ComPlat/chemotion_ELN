@@ -39,4 +39,21 @@ describe('WellplateSizeDropdown', async () => {
       });
     });
   });
+  describe('changeSizeOption()', async () => {
+    context('when wellplate size 2x3 is not in option list', async () => {
+      const wellplate = new Wellplate(wellplate2x3EmptyJson);
+      const wrapper = shallow(<WellplateSizeDropdown
+        wellplate={wellplate}
+      />);
+      wrapper.instance().changeSizeOption( { value: '4;3', label: '12 (4x3)' })
+
+      it('the state of the react component was changed', async () => {
+        expect(wrapper.instance().state.currentSize).toEqual({ value: '4;3', label: '12 (4x3)' });
+      });
+
+      it('the wellplate properties were changed', async () => {
+        expect(wellplate.size).toEqual(12);
+      });
+    });
+  });
 });
