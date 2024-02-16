@@ -25,12 +25,17 @@ module QuillUtils
 
   private
 
+  # rubocop:disable Style/StringLiterals
+
   # desc: check for empty quill delta ops
   def blank_ops?(content)
     return true if content.blank?
-    return true if [{ "ops" => [{ "insert"=>"" }] }, { "ops" => [{ "insert"=>"\n" }] }].include?(content)
-    return true if ["{\"ops\":[{\"insert\":\"\"}]}", "{\"ops\":[{\"insert\":\"\\n\"}]}"].include?(content)
+    return true if [{ "ops" => [{ "insert" => "" }] }, { "ops" => [{ "insert" => "\n" }] }].include?(content)
+
+    ["{\"ops\":[{\"insert\":\"\"}]}", "{\"ops\":[{\"insert\":\"\\n\"}]}"].include?(content)
   end
+
+  # rubocop:enable Style/StringLiterals
 
   # desc: return the quill delta as string
   def parse_input(delta_ops)
@@ -44,7 +49,7 @@ module QuillUtils
                   '[]'
                 end
     # remove blank inserts that can break the conversion
-    delta_ops.gsub(/\{"insert":""\},/, '').gsub(/\{"insert":""\}\]/, ']')
+    delta_ops.gsub('{"insert":""},', '').gsub('{"insert":""}]', ']')
   end
 
   # remove image inserts from quill ops string
