@@ -40,12 +40,12 @@ describe('WellplateSizeDropdown', async () => {
     });
   });
   describe('changeSizeOption()', async () => {
-    context('when wellplate size 2x3 is not in option list', async () => {
+    context('when wellplate size 2x3 is not in option list and changed to 4x3', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = shallow(<WellplateSizeDropdown
         wellplate={wellplate}
       />);
-      wrapper.instance().changeSizeOption( { value: '4;3', label: '12 (4x3)' })
+      wrapper.instance().changeSizeOption({ value: '4;3', label: '12 (4x3)' });
 
       it('the state of the react component was changed', async () => {
         expect(wrapper.instance().state.currentSize).toEqual({ value: '4;3', label: '12 (4x3)' });
@@ -53,7 +53,28 @@ describe('WellplateSizeDropdown', async () => {
 
       it('the wellplate properties were changed', async () => {
         expect(wellplate.size).toEqual(12);
+        expect(wellplate.height).toEqual(3);
+        expect(wellplate.width).toEqual(4);
+      });
+      it('the wellplate number of wells is equal to 12', async () => {
+        expect(wellplate.wells.length).toEqual(12);
       });
     });
+    context('when wellplate size 2x3 is changed to 1x2', async () => {
+        const wellplate = new Wellplate(wellplate2x3EmptyJson);
+        const wrapper = shallow(<WellplateSizeDropdown
+          wellplate={wellplate}
+        />);
+        wrapper.instance().changeSizeOption({ value: '1;2', label: '2 (1x2)' });
+
+        it('the wellplate properties were changed', async () => {
+          expect(wellplate.size).toEqual(2);
+          expect(wellplate.height).toEqual(2);
+          expect(wellplate.width).toEqual(1);
+        });
+        it('the wellplate number of wells is equal to 2', async () => {
+          expect(wellplate.wells.length).toEqual(2);
+        });
+      });
   });
 });

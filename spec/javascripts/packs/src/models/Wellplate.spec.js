@@ -201,4 +201,14 @@ describe('Wellplate', async () => {
       });
     });
   });
+
+  describe('size()', async () => {
+    context('initalized with 2x3 (size = 6) and width changed to 3', async () => {
+      const wellplate = new Wellplate(wellplate2x3EmptyJson);
+      wellplate.width = 3;
+      it('size returns 9', async () => {
+        expect(wellplate.size).toEqual(9);
+      });
+    });
+  });
 });

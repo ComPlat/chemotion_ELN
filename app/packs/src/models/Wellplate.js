@@ -20,7 +20,6 @@ export default class Wellplate extends Element {
         name: 'New Wellplate',
         width,
         height,
-        size: width * height,
         description: Wellplate.quillDefault(),
         wells: [],
         readout_titles: [],
@@ -81,6 +80,10 @@ export default class Wellplate extends Element {
     return this._segments || [];
   }
 
+  get size() {
+    return this.width * this.height;
+  }
+
   serialize() {
     return super.serialize({
       name: this.name,
@@ -94,6 +97,13 @@ export default class Wellplate extends Element {
       attachments: this.attachments,
       segments: this.segments.map((s) => s.serialize())
     });
+  }
+
+  changeSize(width, height) {
+    this.width = width;
+    this.height = height;
+
+    this.wells = this.initWellsWithPosition([], this.size);
   }
 
   // ---

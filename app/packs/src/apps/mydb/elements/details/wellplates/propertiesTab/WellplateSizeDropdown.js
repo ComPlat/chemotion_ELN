@@ -35,15 +35,15 @@ export default class WellplateSizeDropdown extends Component {
     );
   }
 
-  changeSizeOption(selectedOption){
+  changeSizeOption(selectedOption) {
+    
     this.props.wellplate.edited = true;
     this.setState({ currentSize: selectedOption });
 
     const width = parseInt(selectedOption.value.split(";")[0]);
     const height = parseInt(selectedOption.value.split(";")[1]);
-    this.props.wellplate.width=width
-    this.props.wellplate.height=height;
-    this.props.wellplate.size=height*width;
+
+    this.props.wellplate.changeSize(width, height);
   }
 
   selectOptionOfWellplate(wellplate) {
