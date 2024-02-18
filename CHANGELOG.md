@@ -1,5 +1,11 @@
 # Chemotion_ELN Changelog
 
+## [v1.8.3]
+> (2024-02-18)
+
+* Fix
+  *  Generic dataset: general info for CV ([#1762](https://github.com/ComPlat/chemotion_ELN/pull/1762))
+
 
 
 ## [v1.8.2]
