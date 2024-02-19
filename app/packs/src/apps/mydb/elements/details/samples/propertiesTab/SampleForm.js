@@ -15,6 +15,7 @@ import { solventOptions, SampleTypesOptions } from 'src/components/staticDropdow
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -35,6 +36,7 @@ export default class SampleForm extends React.Component {
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -66,6 +68,11 @@ export default class SampleForm extends React.Component {
 
   handleSolventChanged(sample) {
     this.props.parent.setState({ sample });
+  }
+
+  handleMixtureComponentChanged(sample) {
+    // TO DO
+    // this.props.parent.setState({ sample });
   }
 
   showStructureEditor() {
@@ -852,6 +859,15 @@ export default class SampleForm extends React.Component {
           </ListGroup>
           <tr>
             {this.additionalProperties(sample)}
+          </tr>
+          <tr>  {this.state.selectedSampleType.value === 'Mixture' ? (
+          <td colSpan="4">
+              <SampleDetailsComponents
+                sample={sample}
+                onChange={this.handleMixtureComponentChanged}
+              />
+            </td>
+          ) : null }
           </tr>
           <tr>
             <td colSpan="4">
