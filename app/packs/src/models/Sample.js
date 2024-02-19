@@ -204,6 +204,7 @@ export default class Sample extends Element {
     });
 
     sample.short_label = Sample.buildNewShortLabel();
+    sample.mixtureComponents = [];
     return sample;
   }
 
@@ -1039,6 +1040,29 @@ export default class Sample extends Element {
       tmpSolvents[filteredIndex] = solventToUpdate;
     }
     this.solvent = tmpSolvents;
+  }
+
+  addMixtureComponent(newComponent) {
+    // TO DO: store only some attributes (id, amount, etc)
+    const tmpComponents = [...(this.mixtureComponents || [])];
+    tmpComponents.push(newComponent);
+    this.mixtureComponents = tmpComponents;
+  }
+
+  deleteMixtureComponent(componentToDelete) {
+    const tmpComponents = [...(this.mixtureComponents || [])];
+    const filteredComponents = tmpComponents.filter(
+      (comp) => comp !== componentToDelete
+    );
+    this.mixtureComponents = filteredComponents;
+  }
+
+  updateMixtureComponent(componentToUpdate) {
+    const tmpComponents = [...(this.mixtureComponents || [])];
+    const updatedComponents = tmpComponents.map((comp) =>
+      comp === componentToUpdate ? componentToUpdate : comp
+    );
+    this.mixtureComponents = updatedComponents;
   }
 }
 
