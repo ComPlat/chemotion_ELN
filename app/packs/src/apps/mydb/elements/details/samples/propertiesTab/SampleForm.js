@@ -11,7 +11,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
-import { solventOptions } from 'src/components/staticDropdownOptions/options';
+import { solventOptions, SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -23,6 +23,7 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
+      selectedSampleType: SampleTypesOptions[0]
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -693,6 +694,21 @@ export default class SampleForm extends React.Component {
     });
   }
 
+  sampleTypeInput() {
+    return (
+      <FormGroup>
+        <ControlLabel>Sample Type</ControlLabel>
+        <Select
+          name="sampleType"
+          clearable={false}
+          value={this.state.selectedSampleType}
+          onChange={(value) => this.setState({ selectedSampleType: value })}
+          options={SampleTypesOptions}
+        />
+      </FormGroup>
+    )
+  }
+
   render() {
     const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
@@ -712,8 +728,9 @@ export default class SampleForm extends React.Component {
       <Table responsive className="sample-form">
         <tbody>
           <ListGroup fill="true">
+          {this.sampleTypeInput()}
             <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
-            <ListGroupItem style={minPadding}>
+            <ListGroupItem style={minPadding}>  {this.state.selectedSampleType.value !== 'Mixture' ? (
               <div className="properties-form" style={{ width: '100%' }}>
                 <tr>
                   <td colSpan="4">
@@ -821,6 +838,16 @@ export default class SampleForm extends React.Component {
                   </td>
                 </tr>
               </div>
+              ) : (
+              <div className="name-form">
+                <div style={{ flex: '1' }}>
+                  {this.textInput(sample, 'name', 'Name')}
+                </div>
+                <div style={{ flex: '1' , paddingLeft: '10px' }}>
+                  {this.textInput(sample, 'external_label', 'External label')}
+                </div>
+              </div>
+            )}
             </ListGroupItem>
           </ListGroup>
           <tr>
