@@ -658,3 +658,9 @@ export const amountSearchOptions = [
   { label: 'l', value: 'l' },
   { label: 'mol', value: 'mol' },
 ];
+
+export const SampleTypesOptions = [
+  { label: 'Micromolecule', value: 'Micromolecule' },
+  { label: 'Mixture Component Stock Solution', value: 'ComponentStock' },
+  { label: 'Mixture', value: 'Mixture' },
+]
