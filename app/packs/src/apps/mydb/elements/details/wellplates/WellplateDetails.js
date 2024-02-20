@@ -322,7 +322,7 @@ export default class WellplateDetails extends Component {
               readoutTitles={readoutTitles}
               wells={wells}
               handleWellsChange={(w) => this.handleWellsChange(w)}
-              cols={12}
+              cols={wellplate.width}
               width={60}
             />
           </Well>
