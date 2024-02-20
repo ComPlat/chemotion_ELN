@@ -1,8 +1,12 @@
 import React from 'react';
 import {
-  FormGroup, ControlLabel, FormControl, InputGroup
+  FormGroup, ControlLabel, FormControl, InputGroup,
+  OverlayTrigger, Tooltip,
 } from 'react-bootstrap';
 import Select from 'react-select3';
+import DatePicker from 'react-datepicker';
+import moment from 'moment';
+import { v4 as uuid } from 'uuid';
 
 const valueByType = (type, event) => {
   switch (type) {
@@ -18,84 +22,155 @@ const valueByType = (type, event) => {
       return event.target.checked;
     case 'select':
       return event.value ? event.value : event.label;
+    case 'datetime':
+      return moment(event, 'YYYY-MM-DD HH:mm:ss').toISOString()
     default:
       return event;
   }
 }
 
-const handleFieldChanged = (element, setState, field, type) => (event) => {
+const handleFieldChanged = (store, field, type, element_type) => (event) => {
   let value = event === null ? '' : valueByType(type, event);
-  let elementValue = { ...element };
-  elementValue[field] = value;
-  setState(elementValue);
+
+  if (element_type == 'device_description') {
+    store.changeDeviceDescription(field, value);
+  }
 }
 
-const vendorNameIDSerialNumberInput = (element, setState, key) => {
+const toggleContent = (store, content) => {
+  store.toggleContent(content);
+}
+
+const headlineWithToggle = (store, type, text) => {
+  const toggledClass = store.toggable_contents[type] ? '' : ' toggled';
   return (
-    <FormGroup key={`${key}vendor-name-id-serial-number`}>
-      <ControlLabel>General information on the device from the vendor</ControlLabel>
+    <div className={`form-fields-headline${toggledClass}`} onClick={() => toggleContent(store, type)}>
+      {text}
+    </div>
+  );
+}
+
+const labelWithInfo = (label, info) => {
+  if (info) {
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={uuid()}>{info}</Tooltip>}
+      >
+        <ControlLabel>{label}</ControlLabel>
+      </OverlayTrigger>
+    );
+  } else {
+    return (
+      <ControlLabel>{label}</ControlLabel>
+    );
+  }
+}
+
+const dateTimePickerInput = (element, store, field, label, info) => {
+  const selectedDate = element[field] === '' ? null : moment(element[field]);
+
+  return (
+    <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
+      {labelWithInfo(label, info)}
+      <DatePicker
+        isClearable
+        showTimeSelect
+        timeFormat="HH:mm"
+        timeIntervals={15}
+        timeCaption="Time"
+        dateFormat="DD/MM/yyyy HH:mm"
+        placeholderText="DD/MM/YYYY hh:mm"
+        popperPlacement="bottom-end"
+        selected={selectedDate}
+        onChange={handleFieldChanged(store, field, 'datetime', element.type)}
+      />
+    </FormGroup>
+  );
+}
+
+const multipleInputGroups = (element, label, fields, store, info) => {
+  let inputGroupForms = [];
+  let formGroupKey = '';
+  let idOrNew = element.id !== '' ? element.id : 'new';
+
+  fields.forEach((field) => {
+    formGroupKey += `-${field.value}`;
+    inputGroupForms.push(
+      <>
+        <InputGroup.Addon>{field.label}</InputGroup.Addon>
+        <FormControl
+          name={field.value}
+          type="text"
+          key={`${store.key_prefix}${field.value}`}
+          value={element[field.value]}
+          onChange={handleFieldChanged(store, field.value, field.type, element.type)}
+        />
+      </>
+    );
+  });
+
+  return (
+    <FormGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
+      {labelWithInfo(label, info)}
       <InputGroup>
-        <InputGroup.Addon>Device's name</InputGroup.Addon>
-        <FormControl
-          name='vendor_name'
-          type="text"
-          key={`${key}vendor_name`}
-          value={element['vendor_name']}
-          onChange={handleFieldChanged(element, setState, 'vendor_name', 'text')}
-        />
-        <InputGroup.Addon>Device's ID</InputGroup.Addon>
-        <FormControl
-          name='vendor_id'
-          type="text"
-          key={`${key}vendor_id`}
-          value={element['vendor_id']}
-          onChange={handleFieldChanged(element, setState, 'vendor_id', 'text')}
-        />
-        <InputGroup.Addon>Serial no</InputGroup.Addon>
-        <FormControl
-          name='serial_number'
-          type="text"
-          key={`${key}serial_number`}
-          value={element['serial_number']}
-          onChange={handleFieldChanged(element, setState, 'serial_number', 'text')}
-        />
+        {inputGroupForms}
       </InputGroup>
     </FormGroup>
   );
 }
 
-const selectInput = (element, setState, field, label, key, options) => {
+const selectInput = (element, store, field, label, options, info) => {
   let value = options.find((o) => { return o.value == element[field] });
   value = value === undefined ? { value: '', label: '' } : value;
 
   return (
-    <FormGroup key={`${key}-${label}`}>
-      <ControlLabel>{label}</ControlLabel>
+    <FormGroup key={`${store.key_prefix}-${label}`}>
+      {labelWithInfo(label, info)}
       <Select
         name={field}
-        key={`${key}-${field}`}
+        key={`${store.key_prefix}-${field}`}
         options={options}
         value={value}
         isClearable={true}
-        onChange={handleFieldChanged(element, setState, field, 'select')}
+        onChange={handleFieldChanged(store, field, 'select', element.type)}
       />
     </FormGroup>
   );
 }
 
-const textInput = (element, setState, field, label, key) => {
+const textareaInput = (element, store, field, label, rows, info) => {
   return (
-    <FormGroup key={`${key}-${label}`}>
-      <ControlLabel>{label}</ControlLabel>
+    <FormGroup key={`${store.key_prefix}-${label}`}>
+      {labelWithInfo(label, info)}
+      <FormControl
+        name={field}
+        componentClass="textarea"
+        key={`${store.key_prefix}-${field}`}
+        value={element[field]}
+        rows={rows}
+        onChange={handleFieldChanged(store, field, 'textarea', element.type)}
+      />
+    </FormGroup>
+  );
+}
+
+const textInput = (element, store, field, label, info) => {
+  return (
+    <FormGroup key={`${store.key_prefix}-${label}`}>
+      {labelWithInfo(label, info)}
       <FormControl
         name={field}
         type="text"
-        key={`${key}-${field}`}
+        key={`${store.key_prefix}-${field}`}
         value={element[field]}
-        onChange={handleFieldChanged(element, setState, field, 'text')}
+        onChange={handleFieldChanged(store, field, 'text', element.type)}
       />
     </FormGroup>
   );
 }
 
-export { selectInput, textInput, vendorNameIDSerialNumberInput }
+export {
+  selectInput, textInput, multipleInputGroups,
+  textareaInput, dateTimePickerInput, headlineWithToggle,
+}

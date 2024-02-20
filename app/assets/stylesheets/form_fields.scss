@@ -32,23 +32,47 @@
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
   padding: 5px;
-  margin-top: 0;
-  margin-bottom: 7px;
+  margin-top: 7px;
+  margin-bottom: 15px;
   font-size: 16px;
   font-weight: bold;
+  position: relative;
 }
+
+.form-fields-headline:hover {
+  cursor: pointer;
+}
+
+.form-fields-headline:after, .form-fields-headline.toggled:after {
+  font-family: FontAwesome;
+  position: absolute;
+  top: 5px;
+  right: 7px;
+}
+
+.form-fields-headline:after {
+  content: "\f078";
+}
+
+.form-fields-headline.toggled:after {
+  content: "\f054";
+}
+
 
 .grouped-fields-row {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 0;
+}
+
+.grouped-fields-row.collapse.in {
+  display: flex;
 }
 
 .grouped-fields-row.cols-1 .form-group {
   width: 100%;
-  margin-top: 7px;
   &.column-size-column {
     width: 24%;
   }
@@ -62,6 +86,31 @@
   width: 32.25%;
 }
 
+.grouped-fields-row .gu_date_picker input {
+  height: 34px;
+}
+
 .grouped-fields-row.cols-4 .form-group {
   width: 24%;
+}
+
+button.react-datepicker__navigation {
+  text-indent: unset;
+}
+
+.react-datepicker__navigation--next:after, .react-datepicker__navigation--previous:after {
+  font-family: FontAwesome;
+  color: #ccc;
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  top: 7px;
+}
+
+.react-datepicker__navigation--next:after {
+  content: "\f054";
+}
+
+.react-datepicker__navigation--previous:after {
+  content: "\f053";
 }

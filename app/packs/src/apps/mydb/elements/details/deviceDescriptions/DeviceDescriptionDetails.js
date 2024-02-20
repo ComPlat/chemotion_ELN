@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   Panel, ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -14,11 +14,19 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import DetailActions from 'src/stores/alt/actions/DetailActions';
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
-const DeviceDescriptionDetails = ({ deviceDescription, toggleFullScreen }) => {
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+
+const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
+  const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
+  let deviceDescription = deviceDescriptionsStore.device_description;
+
   const [activeTab, setActiveTab] = useState('properties'); // state from store
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
 
@@ -46,7 +54,7 @@ const DeviceDescriptionDetails = ({ deviceDescription, toggleFullScreen }) => {
     tabContents.push(
       <Tab eventKey={key} title={title} key={`${key}_${deviceDescription.id}`}>
         {React.createElement(tabContentComponents[key], {
-          key: `${deviceDescription.id}-${key}`, deviceDescription: deviceDescription
+          key: `${deviceDescription.id}-${key}`
         })}
       </Tab>
     );
@@ -61,7 +69,13 @@ const DeviceDescriptionDetails = ({ deviceDescription, toggleFullScreen }) => {
   }
 
   const handleSubmit = () => {
-
+    LoadingActions.start();
+    if (deviceDescription.is_new) {
+      DetailActions.close(deviceDescription, true);
+      ElementActions.createDeviceDescription(deviceDescription);
+    } else {
+      ElementActions.updateDeviceDescription(deviceDescription);
+    }
   }
 
   const deviceDescriptionHeader = () => {
@@ -120,4 +134,4 @@ const DeviceDescriptionDetails = ({ deviceDescription, toggleFullScreen }) => {
   );
 }
 
-export default DeviceDescriptionDetails;
+export default observer(DeviceDescriptionDetails);
