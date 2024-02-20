@@ -331,6 +331,7 @@ module Import
         # 'external_label',
         'created_by',
         'short_label',
+        'rf_value',
         # 'real_amount_value',
         # 'real_amount_unit',
         # 'imported_readout',

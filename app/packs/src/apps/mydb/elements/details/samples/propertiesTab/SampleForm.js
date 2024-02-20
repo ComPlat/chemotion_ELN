@@ -15,6 +15,7 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import SampleTlcControl from 'src/components/SampleTlcControl';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -823,6 +824,16 @@ export default class SampleForm extends React.Component {
           <tr>
             {this.additionalProperties(sample)}
           </tr>
+          
+          <tr>
+            <td colSpan="2">
+              <SampleTlcControl
+                sample={sample}
+                onChange={this.handleSolventChanged}
+              />
+            </td>
+          </tr>
+
           <tr>
             <td colSpan="4">
               <SampleDetailsSolvents

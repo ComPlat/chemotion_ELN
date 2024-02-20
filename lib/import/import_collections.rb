@@ -245,6 +245,7 @@ module Import
           'is_top_secret',
           'dry_solvent',
           'external_label',
+          'rf_value', 
           'short_label',
           'real_amount_value',
           'real_amount_unit',

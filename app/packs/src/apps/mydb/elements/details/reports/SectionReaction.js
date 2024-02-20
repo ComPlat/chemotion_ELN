@@ -279,7 +279,7 @@ const TLCContent = ({show, tlcDescription, tlcSolvents, rfValue}) => (
         <div>
         <h4 className="display-inline"> TLC - Control </h4>
           <pre className="noBorder display-inline no-padding">
-            Rf-value: {rfValue} (Solvent: {tlcSolvents})
+            RF Value: {rfValue} (Solvent: {tlcSolvents})
           </pre>
         </div>
         <div className="g-marginLeft--10">

@@ -43,6 +43,7 @@
 #  sum_formula         :string
 #  solvent             :jsonb
 #  dry_solvent         :boolean          default(FALSE)
+#  rf_value            :jsonb
 #  inventory_sample    :boolean          default(FALSE)
 #
 # Indexes
