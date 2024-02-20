@@ -57,6 +57,7 @@ class Device < ApplicationRecord
   has_many :groups, through: :users_devices, source: :user, class_name: 'Group'
 
   has_one :device_metadata, dependent: :destroy
+  has_many :device_descriptions
 
   validates :name, presence: true
   validate :unique_name_abbreviation

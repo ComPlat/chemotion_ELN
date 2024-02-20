@@ -3,6 +3,7 @@
 module Chemotion
   class DeviceDescriptionAPI < Grape::API
     include Grape::Kaminari
+    helpers ContainerHelpers
     helpers ParamsHelpers
     helpers CollectionHelpers
 
@@ -70,20 +71,23 @@ module Chemotion
       params do
         optional :name, type: String
         optional :short_label, type: String
-        optional :vendor_name, type: String
-        optional :vendor_id, type: String
-        optional :vendor_url, type: String
-        optional :serial_number, type: String
-        optional :doi, type: String
-        optional :doi_url, type: String
         optional :device_type, type: String
         optional :device_type_detail, type: String
         optional :operation_mode, type: String
-        optional :installation_start_date, type: DateTime, allow_blank: true
-        optional :installation_end_date, type: DateTime, allow_blank: true
-        optional :description_and_comments, type: String
-        optional :technical_operator, type: Hash
-        optional :administrative_operator, type: Hash
+        optional :vendor_device_name, type: String
+        optional :vendor_device_id, type: String
+        optional :serial_number, type: String
+        optional :vendor_company_name, type: String
+        optional :vendor_id, type: String
+        optional :description, type: String
+        optional :tags, type: String
+        optional :version_number, type: String
+        optional :version_installation_start_date, type: DateTime, allow_blank: true
+        optional :version_installation_end_date, type: DateTime, allow_blank: true
+        optional :version_doi, type: String
+        optional :version_doi_url, type: String
+        optional :version_characterization, type: String
+        optional :operators, type: Hash
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String
@@ -95,13 +99,20 @@ module Chemotion
         optional :weight, type: String
         optional :application_name, type: String
         optional :application_version, type: String
-        optional :description_for_method_part, type: String
+        optional :vendor_url, type: String
+        optional :policies_and_user_information, type: String
+        optional :description_for_methods_part, type: String
+        requires :collection_id, type: Integer
       end
       post do
         attributes = declared(params, include_missing: false)
-        device_description = DeviceDescription.create!(attributes)
+        attributes[:created_by] = current_user.id
+        device_description = Usecases::DeviceDescriptions::Create.new(attributes, current_user).execute
+        # device_description.container = update_datamodel(params[:container]) # Attachments???
 
         present device_description, with: Entities::DeviceDescriptionEntity, root: :device_description
+      rescue ActiveRecord::RecordInvalid
+        { errors: device_description.errors.messages }
       end
 
       # Return serialized device description by id
@@ -122,20 +133,23 @@ module Chemotion
         optional :device_id, type: Integer, description: 'Linked device'
         optional :name, type: String
         optional :short_label, type: String
-        optional :vendor_name, type: String
-        optional :vendor_id, type: String
-        optional :vendor_url, type: String
-        optional :serial_number, type: String
-        optional :doi, type: String
-        optional :doi_url, type: String
         optional :device_type, type: String
         optional :device_type_detail, type: String
         optional :operation_mode, type: String
-        optional :installation_start_date, type: DateTime, allow_blank: true
-        optional :installation_end_date, type: DateTime, allow_blank: true
-        optional :description_and_comments, type: String
-        optional :technical_operator, type: Hash
-        optional :administrative_operator, type: Hash
+        optional :vendor_device_name, type: String
+        optional :vendor_device_id, type: String
+        optional :serial_number, type: String
+        optional :vendor_company_name, type: String
+        optional :vendor_id, type: String
+        optional :description, type: String
+        optional :tags, type: String
+        optional :version_number, type: String
+        optional :version_installation_start_date, type: DateTime, allow_blank: true
+        optional :version_installation_end_date, type: DateTime, allow_blank: true
+        optional :version_doi, type: String
+        optional :version_doi_url, type: String
+        optional :version_characterization, type: String
+        optional :operators, type: Hash
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String
@@ -147,6 +161,8 @@ module Chemotion
         optional :weight, type: String
         optional :application_name, type: String
         optional :application_version, type: String
+        optional :vendor_url, type: String
+        optional :policies_and_user_information, type: String
         optional :description_for_methods_part, type: String
       end
       put ':id' do
@@ -155,6 +171,8 @@ module Chemotion
         device_description.update!(attributes)
 
         present device_description, with: Entities::DeviceDescriptionEntity, root: :device_description
+      rescue ActiveRecord::RecordInvalid
+        { errors: device_description.errors.messages }
       end
 
       # delete a device description

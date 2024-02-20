@@ -6,20 +6,23 @@ module Entities
     expose :device_id
     expose :name
     expose :short_label
-    expose :vendor_name
-    expose :vendor_id
-    expose :vendor_url
-    expose :serial_number
-    expose :doi
-    expose :doi_url
     expose :device_type
     expose :device_type_detail
     expose :operation_mode
-    expose :installation_start_date
-    expose :installation_end_date
-    expose :description_and_comments
-    expose :technical_operator
-    expose :administrative_operator
+    expose :vendor_device_name
+    expose :vendor_device_id
+    expose :serial_number
+    expose :vendor_company_name
+    expose :vendor_id
+    expose :description
+    expose :tags
+    expose :version_number
+    expose :version_installation_start_date
+    expose :version_installation_end_date
+    expose :version_doi
+    expose :version_doi_url
+    expose :version_characterization
+    expose :operators
     expose :university_campus
     expose :institute
     expose :building
@@ -31,6 +34,13 @@ module Entities
     expose :weight
     expose :application_name
     expose :application_version
+    expose :vendor_url
+    expose :policies_and_user_information
     expose :description_for_methods_part
+    expose :type
+
+    def type
+      'device_description'
+    end
   end
 end
