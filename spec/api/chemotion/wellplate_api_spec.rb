@@ -182,32 +182,38 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'POST /api/v1/wellplates' do
+    let(:params) do
+      {
+        name: name,
+        readout_titles: %w[Mass Energy],
+        wells: wells,
+        height: height,
+        width: width,
+        collection_id: collection.id,
+        container: { id: container.id },
+      }
+    end
+
     let(:collection) { shared_collection }
     let(:container) { create(:root_container) }
+    let(:wells) { [] }
+    let(:height) { 8 }
+    let(:width) { 12 }
+    let(:name) { 'Wellplate-test' }
 
     context 'with wellplate with minimum properties do' do
-      let(:params) do
-        {
-          name: 'Wellplate-test',
-          readout_titles: %w[Mass Energy],
-          wells: [],
-          collection_id: collection.id,
-          container: { id: container.id },
-        }
-      end
-
       before do
         post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
         user.reload
       end
 
       it 'sets the correct short_label' do
-        test_wellplate = Wellplate.find_by(name: 'Wellplate-test')
+        test_wellplate = Wellplate.find_by(name: name)
         expect(test_wellplate.short_label).to eq "#{user.name_abbreviation}-WP1"
       end
 
       it 'wellplate has correct width,heigt and size' do
-        test_wellplate = Wellplate.find_by(name: 'Wellplate-test')
+        test_wellplate = Wellplate.find_by(name: name)
         expect(test_wellplate.height).to eq 8
         expect(test_wellplate.width).to eq 12
         expect(test_wellplate.size).to eq 96
@@ -219,25 +225,16 @@ describe Chemotion::WellplateAPI do
     end
 
     context 'with wellplate with custom size 5 x 3' do
+      let(:height) { 3 }
+      let(:width) { 5 }
+
       before do
         post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
         user.reload
       end
 
-      let(:params) do
-        {
-          name: 'Wellplate-test-custom-size',
-          readout_titles: %w[Mass Energy],
-          wells: [],
-          collection_id: collection.id,
-          container: { id: container.id },
-          height: 3,
-          width: 5,
-        }
-      end
-
-      it 'wellplate has correct width,heigt and size' do
-        test_wellplate = Wellplate.find_by(name: 'Wellplate-test-custom-size')
+      it 'wellplate has correct width,height and size' do
+        test_wellplate = Wellplate.find_by(name: name)
         expect(test_wellplate.height).to eq 3
         expect(test_wellplate.width).to eq 5
         expect(test_wellplate.size).to eq 15
