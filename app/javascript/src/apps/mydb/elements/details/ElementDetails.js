@@ -17,6 +17,7 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
@@ -85,6 +86,8 @@ const tabInfoHash = {
 };
 
 export default class ElementDetails extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const { selecteds, activeKey, deletingElement } = ElementStore.getState();
@@ -179,7 +182,6 @@ export default class ElementDetails extends Component {
       case 'device_description':
         return (
           <DeviceDescriptionDetails
-            deviceDescription={el}
             toggleFullScreen={this.toggleFullScreen}
           />
         );
@@ -238,10 +240,20 @@ export default class ElementDetails extends Component {
     );
   }
 
+  setDeviceDescription(el) {
+    if (el && el.type == 'device_description') {
+      this.context.deviceDescriptions.setDeviceDescription(el);
+    }
+  }
+
   render() {
     const {
       fullScreen, selecteds, activeKey
     } = this.state;
+
+    if (selecteds.length >= 1) {
+      this.setDeviceDescription(selecteds[activeKey]);
+    }
 
     const selectedElements = selecteds
       .filter((el) => !!el)
