@@ -49,6 +49,7 @@ const collectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
@@ -98,6 +99,7 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
