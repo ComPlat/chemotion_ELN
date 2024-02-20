@@ -181,12 +181,13 @@ module Chemotion
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
+        optional :height, type: Integer, default: 8
+        optional :width, type: Integer, default: 12
         optional :segments, type: Array, desc: 'Segments'
       end
       post do
         container = params[:container]
         params.delete(:container)
-
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user).execute!
         wellplate.container = update_datamodel(container)
 

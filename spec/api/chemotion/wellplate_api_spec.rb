@@ -18,15 +18,15 @@ describe Chemotion::WellplateAPI do
         wellplates: [
           attributes_for(
             :wellplate, name: 'wellplate 1', collection_id: collection.id, wells: [
-              attributes_for(:well).merge(position: { x: 1, y: 1 }, is_new: true)
+              attributes_for(:well).merge(position: { x: 1, y: 1 }, is_new: true),
             ]
           ),
           attributes_for(
             :wellplate, name: 'wellplate 2', collection_id: collection.id, wells: [
-              attributes_for(:well).merge(position: { x: 1, y: 2 }, is_new: true)
+              attributes_for(:well).merge(position: { x: 1, y: 2 }, is_new: true),
             ]
-          )
-        ]
+          ),
+        ],
       }
     end
 
@@ -47,8 +47,8 @@ describe Chemotion::WellplateAPI do
           all: false,
           included_ids: [wellplate.id],
           excluded_ids: [],
-          collection_id: collection.id
-        }
+          collection_id: collection.id,
+        },
       }
     end
 
@@ -129,7 +129,7 @@ describe Chemotion::WellplateAPI do
     end
 
     it 'returns 200 status code' do
-      expect(response.status).to eq 200
+      expect(response).to have_http_status :ok
     end
 
     it 'returns the right wellplate' do
@@ -140,7 +140,7 @@ describe Chemotion::WellplateAPI do
       let(:collection) { other_user_collection }
 
       it 'returns 401 unauthorized status code' do
-        expect(response.status).to eq 401
+        expect(response).to have_http_status :unauthorized
       end
     end
   end
@@ -167,7 +167,7 @@ describe Chemotion::WellplateAPI do
         id: wellplate.id,
         name: 'Another Testname',
         wells: [attributes_for(:well).merge(position: { x: 1, y: 1 }, is_new: true)],
-        container: { id: container.id }
+        container: { id: container.id },
       }
     end
 
@@ -184,28 +184,64 @@ describe Chemotion::WellplateAPI do
   describe 'POST /api/v1/wellplates' do
     let(:collection) { shared_collection }
     let(:container) { create(:root_container) }
-    let(:params) do
-      {
-        name: 'Wellplate-test',
-        readout_titles: %w[Mass Energy],
-        wells: [],
-        collection_id: collection.id,
-        container: { id: container.id }
-      }
+
+    context 'with wellplate with minimum properties do' do
+      let(:params) do
+        {
+          name: 'Wellplate-test',
+          readout_titles: %w[Mass Energy],
+          wells: [],
+          collection_id: collection.id,
+          container: { id: container.id },
+        }
+      end
+
+      before do
+        post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
+        user.reload
+      end
+
+      it 'sets the correct short_label' do
+        test_wellplate = Wellplate.find_by(name: 'Wellplate-test')
+        expect(test_wellplate.short_label).to eq "#{user.name_abbreviation}-WP1"
+      end
+
+      it 'wellplate has correct width,heigt and size' do
+        test_wellplate = Wellplate.find_by(name: 'Wellplate-test')
+        expect(test_wellplate.height).to eq 8
+        expect(test_wellplate.width).to eq 12
+        expect(test_wellplate.size).to eq 96
+      end
+
+      it 'increments user wellplate counter' do
+        expect(user.counters['wellplates']).to eq '1'
+      end
     end
 
-    before do
-      post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
-      user.reload
-    end
+    context 'with wellplate with custom size 5 x 3' do
+      before do
+        post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
+        user.reload
+      end
 
-    it 'sets the correct short_label' do
-      test_wellplate = Wellplate.find_by(name: 'Wellplate-test')
-      expect(test_wellplate.short_label).to eq "#{user.name_abbreviation}-WP1"
-    end
+      let(:params) do
+        {
+          name: 'Wellplate-test-custom-size',
+          readout_titles: %w[Mass Energy],
+          wells: [],
+          collection_id: collection.id,
+          container: { id: container.id },
+          height: 3,
+          width: 5,
+        }
+      end
 
-    it 'increments user wellplate counter' do
-      expect(user.counters['wellplates']).to eq '1'
+      it 'wellplate has correct width,heigt and size' do
+        test_wellplate = Wellplate.find_by(name: 'Wellplate-test-custom-size')
+        expect(test_wellplate.height).to eq 3
+        expect(test_wellplate.width).to eq 5
+        expect(test_wellplate.size).to eq 15
+      end
     end
   end
 
@@ -234,7 +270,7 @@ describe Chemotion::WellplateAPI do
       end
 
       it 'returns 200 status code' do
-        expect(response.status).to eq 200
+        expect(response).to have_http_status :ok
       end
 
       it 'receives process!' do
@@ -256,7 +292,7 @@ describe Chemotion::WellplateAPI do
       end
 
       it 'returns 500 status code' do
-        expect(response.status).to eq 500
+        expect(response).to have_http_status :internal_server_error
       end
     end
   end
