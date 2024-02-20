@@ -83,7 +83,7 @@ module Chemotion
         research_plan.save!
         research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
         clone_attachs = params[:attachments]&.reject { |a| a[:is_new] }
-        research_plan.clone_existing_attachments(clone_attachs, research_plan.id, current_user.id) if clone_attachs
+        research_plan.clone_existing_attachments(clone_attachs, current_user.id) if clone_attachs
 
         if params[:collection_id]
           collection = current_user.collections.where(id: params[:collection_id]).take
