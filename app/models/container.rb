@@ -73,9 +73,11 @@ class Container < ApplicationRecord
   def content_to_plain_text
     return unless extended_metadata_changed?
     return if extended_metadata.blank? || (extended_metadata.present? && extended_metadata['content'].blank?)
-    return if extended_metadata['content'] == "{\"ops\":[{\"insert\":\"\"}]}"
 
-    self.plain_text_content = Chemotion::QuillToPlainText.new.convert(extended_metadata['content'])
+    plain_text = Chemotion::QuillToPlainText.convert(extended_metadata['content'])
+    return if plain_text.blank?
+
+    self.plain_text_content = plain_text
   end
   # rubocop:enable Style/StringLiterals
 end

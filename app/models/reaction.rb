@@ -295,13 +295,13 @@ class Reaction < ApplicationRecord
   def description_to_plain_text
     return unless description_changed?
 
-    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
+    self.plain_text_description = Chemotion::QuillToPlainText.convert(description)
   end
 
   def observation_to_plain_text
     return unless observation_changed?
 
-    self.plain_text_observation = Chemotion::QuillToPlainText.new.convert(observation)
+    self.plain_text_observation = Chemotion::QuillToPlainText.convert(observation)
   end
 end
 # rubocop:enable Metrics/ClassLength
