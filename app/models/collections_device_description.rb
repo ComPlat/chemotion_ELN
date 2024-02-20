@@ -26,7 +26,7 @@ class CollectionsDeviceDescription < ApplicationRecord
   def self.remove_in_collection(element_ids, collection_ids)
     # Remove from collections
     delete_in_collection(element_ids, collection_ids)
-    # update sample tag with collection info
+    # update element tag with collection info
     update_tag_by_element_ids(element_ids)
   end
 
@@ -41,7 +41,7 @@ class CollectionsDeviceDescription < ApplicationRecord
 
   def self.create_in_collection(element_ids, collection_ids)
     # upsert in target collection
-    # update sample tag with collection info
+    # update element tag with collection info
     static_create_in_collection(element_ids, collection_ids)
   end
 end

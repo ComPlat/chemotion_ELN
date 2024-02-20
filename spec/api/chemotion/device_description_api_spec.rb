@@ -3,8 +3,9 @@
 describe Chemotion::DeviceDescriptionAPI do
   include_context 'api request authorization context'
 
+  let(:user) { create(:user) }
   let(:collection) { create(:collection, user_id: user.id, device_description_detail_level: 10) }
-  let(:device_description) { create(:device_description) }
+  let(:device_description) { create(:device_description, collection_id: collection.id, created_by: user.id) }
 
   describe 'GET /api/v1/device_descriptions/' do
     before do
