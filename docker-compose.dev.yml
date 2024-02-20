@@ -6,8 +6,6 @@
 #     docker-compose -f docker-compose.dev.yml up postgres app webpacker
 # - Open a bash shell in the app container:
 #     docker exec -it NAME_OF_APP_CONTAINER_FROM_DOCKER_PS /bin/bash
-# - Setup the database environment inside the bash shell:
-#     bundle exec rake db:setup
 # - Run tests:
 #     bundle exec rspec
 #
