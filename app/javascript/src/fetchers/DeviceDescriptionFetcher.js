@@ -12,6 +12,15 @@ export default class DeviceDescriptionFetcher {
       `/api/v1/device_descriptions/${deviceDescriptionId}`,
       { ...this._httpOptions() }
     ).then(response => response.json())
+      .then((json) => {
+        if (json.error) {
+          return new DeviceDescription({ id: `${id}:error:DeviceDescription ${id} is not accessible!`, is_new: true });
+        } else {
+          const deviceDescription = new DeviceDescription(json.device_description);
+          deviceDescription._checksum = deviceDescription.checksum();
+          return deviceDescription;
+        }
+      })
       .catch(errorMessage => console.log(errorMessage));
   }
 
@@ -23,6 +32,9 @@ export default class DeviceDescriptionFetcher {
         body: JSON.stringify(deviceDescription)
       }
     ).then(response => response.json())
+      .then((json) => {
+        return new DeviceDescription(json.device_description);
+      })
       .catch(errorMessage => console.log(errorMessage));
   }
 
@@ -31,9 +43,14 @@ export default class DeviceDescriptionFetcher {
       `/api/v1/device_descriptions/${deviceDescription.id}`,
       {
         ...this._httpOptions('PUT'),
-        body: JSON.stringify(elementFormType)
+        body: JSON.stringify(deviceDescription)
       }
     ).then(response => response.json())
+      .then((json) => {
+        const deviceDescription = new DeviceDescription(json.device_description);
+        deviceDescription.updateChecksum();
+        return deviceDescription;
+      })
       .catch(errorMessage => console.log(errorMessage));
   }
 
