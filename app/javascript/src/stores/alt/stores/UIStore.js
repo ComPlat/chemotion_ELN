@@ -378,6 +378,12 @@ class UIStore {
               Object.assign(params, { page: state.cell_line.page }),
             );
           }
+          if (!isSync && layout.device_description && layout.device_description > 0) {
+            ElementActions.fetchDeviceDescriptionsByCollectionId(
+              collection.id,
+              Object.assign(params, { page: state.device_description.page }),
+            );
+          }
 
           Object.keys(layout)
             .filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description'].includes(l))

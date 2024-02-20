@@ -80,7 +80,7 @@ module Chemotion
       desc "delete element from ui state selection."
       delete do
         deleted = { 'sample' => [] }
-        %w[sample reaction wellplate screen research_plan cell_line].each do |element|
+        %w[sample reaction wellplate screen research_plan cell_line device_description].each do |element|
           next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
 

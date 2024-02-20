@@ -951,7 +951,7 @@ class ElementActions {
 
   updateDeviceDescription(params) {
     return (dispatch) => {
-      DeviceDescriptionFetcher.update(params)
+      DeviceDescriptionFetcher.updateDeviceDescription(params)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -966,7 +966,7 @@ class ElementActions {
 
   createDeviceDescription(params) {
     return (dispatch) => {
-      DeviceDescriptionFetcher.create(params)
+      DeviceDescriptionFetcher.createDeviceDescription(params)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
