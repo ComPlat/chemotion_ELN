@@ -79,7 +79,7 @@ const routes = {
     target: {
       showOrNew: routesUtils.deviceDescriptionShowOrNew
     },
-    '/:deviceDescriptionID': 'showOrNew'
+    '/:device_descriptionID': 'showOrNew'
   },
   '/devicesAnalysis': {
     target: {
