@@ -99,26 +99,14 @@ class ResearchPlan < ApplicationRecord
     svg_files
   end
 
-  def clone_existing_attachments(attachments, current_user_id)
-    attachments.each do |attach|
-      old_attach = Attachment.find attach[:id]
-      new_attach = Attachment.new(
-        attachable_id: self.id,
-        attachable_type: 'ResearchPlan',
-        created_by: current_user_id,
-        created_for: current_user_id,
-        key: SecureRandom.uuid,
-        identifier: nil,
-        filename: old_attach.filename,
-      )
-      tmp = Tempfile.new(encoding: 'ascii-8bit')
-      tmp.write(old_attach.read_file)
-      tmp.rewind
-      new_attach.file_path = tmp.path
-      new_attach.save!
-
-      self.update_annotation(old_attach.id, new_attach.id)
+  def update_body_attachments(old_identifier, new_identifier)
+    attach = body&.detect { |x| x['value']['public_name'] == old_identifier }
+    if attach.present?
+      attach['id'] = SecureRandom.uuid
+      attach['value']['public_name'] = new_identifier
     end
+
+    save!
   end
 
   private
@@ -131,13 +119,5 @@ class ResearchPlan < ApplicationRecord
     else
       attachments.each(&:destroy!)
     end
-  end
-
-  def update_annotation(old_attach_id, new_attach_id)
-    loader = Usecases::Attachments::Annotation::AnnotationLoader.new
-    svg = loader.get_annotation_of_attachment(old_attach_id)
-
-    updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
-    updater.updated_annotated_string(svg, new_attach_id)
   end
 end
