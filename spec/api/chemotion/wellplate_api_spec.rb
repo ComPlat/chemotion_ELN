@@ -201,12 +201,12 @@ describe Chemotion::WellplateAPI do
     let(:width) { 12 }
     let(:name) { 'Wellplate-test' }
 
-    context 'with wellplate with minimum properties do' do
-      before do
-        post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
-        user.reload
-      end
+    before do
+      post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
+      user.reload
+    end
 
+    context 'with wellplate with minimum properties do' do
       it 'sets the correct short_label' do
         test_wellplate = Wellplate.find_by(name: name)
         expect(test_wellplate.short_label).to eq "#{user.name_abbreviation}-WP1"
@@ -228,16 +228,34 @@ describe Chemotion::WellplateAPI do
       let(:height) { 3 }
       let(:width) { 5 }
 
-      before do
-        post '/api/v1/wellplates/', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
-        user.reload
-      end
-
       it 'wellplate has correct width,height and size' do
         test_wellplate = Wellplate.find_by(name: name)
         expect(test_wellplate.height).to eq 3
         expect(test_wellplate.width).to eq 5
         expect(test_wellplate.size).to eq 15
+      end
+    end
+
+    context 'with wellplate with custom size 2 x 1 and wells' do
+      let(:height) { 1 }
+      let(:width) { 2 }
+      let(:wells) do
+        [{ id: '1', is_new: true, position: { x: 1, y: 1 } },
+         { id: '2', is_new: true, position: { x: 1, y: 2 } },
+         { id: '3', is_new: true, position: { x: 2, y: 1 } },
+         { id: '4', is_new: true, position: { x: 2, y: 2 } }]
+      end
+
+      it 'wellplate has correct width,height and size' do
+        test_wellplate = Wellplate.find_by(name: name)
+        expect(test_wellplate.height).to eq 1
+        expect(test_wellplate.width).to eq 2
+        expect(test_wellplate.size).to eq 2
+      end
+
+      it 'four wells were created' do
+        loaded_wells = Wellplate.find_by(name: name).wells
+        expect(loaded_wells.length).to eq 4
       end
     end
   end
