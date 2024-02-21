@@ -146,11 +146,16 @@ export default class WellplateProperties extends Component {
                 </FormGroup>
               </td>
               <td width="30%">
-                <FormGroup>
-                  <ControlLabel>Size</ControlLabel>
-                  <WellplateSizeDropdown wellplate={wellplate} />
+               
+                  <div>Size</div>
+                  <div className='custom-size-dropdown'>
+                  <WellplateSizeDropdown 
+                    wellplate={wellplate} 
+                    />
+                  </div>
                   <OverlayTrigger
                     placement="top"
+                    
                     overlay={<Tooltip id="xxx">Create custom wellplate size</Tooltip>}
                   >
                     <Button
@@ -161,7 +166,7 @@ export default class WellplateProperties extends Component {
                       <i className="fa fa-braille" />
                     </Button>
                   </OverlayTrigger>
-                </FormGroup>
+               
               </td>
             </tr>
             <tr>
