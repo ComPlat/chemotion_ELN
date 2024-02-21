@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { FormControl, FormGroup, ControlLabel, Form, InputGroup, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
+import {
+  FormControl, FormGroup, ControlLabel, Form, InputGroup, Tooltip, OverlayTrigger, Button, Checkbox
+} from 'react-bootstrap';
 import Select from 'react-select3';
 import Clipboard from 'clipboard';
 import { startsWith, endsWith } from 'lodash';
@@ -40,16 +42,25 @@ const DeviceDataCollectorTab = () => {
     { value: 'keyfile', label: 'keyfile' }
   ];
 
-  const methodValue = device && device.datacollector_method ? methodOptions.filter(f => f.value == device.datacollector_method) : '';
+  let methodValue = '';
+  let authenticationValue = { value: 'password', label: 'password' };
+
+  if (device && device.datacollector_method) {
+    methodValue = methodOptions.filter(f => f.value == device.datacollector_method);
+  }
+  if (device && device.datacollector_authentication) {
+    authenticationValue = authenticationOptions.filter(f => f.value == device.datacollector_authentication);
+  }
+
   const methodValueCheck = methodValue ? methodValue[0].value : '';
-  const authenticationValue =
-    device && device.datacollector_authentication ? authenticationOptions.filter(f => f.value == device.datacollector_authentication) : { value: 'password', label: 'password' };
   const readonlyKeyName = authenticationValue !== null && authenticationValue[0] && authenticationValue[0].value == 'password';
   const userValue = device && device.datacollector_user ? device.datacollector_user : '';
   const hostValue = device && device.datacollector_host ? device.datacollector_host : '';
   const keyFileValue = device && device.datacollector_key_name ? device.datacollector_key_name : '';
-  const dirValue = device && device.datacollector_dir ? device.datacollector_dir : '';
   const numberOfFilesValue = device && device.datacollector_number_of_files ? device.datacollector_number_of_files : '1';
+  const dir = device && device.datacollector_dir ? device.datacollector_dir : '';
+  const userLevelSelected = device && device.datacollector_user_level_selected ? device.datacollector_user_level_selected : false;
+  const dirValue = userLevelSelected && dir ? `${dir}/{UserSubDirectories}` : (dir ? dir : '');
 
   const tipCopyClipboard = <Tooltip id="copy_tooltip">copy to clipboard</Tooltip>;
 
@@ -155,7 +166,29 @@ const DeviceDataCollectorTab = () => {
           value={dirValue}
           onChange={(event) => onChange('datacollector_dir', event.target.value)}
           placeholder="e.g. /home/sftp/eln"
+          readOnly={userLevelSelected}
         />
+
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="enableUserLevel">
+              If you choose this option, the system will gather files and folders from subdirectories within the
+              directory you have specified. These subdirectories must align with user name abbreviations.
+            </Tooltip>
+          )}
+        >
+          <div>
+            <Checkbox
+              checked={userLevelSelected}
+              onChange={(event) => onChange('datacollector_user_level_selected', event.target.checked)}
+            >
+              Enable user level data collection&nbsp;
+              <span className="fa fa-info-circle" aria-hidden="true" />
+            </Checkbox>
+          </div>
+        </OverlayTrigger>
+
         {
           endsWith(methodValueCheck, 'local') ? <ListLocalCollector /> : null
         }

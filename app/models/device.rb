@@ -49,7 +49,6 @@ class Device < ApplicationRecord
   ].freeze
 
   acts_as_paranoid
-  # devise :database_authenticatable, :validatable
 
   has_many :users_devices, dependent: :destroy
   has_many :users, through: :users_devices
@@ -58,7 +57,6 @@ class Device < ApplicationRecord
 
   has_one :device_metadata, dependent: :destroy
 
-  # validates :first_name, :last_name, presence: true
   validates :name, presence: true
   validate :unique_name_abbreviation
   validate :name_abbreviation_reserved_list, on: :create

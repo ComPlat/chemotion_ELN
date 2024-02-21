@@ -19,6 +19,7 @@ module Entities
     expose :datacollector_authentication
     expose :datacollector_number_of_files
     expose :datacollector_key_name
+    expose :datacollector_user_level_selected
     expose :novnc_token
     expose :novnc_target
     expose :novnc_password
