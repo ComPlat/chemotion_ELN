@@ -24,6 +24,7 @@ const newDevice = {
   datacollector_authentication: 'password',
   datacollector_number_of_files: '1',
   datacollector_key_name: '',
+  datacollector_user_level_selected: false,
   novnc_token: '',
   novnc_target: '',
   novnc_password: '',

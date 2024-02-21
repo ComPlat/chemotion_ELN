@@ -14,6 +14,7 @@ FactoryBot.define do
       datacollector_dir { Rails.root.join('tmp', 'datacollector', name_abbreviation) }
       datacollector_authentication { 'password' }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :file_sftp do
@@ -25,6 +26,7 @@ FactoryBot.define do
       datacollector_authentication { 'keyfile' }
       datacollector_key_name { "#{Dir.home}/.ssh/id_test" }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :file_sftp_password do
@@ -35,6 +37,7 @@ FactoryBot.define do
       datacollector_host { '127.0.0.1' }
       datacollector_authentication { 'password' }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :file_sftp_faulty do
@@ -46,6 +49,7 @@ FactoryBot.define do
       datacollector_authentication { 'keyfile' }
       datacollector_key_name { "#{Dir.home}/.ssh/id_test" }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :folder_local do
@@ -54,6 +58,7 @@ FactoryBot.define do
       datacollector_dir { Rails.root.join('tmp', 'datacollector', name_abbreviation) }
       datacollector_authentication { 'password' }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :folder_sftp do
@@ -65,6 +70,7 @@ FactoryBot.define do
       datacollector_authentication { 'keyfile' }
       datacollector_key_name { "#{Dir.home}/.ssh/id_test" }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :folder_sftp_faulty do
@@ -76,6 +82,7 @@ FactoryBot.define do
       datacollector_authentication { 'keyfile' }
       datacollector_key_name { "#{Dir.home}/.ssh/id_test" }
       datacollector_number_of_files { 1 }
+      datacollector_user_level_selected { false }
     end
 
     trait :novnc_settings do
