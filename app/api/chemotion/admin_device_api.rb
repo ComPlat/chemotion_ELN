@@ -73,11 +73,11 @@ module Chemotion
         optional :datacollector_user, type: String
         optional :datacollector_authentication, type: String
         optional :datacollector_key_name, type: String
+        optional :datacollector_user_level_selected, type: Boolean
         optional :datacollector_number_of_files, type: Integer
         optional :novnc_target, type: String
         optional :novnc_token, type: String
         optional :novnc_password, type: String
-        # optional :device_metadata, type: Hash
       end
       after_validation do
         if params[:datacollector_fields] && params[:datacollector_method].end_with?('local')
