@@ -200,11 +200,12 @@ export default class Sample extends Element {
       inventory_sample: false,
       molecular_mass: 0,
       sum_formula: '',
-      xref: {}
+      xref: {},
+      sample_type: 'Micromolecule'
     });
 
     sample.short_label = Sample.buildNewShortLabel();
-    sample.mixtureComponents = [];
+    sample.mixture_components = [];
     return sample;
   }
 
@@ -333,6 +334,7 @@ export default class Sample extends Element {
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
+      sample_type: this.sample_type,
     });
 
     return serialized;
@@ -1042,27 +1044,32 @@ export default class Sample extends Element {
     this.solvent = tmpSolvents;
   }
 
+  updateSampleType(newSampleType) {
+    this.sample_type = newSampleType;
+  }
+
   addMixtureComponent(newComponent) {
     // TO DO: store only some attributes (id, amount, etc)
-    const tmpComponents = [...(this.mixtureComponents || [])];
-    tmpComponents.push(newComponent);
-    this.mixtureComponents = tmpComponents;
+    const { id, name, amount, molecule_exact_molecular_weight, amount_mol } = newComponent;
+    const updatedComponent = { id, name, amount, molecule_exact_molecular_weight, amount_mol };
+    const tmpComponents = [...(this.mixture_components || []), updatedComponent];
+    this.mixture_components = tmpComponents;
   }
 
   deleteMixtureComponent(componentToDelete) {
-    const tmpComponents = [...(this.mixtureComponents || [])];
+    const tmpComponents = [...(this.mixture_components || [])];
     const filteredComponents = tmpComponents.filter(
       (comp) => comp !== componentToDelete
     );
-    this.mixtureComponents = filteredComponents;
+    this.mixture_components = filteredComponents;
   }
 
   updateMixtureComponent(componentToUpdate) {
-    const tmpComponents = [...(this.mixtureComponents || [])];
+    const tmpComponents = [...(this.mixture_components || [])];
     const updatedComponents = tmpComponents.map((comp) =>
       comp === componentToUpdate ? componentToUpdate : comp
     );
-    this.mixtureComponents = updatedComponents;
+    this.mixture_components = updatedComponents;
   }
 }
 
