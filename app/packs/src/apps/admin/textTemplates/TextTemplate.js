@@ -5,11 +5,11 @@ import Delta from 'quill-delta';
 import React from 'react';
 import {
   Button, ControlLabel,
-  Form, FormControl,
+  Form, FormControl, FormGroup,
   Panel
 } from 'react-bootstrap';
 
-import ReactQuill from 'src/components/reactQuill/ReactQuill';
+import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
 
 function RemoveRowBtn({ removeRow, node }) {
@@ -195,7 +195,7 @@ export default class TextTemplate extends React.Component {
       return;
     }
 
-    const quill = this.reactQuillRef.current.getEditor();
+    const quill = this.reactQuillRef.current;
     const delta = quill.getContents();
 
     // Quill automatically append a trailing newline, we don't want that
@@ -219,6 +219,8 @@ export default class TextTemplate extends React.Component {
     const { addTemplate } = this.props;
     addTemplate(this.gridApi);
   }
+
+  handleInputChange = () => {}
 
   render() {
     const { predefinedTemplateNames } = this.props;
@@ -262,13 +264,13 @@ export default class TextTemplate extends React.Component {
                 </Form>
               </div>
               <div>
-                <ReactQuill
-                  modules={this.modules}
-                  theme="snow"
-                  style={{ height: '120px' }}
-                  ref={this.reactQuillRef}
-                  value={(selectedTemplate || {}).data}
-                />
+                <FormGroup>
+                  <QuillEditor
+                    ref={this.reactQuillRef}
+                    value={(selectedTemplate || {}).data}
+                    onChange={event => this.handleInputChange(event)}
+                  />
+                </FormGroup>
               </div>
               &nbsp;&nbsp;
               <div style={{ marginTop: '30px' }}>
