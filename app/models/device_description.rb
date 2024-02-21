@@ -51,6 +51,7 @@ class DeviceDescription < ApplicationRecord
   attr_accessor :collection_id
 
   include Collectable
+  include ElementUIStateScopes
 
   acts_as_paranoid
 
