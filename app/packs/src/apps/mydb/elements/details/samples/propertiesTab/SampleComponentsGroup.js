@@ -1,29 +1,32 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Glyphicon, ListGroup } from 'react-bootstrap';
-import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents'; ; 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
+import Material from '../../reactions/schemeTab/Material';
+import { permitOn } from 'src/components/common/uis';
 
 const SampleComponentsGroup = ({
-    sampleComponents, sampleComponentGroup, deleteMixtureComponent, onChange, sample,
+    materialGroup, deleteMixtureComponent, onChange, sample,
     headIndex, dropComponent, dropSample,
   }) => {
     const contents = [];
+    let sampleComponents = sample.mixture_components;
     let index = headIndex;
     if (sampleComponents && sampleComponents.length > 0) {
       sampleComponents.forEach((sampleComponent) => {
         index += 1;
         contents.push((
-          <SampleDetailsComponents
+          <Material
             sample={sample}
             onChange={onChange}
-            key={sampleComponent.id}
-            sampleComponent={sampleComponent}
-            sampleComponentGroup={sampleComponentGroup}
-            deleteMixtureComponent={sc => deleteMixtureComponent(sc, sampleComponentGroup)}
+            key={sampleComponent.parent_id}
+            material={sampleComponent}
+            reaction={sample}
+            materialGroup={materialGroup}
+            deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
             index={index}
-            dropComponent={dropComponent}
+            dropMaterial={dropComponent}
             dropSample={dropSample}
            />
         ));
@@ -31,17 +34,19 @@ const SampleComponentsGroup = ({
     }
   
     const headers = {
+      ref: 'Ref',
       group: 'Mixture Components',
+      tr: 'T/R',
       mass: 'Mass',
-      molecular_mass: 'MW',
       amount: 'Amount',
-      concn: 'Conc.',
-      vol: 'Vol.',
-      eq: 'Equiv.'
+      concn: 'Conc',
+      vol: 'Vol',
+      eq: 'Equiv'
     };
   
     const addSampleButton = (
       <Button
+        disabled={!permitOn(sample)}
         bsStyle="success"
         bsSize="xs"
         onClick={() => ElementActions.addSampleToMaterialGroup({ sample, materialGroup })}
@@ -53,44 +58,39 @@ const SampleComponentsGroup = ({
     return (
       <div>
         <table width="100%" className="sample-scheme">
-        <ListGroup fill="true">
-          <h5 style={{ fontWeight: 'bold' }}>Mixture Components:</h5>
-          {/* TO DO  */}
           <colgroup>
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '8%' }} />
+          <col style={{ width: '4%' }} />
+          <col style={{ width: '4%' }} />
+          <col style={{ width: '2%' }} />
+          <col style={{ width: '4%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '13%' }} />
           </colgroup>
           <thead>
             <tr>
-              <th>{addSampleButton}</th>
-              <th>{headers.group}</th>
-              <th>{headers.molecular_mass}</th>
-              <th>{headers.amount}</th>
-              <th>{headers.mass}</th>
-              <th>{headers.concn}</th>
-              <th>{headers.vol}</th>
-              <th>{headers.eq}</th> 
+            <th>{addSampleButton}</th>
+            <th>{headers.group}</th>
+            <th>{headers.ref}</th>
+            <th style={{ padding: '3px 3px' }}>{headers.tr}</th>
+            <th>{headers.amount}</th>
+            <th />
+            <th />
+            <th>{headers.concn}</th>
+            <th>{headers.eq}</th>
             </tr>
           </thead>
           <tbody>
             {contents.map(item => item)}
           </tbody>
-          </ListGroup>
         </table>
       </div>
     );
   };
   
   SampleComponentsGroup.propTypes = {
-    sampleComponentGroup: PropTypes.string.isRequired,
+    materialGroup: PropTypes.string.isRequired,
     headIndex: PropTypes.number.isRequired,
-    sampleComponents: PropTypes.arrayOf(PropTypes.shape).isRequired,
     deleteMixtureComponent: PropTypes.func.isRequired,
     onChange: PropTypes.func.isRequired,
     sample: PropTypes.instanceOf(Sample).isRequired,
