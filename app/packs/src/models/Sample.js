@@ -1049,10 +1049,8 @@ export default class Sample extends Element {
   }
 
   addMixtureComponent(newComponent) {
-    // TO DO: store only some attributes (id, amount, etc)
-    const { id, name, amount, molecule_exact_molecular_weight, amount_mol } = newComponent;
-    const updatedComponent = { id, name, amount, molecule_exact_molecular_weight, amount_mol };
-    const tmpComponents = [...(this.mixture_components || []), updatedComponent];
+    const tmpComponents = [...(this.mixture_components || [])];
+    tmpComponents.push(newComponent);
     this.mixture_components = tmpComponents;
   }
 

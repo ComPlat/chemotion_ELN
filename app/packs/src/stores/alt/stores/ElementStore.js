@@ -780,16 +780,24 @@ class ElementStore {
    */
   handleAddSampleToMaterialGroup(params) {
     const { materialGroup } = params
-    let { reaction } = params
+    const { reaction, sample } = params
 
-    let sample = Sample.buildEmpty(reaction.collection_id)
-    sample.molfile = sample.molfile || ''
-    sample.molecule = sample.molecule == undefined ? sample : sample.molecule
-    sample.sample_svg_file = sample.sample_svg_file
-    sample.belongTo = reaction;
-    sample.matGroup = materialGroup;
-    reaction.changed = true;
-    this.changeCurrentElement(sample);
+    let newSample = null;
+
+    if (!sample){
+      newSample = Sample.buildEmpty(reaction.collection_id)
+      newSample.belongTo = reaction;
+      reaction.changed = true;
+    } else {
+      newSample = Sample.buildEmpty(sample.collection_id)
+      newSample.belongTo = sample;
+      sample.changed = true;
+    }
+    newSample.molfile = newSample.molfile || ''
+    newSample.molecule = newSample.molecule == undefined ? newSample : newSample.molecule
+    newSample.sample_svg_file = newSample.sample_svg_file
+    newSample.matGroup = materialGroup;
+    this.changeCurrentElement(newSample);
   }
 
   handleShowReactionMaterial(params) {

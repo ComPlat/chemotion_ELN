@@ -458,6 +458,9 @@ class Material extends Component {
   }
 
   materialId() {
+    if (this.props.reaction.sample_type === 'Mixture'){
+      return this.material().parent_id
+    }
     return this.material().id;
   }
 
@@ -487,6 +490,8 @@ class Material extends Component {
       paddingLeft: 2,
     };
 
+    const isMixture = this.props.materialGroup === 'mixture_components';
+
     return (
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -502,27 +507,29 @@ class Material extends Component {
 
         {this.materialRef(material)}
 
+        {!isMixture ? (
         <td style={{ inputsStyle }}>
-          {this.materialShowLabel(material)}
+            {this.materialShowLabel(material)}
         </td>
-
-        <td style={{ inputsStyle }}>
-          {this.switchTargetReal(isTarget)}
-        </td>
-
-        <td style={{ width: '1%', maxWidth: '5px' }}>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
-            <div>
-              <NumeralInputWithUnitsCompo
-                key={material.id}
-                value={material.coefficient}
-                onChange={this.handleCoefficientChange}
-                name="coefficient"
-              />
-            </div>
-          </OverlayTrigger>
-        </td>
-
+        ): null}
+        
+          <td style={{ inputsStyle }}>
+              {this.switchTargetReal(isTarget)}
+            </td>
+            {!isMixture ? (
+            <td style={{ width: '1%', maxWidth: '5px' }}>
+              <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
+                <div>
+                  <NumeralInputWithUnitsCompo
+                    key={material.id}
+                    value={material.coefficient}
+                    onChange={this.handleCoefficientChange}
+                    name="coefficient" />
+                </div>
+              </OverlayTrigger>
+            </td>
+            ): null}
+        
         <td>
           <OverlayTrigger
             delay="100"
@@ -599,7 +606,8 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isProduct = reaction.products.includes(sample);
+    const isMixture = this.props.materialGroup === 'mixture_components'
+    const isProduct = !isMixture && reaction.products.includes(sample);
     const molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
     let theoreticalMassPart = "";

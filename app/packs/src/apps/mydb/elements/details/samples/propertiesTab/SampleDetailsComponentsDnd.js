@@ -65,6 +65,7 @@ class SampleDetailsComponentsDnd extends React.Component {
           deleteMixtureComponent={deleteMixtureComponent}
           isOver={isOver}
           canDrop={canDrop}
+          materialGroup={'mixture_components'}
         />
       </div>
     );
