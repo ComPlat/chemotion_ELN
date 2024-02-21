@@ -155,6 +155,7 @@ export default class WellplateProperties extends Component {
                   >
                     <Button
                       className="create-own-size-button"
+                      disabled={!wellplate.is_new }
                       onClick={() => this.showCustomSizeModal()}
                     >
                       <i className="fa fa-braille" />
