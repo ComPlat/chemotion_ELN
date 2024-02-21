@@ -27,6 +27,7 @@ class Foldercollector < Fcollector
 
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/BlockLength
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/PerceivedComplexity
 
@@ -38,7 +39,7 @@ class Foldercollector < Fcollector
     else
       sleep_time = sleep_seconds(device).to_i
       new_folders(device.datacollector_dir).each do |new_folder_p| # rubocop:disable Metrics/BlockLength
-        if (device.datacollector_number_of_files.blank? || (device.datacollector_number_of_files).to_i.zero?) &&
+        if (device.datacollector_number_of_files.blank? || device.datacollector_number_of_files.to_i.zero?) &&
            modification_time_diff(device, new_folder_p) < 30
           sleep sleep_time
         end
@@ -80,11 +81,6 @@ class Foldercollector < Fcollector
     end
   end
 
-  # rubocop:enable Metrics/CyclomaticComplexity
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/MethodLength
-  # rubocop:enable Metrics/PerceivedComplexity
-
   def list_files
     if @sftp
       all_files = @sftp.dir.glob(@current_collector.path, '**/*').reject(
@@ -110,7 +106,7 @@ class Foldercollector < Fcollector
 
       if recipient
         new_folders(new_folder_p).each do |new_folder|
-          if (device.datacollector_number_of_files.blank? || (device.datacollector_number_of_files).to_i.zero?) &&
+          if (device.datacollector_number_of_files.blank? || device.datacollector_number_of_files.to_i.zero?) &&
              modification_time_diff(device, new_folder) < 30
             sleep sleep_time
           end
@@ -152,4 +148,10 @@ class Foldercollector < Fcollector
       end
     end
   end
+
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/BlockLength
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/PerceivedComplexity
 end
