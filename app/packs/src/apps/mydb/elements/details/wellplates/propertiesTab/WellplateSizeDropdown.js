@@ -16,10 +16,6 @@ export default class WellplateSizeDropdown extends Component {
     };
   }
 
-  componentDidMount() {
-    this.selectOptionOfWellplate(this.props.wellplate);
-  }
-
   render() {
     const isNew = this.props.wellplate.is_new;
     const { options } = this.state;
@@ -27,8 +23,8 @@ export default class WellplateSizeDropdown extends Component {
     return (
       <Select
         clearable={false}
-        value={this.state.currentSize}
-        onChange={(option)=>this.changeSizeOption(option)}
+        value={this.selectOptionOfWellplate(this.props.wellplate)}
+        onChange={(option) => this.changeSizeOption(option)}
         options={options}
         disabled={!isNew}
       />
@@ -36,12 +32,11 @@ export default class WellplateSizeDropdown extends Component {
   }
 
   changeSizeOption(selectedOption) {
-    
     this.props.wellplate.edited = true;
     this.setState({ currentSize: selectedOption });
 
-    const width = parseInt(selectedOption.value.split(";")[0]);
-    const height = parseInt(selectedOption.value.split(";")[1]);
+    const width = parseInt(selectedOption.value.split(';')[0]);
+    const height = parseInt(selectedOption.value.split(';')[1]);
 
     this.props.wellplate.changeSize(width, height);
   }
@@ -61,7 +56,7 @@ export default class WellplateSizeDropdown extends Component {
       foundOption = { value: optionsKey, label: createdLabel };
     }
 
-    this.setState({ currentSize: foundOption });
+    return foundOption;
   }
 }
 
