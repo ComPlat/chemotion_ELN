@@ -27,6 +27,10 @@ services:
       dockerfile: 'Dockerfile.chemotion-dev'
     depends_on:
       - 'postgres'
+    healthcheck:
+      test: ["CMD", "bundle", "check"] # exit 0 if all gems from Gemfile are installed, otherwise exit 1
+      interval: 30s
+      timeout: 10s
     environment:
       - 'WEBPACKER_DEV_SERVER_HOST=webpacker'
       - 'WEBPACKER_DEV_SERVER_PORT=3035'
@@ -45,8 +49,8 @@ services:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
     depends_on:
-      - 'app'
-    restart: on-failure:5
+      app:
+        condition: service_healthy
     environment:
       - 'WEBPACKER_DEV_SERVER_HOST=webpacker'
       - 'WEBPACKER_DEV_SERVER_PORT=3035'
