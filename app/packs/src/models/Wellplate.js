@@ -104,8 +104,8 @@ export default class Wellplate extends Element {
   }
 
   changeSize(width, height) {
-    this.width = width;
-    this.height = height;
+    this.width = Number(width);
+    this.height = Number(height);
 
     this.wells = this.initWellsWithPosition([], this.size);
   }
