@@ -43,7 +43,11 @@ export default class Wellplate extends Element {
     }));
 
     const wellplate = Wellplate.buildEmpty(collection_id, width, height);
-    wellplate.wells = wells;
+
+    for (let i = 0; i < wells.length; i += 1) {
+      wells[i].position = wellplate.calculatePositionOfWellByIndex(i);
+      wellplate.wells[i] = wells[i];
+    }
 
     return wellplate;
   }

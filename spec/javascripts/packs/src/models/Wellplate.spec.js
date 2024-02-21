@@ -8,6 +8,9 @@ import { wellplate2x3EmptyJson } from '../../../fixture/wellplates/wellplate_2_3
 import { wellplate8x12EmptyJson } from '../../../fixture/wellplates/wellplate_8_12_empty';
 
 describe('Wellplate', async () => {
+  const sampleMock = {};
+  sampleMock.buildChild = () => ({ wasCopied: 'yes' });
+
   describe('constructor()', async () => {
     context('when input is valid and has dimesion 2x3 and has no samples in wells', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
@@ -75,6 +78,10 @@ describe('Wellplate', async () => {
         expect(wellplate.height).toEqual(8);
         expect(wellplate.width).toEqual(12);
       });
+
+      it('96 empty wells should be created', async () => {
+        expect(wellplate.wells.length).toEqual(96);
+      });
     });
 
     context('when collection id and dimension [7x3] was given and empty samples list was given', async () => {
@@ -92,33 +99,34 @@ describe('Wellplate', async () => {
     });
 
     context('when collection id and samples list with one samples was given', async () => {
-      const sampleMock = {};
-      sampleMock.buildChild = () => ({ wasCopied: 'yes' });
-
       const width = 1;
       const height = 2;
       const collectionId = 1;
       const samples = [sampleMock];
       const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height);
 
+      it('Two wells should be created', async () => {
+        expect(wellplate.wells.length).toEqual(2);
+      });
+
       it('sample was put in well [1;1]', async () => {
         expect(wellplate.wells[0].sample.wasCopied).toEqual('yes');
+        console.log(wellplate.wells[0].position);
+        expect(wellplate.wells[0].position).toEqual({ x: 1, y: 1 });
       });
+
       it('other well is empty', async () => {
-        expect(wellplate.wells[1]).toBeUndefined();
+        expect(wellplate.wells[1].sample).toBeUndefined();
       });
     });
 
-    context('when collection id and samples list with one samples was given', async () => {
-      const sampleMock = {};
-      sampleMock.buildChild = () => ({ wasCopied: 'yes' });
-
+    context('when collection id and samples list with three samples was given but wellplate is to small', async () => {
       const width = 1;
       const height = 2;
       const collectionId = 1;
       const samples = [sampleMock, sampleMock, sampleMock];
 
-      it('sample was put in well [1;1]', async () => {
+      it('an error was thrown', async () => {
         expect(() => Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height))
           .toThrowError('Size of wellplate to small for samples!');
       });
