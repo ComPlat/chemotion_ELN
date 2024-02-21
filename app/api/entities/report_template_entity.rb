@@ -4,7 +4,7 @@ module Entities
     expose :name, :report_type,  :attachment_id
 
     expose :attachment do |obj|
-      Entities::AttachmentReportEntity.represent(obj.attachment)
+      Entities::AttachmentEntity.represent(obj.attachment)
     end
   end
 end
