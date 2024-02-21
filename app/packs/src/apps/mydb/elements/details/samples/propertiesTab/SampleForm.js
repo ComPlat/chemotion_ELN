@@ -24,7 +24,7 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
-      selectedSampleType: SampleTypesOptions[0]
+      selectedSampleType: props.sample.sample_type ? props.sample.sample_type : SampleTypesOptions[0],
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -37,6 +37,7 @@ export default class SampleForm extends React.Component {
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
+    this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -57,6 +58,11 @@ export default class SampleForm extends React.Component {
     this.setState({ molarityBlocked: false });
   }
 
+  handleSampleTypeChanged(sampleType) {
+    this.props.sample.updateSampleType(sampleType.value);
+    this.setState({ selectedSampleType: sampleType.value })
+  }
+
   handleDensityChanged(density) {
     this.props.sample.setDensity(density);
     this.setState({ molarityBlocked: true });
@@ -71,8 +77,7 @@ export default class SampleForm extends React.Component {
   }
 
   handleMixtureComponentChanged(sample) {
-    // TO DO
-    // this.props.parent.setState({ sample });
+    this.props.parent.setState({ sample });
   }
 
   showStructureEditor() {
@@ -691,15 +696,18 @@ export default class SampleForm extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   assignAmountType(reaction, sample) {
-    // eslint-disable-next-line no-underscore-dangle
-    reaction._products.map((s) => {
-      if (s.id === sample.id) {
-        // eslint-disable-next-line no-param-reassign
-        sample.amountType = 'real';
-      }
-      return sample;
-    });
+    if (reaction._products && reaction._products.length > 0) {
+      // eslint-disable-next-line no-underscore-dangle
+      reaction._products.map((s) => {
+        if (s.id === sample.id) {
+          // eslint-disable-next-line no-param-reassign
+          sample.amountType = 'real';
+        }
+        return sample;
+      });
+    }
   }
+  
 
   sampleTypeInput() {
     return (
@@ -709,7 +717,7 @@ export default class SampleForm extends React.Component {
           name="sampleType"
           clearable={false}
           value={this.state.selectedSampleType}
-          onChange={(value) => this.setState({ selectedSampleType: value })}
+          onChange={(value) => this.handleSampleTypeChanged(value)}
           options={SampleTypesOptions}
         />
       </FormGroup>
@@ -737,7 +745,7 @@ export default class SampleForm extends React.Component {
           <ListGroup fill="true">
           {this.sampleTypeInput()}
             <h5 style={{ fontWeight: 'bold' }}>Basic Properties:</h5>
-            <ListGroupItem style={minPadding}>  {this.state.selectedSampleType.value !== 'Mixture' ? (
+            <ListGroupItem style={minPadding}>  {this.state.selectedSampleType !== 'Mixture' ? (
               <div className="properties-form" style={{ width: '100%' }}>
                 <tr>
                   <td colSpan="4">
@@ -860,7 +868,7 @@ export default class SampleForm extends React.Component {
           <tr>
             {this.additionalProperties(sample)}
           </tr>
-          <tr>  {this.state.selectedSampleType.value === 'Mixture' ? (
+          <tr>  {this.state.selectedSampleType === 'Mixture' ? (
           <td colSpan="4">
               <SampleDetailsComponents
                 sample={sample}
