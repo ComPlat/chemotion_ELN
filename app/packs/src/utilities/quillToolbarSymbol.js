@@ -707,7 +707,7 @@ const sampleAnalysesMacros = {
       { insert: "m/z", attributes: { italic: true } },
       { insert: " = calcd for " },
       { insert: "sum-formula", attributes: { bold: true } },
-      { insert: " [M + H]" },
+      { insert: " [M+H]" },
       { insert: "+", attributes: { script: "super" } },
       { insert: ": " },
       { insert: "MASS", attributes: { bold: true } },
