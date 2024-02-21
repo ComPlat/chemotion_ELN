@@ -7,6 +7,9 @@ class Filecollector < Fcollector
   private
 
   # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/BlockLength
 
   def inspect_folder(device)
     directory = device.datacollector_dir
@@ -46,8 +49,6 @@ class Filecollector < Fcollector
       end
     end
   end
-
-  # rubocop:enable Metrics/AbcSize
 
   def new_files(monitored_folder_p)
     if @sftp
@@ -105,4 +106,9 @@ class Filecollector < Fcollector
       end
     end
   end
+
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/PerceivedComplexity
+  # rubocop:enable Metrics/BlockLength
 end
