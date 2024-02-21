@@ -689,8 +689,8 @@ const sampleAnalysesMacros = {
   'hr-ei': {
     ops: [
       { insert: "HRMS (EI): " },
-      { insert: "m/z=", attributes: { italic: true } },
-      { insert: "  calcd for " },
+      { insert: "m/z", attributes: { italic: true } },
+      { insert: " = calcd for " },
       { insert: "sum-formula", attributes: { bold: true } },
       { insert: " [M]" },
       { insert: "+", attributes: { script: "super" } },
