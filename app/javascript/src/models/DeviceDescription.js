@@ -24,7 +24,7 @@ export default class DeviceDescription extends Element {
       version_doi: '',
       version_doi_url: '',
       version_characterization: '',
-      operators: {},
+      operators: [],
       university_campus: '',
       institute: '',
       building: '',

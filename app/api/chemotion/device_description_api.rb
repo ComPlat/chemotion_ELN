@@ -87,7 +87,15 @@ module Chemotion
         optional :version_doi, type: String
         optional :version_doi_url, type: String
         optional :version_characterization, type: String
-        optional :operators, type: Hash
+
+        optional :operators, type: Array do
+          optional :name, type: String
+          optional :phone, type: String
+          optional :email, type: String
+          optional :type, type: String
+          optional :comment, type: String
+        end
+
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String
@@ -149,7 +157,15 @@ module Chemotion
         optional :version_doi, type: String
         optional :version_doi_url, type: String
         optional :version_characterization, type: String
-        optional :operators, type: Hash
+
+        optional :operators, type: Array do
+          optional :name, type: String
+          optional :phone, type: String
+          optional :email, type: String
+          optional :type, type: String
+          optional :comment, type: String
+        end
+
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String
