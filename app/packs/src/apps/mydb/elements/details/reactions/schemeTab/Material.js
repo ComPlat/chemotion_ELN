@@ -504,20 +504,15 @@ class Material extends Component {
         <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
-
+        {!isMixture ? (
+        <>
         {this.materialRef(material)}
 
-        {!isMixture ? (
         <td style={{ inputsStyle }}>
             {this.materialShowLabel(material)}
-        </td>
-        ): null}
-        
-          <td style={{ inputsStyle }}>
+          </td><td style={{ inputsStyle }}>
               {this.switchTargetReal(isTarget)}
-            </td>
-            {!isMixture ? (
-            <td style={{ width: '1%', maxWidth: '5px' }}>
+            </td><td style={{ width: '1%', maxWidth: '5px' }}>
               <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
                 <div>
                   <NumeralInputWithUnitsCompo
@@ -527,7 +522,7 @@ class Material extends Component {
                     name="coefficient" />
                 </div>
               </OverlayTrigger>
-            </td>
+            </td></>
             ): null}
         
         <td>
@@ -582,7 +577,7 @@ class Material extends Component {
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
             precision={4}
-            disabled
+            disabled={!isMixture}
             onChange={e => this.handleAmountUnitChange(e, material.concn)}
             onMetricsChange={this.handleMetricsChange}
           />

@@ -537,6 +537,14 @@ export default class Sample extends Element {
     }
   }
 
+  setConc(amount) {
+    if (amount.unit && !isNaN(amount.value)) {
+      this.concn = amount.value;
+      this.molarity_value = amount.value;
+      this.molarity_unit = amount.unit;
+    }
+  }
+
   setUnitMetrics(unit, metricPrefix) {
     const mp = metricPrefix || 'm';
     if (unit === 'l') {

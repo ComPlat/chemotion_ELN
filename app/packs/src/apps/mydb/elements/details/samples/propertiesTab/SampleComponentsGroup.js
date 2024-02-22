@@ -34,14 +34,12 @@ const SampleComponentsGroup = ({
     }
   
     const headers = {
-      ref: 'Ref',
       group: 'Mixture Components',
-      tr: 'T/R',
       mass: 'Mass',
       amount: 'Amount',
       concn: 'Conc',
       vol: 'Vol',
-      eq: 'Equiv'
+      eq: 'Ratio'
     };
   
     const addSampleButton = (
@@ -60,9 +58,7 @@ const SampleComponentsGroup = ({
         <table width="100%" className="sample-scheme">
           <colgroup>
           <col style={{ width: '4%' }} />
-          <col style={{ width: '4%' }} />
-          <col style={{ width: '2%' }} />
-          <col style={{ width: '4%' }} />
+          <col style={{ width: '4%', padding: '3px 3px' }} />
           <col style={{ width: '11%' }} />
           <col style={{ width: '11%' }} />
           <col style={{ width: '13%' }} />
@@ -71,8 +67,6 @@ const SampleComponentsGroup = ({
             <tr>
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
-            <th>{headers.ref}</th>
-            <th style={{ padding: '3px 3px' }}>{headers.tr}</th>
             <th>{headers.amount}</th>
             <th />
             <th />

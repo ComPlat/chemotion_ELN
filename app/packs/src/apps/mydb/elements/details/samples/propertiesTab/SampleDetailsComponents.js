@@ -16,12 +16,62 @@ export default class SampleDetailsComponents extends React.Component {
     this.dropSample = this.dropSample.bind(this);
     this.deleteMixtureComponent = this.deleteMixtureComponent.bind(this);
     this.onChangeComponent = this.onChangeComponent.bind(this);
+    this.updatedSampleForAmountUnitChange = this.updatedSampleForAmountUnitChange.bind(this);
+    this.updatedSampleForMetricsChange = this.updatedSampleForMetricsChange.bind(this);
   }
 
-  onChangeComponent(component) {
+  onChangeComponent(changeEvent) {
     const { sample } = this.state;
-    sample.updateMixtureComponent(component);
+    switch (changeEvent.type) {
+      case 'amountUnitChanged':
+        this.updatedSampleForAmountUnitChange(changeEvent);
+        break;
+      case 'MetricsChanged':
+        this.updatedSampleForMetricsChange(changeEvent);
+        break;
+      default:
+        break;
+    }
     this.props.onChange(sample);
+  }
+  
+  
+  updatedSampleForAmountUnitChange(changeEvent) {
+    const { sample } = this.props;
+    const sampleID = changeEvent.sampleID;
+    const amount = changeEvent.amount;
+    const componentIndex = this.props.sample.mixture_components.findIndex(
+      (component) => component.parent_id === sampleID
+    );
+
+    if (amount.metricPrefix == 'm' &&  amount.unit == "mol/l"){
+      sample.mixture_components[componentIndex].setConc(amount)
+    } else {
+      sample.mixture_components[componentIndex].setAmount(amount)
+    }
+
+    // update components ratio
+    const minAmountIndex = sample.mixture_components.reduce((minIndex, component, currentIndex) => {
+      return component.amount_mol < sample.mixture_components[minIndex].amount_mol ? currentIndex : minIndex;
+    }, 0);
+
+    const referenceAmountMol = sample.mixture_components[minAmountIndex].amount_mol;
+    sample.mixture_components[minAmountIndex].equivalent = 1;
+
+    sample.mixture_components.forEach((component, index) => {
+      if (index !== minAmountIndex) {
+        component.equivalent = component.amount_mol / referenceAmountMol;
+      }
+    });
+  }
+  
+  updatedSampleForMetricsChange(changeEvent) {
+    const { sample } = this.props;
+    const { sampleID, metricUnit, metricPrefix } = changeEvent;
+    const componentIndex = this.props.sample.mixture_components.findIndex(
+      (component) => component.parent_id === sampleID
+    );
+    sample.mixture_components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
   }
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
