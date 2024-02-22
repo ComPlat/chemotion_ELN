@@ -4,6 +4,10 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
+function isPositiveInteger(value) {
+  return !Number.isNaN(value) && Number.isInteger(Number(value)) && Number(value) > 0;
+}
+
 export default class CustomSizeModal extends Component {
   constructor(props) {
     super(props);
@@ -13,6 +17,7 @@ export default class CustomSizeModal extends Component {
     };
   }
 
+  // TODO: change function name
   updateDimesion() {
     this.setState({
       width: this.props.wellplate.width,
@@ -27,19 +32,17 @@ export default class CustomSizeModal extends Component {
     handleClose();
   }
 
-  checkInput(value) {
-    return !Number.isNaN(value) && Number.isInteger(Number(value));
-  }
-
-  updateDimension(event, type) {
-    if (this.checkInput(event.target.value)) {
-      this.setState({ [type]: event.target.value });
+  updateDimension(type, value) {
+    if (isPositiveInteger(value)) {
+      this.setState({ [type]: value });
     }
   }
 
   renderApplyButton() {
+    //Check if all values are not zero
     return (
       <Button
+       
         onClick={() => this.applySizeChange()}
       >
         Apply
@@ -54,7 +57,7 @@ export default class CustomSizeModal extends Component {
         <FormControl
           type="text"
           value={value}
-          onChange={(event) => this.updateDimension(event, propertyName)}
+          onChange={(event) => this.updateDimension(propertyName, event.target.value)}
         />
       </FormGroup>
     );
@@ -69,7 +72,7 @@ export default class CustomSizeModal extends Component {
         onHide={handleClose}
         onShow={() => { this.updateDimesion(); }}
       >
-        <Modal.Header closeButton />
+        <Modal.Header closeButton >Blablabla</Modal.Header>
         <Modal.Body>
           {this.renderProperty(width, 'Width', 'width') }
           {this.renderProperty(height, 'Height', 'height') }
@@ -79,3 +82,9 @@ export default class CustomSizeModal extends Component {
     );
   }
 }
+
+CustomSizeModal.propTypes = { /* eslint-disable react/forbid-prop-types */
+  wellplate: PropTypes.object.isRequired,
+  showCustomSizeModal: PropTypes.bool.isRequired,
+  handleClose: PropTypes.func.isRequired,
+};
