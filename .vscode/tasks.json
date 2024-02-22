@@ -44,5 +44,10 @@
       "type": "shell",
       "command": "$(which bundle) exec rubocop -c .rubocop.yml -a ${file}",
     },
+    {
+      "label": "mocha - unit tests current file",
+      "type": "shell",
+      "command": "NODE_PATH=./spec/javascripts:./app/packs yarn mocha --watch --exit --require '@babel/register' './spec/javascripts/helper/setup.js' '${file}'",
+    }
   ]
 }
