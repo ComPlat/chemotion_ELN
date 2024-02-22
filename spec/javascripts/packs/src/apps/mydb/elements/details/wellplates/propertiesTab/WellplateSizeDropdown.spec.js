@@ -61,20 +61,20 @@ describe('WellplateSizeDropdown', async () => {
       });
     });
     context('when wellplate size 2x3 is changed to 1x2', async () => {
-        const wellplate = new Wellplate(wellplate2x3EmptyJson);
-        const wrapper = shallow(<WellplateSizeDropdown
-          wellplate={wellplate}
-        />);
-        wrapper.instance().changeSizeOption({ value: '1;2', label: '2 (1x2)' });
+      const wellplate = new Wellplate(wellplate2x3EmptyJson);
+      const wrapper = shallow(<WellplateSizeDropdown
+        wellplate={wellplate}
+      />);
+      wrapper.instance().changeSizeOption({ value: '1;2', label: '2 (1x2)' });
 
-        it('the wellplate properties were changed', async () => {
-          expect(wellplate.size).toEqual(2);
-          expect(wellplate.height).toEqual(2);
-          expect(wellplate.width).toEqual(1);
-        });
-        it('the wellplate number of wells is equal to 2', async () => {
-          expect(wellplate.wells.length).toEqual(2);
-        });
+      it('the wellplate properties were changed', async () => {
+        expect(wellplate.size).toEqual(2);
+        expect(wellplate.height).toEqual(2);
+        expect(wellplate.width).toEqual(1);
       });
+      it('the wellplate number of wells is equal to 2', async () => {
+        expect(wellplate.wells.length).toEqual(2);
+      });
+    });
   });
 });

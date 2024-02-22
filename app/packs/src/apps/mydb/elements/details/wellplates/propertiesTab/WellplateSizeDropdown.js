@@ -1,6 +1,17 @@
 import React, { Component } from 'react';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
+import Wellplate from 'src/models/Wellplate';
+
+function newOption(wellplate, optionsKey) {
+  const size = (wellplate.width * wellplate.height).toString();
+  const width = wellplate.width.toString();
+  const height = wellplate.height.toString();
+  return {
+    value: optionsKey,
+    label: `${size} (${width}x${height})`
+  };
+}
 
 export default class WellplateSizeDropdown extends Component {
   constructor(props) {
@@ -14,6 +25,25 @@ export default class WellplateSizeDropdown extends Component {
         { value: '4;3', label: '12 (4x3)' }
       ]
     };
+
+    this.state.currentSize = this.selectOptionOfWellplate(this.props.wellplate);
+  }
+
+  changeSizeOption(selectedOption) {
+    this.props.wellplate.edited = true;
+    this.setState({ currentSize: selectedOption });
+
+    const width = parseInt(selectedOption.value.split(';')[0], 10);
+    const height = parseInt(selectedOption.value.split(';')[1], 10);
+
+    this.props.wellplate.changeSize(width, height);
+  }
+
+  selectOptionOfWellplate(wellplate) {
+    const optionsKey = `${wellplate.width.toString()};${wellplate.height.toString()}`;
+
+    const option = this.state.options.find((option) => option.value == optionsKey);
+    return option !== undefined ? option : newOption(wellplate, optionsKey);
   }
 
   render() {
@@ -30,36 +60,8 @@ export default class WellplateSizeDropdown extends Component {
       />
     );
   }
-
-  changeSizeOption(selectedOption) {
-    this.props.wellplate.edited = true;
-    this.setState({ currentSize: selectedOption });
-
-    const width = parseInt(selectedOption.value.split(';')[0]);
-    const height = parseInt(selectedOption.value.split(';')[1]);
-
-    this.props.wellplate.changeSize(width, height);
-  }
-
-  selectOptionOfWellplate(wellplate) {
-    const optionsKey = `${wellplate.width.toString()};${wellplate.height.toString()}`;
-
-    let foundOption = null;
-    this.state.options.forEach((option) => {
-      if (option.value === optionsKey) {
-        foundOption = option;
-      }
-    });
-
-    if (foundOption == null) {
-      const createdLabel = `${(wellplate.width * wellplate.height).toString()} (${wellplate.width.toString()}x${wellplate.height.toString()})`;
-      foundOption = { value: optionsKey, label: createdLabel };
-    }
-
-    return foundOption;
-  }
 }
 
 WellplateSizeDropdown.propTypes = {
-  wellplate: PropTypes.object.isRequired,
+  wellplate: PropTypes.instanceOf(Wellplate).isRequired
 };
