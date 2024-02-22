@@ -35,7 +35,16 @@ export const DeviceDescriptionsStore = types
     },
     changeDeviceDescription(field, value) {
       let device_description = { ...self.device_description };
-      device_description[field] = value;
+      let operators = [...self.device_description['operators']];
+
+      if (field.includes('operators_')) {
+        const fieldElements = field.split('_');
+        operators[fieldElements[2]][fieldElements[1]] = value;
+        device_description['operators'] = operators;
+      } else {
+        device_description[field] = value;
+      }
+
       device_description.isPendingToSave = true;
       //if (device_description.id) {
       //  device_description.isEdited = true;

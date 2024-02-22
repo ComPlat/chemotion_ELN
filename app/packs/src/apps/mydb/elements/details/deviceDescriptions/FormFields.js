@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   FormGroup, ControlLabel, FormControl, InputGroup,
-  OverlayTrigger, Tooltip,
+  OverlayTrigger, Tooltip, Button,
 } from 'react-bootstrap';
 import Select from 'react-select3';
 import DatePicker from 'react-datepicker';
@@ -51,8 +51,10 @@ const headlineWithToggle = (store, type, text) => {
 }
 
 const labelWithInfo = (label, info) => {
+  let controlLabel = <ControlLabel>{label}</ControlLabel>;
+
   if (info) {
-    return (
+    controlLabel = (
       <OverlayTrigger
         placement="top"
         overlay={<Tooltip id={uuid()}>{info}</Tooltip>}
@@ -60,15 +62,93 @@ const labelWithInfo = (label, info) => {
         <ControlLabel>{label}</ControlLabel>
       </OverlayTrigger>
     );
-  } else {
-    return (
-      <ControlLabel>{label}</ControlLabel>
-    );
   }
+  return controlLabel;
+}
+
+const elementFieldValue = (element, field) => {
+  let value = element[field];
+  if (field.includes('operators_')) {
+    const fieldValues = field.split('_');
+    value = element['operators'][fieldValues[2]][fieldValues[1]];
+  }
+  return value;
+}
+
+const operatorOptions = [
+  {
+    'value': 'technical',
+    'label': 'technical'
+  },
+  {
+    'value': 'administrative',
+    'label': 'administrative'
+  }
+];
+
+const addOperator = (element, store) => {
+  const newOperator = { name: '', phone: '', email: '', type: '', comment: '' };
+  const value = element['operators'].concat(newOperator);
+  store.changeDeviceDescription('operators', value);
+}
+
+const deleteOperator = (element, store, i) => {
+  element['operators'].splice(i, (i >= 0 ? 1 : 0));
+  store.changeDeviceDescription('operators', element['operators']);
+}
+
+const addOperatorButton = (element, store) => {
+  return (
+    <Button
+      bsSize="xsmall"
+      bsStyle="primary"
+      onClick={() => addOperator(element, store)}
+      className="add-row"
+    >
+      <i className="fa fa-plus" />
+    </Button>
+  );
+}
+
+const deleteOperatorButton = (element, store, i) => {
+  return (
+    <Button
+      bsSize="xsmall"
+      bsStyle="danger"
+      onClick={() => deleteOperator(element, store, i)}
+      className="delete-in-row"
+    >
+      <i className="fa fa-trash-o" />
+    </Button>
+  );
+}
+
+const operatorInput = (element, store, label, info) => {
+  let operators = [];
+  element['operators'].forEach((operator, i) => {
+    operators.push(
+      <div className="grouped-fields-row cols-5">
+        {textInput(element, store, `operators_name_${i}`, 'Name')}
+        {textInput(element, store, `operators_phone_${i}`, 'Phone')}
+        {textInput(element, store, `operators_email_${i}`, 'eMail')}
+        {selectInput(element, store, `operators_type_${i}`, 'Type', operatorOptions)}
+        {textInput(element, store, `operators_comment_${i}`, 'Comment')}
+        {deleteOperatorButton(element, store, i)}
+      </div>
+    );
+  });
+
+  return (
+    <FormGroup key={`${store.key_prefix}-${label}`} className="no-margin-bottom">
+      {addOperatorButton(element, store)}
+      {labelWithInfo(label, info)}
+      {operators}
+    </FormGroup>
+  );
 }
 
 const dateTimePickerInput = (element, store, field, label, info) => {
-  const selectedDate = element[field] === '' ? null : moment(element[field]);
+  const selectedDate = element[field] ? moment(element[field]) : null;
 
   return (
     <FormGroup key={`${store.key_prefix}-${label}`} className="gu_date_picker">
@@ -121,7 +201,9 @@ const multipleInputGroups = (element, label, fields, store, info) => {
 }
 
 const selectInput = (element, store, field, label, options, info) => {
-  let value = options.find((o) => { return o.value == element[field] });
+  const elementValue = elementFieldValue(element, field);
+
+  let value = options.find((o) => { return o.value == elementValue });
   value = value === undefined ? { value: '', label: '' } : value;
 
   return (
@@ -156,6 +238,8 @@ const textareaInput = (element, store, field, label, rows, info) => {
 }
 
 const textInput = (element, store, field, label, info) => {
+  let value = elementFieldValue(element, field);
+
   return (
     <FormGroup key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
@@ -163,7 +247,7 @@ const textInput = (element, store, field, label, info) => {
         name={field}
         type="text"
         key={`${store.key_prefix}-${field}`}
-        value={element[field]}
+        value={value}
         onChange={handleFieldChanged(store, field, 'text', element.type)}
       />
     </FormGroup>
@@ -173,4 +257,5 @@ const textInput = (element, store, field, label, info) => {
 export {
   selectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
+  operatorInput,
 }

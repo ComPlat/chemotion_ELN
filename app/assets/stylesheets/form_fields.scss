@@ -94,6 +94,23 @@
   width: 24%;
 }
 
+.grouped-fields-row.cols-5 .form-group {
+  width: 18.5%;
+}
+
+.form-group.no-margin-bottom {
+  margin-bottom: 0;
+}
+
+button.add-row {
+  margin-right: 7px;
+}
+
+button.delete-in-row {
+  margin-top: 25px;
+  height: 34px;
+}
+
 button.react-datepicker__navigation {
   text-indent: unset;
 }
