@@ -14,9 +14,12 @@
 class ResearchPlan < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
+  include PgSearch::Model
   include Collectable
   include Taggable
   include Labimotion::Segmentable
+
+  multisearchable against: %i[name search_text]
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, :name, presence: true
@@ -64,6 +67,7 @@ class ResearchPlan < ApplicationRecord
   has_many :literatures, through: :literals
 
   before_destroy :delete_attachment
+  before_validation :parse_search_text
   accepts_nested_attributes_for :collections_research_plans
 
 
@@ -107,6 +111,49 @@ class ResearchPlan < ApplicationRecord
     else
       attachments.each(&:destroy!)
     end
+  end
+
+  # This method does something with a string.
+  #
+  # @param str [String] the string to do something with
+  # @return [nil]
+  def parse_search_text
+    search_text = []
+    self.body.each do |key|
+      puts "Key: #{key}"
+
+      case  key["type"]
+      when "table"
+        search_text << parse_table_to_search_text(key["value"])
+      when "richtext"
+        search_text << parse_richtext_to_search_text(key["value"])
+      else
+        # type code here
+      end
+
+
+    end
+    self.search_text = search_text.join("  ").gsub("\n", " ")
+  end
+
+
+
+  # This method parses the content of a research-plan-richtext into a searchable string
+  #
+  # @param value [hash] Richtext content stored in a richtext body element
+  # @return [str] Returns a string which contains the plain richtext content
+  def parse_richtext_to_search_text(value)
+    value["ops"].map { |hash| hash["insert"] }.join("  ")
+  end
+
+
+
+  # This method parses the content of a research-plan-table into a searchable string
+  #
+  # @param value [hash] Table content stored in a table body element
+  # @return [str] Returns a string which contains the composed table content
+  def parse_table_to_search_text(value)
+    value["rows"].map { |hash| hash.select { |_, col_text| col_text != '' }.map { |k, v| "#{k}=#{v}" }.join("  ") }.join("  ")
   end
 
 end

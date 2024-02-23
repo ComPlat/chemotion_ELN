@@ -1,5 +1,5 @@
 class AllElementSearch
-  PG_ELEMENTS = %w[Sample Reaction Screen Wellplate Element]
+  PG_ELEMENTS = %w[Sample Reaction Screen Wellplate ResearchPlan Element]
 
   def initialize(term)
     @term = term
@@ -26,20 +26,20 @@ class AllElementSearch
 
     def by_collection_id(id, current_user)
       types = if (prof = current_user&.profile&.data)
-                (prof.fetch('layout', {}).keys.map(&:capitalize)) & PG_ELEMENTS
+                (prof.fetch('layout', {}).keys.map(&:camelize)) & PG_ELEMENTS
               else
                 PG_ELEMENTS
               end
       types.push('Element')
       first_type = types.first
       query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
-                "SELECT #{first_type}_id FROM collections_#{first_type}s "\
+                "SELECT #{first_type.underscore}_id FROM collections_#{first_type.underscore}s "\
                 "WHERE collection_id = #{id} AND deleted_at IS NULL))"
       if (types.count > 1)
         types[1..-1].each { |type|
           query = query +
                   " OR (searchable_type = '#{type}' AND searchable_id IN (" \
-                  "SELECT #{type}_id FROM collections_#{type}s "\
+                  "SELECT #{type.underscore}_id FROM collections_#{type.underscore}s "\
                   "WHERE collection_id = #{id} AND deleted_at IS NULL))"
         }
       end
@@ -68,6 +68,10 @@ class AllElementSearch
       filter_results_by_type('Screen')
     end
 
+    def research_plan
+      filter_results_by_type('ResearchPlan')
+    end
+
     def elements
       filter_results_by_type('Element')
     end
@@ -90,6 +94,10 @@ class AllElementSearch
 
     def screens_ids
       filter_results_ids_by_type('Screen')
+    end
+
+    def research_plan_ids
+      filter_results_ids_by_type('ResearchPlan')
     end
 
     def element_ids

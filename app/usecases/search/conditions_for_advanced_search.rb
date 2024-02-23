@@ -175,7 +175,7 @@ module Usecases
             @conditions[:field] = 'rows::TEXT'
             @conditions[:additional_condition] = "AND (#{prop} ->> 'type')::TEXT = 'table'"
           else
-            @conditions[:field] = "(regexp_replace(#{key} ->> 'insert', '\r|\n', '', 'g'))::TEXT"
+            @conditions[:field] = "(regexp_replace(#{key} ->> 'insert', '\\r|\\n', '', 'g'))::TEXT"
           end
           @conditions[:condition_table] = ''
         when 'content'

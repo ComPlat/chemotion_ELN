@@ -443,6 +443,12 @@ module Chemotion
             user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
           ).uniq
 
+          elements[:research_plan_ids] = (
+            scope&.research_plan_ids +
+              user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id) +
+              user_research_plans.by_reaction_ids(elements[:reaction_ids]).pluck(:id)
+          ).uniq
+
           elements[:element_ids] = (scope&.element_ids).uniq
         when CelllineSample
           elements[:cell_line_ids] = scope&.ids
