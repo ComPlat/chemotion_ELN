@@ -5,6 +5,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import Material from '../../reactions/schemeTab/Material';
 import { permitOn } from 'src/components/common/uis';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
@@ -42,12 +43,14 @@ const SampleComponentsGroup = ({
       eq: 'Ratio'
     };
   
+    const { currentCollection } = UIStore.getState()
+
     const addSampleButton = (
       <Button
         disabled={!permitOn(sample)}
         bsStyle="success"
         bsSize="xs"
-        onClick={() => ElementActions.addSampleToMaterialGroup({ sample, materialGroup })}
+        onClick={() => ElementActions.addSampleToMaterialGroup({ sample, materialGroup, currentCollection })}
       >
         <Glyphicon glyph="plus" />
       </Button>

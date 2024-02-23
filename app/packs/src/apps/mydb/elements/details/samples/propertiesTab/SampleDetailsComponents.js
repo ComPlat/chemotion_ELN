@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
 import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class SampleDetailsComponents extends React.Component {
   constructor(props) {
@@ -44,7 +45,7 @@ export default class SampleDetailsComponents extends React.Component {
       (component) => component.parent_id === sampleID
     );
 
-    if (amount.metricPrefix == 'm' &&  amount.unit == "mol/l"){
+    if (amount.unit == "mol/l"){
       sample.mixture_components[componentIndex].setConc(amount)
     } else {
       sample.mixture_components[componentIndex].setAmount(amount)
@@ -76,12 +77,13 @@ export default class SampleDetailsComponents extends React.Component {
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
     const { sample } = this.state;
+    const { currentCollection } = UIStore.getState()
     let splitSample;
 
     if (srcSample instanceof Molecule || isNewSample) {
-      splitSample = Sample.buildNew(srcSample, sample.collection_id, tagGroup);
+      splitSample = Sample.buildNew(srcSample, currentCollection.id);
     } else if (srcSample instanceof Sample) {
-      splitSample = srcSample.buildChild();
+      splitSample = srcSample.buildChildWithoutCounter();
     }
 
     sample.addMixtureComponent(splitSample);

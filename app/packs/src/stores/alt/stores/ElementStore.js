@@ -780,7 +780,7 @@ class ElementStore {
    */
   handleAddSampleToMaterialGroup(params) {
     const { materialGroup } = params
-    const { reaction, sample } = params
+    const { reaction, sample, currentCollection } = params
 
     let newSample = null;
 
@@ -789,14 +789,19 @@ class ElementStore {
       newSample.belongTo = reaction;
       reaction.changed = true;
     } else {
-      newSample = Sample.buildEmpty(sample.collection_id)
-      newSample.belongTo = sample;
+      newSample = Sample.buildEmpty(currentCollection.id)
       sample.changed = true;
+      newSample.sample_type = 'ComponentStock'
     }
     newSample.molfile = newSample.molfile || ''
     newSample.molecule = newSample.molecule == undefined ? newSample : newSample.molecule
     newSample.sample_svg_file = newSample.sample_svg_file
     newSample.matGroup = materialGroup;
+
+    if (sample){
+      sample.mixture_components = sample.mixture_components || [];
+      sample.mixture_components.push(newSample);
+    }
     this.changeCurrentElement(newSample);
   }
 
@@ -1224,9 +1229,29 @@ class ElementStore {
     const deleteEl = this.state.deletingElement
     if (confirm) {
       this.deleteCurrentElement(deleteEl)
+      this.deleteMixtureComponent(deleteEl)
     }
     this.setState({ deletingElement: null })
   }
+
+  deleteMixtureComponent(deleteEl) {
+    const { selecteds } = this.state;
+  
+    selecteds.forEach(selectedElement => {
+      if (selectedElement instanceof Sample && selectedElement.mixture_components) {
+        const mixtureComponents = selectedElement.mixture_components;
+        const componentIndex = mixtureComponents.findIndex(
+          component => component.id === deleteEl.id
+        );
+  
+        if (componentIndex !== -1) {
+          mixtureComponents.splice(componentIndex, 1);
+          return;
+        }
+      }
+    });
+  }
+  
 
   handleChangeCurrentElement({ oriEl, nextEl }) {
     const { selecteds } = this.state;
