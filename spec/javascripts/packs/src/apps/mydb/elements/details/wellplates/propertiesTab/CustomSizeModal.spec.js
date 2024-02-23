@@ -10,7 +10,6 @@ import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 import { wellplate2x3EmptyJson } from 'fixture/wellplates/wellplate_2_3_empty';
-import { wellplate8x12EmptyJson } from 'fixture/wellplates/wellplate_8_12_empty';
 import Wellplate from 'src/models/Wellplate';
 
 Enzyme.configure({
@@ -30,6 +29,25 @@ describe('CustomSizeModal', async () => {
       it('the width and height are initalized accordingly to the dimensions', async () => {
         expect(wrapper.instance().state.width).toEqual(2);
         expect(wrapper.instance().state.height).toEqual(3);
+      });
+    });
+  });
+
+  describe('updateDimensionsFromWellplate()', async () => {
+    const wellplate = new Wellplate(wellplate2x3EmptyJson);
+    const wrapper = shallow(<CustomSizeModal
+      wellplate={wellplate}
+      showCustomSizeModal
+      handleClose={() => {}}
+    />);
+    context('wellplate is changed after construction', async () => {
+      wellplate.width = 4;
+      wellplate.height = 5;
+      wrapper.instance().updateDimensionsFromWellplate();
+
+      it('the width and height are initalized accordingly to the dimensions', async () => {
+        expect(wrapper.instance().state.width).toEqual(4);
+        expect(wrapper.instance().state.height).toEqual(5);
       });
     });
   });
@@ -74,22 +92,27 @@ describe('CustomSizeModal', async () => {
     });
     describe('called with something else than a positive integer', async () => {
       wrapper.instance().updateDimension('width', NaN);
-      it('not changes the state', async () => {
+      it('NaN not changes the state', async () => {
         expect(wrapper.instance().state.width).toEqual(4);
       });
 
       wrapper.instance().updateDimension('width', 'abc');
-      it('not changes the state', async () => {
+      it('string not changes the state', async () => {
         expect(wrapper.instance().state.width).toEqual(4);
       });
 
       wrapper.instance().updateDimension('width', 2.4);
-      it('not changes the state', async () => {
+      it('2.4 not changes the state', async () => {
+        expect(wrapper.instance().state.width).toEqual(4);
+      });
+
+      wrapper.instance().updateDimension('width', 0);
+      it('0 not changes the state', async () => {
         expect(wrapper.instance().state.width).toEqual(4);
       });
 
       wrapper.instance().updateDimension('width', -5);
-      it('not changes the state', async () => {
+      it('-5 not changes the state', async () => {
         expect(wrapper.instance().state.width).toEqual(4);
       });
     });

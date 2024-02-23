@@ -3,12 +3,13 @@ import {
   Button, Modal, FormGroup, FormControl, ControlLabel
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-
-function isPositiveInteger(value) {
-  return !Number.isNaN(value) && Number.isInteger(Number(value)) && Number(value) > 0;
-}
+import Wellplate from 'src/models/Wellplate';
 
 export default class CustomSizeModal extends Component {
+  static isPositiveInteger(value) {
+    return !Number.isNaN(value) && Number.isInteger(Number(value)) && Number(value) > 0;
+  }
+
   constructor(props) {
     super(props);
     this.state = {
@@ -17,11 +18,11 @@ export default class CustomSizeModal extends Component {
     };
   }
 
-  // TODO: change function name
-  updateDimesion() {
+  updateDimensionsFromWellplate() {
+    const { wellplate } = this.props;
     this.setState({
-      width: this.props.wellplate.width,
-      height: this.props.wellplate.height
+      width: wellplate.width,
+      height: wellplate.height
     });
   }
 
@@ -33,16 +34,14 @@ export default class CustomSizeModal extends Component {
   }
 
   updateDimension(type, value) {
-    if (isPositiveInteger(value)) {
+    if (CustomSizeModal.isPositiveInteger(value)) {
       this.setState({ [type]: value });
     }
   }
 
   renderApplyButton() {
-    //Check if all values are not zero
     return (
       <Button
-       
         onClick={() => this.applySizeChange()}
       >
         Apply
@@ -63,6 +62,16 @@ export default class CustomSizeModal extends Component {
     );
   }
 
+  renderSize() {
+    const { height, width } = this.state;
+    return (
+      <FormGroup>
+        <ControlLabel>Size</ControlLabel>
+        <FormControl.Static>{height * width}</FormControl.Static>
+      </FormGroup>
+    );
+  }
+
   render() {
     const { showCustomSizeModal, handleClose } = this.props;
     const { height, width } = this.state;
@@ -70,12 +79,13 @@ export default class CustomSizeModal extends Component {
       <Modal
         show={showCustomSizeModal}
         onHide={handleClose}
-        onShow={() => { this.updateDimesion(); }}
+        onShow={() => { this.updateDimensionsFromWellplate(); }}
       >
-        <Modal.Header closeButton >Blablabla</Modal.Header>
+        <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
         <Modal.Body>
           {this.renderProperty(width, 'Width', 'width') }
           {this.renderProperty(height, 'Height', 'height') }
+          {this.renderSize() }
           {this.renderApplyButton()}
         </Modal.Body>
       </Modal>
@@ -83,8 +93,8 @@ export default class CustomSizeModal extends Component {
   }
 }
 
-CustomSizeModal.propTypes = { /* eslint-disable react/forbid-prop-types */
-  wellplate: PropTypes.object.isRequired,
+CustomSizeModal.propTypes = {
+  wellplate: PropTypes.instanceOf(Wellplate).isRequired,
   showCustomSizeModal: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
 };

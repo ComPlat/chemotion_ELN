@@ -42,7 +42,7 @@ export default class WellplateSizeDropdown extends Component {
   selectOptionOfWellplate(wellplate) {
     const optionsKey = `${wellplate.width.toString()};${wellplate.height.toString()}`;
 
-    const option = this.state.options.find((option) => option.value == optionsKey);
+    const option = this.state.options.find((option) => option.value === optionsKey);
     return option !== undefined ? option : newOption(wellplate, optionsKey);
   }
 
