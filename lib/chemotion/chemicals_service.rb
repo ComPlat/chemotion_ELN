@@ -4,10 +4,11 @@ module Chemotion
   class ChemicalsService
     def self.request_options
       { headers: {
-        'Access-Control-Request-Method' => 'GET',
-        'Accept' => '*/*',
-        'User-Agent': 'Google Chrome',
-      } }
+          'Access-Control-Request-Method' => 'GET',
+          'Accept' => '*/*',
+          'User-Agent': 'Google Chrome',
+        },
+        timeout: 3 }
     end
 
     def self.merck_request(name)
@@ -65,6 +66,12 @@ module Chemotion
 
     def self.write_file(file_path, link)
       req_safety_sheet = HTTParty.get(link, request_options)
+      if req_safety_sheet.code == 307
+        # Extract the redirected URL from the response headers
+        redirected_url = req_safety_sheet.headers['location']
+        # Make a new request to the redirected URL
+        req_safety_sheet = HTTParty.get(redirected_url, request_options)
+      end
       file_name = "public/safety_sheets/#{file_path}"
       if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
         File.binwrite(file_name, req_safety_sheet)
@@ -72,6 +79,10 @@ module Chemotion
       else
         'there is no file to save'
       end
+    rescue HTTParty::RedirectionTooDeep => e
+      "Redirection limit exceeded: #{e}"
+    rescue HTTParty::TimeoutError => e
+      "Request timed out: #{e}"
     end
 
     def self.create_sds_file(file_path, link)
