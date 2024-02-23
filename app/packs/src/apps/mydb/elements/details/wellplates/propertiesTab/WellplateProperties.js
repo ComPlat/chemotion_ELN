@@ -5,14 +5,21 @@ import {
 import PropTypes from 'prop-types';
 
 import QuillEditor from 'src/components/QuillEditor';
-import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown.js';
+import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
+import Wellplate from 'src/models/Wellplate';
 
 export default class WellplateProperties extends Component {
   constructor(props) {
     super(props);
     this.deleteButtonRefs = [];
     this.state = { showDeleteReadoutConfirm: [], showCustomSizeModal: false };
+  }
+
+  handleInputChange(type, event) {
+    const { changeProperties } = this.props;
+    const { value } = event.target;
+    changeProperties({ type, value });
   }
 
   showDeleteReadoutTitleConfirm(index) {
@@ -25,12 +32,6 @@ export default class WellplateProperties extends Component {
     const { showDeleteReadoutConfirm } = this.state;
     showDeleteReadoutConfirm[index] = false;
     this.setState({ showDeleteReadoutConfirm });
-  }
-
-  handleInputChange(type, event) {
-    const { changeProperties } = this.props;
-    const { value } = event.target;
-    changeProperties({ type, value });
   }
 
   addReadoutTitle() {
@@ -118,8 +119,10 @@ export default class WellplateProperties extends Component {
 
   render() {
     const {
-      name, size, description, readoutTitles, wellplate
+      readoutTitles, wellplate
     } = this.props;
+
+    const { name, description } = wellplate;
 
     const { showCustomSizeModal } = this.state;
 
@@ -128,7 +131,6 @@ export default class WellplateProperties extends Component {
         <CustomSizeModal
           showCustomSizeModal={showCustomSizeModal}
           wellplate={wellplate}
-          parent={this}
           handleClose={() => { this.setState({ showCustomSizeModal: false }); }}
         />
         <table width="100%">
@@ -146,27 +148,26 @@ export default class WellplateProperties extends Component {
                 </FormGroup>
               </td>
               <td width="30%">
-               
-                  <div>Size</div>
-                  <div className='custom-size-dropdown'>
-                  <WellplateSizeDropdown 
-                    wellplate={wellplate} 
-                    />
-                  </div>
-                  <OverlayTrigger
-                    placement="top"
-                    
-                    overlay={<Tooltip id="xxx">Create custom wellplate size</Tooltip>}
+
+                <div>Size</div>
+                <div className="custom-size-dropdown">
+                  <WellplateSizeDropdown
+                    wellplate={wellplate}
+                  />
+                </div>
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip id="create-custom-tooltip-id">Create custom wellplate size</Tooltip>}
+                >
+                  <Button
+                    className="create-own-size-button"
+                    disabled={!wellplate.is_new}
+                    onClick={() => this.showCustomSizeModal()}
                   >
-                    <Button
-                      className="create-own-size-button"
-                      disabled={!wellplate.is_new }
-                      onClick={() => this.showCustomSizeModal()}
-                    >
-                      <i className="fa fa-braille" />
-                    </Button>
-                  </OverlayTrigger>
-               
+                    <i className="fa fa-braille" />
+                  </Button>
+                </OverlayTrigger>
+
               </td>
             </tr>
             <tr>
@@ -193,7 +194,10 @@ export default class WellplateProperties extends Component {
             ))}
             <tr>
               <td colSpan={2}>
-                <OverlayTrigger placement="top" overlay={<Tooltip id="add_readout_title_tooltip">Add Readout Title</Tooltip>}>
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip id="add_readout_title_tooltip">Add Readout Title</Tooltip>}
+                >
                   <Button className="button-right" bsStyle="success" onClick={() => this.addReadoutTitle()}>
                     Add Readouts
                   </Button>
@@ -220,12 +224,9 @@ export default class WellplateProperties extends Component {
 }
 
 WellplateProperties.propTypes = { /* eslint-disable react/forbid-prop-types */
-  wellplate: PropTypes.object.isRequired,
+  wellplate: PropTypes.instanceOf(Wellplate).isRequired,
   changeProperties: PropTypes.func.isRequired,
   handleAddReadout: PropTypes.func.isRequired,
   handleRemoveReadout: PropTypes.func.isRequired,
-  name: PropTypes.string.isRequired,
-  size: PropTypes.number.isRequired,
-  description: PropTypes.object.isRequired,
-  readoutTitles: PropTypes.array.isRequired,
+  readoutTitles: PropTypes.array.isRequired
 };

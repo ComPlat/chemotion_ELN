@@ -25,35 +25,41 @@ export default class WellplateSizeDropdown extends Component {
         { value: '4;3', label: '12 (4x3)' }
       ]
     };
-
-    this.state.currentSize = this.selectOptionOfWellplate(this.props.wellplate);
+    const { wellplate } = this.props;
+    this.state.currentSize = this.selectOptionOfWellplate(wellplate);
   }
 
   changeSizeOption(selectedOption) {
-    this.props.wellplate.edited = true;
+    const { wellplate } = this.props;
+
+    wellplate.edited = true;
     this.setState({ currentSize: selectedOption });
 
     const width = parseInt(selectedOption.value.split(';')[0], 10);
     const height = parseInt(selectedOption.value.split(';')[1], 10);
 
-    this.props.wellplate.changeSize(width, height);
+    wellplate.changeSize(width, height);
   }
 
   selectOptionOfWellplate(wellplate) {
     const optionsKey = `${wellplate.width.toString()};${wellplate.height.toString()}`;
 
-    const option = this.state.options.find((option) => option.value === optionsKey);
+    const { options } = this.state;
+
+    const option = options.find((o) => o.value === optionsKey);
     return option !== undefined ? option : newOption(wellplate, optionsKey);
   }
 
   render() {
-    const isNew = this.props.wellplate.is_new;
+    const { wellplate } = this.props;
+
+    const isNew = wellplate.is_new;
     const { options } = this.state;
 
     return (
       <Select
         clearable={false}
-        value={this.selectOptionOfWellplate(this.props.wellplate)}
+        value={this.selectOptionOfWellplate(wellplate)}
         onChange={(option) => this.changeSizeOption(option)}
         options={options}
         disabled={!isNew}
