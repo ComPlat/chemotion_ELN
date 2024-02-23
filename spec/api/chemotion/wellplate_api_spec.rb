@@ -321,14 +321,33 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'GET /api/v1/wellplates/template' do
-    before do
-      get '/api/v1/wellplates/template/1', params: {}
-    end
 
     context 'when wellplate does not exit' do
+      before do
+        get '/api/v1/wellplates/template/-1', params: {}
+      end
+
       it 'return 401 status code' do
         expect(response).to have_http_status 401
       end 
+    end
+
+    context 'when wellplate exits' do
+     
+      before do
+        allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+        get '/api/v1/wellplates/template/'+wellplate.id.to_s, params: {}
+      end
+
+      it 'return 200 status code' do
+        expect(response).to have_http_status 200
+      end 
+
+      it 'response data not empty' do
+        expect(response.body.length).to satisfy("not empty") { |n| n > 0 }
+      end 
+
+
     end
 
   end

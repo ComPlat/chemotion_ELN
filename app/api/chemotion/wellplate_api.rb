@@ -294,7 +294,8 @@ module Chemotion
         end
         route_param :id do
           before do
-            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).read?
+            error!('401 Unauthorized', 401) unless Wellplate.find_by(id: params[:id])
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,Wellplate.find(params[:id] )).read?
           end
 
           get do
