@@ -319,4 +319,17 @@ describe Chemotion::WellplateAPI do
   describe 'POST /api/v1/wellplates/well_color_code' do
     pending 'TODO: Add missing spec'
   end
+
+  describe 'GET /api/v1/wellplates/template' do
+    before do
+      get '/api/v1/wellplates/template/1', params: {}
+    end
+
+    context 'when wellplate does not exit' do
+      it 'return 401 status code' do
+        expect(response).to have_http_status 401
+      end 
+    end
+
+  end
 end
