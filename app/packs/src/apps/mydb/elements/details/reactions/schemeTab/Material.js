@@ -128,6 +128,7 @@ class Material extends Component {
   }
 
   materialVolume(material) {
+    const isMixture = this.props.materialGroup === 'mixture_components'
     if (material.contains_residues) { return notApplicableInput(); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
@@ -143,7 +144,24 @@ class Material extends Component {
 
     return (
       <td>
-        <OverlayTrigger placement="top" overlay={tooltip}>
+        {!isMixture ? (
+          <OverlayTrigger placement="top" overlay={tooltip}>
+            <div>
+              <NumeralInputWithUnitsCompo
+                key={material.id}
+                value={material.amount_l}
+                unit="l"
+                metricPrefix={metric}
+                metricPrefixes={metricPrefixes}
+                precision={3}
+                disabled={!permitOn(this.props.reaction) || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
+                onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
+                onMetricsChange={this.handleMetricsChange}
+                bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
+              />
+            </div>
+          </OverlayTrigger>
+        ) : (
           <div>
             <NumeralInputWithUnitsCompo
               key={material.id}
@@ -158,7 +176,7 @@ class Material extends Component {
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
             />
           </div>
-        </OverlayTrigger>
+        )}
       </td>
     );
   }
