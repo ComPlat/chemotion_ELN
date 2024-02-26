@@ -6,9 +6,12 @@ module Chemotion
       { headers: {
           'Access-Control-Request-Method' => 'GET',
           'Accept' => '*/*',
-          'User-Agent': 'Google Chrome',
+          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0',
+          'Accept-Encoding': 'gzip, deflate, br',
+          Connection: 'keep-alive',
         },
-        timeout: 3 }
+        timeout: 15,
+        follow_redirects: true }
     end
 
     def self.merck_request(name)
@@ -65,13 +68,9 @@ module Chemotion
     end
 
     def self.write_file(file_path, link)
-      req_safety_sheet = HTTParty.get(link, request_options)
-      if req_safety_sheet.code == 307
-        # Extract the redirected URL from the response headers
-        redirected_url = req_safety_sheet.headers['location']
-        # Make a new request to the redirected URL
-        req_safety_sheet = HTTParty.get(redirected_url, request_options)
-      end
+      options = request_options.dup
+      options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
+      req_safety_sheet = HTTParty.get(link, options)
       file_name = "public/safety_sheets/#{file_path}"
       if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
         File.binwrite(file_name, req_safety_sheet)

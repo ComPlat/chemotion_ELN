@@ -106,7 +106,9 @@ module Import
         match[1]
       else
         path = url.split('/')
-        path.last
+        filter = path.last
+        # extract digits from the string
+        filter.match(/^\d+/)&.[](0)
       end
     end
 
