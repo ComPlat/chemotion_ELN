@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Button, Modal, FormGroup, FormControl, ControlLabel
+  Button, Modal, FormGroup, FormControl, ControlLabel, Col, Row
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
@@ -40,9 +40,12 @@ export default class CustomSizeModal extends Component {
   }
 
   renderApplyButton() {
+    const { height, width } = this.state;
+    const disabled = height > 100 || width > 100;
     return (
       <Button
         onClick={() => this.applySizeChange()}
+        disabled={disabled}
       >
         Apply
       </Button>
@@ -50,15 +53,23 @@ export default class CustomSizeModal extends Component {
   }
 
   renderProperty(value, label, propertyName) {
+    const invalidStyleClass = value > 100 ? 'invalid-wellplate-size' : 'size-without-error';
+    const errorMessage = value > 100
+      ? <div className="invalid-wellplate-size-text">Size must be between 0 and 100</div>
+      : null;
     return (
-      <FormGroup>
-        <ControlLabel>{label}</ControlLabel>
-        <FormControl
-          type="text"
-          value={value}
-          onChange={(event) => this.updateDimension(propertyName, event.target.value)}
-        />
-      </FormGroup>
+      <div className="floating-left">
+        <FormGroup>
+          <ControlLabel>{label}</ControlLabel>
+          <FormControl
+            type="text"
+            value={value}
+            className={invalidStyleClass}
+            onChange={(event) => this.updateDimension(propertyName, event.target.value)}
+          />
+          {errorMessage}
+        </FormGroup>
+      </div>
     );
   }
 
@@ -83,10 +94,22 @@ export default class CustomSizeModal extends Component {
       >
         <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
         <Modal.Body>
-          {this.renderProperty(width, 'Width', 'width') }
-          {this.renderProperty(height, 'Height', 'height') }
-          {this.renderSize() }
-          {this.renderApplyButton()}
+          <Row>
+            <Col xs={4}>
+              {this.renderProperty(width, 'Width', 'width') }
+            </Col>
+            <Col xs={4}>
+              {this.renderProperty(height, 'Height', 'height') }
+            </Col>
+            <Col xs={4}>
+              {this.renderSize() }
+            </Col>
+          </Row>
+          <Row>
+            <Col xs={1} xsOffset={10}>
+              {this.renderApplyButton()}
+            </Col>
+          </Row>
         </Modal.Body>
       </Modal>
     );
