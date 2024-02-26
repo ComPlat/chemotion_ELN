@@ -288,7 +288,7 @@ module Chemotion
         end
 
         namespace :template do
-        desc 'Return serialized wellplate by id'
+        desc 'Returns an xlsx template for a wellplate'
         params do
           requires :id, type: Integer, desc: 'Wellplate id'
         end
@@ -302,10 +302,10 @@ module Chemotion
             content_type 'application/octet-stream'
             env['api.format'] = :binary
             header['Content-Disposition'] = 'attachment; filename=\"wellplate_import_template.xlsx\"'
-            # wellplate = Wellplate.find(params[:id])
-            data = File.read('public/xlsx/wellplate_import_template.xlsx')
-
-            data
+            
+            wellplate = Wellplate.find(params[:id])
+            xlsx_template=Usecases::Wellplates::TemplateCreation.new(wellplate).execute!
+            xlsx_template.to_stream.read
           end
         end
       end
