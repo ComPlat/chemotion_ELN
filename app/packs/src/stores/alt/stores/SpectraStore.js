@@ -84,7 +84,13 @@ class SpectraStore {
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
     const sortedSpcInfo = [...spcInfos];
-    sortedSpcInfo.sort((a, b) => a.label.localeCompare(b.label));
+    sortedSpcInfo.sort((a, b) => b.idx - a.idx);
+    if (spcMetas.length > 0) {
+      const spc = spcMetas[0];
+      if (spc.jcamp.layout === FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY) {
+        sortedSpcInfo.sort((a, b) => a.label.localeCompare(b.label));
+      }
+    }
     const sortedSpcIdxs = sortedSpcInfo.map((info) => (info.idx));
     spcMetas.sort((a, b) => {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
