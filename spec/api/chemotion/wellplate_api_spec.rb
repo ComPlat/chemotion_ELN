@@ -258,6 +258,30 @@ describe Chemotion::WellplateAPI do
         expect(loaded_wells.length).to eq 4
       end
     end
+
+    context 'with wellplate width 200' do
+      let(:width) { 200 }
+
+      it 'status code 400 was returned' do
+        expect(response).to have_http_status :bad_request
+      end
+
+      it 'correct error message was returned' do
+        expect(response.parsed_body).to eq({ 'error' => 'width does not have a valid value' })
+      end
+    end
+
+    context 'with wellplate height 200' do
+      let(:height) { 200 }
+
+      it 'status code 400 was returned' do
+        expect(response).to have_http_status :bad_request
+      end
+
+      it 'correct error message was returned' do
+        expect(response.parsed_body).to eq({ 'error' => 'height does not have a valid value' })
+      end
+    end
   end
 
   describe 'POST /api/v1/wellplates/subwellplates' do
@@ -321,34 +345,29 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'GET /api/v1/wellplates/template' do
-
     context 'when wellplate does not exit' do
       before do
         get '/api/v1/wellplates/template/-1', params: {}
       end
 
       it 'return 401 status code' do
-        expect(response).to have_http_status 401
-      end 
+        expect(response).to have_http_status :unauthorized
+      end
     end
 
     context 'when wellplate exits' do
-     
       before do
         allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
-        get '/api/v1/wellplates/template/'+wellplate.id.to_s, params: {}
+        get "/api/v1/wellplates/template/#{wellplate.id}", params: {}
       end
 
       it 'return 200 status code' do
-        expect(response).to have_http_status 200
-      end 
+        expect(response).to have_http_status :ok
+      end
 
       it 'response data not empty' do
-        expect(response.body.length).to satisfy("not empty") { |n| n > 0 }
-      end 
-
-
+        expect(response.body.length).to satisfy('not empty') { |n| n > 0 }
+      end
     end
-
   end
 end

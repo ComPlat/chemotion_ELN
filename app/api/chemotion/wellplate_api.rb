@@ -181,8 +181,8 @@ module Chemotion
           optional :readout_titles, type: Array
           requires :collection_id, type: Integer
           requires :container, type: Hash
-          optional :height, type: Integer, default: 8
-          optional :width, type: Integer, default: 12
+          optional :height, type: Integer, default: 8, values: 1..100
+          optional :width, type: Integer, default: 12, values: 1..100
           optional :segments, type: Array, desc: 'Segments'
         end
         post do
