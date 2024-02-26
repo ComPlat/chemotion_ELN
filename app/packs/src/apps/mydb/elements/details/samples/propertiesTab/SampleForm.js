@@ -59,8 +59,10 @@ export default class SampleForm extends React.Component {
   }
 
   handleSampleTypeChanged(sampleType) {
-    this.props.sample.updateSampleType(sampleType.value);
+    const { sample } = this.props;
+    sample.updateSampleType(sampleType.value);
     this.setState({ selectedSampleType: sampleType.value })
+    this.props.parent.setState({ sample });
   }
 
   handleDensityChanged(density) {
@@ -710,12 +712,14 @@ export default class SampleForm extends React.Component {
   
 
   sampleTypeInput() {
+    const { sample } = this.props;
     return (
       <FormGroup>
         <ControlLabel>Sample Type</ControlLabel>
         <Select
           name="sampleType"
           clearable={false}
+          disabled={!sample.can_update}
           value={this.state.selectedSampleType}
           onChange={(value) => this.handleSampleTypeChanged(value)}
           options={SampleTypesOptions}
