@@ -28,24 +28,26 @@ module Reporter
     def extract_product_attrs(objects)
       product_attrs = []
       objects&.map do |obj|
-        product_attrs << extract_products_attrs(obj) if obj[:role] != 'gp'
+        product_attrs += extract_products_attrs(obj) if obj[:role] != 'gp'
       end
       product_attrs.compact_blank!
     end
 
     def extract_products_attrs(object)
-      target_object = {}
+      products = []
       if object[:type] == 'reaction'
         object[:products]&.map do |prod|
+          target_object = {}
           target_object[:prdId] = prod[:id]
           target_object[:iupac_name] = prod.dig(:molecule, :iupac_name)
           target_object[:sum_formular] = prod.dig(:molecule, :sum_formular)
           target_object[:molId] = prod.dig(:molecule, :id)
           target_object[:showedName] = prod[:showed_name]
           target_object[:atts] = extract_attributes(prod)
+          products << target_object
         end
       end
-      target_object
+      products
     end
 
     def extract_attributes(product) # rubocop:disable Metrics/CyclomaticComplexity
