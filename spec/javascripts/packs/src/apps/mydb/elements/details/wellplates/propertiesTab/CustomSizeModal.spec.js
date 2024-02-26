@@ -6,7 +6,7 @@ import {
   describe, it
 } from 'mocha';
 import sinon from 'sinon';
-import Enzyme, { shallow } from 'enzyme';
+import Enzyme, { shallow, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 import { wellplate2x3EmptyJson } from 'fixture/wellplates/wellplate_2_3_empty';
@@ -77,6 +77,7 @@ describe('CustomSizeModal', async () => {
       });
     });
   });
+
   describe('updateDimension()', async () => {
     const wellplate = new Wellplate(wellplate2x3EmptyJson);
     const wrapper = shallow(<CustomSizeModal
@@ -114,6 +115,42 @@ describe('CustomSizeModal', async () => {
       wrapper.instance().updateDimension('width', -5);
       it('-5 not changes the state', async () => {
         expect(wrapper.instance().state.width).toEqual(4);
+      });
+    });
+  });
+
+  describe('render()', async () => {
+    context('when width was set to hight (120)', async () => {
+      const wellplate = new Wellplate(wellplate2x3EmptyJson);
+      const wrapper = mount(<CustomSizeModal
+        wellplate={wellplate}
+        showCustomSizeModal
+        handleClose={() => {}}
+      />);
+      wrapper.instance().updateDimension('width', 120);
+
+      it('the apply button is disabled', async () => {
+        expect(
+          wrapper.html()
+            .includes('<button type="button" class="applyButton btn btn-default" disabled="">')
+        )
+          .toBeTruthy();
+      });
+
+      it('the width textbox has red border', async () => {
+        expect(
+          wrapper.html()
+            .includes('<input type="text" class="invalid-wellplate-size form-control"')
+        )
+          .toBeTruthy();
+      });
+
+      it('an error message appears in the width area', async () => {
+        expect(
+          wrapper.html()
+            .includes('<div class="invalid-wellplate-size-text">Size must be between 0 and 100</div>')
+        )
+          .toBeTruthy();
       });
     });
   });
