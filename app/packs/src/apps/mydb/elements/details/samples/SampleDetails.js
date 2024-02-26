@@ -967,6 +967,8 @@ export default class SampleDetails extends React.Component {
       </Checkbox>
     ) : null;
 
+    const isMixture = sample.sample_type === 'Mixture';
+
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -984,7 +986,7 @@ export default class SampleDetails extends React.Component {
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           <PubchemLabels element={sample} />
           <HeaderCommentSection element={sample} />
-          {sample.isNew
+          {sample.isNew && !isMixture
             ? <FastInput fnHandle={this.handleFastInput} />
             : null}
         </div>
@@ -1571,6 +1573,8 @@ export default class SampleDetails extends React.Component {
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
+    const isMixture = sample.sample_type === 'Mixture';
+
     return (
       <Panel
         className="eln-panel-detail"
@@ -1581,7 +1585,7 @@ export default class SampleDetails extends React.Component {
           {messageBlock}
         </Panel.Heading>
         <Panel.Body>
-          {this.sampleInfo(sample)}
+          {!isMixture ? this.sampleInfo(sample) : null}
           <ListGroup>
             <ElementDetailSortTab
               type="sample"
