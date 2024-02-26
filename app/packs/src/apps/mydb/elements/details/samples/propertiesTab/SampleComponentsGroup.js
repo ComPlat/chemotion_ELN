@@ -7,9 +7,11 @@ import Material from '../../reactions/schemeTab/Material';
 import { permitOn } from 'src/components/common/uis';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
+function dummy() { return false; }
+
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
-    headIndex, dropComponent, dropSample,
+    headIndex, dropSample,
   }) => {
     const contents = [];
     let sampleComponents = sample.mixture_components;
@@ -27,7 +29,7 @@ const SampleComponentsGroup = ({
             materialGroup={materialGroup}
             deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
             index={index}
-            dropMaterial={dropComponent}
+            dropMaterial={dummy}
             dropSample={dropSample}
            />
         ));
@@ -91,7 +93,6 @@ const SampleComponentsGroup = ({
     deleteMixtureComponent: PropTypes.func.isRequired,
     onChange: PropTypes.func.isRequired,
     sample: PropTypes.instanceOf(Sample).isRequired,
-    dropComponent: PropTypes.func.isRequired,
     dropSample: PropTypes.func.isRequired,
   };
   
