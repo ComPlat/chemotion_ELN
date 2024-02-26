@@ -108,7 +108,7 @@ module Import
         path = url.split('/')
         filter = path.last
         # extract digits from the string
-        filter.match(/^\d+/)&.[](0)
+        filter.match(/.*?(?=[$%&?]|$)/)&.[](0)
       end
     end
 
