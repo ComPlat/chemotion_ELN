@@ -676,9 +676,9 @@ export default class ChemicalTab extends React.Component {
   chooseVendor() {
     const { vendorValue } = this.state;
     const vendorOptions = [
-      { label: 'All', value: 'All' },
+      // { label: 'All', value: 'All' },
       { label: 'Merck', value: 'Merck' },
-      { label: 'Thermofisher', value: 'Thermofisher' },
+      // { label: 'Thermofisher', value: 'Thermofisher' },
     ];
 
     return (
