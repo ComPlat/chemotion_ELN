@@ -7,17 +7,9 @@ import {
   addMissingMaterialsToVariations,
   updateYields,
   updateEquivalents,
-  getReferenceMaterial
+  getReferenceMaterial,
+  getReactionMaterials,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-
-function getReactionMaterials(reaction) {
-  return {
-    startingMaterials: reaction.starting_materials,
-    reactants: reaction.reactants,
-    products: reaction.products,
-    solvents: reaction.solvents
-  };
-}
 
 async function setUpMaterial() {
   return SampleFactory.build('SampleFactory.water_100g');
@@ -122,18 +114,18 @@ describe('Reaction', async () => {
       const reaction = await setUpReaction();
       const productID = reaction.products[0].id;
       expect(reaction.variations[0].products[productID].aux.yield).toBe(100);
-      reaction.variations[0].products[productID].value = 2;
-      const updatedVariations = updateYields(reaction.variations, reaction.hasPolymers());
-      expect(updatedVariations[0].products[productID].aux.yield).toBe(5);
+      reaction.variations[0].products[productID].value = 2000;
+      const updatedVariationsRow = updateYields(reaction.variations[0], reaction.hasPolymers());
+      expect(updatedVariationsRow.products[productID].aux.yield).toBe(5);
     });
     it("updates non-reference materials' equivalents when reference material's amount changes ", async () => {
       const reaction = await setUpReaction();
       const reactantID = reaction.reactants[0].id;
       expect(reaction.variations[0].reactants[reactantID].aux.equivalent).toBe(1);
       const referenceMaterial = getReferenceMaterial(reaction.variations[0]);
-      referenceMaterial.value = 2;
-      const updatedVariations = updateEquivalents(reaction.variations);
-      expect(updatedVariations[0].reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
+      referenceMaterial.value = 2000;
+      const updatedVariationsRow = updateEquivalents(reaction.variations[0]);
+      expect(updatedVariationsRow.reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
     });
   });
 });
