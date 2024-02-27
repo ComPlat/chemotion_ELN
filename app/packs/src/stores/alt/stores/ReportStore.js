@@ -95,12 +95,12 @@ class ReportStore {
       handleUpdateTemplate: ReportActions.updateTemplate,
       handleClone: ReportActions.clone,
       handleDelete: ReportActions.delete,
-      hadnleRemove: ReportActions.remove,
-      hadnleReset: [ReportActions.reset, UserActions.fetchCurrentUser],
+      handleRemove: ReportActions.remove,
+      handleReset: [ReportActions.reset, UserActions.fetchCurrentUser],
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
-      handleLoadRreview: ReportActions.loadRreview,
+      handleLoadReview: ReportActions.loadReview,
       handleFetchTemplate: ReportActions.fetchTemplates
     });
   }
@@ -494,7 +494,7 @@ class ReportStore {
     return inp;
   }
 
-  hadnleRemove(target) {
+  handleRemove(target) {
     let dTags = this.defaultObjTags;
     let sTags = this.selectedObjTags;
     const currentObjs = this.selectedObjs;
@@ -531,7 +531,7 @@ class ReportStore {
     });
   }
 
-  hadnleReset(user) {
+  handleReset(user) {
     const { initials } = user || {};
     this.setState({
       activeKey: 0,
@@ -682,7 +682,7 @@ class ReportStore {
     // TODO: update selectedObjs?
   }
 
-  handleLoadRreview({ objs }) {
+  handleLoadReview({ objs }) {
     if (!objs) return null;
     const { samples, reactions } = objs;
     let previewObjs = OrderPreviewObjs(
