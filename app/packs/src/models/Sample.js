@@ -898,7 +898,8 @@ export default class Sample extends Element {
   }
 
   get isValid() {
-    return (this && ((this.molfile && !this.decoupled) || this.decoupled)
+    const isValidMixture = this.sample_type === 'Mixture' && this.mixture_components?.length > 0;
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
       && !this.error_loading && !this.error_polymer_type);
   }
 
