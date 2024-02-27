@@ -201,11 +201,11 @@ export default class Sample extends Element {
       molecular_mass: 0,
       sum_formula: '',
       xref: {},
-      sample_type: 'Micromolecule'
+      sample_type: 'Micromolecule',
+      mixture_components: []
     });
 
     sample.short_label = Sample.buildNewShortLabel();
-    sample.mixture_components = [];
     return sample;
   }
 

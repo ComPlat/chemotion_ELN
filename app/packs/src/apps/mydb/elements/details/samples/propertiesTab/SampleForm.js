@@ -728,6 +728,18 @@ export default class SampleForm extends React.Component {
     )
   }
 
+  mixtureComponentsList(sample) {
+    return (
+      <tr>
+          <ControlLabel>Mixture Components:</ControlLabel>
+          <SampleDetailsComponents
+            sample={sample}
+            onChange={this.handleMixtureComponentChanged}
+          />
+      </tr>
+    );
+  }
+
   render() {
     const sample = this.props.sample || {};
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
@@ -869,17 +881,9 @@ export default class SampleForm extends React.Component {
             )}
             </ListGroupItem>
           </ListGroup>
+          {this.state.selectedSampleType === 'Mixture' ? this.mixtureComponentsList(sample) : null}
           <tr>
             {this.additionalProperties(sample)}
-          </tr>
-          <tr>  {this.state.selectedSampleType === 'Mixture' ? (
-          <td colSpan="4">
-              <SampleDetailsComponents
-                sample={sample}
-                onChange={this.handleMixtureComponentChanged}
-              />
-            </td>
-          ) : null }
           </tr>
           <tr>
             <td colSpan="4">

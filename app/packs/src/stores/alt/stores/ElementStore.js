@@ -792,6 +792,12 @@ class ElementStore {
       newSample = Sample.buildEmpty(currentCollection.id)
       sample.changed = true;
       newSample.sample_type = 'ComponentStock'
+      const shortLabel = newSample.short_label
+
+      if (shortLabel === sample.short_label) {
+        // increment short label by 1
+        newSample.short_label = shortLabel.replace(/(\d+)$/, (match, number) => parseInt(number) + 1);
+      }
     }
     newSample.molfile = newSample.molfile || ''
     newSample.molecule = newSample.molecule == undefined ? newSample : newSample.molecule
