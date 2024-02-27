@@ -21,6 +21,15 @@ FactoryBot.define do
         end
       end
     end
+    trait :with_wells_2x3 do
+      after(:create) do |wellplate|
+        (1..3).each do |pos_y|
+          (1..2).each do |pos_x|
+            FactoryBot.create(:well, wellplate: wellplate, position_x: pos_x, position_y: pos_y)
+          end
+        end
+      end
+    end
 
     trait :with_random_wells do
       transient do
