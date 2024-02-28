@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_02_15_121136) do
+ActiveRecord::Schema.define(version: 2024_02_27_140831) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1155,6 +1155,7 @@ ActiveRecord::Schema.define(version: 2024_02_15_121136) do
     t.boolean "inventory_sample", default: false
     t.bigint "mixture_id"
     t.bigint "micromolecule_id"
+    t.string "sample_type_name", default: "Micromolecule"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"

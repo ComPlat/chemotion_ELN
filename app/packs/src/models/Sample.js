@@ -201,7 +201,7 @@ export default class Sample extends Element {
       molecular_mass: 0,
       sum_formula: '',
       xref: {},
-      sample_type: 'Micromolecule',
+      sample_type_name: 'Micromolecule',
       mixture_components: []
     });
 
@@ -334,7 +334,7 @@ export default class Sample extends Element {
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
-      sample_type: this.sample_type,
+      sample_type_name: this.sample_type_name,
     });
 
     return serialized;
@@ -898,7 +898,7 @@ export default class Sample extends Element {
   }
 
   get isValid() {
-    const isValidMixture = this.sample_type === 'Mixture' && this.mixture_components?.length > 0;
+    const isValidMixture = this.sample_type_name === 'Mixture' && this.mixture_components?.length > 0;
     return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
       && !this.error_loading && !this.error_polymer_type);
   }
@@ -1054,7 +1054,7 @@ export default class Sample extends Element {
   }
 
   updateSampleType(newSampleType) {
-    this.sample_type = newSampleType;
+    this.sample_type_name = newSampleType;
   }
 
   addMixtureComponent(newComponent) {

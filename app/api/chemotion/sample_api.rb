@@ -347,7 +347,7 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         # use :root_container_params
-        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_type_name, type: String, default: 'Micromolecule'
         optional :mixture_components, type: Hash, desc: 'Sample ids and quantities for mixture components (subsamples)'
       end
 
@@ -401,17 +401,15 @@ module Chemotion
             stereo: params[:stereo],
           }
 
-          new_sample_type = params[:sample_type]
-          current_sample_type = @sample.sample_types.first&.sampleable_type
-          current_sample_type = 'Mixture' if current_sample_type == 'Sample'
-          current_sample_type = 'ComponentStock' if @sample.sample_types.first&.component_stock?
+          new_sample_type = params[:sample_type_name]
+          current_sample_type = @sample.sample_type_name
 
           if current_sample_type != new_sample_type
             # CASE 1: Changed from micromolecule to mixture component
             if current_sample_type == 'Micromolecule' && new_sample_type == 'ComponentStock'
               # update sample type
               s_type = SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)
-              s_type.update(sampleable: nil, component_stock: true)
+              s_type.update(sampleable: @sample, component_stock: true)
               # delete micromolecule
               @sample.micromolecule&.destroy
             end
@@ -423,7 +421,7 @@ module Chemotion
               micromolecule.samples << @sample
               micromolecule.save!
               # update sample type
-              s_type = SampleType.find_by(sample: @sample, component_stock: true)
+              s_type = SampleType.find_by(sample: @sample, sampleable: @sample, component_stock: true)
               s_type.update(sampleable: micromolecule)
             end
 
@@ -460,7 +458,6 @@ module Chemotion
           end
 
           attributes.delete(:mixture_components)
-          attributes.delete(:sample_type)
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -522,7 +519,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_type_name, type: String, default: 'Micromolecule'
         optional :mixture_components, type: Hash, desc: 'Sample ids and quantities for component stock solutions'
       end
       post do
@@ -559,6 +556,7 @@ module Chemotion
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
+          sample_type_name: params[:sample_type_name],
         }
         micro_att = {
           name: params[:name],
@@ -618,8 +616,8 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        # Save sample based on sample_type
-        case params[:sample_type]
+        # Save sample based on sample_type_name
+        case params[:sample_type_name]
         when 'Mixture'
           mixture_components = params[:mixture_components]
           if mixture_components.present?
@@ -639,7 +637,7 @@ module Chemotion
           end
 
         when 'ComponentStock'
-          SampleType.create(sample: sample, component_stock: true)
+          SampleType.create(sample: sample, sampleable: sample, component_stock: true)
 
         when 'Micromolecule'
           micromolecule = Micromolecule.new(micro_att)
