@@ -791,7 +791,7 @@ class ElementStore {
     } else {
       newSample = Sample.buildEmpty(currentCollection.id)
       sample.changed = true;
-      newSample.sample_type = 'ComponentStock'
+      newSample.sample_type_name = 'ComponentStock'
       const shortLabel = newSample.short_label
 
       if (shortLabel === sample.short_label) {

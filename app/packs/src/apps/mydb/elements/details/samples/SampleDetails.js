@@ -80,7 +80,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.sample_type_name == 'Mixture') {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -1038,7 +1038,7 @@ export default class SampleDetails extends React.Component {
       </Checkbox>
     ) : null;
 
-    const isMixture = sample.sample_type === 'Mixture';
+    const isMixture = sample.sample_type_name === 'Mixture';
 
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -1615,7 +1615,7 @@ export default class SampleDetails extends React.Component {
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
-    const isMixture = sample.sample_type === 'Mixture';
+    const isMixture = sample.sample_type_name === 'Mixture';
 
     return (
       <Panel

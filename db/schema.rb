@@ -1183,6 +1183,7 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.boolean "inventory_sample", default: false
     t.bigint "mixture_id"
     t.bigint "micromolecule_id"
+    t.string "sample_type_name", default: "Micromolecule"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"

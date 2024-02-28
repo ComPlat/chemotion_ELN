@@ -476,7 +476,7 @@ class Material extends Component {
   }
 
   materialId() {
-    if (this.props.reaction.sample_type === 'Mixture'){
+    if (this.props.reaction.sample_type_name === 'Mixture'){
       return this.material().parent_id
     }
     return this.material().id;
