@@ -835,7 +835,6 @@ GEM
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
-    webrick (1.7.0)
     websocket (1.2.9)
     websocket-driver (0.7.6)
       websocket-extensions (>= 0.1.0)
@@ -849,8 +848,7 @@ GEM
     yaml_db (0.7.0)
       rails (>= 3.0)
       rake (>= 0.8.7)
-    yard (0.9.28)
-      webrick (~> 1.7.0)
+    yard (0.9.35)
     zeitwerk (2.6.12)
 
 PLATFORMS
