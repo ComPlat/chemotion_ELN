@@ -21,7 +21,10 @@ const rmRefreshed = (analysis) => {
 const layoutsWillShowMulti = [
   FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY,
   FN.LIST_LAYOUT.SEC,
-  FN.LIST_LAYOUT.AIF
+  FN.LIST_LAYOUT.AIF,
+  FN.LIST_LAYOUT.H1,
+  FN.LIST_LAYOUT.C13,
+  FN.LIST_LAYOUT.UVVIS
 ];
 
 class ViewSpectra extends React.Component {
