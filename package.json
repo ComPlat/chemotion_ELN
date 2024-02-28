@@ -11,7 +11,7 @@
     "@babel/preset-react": "7.10.4",
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.0.0",
-    "@complat/react-spectra-editor": "1.0.0",
+    "@complat/react-spectra-editor": "https://github.com/ComPlat/react-spectra-editor.git#v1.0.2",
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.3",
     "@novnc/novnc": "^1.2.0",
