@@ -10,6 +10,9 @@ module Usecases
       end
 
       def execute!
+        raise "Width of wellplate to high" if @wellplate.width >100 
+        raise "Height of wellplate to high" if @wellplate.height >100
+
         xfile = Axlsx::Package.new
         file_extension = 'xlsx'
         xfile.workbook.styles.fonts.first.name = 'Calibri'

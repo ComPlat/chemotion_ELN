@@ -10,7 +10,7 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
     let(:template) { usecase.execute! }
 
     context 'when wellplate has size 2x3' do
-      let(:wellplate) { create(:wellplate, :with_wells_2x3) }
+      let(:wellplate) { create(:wellplate, :with_transient_wells, height: 3, width: 2) }
       let(:data_column_count) { 6 }
 
       it 'xlsx file was created and has one worksheet' do
@@ -29,7 +29,7 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
     end
 
     context 'when wellplate has size 12x8' do
-      let(:wellplate) { create(:wellplate, :with_wells) }
+      let(:wellplate) { create(:wellplate, :with_transient_wells) }
       let(:data_column_count) { 96 }
 
       it 'xlsx file was created and has one worksheet' do
@@ -50,14 +50,18 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
     end
 
     context 'when wellplate has size 101x1' do
+      let(:wellplate) { create(:wellplate, :with_transient_wells, width: 101, height: 1) }
+
       it 'an error was thrown' do
-        pending 'not yet implemented'
+        expect { usecase.execute! }.to raise_error('Width of wellplate to high')
       end
     end
 
     context 'when wellplate has size 1x101' do
+      let(:wellplate) { create(:wellplate, :with_transient_wells, width: 1, height: 101) }
+
       it 'an error was thrown' do
-        pending 'not yet implemented'
+        expect { usecase.execute! }.to raise_error('Height of wellplate to high')
       end
     end
   end
