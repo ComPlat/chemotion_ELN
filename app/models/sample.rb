@@ -589,7 +589,7 @@ private
   end
 
   def check_molfile_polymer_section
-    return if decoupled
+    return if decoupled || sample_type_name == 'Mixture'
     return unless self.molfile.include? 'R#'
 
     lines = self.molfile.lines
@@ -697,6 +697,7 @@ private
   end
 
   def assign_molecule_name
+    return if sample_type_name == 'Mixture'
     if molecule_name&.new_record? && molecule.persisted? && molecule_name.name.present?
       att = molecule_name.attributes.slice('user_id', 'description', 'name')
       att['molecule_id'] = molecule.id
