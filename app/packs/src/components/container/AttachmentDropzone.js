@@ -1,50 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
-import InboxActions from 'src/stores/alt/actions/InboxActions';
-
-const dataTarget = {
-  canDrop(monitor) {
-    const itemType = monitor.getItemType();
-    if (itemType == DragDropItemTypes.DATA
-      || itemType == DragDropItemTypes.UNLINKED_DATA
-      || itemType == DragDropItemTypes.DATASET) {
-      return true;
-    }
-    return false;
-  },
-
-  drop(props, monitor) {
-    const item = monitor.getItem();
-    const itemType = monitor.getItemType();
-    const { handleAddWithAttachments } = props;
-
-    switch (itemType) {
-      case DragDropItemTypes.DATA:
-        handleAddWithAttachments([item.attachment]);
-        InboxActions.removeAttachmentFromList(item.attachment);
-        break;
-      case DragDropItemTypes.UNLINKED_DATA:
-        handleAddWithAttachments([item.attachment]);
-        InboxActions.removeUnlinkedAttachmentFromList(item.attachment);
-        break;
-      case DragDropItemTypes.DATASET:
-        handleAddWithAttachments(item.dataset.attachments);
-        InboxActions.removeDatasetFromList(item.dataset);
-        break;
-      default:
-        console.warn(`Unhandled itemType: ${itemType}`);
-        break;
-    }
-  }
-};
-
-const collectTarget = (connect, monitor) => ({
-  connectDropTarget: connect.dropTarget(),
-  isOver: monitor.isOver(),
-  canDrop: monitor.canDrop()
-});
+import { targetAttachmentDropzone } from 'src/utilities/DndConst';
 
 class AttachmentDropzone extends Component {
   renderOverlay(color) {
@@ -77,7 +34,11 @@ class AttachmentDropzone extends Component {
   }
 }
 
-export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.UNLINKED_DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(AttachmentDropzone);
+export default DropTarget(
+  targetAttachmentDropzone.dropTargetTypes,
+  targetAttachmentDropzone.dataTarget,
+  targetAttachmentDropzone.collectTarget
+)(AttachmentDropzone);
 
 AttachmentDropzone.propTypes = {
   isOver: PropTypes.bool.isRequired,

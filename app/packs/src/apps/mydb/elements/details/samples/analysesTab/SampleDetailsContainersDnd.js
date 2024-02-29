@@ -1,7 +1,7 @@
 import React from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { HeaderDeleted, HeaderNormal } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 
 const orderSource = {

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Utils from 'src/utilities/Functions';
 
 import MoveToAnalysisButton from 'src/apps/mydb/inbox/MoveToAnalysisButton';
