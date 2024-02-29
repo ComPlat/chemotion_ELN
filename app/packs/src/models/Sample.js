@@ -335,6 +335,7 @@ export default class Sample extends Element {
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
       sample_type_name: this.sample_type_name,
+      mixture_components: this.mixture_components
     });
 
     return serialized;

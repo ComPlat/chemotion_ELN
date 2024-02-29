@@ -348,7 +348,7 @@ module Chemotion
         optional :sum_formula, type: String
         # use :root_container_params
         optional :sample_type_name, type: String, default: 'Micromolecule'
-        optional :mixture_components, type: Hash, desc: 'Sample ids and quantities for mixture components (subsamples)'
+        optional :mixture_components, type: Array, desc: 'Sample ids and quantities for mixture components (subsamples)'
       end
 
       route_param :id do
@@ -520,7 +520,7 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         optional :sample_type_name, type: String, default: 'Micromolecule'
-        optional :mixture_components, type: Hash, desc: 'Sample ids and quantities for component stock solutions'
+        optional :mixture_components, type: Array, desc: 'Sample ids and quantities for component stock solutions'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -621,15 +621,21 @@ module Chemotion
         when 'Mixture'
           mixture_components = params[:mixture_components]
           if mixture_components.present?
-            mixture_components.each do |component_id, _component_quantities|
-              stock_component_sample = Sample.find_by(id: component_id)
+            mixture_components.each do |component|
+              stock_component_sample = Sample.find_by(id: component[:parent_id])
               next if stock_component_sample.blank?
 
               # Create subsample of each component stock
               subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
 
-              # TO DO: update subsample with the component_quantities
-              # subsample.update_subsample(component_quantities)
+              # update subsample with the component_quantities
+              component_quantities = {
+                target_amount_value: component[:_target_amount_value],
+                target_amount_unit: component[:_target_amount_unit],
+                molarity_unit: component[:_molarity_unit],
+                molarity_value: component[:_molarity_value],
+              }
+              subsample.update!(component_quantities)
 
               # Create SampleType entry for subsample
               SampleType.create(sample: sample, sampleable: subsample, component_stock: false)

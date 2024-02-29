@@ -23,7 +23,7 @@ const SampleComponentsGroup = ({
           <Material
             sample={sample}
             onChange={onChange}
-            key={sampleComponent.parent_id}
+            key={sampleComponent.id}
             material={sampleComponent}
             reaction={sample}
             materialGroup={materialGroup}
