@@ -9,11 +9,21 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 
 function dummy() { return false; }
 
+function createSample(component) {
+  return new Sample(component)
+}
+
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
     headIndex, dropSample,
   }) => {
     const contents = [];
+    sample.mixture_components = sample.mixture_components.map((component) => {
+      if (!(component instanceof Sample)) {
+        return createSample(component)
+      }
+      return component;
+    });
     let sampleComponents = sample.mixture_components;
     let index = headIndex;
     if (sampleComponents && sampleComponents.length > 0) {

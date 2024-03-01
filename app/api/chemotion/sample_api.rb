@@ -432,7 +432,7 @@ module Chemotion
               SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)&.destroy
 
               # add/delete components
-              existing_components = @sample.components
+              existing_components = @sample.mixture_components
               components_to_remove = existing_components.pluck(:id) - params[:mixture_components].keys.map(&:to_i)
               components_to_add = params[:mixture_components].keys.map(&:to_i) - existing_components.pluck(:id)
 
@@ -639,6 +639,7 @@ module Chemotion
 
               # Create SampleType entry for subsample
               SampleType.create(sample: sample, sampleable: subsample, component_stock: false)
+              sample.mixture_components << subsample
             end
           end
 
