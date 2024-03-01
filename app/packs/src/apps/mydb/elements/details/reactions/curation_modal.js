@@ -56,11 +56,14 @@ export default class Curation_modal extends Component {
       this.setState({ show: true });
     }
 
+
     spell_check(description){
-      // console.log(description)
-      var Typo = require("typo-js"); 
-      var dictionary = new Typo("en_US", false, false, { dictionaryPath: "typo/dictionaries" });
+      // var Typo = require("typo-js"); 
+      // var dictionary = new Typo("en_US", false, false, { dictionaryPath: "typo/dictionaries" });
       // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
+      var Typo = require("typo-js");
+      var dictionary = new Typo( "en_US",false,false,{dictionaryPath: "typo-js/dictionaries" });
+      console.log(dictionary.suggest("tesst"))
       var ms_words = [];
       var word_array = description.split(' ')
       for (let i = 0; i < word_array.length; i++){
@@ -69,10 +72,9 @@ export default class Curation_modal extends Component {
         // check if word has a number in it
         if (word_array[i] == ""||  /\d/.test(word_array[i]))
           {console.log("number detected " + word_array[i])}
+
         // if no number, check if in the dictionary, and set varible s_c_w to false if not in dictionary
         else {var spell_checked_word = dictionary.check(word_array[i]);
-
-          // (console.log("test_2 " + word_array[i]+ "  :  " + spell_checked_word))
         // if word is misspelled add word to ms_word array
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
@@ -80,45 +82,15 @@ export default class Curation_modal extends Component {
         }  
       }
       ms_words = this.uniq(ms_words)
-      
+      console.log(ms_words)
       this.setState({mispelled_words: ms_words})
     }
     
     getHighlightedText(text, highlight) {
-      // Split text on higlight term, include term itself into parts, ignore case
-      // if (typeof text === 'string'){}
-      // else{
-      //   text = text.toString()
-      // }
-      // let test_1 = "this is a string"
-      // let mispelled_words = ["is", "a"]
-      // const splitByNumber = {
-      //   [Symbol.split](str) {
-      //     const mw = mispelled_words;
-      //     const result = [];
-      //     let pos = 0
-      //     while (pos < mw.length){
-      //       result.push(str.split(mispelled_words[pos]))
-      //       pos++
-      //     }
-      //     return result;
-          
-      //   },
-      // };
-      // console.log(test_1.split(splitByNumber));
-      
-      console.log("highlight: " + highlight)
-      // var highlight = "/one|three|five/"
         var parts = text.split(new RegExp(`(${highlight})`, "gi"));
-        // var parts = text.split(highlight);
-        console.log("parts: " + parts)
         let highlight_array = highlight.split("|")
-
-        console.log(highlight_array)
       return parts.map((part, index) => (
         <React.Fragment key={index}>
-        {/* Todo change this to detect if part is in highlight_array */}
-          {/* {part.toLowerCase() === highlight.toLowerCase()  */}
         {highlight_array.includes(part.toLowerCase())
           ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
           : (part)}
@@ -127,15 +99,7 @@ export default class Curation_modal extends Component {
 
     highlight_mispelled_words(text,ms_word_array){
       var test = []
-      // let ms_word_str = ms_word_array.join("|")
-      // for (let i = 0; i < ms_word_array.length; i++){
-      //   // console.log(ms_word_array[i])
-      //    test[i] = this.getHighlightedText(text,ms_word_array[i])
-      //   // console.log(text)
-      // }
       test = this.getHighlightedText(text,ms_word_array)
-      // console.log(ms_word_str)
-      console.log(test)
       return test
     }
 
