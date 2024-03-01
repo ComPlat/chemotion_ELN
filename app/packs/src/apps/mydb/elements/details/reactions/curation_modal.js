@@ -62,7 +62,7 @@ export default class Curation_modal extends Component {
       // var dictionary = new Typo("en_US", false, false, { dictionaryPath: "typo/dictionaries" });
       // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
       var Typo = require("typo-js");
-      var dictionary = new Typo( "en_US",false,false,{dictionaryPath: "typo-js/dictionaries" });
+      var dictionary = new Typo( "en_US",false,false,{dictionaryPath: "home/chemotion-dev/app/node_modules/typo-js/dictionaries" });
       console.log(dictionary.suggest("tesst"))
       var ms_words = [];
       var word_array = description.split(' ')
