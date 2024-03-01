@@ -497,6 +497,7 @@ export default class Sample extends Element {
 
   set molarity_value(molarity_value) {
     this._molarity_value = molarity_value;
+    this.concn = molarity_value
   }
 
   get molarity_unit() {
@@ -642,7 +643,7 @@ export default class Sample extends Element {
   }
 
   get has_molarity() {
-    return this.molarity_value > 0 && this.density === 0;
+    return this.molarity_value > 0 && (this.density === 0 || !this.density);
   }
 
   get has_density() {
@@ -1078,6 +1079,21 @@ export default class Sample extends Element {
       comp === componentToUpdate ? componentToUpdate : comp
     );
     this.mixture_components = updatedComponents;
+  }
+
+  updateMixtureComponentEquivalent(){
+    const minAmountIndex = this.mixture_components.reduce((minIndex, component, currentIndex) => {
+      return component.amount_mol < this.mixture_components[minIndex].amount_mol ? currentIndex : minIndex;
+    }, 0);
+
+    const referenceAmountMol = this.mixture_components[minAmountIndex].amount_mol;
+    this.mixture_components[minAmountIndex].equivalent = 1;
+
+    this.mixture_components.forEach((component, index) => {
+      if (index !== minAmountIndex) {
+        component.equivalent = component.amount_mol / referenceAmountMol;
+      }
+    });
   }
 }
 

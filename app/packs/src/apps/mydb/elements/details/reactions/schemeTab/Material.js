@@ -239,6 +239,9 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     const { reaction, materialGroup } = this.props;
+    if (materialGroup === 'mixture_components'){
+      reaction.updateMixtureComponentEquivalent();
+    }
     if (materialGroup === 'products') {
       const refMaterial = reaction.getReferenceMaterial();
       let calculateYield = material.equivalent;
@@ -471,9 +474,6 @@ class Material extends Component {
   }
 
   materialId() {
-    if (this.props.reaction.sample_type_name === 'Mixture'){
-      return this.material().parent_id
-    }
     return this.material().id;
   }
 

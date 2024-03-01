@@ -5,6 +5,10 @@ import Molecule from 'src/models/Molecule';
 import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
 import UIStore from 'src/stores/alt/stores/UIStore';
 
+function createSample(component) {
+  return new Sample(component)
+}
+
 export default class SampleDetailsComponents extends React.Component {
   constructor(props) {
     super(props);
@@ -23,6 +27,14 @@ export default class SampleDetailsComponents extends React.Component {
 
   onChangeComponent(changeEvent) {
     const { sample } = this.state;
+
+    sample.mixture_components = sample.mixture_components.map((component) => {
+      if (!(component instanceof Sample)) {
+        return createSample(component)
+      }
+      return component;
+    });
+
     switch (changeEvent.type) {
       case 'amountUnitChanged':
         this.updatedSampleForAmountUnitChange(changeEvent);
@@ -42,7 +54,7 @@ export default class SampleDetailsComponents extends React.Component {
     const sampleID = changeEvent.sampleID;
     const amount = changeEvent.amount;
     const componentIndex = this.props.sample.mixture_components.findIndex(
-      (component) => component.parent_id === sampleID
+      (component) => component.id === sampleID
     );
 
     if (amount.unit == "mol/l"){
@@ -52,18 +64,7 @@ export default class SampleDetailsComponents extends React.Component {
     }
 
     // update components ratio
-    const minAmountIndex = sample.mixture_components.reduce((minIndex, component, currentIndex) => {
-      return component.amount_mol < sample.mixture_components[minIndex].amount_mol ? currentIndex : minIndex;
-    }, 0);
-
-    const referenceAmountMol = sample.mixture_components[minAmountIndex].amount_mol;
-    sample.mixture_components[minAmountIndex].equivalent = 1;
-
-    sample.mixture_components.forEach((component, index) => {
-      if (index !== minAmountIndex) {
-        component.equivalent = component.amount_mol / referenceAmountMol;
-      }
-    });
+    sample.updateMixtureComponentEquivalent()
   }
   
   updatedSampleForMetricsChange(changeEvent) {
