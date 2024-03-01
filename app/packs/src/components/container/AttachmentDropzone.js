@@ -2,24 +2,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import { targetAttachmentDropzone } from 'src/utilities/DndConst';
+import ColoredOverlay from 'src/components/common/ColoredOverlay'
 
 class AttachmentDropzone extends Component {
-  renderOverlay(color) {
-    return (
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: '100%',
-        zIndex: 1,
-        opacity: 0.5,
-        backgroundColor: color,
-      }}
-      />
-    );
-  }
-
   render() {
     const { connectDropTarget, isOver, canDrop } = this.props;
 
@@ -27,7 +12,7 @@ class AttachmentDropzone extends Component {
       <div>
         <i style={{ color: 'gray', padding: 2, textAlign: 'center' }}>
           Drop File(s) from the inbox
-          {isOver && canDrop && this.renderOverlay('green')}
+          {isOver && canDrop && ColoredOverlay({color: 'green'})}
         </i>
       </div>
     );

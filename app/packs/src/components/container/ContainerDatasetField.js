@@ -4,6 +4,7 @@ import {
   Button, ButtonToolbar, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
+import ColoredOverlay from 'src/components/common/ColoredOverlay';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { targetContainerDataField } from 'src/utilities/DndConst';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -26,22 +27,6 @@ class ContainerDatasetField extends Component {
       );
     }
     return null;
-  }
-
-  static renderOverlay(color) {
-    return (
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: '100%',
-        zIndex: 1,
-        opacity: 0.5,
-        backgroundColor: color,
-      }}
-      />
-    );
   }
 
   render() {
@@ -96,7 +81,7 @@ class ContainerDatasetField extends Component {
           </OverlayTrigger>
           {this.removeButton(datasetContainer)}
         </ButtonToolbar>
-        {isOver && canDrop && this.renderOverlay('green')}
+        {isOver && canDrop && ColoredOverlay({color: 'green'})}
       </div>
     );
   }
