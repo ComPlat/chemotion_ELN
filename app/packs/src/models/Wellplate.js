@@ -8,8 +8,7 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
-    this.wells = this.initWellsWithPosition(this.wells, this.size);
-    this._checksum = this.checksum();
+    this.initWellsWithPosition(this.wells, this.size);
   }
 
   static buildEmpty(collection_id, width = 12, height = 8) {
@@ -41,7 +40,6 @@ export default class Wellplate extends Element {
       sample,
       readouts: []
     }));
-
     const wellplate = Wellplate.buildEmpty(collection_id, width, height);
 
     for (let i = 0; i < wells.length; i += 1) {
@@ -107,16 +105,21 @@ export default class Wellplate extends Element {
     this.width = Number(width);
     this.height = Number(height);
 
-    this.wells = this.initWellsWithPosition([], this.size);
+    this.initWellsWithPosition(this.wells, this.size);
   }
 
   // ---
 
   initWellsWithPosition(wells, size) {
-    const placeholdersCount = size - wells.length;
+    const _wells = wells;
+    _wells.length = wells.length <= size ? wells.length : wells.length - (wells.length - size);
+
+    const placeholdersCount = size - _wells.length;
     const placeholders = Array(placeholdersCount).fill({});
-    const allWells = wells.concat(placeholders);
-    return allWells.map((well, i) => this.initWellWithPositionByIndex(well, i));
+    const allWells = _wells.concat(placeholders);
+
+    this.wells = allWells.map((well, i) => this.initWellWithPositionByIndex(well, i));
+    this._checksum = this.checksum();
   }
 
   initWellWithPositionByIndex(well, i) {

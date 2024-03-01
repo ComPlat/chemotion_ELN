@@ -210,12 +210,51 @@ describe('Wellplate', async () => {
     });
   });
 
-  describe('size()', async () => {
+  describe('get size()', async () => {
     context('initalized with 2x3 (size = 6) and width changed to 3', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       wellplate.width = 3;
       it('size returns 9', async () => {
         expect(wellplate.size).toEqual(9);
+      });
+    });
+  });
+
+  describe('changeSize()', async () => {
+    context('initalized with 2x3 (size = 6) and size changed to 3x4', async () => {
+      const wellplate = new Wellplate(wellplate2x3EmptyJson);
+      wellplate.changeSize(3, 4);
+      it('height, width and number of wells are adapted', async () => {
+        expect(wellplate.width).toEqual(3);
+        expect(wellplate.height).toEqual(4);
+        expect(wellplate.wells.length).toEqual(12);
+      });
+    });
+
+    context('build with 1 sample and increase size', async () => {
+      const width = 1;
+      const height = 2;
+      const collectionId = 1;
+      const samples = [sampleMock];
+      const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height);
+
+      wellplate.changeSize(3, 4);
+      it('sample can be found in wells', async () => {
+        expect(wellplate.wells[0].sample).not.toBeUndefined();
+      });
+
+      context('wellplate with two samples decrease size to 1x1', async () => {
+        const width = 1;
+        const height = 2;
+        const collectionId = 1;
+        const samples = [sampleMock, sampleMock];
+        const wellplate = Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height);
+
+        it('does not throw an error and number of wells is 1', async () => {
+          expect(() => wellplate.changeSize(1, 1)).not.toThrow();
+          expect(wellplate.wells.length).toEqual(1);
+          expect(wellplate.wells[0].sample).not.toBeUndefined();
+        });
       });
     });
   });
