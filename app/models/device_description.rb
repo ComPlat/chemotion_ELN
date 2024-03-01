@@ -50,8 +50,10 @@
 class DeviceDescription < ApplicationRecord
   attr_accessor :collection_id
 
-  include Collectable
   include ElementUIStateScopes
+  include Collectable
+  include ElementCodes
+  include Taggable
 
   acts_as_paranoid
 
@@ -61,14 +63,18 @@ class DeviceDescription < ApplicationRecord
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', inverse_of: :device_descriptions
 
-  # has_many :attachments, as: :attachable
+  has_many :attachments, as: :attachable
   has_many :sync_collections_users, through: :collections
 
   # has_many :comments, as: :commentable, dependent: :destroy
 
-  # has_one :container, as: :containable
+  has_one :container, as: :containable
 
   after_create :set_short_label
+
+  def analyses
+    container ? container.analyses : []
+  end
 
   def set_short_label
     prefix = 'DD'

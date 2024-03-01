@@ -242,7 +242,7 @@ export default class ElementDetails extends Component {
 
   setDeviceDescription(el) {
     if (el && el.type == 'device_description') {
-      this.context.deviceDescriptions.setDeviceDescription(el);
+      this.context.deviceDescriptions.setDeviceDescription(el, true);
     }
   }
 
