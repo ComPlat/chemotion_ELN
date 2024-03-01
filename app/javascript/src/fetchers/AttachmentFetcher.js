@@ -487,6 +487,45 @@ export default class AttachmentFetcher {
       });
   }
 
+  static downloadZipByDeviceDescription(deviceDescriptionId) {
+    let fileName = 'dataset.zip';
+    return fetch(`/api/v1/attachments/device_description_analyses/${deviceDescriptionId}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+    })
+      .then((response) => {
+        const disposition = response.headers.get('Content-Disposition');
+        if (disposition != null) {
+          if (disposition && disposition.indexOf('attachment') !== -1) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+              fileName = matches[1].replace(/['"]/g, '');
+            }
+          }
+
+          return response.blob();
+        }
+        NotificationActions.notifyExImportStatus('Analysis download', 204);
+        return null;
+      })
+      .then((blob) => {
+        if (blob && blob.type != null) {
+          const a = document.createElement('a');
+          a.style = 'display: none';
+          document.body.appendChild(a);
+          const url = window.URL.createObjectURL(blob);
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   static saveSpectrum(
     attId,
     peaksStr,
@@ -660,10 +699,10 @@ export default class AttachmentFetcher {
         credentials: 'same-origin',
         method: 'POST',
         headers:
-          {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
+        {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           spectra_ids: jcampIds,
           front_spectra_idx: curveIdx,

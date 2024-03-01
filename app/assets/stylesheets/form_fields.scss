@@ -24,6 +24,16 @@
     margin-top: 0;
     z-index: 10000;
   }
+
+  .react-datepicker__close-icon::after {
+    background-color: #fff;
+    color: #ccc;
+    font-size: 23px;
+    width: 20px;
+    height: 20px;
+    margin: -13px auto 0;
+    padding: 0;
+  }
 }
 
 .form-fields-headline {
@@ -104,6 +114,11 @@
 
 button.add-row {
   margin-right: 7px;
+  margin-bottom: 7px;
+}
+
+i.icon-margin-right {
+  margin-right: 7px;
 }
 
 button.delete-in-row {
@@ -130,4 +145,20 @@ button.react-datepicker__navigation {
 
 .react-datepicker__navigation--previous:after {
   content: "\f053";
+}
+
+.comment-button {
+  margin-top: 10px;
+  float: right;
+}
+
+.device-description-analyses {
+  padding-top: 0;
+  margin-bottom: 25px;
+  margin-top: 10px;
+}
+
+form-group.small-comment-form {
+  margin-bottom: 10px;
+  margin-top: 10px;
 }

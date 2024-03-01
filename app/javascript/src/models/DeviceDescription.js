@@ -1,4 +1,5 @@
 import Element from 'src/models/Element';
+import Container from 'src/models/Container';
 
 export default class DeviceDescription extends Element {
   static buildEmpty(collectionID) {
@@ -41,10 +42,13 @@ export default class DeviceDescription extends Element {
       description_for_methods_part: '',
       // setting components
       isNew: true,
+      changed: false,
+      container: Container.init(),
     });
   }
 
   title() {
-    return this.name;
+    const short_label = this.short_label ? this.short_label : '';
+    return this.name ? `${short_label} ${this.name}` : short_label;
   }
 }
