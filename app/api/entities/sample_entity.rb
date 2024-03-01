@@ -9,6 +9,7 @@ module Entities
     expose :target_amount_value,     unless: :displayed_in_list
     expose :molarity_unit,           unless: :displayed_in_list
     expose :molarity_value,          unless: :displayed_in_list
+    expose :short_label
   end
 
   class SampleEntity < ApplicationEntity
