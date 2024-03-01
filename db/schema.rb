@@ -192,7 +192,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
-    t.integer "device_description_detail_level", default: 10
+    t.integer "devicedescription_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
@@ -1397,6 +1397,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.datetime "updated_at"
     t.integer "element_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
+    t.integer "devicedescription_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"

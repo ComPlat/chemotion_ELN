@@ -4,8 +4,8 @@ describe Chemotion::DeviceDescriptionAPI do
   include_context 'api request authorization context'
 
   let(:user) { create(:user) }
-  let(:collection) { create(:collection, user_id: user.id, device_description_detail_level: 10) }
-  let(:device_description) { create(:device_description, collection_id: collection.id, created_by: user.id) }
+  let(:collection) { create(:collection, user_id: user.id, devicedescription_detail_level: 10) }
+  let(:device_description) { create(:device_description, collection_id: collection.id, created_by: collection.user_id) }
 
   describe 'GET /api/v1/device_descriptions/' do
     before do
@@ -50,12 +50,12 @@ describe Chemotion::DeviceDescriptionAPI do
       let(:params) do
         {
           name: 'new name',
-          short_label: 'DD1-2',
+          short_label: 'CU1-DD1-2',
         }
       end
 
       it 'returns the updated device description' do
-        put "/api/v1/device_descriptions/#{device_description.id}", params: params
+        put "/api/v1/device_descriptions/#{device_description.id}", params: device_description.attributes.merge(params)
 
         expect(parsed_json_response['device_description']).to include(params.stringify_keys)
       end

@@ -10,8 +10,8 @@ FactoryBot.define do
 
     callback(:before_create) do |device_description|
       device_description.created_by = FactoryBot.build(:user) unless device_description.created_by
-      device_description.collections << FactoryBot.build(:collection)
-      # device_description.container = FactoryBot.create(:container, :with_analysis) unless device_description.container
+      device_description.collections << FactoryBot.build(:collection, user_id: device_description.created_by)
+      device_description.container = FactoryBot.create(:container, :with_analysis) unless device_description.container
     end
   end
 end

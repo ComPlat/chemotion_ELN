@@ -38,9 +38,15 @@ module Entities
     expose :policies_and_user_information
     expose :description_for_methods_part
     expose :type
+    expose :changed
+    expose :container, using: 'Entities::ContainerEntity'
 
     def type
       'device_description'
+    end
+
+    def changed
+      false
     end
   end
 end

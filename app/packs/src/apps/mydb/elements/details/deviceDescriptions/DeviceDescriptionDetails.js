@@ -5,7 +5,7 @@ import {
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
 import DetailsForm from './detailsTab/DetailsForm';
-import AnalysesForm from './analysesTab/AnalysesForm';
+import AnalysesContainer from './analysesTab/AnalysesContainer';
 import AttachmentForm from './attachmentsTab/AttachmentForm';
 import MaintainanceForm from './maintainanceTab/MaintainanceForm';
 
@@ -17,11 +17,18 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import CollectionUtils from 'src/models/collection/CollectionUtils';
+import DeviceDescription from '../../../../../models/DeviceDescription';
+import { DeviceDescriptionsStore } from '../../../../../stores/mobx/DeviceDescriptionsStore';
 
 const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
@@ -36,7 +43,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const tabContentComponents = {
     properties: PropertiesForm,
     detail: DetailsForm,
-    analyses: AnalysesForm,
+    analyses: AnalysesContainer,
     attachments: AttachmentForm,
     maintainance: MaintainanceForm,
   };
@@ -49,12 +56,24 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     maintainance: 'Maintainance',
   };
 
+  const isReadOnly = () => {
+    const { currentCollection, isSync } = UIStore.getState();
+    const { currentUser } = UserStore.getState();
+
+    return CollectionUtils.isReadOnly(
+      currentCollection,
+      currentUser.id,
+      isSync
+    );
+  }
+
   visibleTabs.forEach((key) => {
     let title = key.charAt(0).toUpperCase() + key.slice(1);
     tabContents.push(
       <Tab eventKey={key} title={title} key={`${key}_${deviceDescription.id}`}>
         {React.createElement(tabContentComponents[key], {
-          key: `${deviceDescription.id}-${key}`
+          key: `${deviceDescription.id}-${key}`,
+          readonly: isReadOnly()
         })}
       </Tab>
     );
@@ -76,6 +95,35 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     } else {
       ElementActions.updateDeviceDescription(deviceDescription);
     }
+  }
+
+  const deviceDescriptionIsValid = () => {
+    // TODO: validation
+    return true;
+  }
+
+  const handleExportAnalyses = () => {
+    deviceDescriptionsStore.toggleAnalysisStartExport();
+    AttachmentFetcher.downloadZipByDeviceDescription(deviceDescription.id)
+      .then(() => { deviceDescriptionsStore.toggleAnalysisStartExport(); })
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  const downloadAnalysisButton = () => {
+    const hasNoAnalysis = deviceDescription.analyses?.length === 0 || deviceDescription.analyses?.length === undefined;
+    if (deviceDescription.isNew || hasNoAnalysis) { return null; }
+
+    return (
+      <Button bsStyle="info" disabled={!deviceDescriptionIsValid()} onClick={() => handleExportAnalyses()}>
+        Download Analysis
+        {' '}
+        {DeviceDescriptionsStore.analysis_start_export ? (
+          <span>
+            <i className="fa fa-spin fa-spinner" />
+          </span>
+        ) : null}
+      </Button>
+    );
   }
 
   const deviceDescriptionHeader = () => {
@@ -125,9 +173,10 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
           <Button bsStyle="primary" onClick={() => DetailActions.close(deviceDescription)}>
             Close
           </Button>
-          <Button bsStyle="warning" onClick={() => handleSubmit()}>
+          <Button bsStyle="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
             {submitLabel}
           </Button>
+          {downloadAnalysisButton()}
         </ButtonToolbar>
       </Panel.Body>
     </Panel>

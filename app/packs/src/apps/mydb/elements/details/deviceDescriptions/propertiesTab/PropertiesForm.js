@@ -3,9 +3,9 @@ import { Collapse } from 'react-bootstrap';
 import {
   selectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
+  operatorInput,
 } from '../FormFields';
 
-import { formatPrefix } from 'd3';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -204,9 +204,7 @@ const PropertiesForm = () => {
       {headlineWithToggle(deviceDescriptionsStore, 'operators_and_locations', 'Device operators and location')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.operators_and_locations} className="grouped-fields-row cols-1">
         <div>
-          <div className="form-group">
-            Operators
-          </div>
+          {operatorInput(deviceDescription, deviceDescriptionsStore, 'Operators')}
           {multipleInputGroups(deviceDescription, locationLabel, location, deviceDescriptionsStore)}
           {multipleInputGroups(deviceDescription, accessOptionsLabel, accessOptions, deviceDescriptionsStore)}
         </div>

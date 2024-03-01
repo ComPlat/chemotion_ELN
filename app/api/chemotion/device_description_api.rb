@@ -87,7 +87,6 @@ module Chemotion
         optional :version_doi, type: String
         optional :version_doi_url, type: String
         optional :version_characterization, type: String
-
         optional :operators, type: Array do
           optional :name, type: String
           optional :phone, type: String
@@ -95,7 +94,6 @@ module Chemotion
           optional :type, type: String
           optional :comment, type: String
         end
-
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String
@@ -111,14 +109,21 @@ module Chemotion
         optional :policies_and_user_information, type: String
         optional :description_for_methods_part, type: String
         requires :collection_id, type: Integer
+        optional :container, type: Hash
       end
       post do
-        attributes = declared(params, include_missing: false)
+        attributes = declared(params.except(:container), include_missing: false)
         attributes[:created_by] = current_user.id
         device_description = Usecases::DeviceDescriptions::Create.new(attributes, current_user).execute
-        # device_description.container = update_datamodel(params[:container]) # Attachments???
+        device_description.container = update_datamodel(params[:container]) if params[:container].present?
 
-        present device_description, with: Entities::DeviceDescriptionEntity, root: :device_description
+        present(
+          device_description,
+          with: Entities::DeviceDescriptionEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
+                                                     .detail_levels,
+          root: :device_description,
+        )
       rescue ActiveRecord::RecordInvalid
         { errors: device_description.errors.messages }
       end
@@ -130,8 +135,15 @@ module Chemotion
       route_param :id do
         get do
           device_description = DeviceDescription.find(params[:id])
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).read?
 
-          present device_description, with: Entities::DeviceDescriptionEntity, root: :device_description
+          present(
+            device_description,
+            with: Entities::DeviceDescriptionEntity,
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
+                                                       .detail_levels,
+            root: :device_description,
+          )
         end
       end
 
@@ -157,7 +169,6 @@ module Chemotion
         optional :version_doi, type: String
         optional :version_doi_url, type: String
         optional :version_characterization, type: String
-
         optional :operators, type: Array do
           optional :name, type: String
           optional :phone, type: String
@@ -165,7 +176,6 @@ module Chemotion
           optional :type, type: String
           optional :comment, type: String
         end
-
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String
@@ -180,13 +190,22 @@ module Chemotion
         optional :vendor_url, type: String
         optional :policies_and_user_information, type: String
         optional :description_for_methods_part, type: String
+        optional :container, type: Hash
       end
       put ':id' do
         device_description = DeviceDescription.find(params[:id])
-        attributes = declared(params, include_missing: false)
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).update?
+        attributes = declared(params.except(:container), include_missing: false)
         device_description.update!(attributes)
+        device_description.container = update_datamodel(params[:container]) if params[:container].present?
 
-        present device_description, with: Entities::DeviceDescriptionEntity, root: :device_description
+        present(
+          device_description,
+          with: Entities::DeviceDescriptionEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
+                                                     .detail_levels,
+          root: :device_description,
+        )
       rescue ActiveRecord::RecordInvalid
         { errors: device_description.errors.messages }
       end
@@ -194,6 +213,8 @@ module Chemotion
       # delete a device description
       delete ':id' do
         device_description = DeviceDescription.find(params[:id])
+
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).destroy?
         error!('Device could not be deleted', 400) unless device_description.present? && device_description.destroy
 
         { deleted: device_description.id }
