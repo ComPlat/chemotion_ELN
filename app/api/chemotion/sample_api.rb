@@ -412,10 +412,9 @@ module Chemotion
               s_type.update(sampleable: @sample, component_stock: true)
               # delete micromolecule
               @sample.micromolecule&.destroy
-            end
 
             # CASE 2: Change from component stock to micromolecule
-            if current_sample_type == 'ComponentStock' && new_sample_type == 'Micromolecule'
+            elsif current_sample_type == 'ComponentStock' && new_sample_type == 'Micromolecule'
               # create micromolecule
               micromolecule = Micromolecule.new(micro_att)
               micromolecule.samples << @sample
@@ -424,36 +423,56 @@ module Chemotion
               s_type = SampleType.find_by(sample: @sample, sampleable: @sample, component_stock: true)
               s_type.update(sampleable: micromolecule)
             end
+          end
 
-            # CASE 3: A mixture
-            if new_sample_type == 'Mixture'
-              # Delete micromolecule and sample type entry, if any
-              @sample.micromolecule&.destroy
-              SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)&.destroy
+          # CASE 3: A mixture
+          if new_sample_type == 'Mixture'
+            @sample.micromolecule&.destroy
+            SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)&.destroy
 
-              # add/delete components
-              existing_components = @sample.mixture_components
-              components_to_remove = existing_components.pluck(:id) - params[:mixture_components].keys.map(&:to_i)
-              components_to_add = params[:mixture_components].keys.map(&:to_i) - existing_components.pluck(:id)
+            # add/delete components
+            current_component_ids = @sample.mixture_components.pluck(:id)
+            new_component_ids = params[:mixture_components].map do |component|
+              id = component[:id].to_s
+              id.to_i.to_s == id ? id.to_i : component[:parent_id]
+            end
 
-              components_to_remove.each do |component_id|
-                component = Sample.find(component_id)
-                component&.destroy
-              end
+            components_to_remove = current_component_ids - new_component_ids
+            components_to_add = new_component_ids - current_component_ids
 
-              components_to_add.each do |component_id|
-                stock_component_sample = Sample.find_by(id: component_id)
-                next if stock_component_sample.blank?
+            components_to_remove.each do |component_id|
+              Sample.find_by(id: component_id)&.destroy
+            end
 
-                subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
-                SampleType.create(sample: @sample, sampleable: subsample, component_stock: false)
-              end
+            components_to_add.each do |component_id|
+              stock_component_sample = Sample.find_by(id: component_id)
+              next if stock_component_sample.blank?
 
-              # TO DO: update subsamples
-              params[:mixture_components].each do |component_id, _component_quantities|
-                component = Sample.find(component_id)
-                # component.update_subsample
-              end
+              component = params[:mixture_components].find { |c| c[:parent_id].to_i == component_id }
+              subsample = stock_component_sample.create_subsample(current_user, @sample.collection_ids, true, 'sample')
+              component_quantities = {
+                target_amount_value: component[:_target_amount_value],
+                target_amount_unit: component[:_target_amount_unit],
+                molarity_unit: component[:_molarity_unit],
+                molarity_value: component[:_molarity_value],
+              }
+              subsample.update!(component_quantities)
+              SampleType.create(sample: @sample, sampleable: subsample, component_stock: false)
+              @sample.mixture_components << subsample
+            end
+
+            # update current subsamples
+            params[:mixture_components].each do |component|
+              next if components_to_remove.include?(component[:id]) || components_to_add.include?(component[:parent_id])
+
+              subsample = Sample.find_by(id: component[:id])
+              component_quantities = {
+                target_amount_value: component[:_target_amount_value],
+                target_amount_unit: component[:_target_amount_unit],
+                molarity_unit: component[:_molarity_unit],
+                molarity_value: component[:_molarity_value],
+              }
+              subsample.update!(component_quantities)
             end
           end
 
