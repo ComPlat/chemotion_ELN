@@ -160,6 +160,7 @@ class ElementStore {
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
+      handleCreateSampleForMixture: ElementActions.createSampleForMixture,
       handleEditReactionSample: ElementActions.editReactionSample,
       handleEditWellplateSample: ElementActions.editWellplateSample,
       handleUpdateSampleForReaction: ElementActions.updateSampleForReaction,
@@ -672,6 +673,14 @@ class ElementStore {
     }
   }
 
+  handleCreateSampleForMixture({ newSample, mixtureSample, closeView }) {
+    UserActions.fetchCurrentUser();
+    this.handleRefreshElements('sample');
+    this.changeCurrentElement(mixtureSample);
+    let splitSample = newSample.buildChildWithoutCounter();
+    mixtureSample.addMixtureComponent(splitSample);
+  }
+
   handleCreateSampleForReaction({ newSample, reaction, materialGroup }) {
     UserActions.fetchCurrentUser();
     reaction.addMaterial(newSample, materialGroup);
@@ -778,6 +787,7 @@ class ElementStore {
       reaction.changed = true;
     } else {
       newSample = Sample.buildEmpty(currentCollection.id)
+      newSample.belongTo = sample;
       sample.changed = true;
       newSample.sample_type_name = 'ComponentStock'
       const shortLabel = newSample.short_label
@@ -792,10 +802,6 @@ class ElementStore {
     newSample.sample_svg_file = newSample.sample_svg_file
     newSample.matGroup = materialGroup;
 
-    if (sample){
-      sample.mixture_components = sample.mixture_components || [];
-      sample.mixture_components.push(newSample);
-    }
     this.changeCurrentElement(newSample);
   }
 

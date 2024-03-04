@@ -71,7 +71,7 @@ export default class SampleDetailsComponents extends React.Component {
     const { sample } = this.props;
     const { sampleID, metricUnit, metricPrefix } = changeEvent;
     const componentIndex = this.props.sample.mixture_components.findIndex(
-      (component) => component.parent_id === sampleID
+      (component) => (component.parent_id === sampleID || component.id === sampleID)
     );
     sample.mixture_components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
   }
