@@ -135,9 +135,11 @@ describe('CustomSizeModal', async () => {
       wrapper.instance().updateDimension('width', 120);
 
       it('the apply button is disabled', async () => {
+        console.log(wrapper.html())
         expect(
           wrapper.html()
-            .includes('<button type="button" class="applyButton btn btn-default" disabled="">')
+            .includes(
+              '<button type="button" class="btn btn-default" disabled="">Apply</button>')
         )
           .toBeTruthy();
       });
