@@ -167,7 +167,10 @@ class ElementStore {
       handleUpdateSampleForWellplate: ElementActions.updateSampleForWellplate,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
-      handleShowReactionMaterial: ElementActions.showReactionMaterial,
+      handleShowReactionMaterial: [
+        ElementActions.showReactionMaterial,
+        ElementActions.showMixtureMaterial
+      ],
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
 
