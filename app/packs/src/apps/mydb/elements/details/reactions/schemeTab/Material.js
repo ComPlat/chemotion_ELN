@@ -123,10 +123,14 @@ class Material extends Component {
   }
 
   handleMaterialClick(sample) {
-    const { reaction } = this.props;
+    const { reaction, materialGroup } = this.props;
     UrlSilentNavigation(sample);
     sample.updateChecksum();
-    ElementActions.showReactionMaterial({ sample, reaction });
+    if (materialGroup === 'mixture_components' && sample.ancestor_ids.length > 0){
+      ElementActions.showMixtureMaterial({ sample, reaction })
+    } else {
+      ElementActions.showReactionMaterial({ sample, reaction });
+    }
   }
 
   materialVolume(material) {
