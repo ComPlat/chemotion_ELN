@@ -143,7 +143,7 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
-  handleChangeProperties(change) {
+  handleChangeProperties(change = {}) {
     const { wellplate } = this.state;
     const { type, value } = change;
     switch (type) {
@@ -238,7 +238,7 @@ export default class WellplateDetails extends Component {
   }
 
   wellplateHeader(wellplate) {
-    const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
+    const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
     const datetp = formatTimeStampsOfElement(wellplate || {});
     const { showCommentSection, comments } = this.props;
 

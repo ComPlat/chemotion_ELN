@@ -108,8 +108,6 @@ export default class Wellplate extends Element {
     this.initWellsWithPosition(this.wells, this.size);
   }
 
-  // ---
-
   initWellsWithPosition(wells, size) {
     const _wells = wells;
     _wells.length = wells.length <= size ? wells.length : wells.length - (wells.length - size);

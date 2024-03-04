@@ -119,7 +119,7 @@ export default class WellplateProperties extends Component {
 
   render() {
     const {
-      readoutTitles, wellplate
+      readoutTitles, wellplate, changeProperties
     } = this.props;
 
     const { name, description } = wellplate;
@@ -131,6 +131,7 @@ export default class WellplateProperties extends Component {
         <CustomSizeModal
           showCustomSizeModal={showCustomSizeModal}
           wellplate={wellplate}
+          triggerUIUpdate={changeProperties}
           handleClose={() => { this.setState({ showCustomSizeModal: false }); }}
         />
         <table width="100%">
@@ -152,6 +153,7 @@ export default class WellplateProperties extends Component {
                 <div>Size</div>
                 <div className="custom-size-dropdown">
                   <WellplateSizeDropdown
+                    triggerUIUpdate={changeProperties}
                     wellplate={wellplate}
                   />
                 </div>

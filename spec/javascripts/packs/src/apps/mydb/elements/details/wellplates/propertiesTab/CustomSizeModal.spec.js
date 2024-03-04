@@ -23,6 +23,7 @@ describe('CustomSizeModal', async () => {
       const wrapper = shallow(<CustomSizeModal
         wellplate={wellplate}
         showCustomSizeModal
+        triggerUIUpdate={()=>{}}
         handleClose={() => {}}
       />);
 
@@ -38,6 +39,7 @@ describe('CustomSizeModal', async () => {
     const wrapper = shallow(<CustomSizeModal
       wellplate={wellplate}
       showCustomSizeModal
+      triggerUIUpdate={()=>{}}
       handleClose={() => {}}
     />);
     context('wellplate is changed after construction', async () => {
@@ -59,6 +61,7 @@ describe('CustomSizeModal', async () => {
       const wrapper = shallow(<CustomSizeModal
         wellplate={wellplate}
         showCustomSizeModal
+        triggerUIUpdate={()=>{}}
         handleClose={spy}
       />);
       wrapper.instance().state.width = 4;
@@ -83,6 +86,7 @@ describe('CustomSizeModal', async () => {
     const wrapper = shallow(<CustomSizeModal
       wellplate={wellplate}
       showCustomSizeModal
+      triggerUIUpdate={()=>{}}
       handleClose={() => {}}
     />);
     describe('called with change the width to a valid value', async () => {
@@ -125,6 +129,7 @@ describe('CustomSizeModal', async () => {
       const wrapper = mount(<CustomSizeModal
         wellplate={wellplate}
         showCustomSizeModal
+        triggerUIUpdate={()=>{}}
         handleClose={() => {}}
       />);
       wrapper.instance().updateDimension('width', 120);

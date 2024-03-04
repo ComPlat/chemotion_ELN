@@ -27,9 +27,10 @@ export default class CustomSizeModal extends Component {
   }
 
   applySizeChange() {
-    const { handleClose, wellplate } = this.props;
+    const { handleClose, wellplate, triggerUIUpdate } = this.props;
     const { height, width } = this.state;
     wellplate.changeSize(width, height);
+    triggerUIUpdate();
     handleClose();
   }
 
@@ -120,4 +121,5 @@ CustomSizeModal.propTypes = {
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
   showCustomSizeModal: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
+  triggerUIUpdate: PropTypes.func.isRequired,
 };

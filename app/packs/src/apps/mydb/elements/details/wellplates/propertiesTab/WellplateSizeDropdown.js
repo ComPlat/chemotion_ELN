@@ -30,8 +30,7 @@ export default class WellplateSizeDropdown extends Component {
   }
 
   changeSizeOption(selectedOption) {
-    const { wellplate } = this.props;
-
+    const { wellplate, triggerUIUpdate } = this.props;
     wellplate.edited = true;
     this.setState({ currentSize: selectedOption });
 
@@ -39,6 +38,8 @@ export default class WellplateSizeDropdown extends Component {
     const height = parseInt(selectedOption.value.split(';')[1], 10);
 
     wellplate.changeSize(width, height);
+
+    triggerUIUpdate({ type: 'size' });
   }
 
   selectOptionOfWellplate(wellplate) {
@@ -69,5 +70,6 @@ export default class WellplateSizeDropdown extends Component {
 }
 
 WellplateSizeDropdown.propTypes = {
-  wellplate: PropTypes.instanceOf(Wellplate).isRequired
+  wellplate: PropTypes.instanceOf(Wellplate).isRequired,
+  triggerUIUpdate: PropTypes.func.isRequired,
 };
