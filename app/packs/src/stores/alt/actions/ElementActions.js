@@ -385,6 +385,15 @@ class ElementActions {
     };
   }
 
+  createSampleForMixture(sample, mixtureSample, closeView = false){
+    return (dispatch) => {
+      SamplesFetcher.create(sample)
+        .then((newSample) => {
+          dispatch({ newSample, mixtureSample, closeView })
+        });
+    };
+  }
+
   handleSvgReactionChange(reaction) {
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map(material => material.svgPath),

@@ -466,6 +466,8 @@ module Chemotion
               next if components_to_remove.include?(component[:id]) || components_to_add.include?(component[:parent_id])
 
               subsample = Sample.find_by(id: component[:id])
+              next unless subsample
+
               component_quantities = {
                 target_amount_value: component[:_target_amount_value],
                 target_amount_unit: component[:_target_amount_unit],
@@ -695,7 +697,9 @@ module Chemotion
 
         delete do
           sample = Sample.find(params[:id])
+          micromolecule = Micromolecule.find_by(id: sample.micromolecule_id)
           sample.destroy
+          micromolecule&.destroy
         end
       end
     end
