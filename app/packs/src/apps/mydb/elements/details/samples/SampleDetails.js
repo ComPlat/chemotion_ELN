@@ -759,7 +759,7 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if (!sample.molecule_formula) {
+    if (!sample.molecule_formula || sample.sample_type_name === 'Mixture') {
       return false;
     }
 
@@ -806,6 +806,7 @@ export default class SampleDetails extends React.Component {
 
   chemicalIdentifiersItem(sample) {
     const show = this.state.showChemicalIdentifiers;
+    if (sample.sample_type_name === 'Mixture') return false;
     return (
       <div
         width="100%"

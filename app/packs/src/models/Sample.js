@@ -387,10 +387,18 @@ export default class Sample extends Element {
     const { profile } = UserStore.getState();
     const show_external_name = profile ? profile.show_external_name : false;
     const show_sample_name = profile ? profile.show_sample_name : false;
-    const { external_label } = this;
+    const { external_label, ancestor_ids } = this;
     const extLabelClass = 'label--bold';
     const { name } = this;
-    const { short_label } = this;
+    let { short_label } = this;
+
+    if (ancestor_ids){
+      if (ancestor_ids.length > 0) {
+        let sLabel = short_label.split('-')
+        sLabel.pop()
+        short_label = sLabel.join('-')
+      }
+    }
 
     if (show_external_name) {
       return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
