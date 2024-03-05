@@ -18,6 +18,7 @@ export default class ChemicalTab extends React.Component {
     super(props);
     this.state = {
       chemical: undefined,
+      prevChemical: null,
       safetySheets: [],
       displayWell: false,
       checkSaveIconThermofischer: false,
@@ -47,11 +48,16 @@ export default class ChemicalTab extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { saveInventory, parent } = this.props;
-    const { chemical } = this.state;
+    const { saveInventory, editChemical } = this.props;
+    const { chemical, prevChemical } = this.state;
+    console.log(chemical !== prevChemical, prevChemical);
 
     if (prevState.chemical !== chemical) {
       this.updateDisplayWell();
+    }
+
+    if (chemical?.isEdited && prevChemical && chemical !== prevChemical) {
+      editChemical(chemical.isEdited);
     }
 
     if (saveInventory === true) {
@@ -60,16 +66,27 @@ export default class ChemicalTab extends React.Component {
   }
 
   handleFieldChanged(parameter, value) {
-    const { chemical } = this.state;
-    if (chemical) {
-      chemical.buildChemical(parameter, value);
-    }
-    this.setState({ chemical });
+    const { chemical, prevChemical } = this.state;
+    const { editChemical } = this.props;
+    this.setState({ prevChemical: chemical }, () => {
+      if (chemical) {
+        console.log(chemical, prevChemical);
+        if (chemical.isEdited && prevChemical && chemical !== prevChemical) {
+          editChemical(chemical.isEdited);
+        }
+        chemical.buildChemical(parameter, value);
+      }
+      this.setState({ chemical });
+    });
   }
 
   handleSubmitSave() {
     const { chemical } = this.state;
-    const { sample, parent } = this.props;
+    const {
+      sample,
+      parent,
+      editChemical,
+    } = this.props;
     if (!sample || !chemical) {
       return;
     }
@@ -101,6 +118,7 @@ export default class ChemicalTab extends React.Component {
       });
     }
     parent.setState({ saveInventoryAction: false });
+    editChemical(!chemical.isEdited);
   }
 
   handleRemove(index, document) {
@@ -1192,5 +1210,6 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
-  saveInventory: PropTypes.bool.isRequired
+  saveInventory: PropTypes.bool.isRequired,
+  editChemical: PropTypes.func.isRequired,
 };
