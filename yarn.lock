@@ -1460,12 +1460,12 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@complat/chem-spectra-client@1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.2.2.tgz#2f4a71b648d1eba824da6fa23cd46558d1f5e637"
-  integrity sha512-7k86yQUkIt50cLtgEaCgAp/E9gr5xnZupkO0PycWEeap8amLggSWtBxZe4gWS33AfrbGYTAYQdW31y07u4WOog==
+"@complat/chem-spectra-client@1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.2.1.tgz#7cb9ad785bc994961ead070628a1431a4406fad2"
+  integrity sha512-TD1ztuWozF45ei4FqDk1WMG6eFXXP6VGzKMGOr+0JIJoq9qM2YVdh6UcoBVZs1QEDGAe4z8Pm83mWG8SZgvznA==
   dependencies:
-    "@complat/react-spectra-editor" "1.2.2"
+    "@complat/react-spectra-editor" "1.2.1"
     "@emotion/react" "^11.11.1"
     "@emotion/styled" "^11.11.0"
     "@mui/icons-material" "^5.14.9"
@@ -1483,12 +1483,12 @@
     redux-form "^8.3.7"
     redux-saga "^1.1.3"
 
-"@complat/react-spectra-editor@1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.2.2.tgz#40f5129bdc48d04a8e4ac36f76b9b7a1eebb2d2f"
-  integrity sha512-nskyHPg90b0PqQIihgNDz5/cYYEe9Md7OVukoxDbDL/Vb4L1Y2r3qOlvspFFi1yj5AK01pgyqx7hzRszOGnAkA==
+"@complat/react-spectra-editor@1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.2.1.tgz#ba9fcca31e93b38387d61bdd97f4cbb7667c69f9"
+  integrity sha512-VgstZ7ajTtUv1mp1N/8CXjW1QdzwahCa3c2wCQCC1MzTnR/g6rLJDC7guD7+VDr6/fb5DyC5yd8JjEX08ZUfyQ==
   dependencies:
-    "@complat/react-svg-file-zoom-pan" "1.1.4"
+    "@complat/react-svg-file-zoom-pan" "1.1.3"
     "@emotion/react" "^11.11.1"
     "@emotion/styled" "^11.11.0"
     "@mdi/js" "^7.2.96"
@@ -1518,13 +1518,47 @@
     reselect "^4.0.0"
     typescript "^5.0.4"
 
-"@complat/react-svg-file-zoom-pan@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.4.tgz#292e44e4b9ad0e8efa1f0b6d52358baa75dc13b5"
-  integrity sha512-1VjX7OEMPZJ0PZmUZxE1ZvUVEFU6h67FEyJphu6sXVzIYA8TG+JZwBaKh/V2k8nplA6hqGohbydX8oo2GJ1VwA==
+"@complat/react-spectra-editor@https://github.com/ComPlat/react-spectra-editor.git#refactor-label-cv-data-panel":
+  version "1.2.2"
+  resolved "https://github.com/ComPlat/react-spectra-editor.git#892221f760f2572d2d7a779b6091a387c484e21a"
+  dependencies:
+    "@complat/react-svg-file-zoom-pan" "1.1.3"
+    "@emotion/react" "^11.11.1"
+    "@emotion/styled" "^11.11.0"
+    "@mdi/js" "^7.2.96"
+    "@mdi/react" "^1.6.1"
+    "@mui/icons-material" "^5.14.9"
+    "@mui/material" "^5.14.9"
+    "@mui/styles" "^5.14.9"
+    "@types/jest" "^29.5.0"
+    "@types/node" "^18.15.11"
+    "@types/react" "^18.0.34"
+    "@types/react-dom" "^18.0.11"
+    babel-plugin-transform-object-rest-spread "^6.26.0"
+    browserslist "^4.21.5"
+    classnames "^2.3.2"
+    d3 "^7.8.5"
+    d3-tip "^0.9.1"
+    jcampconverter "4.1.0"
+    ml-savitzky-golay-generalized "1.1.1"
+    prop-types "^15.8.1"
+    react-dropzone "^8.0.3"
+    react-quill "^2.0.0"
+    react-redux "^7.2.0"
+    redux "^4.1.1"
+    redux-saga "^1.1.3"
+    redux-undo "^1.1.0"
+    regenerator-transform "^0.13.3"
+    reselect "^4.0.0"
+    typescript "^5.0.4"
+
+"@complat/react-svg-file-zoom-pan@1.1.3", "react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.3.tgz#a3da916005b6d6ee18be2b1bce62745becf082be"
+  integrity sha512-gtb41KBr/hQjKR9v6HOvwnyGEM61lSNsyMHTCk1rMX4SYJjx8iXw0J7z30Ff9tw2oK6sgEiejlPtM7tkdQi3GQ==
   dependencies:
     babel-plugin-transform-object-rest-spread "^6.26.0"
-    d3 "^7.8.5"
+    d3 "6.7.0"
     regenerator-transform "^0.13.3"
 
 "@ctrl/tinycolor@^3.6.1":
@@ -12316,15 +12350,6 @@ react-stickydiv@^3.4.19:
   integrity sha512-OpvOVuu3gXBYPP30q5EQfn5oApgeON1SAU73OweKHPuwlAUytz2shhqv7gqxlBUQq7onKlGE6ImLM9ELbRLbcw==
   dependencies:
     dom-find "^0.3.1"
-
-"react-svg-file-zoom-pan-latest@npm:@complat/react-svg-file-zoom-pan@1.1.3":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.3.tgz#a3da916005b6d6ee18be2b1bce62745becf082be"
-  integrity sha512-gtb41KBr/hQjKR9v6HOvwnyGEM61lSNsyMHTCk1rMX4SYJjx8iXw0J7z30Ff9tw2oK6sgEiejlPtM7tkdQi3GQ==
-  dependencies:
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    d3 "6.7.0"
-    regenerator-transform "^0.13.3"
 
 react-svg-file-zoom-pan@0.1.5:
   version "0.1.5"

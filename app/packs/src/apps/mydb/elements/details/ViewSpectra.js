@@ -430,8 +430,8 @@ class ViewSpectra extends React.Component {
     const selectedMutiplicity = multiplicities[curveIdx];
   
     const isSaveCombined = FN.isCyclicVoltaLayout(layout);
-    const { spcInfos } = this.state;
-    const previousSpcInfos = spcInfos.filter((spc) => spc.idDt === si.idDt);
+    const { arrSpcIdx, spcInfos } = this.state;
+    const previousSpcInfos = spcInfos.filter((spc) => spc.idDt === si.idDt && arrSpcIdx.includes(spc.idx));
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
       si,
