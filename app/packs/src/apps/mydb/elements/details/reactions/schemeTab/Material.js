@@ -586,7 +586,7 @@ class Material extends Component {
 
         {this.materialLoading(material, showLoadingColumn)}
 
-        <td>
+        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.concn}
@@ -600,10 +600,10 @@ class Material extends Component {
           />
         </td>
 
-        <td>
+        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
           {this.equivalentOrYield(material)}
         </td>
-        <td>
+        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
           <Button
             disabled={!permitOn(reaction)}
             bsStyle="danger"

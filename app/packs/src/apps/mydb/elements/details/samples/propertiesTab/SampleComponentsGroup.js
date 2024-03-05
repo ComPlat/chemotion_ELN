@@ -41,6 +41,8 @@ const SampleComponentsGroup = ({
             index={index}
             dropMaterial={dummy}
             dropSample={dropSample}
+            lockEquivColumn={false}
+            showLoadingColumn={false}
            />
         ));
       });
@@ -50,7 +52,6 @@ const SampleComponentsGroup = ({
       group: 'Component',
       amount: 'Amount',
       concn: 'Conc',
-      vol: 'Vol',
       eq: 'Ratio'
     };
   
@@ -72,12 +73,12 @@ const SampleComponentsGroup = ({
         <table width="100%" className="sample-scheme">
           <colgroup>
           <col style={{ width: '4%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '10%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '11%' }} />
           </colgroup>
           <thead>
             <tr>
