@@ -219,7 +219,7 @@ module Chemotion
     module CombineImg
       include HTTParty
 
-      def self.stub_request(files, curve_idx, list_file_names)
+      def self.stub_request(files, curve_idx, list_file_names, extras)
         response = nil
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/combine_images"
@@ -233,6 +233,7 @@ module Chemotion
               files: files_to_read,
               jcamp_idx: curve_idx,
               list_file_names: list_file_names,
+              extras: extras,
             },
           )
         ensure
@@ -241,8 +242,8 @@ module Chemotion
         response
       end
 
-      def self.combine(files, curve_idx, list_file_names)
-        rsp = stub_request(files, curve_idx, list_file_names)
+      def self.combine(files, curve_idx, list_file_names, extras)
+        rsp = stub_request(files, curve_idx, list_file_names, extras)
         if rsp.code == 200
           rsp_io = StringIO.new(rsp.body.to_s)
           Util.extract_zip(rsp_io)
