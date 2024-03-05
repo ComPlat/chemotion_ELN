@@ -431,6 +431,7 @@ class ViewSpectra extends React.Component {
   
     const isSaveCombined = FN.isCyclicVoltaLayout(layout);
     const { spcInfos } = this.state;
+    const previousSpcInfos = spcInfos.filter((spc) => spc.idDt === si.idDt);
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
       si,
@@ -447,7 +448,7 @@ class ViewSpectra extends React.Component {
       cyclicvolta,
       curveIdx,
       simulatenmr,
-      spcInfos,
+      previousSpcInfos,
       isSaveCombined,
       axesUnitsStr,
       detector,

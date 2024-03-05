@@ -210,24 +210,16 @@ module Chemotion
           content_type('application/json')
           unless image.nil?
             att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
-            if att.nil?
-              att = Attachment.new(
-                bucket: container_id,
-                filename: combined_image_filename,
-                created_by: current_user.id,
-                created_for: current_user.id,
-                file_path: image.path,
-                attachable_type: 'Container',
-                attachable_id: container_id,
-              )
-              att.save!
-            else
-              att.update!(
-                file_path: image.path,
-                attachable_type: 'Container',
-                attachable_id: container_id,
-              )
-            end
+            att.destroy! unless att.nil?
+            att = Attachment.new(
+              filename: combined_image_filename,
+              created_by: current_user.id,
+              created_for: current_user.id,
+              file_path: image.path,
+              attachable_type: 'Container',
+              attachable_id: container_id,
+            )
+            att.save!
           end
 
           { status: true }

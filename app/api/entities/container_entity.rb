@@ -60,7 +60,9 @@ module Entities
         value: THUMBNAIL_CONTENT_TYPES,
       ).order(updated_at: :desc)
 
-      combined_image_attachment = atts_with_thumbnail.where('filename LIKE ?', '%combined%').first
+      combined_image_attachment = atts_with_thumbnail.where(
+        'filename LIKE ?', '%combined%'
+      ).order(updated_at: :desc).first
 
       latest_image_attachment = atts_with_thumbnail.first
 
