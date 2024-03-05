@@ -1520,7 +1520,7 @@
 
 "@complat/react-spectra-editor@https://github.com/ComPlat/react-spectra-editor.git#refactor-label-cv-data-panel":
   version "1.2.2"
-  resolved "https://github.com/ComPlat/react-spectra-editor.git#892221f760f2572d2d7a779b6091a387c484e21a"
+  resolved "https://github.com/ComPlat/react-spectra-editor.git#e76c9ffb9752cef2f4a154405cdad4de06169fae"
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.3"
     "@emotion/react" "^11.11.1"
