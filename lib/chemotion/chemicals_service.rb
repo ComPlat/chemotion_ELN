@@ -88,6 +88,7 @@ module Chemotion
       safety_sheet_files_names = Dir.children('public/safety_sheets')
       if check_if_safety_sheet_already_saved(file_path, safety_sheet_files_names) == false
         write_file(file_path, link)
+        sleep 1
       else
         'file is already saved'
       end
