@@ -89,7 +89,6 @@ export default class ChemicalTab extends React.Component {
     if (chemical.isNew) {
       ChemicalFetcher.create(params).then((response) => {
         if (response) {
-          // chemical.isEdited = false;
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
