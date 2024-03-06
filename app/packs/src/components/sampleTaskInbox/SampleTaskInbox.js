@@ -1,4 +1,4 @@
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Draggable from 'react-draggable';
 import React, { useContext } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
