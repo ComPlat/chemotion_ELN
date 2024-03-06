@@ -19,3 +19,4 @@ node_modules_folder="$(node -e 'const p = require.resolve("@svgedit/svgcanvas");
 rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./public/svgedit
 
 yellow "Finished adding symbolic link to svg editor in public folder"
+

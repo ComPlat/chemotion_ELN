@@ -20,11 +20,15 @@ export default class Curation_modal extends Component {
       this.handleClose = this.handleClose.bind(this);
       this.handleDesc = this.handleDesc.bind(this);
       this.handleSubmit = this.handleSubmit.bind(this);
+      this.handleSuggest = this.handleSuggest.bind(this);
+      this.handleSuggest = this.handleSuggest.bind(this);
       this.state = {
         desc : this.clean_data(this.props.description),
         show : false, 
         reaction : reaction,
-        mispelled_words : ["two | four"],
+        mispelled_words : [],
+        suggestion : [],
+        suggestion_index : 0
       }
       this.setState({mispelled_words:[]})
     }
@@ -42,6 +46,11 @@ export default class Curation_modal extends Component {
       }
     }
 
+    advance_suggestion(input){
+      input = input +1 
+      this.setState( {suggestion_index : input} )
+    }
+
     handleDesc(){
       const old_desc = this.clean_data(this.props.description);
       const new_desc = old_desc.replaceAll("  ", " ");
@@ -56,13 +65,27 @@ export default class Curation_modal extends Component {
       this.setState({ show: true });
     }
 
+    handleSuggest(miss_spelled_words, index){
+      var Typo = require("typo-js");
+      var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
+      var mispelled_word = miss_spelled_words[index]
+      if (typeof mispelled_word === "string" )
+      {
+      var ms_suggestion = dictionary.suggest(mispelled_word)
+      this.setState({ suggestion : ms_suggestion}) }   
+      else {
+        console.log("run spell check")
+      }
+    }
+
 
     spell_check(description){
       // var Typo = require("typo-js"); 
       // var dictionary = new Typo("en_US", false, false, { dictionaryPath: "typo/dictionaries" });
       // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
       var Typo = require("typo-js");
-      var dictionary = new Typo( "en_US",false,false,{dictionaryPath: "home/chemotion-dev/app/node_modules/typo-js/dictionaries" });
+      var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
+      console.log("tesst11111111111")
       console.log(dictionary.suggest("tesst"))
       var ms_words = [];
       var word_array = description.split(' ')
@@ -98,8 +121,8 @@ export default class Curation_modal extends Component {
       ));}
 
     highlight_mispelled_words(text,ms_word_array){
-      var test = []
-      test = this.getHighlightedText(text,ms_word_array)
+      var ms_word_regex = ms_word_array.join("|")
+      var test = this.getHighlightedText(text,ms_word_regex)
       return test
     }
 
@@ -129,6 +152,14 @@ export default class Curation_modal extends Component {
       const Compo = ({ highlight, text }) => {
         return <p>{this.highlight_mispelled_words(text, highlight)}</p>;
       };
+      const SuggestBox = ({suggest_array}) =>{
+        return suggest_array.map((suggestion) =>  (
+  <div>
+    <input type="radio" id={suggestion} name={suggestion} value={suggestion} />
+    <label >{suggestion}</label>
+  </div>
+        ));
+      };
       return (
         <div>
           <Button bsStyle="primary" bsSize="small" onClick={this.handleShow}>
@@ -144,7 +175,7 @@ export default class Curation_modal extends Component {
                     padding: "10px",
                     fontFamily: "Arial",
                     borderRadius: "10px",}}>
-                 <Compo text={this.state.desc} highlight= 'one|three' /> 
+                 <Compo text={this.state.desc} highlight= {this.state.mispelled_words} /> 
                 </div>  
                      
                 <div>
@@ -156,8 +187,12 @@ export default class Curation_modal extends Component {
                     save and close
                   </Button>
                   <Button>Change</Button>
-                  <Button>Skip</Button>
+                  <Button onClick={()=> this.advance_suggestion(this.state.suggestion_index)}>Skip</Button>
+                  <Button onClick={()=>this.handleSuggest(this.state.mispelled_words, this.state.suggestion_index)}>suggest</Button>
                 </div>
+                <fieldset>
+                  <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
+                </fieldset>
             </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
