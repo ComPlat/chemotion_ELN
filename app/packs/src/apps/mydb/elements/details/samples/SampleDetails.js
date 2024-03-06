@@ -956,7 +956,7 @@ export default class SampleDetails extends React.Component {
   }
 
   saveAndCloseSample(sample, saveBtnDisplay) {
-    const { activeTab } = this.state;
+    const { activeTab, isChemicalEdited } = this.state;
     const isChemicalTab = activeTab === 'inventory';
     const floppyTag = (
       <i className="fa fa-floppy-o" />
@@ -979,20 +979,25 @@ export default class SampleDetails extends React.Component {
         {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag, timesTag, true)}
       </OverlayTrigger>
     );
+    const save = (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveSample">
+            {`Save ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag)}
+      </OverlayTrigger>
+    );
+
+    const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
       <div>
         <ConfirmClose el={sample} />
         { isChemicalTab ? null : saveAndClose }
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id="saveSample">
-              {`Save ${elementToSave}`}
-            </Tooltip>
-          )}
-        >
-          {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag)}
-        </OverlayTrigger>
+        { isChemicalTab ? saveForChemical : save}
       </div>
     );
   }
@@ -1526,7 +1531,7 @@ export default class SampleDetails extends React.Component {
 
   render() {
     const sample = this.state.sample || {};
-    const { visible } = this.state;
+    const { visible, isChemicalEdited } = this.state;
     const tabContentsMap = {
       properties: this.samplePropertiesTab('properties'),
       analyses: this.sampleContainerTab('analyses'),
@@ -1611,7 +1616,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Panel
         className="eln-panel-detail"
-        bsStyle={sample.isPendingToSave ? 'info' : 'primary'}
+        bsStyle={sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary'}
       >
         <Panel.Heading>
           {this.sampleHeader(sample)}
