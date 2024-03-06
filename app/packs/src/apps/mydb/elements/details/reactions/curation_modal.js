@@ -22,15 +22,17 @@ export default class Curation_modal extends Component {
       this.handleSubmit = this.handleSubmit.bind(this);
       this.handleSuggest = this.handleSuggest.bind(this);
       this.handleSuggest = this.handleSuggest.bind(this);
+      this.change_corect_word = this.change_corect_word.bind(this)
       this.state = {
         desc : this.clean_data(this.props.description),
         show : false, 
         reaction : reaction,
         mispelled_words : [],
         suggestion : [],
-        suggestion_index : 0
+        suggestion_index : 0,
+        correct_word : ""
       }
-      this.setState({mispelled_words:[]})
+      
     }
 
     handleSubmit(closeView = false) {
@@ -46,9 +48,14 @@ export default class Curation_modal extends Component {
       }
     }
 
-    advance_suggestion(input){
-      input = input +1 
-      this.setState( {suggestion_index : input} )
+    advance_suggestion(input,miss_spelled_words){
+      if (input < miss_spelled_words.length-1){
+      input = input +1 }
+      else {
+        input = 0
+      }
+      this.handleSuggest(miss_spelled_words, input)
+      this.setState( {suggestion_index : input} ) 
     }
 
     handleDesc(){
@@ -80,13 +87,9 @@ export default class Curation_modal extends Component {
 
 
     spell_check(description){
-      // var Typo = require("typo-js"); 
-      // var dictionary = new Typo("en_US", false, false, { dictionaryPath: "typo/dictionaries" });
       // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
       var Typo = require("typo-js");
       var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
-      console.log("tesst11111111111")
-      console.log(dictionary.suggest("tesst"))
       var ms_words = [];
       var word_array = description.split(' ')
       for (let i = 0; i < word_array.length; i++){
@@ -105,20 +108,32 @@ export default class Curation_modal extends Component {
         }  
       }
       ms_words = this.uniq(ms_words)
-      console.log(ms_words)
       this.setState({mispelled_words: ms_words})
     }
+
+    change_misspelling(description,selected_choice,ms_words,index){
+      var fixed_description = description.replace(ms_words[index], selected_choice);
+      if (index < ms_words.length-1){
+        index= index +1 }
+      else {
+          index = 0
+        }
+      this.setState({desc :fixed_description});
+      this.setState({suggestion_index : index});
+      this.handleSuggest(ms_words, index);
+    }
+
     
     getHighlightedText(text, highlight) {
         var parts = text.split(new RegExp(`(${highlight})`, "gi"));
         let highlight_array = highlight.split("|")
-      return parts.map((part, index) => (
-        <React.Fragment key={index}>
-        {highlight_array.includes(part.toLowerCase())
-          ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
-          : (part)}
-        </React.Fragment>
-      ));}
+          return parts.map((part, index) => (
+          <React.Fragment key={index}>
+            {highlight_array.includes(part.toLowerCase())
+            ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
+            : (part)}
+          </React.Fragment>
+    ));}
 
     highlight_mispelled_words(text,ms_word_array){
       var ms_word_regex = ms_word_array.join("|")
@@ -137,6 +152,9 @@ export default class Curation_modal extends Component {
       });
     }
 
+    change_corect_word(changeEvent) {
+      this.setState({correct_word: changeEvent.target.value}) 
+    }
 
     clean_data(description){
         const array_input = Object.values(description);
@@ -153,12 +171,21 @@ export default class Curation_modal extends Component {
         return <p>{this.highlight_mispelled_words(text, highlight)}</p>;
       };
       const SuggestBox = ({suggest_array}) =>{
-        return suggest_array.map((suggestion) =>  (
-  <div>
-    <input type="radio" id={suggestion} name={suggestion} value={suggestion} />
-    <label >{suggestion}</label>
-  </div>
+        if (suggest_array.length != 0){
+        return suggest_array.map((suggestion,id) =>  (
+          <div>
+            <input type="radio" id={id} value={suggestion} onChange={this.change_corect_word} checked={this.state.correct_word === suggestion} />
+            <label for={id}>{suggestion}</label>
+          </div>  
         ));
+        }
+        else{
+          return (
+            <div>
+              <h3>NONE</h3>
+            </div>
+          )
+        }
       };
       return (
         <div>
@@ -182,17 +209,18 @@ export default class Curation_modal extends Component {
                     suggestion
                 </div>
                 <div className="row">
+               
                   <Button onClick={() =>this.spell_check(this.state.desc)}>fix</Button>
                   <Button onClick={() => this.handleSubmit(true)}> 
                     save and close
                   </Button>
-                  <Button>Change</Button>
-                  <Button onClick={()=> this.advance_suggestion(this.state.suggestion_index)}>Skip</Button>
+                  <Button onClick={()=> this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
+                  <Button onClick={()=> this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
                   <Button onClick={()=>this.handleSuggest(this.state.mispelled_words, this.state.suggestion_index)}>suggest</Button>
                 </div>
-                <fieldset>
+                <form>
                   <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
-                </fieldset>
+                </form>
             </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
