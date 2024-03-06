@@ -112,7 +112,11 @@ export default class Curation_modal extends Component {
     }
 
     change_misspelling(description,selected_choice,ms_words,index){
-      var fixed_description = description.replace(ms_words[index], selected_choice);
+      console.log(selected_choice)
+      if (selected_choice !== ""){
+      var fixed_description = description.replace(ms_words[index], selected_choice);}
+      else{
+      var fixed_description = description}
       if (index < ms_words.length-1){
         index= index +1 }
       else {
@@ -121,6 +125,7 @@ export default class Curation_modal extends Component {
       this.setState({desc :fixed_description});
       this.setState({suggestion_index : index});
       this.handleSuggest(ms_words, index);
+      this.setState({correct_word: ""})
     }
 
     
