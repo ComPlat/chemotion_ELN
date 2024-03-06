@@ -529,7 +529,7 @@ class ElementActions {
 
   showMixtureMaterial(params) {
     return (dispatch) => {
-      SamplesFetcher.fetchById(params.sample.ancestor_ids[0])
+      SamplesFetcher.fetchById(params.sample.id)
         .then((result) => {
           params.sample = result;
           dispatch(params);

@@ -124,11 +124,15 @@ class Material extends Component {
 
   handleMaterialClick(sample) {
     const { reaction, materialGroup } = this.props;
-    UrlSilentNavigation(sample);
-    sample.updateChecksum();
-    if (materialGroup === 'mixture_components' && sample.ancestor_ids.length > 0){
-      ElementActions.showMixtureMaterial({ sample, reaction })
+    if (materialGroup === 'mixture_components' && sample.ancestors.length > 0){
+      const stockSample = new Sample(sample.ancestors[0]);
+      stockSample.type = 'sample';
+      UrlSilentNavigation(stockSample);
+      stockSample.updateChecksum();
+      ElementActions.showMixtureMaterial({ sample: stockSample, reaction })
     } else {
+      UrlSilentNavigation(sample);
+      sample.updateChecksum();
       ElementActions.showReactionMaterial({ sample, reaction });
     }
   }

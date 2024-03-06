@@ -455,6 +455,7 @@ module Chemotion
                 target_amount_unit: component[:_target_amount_unit],
                 molarity_unit: component[:_molarity_unit],
                 molarity_value: component[:_molarity_value],
+                sample_type_name: 'MixtureComponent',
               }
               subsample.update!(component_quantities)
               SampleType.create(sample: @sample, sampleable: subsample, component_stock: false)
@@ -473,6 +474,7 @@ module Chemotion
                 target_amount_unit: component[:_target_amount_unit],
                 molarity_unit: component[:_molarity_unit],
                 molarity_value: component[:_molarity_value],
+                sample_type_name: 'MixtureComponent',
               }
               subsample.update!(component_quantities)
             end
@@ -655,6 +657,7 @@ module Chemotion
                 target_amount_unit: component[:_target_amount_unit],
                 molarity_unit: component[:_molarity_unit],
                 molarity_value: component[:_molarity_value],
+                sample_type_name: 'MixtureComponent',
               }
               subsample.update!(component_quantities)
 
