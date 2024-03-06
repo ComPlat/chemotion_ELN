@@ -11,6 +11,7 @@ module Entities
     expose :molarity_value,          unless: :displayed_in_list
     expose :short_label
     expose :ancestor_ids
+    expose :ancestors
   end
 
   class SampleEntity < ApplicationEntity
