@@ -395,6 +395,8 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
+          attributes.delete(:molfile)
+          attributes.delete(:stereo)
           micro_att = {
             name: params[:name],
             molfile: params[:molfile],
@@ -407,19 +409,18 @@ module Chemotion
           if current_sample_type != new_sample_type
             # CASE 1: Changed from micromolecule to mixture component
             if current_sample_type == 'Micromolecule' && new_sample_type == 'ComponentStock'
-              # update sample type
               s_type = SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)
               s_type.update(sampleable: @sample, component_stock: true)
-              # delete micromolecule
+
               @sample.micromolecule&.destroy
 
             # CASE 2: Change from component stock to micromolecule
             elsif current_sample_type == 'ComponentStock' && new_sample_type == 'Micromolecule'
-              # create micromolecule
+
               micromolecule = Micromolecule.new(micro_att)
               micromolecule.samples << @sample
               micromolecule.save!
-              # update sample type
+
               s_type = SampleType.find_by(sample: @sample, sampleable: @sample, component_stock: true)
               s_type.update(sampleable: micromolecule)
             end
@@ -483,6 +484,7 @@ module Chemotion
           attributes.delete(:mixture_components)
 
           @sample.update!(attributes)
+          @sample.micromolecule&.update(micro_att)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
           # save to profile

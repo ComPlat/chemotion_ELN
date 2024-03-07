@@ -129,7 +129,7 @@ class Material extends Component {
       stockSample.type = 'sample';
       UrlSilentNavigation(stockSample);
       stockSample.updateChecksum();
-      ElementActions.showMixtureMaterial({ sample: stockSample, reaction })
+      ElementActions.showMixtureMaterial({ sample: stockSample })
     } else {
       UrlSilentNavigation(sample);
       sample.updateChecksum();
