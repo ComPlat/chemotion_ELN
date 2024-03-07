@@ -265,9 +265,11 @@ export default class CreateButton extends React.Component {
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls, itemTables } = elementList();
-    
-    elements.concat(genericEls).forEach((el) => {
-      itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+
+    sortedLayout?.forEach(([sl]) => {
+      const el = elements.concat(genericEls).find((ael) => ael.name === sl);
+      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
     });
 
     return (
