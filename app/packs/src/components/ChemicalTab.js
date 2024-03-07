@@ -99,6 +99,7 @@ export default class ChemicalTab extends React.Component {
       ChemicalFetcher.update(params).then((response) => {
         if (response) {
           editChemical(false);
+          chemical.updateChecksum();
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
