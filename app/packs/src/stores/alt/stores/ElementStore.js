@@ -167,10 +167,8 @@ class ElementStore {
       handleUpdateSampleForWellplate: ElementActions.updateSampleForWellplate,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
-      handleShowReactionMaterial: [
-        ElementActions.showReactionMaterial,
-        ElementActions.showMixtureMaterial
-      ],
+      handleShowReactionMaterial: ElementActions.showReactionMaterial,
+      handleShowMixtureMaterial: ElementActions.showMixtureMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
 
@@ -830,6 +828,11 @@ class ElementStore {
       }
       return { refreshCoefficient: updatedCoefficient };
     });
+    this.changeCurrentElement(sample);
+  }
+
+  handleShowMixtureMaterial(params) {
+    const { sample } = params;
     this.changeCurrentElement(sample);
   }
 
