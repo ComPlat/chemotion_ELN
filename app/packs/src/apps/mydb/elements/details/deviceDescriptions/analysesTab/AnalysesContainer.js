@@ -14,8 +14,6 @@ const AnalysesContainer = ({ readonly }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
   const containers = deviceDescription.container.children[0].children;
-  console.log(deviceDescription);
-
 
   const addEmptyAnalysis = () => {
     deviceDescriptionsStore.addEmptyAnalysisContainer();

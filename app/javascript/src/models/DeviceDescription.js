@@ -43,12 +43,24 @@ export default class DeviceDescription extends Element {
       // setting components
       isNew: true,
       changed: false,
+      updated: false,
       container: Container.init(),
+      attachments: [],
     });
   }
 
   title() {
     const short_label = this.short_label ? this.short_label : '';
     return this.name ? `${short_label} ${this.name}` : short_label;
+  }
+
+  get attachmentCount() {
+    if (this.attachments) { return this.attachments.length; }
+    return this.attachment_count;
+  }
+
+  getAttachmentByIdentifier(identifier) {
+    return this.attachments
+      .filter((attachment) => attachment.identifier === identifier)[0];
   }
 }
