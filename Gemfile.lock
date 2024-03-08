@@ -849,7 +849,7 @@ GEM
     yaml_db (0.7.0)
       rails (>= 3.0)
       rake (>= 0.8.7)
-    yard (0.9.35)
+    yard (0.9.36)
     zeitwerk (2.6.13)
 
 PLATFORMS
