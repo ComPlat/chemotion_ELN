@@ -2,6 +2,7 @@ import { keys, values } from 'mobx';
 import { flow, types } from 'mobx-state-tree';
 
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Container from 'src/models/Container';
 
@@ -28,6 +29,14 @@ export const DeviceDescriptionsStore = types
     analysis_open_panel: types.optional(types.union(types.string, types.number), 'none'),
     analysis_comment_box: types.optional(types.boolean, false),
     analysis_start_export: types.optional(types.boolean, false),
+    attachment_editor: types.optional(types.boolean, false),
+    attachment_extension: types.optional(types.frozen({}), {}),
+    attachment_image_edit_modal_shown: types.optional(types.boolean, false),
+    attachment_show_import_confirm: types.optional(types.array(types.frozen({})), []),
+    attachment_filter_text: types.optional(types.string, ''),
+    attachment_sort_by: types.optional(types.string, 'name'),
+    attachment_sort_direction: types.optional(types.string, 'asc'),
+    filtered_attachments: types.optional(types.array(types.frozen({})), []),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -60,6 +69,7 @@ export const DeviceDescriptionsStore = types
         device_description[field] = value;
       }
 
+      device_description.updated = false;
       self.setDeviceDescription(device_description);
     },
     setActiveTabKey(key) {
@@ -110,7 +120,54 @@ export const DeviceDescriptionsStore = types
     toggleAnalysisStartExport() {
       self.analysis_start_export = !self.analysis_start_export;
     },
+    setAttachmentEditor(value) {
+      self.attachment_editor = value;
+    },
+    setAttachmentExtension(value) {
+      self.attachment_extension = value;
+    },
+    setFilteredAttachments(attachments) {
+      self.filtered_attachments = attachments;
+    },
+    setShowImportConfirm(value) {
+      self.attachment_show_import_confirm = value;
+    },
+    setAttachmentFilterText(value) {
+      self.attachment_filter_text = value;
+    },
+    setAttachmentSortBy(value) {
+      self.attachment_sort_by = value;
+    },
+    setAttachmentSortDirectory(value) {
+      self.attachment_sort_direction = value;
+    },
+    changeAttachment(index, key, value, initial = false) {
+      let device_description = { ...self.device_description };
+      let attachment = { ...device_description.attachments[index] };
+      attachment[key] = value;
+      device_description.attachments[index] = attachment;
+      self.setFilteredAttachments(device_description.attachments);
+      self.setDeviceDescription(device_description, initial);
+    },
+    loadPreviewImagesOfAttachments(device_description) {
+      if (device_description.attachments.length === 0) { return device_description }
+      let deviceDescription = { ...device_description }
+
+      deviceDescription.attachments.map((attachment, index) => {
+        let attachment_object = { ...device_description.attachments[index] };
+        if (attachment.thumb) {
+          AttachmentFetcher.fetchThumbnail({ id: attachment.id })
+            .then((result) => {
+              let preview = result != null ? `data:image/png;base64,${result}` : '/images/wild_card/not_available.svg';
+              attachment_object.preview = preview;
+              deviceDescription.attachments[index] = attachment_object;
+              self.setFilteredAttachments(deviceDescription.attachments);
+            });
+        }
+      });
+    },
   }))
   .views(self => ({
     get deviceDescriptionsValues() { return values(self.devices_descriptions) },
+    get filteredAttachments() { return values(self.filtered_attachments) },
   }));
