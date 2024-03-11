@@ -20,7 +20,7 @@ module Usecases
               position: reaction_process_step.reaction_process_activities.count,
             )
 
-            ReactionProcessActivities::UpdateWorkup.execute!(activity: activity, workup: activity_params['workup'])
+            ReactionProcessActivities::Update.execute!(activity: activity, activity_params: activity_params)
             ReactionProcessActivities::UpdatePosition.execute!(activity: activity, position: position) if position
 
             activity

@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 module Usecases
   module ReactionProcessEditor
     module ReactionProcessActivities
       class SaveIntermediate
+        # rubocop:disable Metrics/AbcSize
         def self.execute!(activity:, workup:)
           sample = Sample.find_by(id: workup['sample_id']) || Sample.new(decoupled: true, creator: activity.creator,
                                                                          molecule: Molecule.find_or_create_dummy)
@@ -27,11 +30,14 @@ module Usecases
           activity.workup['sample_id'] = sample.id
           activity.save!
 
-          ris = ReactionsIntermediateSample.find_or_create_by(reaction: activity.reaction,
-                                                              sample: sample,
-                                                              reaction_process_step_id: activity.reaction_process_step_id)
+          ris = ReactionsIntermediateSample.find_or_create_by(
+            reaction: activity.reaction,
+            sample: sample,
+            reaction_process_step_id: activity.reaction_process_step_id,
+          )
           ris.update(intermediate_type: workup['intermediate_type'])
         end
+        # rubocop:enable Metrics/AbcSize
       end
     end
   end
