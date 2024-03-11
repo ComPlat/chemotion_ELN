@@ -17,7 +17,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.put /update_position' 
 
   it_behaves_like 'authorization restricted API call'
 
-  it 'triggers usecase ReactionProcessStep::UpdatePosition' do
+  it 'triggers UseCase ReactionProcessSteps::UpdatePosition' do
     allow(Usecases::ReactionProcessEditor::ReactionProcessSteps::UpdatePosition).to receive(:execute!)
 
     put_reaction_process_request

@@ -7,8 +7,8 @@ RSpec.describe ReactionProcessEditor::ReactionProcessStep do
 
   it_behaves_like 'acts_as_paranoid soft-deletable model', :reaction_process_step
 
-  it { is_expected.to belong_to(:vessel).optional(true) }
   it { is_expected.to belong_to(:reaction_process) }
+  it { is_expected.to belong_to(:reaction_process_vessel).optional(true) }
   it { is_expected.to have_many(:reaction_process_activities).dependent(:destroy) }
 
   it { is_expected.to delegate_method(:reaction).to(:reaction_process) }

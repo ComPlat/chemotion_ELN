@@ -3,22 +3,26 @@
 module OrdKit
   module Exporter
     module Vessels
-      class VesselExporter < OrdKit::Exporter::Base
+      class ReactionProcessVesselExporter < OrdKit::Exporter::Base
+        attr_reader :vessel
+
         def to_ord
           return unless model
 
+          @vessel = model.vessel
+
           OrdKit::Vessel.new(
-            id: model.id,
-            name: model.name,
-            label: model.short_label,
-            description: model.description,
-            details: model.details,
+            id: vessel.id,
+            name: vessel.name,
+            label: vessel.short_label,
+            description: vessel.description,
+            details: vessel.details,
             type: vessel_type,
             material: vessel_material,
             volume: volume,
             weight: weight,
-            bar_code: model.bar_code,
-            qr_code: model.qr_code,
+            bar_code: vessel.bar_code,
+            qr_code: vessel.qr_code,
             preparations: preparations,
             attachments: attachments,
             vessel_id: nil, # Unknown in ELN.
@@ -31,30 +35,30 @@ module OrdKit
         private
 
         def vessel_type
-          VesselTypeExporter.new(model).to_ord
+          VesselTypeExporter.new(vessel).to_ord
         end
 
         def vessel_material
-          VesselMaterialExporter.new(model).to_ord
+          VesselMaterialExporter.new(vessel).to_ord
         end
 
         def preparations
-          VesselPreparationsExporter.new(model).to_ord
+          VesselPreparationsExporter.new(model.preparations).to_ord
         end
 
         def attachments
-          VesselAttachmentsExporter.new(model).to_ord
+          VesselAttachmentsExporter.new(vessel).to_ord
         end
 
         def volume
           Metrics::Amounts::VolumeExporter.new(
-            { value: model.volume_amount, unit: model.volume_unit }.stringify_keys,
+            { value: vessel.volume_amount, unit: vessel.volume_unit }.stringify_keys,
           ).to_ord
         end
 
         def weight
           Metrics::Amounts::MassExporter.new(
-            { value: model.weight_amount, unit: model.weight_unit }.stringify_keys,
+            { value: vessel.weight_amount, unit: vessel.weight_unit }.stringify_keys,
           ).to_ord
         end
       end

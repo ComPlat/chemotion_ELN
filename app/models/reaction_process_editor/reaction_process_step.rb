@@ -20,7 +20,7 @@ module ReactionProcessEditor
 
     belongs_to :reaction_process
 
-    belongs_to :vessel, optional: true
+    belongs_to :reaction_process_vessel, optional: true
 
     has_many :reaction_process_activities, dependent: :destroy
 

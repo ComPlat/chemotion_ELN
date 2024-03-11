@@ -15,9 +15,7 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.put' do
   let!(:sample) { create(:valid_sample, reaction: reaction_process_step.reaction) }
   let(:update_activity_params) do
     { activity:
-      { activity_name: 'ADD',
-        description: '',
-        workup: workup_hash } }
+      { workup: workup_hash }.deep_stringify_keys }
   end
   let(:workup_hash) do
     {
@@ -29,7 +27,6 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.put' do
   let(:expected_update_activity_hash) do
     { 'reaction_process_activity' => hash_including(
       {
-        'activity_name' => 'ADD',
         'workup' => hash_including(workup_hash),
       },
     ) }
@@ -40,12 +37,22 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.put' do
 
   it_behaves_like 'authorization restricted API call'
 
-  it 'updates workup' do
-    allow(Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdateWorkup).to receive(:execute!)
+  it 'triggers ReactionProcessActivities::Update' do
+    allow(Usecases::ReactionProcessEditor::ReactionProcessActivities::Update).to receive(:execute!)
     put_activity_request
 
-    expect(Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdateWorkup).to have_received(:execute!).with(
-      activity: activity, workup: workup_hash,
+    expect(Usecases::ReactionProcessEditor::ReactionProcessActivities::Update).to have_received(:execute!).with(
+      activity: activity, activity_params: update_activity_params[:activity],
+    )
+  end
+
+  it 'triggers ReactionProcesses::ReactionProcessVessels::SweepUnused' do
+    allow(Usecases::ReactionProcessEditor::ReactionProcessVessels::SweepUnused).to receive(:execute!)
+
+    put_activity_request
+
+    expect(Usecases::ReactionProcessEditor::ReactionProcessVessels::SweepUnused).to have_received(:execute!).with(
+      reaction_process_id: reaction_process_step.reaction_process_id,
     )
   end
 

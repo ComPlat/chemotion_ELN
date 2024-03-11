@@ -18,20 +18,23 @@ module ReactionProcessEditor
         params do
           requires :activity, type: Hash do
             requires :workup, type: Hash, desc: 'Generic Activity workup hash bearing the details.'
+            optional :reaction_process_vessel, type: Hash, desc: 'Optional vessel associated with this activity.'
           end
         end
 
         desc 'Update a ReactionProcessActivity.'
         put do
-          present Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdateWorkup.execute!(
-            activity: @activity, workup: params[:activity][:workup],
+          present Usecases::ReactionProcessEditor::ReactionProcessActivities::Update.execute!(
+            activity: @activity, activity_params: permitted_params[:activity],
           ), with: Entities::ReactionProcessEditor::ReactionProcessActivityEntity, root: :reaction_process_activity
         end
 
         desc 'Update Position of a ReactionProcessActivity'
         put :update_position do
-          Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdatePosition.execute!(activity: @activity,
-                                                                                              position: params[:position])
+          Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdatePosition.execute!(
+            activity: @activity,
+            position: params[:position],
+          )
         end
 
         desc 'Delete a ReactionProcessActivity'
