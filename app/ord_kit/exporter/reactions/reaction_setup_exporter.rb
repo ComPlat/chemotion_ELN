@@ -9,7 +9,7 @@ module OrdKit
           return unless model
 
           OrdKit::ReactionSetup.new(
-            vessel: Vessels::VesselExporter.new(model.vessel).to_ord,
+            vessel: Vessels::ReactionProcessVesselExporter.new(model.reaction_process_vessel).to_ord,
             is_automated: false, # NYI in ELN/RPE.
             automation_platform: '', # Unknown in ELN.
             automation_code: {}, # Unknown in ELN.
