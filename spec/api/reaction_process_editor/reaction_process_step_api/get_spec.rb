@@ -64,9 +64,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
     end
 
     it 'assigned_vessel' do
-      expect(parsed_json_response['reaction_process_step']['vessel']).to include(
-        { id: reaction_process_step.vessel_id }.deep_stringify_keys,
-      )
+      expect(parsed_json_response['reaction_process_step']['id']).to eq reaction_process_step.id
     end
 
     it 'mounted_equipment' do

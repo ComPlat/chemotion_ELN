@@ -11,8 +11,6 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.put /provenance' do
         params: { provenance: provenance_params }.to_json)
   end
 
-  # params: { vessel_id: vessel_id }.to_json,
-
   let!(:reaction_process) { create_default(:reaction_process, :has_provenance) }
 
   let(:provenance_params) do
