@@ -9,7 +9,8 @@ module Entities
       )
 
       expose :actions, using: 'Entities::ReactionProcessEditor::ReactionProcessActivityEntity'
-      expose :vessel, using: 'Entities::ReactionProcessEditor::VesselEntity'
+
+      expose :reaction_process_vessel, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
 
       private
 
@@ -110,9 +111,9 @@ module Entities
       def mounted_equipment
         object.reaction_process_activities.map do |action|
           if action.activity_name == 'CONDITION'
-            action.workup['EQUIPMENT'].try(:[], 'value')
+            action.workup && action.workup['EQUIPMENT'].try(:[], 'value')
           else
-            action.workup['equipment']
+            action.workup && action.workup['equipment']
           end
         end.flatten.uniq.compact
       end

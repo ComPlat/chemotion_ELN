@@ -26,7 +26,6 @@ module ReactionProcessEditor
           requires :reaction_process_step, type: Hash do
             optional :name
             optional :locked
-            optional :vessel_id
           end
         end
 
@@ -68,6 +67,7 @@ module ReactionProcessEditor
             requires :activity, type: Hash do
               requires :activity_name, type: String, desc: 'Name of the Action described'
               requires :workup, type: Hash, desc: 'Custom Action Parameters'
+              optional :reaction_process_vessel, type: Hash
             end
             optional :insert_before
           end
@@ -87,21 +87,6 @@ module ReactionProcessEditor
               status 422
               activity.errors
             end
-          end
-        end
-
-        namespace :vessel do
-          desc 'Set the Vessel'
-          put do
-            if params[:vessel_id].blank?
-              @reaction_process_step.vessel = nil
-            else
-              vessel = Vessel.find params[:vessel_id]
-              error!('404 Not Found', 404) unless vessel
-
-              @reaction_process_step.vessel = vessel
-            end
-            @reaction_process_step.save
           end
         end
       end

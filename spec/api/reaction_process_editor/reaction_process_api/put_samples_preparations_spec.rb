@@ -34,7 +34,7 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.put /samples_preparations'
   context 'with new sample_preparation' do
     let(:sample_preparation_id) { nil }
 
-    it 'triggers usecase SamplesPreparation::FindOrCreate' do
+    it 'triggers UseCase SamplesPreparation::FindOrCreate' do
       allow(Usecases::ReactionProcessEditor::SamplesPreparations::FindOrCreate).to receive(:execute!)
 
       put_sample_preparation_request
@@ -73,7 +73,7 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.put /samples_preparations'
     let!(:sample_preparation) { create(:samples_preparation, sample_id: sample_id) }
     let(:sample_preparation_id) { sample_preparation.id }
 
-    it 'triggers usecase SamplesPreparation::FindOrCreate' do
+    it 'triggers UseCase SamplesPreparation::FindOrCreate' do
       allow(Usecases::ReactionProcessEditor::SamplesPreparations::FindOrCreate).to receive(:execute!)
 
       put_sample_preparation_request

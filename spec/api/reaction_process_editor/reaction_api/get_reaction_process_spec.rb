@@ -39,7 +39,7 @@ describe ReactionProcessEditor::ReactionAPI, '.get /reaction_process' do
       expect(parsed_json_response['reaction_process']).to include expected_process_hash
     end
 
-    it 'triggers usecase ReactionProcess::FindOrCreate' do
+    it 'triggers UseCase ReactionProcess::FindOrCreate' do
       allow(Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreate).to receive(:execute!)
       get_reaction_process_request
 

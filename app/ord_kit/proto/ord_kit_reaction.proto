@@ -203,15 +203,16 @@ message ReactionProcessAction {
   Time start_time = 3;
   Time duration = 4;
   repeated Equipment equipment = 5;
+  optional Vessel vessel = 6;
   oneof action {
-    ActionAdd addition = 6;
-    ActionRemove removal = 7;
-    ReactionConditions conditions = 8;
-    ActionPurify purify = 9;
-    ActionTransfer transfer = 10;
-    ActionWait wait = 11;
-    ActionSaveSample save_sample = 12;
-    Analysis analysis = 13;
+    ActionAdd addition = 7;
+    ActionRemove removal = 8;
+    ReactionConditions conditions = 9;
+    ActionPurify purify = 10;
+    ActionTransfer transfer = 11;
+    ActionWait wait = 12;
+    ActionSaveSample save_sample = 13;
+    Analysis analysis = 14;
   }
 
   message ActionAdd {

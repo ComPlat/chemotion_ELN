@@ -22,9 +22,9 @@ module OrdKit
         end
 
         def attachment_type(attachment)
-          OrdKit::VesselPreparation::VesselPreparationType.const_get(attachment)
+          OrdKit::VesselPreparation::VesselAttachmentType.const_get(attachment)
         rescue StandardError
-          OrdKit::VesselPreparation::VesselPreparationType.UNSPECIFIED
+          OrdKit::VesselPreparation::VesselAttachmentType.UNSPECIFIED
         end
       end
     end

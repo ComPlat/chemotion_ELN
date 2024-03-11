@@ -29,6 +29,17 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendActi
     expect(append_activity.position).to eq existing_actions.length
   end
 
+  it 'triggers ReactionProcessActivities::Update' do
+    allow(Usecases::ReactionProcessEditor::ReactionProcessActivities::Update).to receive(:execute!)
+
+    append_activity
+
+    expect(Usecases::ReactionProcessEditor::ReactionProcessActivities::Update).to have_received(:execute!).with(
+      activity: instance_of(ReactionProcessEditor::ReactionProcessActivity),
+      activity_params: activity_params,
+    )
+  end
+
   describe 'action TRANSFER' do
     let(:insert_before) { 1 }
     let(:target_step) { create(:reaction_process_step, reaction_process: process_step.reaction_process) }
@@ -69,6 +80,19 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendActi
 
     it 'reflects insert' do
       expect(append_activity.position).to eq insert_before
+    end
+
+    it 'triggers ReactionProcessActivities::UpdatePosition' do
+      allow(Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdatePosition).to receive(:execute!)
+
+      append_activity
+
+      expect(
+        Usecases::ReactionProcessEditor::ReactionProcessActivities::UpdatePosition,
+      ).to have_received(:execute!).with(
+        activity: instance_of(ReactionProcessEditor::ReactionProcessActivity),
+        position: insert_before,
+      )
     end
   end
 

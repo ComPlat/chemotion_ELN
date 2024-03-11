@@ -66,6 +66,10 @@ module ReactionProcessEditor
         [{ value: 'DRIED', label: 'Drying' }]
     end
 
+    def vessel_preparation_types
+      options_for(OrdKit::VesselPreparation::VesselPreparationType.constants)
+    end
+
     def crystallization_modes
       [
         { value: 'NONE', label: 'None' },

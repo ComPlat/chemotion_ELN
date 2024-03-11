@@ -3,7 +3,7 @@
 FactoryBot.define do
   factory :reaction_process_step, class: 'ReactionProcessEditor::ReactionProcessStep' do
     trait :with_vessel do
-      vessel
+      reaction_process_vessel
     end
 
     reaction_process

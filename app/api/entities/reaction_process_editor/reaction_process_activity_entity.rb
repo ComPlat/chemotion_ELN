@@ -12,6 +12,8 @@ module Entities
 
       expose :intermediate_type, :transfer_source_step_name # supportive piggybacks required in TRANSFER only
 
+      expose :reaction_process_vessel, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
+
       private
 
       def intermediate_type

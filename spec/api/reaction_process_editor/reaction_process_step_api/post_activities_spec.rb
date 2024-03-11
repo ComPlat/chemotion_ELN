@@ -40,7 +40,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
 
   it_behaves_like 'authorization restricted API call'
 
-  it 'triggers usecase ReactionProcessStep::AppendActivity' do
+  it 'triggers UseCase ReactionProcessSteps::AppendActivity' do
     allow(Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendActivity).to receive(:execute!).and_call_original
 
     post_action_request
@@ -90,7 +90,8 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
 
   context 'with invalid action data' do
     let(:create_activity_params) do
-      { activity: { activity_name: 'ADD', workup: { acts_as: 'SAMPLE' } } } # Invalid: acts_as 'SAMPLE' requires sample_id
+      # Invalid: acts_as 'SAMPLE' also requires sample_id:
+      { activity: { activity_name: 'ADD', workup: { acts_as: 'SAMPLE' } } }
     end
 
     it 'returns 422' do

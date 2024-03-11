@@ -5,15 +5,23 @@ module OrdKit
     module Vessels
       class VesselPreparationsExporter < OrdKit::Exporter::Base
         def to_ord
-          []
-          # TODO: Not yet implemented.
-          #   VesselPreparation.new(
-          #     preparation_type: model.preparation_type,
-          #     medium_type: model.medium_type,
-          #     details: model.details,
-          #   )
-          #   nil # n/a. VesselPreparations unknown in ELN.
-          # end
+          return unless model
+
+          model.map do |preparation|
+            VesselPreparation.new(
+              type: preparation_type(preparation),
+              medium: nil,
+              details: nil,
+            )
+          end
+        end
+
+        private
+
+        def preparation_type(attachment)
+          OrdKit::VesselPreparation::VesselPreparationType.const_get(attachment)
+        rescue StandardError
+          OrdKit::VesselPreparation::VesselPreparationType.UNSPECIFIED
         end
       end
     end

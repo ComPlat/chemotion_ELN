@@ -21,6 +21,7 @@ module OrdKit
               start_time: start_time(starts_at),
               duration: duration,
               equipment: equipment,
+              vessel: Vessels::ReactionProcessVesselExporter.new(@action.reaction_process_vessel).to_ord,
             }.merge(action_type_attributes),
           )
         rescue StandardError => e
