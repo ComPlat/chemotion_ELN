@@ -16,7 +16,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.delete' do
 
   it_behaves_like 'authorization restricted API call'
 
-  it 'triggers usecase ReactionProcessStep::Destroy' do
+  it 'triggers UseCase ReactionProcessSteps::Destroy' do
     allow(Usecases::ReactionProcessEditor::ReactionProcessSteps::Destroy).to receive(:execute!)
     delete_reaction_process_step_request
 
