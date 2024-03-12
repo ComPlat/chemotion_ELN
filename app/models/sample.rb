@@ -57,6 +57,8 @@
 
 # rubocop:disable Metrics/ClassLength
 class Sample < ApplicationRecord
+  attr_accessor :skip_inventory_label_update
+
   acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch::Model
@@ -169,7 +171,7 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
-  before_save :update_inventory_label, if: :new_record?
+  before_save :update_inventory_label, if: :should_update_inventory_label?
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -350,9 +352,9 @@ class Sample < ApplicationRecord
   # rubocop:disable Style/OptionalBooleanParameter
   # rubocop:disable Layout/TrailingWhitespace
   def create_subsample user, collection_ids, copy_ea = false, type = nil
-    @skip_inventory_label_update = true
     subsample = self.dup
     subsample.xref['inventory_label'] = nil
+    subsample.skip_inventory_label_update = true
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
 
@@ -383,7 +385,6 @@ class Sample < ApplicationRecord
     subsample.container = Container.create_root_container
     subsample.mol_rdkit = nil if subsample.respond_to?(:mol_rdkit)
     subsample.save!
-    @skip_inventory_label_update = false
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
     subsample
   end
@@ -663,9 +664,11 @@ private
     collection_ids.first
   end
 
-  def update_inventory_label
-    return if @skip_inventory_label_update
+  def should_update_inventory_label?
+    new_record? && skip_inventory_label_update != true
+  end
 
+  def update_inventory_label
     collection_id = find_collection_id
     return if collection_id.blank?
 
