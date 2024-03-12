@@ -169,7 +169,6 @@ class Sample < ApplicationRecord
               :set_loading_from_ea
   before_save :auto_set_short_label
   before_save :update_inventory_label, if: :new_record?
-  before_save :assign_mixture_molecule
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -698,8 +697,6 @@ private
   end
 
   def assign_molecule_name
-    return if sample_type_name == 'Mixture' && mixture_components.length.zero?
-
     if molecule_name&.new_record? && molecule.persisted? && molecule_name.name.present?
       att = molecule_name.attributes.slice('user_id', 'description', 'name')
       att['molecule_id'] = molecule.id
@@ -709,13 +706,6 @@ private
       mn = molecule.molecule_names.find_by(name: target)
     end
     self.molecule_name = mn
-  end
-
-  def assign_mixture_molecule
-    return unless sample_type_name == 'Mixture' && !mixture_components.length.zero?
-
-    first_comp = mixture_components[0]
-    self.molecule = first_comp.molecule
   end
 
   def check_molecule_name
