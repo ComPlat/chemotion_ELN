@@ -296,6 +296,14 @@ export default class SampleDetails extends React.Component {
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
+    const splitMolfile = sample.molfile.split('$MOL').map(molfile => molfile.trim()).filter(entry => entry && !entry.includes('$RXN'));
+    const mixtureMolfiles = splitMolfile.map(molfile => `\n  ${molfile}\n\n`);
+
+    sample.mixtureMolfiles = mixtureMolfiles;
+    if (sample.mixtureMolfiles){
+      sample.splitMolfileToMolecule(mixtureMolfiles, editor);
+    }
+
     const fetchError = (errorMessage) => {
       NotificationActions.add({
         title: 'Error on Sample creation',
@@ -1070,6 +1078,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
+    const isMixture = sample.sample_type_name === 'Mixture';
     const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
@@ -1093,7 +1102,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
-          {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
+          {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
         <Col md={8}>
@@ -1590,7 +1599,7 @@ export default class SampleDetails extends React.Component {
           {messageBlock}
         </Panel.Heading>
         <Panel.Body>
-          {!isMixture ? this.sampleInfo(sample) : null}
+          {this.sampleInfo(sample)}
           <ListGroup>
             <ElementDetailSortTab
               type="sample"

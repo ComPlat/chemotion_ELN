@@ -582,12 +582,13 @@ module Chemotion
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
           sample_type_name: params[:sample_type_name],
+          molfile: params[:molfile],
+          stereo: params[:stereo],
         }
         micro_att = {
           name: params[:name],
           molfile: params[:molfile],
           stereo: params[:stereo],
-
         }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
@@ -641,37 +642,9 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        # Save sample based on sample_type_name
         case params[:sample_type_name]
-        when 'Mixture'
-          mixture_components = params[:mixture_components]
-          if mixture_components.present?
-            mixture_components.each do |component|
-              stock_component_sample = Sample.find_by(id: component[:parent_id])
-              next if stock_component_sample.blank?
-
-              # Create subsample of each component stock
-              subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
-
-              # update subsample with the component_quantities
-              component_quantities = {
-                target_amount_value: component[:_target_amount_value],
-                target_amount_unit: component[:_target_amount_unit],
-                molarity_unit: component[:_molarity_unit],
-                molarity_value: component[:_molarity_value],
-                sample_type_name: 'MixtureComponent',
-              }
-              subsample.update!(component_quantities)
-
-              # Create SampleType entry for subsample
-              SampleType.create(sample: sample, sampleable: subsample, component_stock: false)
-              sample.mixture_components << subsample
-            end
-          end
-
         when 'ComponentStock'
           SampleType.create(sample: sample, sampleable: sample, component_stock: true)
-
         when 'Micromolecule'
           micromolecule = Micromolecule.new(micro_att)
           micromolecule.samples << sample
@@ -681,6 +654,37 @@ module Chemotion
 
         sample.container = update_datamodel(params[:container])
         sample.save!
+
+        mixture_components = params[:mixture_components]
+        if params[:sample_type_name] == 'Mixture' && mixture_components.present?
+          mixture_components.each do |component|
+            stock_component_sample = Sample.find_by(id: component[:parent_id])
+
+            if stock_component_sample
+              subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+            else
+              subsample = sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+            end
+
+            molfile = component[:_molecule][:molfile]
+            molecule = Molecule.find_or_create_by_molfile(molfile)
+            component_quantities = {
+              target_amount_value: component[:_target_amount_value],
+              target_amount_unit: component[:_target_amount_unit],
+              molarity_unit: component[:_molarity_unit],
+              molarity_value: component[:_molarity_value],
+              sample_type_name: 'MixtureComponent',
+              molecule_id: molecule[:id],
+              molfile: molfile,
+            }
+            subsample.update!(component_quantities)
+            molecule.update!(iupac_name: component[:_molecule][:iupac_name]) if subsample.molecule.iupac_name.nil?
+
+            SampleType.create(sample: sample, sampleable: subsample, component_stock: false)
+            sample.mixture_components << subsample
+            sample.save
+          end
+        end
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 

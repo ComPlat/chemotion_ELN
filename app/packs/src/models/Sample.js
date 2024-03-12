@@ -8,6 +8,7 @@ import Molecule from 'src/models/Molecule';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -1099,6 +1100,30 @@ export default class Sample extends Element {
       }
     });
   }
+
+
+  splitMolfileToMolecule(mixtureMolfiles, editor) {
+    const promises = mixtureMolfiles.map(molfile => {
+      return MoleculesFetcher.fetchByMolfile(molfile, null, editor);
+    });
+  
+    return Promise.all(promises)
+      .then(mixtureMolecules => {
+        return this.mixtureMoleculeToSubsample(mixtureMolecules);
+      })
+      .catch(errorMessage => {
+        console.log(errorMessage);
+        return [];
+      });
+  }
+
+  mixtureMoleculeToSubsample(mixtureMolecules){
+    mixtureMolecules.map(molecule => {
+      const subSample = Sample.buildNew(molecule, this.collection_id);
+      this.addMixtureComponent(subSample);
+    });
+  }
+  
 }
 
 Sample.counter = 0;
