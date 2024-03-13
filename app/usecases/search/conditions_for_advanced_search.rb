@@ -191,10 +191,11 @@ module Usecases
           @conditions[:condition_table] = ''
         when 'duration'
           time_divisor= duration_interval_by_unit(filter['unit'])
-          is_data_valid = "reactions.duration similar to ('%[0-9]%')"
+          is_data_valid = "reactions.duration similar to ('\\d+%')"
+          time_from_duration_column = "EXTRACT(epoch FROM #{@table}.duration::interval)/#{time_divisor}::INT"
 
           @conditions[:field] =
-            "CASE WHEN #{is_data_valid} THEN EXTRACT(epoch FROM #{@table}.duration::interval)/#{time_divisor}::INT ELSE 0 END"
+            "CASE WHEN #{is_data_valid} THEN #{time_from_duration_column} ELSE 0 END"
 
           @conditions[:first_condition] = "#{@table}.duration IS NOT NULL AND #{@table}.duration != '' AND "
           @conditions[:condition_table] = ''

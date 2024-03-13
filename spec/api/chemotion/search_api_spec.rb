@@ -20,7 +20,7 @@ describe Chemotion::SearchAPI do
   let(:invalid_reaction_with_duration) do
     create(:reaction, name: 'invalid Reaction', creator: user, duration: 'Day(s)')
   end
-  let(:reaction_with_duration) { create(:reaction, name: 'invalid Reaction', creator: user, duration: '1 Day(s)') }
+  let(:reaction_with_duration) { create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)') }
   let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: other_user) }
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
