@@ -8,7 +8,7 @@ export default class DeviceDescriptionFetcher {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'device_descriptions', DeviceDescription);
   }
 
-  static fetchById(deviceDescriptionId, updated = false) {
+  static fetchById(deviceDescriptionId) {
     return fetch(
       `/api/v1/device_descriptions/${deviceDescriptionId}`,
       { ...this._httpOptions() }
@@ -18,12 +18,7 @@ export default class DeviceDescriptionFetcher {
           return new DeviceDescription({ id: `${id}:error:DeviceDescription ${id} is not accessible!`, is_new: true });
         } else {
           const deviceDescription = new DeviceDescription(json.device_description);
-          deviceDescription.updated = updated;
-          if (updated) {
-            deviceDescription.updateChecksum()
-          } else {
-            deviceDescription._checksum = deviceDescription.checksum();
-          }
+          deviceDescription._checksum = deviceDescription.checksum();
           return deviceDescription;
         }
       })
@@ -42,15 +37,11 @@ export default class DeviceDescriptionFetcher {
       }
     ).then(response => response.json())
       .then((json) => {
-        if (newFiles.length > 0) {
-          AttachmentFetcher.updateAttachables(
-            newFiles,
-            'DeviceDescription',
-            json.device_description.id,
-            []
-          )();
+        if (newFiles.length <= 0) {
+          return new DeviceDescription(json.device_description);
         }
-        return new DeviceDescription(json.device_description);
+        return AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', json.device_description.id, [])()
+          .then(() => new DeviceDescription(json.device_description));
       })
       .catch(errorMessage => console.log(errorMessage));
 
@@ -73,31 +64,25 @@ export default class DeviceDescriptionFetcher {
         ...this._httpOptions('PUT'),
         body: JSON.stringify(deviceDescription)
       }
-    ).then(response => response.json())
+    ).then((response) => response.json())
       .then((json) => {
-        if (newFiles.length > 0 || delFiles.length > 0) {
-          AttachmentFetcher.updateAttachables(
-            newFiles,
-            'DeviceDescription',
-            json.device_description.id,
-            delFiles
-          )().then(() => {
-            console.log(deviceDescription, json.device_description);
-            return this.fetchById(deviceDescription.id, true);
-          });
-        }
-        return this.fetchById(deviceDescription.id, true)
-        //const updatedDeviceDescription = new DeviceDescription(json.device_description);
-        //updatedDeviceDescription.updateChecksum();
-        //updatedDeviceDescription.updated = true;
-        //return updatedDeviceDescription;
+        const updatedDeviceDescription = new DeviceDescription(json.device_description);
+        updatedDeviceDescription.updated = true;
+        updatedDeviceDescription.updateChecksum();
+        return updatedDeviceDescription;
       })
-      //.then(() => this.fetchById(deviceDescription.id, true))
+      //.then(() => BaseFetcher.updateAnnotations(deviceDescription))
+      //.then(() => this.fetchById(deviceDescription.id))
       .catch(errorMessage => console.log(errorMessage));
 
-    if (containerFiles.length > 0) {
+    if (containerFiles.length > 0 || newFiles.length > 0 || delFiles.length > 0) {
       const tasks = [];
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      if (containerFiles.length > 0) {
+        containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
+      }
+      if (newFiles.length > 0 || delFiles.length > 0) {
+        tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles)());
+      }
       return Promise.all(tasks).then(() => promise());
     }
     return promise();
