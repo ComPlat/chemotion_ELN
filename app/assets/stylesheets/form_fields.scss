@@ -126,6 +126,11 @@ button.delete-in-row {
   height: 34px;
 }
 
+button.delete-in-list {
+  float: right;
+  margin-top: -13px;
+}
+
 button.react-datepicker__navigation {
   text-indent: unset;
 }
@@ -161,4 +166,22 @@ button.react-datepicker__navigation {
 form-group.small-comment-form {
   margin-bottom: 10px;
   margin-top: 10px;
+}
+
+ul.list-group {
+  margin-bottom: 0;
+}
+
+ul.list-group.ontology-list h4 {
+  font-size: 16px;
+}
+
+ul.list-group.ontology-list li {
+  background-color: #eee;
+  font-size: 13px;
+  border: 1px solid #bbb;
+}
+
+ul.list-group.ontology-list li:nth-child(even) {
+  background-color: #fff;
 }

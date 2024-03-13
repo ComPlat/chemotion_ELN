@@ -16,7 +16,7 @@ export default class DeviceDescription extends Element {
       serial_number: '',
       vendor_company_name: '',
       vendor_id: '',
-      // ontology logic
+      ontologies: [],
       description: '',
       tags: '',
       version_number: '',
