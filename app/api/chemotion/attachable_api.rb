@@ -48,7 +48,7 @@ module Chemotion
             begin
               a.save!
               attach_ary.push(a.id)
-              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate Labimotion::Element])
+              rp_attach_ary.push(a.id) if a.attachable_type.in?(%w[ResearchPlan Wellplate DeviceDescription Labimotion::Element])
             ensure
               tempfile.close
               tempfile.unlink
