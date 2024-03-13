@@ -220,6 +220,9 @@ export default class Sample extends Element {
     const sample = super.buildCopy();
     sample.short_label = Sample.buildNewShortLabel();
     sample.container = Container.init();
+    if (sample.xref && sample.xref.inventory_label) {
+      sample.xref.inventory_label = null;
+    }
     sample.can_update = true;
     sample.can_copy = false;
     return sample;
