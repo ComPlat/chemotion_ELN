@@ -110,6 +110,10 @@ module Chemotion
         optional :description_for_methods_part, type: String
         requires :collection_id, type: Integer
         optional :container, type: Hash
+        optional :ontologies, type: Array do
+          optional :data, type: Hash
+          optional :paths, type: Array
+        end
       end
       post do
         attributes = declared(params.except(:container), include_missing: false)
@@ -191,6 +195,10 @@ module Chemotion
         optional :policies_and_user_information, type: String
         optional :description_for_methods_part, type: String
         optional :container, type: Hash
+        optional :ontologies, type: Array do
+          optional :data, type: Hash
+          optional :paths, type: Array
+        end
       end
       put ':id' do
         device_description = DeviceDescription.find(params[:id])
