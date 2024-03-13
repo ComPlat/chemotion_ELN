@@ -473,6 +473,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.text "version_characterization"
     t.datetime "deleted_at"
     t.integer "created_by"
+    t.jsonb "ontologies"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
 

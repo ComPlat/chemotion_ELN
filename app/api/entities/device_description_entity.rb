@@ -41,6 +41,7 @@ module Entities
     expose :changed
     expose :container, using: 'Entities::ContainerEntity'
     expose :attachments, using: 'Entities::AttachmentEntity'
+    expose :ontologies
 
     def type
       'device_description'

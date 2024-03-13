@@ -3,7 +3,7 @@ import { Collapse } from 'react-bootstrap';
 import {
   selectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput,
+  operatorInput, ontologiesList,
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -152,9 +152,7 @@ const PropertiesForm = () => {
         <div>
           {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
           {multipleInputGroups(deviceDescription, vendorCompanyNameLabel, vendorCompanyName, deviceDescriptionsStore)}
-          <div className="form-group">
-            ONTOLOGY Classification
-          </div>
+          {ontologiesList(deviceDescriptionsStore, deviceDescription, 'ONTOLOGY Classification', '')}
           {textareaInput(deviceDescription, deviceDescriptionsStore, 'description', 'Description', 3)}
           {selectInput(deviceDescription, deviceDescriptionsStore, 'tags', 'Tags', deviceTags)}
         </div>

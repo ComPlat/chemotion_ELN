@@ -37,6 +37,7 @@ export const DeviceDescriptionsStore = types
     attachment_sort_by: types.optional(types.string, 'name'),
     attachment_sort_direction: types.optional(types.string, 'asc'),
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
+    show_ontology_modal: types.optional(types.boolean, false),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -165,6 +166,9 @@ export const DeviceDescriptionsStore = types
             });
         }
       });
+    },
+    toggleOntologyModal() {
+      self.show_ontology_modal = !self.show_ontology_modal;
     },
   }))
   .views(self => ({
