@@ -4,6 +4,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReactionDetails from './ReactionDetails';
+import { reaction } from 'mobx';
+
 
 
 
@@ -23,6 +25,7 @@ export default class Curation_modal extends Component {
       this.handleSuggest = this.handleSuggest.bind(this);
       this.handleSuggest = this.handleSuggest.bind(this);
       this.change_corect_word = this.change_corect_word.bind(this)
+      this.handleChange = this.handleChange.bind(this)
       this.state = {
         desc : this.clean_data(this.props.description),
         show : false, 
@@ -35,13 +38,19 @@ export default class Curation_modal extends Component {
       
     }
 
-    handleSubmit(closeView = false) {
+    handleSubmit(closeView = false,description) {
       LoadingActions.start();
       const { reaction } = this.props;
       if (reaction && reaction.isNew) {
         ElementActions.createReaction(reaction);
+        console.log("create")
       } else {
+        var new_reaction  = reaction
+        new_reaction.description = description
+        console.log(new_reaction)
+        this.setState({reaction:new_reaction} )
         ElementActions.updateReaction(reaction, closeView);
+        // console.log(reaction)
       }
       if (reaction.is_new || closeView) {
         DetailActions.close(reaction, true);
@@ -64,6 +73,10 @@ export default class Curation_modal extends Component {
       this.setState({ desc: new_desc});
     }
 
+    handleChange(){
+      this.props.onDescChange(this.state.desc)
+    }
+
     handleClose() {
       this.setState({ show: false });
     }
@@ -78,8 +91,8 @@ export default class Curation_modal extends Component {
       var mispelled_word = miss_spelled_words[index]
       if (typeof mispelled_word === "string" )
       {
-      var ms_suggestion = dictionary.suggest(mispelled_word)
-      this.setState({ suggestion : ms_suggestion}) }   
+        var ms_suggestion = dictionary.suggest(mispelled_word)
+        this.setState({ suggestion : ms_suggestion}) }   
       else {
         console.log("run spell check")
       }
@@ -109,10 +122,10 @@ export default class Curation_modal extends Component {
       }
       ms_words = this.uniq(ms_words)
       this.setState({mispelled_words: ms_words})
+      this.handleSuggest(ms_words, 0)
     }
 
     change_misspelling(description,selected_choice,ms_words,index){
-      console.log(selected_choice)
       if (selected_choice !== ""){
       var fixed_description = description.replace(ms_words[index], selected_choice);}
       else{
@@ -133,11 +146,11 @@ export default class Curation_modal extends Component {
         var parts = text.split(new RegExp(`(${highlight})`, "gi"));
         let highlight_array = highlight.split("|")
           return parts.map((part, index) => (
-          <React.Fragment key={index}>
-            {highlight_array.includes(part.toLowerCase())
-            ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
-            : (part)}
-          </React.Fragment>
+            <React.Fragment key={index}>
+              {highlight_array.includes(part.toLowerCase())
+              ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
+              : (part)}
+            </React.Fragment>
     ));}
 
     highlight_mispelled_words(text,ms_word_array){
@@ -175,15 +188,17 @@ export default class Curation_modal extends Component {
       const Compo = ({ highlight, text }) => {
         return <p>{this.highlight_mispelled_words(text, highlight)}</p>;
       };
+
       const SuggestBox = ({suggest_array}) =>{
         if (suggest_array.length != 0){
-        return suggest_array.map((suggestion,id) =>  (
-          <div>
-            <input type="radio" id={id} value={suggestion} onChange={this.change_corect_word} checked={this.state.correct_word === suggestion} />
-            <label for={id}>{suggestion}</label>
-          </div>  
-        ));
-        }
+          return suggest_array.map((suggestion,id) =>  (
+            <div key={id}>
+              <label>
+                <input type="radio" value={suggestion} onChange={this.change_corect_word} checked={this.state.correct_word === suggestion}/>
+                  {suggestion}
+                </label> 
+            </div>  
+        ));}
         else{
           return (
             <div>
@@ -192,6 +207,7 @@ export default class Curation_modal extends Component {
           )
         }
       };
+
       return (
         <div>
           <Button bsStyle="primary" bsSize="small" onClick={this.handleShow}>
@@ -203,29 +219,25 @@ export default class Curation_modal extends Component {
               <Modal.Title>Spell Check</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <div style={{border: "ridge",
-                    padding: "10px",
-                    fontFamily: "Arial",
-                    borderRadius: "10px",}}>
-                 <Compo text={this.state.desc} highlight= {this.state.mispelled_words} /> 
-                </div>  
-                     
-                <div>
-                    suggestion
-                </div>
-                <div className="row">
-               
-                  <Button onClick={() =>this.spell_check(this.state.desc)}>fix</Button>
-                  <Button onClick={() => this.handleSubmit(true)}> 
-                    save and close
-                  </Button>
-                  <Button onClick={()=> this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
-                  <Button onClick={()=> this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
-                  <Button onClick={()=>this.handleSuggest(this.state.mispelled_words, this.state.suggestion_index)}>suggest</Button>
-                </div>
-                <form>
-                  <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
-                </form>
+              <div style={{border: "ridge",
+                padding: "10px",
+                fontFamily: "Arial",
+                borderRadius: "10px",}}>
+                <Compo text={this.state.desc} highlight= {this.state.mispelled_words} /> 
+              </div>         
+              <div>
+                  suggestion
+              </div>
+              <div className="row"> 
+                <Button onClick={()=>this.spell_check(this.state.desc) }>fix</Button>
+                <Button onClick={()=>this.handleChange()}> save </Button>
+                <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
+                <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
+                <Button onClick={()=>this.handleSuggest(this.state.mispelled_words, this.state.suggestion_index)}>suggest</Button>
+              </div>
+              <form>
+                <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
+              </form>
             </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
@@ -235,5 +247,3 @@ export default class Curation_modal extends Component {
       );
     }
   }
-
-  

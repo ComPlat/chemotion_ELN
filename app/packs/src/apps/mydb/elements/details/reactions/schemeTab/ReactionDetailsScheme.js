@@ -26,6 +26,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import Curation_modal from "src/apps/mydb/elements/details/reactions/curation_modal.js";
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -56,6 +57,7 @@ export default class ReactionDetailsScheme extends Component {
     this.switchEquiv = this.switchEquiv.bind(this);
     this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
+    this.handleDescChange = this.handleDescChange.bind(this)
   }
 
   componentDidMount() {
@@ -238,6 +240,12 @@ export default class ReactionDetailsScheme extends Component {
     this.setState({
       reactionDescTemplate: state.reactionDescription.toJS()
     });
+  }
+
+  handleDescChange(description){
+    const { reaction } = this.state
+    reaction.description = description
+    this.setState({reaction :reaction})
   }
 
   handleMaterialsChange(changeEvent) {
@@ -939,6 +947,7 @@ export default class ReactionDetailsScheme extends Component {
               <Col md={12}>
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
+                  <Curation_modal description= {reaction.description.ops} reaction={reaction} onDescChange = {this.handleDescChange}/>
                   <div className="quill-resize">
                     {
                       permitOn(reaction) ?
