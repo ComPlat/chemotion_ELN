@@ -34,15 +34,15 @@ const AttachmentForm = ({ readonly }) => {
   useEffect(() => {
     console.log('init');
     editorInitial();
-    deviceDescriptionsStore.loadPreviewImagesOfAttachments(deviceDescription);
+    deviceDescriptionsStore.setFilteredAttachments(deviceDescription.attachments);
   }, []);
 
   useEffect(() => {
     console.log('did update', deviceDescription.updated, deviceDescription);
     if (deviceDescription.updated) {
-      deviceDescriptionsStore.loadPreviewImagesOfAttachments(deviceDescriptionsStore.device_description);
+      deviceDescriptionsStore.setFilteredAttachments(deviceDescription.attachments);
     }
-  }, [deviceDescription.updated]);
+  }, [deviceDescription.attachments]);
 
   const editorInitial = () => {
     EditorFetcher.initial().then((result) => {
