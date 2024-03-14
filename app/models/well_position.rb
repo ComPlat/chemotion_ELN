@@ -24,7 +24,7 @@ class WellPosition
   end
 
   def initialize(x:, y:) # rubocop:disable Naming/MethodParameterName
-    raise "Invalid position - X = #{x}, Y = #{y}" unless x.in?(1..1000) && y.in?(1..1000)
+    raise "Invalid position - X = #{x}, Y = #{y}" unless x.in?(1..100) && y.in?(1..100)
 
     @x = x
     @y = y
@@ -41,9 +41,9 @@ class WellPosition
   end
 
   def alphanumeric_position
-    row = ('A'..'ZZZ').to_a[y - 1] # -1 to account for 1 based positions
+    row = ('A'..'ZZ').to_a[y - 1] # -1 to account for 1 based positions
 
-    "#{row}#{format('%04i', x)}"
+    "#{row}#{format('%02i', x)}"
   end
   alias_method :to_s, :alphanumeric_position # rubocop:disable Style/Alias
 end

@@ -50,6 +50,10 @@ export default class Wellplate extends Element {
     return wellplate;
   }
 
+  static get MAX_DIMENSION() {
+    return 99;
+  }
+
   get name() {
     return this._name;
   }

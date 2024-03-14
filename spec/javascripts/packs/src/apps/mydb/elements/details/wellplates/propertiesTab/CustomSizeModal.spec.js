@@ -124,7 +124,7 @@ describe('CustomSizeModal', async () => {
   });
 
   describe('render()', async () => {
-    context('when width was set to hight (120)', async () => {
+    context('when width was set to 100', async () => {
       const wellplate = new Wellplate(wellplate2x3EmptyJson);
       const wrapper = mount(<CustomSizeModal
         wellplate={wellplate}
@@ -132,7 +132,7 @@ describe('CustomSizeModal', async () => {
         triggerUIUpdate={()=>{}}
         handleClose={() => {}}
       />);
-      wrapper.instance().updateDimension('width', 120);
+      wrapper.instance().updateDimension('width', 100);
 
       it('the apply button is disabled', async () => {
         console.log(wrapper.html())

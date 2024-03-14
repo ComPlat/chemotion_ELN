@@ -10,6 +10,10 @@ export default class CustomSizeModal extends Component {
     return !Number.isNaN(value) && Number.isInteger(Number(value)) && Number(value) > 0;
   }
 
+  static propertyIsInvalid(value) {
+    return value > Wellplate.MAX_DIMENSION;
+  }
+
   constructor(props) {
     super(props);
     this.state = {
@@ -42,7 +46,7 @@ export default class CustomSizeModal extends Component {
 
   renderApplyButton() {
     const { height, width } = this.state;
-    const disabled = height > 100 || width > 100;
+    const disabled = CustomSizeModal.propertyIsInvalid(height) || CustomSizeModal.propertyIsInvalid(width);
     return (
       <Button
         onClick={() => this.applySizeChange()}
@@ -54,9 +58,10 @@ export default class CustomSizeModal extends Component {
   }
 
   renderProperty(value, label, propertyName) {
-    const invalidStyleClass = value > 100 ? 'invalid-wellplate-size' : 'size-without-error';
-    const errorMessage = value > 100
-      ? <div className="invalid-wellplate-size-text">Size must be between 0 and 100</div>
+    const invalidStyleClass = CustomSizeModal.propertyIsInvalid(value)
+      ? 'invalid-wellplate-size' : 'size-without-error';
+    const errorMessage = CustomSizeModal.propertyIsInvalid(value)
+      ? <div className="invalid-wellplate-size-text">Size must be smaller than 100.</div>
       : null;
     return (
       <div className="floating-left">
