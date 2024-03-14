@@ -155,7 +155,7 @@ describe('CustomSizeModal', async () => {
       it('an error message appears in the width area', async () => {
         expect(
           wrapper.html()
-            .includes('<div class="invalid-wellplate-size-text">Size must be between 0 and 100</div>')
+            .includes('<div class="invalid-wellplate-size-text">Size must be smaller than 100.</div>')
         )
           .toBeTruthy();
       });
