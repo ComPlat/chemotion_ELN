@@ -297,12 +297,15 @@ export default class SampleDetails extends React.Component {
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
-    const splitMolfile = sample.molfile.split('$MOL').map(molfile => molfile.trim()).filter(entry => entry && !entry.includes('$RXN'));
-    const mixtureMolfiles = splitMolfile.map(molfile => `\n  ${molfile}\n\n`);
+    if (sample.sample_type_name === 'Mixture'){
+      const splitMolfiles = molfile.match(/\$MOL[\s\S]*?M\s+END/g);
+      const cleanedMolfiles = splitMolfiles.map(section => section.replace(/\$MOL|null/g, '').trim());
+      const mixtureMolfiles = cleanedMolfiles.map(molfile => `\n ${molfile}`)
 
-    sample.mixtureMolfiles = mixtureMolfiles;
-    if (sample.mixtureMolfiles){
-      sample.splitMolfileToMolecule(mixtureMolfiles, editor);
+      sample.mixtureMolfiles = mixtureMolfiles;
+      if (sample.mixtureMolfiles){
+        sample.splitMolfileToMolecule(mixtureMolfiles, editor);
+      }
     }
 
     const fetchError = (errorMessage) => {
@@ -489,6 +492,7 @@ export default class SampleDetails extends React.Component {
         molfile={molfile}
         hasParent={hasParent}
         hasChildren={hasChildren}
+        sample={sample}
       />
     );
   }

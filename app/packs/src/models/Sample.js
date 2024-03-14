@@ -1104,7 +1104,7 @@ export default class Sample extends Element {
 
   splitMolfileToMolecule(mixtureMolfiles, editor) {
     const promises = mixtureMolfiles.map(molfile => {
-      return MoleculesFetcher.fetchByMolfile(molfile, null, editor);
+      return MoleculesFetcher.fetchByMolfile(molfile, null, editor, false);
     });
   
     return Promise.all(promises)
