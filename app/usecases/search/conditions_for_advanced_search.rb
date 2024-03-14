@@ -184,8 +184,11 @@ module Usecases
             AND private_notes.noteable_id = #{@table}.id"
           @conditions[:condition_table] = 'private_notes.'
         when 'temperature'
-          @conditions[:field] = "(#{@table}.temperature ->> 'userText')::FLOAT"
-          @conditions[:first_condition] = "(#{@table}.temperature ->> 'userText')::TEXT != ''"
+          regex_number = "'^-{0,1}\\d+(\\.\\d+){0,1}\\Z'"
+          is_data_valid = "(#{@table}.temperature ->> 'userText' ~ #{regex_number})"
+
+          @conditions[:field] =
+            "CASE WHEN #{is_data_valid} THEN (#{@table}.temperature ->> 'userText')::FLOAT ELSE -30000 END "
           @conditions[:first_condition] += " AND (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
           @conditions[:additional_condition] = "AND (#{@table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
           @conditions[:condition_table] = ''
