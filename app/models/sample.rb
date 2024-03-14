@@ -665,7 +665,7 @@ private
   end
 
   def should_update_inventory_label?
-    new_record? && skip_inventory_label_update != true
+    skip_inventory_label_update != true
   end
 
   def update_inventory_label
