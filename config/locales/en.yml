@@ -42,3 +42,25 @@ en:
           attributes:
             base:
               sample_or_scan_data_required: SampleTask creation requires either a sample id or a file + measurement data
+
+        device:
+          attributes:
+            name:
+              blank: Please enter a name
+            name_abbreviation:
+              in_use: Is already in use
+              wrong_length: "Has to be %{min} to %{max} characters long"
+              reserved: Is reserved, please change
+            datacollector_method:
+              blank: Please select watch method
+            datacollector_dir:
+              blank: Please enter a watch directory
+              invalid: Watch directory is not a valid directory
+              whitelist: Watch directory is not in white-list for local data collection
+            datacollector_user:
+              blank: Please enter a user
+            datacollector_host:
+              blank: Please enter a host'
+            datacollector_key_name:
+              blank: Use key file, please enter a key path
+              not_found: No key file found

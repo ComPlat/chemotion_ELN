@@ -494,23 +494,6 @@ class Person < User
   has_many :administrated_accounts,  through: :users_admins, source: :user
 end
 
-class Device < User
-  has_many :users_devices, dependent: :destroy
-  has_many :users, class_name: 'User', through: :users_devices
-
-  has_many :users_admins, dependent: :destroy, foreign_key: :user_id
-  has_many :admins, through: :users_admins, source: :admin
-
-  has_one :device_metadata, dependent: :destroy
-
-  scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
-  scope :novnc, -> { joins(:profile).merge(Profile.novnc) }
-
-  def info
-    "Device ID: #{id}, Name: #{first_name} #{last_name}"
-  end
-end
-
 class Group < User
   has_many :users_groups, dependent: :destroy
   has_many :users, class_name: 'User', through: :users_groups

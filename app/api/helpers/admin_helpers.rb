@@ -31,10 +31,10 @@ module AdminHelpers
 
   def connect_sftp_with_key(prms)
     sftp = Net::SFTP.start(
-      prms[:host],
-      prms[:user],
+      prms[:datacollector_host],
+      prms[:datacollector_user],
       key_data: [],
-      keys: key_path(prms[:key_name]),
+      keys: key_path(prms[:datacollector_key_name]),
       keys_only: true,
       timeout: 5
     )
