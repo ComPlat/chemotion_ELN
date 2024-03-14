@@ -186,5 +186,9 @@ class Collection < ApplicationRecord
       collections_group_by_inventory(collections, inventory)
     end
   end
+
+  def self.find_inventory_id_for_collection(collection_id)
+    Collection.find(collection_id).inventory&.id
+  end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity

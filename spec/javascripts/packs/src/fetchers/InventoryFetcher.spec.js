@@ -104,4 +104,31 @@ describe('InventoryFetcher methods', () => {
       expect(result).toEqual(expectedResponse);
     });
   });
+
+  describe('fetchInventoryOfCollection', () => {
+    const ExpectedInventory = {
+      id: 1,
+      prefix: 'BCN',
+      name: 'IBCS North Camp',
+      counter: 1,
+    };
+    const collectionId = 2;
+    it('should fetch inventory label and counter', async () => {
+      fetchStub.resolves(new Response(JSON.stringify(ExpectedInventory)));
+
+      const result = await InventoryFetcher.fetchInventoryOfCollection(collectionId);
+
+      sinon.assert.calledOnce(fetchStub);
+      sinon.assert.calledWithExactly(fetchStub, `/api/v1/inventory/${collectionId}`, {
+        credentials: 'same-origin',
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      expect(result).toEqual(ExpectedInventory);
+    });
+  });
 });

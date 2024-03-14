@@ -15,6 +15,8 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import InventoryFetcher from 'src/fetchers/InventoryFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -34,6 +36,7 @@ export default class SampleForm extends React.Component {
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -291,6 +294,21 @@ export default class SampleForm extends React.Component {
     this.props.parent.setState({ sample });
   }
 
+  fetchNextInventoryLabel() {
+    const { currentCollection } = UIStore.getState();
+    InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
+      .then((inventory) => {
+        if (inventory) {
+          const { prefix, counter } = inventory;
+          const value = `${prefix}-${counter + 1}`;
+          this.handleFieldChanged('xref_inventory_label', value);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
   handleFieldChanged(field, e, unit = null) {
     const { sample } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
@@ -358,6 +376,26 @@ export default class SampleForm extends React.Component {
           readOnly={disabled || !sample.can_update}
         />
       </FormGroup>
+    );
+  }
+
+  nextInventoryLabel() {
+    return (
+      <div>
+        <ControlLabel> &nbsp; </ControlLabel>
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id="FetchNextInventoryLabel">click to assign next inventory label</Tooltip>
+          }
+        >
+          <Button
+            onClick={this.fetchNextInventoryLabel}
+          >
+            <Glyphicon glyph="tag" />
+          </Button>
+        </OverlayTrigger>
+      </div>
     );
   }
 
@@ -748,10 +786,14 @@ export default class SampleForm extends React.Component {
                       <div style={{ width: '30%', paddingLeft: '5px' }}>
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
-                      <div style={{ width: '30%', paddingLeft: '5px' }}>
+                      <div style={{
+                        width: '26%', paddingLeft: '5px', display: 'flex', justifyContent: 'space-between'
+                      }}
+                      >
                         {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                        {this.nextInventoryLabel(sample)}
                       </div>
-                      <div style={{ width: '10%', paddingLeft: '10px' }} className="top-secret-checkbox">
+                      <div style={{ width: '14%', paddingLeft: '10px' }} className="top-secret-checkbox">
                         {this.drySolventCheckbox(sample)}
                       </div>
                       {/* <div style={{ width: '40%' }}>
