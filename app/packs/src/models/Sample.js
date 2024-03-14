@@ -9,6 +9,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import SampleSvgFetcher from '../fetchers/SampleSvgFetcher';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -1066,8 +1067,12 @@ export default class Sample extends Element {
 
   addMixtureComponent(newComponent) {
     const tmpComponents = [...(this.mixture_components || [])];
-    tmpComponents.push(newComponent);
-    this.mixture_components = tmpComponents;
+    const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
+                                || component.molecule.inchikey === newComponent.molecule.inchikey);
+    if (isNew){
+      tmpComponents.push(newComponent);
+      this.mixture_components = tmpComponents;
+    }
   }
 
   deleteMixtureComponent(componentToDelete) {
@@ -1121,6 +1126,24 @@ export default class Sample extends Element {
     mixtureMolecules.map(molecule => {
       const subSample = Sample.buildNew(molecule, this.collection_id);
       this.addMixtureComponent(subSample);
+      this.combineSVG()
+    });
+  }
+
+  combineSVG(){
+    let materialsSvgPaths = {
+      starting_materials: [],
+      reactants: [],
+      products: []
+    };
+
+    this.mixture_components.forEach(component => {
+        let moleculeSvg = component.molecule.molecule_svg_file;
+        materialsSvgPaths.products.push(`/images/molecules/${moleculeSvg}`);
+    });
+
+    SampleSvgFetcher.fetchCombinedSampleSvg(materialsSvgPaths).then((result) => {
+      this.sample_svg_file = result.sample_svg;
     });
   }
   
