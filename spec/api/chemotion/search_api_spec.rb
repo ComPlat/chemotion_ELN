@@ -61,7 +61,6 @@ describe Chemotion::SearchAPI do
     CollectionsScreen.create!(screen: other_screen, collection: other_collection)
     CollectionsWellplate.create!(wellplate: other_wellplate, collection: other_collection)
     ScreensWellplate.create!(wellplate: other_wellplate, screen: other_screen)
-    ActiveRecord::Base.logger = Logger.new($stdout)
 
     post url, params: params
   end
