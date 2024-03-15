@@ -189,7 +189,8 @@ module Usecases
 
           @conditions[:field] =
             "CASE WHEN #{is_data_valid} THEN (#{@table}.temperature ->> 'userText')::FLOAT ELSE -30000 END "
-          @conditions[:first_condition] += " AND (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
+
+          @conditions[:first_condition] += " (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
           @conditions[:additional_condition] = "AND (#{@table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
           @conditions[:condition_table] = ''
         when 'duration'
