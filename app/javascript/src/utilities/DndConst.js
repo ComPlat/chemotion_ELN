@@ -19,7 +19,8 @@ const DragDropItemTypes = {
   GENERALPROCEDURE: 'generalProcedure',
   ELEMENT_FIELD: 'element_field',
   GENERIC_GRID: 'generic_grid',
-  CELL_LINE: 'cell_line'
+  CELL_LINE: 'cell_line',
+  DEVICE_DESCRIPTION: 'device_description'
 };
 
 const dropTargetTypes = [
@@ -37,8 +38,8 @@ const collectTarget = (connect, monitor) => ({
 const canDrop = (_props, monitor) => {
   const itemType = monitor.getItemType();
   return itemType === DragDropItemTypes.DATA
-   || itemType === DragDropItemTypes.UNLINKED_DATA
-   || itemType === DragDropItemTypes.DATASET;
+    || itemType === DragDropItemTypes.UNLINKED_DATA
+    || itemType === DragDropItemTypes.DATASET;
 };
 
 // define dataTarget, collectTarget, and dropTargetTypes ()

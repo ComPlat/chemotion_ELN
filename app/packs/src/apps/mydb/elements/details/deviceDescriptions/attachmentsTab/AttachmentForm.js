@@ -2,17 +2,14 @@ import React, { useContext, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
 
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Attachment from 'src/models/Attachment';
 
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { last, findKey } from 'lodash';
-import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
   downloadButton,
   removeButton,
-  annotateButton,
   editButton,
   importButton,
   customDropzone,
@@ -21,6 +18,11 @@ import {
   attachmentThumbnail
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
+
+import {
+  annotationButton,
+} from '../FormFields';
+
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -110,13 +112,47 @@ const AttachmentForm = ({ readonly }) => {
     deviceDescriptionsStore.setFilteredAttachments(deviceDescriptionsStore.device_description.attachments);
   }
 
-  const handleEdit = () => {
-    LoadingActions.start();
-    const deviceDescriptionId = deviceDescription.id;
-    const attachmentId = attachment.id;
-
-    //ElementActions.importWellplateSpreadsheet(deviceDescriptionId, attachmentId);
+  const updateEditedAttachment = (attachment) => {
+    let attachments = [];
+    deviceDescription.attachments.map((currentAttachment) => {
+      if (currentAttachment.id === attachment.id) {
+        attachments.push(attachment);
+      } else {
+        attachments.push(currentAttachment);
+      }
+    });
+    deviceDescriptionsStore.changeDeviceDescription('attachments', attachments);
+    deviceDescriptionsStore.setFilteredAttachments(deviceDescriptionsStore.device_description.attachments);
   }
+
+  const handleEditAnnotation = (annotation) => {
+    let selectedAttachment = { ...deviceDescriptionsStore.attachment_selected };
+    selectedAttachment.updatedAnnotation = annotation;
+    updateEditedAttachment(selectedAttachment);
+  }
+
+  const handleEditAttachment = (attachment) => {
+    const fileType = last(attachment.filename.split('.'));
+    const docType = documentType(attachment.filename);
+
+    EditorFetcher.startEditing({ attachment_id: attachment.id })
+      .then((result) => {
+        if (result.token) {
+          const url = `/editor?id=${attachment.id}&docType=${docType}
+          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
+          &only_office_token=${result.only_office_token}`;
+          window.open(url, '_blank');
+
+          attachment.aasm_state = 'oo_editing';
+          attachment.updated_at = new Date();
+
+          updateEditedAttachment(attachment);
+        } else {
+          alert('Unauthorized to edit this file.');
+        }
+      });
+  }
+
 
   const onUndoDelete = (attachment) => {
     const index = deviceDescription.attachments.indexOf(attachment);
@@ -185,9 +221,9 @@ const AttachmentForm = ({ readonly }) => {
           deviceDescriptionsStore.attachment_editor,
           isEditing,
           editDisable,
-          handleEdit
+          handleEditAttachment
         )}
-        {annotateButton(attachment, this)}
+        {annotationButton(deviceDescriptionsStore, attachment)}
         {importButton(
           attachment,
           deviceDescriptionsStore.attachment_show_import_confirm,
@@ -261,23 +297,20 @@ const AttachmentForm = ({ readonly }) => {
   }
 
   const renderImageEditModal = () => {
-    //const { chosenAttachment, imageEditModalShown } = this.state;
-    //const { onEdit } = this.props;
-    //return (
-    //  <ImageAnnotationModalSVG
-    //    attachment={chosenAttachment}
-    //    isShow={imageEditModalShown}
-    //    handleSave={
-    //      () => {
-    //        const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-    //        chosenAttachment.updatedAnnotation = newAnnotation;
-    //        this.setState({ imageEditModalShown: false });
-    //        onEdit(chosenAttachment);
-    //      }
-    //    }
-    //    handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
-    //  />
-    //);
+    return (
+      <ImageAnnotationModalSVG
+        attachment={deviceDescriptionsStore.attachment_selected}
+        isShow={deviceDescriptionsStore.attachment_image_edit_modal_shown}
+        handleSave={
+          () => {
+            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
+            deviceDescriptionsStore.toogleAttachmentModal();
+            handleEditAnnotation(newAnnotation);
+          }
+        }
+        handleOnClose={() => { deviceDescriptionsStore.toogleAttachmentModal() }}
+      />
+    );
     return null;
   }
 

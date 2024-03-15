@@ -117,7 +117,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
       <Button bsStyle="info" disabled={!deviceDescriptionIsValid()} onClick={() => handleExportAnalyses()}>
         Download Analysis
         {' '}
-        {DeviceDescriptionsStore.analysis_start_export ? (
+        {deviceDescriptionsStore.analysis_start_export ? (
           <span>
             <i className="fa fa-spin fa-spinner" />
           </span>

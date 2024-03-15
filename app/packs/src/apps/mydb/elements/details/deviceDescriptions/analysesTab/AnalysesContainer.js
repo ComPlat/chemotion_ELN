@@ -4,8 +4,8 @@ import { PanelGroup, Panel, Button, OverlayTrigger, Tooltip, FormGroup, FormCont
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import AnalysisHeader from './AnalysisHeader';
 import AnalysisDragNDropRow from './AnalysisDragNDropRow';
-// import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-// import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -39,6 +39,14 @@ const AnalysesContainer = ({ readonly }) => {
 
   const handleContainerChanged = (container) => {
     deviceDescriptionsStore.changeAnalysisContainerContent(container);
+  }
+
+  const handleSpectraChange = () => {
+
+  }
+
+  const handleSpectraSubmit = () => {
+
   }
 
   const handleMove = (children) => {
@@ -146,23 +154,22 @@ const AnalysesContainer = ({ readonly }) => {
               container={container}
               onChange={() => handleContainerChanged(container)}
             />
+            <ViewSpectra
+              sample={deviceDescription}
+              handleSampleChanged={handleSpectraChange}
+              handleSubmit={handleSpectraSubmit}
+            />
+            <NMRiumDisplayer
+              sample={deviceDescription}
+              handleSampleChanged={handleSpectraChange}
+              handleSubmit={handleSpectraSubmit}
+            />
           </Panel.Body>
         </Panel>
       );
     });
     return panels;
   }
-
-  // <ViewSpectra
-  //   sample={this.props.researchPlan}
-  //   handleSampleChanged={this.handleSpChange}
-  //   handleSubmit={this.props.handleSubmit}
-  // />
-  // <NMRiumDisplayer
-  //   sample={this.props.researchPlan}
-  //   handleSampleChanged={this.handleSpChange}
-  //   handleSubmit={this.props.handleSubmit}
-  // />
 
   const analysisOrderContainer = () => {
     let panels = [];
