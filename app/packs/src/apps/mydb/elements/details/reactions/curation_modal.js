@@ -3,8 +3,6 @@ import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,To
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ReactionDetails from './ReactionDetails';
-import { reaction } from 'mobx';
 
 
 
@@ -12,8 +10,9 @@ import { reaction } from 'mobx';
 
 
 
+ 
 
-export default class Curation_modal extends Component {
+export default class CurationModal extends Component {
 
     constructor(props) {
       super(props);
@@ -26,6 +25,7 @@ export default class Curation_modal extends Component {
       this.handleSuggest = this.handleSuggest.bind(this);
       this.change_corect_word = this.change_corect_word.bind(this)
       this.handleChange = this.handleChange.bind(this)
+      this.handleSuggestChange = this.handleSuggestChange.bind(this)
       this.state = {
         desc : this.clean_data(this.props.description),
         show : false, 
@@ -36,6 +36,11 @@ export default class Curation_modal extends Component {
         correct_word : ""
       }
       
+    }
+
+    handleSuggestChange(e){
+      const new_word = e.target.value
+      this.setState({correct_word:new_word})
     }
 
     handleSubmit(closeView = false,description) {
@@ -83,6 +88,9 @@ export default class Curation_modal extends Component {
   
     handleShow() {
       this.setState({ show: true });
+    }
+
+    add_new_word_to_custom_dic(new_word){
     }
 
     handleSuggest(miss_spelled_words, index){
@@ -229,6 +237,7 @@ export default class Curation_modal extends Component {
                   suggestion
               </div>
               <div className="row"> 
+                <Button onClick={()=>this.add_new_word_to_custom_dic("new_word")}>add to dictionairy</Button>
                 <Button onClick={()=>this.spell_check(this.state.desc) }>fix</Button>
                 <Button onClick={()=>this.handleChange()}> save </Button>
                 <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
@@ -237,6 +246,10 @@ export default class Curation_modal extends Component {
               </div>
               <form>
                 <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
+                <legend>Or enter a new word</legend>
+                <input value={this.state.correct_word}
+                  onChange={this.handleSuggestChange}
+                />
               </form>
             </Modal.Body>
             <Modal.Footer>
