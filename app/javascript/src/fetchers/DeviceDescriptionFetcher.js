@@ -71,21 +71,18 @@ export default class DeviceDescriptionFetcher {
         updatedDeviceDescription.updateChecksum();
         return updatedDeviceDescription;
       })
-      //.then(() => BaseFetcher.updateAnnotations(deviceDescription))
-      //.then(() => this.fetchById(deviceDescription.id))
       .catch(errorMessage => console.log(errorMessage));
 
-    if (containerFiles.length > 0 || newFiles.length > 0 || delFiles.length > 0) {
-      const tasks = [];
-      if (containerFiles.length > 0) {
-        containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      }
-      if (newFiles.length > 0 || delFiles.length > 0) {
-        tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles)());
-      }
-      return Promise.all(tasks).then(() => promise());
+    const tasks = [];
+    if (containerFiles.length > 0) {
+      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
     }
-    return promise();
+    if (newFiles.length > 0 || delFiles.length > 0) {
+      tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles)());
+    }
+    return Promise.all(tasks)
+      .then(() => BaseFetcher.updateAnnotations(deviceDescription))
+      .then(() => promise());
   }
 
   static deleteDeviceDescription(deviceDescriptionId) {
