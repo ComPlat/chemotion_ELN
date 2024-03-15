@@ -1051,7 +1051,7 @@ export default class SampleDetails extends React.Component {
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
           <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <div style={{ marginLeft: '10px', marginTop: '-5px' }}>{colLabel}</div>
+          <div style={{ marginTop: '-5px' }}>{colLabel}</div>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           <PubchemLabels element={sample} />
           <HeaderCommentSection element={sample} />
