@@ -2,7 +2,7 @@ import React from 'react';
 
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import AnalysisHeader from './AnalysisHeader';
 import Container from 'src/models/Container';
 

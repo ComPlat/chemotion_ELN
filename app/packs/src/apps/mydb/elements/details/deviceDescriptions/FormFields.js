@@ -130,6 +130,45 @@ const ontologiesList = (store, element, label, info) => {
   );
 }
 
+const allowedAnnotationFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
+
+const annotationButton = (store, attachment) => {
+  if (!attachment || !attachment.filename) { return null; }
+
+  const extension = attachment.filename.split('.').pop();
+  const isAllowedFileType = allowedAnnotationFileTypes.includes(extension);
+  const isActive = isAllowedFileType && !attachment.isNew;
+  const className = !isAllowedFileType ? 'attachment-gray-button' : '';
+  const tooltipText = isActive
+    ? 'Annotate image'
+    : 'Cannot annotate - invalid file type or the image is new';
+
+  return (
+    <OverlayTrigger
+      placement="top"
+      overlay={<Tooltip id="annotate_tooltip">{tooltipText}</Tooltip>}
+    >
+      <span>
+        <Button
+          bsSize="xs"
+          bsStyle="warning"
+          className={`attachment-button-size ${className}`}
+          onClick={() => {
+            if (isActive) {
+              store.toogleAttachmentModal();
+              store.setAttachmentSelected(attachment);
+              // imageName: attachment.filename,
+            }
+          }}
+          disabled={!isActive}
+        >
+          <i className="fa fa-pencil-square-o" aria-hidden="true" />
+        </Button>
+      </span>
+    </OverlayTrigger>
+  );
+}
+
 const headlineWithToggle = (store, type, text) => {
   const toggledClass = store.toggable_contents[type] ? '' : ' toggled';
   return (
@@ -346,5 +385,5 @@ const textInput = (element, store, field, label, info) => {
 export {
   selectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, ontologiesList
+  operatorInput, ontologiesList, annotationButton,
 }

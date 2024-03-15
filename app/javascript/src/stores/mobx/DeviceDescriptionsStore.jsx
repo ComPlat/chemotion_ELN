@@ -32,6 +32,7 @@ export const DeviceDescriptionsStore = types
     attachment_editor: types.optional(types.boolean, false),
     attachment_extension: types.optional(types.frozen({}), {}),
     attachment_image_edit_modal_shown: types.optional(types.boolean, false),
+    attachment_selected: types.optional(types.frozen({}), {}),
     attachment_show_import_confirm: types.optional(types.array(types.frozen({})), []),
     attachment_filter_text: types.optional(types.string, ''),
     attachment_sort_by: types.optional(types.string, 'name'),
@@ -132,6 +133,12 @@ export const DeviceDescriptionsStore = types
     },
     setShowImportConfirm(value) {
       self.attachment_show_import_confirm = value;
+    },
+    toogleAttachmentModal() {
+      self.attachment_image_edit_modal_shown = !self.attachment_image_edit_modal_shown;
+    },
+    setAttachmentSelected(attachment) {
+      self.attachment_selected = attachment;
     },
     setAttachmentFilterText(value) {
       self.attachment_filter_text = value;

@@ -10,6 +10,7 @@ import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import { instrumentText } from 'src/utilities/ElementUtils';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -180,8 +181,9 @@ const AnalysisHeader = ({ container, readonly }) => {
   const panelHeader = () => {
     const kind = (container.extended_metadata.kind?.split('|')[1] || container.extended_metadata.kind)?.trim() || '';
     const titleKind = `Type: ${kind}`;
+    const instText = ` - ${instrumentText(container)}`;
     const status = container.extended_metadata.status || '';
-    const titleStatus = `Status: ${status}`;
+    const titleStatus = `Status: ${status} ${instText}`;
     const titleStriked =
       [container.name, titleKind, titleStatus].filter(n => n != 'Type: ' && n != 'Status: ').join(' - ');
     const headerClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'analysis-header order' : 'analysis-header';
