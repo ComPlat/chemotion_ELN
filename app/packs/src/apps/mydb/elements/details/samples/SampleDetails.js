@@ -297,17 +297,6 @@ export default class SampleDetails extends React.Component {
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
-    if (sample.sample_type_name === 'Mixture'){
-      const splitMolfiles = molfile.match(/\$MOL[\s\S]*?M\s+END/g);
-      const cleanedMolfiles = splitMolfiles.map(section => section.replace(/\$MOL|null/g, '').trim());
-      const mixtureMolfiles = cleanedMolfiles.map(molfile => `\n ${molfile}`)
-
-      sample.mixtureMolfiles = mixtureMolfiles;
-      if (sample.mixtureMolfiles){
-        sample.splitMolfileToMolecule(mixtureMolfiles, editor);
-      }
-    }
-
     const fetchError = (errorMessage) => {
       NotificationActions.add({
         title: 'Error on Sample creation',
@@ -341,12 +330,25 @@ export default class SampleDetails extends React.Component {
     };
 
     if (!smiles || smiles === '') {
-      fetchMolecule(
-        () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
-      );
+      if (sample.sample_type_name === 'Mixture'){
+        const splitMolfiles = molfile.match(/\$MOL[\s\S]*?M\s+END/g);
+        const cleanedMolfiles = splitMolfiles.map(section => section.replace(/\$MOL|null/g, '').trim());
+        const mixtureMolfiles = cleanedMolfiles.map(molfile => `\n ${molfile}`)
+  
+        sample.mixtureMolfiles = mixtureMolfiles;
+        if (sample.mixtureMolfiles){
+          sample.splitMolfileToMolecule(mixtureMolfiles, editor).then(() => {
+            fetchMolecule(() => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled));
+        });
+      } else {
+        fetchMolecule(
+          () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
+        );
+      }
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
+   }
   }
 
   handleStructureEditorCancel() {
