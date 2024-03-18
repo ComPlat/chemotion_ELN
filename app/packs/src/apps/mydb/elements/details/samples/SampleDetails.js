@@ -163,6 +163,7 @@ export default class SampleDetails extends React.Component {
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.splitMolfile = this.splitMolfile.bind(this);
   }
 
   componentDidMount() {
@@ -324,31 +325,19 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.splitMolfile(editor);
           this.hideStructureEditor();
         });
     };
 
     if (!smiles || smiles === '') {
-      if (sample.sample_type_name === 'Mixture'){
-        const splitMolfiles = molfile.match(/\$MOL[\s\S]*?M\s+END/g);
-        const cleanedMolfiles = splitMolfiles.map(section => section.replace(/\$MOL|null/g, '').trim());
-        const mixtureMolfiles = cleanedMolfiles.map(molfile => `\n ${molfile}`)
-  
-        sample.mixtureMolfiles = mixtureMolfiles;
-        if (sample.mixtureMolfiles){
-          sample.splitMolfileToMolecule(mixtureMolfiles, editor).then(() => {
-            fetchMolecule(() => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled));
-        });
-      } else {
-        fetchMolecule(
-          () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
-        );
-      }
+      fetchMolecule(
+        () => MoleculesFetcher.fetchByMolfile(molfile, svgFile, editor, sample.decoupled)
+      );
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
    }
-  }
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
@@ -1423,6 +1412,23 @@ export default class SampleDetails extends React.Component {
     this.setState({
       showStructureEditor: false
     });
+  }
+
+  splitMolfile(editor) {
+    const { sample } = this.state;
+    if (sample.sample_type_name !== 'Mixture') { return }
+    
+    const splitMolfiles = sample.molfile.match(/\$MOL[\s\S]*?M\s+END/g);
+    const cleanedMolfiles = splitMolfiles.map(section => section.replace(/\$MOL|null/g, '').trim());
+    const mixtureMolfiles = cleanedMolfiles.map(molfile => `\n ${molfile}`)
+  
+    sample.mixtureMolfiles = mixtureMolfiles;
+    if (sample.mixtureMolfiles) {
+      sample.splitMolfileToMolecule(mixtureMolfiles, editor)
+        .then(() => {
+          this.setState({ sample });
+        });
+    }
   }
 
   toggleInchi() {
