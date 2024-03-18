@@ -14,6 +14,22 @@ describe Chemotion::SearchAPI do
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
   let(:sample_c) { create(:sample, name: 'SampleC', creator: other_user) }
   let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
+  let(:sample_sorting_a) do
+    create(:sample, name: 'Sorting_Sample_A', creator: user,
+                    created_at: Date.strptime('10/15/2013', '%m/%d/%Y'),
+                    updated_at: Date.strptime('10/15/2015', '%m/%d/%Y'))
+  end
+  let(:sample_sorting_b) do
+    create(:sample, name: 'Sorting_Sample_B', creator: user,
+                    created_at: Date.strptime('10/15/2014', '%m/%d/%Y'),
+                    updated_at: Date.strptime('10/15/2013', '%m/%d/%Y'))
+  end
+  let(:sample_sorting_c) do
+    create(:sample, name: 'Sorting_Sample_C', creator: user,
+                    created_at: Date.strptime('10/15/2015', '%m/%d/%Y'),
+                    updated_at: Date.strptime('10/15/2014', '%m/%d/%Y'))
+  end
+
   let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)]) }
   let(:other_wellplate) { create(:wellplate, name: 'Other Wellplate', wells: [build(:well, sample: sample_b)]) }
   let(:reaction) { create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user) }
@@ -61,6 +77,10 @@ describe Chemotion::SearchAPI do
     CollectionsScreen.create!(screen: other_screen, collection: other_collection)
     CollectionsWellplate.create!(wellplate: other_wellplate, collection: other_collection)
     ScreensWellplate.create!(wellplate: other_wellplate, screen: other_screen)
+
+    CollectionsSample.create!(sample: sample_sorting_a, collection: collection)
+    CollectionsSample.create!(sample: sample_sorting_b, collection: collection)
+    CollectionsSample.create!(sample: sample_sorting_c, collection: collection)
 
     post url, params: params
   end
@@ -272,6 +292,37 @@ describe Chemotion::SearchAPI do
       it 'returns one reaction' do
         result = JSON.parse(response.body)
         expect(result.dig('reactions', 'totalElements')).to eq 2
+      end
+    end
+
+    context 'when searching for names and sorted by creation dates ascending' do
+      let(:result) { JSON.parse(response.body) }
+      let(:search_term) { 'Sorting_Sample' }
+
+      let(:advanced_params) do
+        [
+          {
+            link: '',
+            match: 'LIKE',
+            table: 'samples',
+            element_id: 0,
+            field: {
+              column: 'name',
+              label: 'Name',
+            },
+            value: search_term,
+            sub_values: [],
+            unit: '',
+            sorting: {
+              column: 'created_at',
+              direction: 'ascending',
+            },
+          },
+        ]
+      end
+
+      it 'returns 3 samples' do
+        expect(result.dig('reactions', 'totalElements')).to eq 3
       end
     end
   end
