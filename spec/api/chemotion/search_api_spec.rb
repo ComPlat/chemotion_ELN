@@ -16,17 +16,17 @@ describe Chemotion::SearchAPI do
   let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
   let(:sample_sorting_a) do
     create(:sample, name: 'Sorting_Sample_A', creator: user,
-                    created_at: Date.strptime('10/15/2013', '%m/%d/%Y'),
+                    created_at: Date.strptime('10/15/2009', '%m/%d/%Y'),
                     updated_at: Date.strptime('10/15/2015', '%m/%d/%Y'))
   end
   let(:sample_sorting_b) do
     create(:sample, name: 'Sorting_Sample_B', creator: user,
-                    created_at: Date.strptime('10/15/2014', '%m/%d/%Y'),
+                    created_at: Date.strptime('10/15/2010', '%m/%d/%Y'),
                     updated_at: Date.strptime('10/15/2013', '%m/%d/%Y'))
   end
   let(:sample_sorting_c) do
     create(:sample, name: 'Sorting_Sample_C', creator: user,
-                    created_at: Date.strptime('10/15/2015', '%m/%d/%Y'),
+                    created_at: Date.strptime('10/15/2011', '%m/%d/%Y'),
                     updated_at: Date.strptime('10/15/2014', '%m/%d/%Y'))
   end
 
@@ -322,7 +322,13 @@ describe Chemotion::SearchAPI do
       end
 
       it 'returns 3 samples' do
-        expect(result.dig('reactions', 'totalElements')).to eq 3
+        expect(result.dig('samples', 'totalElements')).to eq 3
+      end
+
+      it 'all three samples are in correct order' do
+        expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.2009, 00:00:00 +0000'
+        expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.2010, 00:00:00 +0000'
+        expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.2011, 00:00:00 +0000'
       end
     end
   end

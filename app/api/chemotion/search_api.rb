@@ -42,6 +42,8 @@ module Chemotion
             requires :value, type: String
             optional :smiles, type: String
             optional :sub_values, type: Array
+            optional :sorting, type: Hash
+
           end
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
@@ -551,6 +553,11 @@ module Chemotion
             user: current_user,
             conditions: conditions,
           ).perform!
+
+          results.dig('samples',:elements).sort_by do |o| 
+            o[:created_at]
+          end
+
 
           results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
           results
