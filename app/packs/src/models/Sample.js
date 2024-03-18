@@ -1073,6 +1073,7 @@ export default class Sample extends Element {
       tmpComponents.push(newComponent);
       this.mixture_components = tmpComponents;
     }
+    this.combineSVG()
   }
 
   deleteMixtureComponent(componentToDelete) {
@@ -1081,6 +1082,7 @@ export default class Sample extends Element {
       (comp) => comp !== componentToDelete
     );
     this.mixture_components = filteredComponents;
+    this.combineSVG()
   }
 
   updateMixtureComponent(componentToUpdate) {
@@ -1127,7 +1129,6 @@ export default class Sample extends Element {
       const subSample = Sample.buildNew(molecule, this.collection_id);
       this.addMixtureComponent(subSample);
     });
-    this.combineSVG()
   }
 
   combineSVG(){
