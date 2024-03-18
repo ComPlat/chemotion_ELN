@@ -10,23 +10,31 @@ describe Chemotion::SearchAPI do
   let(:other_user) { create(:person) }
   let(:collection) { create(:collection, user: user) }
   let(:other_collection) { create(:collection, user: other_user) }
+  let(:sorting_collection) { create(:collection, user: user) }
   let(:sample_a) { create(:sample, name: 'SampleA', creator: user) }
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
   let(:sample_c) { create(:sample, name: 'SampleC', creator: other_user) }
   let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
   let(:sample_sorting_a) do
     create(:sample, name: 'Sorting_Sample_A', creator: user,
-                    created_at: Date.strptime('10/15/2009', '%m/%d/%Y'),
+                    created_at: Date.strptime('10/15/1090', '%m/%d/%Y'),
                     updated_at: Date.strptime('10/15/2015', '%m/%d/%Y'))
   end
   let(:sample_sorting_b) do
     create(:sample, name: 'Sorting_Sample_B', creator: user,
-                    created_at: Date.strptime('10/15/2010', '%m/%d/%Y'),
+                    created_at: Date.strptime('10/15/1080', '%m/%d/%Y'),
                     updated_at: Date.strptime('10/15/2013', '%m/%d/%Y'))
   end
   let(:sample_sorting_c) do
     create(:sample, name: 'Sorting_Sample_C', creator: user,
-                    created_at: Date.strptime('10/15/2011', '%m/%d/%Y'),
+                    created_at: Date.strptime('10/15/1070', '%m/%d/%Y'),
+                    updated_at: Date.strptime('10/15/2014', '%m/%d/%Y'))
+  end
+
+  let(:sample_sorting_d) do
+    create(:sample, name: 'Sorting_Sample_C', creator: user,
+                    molecule: FactoryBot.create(:molecule),
+                    created_at: Date.strptime('10/15/1085', '%m/%d/%Y'),
                     updated_at: Date.strptime('10/15/2014', '%m/%d/%Y'))
   end
 
@@ -78,9 +86,10 @@ describe Chemotion::SearchAPI do
     CollectionsWellplate.create!(wellplate: other_wellplate, collection: other_collection)
     ScreensWellplate.create!(wellplate: other_wellplate, screen: other_screen)
 
-    CollectionsSample.create!(sample: sample_sorting_a, collection: collection)
-    CollectionsSample.create!(sample: sample_sorting_b, collection: collection)
-    CollectionsSample.create!(sample: sample_sorting_c, collection: collection)
+    CollectionsSample.create!(sample: sample_sorting_a, collection: sorting_collection)
+    CollectionsSample.create!(sample: sample_sorting_b, collection: sorting_collection)
+    CollectionsSample.create!(sample: sample_sorting_c, collection: sorting_collection)
+    CollectionsSample.create!(sample: sample_sorting_d, collection: sorting_collection)
 
     post url, params: params
   end
@@ -189,6 +198,7 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/advanced' do
     let(:url) { '/api/v1/search/advanced' }
+    let(:collection_id){collection.id}
     let(:advanced_params) do
       [
         {
@@ -213,7 +223,7 @@ describe Chemotion::SearchAPI do
           advanced_params: advanced_params,
           search_by_method: :advanced,
         },
-        collection_id: collection.id,
+        collection_id: collection_id,
         page: 1,
         per_page: 15,
         molecule_sort: true,
@@ -298,6 +308,7 @@ describe Chemotion::SearchAPI do
     context 'when searching for names and sorted by creation dates ascending' do
       let(:result) { JSON.parse(response.body) }
       let(:search_term) { 'Sorting_Sample' }
+      let(:collection_id){ sorting_collection.id}
 
       let(:advanced_params) do
         [
@@ -321,14 +332,15 @@ describe Chemotion::SearchAPI do
         ]
       end
 
-      it 'returns 3 samples' do
-        expect(result.dig('samples', 'totalElements')).to eq 3
+      it 'returns four samples' do
+        expect(result.dig('samples', 'totalElements')).to eq 4
       end
 
       it 'all three samples are in correct order' do
-        expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.2009, 00:00:00 +0000'
-        expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.2010, 00:00:00 +0000'
-        expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.2011, 00:00:00 +0000'
+        expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.1070, 00:00:00 +0000'
+        expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.1080, 00:00:00 +0000'
+        expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.1085, 00:00:00 +0000'
+        expect(result.dig('samples','elements').fourth.dig('created_at')).to eq '15.10.1090, 00:00:00 +0000'
       end
     end
   end

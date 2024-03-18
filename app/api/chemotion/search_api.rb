@@ -42,7 +42,10 @@ module Chemotion
             requires :value, type: String
             optional :smiles, type: String
             optional :sub_values, type: Array
-            optional :sorting, type: Hash
+            optional :sorting, type: Hash do
+              requires :column, type: String, values:['created_at','updated_at'], default: 'created_at'
+              requires :direction, type: String, values:['ascending','descending'], default: 'ascending'
+            end
 
           end
           optional :id_params, type: Hash do
@@ -541,6 +544,7 @@ module Chemotion
         end
 
         post do
+          
           conditions =
             Usecases::Search::ConditionsForAdvancedSearch.new(
               detail_levels: @dl,
@@ -554,10 +558,10 @@ module Chemotion
             conditions: conditions,
           ).perform!
 
-          results.dig('samples',:elements).sort_by do |o| 
+          results['samples'][:elements] = results.dig('samples',:elements).sort_by do |o| 
             o[:created_at]
           end
-
+         
 
           results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
           results
