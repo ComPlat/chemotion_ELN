@@ -35,7 +35,7 @@ describe Chemotion::SearchAPI do
     create(:sample, name: 'Sorting_Sample_C', creator: user,
                     molecule: FactoryBot.create(:molecule),
                     created_at: Date.strptime('10/15/1085', '%m/%d/%Y'),
-                    updated_at: Date.strptime('10/15/2014', '%m/%d/%Y'))
+                    updated_at: Date.strptime('11/15/2014', '%m/%d/%Y'))
   end
 
   let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)]) }
@@ -305,11 +305,12 @@ describe Chemotion::SearchAPI do
       end
     end
 
-    context 'when searching for names and sorted by creation dates ascending' do
+    context 'with focus on sorting' do
+      let(:search_column){ 'created_at'}
+      let(:search_direction){ 'ascending'}
       let(:result) { JSON.parse(response.body) }
       let(:search_term) { 'Sorting_Sample' }
       let(:collection_id){ sorting_collection.id}
-
       let(:advanced_params) do
         [
           {
@@ -325,23 +326,71 @@ describe Chemotion::SearchAPI do
             sub_values: [],
             unit: '',
             sorting: {
-              column: 'created_at',
-              direction: 'ascending',
+              column: search_column,
+              direction: search_direction,
             },
           },
         ]
       end
 
-      it 'returns four samples' do
-        expect(result.dig('samples', 'totalElements')).to eq 4
+      context 'when searching for names and sorted by creation dates ascending' do
+        it 'returns four samples' do
+          expect(result.dig('samples', 'totalElements')).to eq 4
+        end
+
+        it 'all four samples are in correct order' do
+          expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.1070, 00:00:00 +0000'
+          expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.1080, 00:00:00 +0000'
+          expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.1085, 00:00:00 +0000'
+          expect(result.dig('samples','elements').fourth.dig('created_at')).to eq '15.10.1090, 00:00:00 +0000'
+        end
       end
 
-      it 'all three samples are in correct order' do
-        expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.1070, 00:00:00 +0000'
-        expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.1080, 00:00:00 +0000'
-        expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.1085, 00:00:00 +0000'
-        expect(result.dig('samples','elements').fourth.dig('created_at')).to eq '15.10.1090, 00:00:00 +0000'
+      context 'when searching for names and sorted by creation dates descending' do
+        let(:search_direction){ 'descending'}
+
+        it 'returns four samples' do
+          expect(result.dig('samples', 'totalElements')).to eq 4
+        end
+
+        it 'all four samples are in correct order' do
+          expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.1090, 00:00:00 +0000'
+          expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.1085, 00:00:00 +0000'
+          expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.1080, 00:00:00 +0000'
+          expect(result.dig('samples','elements').fourth.dig('created_at')).to eq '15.10.1070, 00:00:00 +0000'
+        end
       end
+      context 'when searching for names and sorted by updated dates ascending' do
+        let(:search_column){ 'updated_at'}
+
+        it 'returns four samples' do
+          expect(result.dig('samples', 'totalElements')).to eq 4
+        end
+
+        it 'all four samples are in correct order' do
+          expect(result.dig('samples','elements').first.dig('updated_at')).to eq '15.10.2013, 00:00:00 +0000'
+          expect(result.dig('samples','elements').second.dig('updated_at')).to eq '15.10.2014, 00:00:00 +0000'
+          expect(result.dig('samples','elements').third.dig('updated_at')).to eq '15.11.2014, 00:00:00 +0000'
+          expect(result.dig('samples','elements').fourth.dig('updated_at')).to eq '15.10.2015, 00:00:00 +0000'
+        end
+      end
+
+      context 'when searching for names and sorted by updated dates descending' do
+        let(:search_column){ 'updated_at'}
+        let(:search_direction){ 'descending'}
+
+        it 'returns four samples' do
+          expect(result.dig('samples', 'totalElements')).to eq 4
+        end
+
+        it 'all four samples are in correct order' do
+          expect(result.dig('samples','elements').first.dig('updated_at')).to eq '15.10.2015, 00:00:00 +0000'
+          expect(result.dig('samples','elements').second.dig('updated_at')).to eq '15.11.2014, 00:00:00 +0000'
+          expect(result.dig('samples','elements').third.dig('updated_at')).to eq '15.10.2014, 00:00:00 +0000'
+          expect(result.dig('samples','elements').fourth.dig('updated_at')).to eq '15.10.2013, 00:00:00 +0000'
+        end
+      end
+
     end
   end
 

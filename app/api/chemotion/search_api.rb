@@ -558,11 +558,24 @@ module Chemotion
             conditions: conditions,
           ).perform!
 
-          results['samples'][:elements] = results.dig('samples',:elements).sort_by do |o| 
-            o[:created_at]
-          end
-         
+          if params.dig('selection','advanced_params').first.dig('sorting') != nil then
+            sorting_column=params.dig('selection','advanced_params').first.dig('sorting','column')
+            sorting_direction=params.dig('selection','advanced_params').first.dig('sorting','direction')
 
+
+            results['samples'][:elements] = results.dig('samples',:elements).sort_by do |o| 
+
+              if( sorting_column)=="created_at" then
+                Date.parse o[:created_at]
+              elsif( sorting_column)=="updated_at"
+                Date.parse o[:updated_at]
+              end
+            end
+            if(sorting_direction=="descending") then
+              results['samples'][:elements] = results.dig('samples',:elements).reverse
+            end
+          end
+          
           results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
           results
         end
