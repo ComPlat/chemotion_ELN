@@ -1126,8 +1126,8 @@ export default class Sample extends Element {
     mixtureMolecules.map(molecule => {
       const subSample = Sample.buildNew(molecule, this.collection_id);
       this.addMixtureComponent(subSample);
-      this.combineSVG()
     });
+    this.combineSVG()
   }
 
   combineSVG(){
