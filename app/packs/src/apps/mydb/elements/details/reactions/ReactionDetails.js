@@ -39,7 +39,7 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import Curation_modal from "./curation_modal";
+
 
 
 export default class ReactionDetails extends Component {
@@ -304,12 +304,7 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="Curate">Curate</Tooltip>}
-        >
-        <Curation_modal description= {reaction.description.ops} reaction={reaction}/>
-        </OverlayTrigger>
+      
       
         {copyBtn}
         <OverlayTrigger

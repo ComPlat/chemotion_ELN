@@ -5,13 +5,6 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 
-
-
-
-
-
- 
-
 export default class CurationModal extends Component {
 
     constructor(props) {
@@ -91,7 +84,16 @@ export default class CurationModal extends Component {
     }
 
     add_new_word_to_custom_dic(new_word){
+      fetch("/typojs/custom/custom.dic")
+      .then(response => (response.text()))
+      // .then(responsetext => console.log(responsetext))
+      .then(responsetext => {var text = responsetext 
+              var ammendedDictionairy = (text + new_word + "\n")
+              fetch("/typojs/custom/custom.dic", {method: "POST", headers:{"Content-Type": "text/plain"}, body : ammendedDictionairy})} )
     }
+
+    
+
 
     handleSuggest(miss_spelled_words, index){
       var Typo = require("typo-js");
@@ -210,7 +212,7 @@ export default class CurationModal extends Component {
         else{
           return (
             <div>
-              <h3>NONE</h3>
+              <h5>None</h5>
             </div>
           )
         }
@@ -233,17 +235,17 @@ export default class CurationModal extends Component {
                 borderRadius: "10px",}}>
                 <Compo text={this.state.desc} highlight= {this.state.mispelled_words} /> 
               </div>         
-              <div>
-                  suggestion
-              </div>
+              
               <div className="row"> 
-                <Button onClick={()=>this.add_new_word_to_custom_dic("new_word")}>add to dictionairy</Button>
-                <Button onClick={()=>this.spell_check(this.state.desc) }>fix</Button>
-                <Button onClick={()=>this.handleChange()}> save </Button>
+             
+                <Button onClick={()=>this.spell_check(this.state.desc) }>spell check</Button>
                 <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
                 <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
-                <Button onClick={()=>this.handleSuggest(this.state.mispelled_words, this.state.suggestion_index)}>suggest</Button>
+                <Button onClick={()=>this.handleChange()}> save </Button>
               </div>
+              <h4>
+                  Suggestions
+              </h4>
               <form>
                 <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
                 <legend>Or enter a new word</legend>
@@ -251,6 +253,7 @@ export default class CurationModal extends Component {
                   onChange={this.handleSuggestChange}
                 />
               </form>
+              <Button onClick={()=>this.add_new_word_to_custom_dic(this.state.correct_word)}>add to dictionairy</Button>
             </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
