@@ -107,8 +107,10 @@ export default class UserManagement extends React.Component {
       showNewUserModal: false,
       showEditUserModal: false,
       showGenericAdminModal: false,
+      showRestoreAccountModal: false,
       messageNewUserModal: '',
       messageEditUserModal: '',
+      messageRestoreAccountModal:'',
       processingSummaryUserFile: '',
       filterCriteria: {}
     };
@@ -123,6 +125,9 @@ export default class UserManagement extends React.Component {
     this.handleEditUserShow = this.handleEditUserShow.bind(this);
     this.handleEditUserClose = this.handleEditUserClose.bind(this);
     this.handleUpdateUser = this.handleUpdateUser.bind(this);
+    this.handleRestoreAccountShow = this.handleRestoreAccountShow.bind(this);
+    this.handleRestoreAccountClose = this.handleRestoreAccountClose.bind(this);
+    this.handleRestoreAccount = this.handleRestoreAccount.bind(this);
     this.handleGenericAdminModal = this.handleGenericAdminModal.bind(this);
     this.handleGenericAdminModalCb = this.handleGenericAdminModalCb.bind(this);
   }
@@ -172,6 +177,20 @@ export default class UserManagement extends React.Component {
       showEditUserModal: false,
       messageEditUserModal: '',
       user: {}
+    });
+  }
+
+  handleRestoreAccountShow() {
+    this.setState({
+      showRestoreAccountModal: true,
+      messageRestoreAccountModal: '',   
+    });
+  }
+
+  handleRestoreAccountClose() {
+    this.setState({
+      showRestoreAccountModal: false,
+      messageRestoreAccountModal: '',
     });
   }
 
@@ -377,6 +396,10 @@ export default class UserManagement extends React.Component {
         return true;
       });
     return true;
+  }
+
+  handleRestoreAccount(user) {
+   console.log('Restore Account')
   }
 
   updateFilter = (key, value) => {
@@ -886,6 +909,73 @@ export default class UserManagement extends React.Component {
       </Modal>
     );
   }
+  renderRestoreAccountModal() {
+    //const { user } = this.state;
+    return (
+      <Modal
+        show={this.state.showRestoreAccountModal}
+        onHide={this.handleRestoreAccountClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Restore Account</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ overflow: 'auto' }}>
+          <div className="col-md-9">
+            <Form horizontal>
+              <FormGroup controlId="formControlEmail">
+                <Col componentClass={ControlLabel} sm={3}>
+                  Email:
+                </Col>
+                <Col sm={9}>
+                  <FormControl
+                    type="email"
+                    name="u_email"
+                   // defaultValue={user.email}
+                    inputRef={(ref) => { this.u_email = ref; }}
+                  />
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlAbbr">
+                <Col componentClass={ControlLabel} sm={3}>
+                  Abbr (3):
+                </Col>
+                <Col sm={9}>
+                  <FormControl
+                    type="text"
+                    name="nameAbbrevation"
+                    //defaultValue={user.initials}
+                    inputRef={(ref) => { this.nameAbbrevation = ref; }}
+                  />
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlMessage">
+                <Col sm={12}>
+                  <FormControl
+                    type="text"
+                    readOnly
+                    name="messageRestoreAccountModal"
+                    value={this.state.messageRestoreAccountModal}
+                  />
+                </Col>
+              </FormGroup>
+              <FormGroup>
+                <Col smOffset={0} sm={10}>
+                  <Button bsStyle="primary" onClick={() => this.handleRestoreAccount()}>
+                    Restore&nbsp;
+                    <i className="fa fa-save" />
+                  </Button>
+                  &nbsp;
+                  <Button bsStyle="warning" onClick={() => this.handleRestoreAccountClose()}>
+                    Cancel&nbsp;
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
+  }
 
   renderGenericAdminModal() {
     const { user, showGenericAdminModal } = this.state;
@@ -1171,6 +1261,11 @@ export default class UserManagement extends React.Component {
             New User&nbsp;
             <i className="fa fa-plus" />
           </Button>
+          &nbsp;
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleRestoreAccountShow()} data-cy="restore-user">
+            Restore Account&nbsp;
+            <i className="fa fa-undo" />
+          </Button>
         </Panel>
         <Panel>
           <Table>
@@ -1183,6 +1278,7 @@ export default class UserManagement extends React.Component {
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
+        {this.renderRestoreAccountModal()}
         { this.renderGenericAdminModal() }
       </div>
     );
