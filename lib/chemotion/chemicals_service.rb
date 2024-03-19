@@ -54,19 +54,6 @@ module Chemotion
       'Could not find safety data sheet from Thermofisher'
     end
 
-    def self.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)
-      saved = false
-      unless  safety_sheet_files_names.empty?
-        safety_sheet_files_names.each do |file|
-          if file == file_name
-            saved = true
-            break
-          end
-        end
-      end
-      saved
-    end
-
     def self.write_file(file_path, link)
       options = request_options.dup
       options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
@@ -85,13 +72,8 @@ module Chemotion
     end
 
     def self.create_sds_file(file_path, link)
-      safety_sheet_files_names = Dir.children('public/safety_sheets')
-      if check_if_safety_sheet_already_saved(file_path, safety_sheet_files_names) == false
-        write_file(file_path, link)
-        sleep 1
-      else
-        'file is already saved'
-      end
+      write_file(file_path, link)
+      sleep 1
     rescue StandardError
       'could not save safety data sheet'
     end

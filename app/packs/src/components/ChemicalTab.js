@@ -580,7 +580,7 @@ export default class ChemicalTab extends React.Component {
       vendor_product: vendorProduct
     };
     ChemicalFetcher.saveSafetySheets(params).then((result) => {
-      if (result || result === 'file is already saved') {
+      if (result) {
         const value = `/safety_sheets/${productInfo.productNumber}_${productInfo.vendor}.pdf`;
         const chemicalData = chemical._chemical_data;
         const pathArr = [];
@@ -812,7 +812,6 @@ export default class ChemicalTab extends React.Component {
 
   renderSafetyPhrases = () => {
     const { chemical, safetyPhrases } = this.state;
-    console.log(chemical);
     let fetchedSafetyPhrases;
     if (chemical && chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
       const phrases = chemical._chemical_data[0].safetyPhrases;
