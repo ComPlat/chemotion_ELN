@@ -449,17 +449,37 @@ module Chemotion
               stock_component_sample = Sample.find_by(id: component_id)
               next if stock_component_sample.blank?
 
-              component = params[:mixture_components].find { |c| c[:parent_id].to_i == component_id }
-              subsample = stock_component_sample.create_subsample(current_user, @sample.collection_ids, true, 'sample')
-              component_quantities = {
-                target_amount_value: component[:_target_amount_value],
-                target_amount_unit: component[:_target_amount_unit],
-                molarity_unit: component[:_molarity_unit],
-                molarity_value: component[:_molarity_value],
-                sample_type_name: 'MixtureComponent',
-              }
-              subsample.update!(component_quantities)
-              SampleType.create(sample: @sample, sampleable: subsample, component_stock: false)
+              if stock_component_sample
+                component = params[:mixture_components].find { |c| c[:parent_id].to_i == component_id }
+                component_sample = stock_component_sample.create_subsample(current_user, @sample.collection_ids, true, 'sample')
+                component_quantities = {
+                  target_amount_value: component[:_target_amount_value],
+                  target_amount_unit: component[:_target_amount_unit],
+                  molarity_unit: component[:_molarity_unit],
+                  molarity_value: component[:_molarity_value],
+                  sample_type_name: 'MixtureComponent',
+                }
+                component_sample.update!(component_quantities)
+              else
+                att = {
+                  target_amount_value: component[:_target_amount_value],
+                  target_amount_unit: component[:_target_amount_unit],
+                  molarity_value: component[:_molarity_value],
+                  molarity_unit: component[:_molarity_unit],
+                  molecule_id: component[:_molecule][:id],
+                  sample_svg_file: component[:sample_svg_file],
+                  created_by: current_user.id,
+                  sum_formula: component[:_molecule][:sum_formular],
+                  molfile: component[:molfile],
+                  stereo: component[:stereo],
+                }
+                component_sample = Sample.new(att)
+                binding.pry
+                collection = current_user.collections.where(id: params[:collection_id]).take
+                component_sample.collections << collection if collection.present?
+                component_sample.save
+              end
+              SampleType.create(sample: @sample, sampleable: component_sample, component_stock: false)
               @sample.mixture_components << subsample
             end
 
@@ -661,29 +681,38 @@ module Chemotion
             stock_component_sample = Sample.find_by(id: component[:parent_id])
 
             if stock_component_sample
-              subsample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+              component_sample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+
+              component_quantities = {
+                target_amount_value: component[:_target_amount_value],
+                target_amount_unit: component[:_target_amount_unit],
+                molarity_unit: component[:_molarity_unit],
+                molarity_value: component[:_molarity_value],
+                sample_type_name: 'MixtureComponent',
+              }
+              component_sample.update!(component_quantities)
             else
-              subsample = sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
+              att = {
+                target_amount_value: component[:_target_amount_value],
+                target_amount_unit: component[:_target_amount_unit],
+                molarity_value: component[:_molarity_value],
+                molarity_unit: component[:_molarity_unit],
+                molecule_id: component[:_molecule][:id],
+                sample_svg_file: component[:sample_svg_file],
+                created_by: current_user.id,
+                sum_formula: component[:_molecule][:sum_formular],
+                molfile: component[:molfile],
+                stereo: component[:stereo],
+              }
+              component_sample = Sample.new(att)
+              component_sample.collections << collection if collection.present?
+              component_sample.save
             end
 
-            molfile = component[:_molecule][:molfile]
-            molecule = Molecule.find_or_create_by_molfile(molfile)
-            component_quantities = {
-              target_amount_value: component[:_target_amount_value],
-              target_amount_unit: component[:_target_amount_unit],
-              molarity_unit: component[:_molarity_unit],
-              molarity_value: component[:_molarity_value],
-              sample_type_name: 'MixtureComponent',
-              molecule_id: molecule[:id],
-              molfile: molfile,
-            }
-            subsample.update!(component_quantities)
-            molecule.update!(iupac_name: component[:_molecule][:iupac_name]) if subsample.molecule.iupac_name.nil?
-
-            SampleType.create(sample: sample, sampleable: subsample, component_stock: false)
-            sample.mixture_components << subsample
-            sample.save
+            SampleType.create(sample: sample, sampleable: component_sample, component_stock: false)
+            sample.mixture_components << component_sample
           end
+          sample.save
         end
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)

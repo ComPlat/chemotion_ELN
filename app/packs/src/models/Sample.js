@@ -1126,8 +1126,8 @@ export default class Sample extends Element {
 
   mixtureMoleculeToSubsample(mixtureMolecules){
     mixtureMolecules.map(molecule => {
-      const subSample = Sample.buildNew(molecule, this.collection_id);
-      this.addMixtureComponent(subSample);
+      const newSample = Sample.buildNew(molecule, this.collection_id);
+      this.addMixtureComponent(newSample);
     });
   }
 
