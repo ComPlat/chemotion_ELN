@@ -134,6 +134,7 @@ export default class UserManagement extends React.Component {
       messageNewUserModal: '',
       messageEditUserModal: '',
       messageRestoreAccountModal: '',
+      messageRestoreAccountModal: '',
       processingSummaryUserFile: '',
       filterCriteria: {}
     };
@@ -1342,7 +1343,6 @@ export default class UserManagement extends React.Component {
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
-        {this.renderRestoreAccountModal()}
         {this.renderGenericAdminModal()}
       </div>
     );
