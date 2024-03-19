@@ -64,7 +64,7 @@ export default class ElementDetailSortTab extends Component {
     let { addInventoryTab, availableTabs } = this.props;
     const currentCollection = UIStore.getState().currentCollection;
     const collectionTabs = currentCollection?.tabs_segment;
-    let layout = {};
+    let layout;
     if (!collectionTabs || _.isEmpty(collectionTabs[`${this.type}`])) {
       layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${this.type}`];
     } else {
@@ -123,7 +123,7 @@ export default class ElementDetailSortTab extends Component {
       <Popover
         className="collection-overlay"
         id="popover-layout"
-        style={{ maxWidth: 'none', width: `${wd}px`, position: 'sticky' }}
+        style={{ maxWidth: 'none', width: `${wd}px`, position: 'absolute' }}
       >
         <div>
           <h3 className="popover-title">Tab Layout</h3>
@@ -133,8 +133,10 @@ export default class ElementDetailSortTab extends Component {
         </div>
       </Popover>
     );
+    // Using a ref object for the Popover placement
+    let div_ref = null;
     return (
-      <div>
+      <div ref={thisDiv => div_ref = thisDiv }>
         <Button
           bsStyle={buttonInfo}
           bsSize="xsmall"
@@ -147,7 +149,7 @@ export default class ElementDetailSortTab extends Component {
         </Button>
         <Overlay
           style={{ overflowY: 'scroll'}}
-          container={this}
+          container={div_ref}
           onHide={this.onCloseTabLayoutContainer}
           placement="bottom"
           rootClose

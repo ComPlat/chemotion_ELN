@@ -654,7 +654,7 @@ const DetailSearch = () => {
         fields.push(solventSelect(option, 'solventSelect', selectedValue, column, keyLabel));
         break;
       case 'spacer':
-        fields.push(<div class="form-group" key={`empty-column-${i}`}></div>);
+        fields.push(<div className="form-group" key={`empty-column-${i}`}></div>);
         break;
       case 'headline':
         fields.push(componentHeadline(option.label, 'headline', 'detail-search-headline'));

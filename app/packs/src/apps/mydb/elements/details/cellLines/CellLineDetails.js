@@ -81,7 +81,7 @@ class CellLineDetails extends React.Component {
       <div>
 
         <ElementCollectionLabels
-          class="collection-label floating"
+          className="collection-label floating"
           element={cellLineItem}
           key={cellLineItem.id}
           placement="right"
@@ -194,7 +194,7 @@ class CellLineDetails extends React.Component {
   render() {
     const { cellLineItem } = this.props;
 
-    if (!cellLineItem) { return (null); }
+    if (!cellLineItem) { return null; }
     // eslint-disable-next-line react/destructuring-assignment
     this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
     const { readOnly } = this.state;
