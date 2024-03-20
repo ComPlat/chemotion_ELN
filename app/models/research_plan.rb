@@ -19,7 +19,7 @@ class ResearchPlan < ApplicationRecord
   include Taggable
   include Labimotion::Segmentable
 
-  multisearchable against: %i[name search_text]
+  multisearchable against: %i[name parse_search_text]
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, :name, presence: true
@@ -67,7 +67,6 @@ class ResearchPlan < ApplicationRecord
   has_many :literatures, through: :literals
 
   before_destroy :delete_attachment
-  before_validation :parse_search_text
   accepts_nested_attributes_for :collections_research_plans
 
 
@@ -133,7 +132,7 @@ class ResearchPlan < ApplicationRecord
 
 
     end
-    self.search_text = search_text.join("  ").gsub("\n", " ")
+    search_text.join("  ").gsub("\n", " ")
   end
 
 
@@ -143,7 +142,7 @@ class ResearchPlan < ApplicationRecord
   # @param value [hash] Richtext content stored in a richtext body element
   # @return [str] Returns a string which contains the plain richtext content
   def parse_richtext_to_search_text(value)
-    value["ops"].map { |hash| hash["insert"] }.join("  ")
+    value["ops"].select {|hash| hash["insert"].instance_of?(String) }.map { |hash| hash["insert"] }.join("  ")
   end
 
 
