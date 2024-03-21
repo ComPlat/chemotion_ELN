@@ -346,6 +346,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :collection_id, type: Integer, desc: 'Collection id'
         # use :root_container_params
       end
 
@@ -392,6 +393,13 @@ module Chemotion
           attributes.delete(:boiling_point_upperbound)
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
+
+          inventory_label_changed = @sample.xref['inventory_label'] != params[:xref][:inventory_label]
+          # update inventory_label only if sample inventory label has a new value
+          collection_id = params[:collection_id]
+          @sample.update_inventory_label(collection_id) if inventory_label_changed && !collection_id.nil?
+          # remove collection_id from sample attributes after updating inventory label
+          attributes.delete(:collection_id)
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -544,6 +552,7 @@ module Chemotion
         end
 
         sample.container = update_datamodel(params[:container])
+        sample.update_inventory_label(params[:collection_id])
         sample.save!
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
