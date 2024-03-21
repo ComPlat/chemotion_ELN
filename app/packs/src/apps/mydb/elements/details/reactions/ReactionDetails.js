@@ -28,7 +28,7 @@ import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/Reac
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
-import { rfValueFormat } from 'src/utilities/ElementUtils';
+import { rfValueFormat, handleSaveDataset } from 'src/utilities/ElementUtils';
 import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
@@ -129,10 +129,16 @@ export default class ReactionDetails extends Component {
         activeAnalysisTab: state.reaction.activeAnalysisTab
       });
     }
+    const { reaction } = this.state;
+    const { products } = reaction;
+    const saved = handleSaveDataset(reaction, state, this.handleSubmit, false);
+    if (!saved && products.length > 0) {
+      handleSaveDataset(products, state, this.handleSubmit, false);
+    }
   }
 
   handleSubmit(closeView = false) {
-    LoadingActions.start();
+    LoadingActions.start.defer();
 
     const { reaction } = this.state;
     if (reaction && reaction.isNew) {

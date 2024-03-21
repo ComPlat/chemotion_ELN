@@ -143,7 +143,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled } = this.props;
+    const { readOnly, disabled, elementID, templateType } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -224,6 +224,8 @@ export default class ContainerComponent extends Component {
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label>Datasets</label>
           <ContainerDatasets
+            elementID={elementID}
+            templateType={templateType}
             container={container}
             readOnly={readOnly}
             disabled={disabled}
@@ -251,7 +253,8 @@ ContainerComponent.propTypes = {
   onChange: PropTypes.func,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  container: PropTypes.object
+  container: PropTypes.object,
+  elementID: PropTypes.string,
 };
 
 ContainerComponent.defaultProps = {
@@ -261,5 +264,6 @@ ContainerComponent.defaultProps = {
   onChange: () => {},
   readOnly: false,
   disabled: false,
-  container: {}
+  container: {},
+  elementID: ''
 };

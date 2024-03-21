@@ -181,6 +181,7 @@ const AiHeader = (props) => {
           readOnly={readOnly}
           container={container}
           onChange={() => fnChange()}
+          elementID={generic.id}
         />
         <ViewSpectra
           sample={generic}

@@ -292,6 +292,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                         disabled={readOnly}
                         container={container}
                         onChange={this.handleChange}
+                        elementID={researchPlan.id}
                       />
                       <ViewSpectra
                         sample={this.props.researchPlan}
