@@ -75,7 +75,12 @@ class UIStore {
       modalParams: {},
       hasChemSpectra: false,
       hasNmriumWrapper: false,
-      matrices: {}
+      matrices: {},
+      containerDataSet: {
+        elementID: '',
+        elementType: null,
+        isSaving: false,
+      },
     };
 
     this.bindListeners({
@@ -116,6 +121,7 @@ class UIStore {
       handleSetProductOnly: UIActions.setProductOnly,
       handleRerenderGenericWorkflow: UIActions.rerenderGenericWorkflow,
       handleShowGenericWorkflowModal: UIActions.showGenericWorkflowModal,
+      handleSaveAttachmentDataset: UIActions.saveAttachmentDataset,
     });
   }
 
@@ -495,6 +501,16 @@ class UIStore {
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
     this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleSaveAttachmentDataset(data) {
+    const { isSaving } = this.state.containerDataSet;
+    const { elementID, elementType } = data;
+    this.state.containerDataSet = {
+      elementID: elementID,
+      elementType: elementType,
+      isSaving: !isSaving
+    }
   }
 }
 

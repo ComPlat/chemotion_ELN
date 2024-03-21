@@ -433,6 +433,12 @@ export default class SampleDetails extends React.Component {
         ...previousState, activeTab: state.sample.activeTab
       }));
     }
+    const { sample } = this.state;
+    const { containerDataSet } = state;
+    const { elementID, isSaving, elementType } = containerDataSet;
+    if (elementType === 'sample' && isSaving && elementID === sample.id) {
+      this.handleSubmit(false);
+    }
   }
 
   sampleFooter() {
