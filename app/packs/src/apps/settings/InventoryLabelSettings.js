@@ -149,7 +149,7 @@ function InventoryLabelSettings() {
   const updateUserSettings = () => {
     setSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
-    if (prefixValue.length !== 0 && counterValue.length !== 0 && nameValue.length !== 0) {
+    if (prefixValue.length !== 0 && counterValue.length !== 0 && nameValue !== null) {
       setErrorMessage(null);
       InventoryFetcher.updateInventoryLabel({
         prefix: prefixValue,

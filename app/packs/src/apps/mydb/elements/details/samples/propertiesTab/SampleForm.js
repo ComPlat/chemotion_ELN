@@ -37,6 +37,7 @@ export default class SampleForm extends React.Component {
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
+    this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -294,19 +295,40 @@ export default class SampleForm extends React.Component {
     this.props.parent.setState({ sample });
   }
 
+  /* eslint-disable camelcase */
+  matchSelectedCollection(currentCollection) {
+    const { sample } = this.props;
+    const { collection_labels } = sample.tag?.taggable_data || [];
+    const result = collection_labels.filter((object) => object.id === currentCollection.id).length > 0;
+    return result;
+  }
+
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
-    InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
-      .then((inventory) => {
-        if (inventory) {
-          const { prefix, counter } = inventory;
-          const value = `${prefix}-${counter + 1}`;
-          this.handleFieldChanged('xref_inventory_label', value);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
+    if (this.matchSelectedCollection(currentCollection)) {
+      InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
+        .then((result) => {
+          if (result && result.prefix && result.counter !== undefined) {
+            const { prefix, counter } = result;
+            const value = `${prefix}-${counter + 1}`;
+            this.handleFieldChanged('xref_inventory_label', value);
+          } else {
+            NotificationActions.add({
+              message: 'Could not find next inventory label. '
+              + 'Please assign a prefix and a counter for a valid collection first.',
+              level: 'error'
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
+      NotificationActions.add({
+        message: 'Please select the collection to which sample belongs first',
+        level: 'error'
       });
+    }
   }
 
   handleFieldChanged(field, e, unit = null) {
