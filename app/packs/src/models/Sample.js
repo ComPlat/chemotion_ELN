@@ -1137,17 +1137,22 @@ export default class Sample extends Element {
       reactants: [],
       products: []
     };
+    let molFiles = [];
+
+    if (this.mixture_components.length < 1) { return }
 
     this.mixture_components.forEach(component => {
         let moleculeSvg = component.molecule.molecule_svg_file;
         materialsSvgPaths.products.push(`/images/molecules/${moleculeSvg}`);
+        molFiles.push(component.molecule.molfile);
     });
 
-    SampleSvgFetcher.fetchCombinedSampleSvg(materialsSvgPaths).then((result) => {
+    SampleSvgFetcher.fetchCombinedSampleSvg(materialsSvgPaths, molFiles).then((result) => {
       this.sample_svg_file = result.sample_svg;
+      this.molfile = result.molfile;
     });
   }
-  
+
 }
 
 Sample.counter = 0;
