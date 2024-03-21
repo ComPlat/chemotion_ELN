@@ -90,6 +90,23 @@ module Chemotion
         end
       end
 
+      namespace :restoreAccount do
+        desc 'restore deleted user account'
+        params do
+          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'          
+        end
+        post do
+          user = User.only_deleted.find_by(name_abbreviation: params[:name_abbreviation])
+          error!('Record not found', 404) unless user
+          begin
+            user.update_columns(deleted_at: nil)
+            status 201
+          rescue ActiveRecord::RecordInvalid => e
+            { error: e.message }
+          end
+        end
+      end  
+
       namespace :updateAccount do
         desc 'update account'
         params do
