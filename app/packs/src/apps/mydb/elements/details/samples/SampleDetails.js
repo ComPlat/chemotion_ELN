@@ -137,6 +137,7 @@ export default class SampleDetails extends React.Component {
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,
+      isChemicalEdited: false,
       currentUser,
     };
 
@@ -489,6 +490,10 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  editChemical = (boolean) => {
+    this.setState({ isChemicalEdited: boolean });
+  };
+
   sampleInventoryTab(ind) {
     const sample = this.state.sample || {};
     const { saveInventoryAction } = this.state;
@@ -503,6 +508,7 @@ export default class SampleDetails extends React.Component {
             sample={sample}
             parent={this}
             saveInventory={saveInventoryAction}
+            editChemical={this.editChemical}
             key={`ChemicalTab${sample.id.toString()}`}
           />
         </ListGroupItem>
@@ -933,9 +939,74 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
+  saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag, timesTag, boolean = false) {
+    return (
+      <Button
+        bsStyle="warning"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={() => this.saveSampleOrInventory(boolean)}
+        style={{ display: saveBtnDisplay }}
+        disabled={sampleUpdateCondition}
+      >
+        {floppyTag}
+        {timesTag || null}
+      </Button>
+    );
+  }
+
+  saveAndCloseSample(sample, saveBtnDisplay) {
+    const { activeTab, isChemicalEdited } = this.state;
+    const isChemicalTab = activeTab === 'inventory';
+    const floppyTag = (
+      <i className="fa fa-floppy-o" />
+    );
+    const timesTag = (
+      <i className="fa fa-times" />
+    );
+    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
+
+    const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
+    const saveAndClose = (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveCloseSample">
+            {`Save and Close ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag, timesTag, true)}
+      </OverlayTrigger>
+    );
+    const save = (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveSample">
+            {`Save ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag)}
+      </OverlayTrigger>
+    );
+
+    const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
+    return (
+      <div>
+        <ConfirmClose el={sample} />
+        { isChemicalTab ? null : saveAndClose }
+        { isChemicalTab ? saveForChemical : save}
+      </div>
+    );
+  }
+
   sampleHeader(sample) {
-    const saveBtnDisplay = sample.isEdited ? '' : 'none';
+    const { isChemicalEdited, activeTab } = this.state;
     const titleTooltip = formatTimeStampsOfElement(sample || {});
+    const isChemicalTab = activeTab === 'inventory';
+    const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab) ? '' : 'none';
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false
@@ -980,7 +1051,7 @@ export default class SampleDetails extends React.Component {
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
           <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <div style={{ marginLeft: '10px', marginTop: '-5px' }}>{colLabel}</div>
+          <div style={{ marginTop: '-5px' }}>{colLabel}</div>
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           <PubchemLabels element={sample} />
           <HeaderCommentSection element={sample} />
@@ -988,59 +1059,30 @@ export default class SampleDetails extends React.Component {
             ? <FastInput fnHandle={this.handleFastInput} />
             : null}
         </div>
-        <div style={{ marginLeft: 'auto' }}>
-          <ConfirmClose el={sample} />
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}
-          >
-            <Button
-              bsStyle="warning"
-              bsSize="xsmall"
-              className="button-right"
-              onClick={() => this.handleSubmit(true)}
-              style={{ display: saveBtnDisplay }}
-              disabled={!this.sampleIsValid() || !sample.can_update}
+        <div style={{ marginLeft: 'auto', display: 'flex', justifyContent: 'space-between' }}>
+          <div>
+            {copyBtn}
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
             >
-              <i className="fa fa-floppy-o" />
-              <i className="fa fa-times" />
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}
-          >
-            <Button
-              bsStyle="warning"
-              bsSize="xsmall"
-              className="button-right"
-              onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
-              disabled={!this.sampleIsValid() || !sample.can_update}
-            >
-              <i className="fa fa-floppy-o" />
-            </Button>
-          </OverlayTrigger>
-          {copyBtn}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              bsStyle="info"
-              bsSize="xsmall"
-              className="button-right"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
-          <PrintCodeButton element={sample} />
-          {sample.isNew
-            ? null
-            : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-          {inventorySample}
-          {decoupleCb}
+              <Button
+                bsStyle="info"
+                bsSize="xsmall"
+                className="button-right"
+                onClick={() => this.props.toggleFullScreen()}
+              >
+                <i className="fa fa-expand" />
+              </Button>
+            </OverlayTrigger>
+            <PrintCodeButton element={sample} />
+            {sample.isNew
+              ? null
+              : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+            {inventorySample}
+            {decoupleCb}
+          </div>
+          {this.saveAndCloseSample(sample, saveBtnDisplay)}
         </div>
       </div>
     );
@@ -1489,7 +1531,7 @@ export default class SampleDetails extends React.Component {
 
   render() {
     const sample = this.state.sample || {};
-    const { visible } = this.state;
+    const { visible, isChemicalEdited } = this.state;
     const tabContentsMap = {
       properties: this.samplePropertiesTab('properties'),
       analyses: this.sampleContainerTab('analyses'),
@@ -1574,7 +1616,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Panel
         className="eln-panel-detail"
-        bsStyle={sample.isPendingToSave ? 'info' : 'primary'}
+        bsStyle={sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary'}
       >
         <Panel.Heading>
           {this.sampleHeader(sample)}

@@ -47,7 +47,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { saveInventory, parent } = this.props;
+    const { saveInventory } = this.props;
     const { chemical } = this.state;
 
     if (prevState.chemical !== chemical) {
@@ -61,15 +61,21 @@ export default class ChemicalTab extends React.Component {
 
   handleFieldChanged(parameter, value) {
     const { chemical } = this.state;
+    const { editChemical } = this.props;
     if (chemical) {
       chemical.buildChemical(parameter, value);
+      editChemical(chemical.isEdited);
     }
     this.setState({ chemical });
   }
 
   handleSubmitSave() {
     const { chemical } = this.state;
-    const { sample, parent } = this.props;
+    const {
+      sample,
+      parent,
+      editChemical,
+    } = this.props;
     if (!sample || !chemical) {
       return;
     }
@@ -83,7 +89,6 @@ export default class ChemicalTab extends React.Component {
     if (chemical.isNew) {
       ChemicalFetcher.create(params).then((response) => {
         if (response) {
-          chemical.changed = false;
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
@@ -93,7 +98,8 @@ export default class ChemicalTab extends React.Component {
     } else {
       ChemicalFetcher.update(params).then((response) => {
         if (response) {
-          chemical.changed = false;
+          editChemical(false);
+          chemical.updateChecksum();
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
@@ -1192,5 +1198,6 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
-  saveInventory: PropTypes.bool.isRequired
+  saveInventory: PropTypes.bool.isRequired,
+  editChemical: PropTypes.func.isRequired,
 };
