@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 
 export default class SampleSvgFetcher {
 
-  static fetchCombinedSampleSvg(materialsSvgPaths) {
+  static fetchCombinedSampleSvg(materialsSvgPaths, molFiles) {
     const promise = fetch('/api/v1/sample_svg', {
       credentials: 'same-origin',
       method: 'post',
@@ -10,7 +10,7 @@ export default class SampleSvgFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ materials_svg_paths: materialsSvgPaths })
+      body: JSON.stringify({ materials_svg_paths: materialsSvgPaths, molfiles: molFiles })
     }).then((response) => {
       return response.status == 201 ? response.json() : {}
     }).catch((errorMessage) => {
