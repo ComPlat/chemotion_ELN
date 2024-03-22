@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chemotion
-  class WellplateAPI < Grape::API
+  class WellplateAPI < Grape::API # rubocop:disable Metrics/ClassLength
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ParamsHelpers
@@ -78,7 +78,7 @@ module Chemotion
                   end
                 else
                   # All collection of current_user
-                  Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                  Wellplate.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
         from = params[:from_date]
@@ -86,10 +86,10 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.includes_for_list_display
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
 
