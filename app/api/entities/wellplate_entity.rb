@@ -7,7 +7,8 @@ module Entities
     with_options(anonymize_below: 0) do
       expose! :id
       expose! :is_restricted
-      expose! :size
+      expose! :height
+      expose! :width
       expose! :type
       expose! :wells,                                using: 'Entities::WellEntity'
       expose! :comment_count
