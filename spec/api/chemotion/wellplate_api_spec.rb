@@ -356,8 +356,11 @@ describe Chemotion::WellplateAPI do
     end
 
     context 'when wellplate exits' do
+      let(:my_instance) { instance_double(ElementPolicy) }
+
       before do
-        allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+        allow(ElementPolicy).to receive(:new).and_return(my_instance)
+        allow(my_instance).to receive(:read?).and_return(true)
         get "/api/v1/wellplates/template/#{wellplate.id}", params: {}
       end
 
