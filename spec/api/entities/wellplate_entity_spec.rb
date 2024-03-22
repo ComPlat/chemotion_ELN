@@ -40,7 +40,8 @@ describe Entities::WellplateEntity do
         expect(grape_entity_as_hash).to include(
           id: wellplate.id,
           is_restricted: false,
-          size: wellplate.size,
+          height: wellplate.height,
+          width: wellplate.width,
           type: 'wellplate',
           description: wellplate.description,
           name: wellplate.name,
@@ -81,7 +82,8 @@ describe Entities::WellplateEntity do
         expect(grape_entity_as_hash).to include(
           id: wellplate.id,
           is_restricted: true,
-          size: wellplate.size,
+          height: wellplate.height,
+          width: wellplate.width,
           type: 'wellplate',
           description: '***',
           name: '***',
