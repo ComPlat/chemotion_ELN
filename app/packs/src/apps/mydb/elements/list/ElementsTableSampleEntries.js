@@ -363,6 +363,9 @@ export default class ElementsTableSampleEntries extends Component {
             style={{ cursor: 'pointer', verticalAlign: 'middle' }}
             onClick={showDetails.bind(this, sample.id)}
           >
+             {"created-at: "+sample.created_at.substring(0,21)}
+             {" | updated-at: "+sample.updated_at.substring(0,21)}
+             {" | id: "+sample.id+" | "}
             {sample.title(selected)}
             <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
               <CommentIcon commentCount={sample.comment_count} />

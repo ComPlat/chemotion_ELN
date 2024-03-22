@@ -60,7 +60,7 @@ const handleSearch = (store, uiState) => {
       elementType: 'advanced',
       advanced_params: filters,
       search_by_method: 'advanced',
-      page_size: uiState.number_of_results
+      page_size: uiState.number_of_results,
     };
 
     store.loadSearchResults({

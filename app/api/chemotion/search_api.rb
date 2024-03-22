@@ -16,6 +16,10 @@ module Chemotion
       params :search_params do
         optional :page, type: Integer
         requires :selection, type: Hash do
+          optional :sorting, type: Hash do
+            requires :column, type: String, values:['created_at','updated_at'], default: 'created_at'
+            requires :direction, type: String, values:['ascending','descending'], default: 'ascending'
+          end
           optional :search_by_method, type: String # , values: %w[
           #  advanced substring structure
           #  screen_name wellplate_name reaction_name reaction_short_label
@@ -42,11 +46,6 @@ module Chemotion
             requires :value, type: String
             optional :smiles, type: String
             optional :sub_values, type: Array
-            optional :sorting, type: Hash do
-              requires :column, type: String, values:['created_at','updated_at'], default: 'created_at'
-              requires :direction, type: String, values:['ascending','descending'], default: 'ascending'
-            end
-
           end
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
@@ -544,7 +543,7 @@ module Chemotion
         end
 
         post do
-          
+        
           conditions =
             Usecases::Search::ConditionsForAdvancedSearch.new(
               detail_levels: @dl,
@@ -558,24 +557,22 @@ module Chemotion
             conditions: conditions,
           ).perform!
 
-          if params.dig('selection','advanced_params').first.dig('sorting') != nil then
-            sorting_column=params.dig('selection','advanced_params').first.dig('sorting','column')
-            sorting_direction=params.dig('selection','advanced_params').first.dig('sorting','direction')
-
-
-            results['samples'][:elements] = results.dig('samples',:elements).sort_by do |o| 
-
-              if( sorting_column)=="created_at" then
-                Date.parse o[:created_at]
-              elsif( sorting_column)=="updated_at"
-                Date.parse o[:updated_at]
-              end
+          if params.dig('sorting') != nil then
+            sorting_column=params.dig('sorting','column')
+            sorting_direction=params.dig('sorting','direction')
+           
+            map={}
+            results['samples'][:elements] = results.dig('samples',:elements).each do |o| 
+              map[o[:molecule][:cano_smiles]]=[] unless map[o[:molecule][:cano_smiles]]
+              map[o[:molecule][:cano_smiles]] << o
+             # puts o[:id].to_s + ' | '+o[:molecule][:cano_smiles]+" | "+ o[:updated_at]+" | "+ o[:created_at]
             end
-            if(sorting_direction=="descending") then
-              results['samples'][:elements] = results.dig('samples',:elements).reverse
+            bucketSortedSamples=[];
+            map.keys.each do |o|
+              bucketSortedSamples+=map[o]
             end
           end
-          
+          results['samples'][:elements] = bucketSortedSamples
           results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
           results
         end

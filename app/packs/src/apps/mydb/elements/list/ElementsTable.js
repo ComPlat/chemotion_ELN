@@ -95,14 +95,14 @@ export default class ElementsTable extends React.Component {
       || state.wellplate.currentId;
 
     let isSearchResult = currentSearchByID ? true : false;
-
+    isSearchResult=false
     const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
       checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
       || fromDate || toDate || productOnly !== currentStateProductOnly
       || isSearchResult !== searchResult
     );
-    const moleculeSort = isSearchResult ? true : ElementStore.getState().moleculeSort;
+    const moleculeSort = false ;//isSearchResult ? true : ElementStore.getState().moleculeSort;
 
     if (stateChange) {
       this.setState({

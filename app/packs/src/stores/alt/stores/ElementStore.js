@@ -1158,6 +1158,7 @@ class ElementStore {
   }
 
   handleChangeSorting(sort) {
+    console.log("Change sorting to "+sort)
     this.state.moleculeSort = sort;
     this.waitFor(UIStore.dispatchToken);
     this.handleRefreshElements('sample');

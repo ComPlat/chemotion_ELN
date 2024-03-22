@@ -27,7 +27,24 @@ module Usecases
       def perform!
         scope = basic_scope
         scope = search_filter_scope(scope)
-        serialize_result_by_ids(scope)
+
+        scope=scope.sort_by{|o| o.created_at}.reverse
+        map={}
+        
+        scope.each do |o| 
+          map[o.molecule.cano_smiles]=[] unless map[o.molecule.cano_smiles]
+          map[o.molecule.cano_smiles] << o
+        end
+
+        bucketSortedSamples=[];
+        map.keys.each do |o|
+          bucketSortedSamples+=map[o]
+        end
+        
+        scope=bucketSortedSamples
+        x = serialize_result_by_ids(scope)
+        
+        x
       end
 
       private
@@ -122,7 +139,8 @@ module Usecases
               serialized_result_by_id(s, serialized_scope)
             end
         end
-        serialized_scope.sort_by! { |object| @id_params['ids'].index object[:id] }
+        serialized_scope
+        #serialized_scope.sort_by! { |object| @id_params['ids'].index object[:id] }
       end
 
       def serialized_result_by_id_for_sample(sample, serialized_scope)

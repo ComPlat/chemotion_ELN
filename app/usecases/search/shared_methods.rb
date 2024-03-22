@@ -9,11 +9,15 @@ class SharedMethods
     @result = {}
   end
 
+  def order_by_updated_at(scope)
+    scope.order('samples.updated_at DESC')
+  end
+
   def order_by_molecule(scope)
     scope.includes(:molecule)
          .joins(:molecule)
          .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
-         .order('molecules.sum_formular')
+         .order('samples.updated_at DESC')
   end
 
   def pages(total_elements, per_page)
