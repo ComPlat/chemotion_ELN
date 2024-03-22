@@ -395,8 +395,6 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
-          attributes.delete(:molfile)
-          attributes.delete(:stereo)
           micro_att = {
             name: params[:name],
             molfile: params[:molfile],
@@ -434,8 +432,7 @@ module Chemotion
             # add/delete components
             current_component_ids = @sample.mixture_components.pluck(:id)
             new_component_ids = params[:mixture_components].map do |component|
-              id = component[:id].to_s
-              id.to_i.to_s == id ? id.to_i : component[:parent_id]
+              component[:parent_id] ? component[:parent_id] : component[:id]
             end
 
             components_to_remove = current_component_ids - new_component_ids
@@ -447,10 +444,9 @@ module Chemotion
 
             components_to_add.each do |component_id|
               stock_component_sample = Sample.find_by(id: component_id)
-              next if stock_component_sample.blank?
-
-              if stock_component_sample
-                component = params[:mixture_components].find { |c| c[:parent_id].to_i == component_id }
+              
+              if !stock_component_sample.blank?
+                component = params[:mixture_components].find { |c| c[:parent_id] == component_id }
                 component_sample = stock_component_sample.create_subsample(current_user, @sample.collection_ids, true, 'sample')
                 component_quantities = {
                   target_amount_value: component[:_target_amount_value],
@@ -461,6 +457,7 @@ module Chemotion
                 }
                 component_sample.update!(component_quantities)
               else
+                component = params[:mixture_components].find { |c| c[:id] == component_id }
                 att = {
                   target_amount_value: component[:_target_amount_value],
                   target_amount_unit: component[:_target_amount_unit],
@@ -472,15 +469,15 @@ module Chemotion
                   sum_formula: component[:_molecule][:sum_formular],
                   molfile: component[:molfile],
                   stereo: component[:stereo],
+                  sample_type_name: 'MixtureComponent',
                 }
                 component_sample = Sample.new(att)
-                binding.pry
-                collection = current_user.collections.where(id: params[:collection_id]).take
+                collection = current_user.collections.where(id: component[:collection_id]).take
                 component_sample.collections << collection if collection.present?
-                component_sample.save
+                component_sample.save!
               end
               SampleType.create(sample: @sample, sampleable: component_sample, component_stock: false)
-              @sample.mixture_components << subsample
+              @sample.mixture_components << component_sample
             end
 
             # update current subsamples
@@ -703,10 +700,11 @@ module Chemotion
                 sum_formula: component[:_molecule][:sum_formular],
                 molfile: component[:molfile],
                 stereo: component[:stereo],
+                sample_type_name: 'MixtureComponent',
               }
               component_sample = Sample.new(att)
               component_sample.collections << collection if collection.present?
-              component_sample.save
+              component_sample.save!
             end
 
             SampleType.create(sample: sample, sampleable: component_sample, component_stock: false)

@@ -10,6 +10,7 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import SampleSvgFetcher from '../fetchers/SampleSvgFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -1066,6 +1067,11 @@ export default class Sample extends Element {
   }
 
   addMixtureComponent(newComponent) {
+    if (!newComponent.collection_id) {
+      const currentCollection = UIStore.getState().currentCollection;
+      newComponent.collection_id = currentCollection.id
+    }
+
     const tmpComponents = [...(this.mixture_components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey);
