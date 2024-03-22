@@ -300,7 +300,7 @@ export default class WellplateDetails extends Component {
     const {
       wellplate, showWellplate, visible
     } = this.state;
-    const printButtonDisabled=wellplate.width>12;
+    const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
       ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
@@ -412,9 +412,10 @@ export default class WellplateDetails extends Component {
             }
             {exportButton}
             <Button
-              bsStyle="primary" 
+              bsStyle="primary"
               onClick={() => this.handlePrint()}
-              disabled={printButtonDisabled}>
+              disabled={printButtonDisabled}
+            >
               Print Wells
             </Button>
           </ButtonToolbar>

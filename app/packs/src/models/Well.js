@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import Element from 'src/models/Element';
 import Sample from 'src/models/Sample';
 

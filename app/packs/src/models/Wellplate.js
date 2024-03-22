@@ -132,7 +132,7 @@ export default class Wellplate extends Element {
     };
   }
 
-  calculatePositionOfWellByIndex(i) { // eslint-disable-line class-methods-use-this
+  calculatePositionOfWellByIndex(i) {
     const columns = this.width;
     const columnOfIndex = (i + 1) % columns;
 
