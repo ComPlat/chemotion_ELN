@@ -37,17 +37,22 @@
     {
       "label": "RSpec - selected line, active file",
       "type": "shell",
-      "command": "RAILS_ENV=test $(which bundle) exec rspec ${file}:${lineNumber}",
+      "command": "RAILS_ENV=test $(which bundle) exec rspec ${file}:${lineNumber}"
+    },
+    {
+      "label": "RSpec - active file",
+      "type": "shell",
+      "command": "RAILS_ENV=test $(which bundle) exec rspec ${file}"
     },
     {
       "label": "RuboCop autocorrect active file",
       "type": "shell",
-      "command": "$(which bundle) exec rubocop -c .rubocop.yml -a ${file}",
+      "command": "$(which bundle) exec rubocop -c .rubocop.yml -a ${file}"
     },
     {
       "label": "mocha - unit tests current file",
       "type": "shell",
-      "command": "NODE_PATH=./spec/javascripts:./app/packs yarn mocha --watch --exit --require '@babel/register' './spec/javascripts/helper/setup.js' '${file}'",
+      "command": "NODE_PATH=./spec/javascripts:./app/packs yarn mocha --watch --exit --require '@babel/register' './spec/javascripts/helper/setup.js' '${file}'"
     }
   ]
 }
