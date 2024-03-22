@@ -466,7 +466,7 @@ class Sample < ApplicationRecord
       FileUtils.remove(src)
     end
     if svg.start_with?(/\s*\<\?xml/, /\s*\<svg/)
-      File.write(full_svg_path(svg_file_name), scrub(svg))
+      File.write(full_svg_path(svg_file_name), Chemotion::Sanitizer.scrub_svg(svg))
       self.sample_svg_file = svg_file_name
     end
     unless sample_svg_file =~ /\A[0-9a-f]{128}.svg\z/
@@ -723,16 +723,6 @@ private
 
   def has_density
     density.present? && density.positive? && (!molarity_value.present? || molarity_value.zero?)
-  end
-
-  def scrub(value)
-    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
-    Loofah.scrub_fragment(value, :strip).to_s
-          .gsub('viewbox', 'viewBox')
-          .gsub('lineargradient', 'linearGradient')
-          .gsub('radialgradient', 'radialGradient')
-#   value
   end
 
   # build a full path of the sample svg, nil if not buildable
