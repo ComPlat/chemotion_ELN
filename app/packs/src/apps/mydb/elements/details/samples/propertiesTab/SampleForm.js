@@ -877,6 +877,9 @@ export default class SampleForm extends React.Component {
                 <div style={{ flex: '1' , paddingLeft: '10px' }}>
                   {this.textInput(sample, 'external_label', 'External label')}
                 </div>
+                <div style={{ flex: '1' , paddingLeft: '10px' }}>
+                  {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+                </div>
               </div>
             )}
             </ListGroupItem>
