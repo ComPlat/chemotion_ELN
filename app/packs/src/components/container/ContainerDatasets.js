@@ -8,11 +8,30 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
     super(props);
+
+    this.initState = this.initState.bind(this);
+    this.handleSavingModal = this.handleSavingModal.bind(this);
+    this.initState(props);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.container !== prevProps.container) {
+      this.handleSavingModal(prevProps);
+    }
+  }
+
+  initState(props) {
     const { container } = props;
+    const { children } = container;
+    const datasetContainer = children.length > 0 ? children[0] : null;  //TODO: need to be check
+    const uiStoreContainerDataSet = (UIStore.getState() && UIStore.getState().containerDataSet) || { isSaving: false };
+    const { isSaving } = uiStoreContainerDataSet;
     this.state = {
       container,
       modal: {
@@ -20,10 +39,37 @@ export default class ContainerDatasets extends Component {
         datasetContainer: null,
       },
     };
+    if (isSaving && datasetContainer) {
+      UIActions.saveAttachmentDataset.defer('', false);
+      this.state.modal = { show: true, datasetContainer: datasetContainer };
+    }
   }
 
-  componentDidUpdate(prevProps) {
-    if (this.props.container !== prevProps.container) {
+  handleSavingModal(prevProps) {
+    //TODO: need to be refactor
+    const { container } = this.props;
+    const { children } = container;
+    if (prevProps.container) {
+      const prevChildren = prevProps.container.children;
+      const childrenIds = children.map((item) => item.id);
+      const prevChildrenIds = prevChildren.map((item) => item.id);
+      const diffIds = childrenIds.filter((id) => !prevChildrenIds.includes(id));
+      const uiStoreContainerDataSet = (UIStore.getState() && UIStore.getState().containerDataSet) || { isSaving: false };
+      const { isSaving } = uiStoreContainerDataSet;
+      if (isSaving) {
+        UIActions.saveAttachmentDataset.defer('', false);
+        const filterChildren = children.filter((item) => diffIds.includes(item.id));
+        const datasetContainer = filterChildren.length > 0 ? filterChildren[0] : null;
+        this.setState({
+          container: this.props.container,
+          modal: { show: true, datasetContainer: datasetContainer },
+        });
+      } else {
+        this.setState({
+          container: this.props.container,
+        });
+      }
+    } else {
       this.setState({
         container: this.props.container,
       });
