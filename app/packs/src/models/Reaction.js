@@ -241,11 +241,10 @@ export default class Reaction extends Element {
     (i.e., at the boundaries of the application).
     See https://softwareengineering.stackexchange.com/a/391480.
     */
-    if (!Array.isArray(variations) || !variations.length) {
-      this._variations = [];
-    } else {
-      this._variations = variations;
+    if (!Array.isArray(variations)) {
+      throw new Error(`Variations must be of type Array. Got ${typeof variations}.`);
     }
+    this._variations = variations;
   }
 
   get variations() {
