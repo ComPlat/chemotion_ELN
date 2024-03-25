@@ -1,34 +1,43 @@
 .container
   %h2
     Change account log-in
+  %br/
   = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f|
     = devise_error_messages!
     .form-group.field
-      = f.label :email
+      = f.label :email, "New Email"
+      %i (Leave unchanged if you don't want to change it)
       %br/
       = f.email_field :email, autofocus: true, class: 'form-control'
     - if devise_mapping.confirmable? && resource.pending_reconfirmation?
       %div
         Currently waiting confirmation for: #{resource.unconfirmed_email}
     .form-group.field
-      = f.label :password
-      %i (leave blank if you don't want to change it)
+      = f.label :password , "New password"
+      %i (Leave blank if you don't want to change it)
       %br/
       = f.password_field :password, autocomplete: "off", class: 'form-control'
     .form-group.field
-      = f.label :password_confirmation
+      = f.label :password_confirmation, "Confirm New Password"
       %br/
       = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
     .form-group.field
       = f.label :current_password
-      %i (we need your current password to confirm your changes)
+      %i (We need your current password to confirm your changes)
       %br/
       = f.password_field :current_password, autocomplete: "off", class: 'form-control'
     .actions
-      = f.submit "Update", class: 'btn btn-primary'
-  %h3 Cancel my account
+      = f.submit "Change Email/Password", class: 'btn btn-primary'
+  %br/    
+  %br/    
+  %br/    
+  %h2 Delete Account
+  %br/
   %p
-    Unhappy? #{button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: 'btn btn-danger'}
-
+    By clicking this, your account will be permanently deleted#{button_to "Delete Account", registration_path(resource_name), onclick: "return confirm('Are you sure you want to delete your account?')", method: :delete, class: 'btn btn-danger'}
+  %br/
+  %br/
+  %br/
+  %br/
   %br/
   = link_to "Back", root_path
