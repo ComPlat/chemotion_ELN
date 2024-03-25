@@ -40,7 +40,7 @@ export default class ContainerDatasets extends Component {
       },
     };
     if (isSaving && datasetContainer) {
-      UIActions.saveAttachmentDataset.defer('', false);
+      UIActions.saveAttachmentDataset.defer('', false, datasetContainer.id);
       this.state.modal = { show: true, datasetContainer: datasetContainer };
     }
   }
@@ -53,11 +53,14 @@ export default class ContainerDatasets extends Component {
       const prevChildren = prevProps.container.children;
       const childrenIds = children.map((item) => item.id);
       const prevChildrenIds = prevChildren.map((item) => item.id);
-      const diffIds = childrenIds.filter((id) => !prevChildrenIds.includes(id));
+      let diffIds = childrenIds.filter((id) => !prevChildrenIds.includes(id));
       const uiStoreContainerDataSet = (UIStore.getState() && UIStore.getState().containerDataSet) || { isSaving: false };
-      const { isSaving } = uiStoreContainerDataSet;
+      const { isSaving, datasetID } = uiStoreContainerDataSet;
       if (isSaving) {
-        UIActions.saveAttachmentDataset.defer('', false);
+        if (diffIds.length === 0) {
+          diffIds = [datasetID];
+        }
+        UIActions.saveAttachmentDataset.defer('', false, datasetID);
         const filterChildren = children.filter((item) => diffIds.includes(item.id));
         const datasetContainer = filterChildren.length > 0 ? filterChildren[0] : null;
         this.setState({

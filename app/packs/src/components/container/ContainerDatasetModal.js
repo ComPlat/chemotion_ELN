@@ -23,7 +23,7 @@ export default class ContainerDatasetModal extends Component {
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleSaveWithoutClose = this.handleSaveWithoutClose.bind(this);
-    // this.onLoadingStoreChange = this.onLoadingStoreChange.bind(this);
+    this.onLoadingStoreChange = this.onLoadingStoreChange.bind(this);
   }
 
   componentDidMount() {
@@ -37,7 +37,7 @@ export default class ContainerDatasetModal extends Component {
   onLoadingStoreChange(state) {
     const { loading } = state;
     if (!loading) {
-      UIActions.saveAttachmentDataset.defer('', false);
+      UIActions.saveAttachmentDataset.defer('', false, '');
     }
   }
 
@@ -66,7 +66,8 @@ export default class ContainerDatasetModal extends Component {
     });
 
     const { elementID, templateType } = this.props;
-    UIActions.saveAttachmentDataset(elementID, templateType);
+    const datasetID = this.datasetInput.current.state.datasetContainer.id;
+    UIActions.saveAttachmentDataset(elementID, templateType, datasetID);
   }
 
   handleNameChange(newName) {

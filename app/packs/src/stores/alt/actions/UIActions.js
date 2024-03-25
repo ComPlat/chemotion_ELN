@@ -142,8 +142,8 @@ class UIActions {
   rerenderGenericWorkflow(params) { return params; }
   showGenericWorkflowModal(show) { return show; }
 
-  saveAttachmentDataset(elementID, templateType) {
-    return { elementID: elementID, elementType: templateType};
+  saveAttachmentDataset(elementID, templateType, datasetID) {
+    return { elementID: elementID, elementType: templateType, datasetID: datasetID};
   }
 }
 

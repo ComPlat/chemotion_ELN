@@ -505,11 +505,12 @@ class UIStore {
 
   handleSaveAttachmentDataset(data) {
     const { isSaving } = this.state.containerDataSet;
-    const { elementID, elementType } = data;
+    const { elementID, elementType, datasetID } = data;
     this.state.containerDataSet = {
       elementID: elementID,
       elementType: elementType,
-      isSaving: !isSaving
+      isSaving: !isSaving,
+      datasetID: datasetID,
     }
   }
 }
