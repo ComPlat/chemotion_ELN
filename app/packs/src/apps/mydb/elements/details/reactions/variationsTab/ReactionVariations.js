@@ -9,6 +9,8 @@ import {
 import {
   set, cloneDeep, isEqual
 } from 'lodash';
+import PropTypes from 'prop-types';
+import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, temperatureUnits, durationUnits, convertUnit, materialTypes,
   getSequentialId, removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
@@ -122,6 +124,15 @@ function MenuHeader({
   );
 }
 
+MenuHeader.propTypes = {
+  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
+  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  setSort: PropTypes.func.isRequired,
+  units: PropTypes.arrayOf(PropTypes.string).isRequired,
+  names: PropTypes.arrayOf(PropTypes.string).isRequired,
+  entries: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 function MaterialOverlay({
   value: cellData, colDef
 }) {
@@ -199,6 +210,11 @@ function MaterialOverlay({
   );
 }
 
+MaterialOverlay.propTypes = {
+  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  colDef: PropTypes.instanceOf(AgGridReact.colDef).isRequired,
+};
+
 function RowToolsCellRenderer({
   data: variationsRow, reactionShortLabel, context
 }) {
@@ -217,6 +233,12 @@ function RowToolsCellRenderer({
     </div>
   );
 }
+
+RowToolsCellRenderer.propTypes = {
+  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
+  reactionShortLabel: PropTypes.string.isRequired,
+  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+};
 
 function ValueUnitFormatter({ value: cellData, colDef }) {
   const { _variationsUnit: displayUnit } = colDef;
@@ -571,3 +593,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
     </div>
   );
 }
+
+ReactionVariations.propTypes = {
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  onEditVariations: PropTypes.func.isRequired,
+};
