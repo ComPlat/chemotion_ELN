@@ -13,7 +13,7 @@ module Usecases
       def execute!
         ActiveRecord::Base.transaction do
           wellplate = Wellplate.find(params[:id])
-          wellplate.update(params.except(:wells, :segments))
+          wellplate.update(params.except(:wells, :segments, :size))
           WellplateUpdater
             .new(wellplate: wellplate, current_user: User.find(@user_id))
             .update_wells(well_data: params[:wells])
