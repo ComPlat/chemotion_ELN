@@ -45,7 +45,7 @@ module Chemotion
 
       # replace rgb func by hex black value
       def transform_rgb_to_hex(value)
-        value.gsub(/rgb\([^)]+\)/, '#000000')
+        value.gsub(/="rgb\([^)]+\)"/, '="#000000"')
       end
     end
   end
