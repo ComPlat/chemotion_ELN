@@ -122,10 +122,16 @@ export default class ReactionDetails extends Component {
         activeTab: state.reaction.activeTab
       });
     }
+    const { reaction } = this.state;
+    const { containerDataSet } = state;
+    const { elementID, isSaving, elementType } = containerDataSet;
+    if ((elementType === 'reaction') && isSaving && elementID === reaction.id) {
+      this.handleSubmit(false);
+    }
   }
 
   handleSubmit(closeView = false) {
-    LoadingActions.start();
+    LoadingActions.start.defer();
 
     const { reaction } = this.state;
     if (reaction && reaction.isNew) {
