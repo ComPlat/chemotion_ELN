@@ -15,12 +15,16 @@ module Usecases
             identifier: nil,
             filename: old_attach.filename,
           )
-          tmp = Tempfile.new(encoding: 'ascii-8bit')
-          tmp.write(old_attach.read_file)
-          tmp.rewind
-          new_attach.file_path = tmp.path
-          new_attach.save!
+          new_attach.save
+
+          copy_io = old_attach.attachment_attacher.get.to_io
+          attacher = new_attach.attachment_attacher
+          attacher.attach copy_io
+          new_attach.file_path = copy_io.path
+          new_attach.save
+
           update_annotation(old_attach.id, new_attach.id)
+
           if element.instance_of?(::ResearchPlan)
             element.update_body_attachments(old_attach.identifier, new_attach.identifier)
           end
