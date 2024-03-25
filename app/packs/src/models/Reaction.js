@@ -73,11 +73,8 @@ const DurationDefault = {
   memUnit: 'Hour(s)'
 };
 
-export const convertDuration = (value, unit, newUnit) => {
-  const d = moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
-    .as(MomentUnit[newUnit]);
-  return round(d, 1).toString();
-};
+export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
+  .as(MomentUnit[newUnit]);
 
 const durationDiff = (startAt, stopAt, precise = false) => {
   if (startAt && stopAt) {
@@ -296,7 +293,7 @@ export default class Reaction extends Element {
     } else if (nextUnit) {
       const index = DurationUnit.indexOf(this._durationDisplay.dispUnit);
       const u = DurationUnit[(index + 1) % DurationUnit.length];
-      const dispValue = convertDuration(memValue, memUnit, u);
+      const dispValue = round(convertDuration(memValue, memUnit, u), 1).toString();
       this._durationDisplay = {
         dispUnit: u,
         dispValue,

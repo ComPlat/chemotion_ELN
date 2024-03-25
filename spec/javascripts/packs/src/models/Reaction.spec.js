@@ -9,6 +9,11 @@ import {
   updateEquivalents,
   getReferenceMaterial,
   getReactionMaterials,
+  getMaterialHeaderNames,
+  getSequentialId,
+  getGramFromMol,
+  getMolFromGram,
+  convertUnit,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 async function setUpMaterial() {
@@ -77,6 +82,44 @@ describe('Reaction', async () => {
     });
   });
   describe('variations', () => {
+    it('gets material names', async () => {
+      const material = await setUpMaterial();
+      material.id = 42;
+      expect(getMaterialHeaderNames(material)).toEqual(['ID: 42', "NEW SAMPLE"]);
+    });
+    it('gets sequential ID', () => {
+      const variations = [];
+      expect(getSequentialId(variations)).toBe(1);
+      variations.push({ id: 42 });
+      expect(getSequentialId(variations)).toBe(43);
+    });
+    it('converts gram to mol', () => {
+      const material = { aux: { loading: 2 } };
+      expect(getMolFromGram(1, material)).toBe((1 * 2) / 1e4);
+      material.aux.loading = null;
+      material.aux.molarity = 1;
+      material.aux.purity = 2;
+      material.aux.molecularWeight = 3;
+      expect(getMolFromGram(1, material)).toBe((1 * 2) / (1 * 3));
+    });
+    it('converts mol to gram', () => {
+      const material = { aux: { loading: 2 } };
+      expect(getGramFromMol(1, material)).toBe((1 / 2) * 1e4);
+      material.aux.loading = null;
+      material.aux.purity = 2;
+      material.aux.molecularWeight = 1;
+      expect(getGramFromMol(1, material)).toBe(1 / 2);
+    });
+    it('converts units', () => {
+      expect(convertUnit(1, 'g', 'mg')).toBe(1000);
+      expect(convertUnit(1, 'mg', 'g')).toBe(0.001);
+      expect(convertUnit(1, 'l', 'ml')).toBe(1000);
+      expect(convertUnit(1, 'ml', 'l')).toBe(0.001);
+      expect(convertUnit(1, '°C', '°F')).toBe(33.8);
+      expect(convertUnit(1, '°F', '°C')).toBeCloseTo(-17.2, 0.1);
+      expect(convertUnit(1, 'Second(s)', 'Minute(s)')).toBeCloseTo(0.0167, 0.00001);
+      expect(convertUnit(1, 'Minute(s)', 'Second(s)')).toBe(60);
+    });
     it('removes obsolete materials', async () => {
       const reaction = await setUpReaction();
       const productIDs = reaction.products.map((product) => product.id);

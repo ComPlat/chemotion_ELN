@@ -62,7 +62,7 @@ function getMolFromGram(gram, material) {
   if (material.aux.molarity) {
     const liter = (gram * material.aux.purity)
       / (material.aux.molarity * material.aux.molecularWeight);
-    return liter * material.molarity;
+    return liter * material.aux.molarity;
   }
 
   return (gram * material.aux.purity) / material.aux.molecularWeight;
@@ -77,12 +77,7 @@ function getGramFromMol(mol, material) {
 
 function getReferenceMaterial(variationsRow) {
   const potentialReferenceMaterials = { ...variationsRow.startingMaterials, ...variationsRow.reactants };
-  return Object.values(potentialReferenceMaterials).find((material) => {
-    if (material.aux) {
-      return material.aux.isReference;
-    }
-    return false;
-  });
+  return Object.values(potentialReferenceMaterials).find((material) => material.aux?.isReference || false);
 }
 
 function computeEquivalent(material, referenceMaterial) {
