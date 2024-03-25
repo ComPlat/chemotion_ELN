@@ -13,13 +13,6 @@ import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 
-import {
-  removeObsoleteMaterialsFromVariations,
-  addMissingMaterialsToVariations,
-  updateYields,
-  updateEquivalents,
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-
 const TemperatureUnit = ['°C', '°F', 'K'];
 
 const TemperatureDefault = {
@@ -80,11 +73,8 @@ const DurationDefault = {
   memUnit: 'Hour(s)'
 };
 
-export const convertDuration = (value, unit, newUnit) => {
-  const d = moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
-    .as(MomentUnit[newUnit]);
-  return round(d, 1).toString();
-};
+export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
+  .as(MomentUnit[newUnit]);
 
 const durationDiff = (startAt, stopAt, precise = false) => {
   if (startAt && stopAt) {
@@ -209,62 +199,52 @@ export default class Reaction extends Element {
   }
 
   set variations(variations) {
-    // variations data structure (also see Entities::ReactionVariationEntity):
-    // [
-    //   {
-    //     "id": <number>,
-    //     "properties": {
-    //         "temperature": {"value": <number>, "unit": <string>},
-    //         "duration": {"value": <number>, "unit": <string>}
-    //     },
-    //     "startingMaterials": {
-    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         ...
-    //     },
-    //     "reactants": {
-    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         ...
-    //     },
-    //     "products": {
-    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         ...
-    //     },
-    //     "solvents": {
-    //         <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-    //         ...
-    //     },
-    //   },
-    //   {
-    //     "id": "<number>",
-    //     ...
-    //   },
-    //   ...
-    // ]
-    if (!Array.isArray(variations) || !variations.length) {
-      this._variations = [];
-    } else {
-      const currentMaterials = {
-        startingMaterials: this.starting_materials,
-        reactants: this.reactants,
-        products: this.products,
-        solvents: this.solvents
-      };
-      // Keep set of materials up-to-date. Materials could have been added or removed in the scheme tab
-      // (of the reaction detail modal); these changes need to be reflected in the variations.
-      let updatedVariations = removeObsoleteMaterialsFromVariations(variations, currentMaterials);
-      updatedVariations = addMissingMaterialsToVariations(updatedVariations, currentMaterials);
-      // The products' yields need to be updated, since the products' amounts could have been edited in
-      // the variations tab (of the reaction detail modal).
-      updatedVariations = updateYields(updatedVariations, this.hasPolymers());
-      // A potential change in the reference material's amount needs to be reflected in the remaining materials' equivalents.
-      updatedVariations = updateEquivalents(updatedVariations);
+    /*
+    variations data structure (also see Entities::ReactionVariationEntity):
+    [
+      {
+        "id": <number>,
+        "properties": {
+            "temperature": {"value": <number>, "unit": <string>},
+            "duration": {"value": <number>, "unit": <string>}
+        },
+        "startingMaterials": {
+            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+            ...
+        },
+        "reactants": {
+            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+            ...
+        },
+        "products": {
+            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+            ...
+        },
+        "solvents": {
+            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
+            ...
+        },
+      },
+      {
+        "id": "<number>",
+        ...
+      },
+      ...
+    ]
 
-      this._variations = updatedVariations;
+    Units are to be treated as immutable. Units and corresponding values
+    are changed (not mutated in the present data-structure!) only for display or export
+    (i.e., at the boundaries of the application).
+    See https://softwareengineering.stackexchange.com/a/391480.
+    */
+    if (!Array.isArray(variations)) {
+      throw new Error(`Variations must be of type Array. Got ${typeof variations}.`);
     }
+    this._variations = variations;
   }
 
   get variations() {
@@ -312,7 +292,7 @@ export default class Reaction extends Element {
     } else if (nextUnit) {
       const index = DurationUnit.indexOf(this._durationDisplay.dispUnit);
       const u = DurationUnit[(index + 1) % DurationUnit.length];
-      const dispValue = convertDuration(memValue, memUnit, u);
+      const dispValue = round(convertDuration(memValue, memUnit, u), 1).toString();
       this._durationDisplay = {
         dispUnit: u,
         dispValue,
