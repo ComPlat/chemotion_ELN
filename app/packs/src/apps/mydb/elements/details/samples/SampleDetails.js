@@ -36,6 +36,7 @@ import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
+import { handleSaveDataset } from 'src/utilities/ElementUtils';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
@@ -434,11 +435,7 @@ export default class SampleDetails extends React.Component {
       }));
     }
     const { sample } = this.state;
-    const { containerDataSet } = state;
-    const { elementID, isSaving, elementType } = containerDataSet;
-    if (elementType === 'sample' && isSaving && elementID === sample.id) {
-      this.handleSubmit(false);
-    }
+    handleSaveDataset(sample, state, this.handleSubmit, false);
   }
 
   sampleFooter() {

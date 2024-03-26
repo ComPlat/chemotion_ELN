@@ -471,6 +471,23 @@ const getElementSegments = (elementName, tabs) => {
   return _.uniq(tabs.concat(labels));
 }
 
+const handleSaveDataset = (element, uiStoreState, callbackFunc, ...args) => {
+  if (!element || !uiStoreState) return false;
+
+  const { containerDataSet } = uiStoreState;
+  if (!containerDataSet) return false;
+
+  const { elementID, isSaving, elementType } = containerDataSet;
+  if (!isSaving) return false;
+
+  if (elementType === 'sample' && elementID === element.id) {
+    callbackFunc(...args);
+    return true;
+  }
+
+  return false;
+};
+
 export {
   rfValueFormat,
   hNmrCheckMsg,
@@ -490,5 +507,6 @@ export {
   atomCountCInNMRDescription,
   emwInStr,
   instrumentText,
-  getElementSegments
+  getElementSegments,
+  handleSaveDataset
 };

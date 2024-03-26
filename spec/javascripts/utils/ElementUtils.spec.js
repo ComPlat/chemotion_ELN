@@ -6,7 +6,8 @@ import {
   searchAndReplace
 } from '../../../app/packs/src/utilities/markdownUtils';
 import {
-  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat
+  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat,
+  handleSaveDataset
 } from '../../../app/packs/src/utilities/ElementUtils';
 import { contentToText } from '../../../app/packs/src/utilities/quillFormat';
 import { nmrData1H } from '../fixture/nmr1H';
@@ -217,4 +218,60 @@ describe('Mass pattern', () => {
       'C<sub>15</sub>H<sub>16</sub>O<sub>17</sub>N<sub>18</sub>S<sub>19</sub>)';
     expect(org).toEqual(expected);
   });
+});
+
+describe('Handle container dataset saving', () => {
+  const handleSubmit = (params) => {
+    expect('function triggered').toEqual('function triggered');
+    expect(params).toEqual(params);
+  }
+
+  describe('save dataset for sample', () => {
+    it('when sample is null', () => {
+      const sample = null;
+      const uiState = {};
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when uiState is null', () => {
+      const sample = {};
+      const uiState = null;
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when uiState does not have container dataset info', () => {
+      const sample = {};
+      const uiState = {};
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when container dataset is not for saving', () => {
+      const sample = {};
+      const containerDataSet = { isSaving: false };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is not the same sample id', () => {
+      const sample = { id: 100 };
+      const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same sample id', () => {
+      const sample = { id: 100 };
+      const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
+
+  
 });
