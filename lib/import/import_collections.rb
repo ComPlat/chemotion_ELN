@@ -135,13 +135,7 @@ module Import
 
       annotation_data = annotation_entry.get_input_stream.read.force_encoding('UTF-8')
       updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
-
-      annotation_data = annotation_data.gsub(
-        %r{/api/v1/attachments/image/([0-9])*},
-        "/api/v1/attachments/image/#{attachment.id}",
-      )
-
-      updater.update_annotation(annotation_data, attachment.id)
+      updater.updated_annotated_string(annotation_data, attachment.id)
     end
 
     def import_collections
