@@ -42,6 +42,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import { handleSaveDataset } from 'src/utilities/ElementUtils';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -53,6 +54,7 @@ export default class ResearchPlanDetails extends Component {
       visible: Immutable.List(),
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
@@ -68,6 +70,8 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.props;
     const { currentUser } = this.state;
 
+    UIStore.listen(this.onUIStoreChange);
+
     if (MatrixCheck(currentUser.matrix, commentActivation) && !researchPlan.isNew) {
       CommentActions.fetchComments(researchPlan);
     }
@@ -76,6 +80,15 @@ export default class ResearchPlanDetails extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    const { researchPlan } = this.state;
+    handleSaveDataset(researchPlan, state, this.handleSubmit);
   }
 
   handleResearchPlanChange(el) {
@@ -104,7 +117,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleSubmit() {
     const { researchPlan } = this.state;
-    LoadingActions.start();
+    LoadingActions.start.defer();
 
     if (researchPlan.isNew) {
       ElementActions.createResearchPlan(researchPlan);
