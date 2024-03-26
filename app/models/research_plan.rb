@@ -99,11 +99,11 @@ class ResearchPlan < ApplicationRecord
     svg_files
   end
 
-  def update_body_attachments(old_identifier, new_identifier)
-    attach = body&.detect { |x| x['value']['public_name'] == old_identifier }
+  def update_body_attachments(original_identifier, copy_identifier)
+    attach = body&.detect { |x| x['value']['public_name'] == original_identifier }
     if attach.present?
       attach['id'] = SecureRandom.uuid
-      attach['value']['public_name'] = new_identifier
+      attach['value']['public_name'] = copy_identifier
     end
 
     save!
