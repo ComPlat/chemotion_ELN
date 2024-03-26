@@ -226,36 +226,37 @@ describe('Handle container dataset saving', () => {
     expect(params).toEqual(params);
   }
 
-  describe('save dataset for sample', () => {
+  describe('ignore when invalid data', () => {
     it('when sample is null', () => {
-      const sample = null;
       const uiState = {};
-      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      const triggered = handleSaveDataset(null, uiState, handleSubmit);
       expect(triggered).toEqual(false);
     });
 
     it('when uiState is null', () => {
-      const sample = {};
+      const element = {};
       const uiState = null;
-      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      const triggered = handleSaveDataset(element, uiState, handleSubmit);
       expect(triggered).toEqual(false);
     });
 
     it('when uiState does not have container dataset info', () => {
-      const sample = {};
+      const element = {};
       const uiState = {};
-      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      const triggered = handleSaveDataset(element, uiState, handleSubmit);
       expect(triggered).toEqual(false);
     });
 
     it('when container dataset is not for saving', () => {
-      const sample = {};
+      const element = {};
       const containerDataSet = { isSaving: false };
       const uiState = { containerDataSet };
-      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      const triggered = handleSaveDataset(element, uiState, handleSubmit);
       expect(triggered).toEqual(false);
     });
+  });
 
+  describe('save dataset for sample', () => {
     it('when it is not the same sample id', () => {
       const sample = { id: 100 };
       const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 101 };
@@ -271,7 +272,31 @@ describe('Handle container dataset saving', () => {
       const triggered = handleSaveDataset(sample, uiState, handleSubmit, true);
       expect(triggered).toEqual(true);
     });
+
+    it('when element is an array of samples', () => {
+      const element = [{ id: 100 }, { id: 101 }];
+      const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(element, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
   });
 
-  
+  describe('save dataset for reaction', () => {
+    it('when it is not the same reaction id', () => {
+      const reaction = { id: 100 };
+      const containerDataSet = { elementType: 'reaction', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(reaction, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same reaction id', () => {
+      const reaction = { id: 100 };
+      const containerDataSet = { elementType: 'reaction', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(reaction, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
 });

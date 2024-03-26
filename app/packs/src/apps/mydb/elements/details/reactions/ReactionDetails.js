@@ -28,7 +28,7 @@ import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/Reac
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
-import { rfValueFormat } from 'src/utilities/ElementUtils';
+import { rfValueFormat, handleSaveDataset } from 'src/utilities/ElementUtils';
 import ExportSamplesBtn from 'src/apps/mydb/elements/details/ExportSamplesBtn';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
@@ -123,10 +123,10 @@ export default class ReactionDetails extends Component {
       });
     }
     const { reaction } = this.state;
-    const { containerDataSet } = state;
-    const { elementID, isSaving, elementType } = containerDataSet;
-    if ((elementType === 'reaction') && isSaving && elementID === reaction.id) {
-      this.handleSubmit(false);
+    const { products } = reaction;
+    const saved = handleSaveDataset(reaction, state, this.handleSubmit, false);
+    if (!saved && products.length > 0) {
+      handleSaveDataset(products, state, this.handleSubmit, false);
     }
   }
 
