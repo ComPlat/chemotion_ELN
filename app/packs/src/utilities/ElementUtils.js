@@ -480,7 +480,7 @@ const handleSaveDataset = (element, uiStoreState, callbackFunc, ...args) => {
   const { elementID, isSaving, elementType } = containerDataSet;
   if (!isSaving) return false;
 
-  const supporedTypes = ['sample', 'reaction']
+  const supporedTypes = ['sample', 'reaction', 'researchPlan']
   if (supporedTypes.includes(elementType)) {
     if (Array.isArray(element)) {
       if (elementType === 'sample') {

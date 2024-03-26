@@ -299,4 +299,22 @@ describe('Handle container dataset saving', () => {
       expect(triggered).toEqual(true);
     });
   });
+
+  describe('save dataset for research plan', () => {
+    it('when it is not the same research plan id', () => {
+      const researchPlan = { id: 100 };
+      const containerDataSet = { elementType: 'researchPlan', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(researchPlan, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same research plan id', () => {
+      const researchPlan = { id: 100 };
+      const containerDataSet = { elementType: 'researchPlan', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(researchPlan, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
 });
