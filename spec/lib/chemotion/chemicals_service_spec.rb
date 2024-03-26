@@ -4,26 +4,6 @@ require 'rails_helper'
 
 describe Chemotion::ChemicalsService do
   describe Chemotion::ChemicalsService do
-    context 'when check_if_safety_sheet_already_saved is called' do
-      it 'returns true when file is already saved' do
-        file_name = 'safety_file.pdf'
-        safety_sheet_files_names = ['safety_file.pdf', 'other_file.pdf']
-        expect(described_class.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)).to be_truthy
-      end
-
-      it 'returns false when file is not already saved' do
-        file_name = 'safety_file.pdf'
-        safety_sheet_files_names = ['other_file.pdf', 'another_file.pdf']
-        expect(described_class.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)).to be_falsey
-      end
-
-      it 'returns false when safety_sheet_files_names is empty' do
-        file_name = 'safety_file.pdf'
-        safety_sheet_files_names = []
-        expect(described_class.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)).to be_falsey
-      end
-    end
-
     context 'when write_file is called' do
       let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }
       let(:file_path) { '252549_Merck.pdf' }
@@ -54,15 +34,6 @@ describe Chemotion::ChemicalsService do
         allow(described_class).to receive(:write_file).with(file_path, link).and_return(true)
         result = described_class.create_sds_file(file_path, link)
         expect(result).to be_truthy
-      end
-
-      it 'returns file is already saved if already saved' do
-        file_path = '252549_Merck.pdf'
-        link = 'https://www.sigmaaldrich.com/US/en/sds/sial/252549'
-        allow(described_class).to receive(:check_if_safety_sheet_already_saved)
-          .with(file_path, anything).and_return(true)
-        result = described_class.create_sds_file(file_path, link)
-        expect(result).to eq('file is already saved')
       end
     end
 
