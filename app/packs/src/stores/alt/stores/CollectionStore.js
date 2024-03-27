@@ -60,7 +60,6 @@ class CollectionStore {
       [...collectionObjects, ...sharedObjects]
     );
 
-
     this.setState({
       myCollectionTree,
       lockedCollectionTree,
@@ -107,7 +106,7 @@ class CollectionStore {
   }
 
   flattenCollectionOptions(args = {}) {
-    const { 
+    const {
       includeAll = true, // include the All collection
       onlyOwned = false, // only include collections owned by the current user
       permissionLevel = 0, // only include collections with perm level higher than the one specified
@@ -191,7 +190,7 @@ class CollectionStore {
   }
 
   static filterLockedCollections(collections) {
-    const myLockedCollections = collections.filter(collection => collection.is_locked);
+    const myLockedCollections = collections.filter(collection => collection.is_locked && collection.is_shared === false);
     const myCollections = collections.filter(collection => !collection.is_locked);
     return { myCollections, myLockedCollections };
   }

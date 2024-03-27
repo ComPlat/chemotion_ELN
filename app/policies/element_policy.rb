@@ -15,25 +15,25 @@ class ElementPolicy
   # 2. there exists a shared collection, containing the sample, which he owns and where the user has
   # the required permission_level
   def read?
-    maximum_permission_level(user_collections, user_scollections) >= 0
+    maximum_permission_level(user_collections, acl_collections) >= 0
   end
 
   def update?
-    maximum_permission_level(user_collections, user_scollections) >= 1
+    maximum_permission_level(user_collections, acl_collections) >= 1
   end
 
   def copy?
-    maximum_element_permission_level(user_collections) >= 1 || maximum_element_permission_level(user_scollections) >= 1
+    maximum_element_permission_level(user_collections) >= 1 || maximum_element_permission_level(acl_collections) >= 1
   end
 
   def share?
     return true unless record
 
-    maximum_permission_level(user_collections, user_scollections) >= 2
+    maximum_permission_level(user_collections, acl_collections) >= 2
   end
 
   def destroy?
-    maximum_permission_level(user_collections, user_scollections) >= 3
+    maximum_permission_level(user_collections, acl_collections) >= 3
   end
 
   def scope
@@ -71,7 +71,7 @@ class ElementPolicy
     record.collections.where(user_id: user_ids)
   end
 
-  def user_scollections
+  def acl_collections
     coll_ids = record.collections.pluck :id
     CollectionAcl.where("collection_id IN (?) and user_id IN (?)", coll_ids, user_ids)
   end

@@ -17,7 +17,7 @@ module Usecases
         # if user already owns the (unshared) collection, there is nothing to do here
         return if acl.user_id == previous_owner_id
 
-        delete_from_all_collection(previous_owner_id, collection)
+        delete_from_all_previous_owner_collections(previous_owner_id, collection)
         cols = Collection.where([' id = ? or ancestry = ?  or ancestry like ? or ancestry like ? or ancestry like ? ',
                                  col_id, col_id.to_s, "%/#{col_id}", "#{col_id}/%", "%/#{col_id}/%"])
         cols.update_all(user_id: new_owner_id)
@@ -31,12 +31,13 @@ module Usecases
         )
       end
 
-      def delete_from_all_collection(previous_owner_id, collection)
-        all_col = Collection.find_by(user_id: previous_owner_id, label: 'All')
+      def delete_from_all_previous_owner_collections(previous_owner_id, collection)
         %w[sample reaction wellplate screen research_plan].each do |element|
-          element_ids = collection.send(element + 's').pluck(:id)
-          collection_element = 'Collections' + (element.split('_').map(&:capitalize).join(''))
-          collection_element.constantize.where(collection_id: all_col.id, "#{element}_id": [element_ids]).destroy_all
+          elements = collection.send(element + 's')
+          collection_ids = elements.map{|s| s.collections.where(user_id: previous_owner_id)}.flatten.pluck(:id).uniq
+          collection_ids -= [collection.id]
+          col_element = 'Collections' + (element.split('_').map(&:capitalize).join(''))
+          col_element.constantize.where(collection_id: collection_ids, "#{element}_id": [elements.pluck(:id)]).destroy_all
         end
       end
     end

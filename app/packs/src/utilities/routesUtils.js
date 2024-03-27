@@ -7,6 +7,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { elementNames } from 'src/apps/generic/Utils';
+import CollectionStore from '../stores/alt/stores/CollectionStore';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -26,7 +27,8 @@ const collectionShow = (e) => {
       collectionId: id
     });
   } else {
-    UIActions.selectCollection.defer({ id });
+    const collection = CollectionStore.findCollectionById(id);
+    UIActions.selectCollection(collection);
   }
 
   [
