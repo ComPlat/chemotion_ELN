@@ -151,6 +151,20 @@ class InboxActions {
     };
   }
 
+  bulkDeleteAttachments(attachmentIdsToDelete, fromUnsorted = false) {
+    return (dispatch) => {
+      AttachmentFetcher.bulkDeleteAttachments(attachmentIdsToDelete)
+        .then((result) => {
+          dispatch({
+            result,
+            fromUnsorted,
+          });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   deleteContainerLink(params) {
     return (dispatch) => {
       AttachmentFetcher.deleteContainerLink(params)
