@@ -678,7 +678,7 @@ class Material extends Component {
             type="text"
             bsClass="bs-form--compact form-control"
             bsSize="small"
-            value={solvConcentration(material, props.reaction.solventVolume)}
+            value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
           />
         </td>

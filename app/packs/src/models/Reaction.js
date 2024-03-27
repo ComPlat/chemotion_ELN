@@ -871,6 +871,13 @@ export default class Reaction extends Element {
     return totalVolume;
   }
 
+  get purificationSolventVolume() {
+    let purificationSolventVolume = 0.0;
+    const materials = [...this.purification_solvents];
+    materials.map(m => purificationSolventVolume += m.amount_l);
+    return purificationSolventVolume;
+  }
+
   get solventVolume() {
     let solventVolume = 0.0;
     const materials = [...this.solvents];
