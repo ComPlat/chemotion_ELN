@@ -29,4 +29,18 @@ export default class InventoryFetcher {
     });
     return promise;
   }
+
+  static fetchInventoryOfCollection(collectionId) {
+    const promise = fetch(`/api/v1/inventory/${collectionId}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }
