@@ -317,4 +317,22 @@ describe('Handle container dataset saving', () => {
       expect(triggered).toEqual(true);
     });
   });
+
+  describe('save dataset for wellplate', () => {
+    it('when it is not the same wellplate plan id', () => {
+      const wellplate = { id: 100 };
+      const containerDataSet = { elementType: 'wellplate', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(wellplate, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same wellplate id', () => {
+      const wellplate = { id: 100 };
+      const containerDataSet = { elementType: 'wellplate', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(wellplate, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
 });
