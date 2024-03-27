@@ -93,7 +93,7 @@ export default class CurationModal extends Component {
       //     lastName: 'Flintstone'
       //   }
       // });
-      
+
       // fetch("/typojs/custom/custom.dic")
       // .then(response => (response.text()))
       // // .then(responsetext => console.log(responsetext))
@@ -119,20 +119,16 @@ export default class CurationModal extends Component {
       }
     }
 
-    use_all_dicitonary(dictionary_array, word){
+    use_all_dicitonary(en_dictionary,custom_dictionary, word){
       var Typo = require("typo-js");
       var is_word_correct = false ;
-      var dict_used = ""
-      var number_of_dictionaries = dictionary_array.length()
-      for (let step = 1; step < number_of_dictionaries; step++){
-        var selected_dictionary = dictionary_array[step]
-        if (selected_dictionary.check((word))){
-          is_word_correct = true
+      if (en_dictionary.check(word)){
+        is_word_correct = true}
+      else { if(custom_dictionary.check(word)){
+        is_word_correct = true
+      }}
 
-        }
-        
-      }
-      console.log(is_word_correct)
+      console.log(word + ": " +is_word_correct)
       return is_word_correct
     }
 
@@ -182,7 +178,7 @@ export default class CurationModal extends Component {
           {console.log("number detected "  + word_array[i])}
 
         // if no number, check if in the dictionary, and set varible s_c_w to false if not in dictionary
-        else {var spell_checked_word = en_dictionary.check(word_array[i]);
+        else {var spell_checked_word = this.use_all_dicitonary(en_dictionary,cus_dictionary,word_array[i]);
         // if word is misspelled add word to ms_word array
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
@@ -313,7 +309,8 @@ export default class CurationModal extends Component {
                   onChange={this.handleSuggestChange}
                 />
               </form>
-              <Button onClick={()=>this.add_new_word_to_custom_dic(this.state.correct_word)}>add to dictionairy</Button>
+              <a class="btn btn-success" href={"http://localhost:3000/api/v1/dictionary.json?new_word=".concat(this.state.correct_word)} target="_blank">add to dictionairy</a>
+
             </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
