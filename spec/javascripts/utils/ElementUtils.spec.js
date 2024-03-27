@@ -319,7 +319,7 @@ describe('Handle container dataset saving', () => {
   });
 
   describe('save dataset for wellplate', () => {
-    it('when it is not the same wellplate plan id', () => {
+    it('when it is not the same wellplate id', () => {
       const wellplate = { id: 100 };
       const containerDataSet = { elementType: 'wellplate', isSaving: true, elementID: 101 };
       const uiState = { containerDataSet };
@@ -332,6 +332,24 @@ describe('Handle container dataset saving', () => {
       const containerDataSet = { elementType: 'wellplate', isSaving: true, elementID: 100 };
       const uiState = { containerDataSet };
       const triggered = handleSaveDataset(wellplate, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
+
+  describe('save dataset for screen', () => {
+    it('when it is not the same screen id', () => {
+      const screen = { id: 100 };
+      const containerDataSet = { elementType: 'screen', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(screen, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same screen id', () => {
+      const screen = { id: 100 };
+      const containerDataSet = { elementType: 'screen', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(screen, uiState, handleSubmit, true);
       expect(triggered).toEqual(true);
     });
   });
