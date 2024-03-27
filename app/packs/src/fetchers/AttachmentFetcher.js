@@ -343,6 +343,25 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static bulkDeleteAttachments(attachmentIdsToDelete) {
+    const promise = fetch('/api/v1/attachments/bulk_delete', {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids: attachmentIdsToDelete }),
+    })
+      .then((response) => response.json())
+      .then((json) => new Attachment(json.attachment))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
   static deleteContainerLink(params) {
     const promise = fetch(`/api/v1/attachments/link/${params.id}`, {
       credentials: 'same-origin',
@@ -523,7 +542,7 @@ export default class AttachmentFetcher {
         let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
         const fetchedFilesIdxs = json.files.map((file) => (file.id));
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
-  
+
         return AttachmentFetcher.combineSpectra(jcampIds, curveIdx).then((res) => {
           return json;
         }).catch((errMsg) => {
