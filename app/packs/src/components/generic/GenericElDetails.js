@@ -33,6 +33,7 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import { handleSaveDataset } from 'src/utilities/ElementUtils';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -94,6 +95,8 @@ export default class GenericElDetails extends Component {
         });
       }
     }
+    const { genericEl } = this.state;
+    handleSaveDataset(genericEl, state, this.handleSubmit, false);
   }
 
   handleElChanged(el) {
@@ -142,7 +145,7 @@ export default class GenericElDetails extends Component {
       });
       return false;
     }
-    LoadingActions.start();
+    LoadingActions.start.defer();
     genericEl.name = genericEl.name.trim();
     // filter is_deleted analysis
     const { container } = genericEl;
