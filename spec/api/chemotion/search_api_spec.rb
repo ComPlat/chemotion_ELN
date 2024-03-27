@@ -15,26 +15,28 @@ describe Chemotion::SearchAPI do
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
   let(:sample_c) { create(:sample, name: 'SampleC', creator: other_user) }
   let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
+  let(:molecule_a) { create(:molecule) }
+  let(:molecule_b) { create(:molecule) }
   let(:sample_sorting_a) do
     create(:sample, name: 'Sorting_Sample_A', creator: user,
-                    created_at: Date.strptime('10/15/1090', '%m/%d/%Y'),
+                    molecule: molecule_a,
+
                     updated_at: Date.strptime('10/15/2015', '%m/%d/%Y'))
   end
   let(:sample_sorting_b) do
     create(:sample, name: 'Sorting_Sample_B', creator: user,
-                    created_at: Date.strptime('10/15/1080', '%m/%d/%Y'),
+                    molecule: molecule_a,
                     updated_at: Date.strptime('10/15/2013', '%m/%d/%Y'))
   end
   let(:sample_sorting_c) do
     create(:sample, name: 'Sorting_Sample_C', creator: user,
-                    created_at: Date.strptime('10/15/1070', '%m/%d/%Y'),
+                    molecule: molecule_a,
                     updated_at: Date.strptime('10/15/2014', '%m/%d/%Y'))
   end
 
   let(:sample_sorting_d) do
-    create(:sample, name: 'Sorting_Sample_C', creator: user,
-                    molecule: FactoryBot.create(:molecule),
-                    created_at: Date.strptime('10/15/1085', '%m/%d/%Y'),
+    create(:sample, name: 'Sorting_Sample_D', creator: user,
+                    molecule: molecule_b,
                     updated_at: Date.strptime('11/15/2014', '%m/%d/%Y'))
   end
 
@@ -198,7 +200,8 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/advanced' do
     let(:url) { '/api/v1/search/advanced' }
-    let(:collection_id){collection.id}
+    let(:collection_id) { collection.id }
+    let(:per_page) { 15 }
     let(:advanced_params) do
       [
         {
@@ -225,7 +228,7 @@ describe Chemotion::SearchAPI do
         },
         collection_id: collection_id,
         page: 1,
-        per_page: 15,
+        per_page: per_page,
         molecule_sort: true,
       }
     end
@@ -306,11 +309,10 @@ describe Chemotion::SearchAPI do
     end
 
     context 'with focus on sorting' do
-      let(:search_column){ 'created_at'}
-      let(:search_direction){ 'ascending'}
       let(:result) { JSON.parse(response.body) }
       let(:search_term) { 'Sorting_Sample' }
-      let(:collection_id){ sorting_collection.id}
+      let(:collection_id) { sorting_collection.id }
+      let(:per_page) { 3 }
       let(:advanced_params) do
         [
           {
@@ -325,72 +327,25 @@ describe Chemotion::SearchAPI do
             value: search_term,
             sub_values: [],
             unit: '',
-            sorting: {
-              column: search_column,
-              direction: search_direction,
-            },
           },
         ]
       end
 
-      context 'when searching for names and sorted by creation dates ascending' do
-        it 'returns four samples' do
-          expect(result.dig('samples', 'totalElements')).to eq 4
-        end
-
-        it 'all four samples are in correct order' do
-          expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.1070, 00:00:00 +0000'
-          expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.1080, 00:00:00 +0000'
-          expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.1085, 00:00:00 +0000'
-          expect(result.dig('samples','elements').fourth.dig('created_at')).to eq '15.10.1090, 00:00:00 +0000'
-        end
-      end
-
-      context 'when searching for names and sorted by creation dates descending' do
-        let(:search_direction){ 'descending'}
-
-        it 'returns four samples' do
-          expect(result.dig('samples', 'totalElements')).to eq 4
-        end
-
-        it 'all four samples are in correct order' do
-          expect(result.dig('samples','elements').first.dig('created_at')).to eq '15.10.1090, 00:00:00 +0000'
-          expect(result.dig('samples','elements').second.dig('created_at')).to eq '15.10.1085, 00:00:00 +0000'
-          expect(result.dig('samples','elements').third.dig('created_at')).to eq '15.10.1080, 00:00:00 +0000'
-          expect(result.dig('samples','elements').fourth.dig('created_at')).to eq '15.10.1070, 00:00:00 +0000'
-        end
-      end
-      context 'when searching for names and sorted by updated dates ascending' do
-        let(:search_column){ 'updated_at'}
-
-        it 'returns four samples' do
-          expect(result.dig('samples', 'totalElements')).to eq 4
-        end
-
-        it 'all four samples are in correct order' do
-          expect(result.dig('samples','elements').first.dig('updated_at')).to eq '15.10.2013, 00:00:00 +0000'
-          expect(result.dig('samples','elements').second.dig('updated_at')).to eq '15.10.2014, 00:00:00 +0000'
-          expect(result.dig('samples','elements').third.dig('updated_at')).to eq '15.11.2014, 00:00:00 +0000'
-          expect(result.dig('samples','elements').fourth.dig('updated_at')).to eq '15.10.2015, 00:00:00 +0000'
-        end
-      end
-
       context 'when searching for names and sorted by updated dates descending' do
-        let(:search_column){ 'updated_at'}
-        let(:search_direction){ 'descending'}
-
-        it 'returns four samples' do
+        it '4 samples were found by search' do
           expect(result.dig('samples', 'totalElements')).to eq 4
         end
 
-        it 'all four samples are in correct order' do
-          expect(result.dig('samples','elements').first.dig('updated_at')).to eq '15.10.2015, 00:00:00 +0000'
-          expect(result.dig('samples','elements').second.dig('updated_at')).to eq '15.11.2014, 00:00:00 +0000'
-          expect(result.dig('samples','elements').third.dig('updated_at')).to eq '15.10.2014, 00:00:00 +0000'
-          expect(result.dig('samples','elements').fourth.dig('updated_at')).to eq '15.10.2013, 00:00:00 +0000'
+        it 'three samples are in the first page of the result' do
+          expect(result.dig('samples', 'elements').count).to eq 3
+        end
+
+        it 'all three samples are in correct order' do
+          expect(result.dig('samples', 'elements').first['name']).to eq 'Sorting_Sample_A'
+          expect(result.dig('samples', 'elements').second['name']).to eq 'Sorting_Sample_D'
+          expect(result.dig('samples', 'elements').third['name']).to eq 'Sorting_Sample_C'
         end
       end
-
     end
   end
 

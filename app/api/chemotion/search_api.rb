@@ -16,10 +16,6 @@ module Chemotion
       params :search_params do
         optional :page, type: Integer
         requires :selection, type: Hash do
-          optional :sorting, type: Hash do
-            requires :column, type: String, values:['created_at','updated_at'], default: 'created_at'
-            requires :direction, type: String, values:['ascending','descending'], default: 'ascending'
-          end
           optional :search_by_method, type: String # , values: %w[
           #  advanced substring structure
           #  screen_name wellplate_name reaction_name reaction_short_label
@@ -556,24 +552,8 @@ module Chemotion
             user: current_user,
             conditions: conditions,
           ).perform!
-
-          if params.dig('sorting') != nil then
-            sorting_column=params.dig('sorting','column')
-            sorting_direction=params.dig('sorting','direction')
-           
-            map={}
-            results['samples'][:elements] = results.dig('samples',:elements).each do |o| 
-              map[o[:molecule][:cano_smiles]]=[] unless map[o[:molecule][:cano_smiles]]
-              map[o[:molecule][:cano_smiles]] << o
-             # puts o[:id].to_s + ' | '+o[:molecule][:cano_smiles]+" | "+ o[:updated_at]+" | "+ o[:created_at]
-            end
-            bucketSortedSamples=[];
-            map.keys.each do |o|
-              bucketSortedSamples+=map[o]
-            end
-          end
-          results['samples'][:elements] = bucketSortedSamples
-          results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
+          
+          results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: params["per_page"], pages: 0, totalElements: 0, error: '' }
           results
         end
       end

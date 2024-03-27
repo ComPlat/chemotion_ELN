@@ -44,8 +44,10 @@ module Usecases
         scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)
                                         .where(query_with_condition)
                                         .joins(@conditions[:joins].join(' '))
+        if @conditions[:model_name] == Sample then
+            scope = scope.order('samples.updated_at DESC')
+        end
         
-        scope = scope.order('samples.updated_at DESC') if @conditions[:model_name] == Sample
 
 
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
