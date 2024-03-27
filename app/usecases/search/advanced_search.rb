@@ -40,17 +40,15 @@ module Usecases
       def basic_scope
         return '' if @conditions[:error] != ''
 
-        group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
         scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)
                                         .where(query_with_condition)
                                         .joins(@conditions[:joins].join(' '))
-        if @conditions[:model_name] == Sample then
-            scope = scope.order('samples.updated_at DESC')
-        end
+
+        scope =  @shared_methods.order_by_updated_at(scope) if @conditions[:model_name] == Sample
         
-
-
+        group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
+
         scope.pluck(:id)
       end
 

@@ -15,8 +15,8 @@ describe Chemotion::SearchAPI do
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
   let(:sample_c) { create(:sample, name: 'SampleC', creator: other_user) }
   let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
-  let(:molecule_a) { create(:molecule) }
-  let(:molecule_b) { create(:molecule) }
+  let(:molecule_a) { create(:molecule, sum_formular:'H2O') }
+  let(:molecule_b) { create(:molecule, sum_formular:'CO2') }
   let(:sample_sorting_a) do
     create(:sample, name: 'Sorting_Sample_A', creator: user,
                     molecule: molecule_a,
@@ -313,23 +313,6 @@ describe Chemotion::SearchAPI do
       let(:search_term) { 'Sorting_Sample' }
       let(:collection_id) { sorting_collection.id }
       let(:per_page) { 3 }
-      let(:advanced_params) do
-        [
-          {
-            link: '',
-            match: 'LIKE',
-            table: 'samples',
-            element_id: 0,
-            field: {
-              column: 'name',
-              label: 'Name',
-            },
-            value: search_term,
-            sub_values: [],
-            unit: '',
-          },
-        ]
-      end
 
       context 'when searching for names and sorted by updated dates descending' do
         it '4 samples were found by search' do
@@ -342,8 +325,8 @@ describe Chemotion::SearchAPI do
 
         it 'all three samples are in correct order' do
           expect(result.dig('samples', 'elements').first['name']).to eq 'Sorting_Sample_A'
-          expect(result.dig('samples', 'elements').second['name']).to eq 'Sorting_Sample_D'
-          expect(result.dig('samples', 'elements').third['name']).to eq 'Sorting_Sample_C'
+          expect(result.dig('samples', 'elements').second['name']).to eq 'Sorting_Sample_C'
+          expect(result.dig('samples', 'elements').third['name']).to eq 'Sorting_Sample_D'
         end
       end
     end
