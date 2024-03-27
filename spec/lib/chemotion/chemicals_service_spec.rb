@@ -29,8 +29,6 @@ describe Chemotion::ChemicalsService do
       it 'create safety data when not already saved' do
         file_path = '252549_Merck.pdf'
         link = 'https://www.sigmaaldrich.com/US/en/sds/sial/252549'
-        allow(described_class).to receive(:check_if_safety_sheet_already_saved)
-          .with(file_path, anything).and_return(false)
         allow(described_class).to receive(:write_file).with(file_path, link).and_return(true)
         result = described_class.create_sds_file(file_path, link)
         expect(result).to be_truthy
