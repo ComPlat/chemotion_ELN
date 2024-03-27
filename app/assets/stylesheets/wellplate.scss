@@ -1,0 +1,27 @@
+.create-own-size-button {
+  float: left;
+}
+
+.custom-size-dropdown{
+  float: left;
+  width: 80%;
+}
+
+
+.modal-content{
+  .modal-body{
+    .invalid-wellplate-size{
+      border-style: solid;
+      border-color: red;
+    }
+    .invalid-wellplate-size-text{
+      font-size: 80%;
+      color: red;
+    }
+    .size-without-error{
+      margin-bottom: 35px;
+    }
+  }
+}
+
+  

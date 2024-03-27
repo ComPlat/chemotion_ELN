@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import Element from 'src/models/Element';
 import Sample from 'src/models/Sample';
 
@@ -11,7 +12,7 @@ export default class Well extends Element {
   }
 
   set sample(sample) {
-    this._sample = (sample) ? new Sample(sample) : null
+    this._sample = (sample) ? new Sample(sample) : null;
   }
 
   get sample() {
