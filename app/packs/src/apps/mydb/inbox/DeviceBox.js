@@ -188,6 +188,8 @@ export default class DeviceBox extends React.Component {
     const currentItemsCount = device_box.children.length;
     const itemsDeleted = checkedDeviceIds.length;
 
+    const attachmentIdsToDelete = [];
+
     checkedDeviceIds.forEach((checkedDeviceId) => {
       const datasetToDelete = device_box.children.find((dataset) => dataset.id === checkedDeviceId);
       if (datasetToDelete) {
@@ -199,10 +201,14 @@ export default class DeviceBox extends React.Component {
       device_box.children.forEach((dataset) => {
         const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
         if (attachmentToDelete) {
-          InboxActions.deleteAttachment(attachmentToDelete, false);
+          attachmentIdsToDelete.push(checkedId);
         }
       });
     });
+
+    if (attachmentIdsToDelete.length > 0) {
+      InboxActions.bulkDeleteAttachments(attachmentIdsToDelete, false);
+    }
 
     const params = {
       checkedDeviceIds: [],
