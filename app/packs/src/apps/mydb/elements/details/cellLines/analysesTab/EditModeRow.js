@@ -32,6 +32,7 @@ export default class EditModeRow extends Component {
             disabled={false}
             container={container}
             onChange={() => parent.handleChange(container)}
+            elementID={element.id}
           />
         </Panel.Body>
       </Panel>

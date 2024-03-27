@@ -471,6 +471,36 @@ const getElementSegments = (elementName, tabs) => {
   return _.uniq(tabs.concat(labels));
 }
 
+const handleSaveDataset = (element, uiStoreState, callbackFunc, ...args) => {
+  if (!element || !uiStoreState) return false;
+
+  const { containerDataSet } = uiStoreState;
+  if (!containerDataSet) return false;
+
+  const { elementID, isSaving, elementType } = containerDataSet;
+  if (!isSaving) return false;
+
+  const supporedTypes = ['sample', 'reaction', 'researchPlan', 'wellplate', 'screen'];
+  if (supporedTypes.includes(elementType)) {
+    if (Array.isArray(element)) {
+      if (elementType === 'sample') {
+        const filtered = element.filter((item) => item.id === elementID);
+        if (filtered.length > 0) {
+          callbackFunc(...args);
+          return true;
+        }
+      }
+      return false;
+    } else if (elementID === element.id) {
+      callbackFunc(...args);
+      return true;
+    }
+    return false;
+  }
+
+  return false;
+};
+
 export {
   rfValueFormat,
   hNmrCheckMsg,
@@ -490,5 +520,6 @@ export {
   atomCountCInNMRDescription,
   emwInStr,
   instrumentText,
-  getElementSegments
+  getElementSegments,
+  handleSaveDataset
 };

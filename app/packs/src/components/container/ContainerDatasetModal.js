@@ -5,6 +5,8 @@ import {
   Modal, ButtonGroup, OverlayTrigger, Tooltip, Button,
 } from 'react-bootstrap';
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import LoadingStore from 'src/stores/alt/stores/LoadingStore';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -20,6 +22,23 @@ export default class ContainerDatasetModal extends Component {
     this.handleSave = this.handleSave.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
+    this.handleSaveWithoutClose = this.handleSaveWithoutClose.bind(this);
+    this.onLoadingStoreChange = this.onLoadingStoreChange.bind(this);
+  }
+
+  componentDidMount() {
+    LoadingStore.listen(this.onLoadingStoreChange);
+  }
+
+  componentWillUnmount() {
+    LoadingStore.unlisten(this.onLoadingStoreChange);
+  }
+
+  onLoadingStoreChange(state) {
+    const { loading } = state;
+    if (!loading) {
+      UIActions.saveAttachmentDataset.defer('', false, '');
+    }
   }
 
   handleModalClose(event) {
@@ -37,6 +56,18 @@ export default class ContainerDatasetModal extends Component {
       ...this.datasetInput.current.state.datasetContainer,
       name: this.state.localName
     });
+  }
+
+  handleSaveWithoutClose() {
+    this.props.onChange({
+      ...this.props.datasetContainer,
+      ...this.datasetInput.current.state.datasetContainer,
+      name: this.state.localName
+    });
+
+    const { elementID, templateType } = this.props;
+    const datasetID = this.datasetInput.current.state.datasetContainer.id;
+    UIActions.saveAttachmentDataset(elementID, templateType, datasetID);
   }
 
   handleNameChange(newName) {
@@ -194,6 +225,13 @@ export default class ContainerDatasetModal extends Component {
               >
                 Keep Changes
               </Button>
+              <Button
+                bsStyle="primary"
+                style={{ alignSelf: 'center', marginLeft: 'auto' }}
+                onClick={this.handleSaveWithoutClose}
+              >
+                Save without close
+              </Button>
             </div>
           </Modal.Footer>
         </Modal>
@@ -213,10 +251,14 @@ ContainerDatasetModal.propTypes = {
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string,
+  elementID: PropTypes.string,
+  templateType: PropTypes.string,
 };
 
 ContainerDatasetModal.defaultProps = {
   readOnly: false,
   disabled: false,
   kind: null,
+  elementID: '',
+  templateType: '',
 };
