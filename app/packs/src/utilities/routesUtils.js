@@ -7,6 +7,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { elementNames } from 'src/apps/generic/Utils';
+import CollectionStore from '../stores/alt/stores/CollectionStore';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -28,16 +29,27 @@ const collectionShow = (e) => {
     const collection = result.collection;
 
     if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating({ id: collectionId });
+      UIActions.selectCollectionWithoutUpdating({ collectionId });
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId});
     } else {
+      const collection = CollectionStore.findCollectionById(id);
       if (currentSearchByID) {
         UIActions.clearSearchById();
       }
-      UIActions.selectCollection({ id: collectionId });
+      UIActions.selectCollection({ collection });
     }
+  if (currentSearchSelection) {
+    UIActions.selectCollectionWithoutUpdating({ id });
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection: currentSearchSelection,
+      collectionId: id
+    });
+  } else {
+    const collection = CollectionStore.findCollectionById(id);
+    UIActions.selectCollection(collection);
+  }
 
     UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });

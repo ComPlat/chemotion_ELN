@@ -241,6 +241,7 @@ module Chemotion
             # check if the user is allowed to export these collections
             collection_ids.each do |collection_id|
               collection = Collection.owned_by(user_ids).find_by(id: collection_id)
+              collection = Collection.shared_with_permission(user_ids).where(id: collection_id) if collection.nil?
               unless collection
                 # case when collection purpose is to build the collection tree (empty and locked)
                 next if Collection.find_by(id: collection_id, is_locked: true, is_shared: true)
