@@ -84,12 +84,23 @@ export default class CurationModal extends Component {
     }
 
     add_new_word_to_custom_dic(new_word){
-      fetch("/typojs/custom/custom.dic")
-      .then(response => (response.text()))
-      // .then(responsetext => console.log(responsetext))
-      .then(responsetext => {var text = responsetext 
-              var ammendedDictionairy = (text + new_word + "\n")
-              fetch("/typojs/custom/custom.dic", {method: "POST", headers:{"Content-Type": "text/plain"}, body : ammendedDictionairy})} )
+      // const axios = require('axios');
+      // axios({
+      //   method: 'post',
+      //   url: '/typojs/custom',
+      //   data: {
+      //     firstName: 'Fred',
+      //     lastName: 'Flintstone'
+      //   }
+      // });
+      
+      // fetch("/typojs/custom/custom.dic")
+      // .then(response => (response.text()))
+      // // .then(responsetext => console.log(responsetext))
+      // .then(responsetext => {var text = responsetext 
+      //         console.log(new_word)
+      //         var ammendedDictionairy = (text + new_word + "\n")
+      //         fetch("/typojs/custom/custom.dic", {method: "POST", headers:{"Content-Type": "text/plain"}, body : ammendedDictionairy})} )
     }
 
     
@@ -108,22 +119,70 @@ export default class CurationModal extends Component {
       }
     }
 
+    use_all_dicitonary(dictionary_array, word){
+      var Typo = require("typo-js");
+      var is_word_correct = false ;
+      var dict_used = ""
+      var number_of_dictionaries = dictionary_array.length()
+      for (let step = 1; step < number_of_dictionaries; step++){
+        var selected_dictionary = dictionary_array[step]
+        if (selected_dictionary.check((word))){
+          is_word_correct = true
+
+        }
+        
+      }
+      console.log(is_word_correct)
+      return is_word_correct
+    }
+
+    check_sub_script(input_text){
+      var potential_mol_form = input_text.match(/\b[a-z]\w*\d[a-z]*/gi)
+      console.log(potential_mol_form)
+      for( let step = 0; step < potential_mol_form.length; step++){
+        var split_form = potential_mol_form[step].split(/(\d)/g)
+        split_form = split_form.filter(n) 
+        console.log(split_form)
+        for (let int = 0; int < split_form.length ; int++)
+        {
+    //       return split_form.map((part, index) => (
+    //         <React.Fragment key={index}>
+    //           {(split_form[int] != "" && split_form[int].match(/\d/))
+    //           ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
+    //           : (part)}
+    //         </React.Fragment>
+    // ))
+          if(split_form[int] != ""){
+          if (split_form[int].match(/\d/)){
+            console.log("number found: " + split_form[int])
+          }
+          else{
+            console.log("number not found: "+ split_form[int])
+          }}
+        }
+       
+      }
+    }
+
 
     spell_check(description){
       // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
       var Typo = require("typo-js");
-      var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
+      var dictionary_array = []
+      var en_dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
+      var cus_dictionary = new Typo( "custom", false, false, { dictionaryPath: "/typojs" });
+      dictionary_array.push(en_dictionary, cus_dictionary);
       var ms_words = [];
       var word_array = description.split(' ')
       for (let i = 0; i < word_array.length; i++){
         var punctuation = /[\.,?!\(\)]/g;
         word_array[i] = word_array[i].replace(punctuation, "");
         // check if word has a number in it
-        if (word_array[i] == ""||  /\d/.test(word_array[i]))
-          {console.log("number detected " + word_array[i])}
+        if (word_array[i] == ""||  /\b\d\S*\b/.test(word_array[i]))
+          {console.log("number detected "  + word_array[i])}
 
         // if no number, check if in the dictionary, and set varible s_c_w to false if not in dictionary
-        else {var spell_checked_word = dictionary.check(word_array[i]);
+        else {var spell_checked_word = en_dictionary.check(word_array[i]);
         // if word is misspelled add word to ms_word array
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
@@ -242,6 +301,7 @@ export default class CurationModal extends Component {
                 <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
                 <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
                 <Button onClick={()=>this.handleChange()}> save </Button>
+                <Button onClick={()=> this.check_sub_script(this.state.desc)}> check subscript</Button>
               </div>
               <h4>
                   Suggestions

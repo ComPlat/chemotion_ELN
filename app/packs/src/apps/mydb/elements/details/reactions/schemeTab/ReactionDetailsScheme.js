@@ -946,12 +946,15 @@ export default class ReactionDetailsScheme extends Component {
             <Row>
               <Col md={12}>
                 <FormGroup>
-                  <ControlLabel>Description</ControlLabel>
-                  <CurationModal 
+                <div class="parent">
+                  <div class="child inline-block-child"><ControlLabel>Description</ControlLabel></div> 
+                  <div class="child inline-block-child"><CurationModal 
                     description= {reaction.description.ops} 
                     reaction={reaction} 
                     onDescChange = {this.handleDescChange}/>
-                  <div className="quill-resize">
+                  </div>   
+                </div>
+                <div className="quill-resize">
                     {
                       permitOn(reaction) ?
                         <ReactionDescriptionEditor
