@@ -74,6 +74,10 @@ class Collection < ApplicationRecord
   scope :owned_by, ->(user_id) { where(user_id: user_id) }
 
   scope :with_collections_acls, -> { joins('left join collection_acls acls on acls.collection_id = collections.id') }
+  scope :shared_with_permission, ->(user_id, with_permission = nil) do
+    joins(:collection_acls).where(collection_acls: { user_id: user_id })
+                           .where("collection_acls.permission_level > ?", 1 )
+  end
   scope :shared_with, ->(user_id, with_permission = nil) do
     if with_permission
       joins(:collection_acls).where(collection_acls: { user_id: user_id, permission_level: with_permission })
