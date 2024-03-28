@@ -19,9 +19,10 @@ RSpec.describe 'ImportCollection' do
 
     let(:importer) { Import::ImportCollections.new(attachment, user.id) }
 
-    describe 'import a collection with samples' do
+    describe 'import a collection with samples, with directories in the zip structure and missing schema.json' do
       let(:import_id) { 'collection_samples' }
-      let(:attachment) { create(:attachment, :with_sample_collection_zip) }
+      # let(:attachment) { create(:attachment, :with_sample_collection_zip) }
+      let(:attachment) { create(:attachment, :with_edited_collection_zip) }
 
       it 'successfully import 2 samples' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute

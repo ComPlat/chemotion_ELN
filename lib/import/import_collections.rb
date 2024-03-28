@@ -31,9 +31,13 @@ module Import
       att = Tempfile.new(encoding: 'ascii-8bit')
       att.write(@att.read_file)
       att.rewind
+
       Zip::File.open(att.path) do |zip_file|
         # Handle entries one by one
         zip_file.each do |entry|
+          # do nothing for directory entry
+          next if entry.ftype == :directory
+
           data = entry.get_input_stream.read.force_encoding('UTF-8')
           case entry.name
           when 'export.json'
