@@ -84,6 +84,12 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/import/collection_samples.zip') }
     end
 
+    # copy of the collection_samples.zip file but with removed schema.json file
+    # and reziped (zip contains directory entries)
+    trait :with_edited_collection_zip do
+      file_path { Rails.root.join('spec/fixtures/import/collection_samples_edited.zip') }
+    end
+
     trait :with_reaction_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/collection_reaction.zip') }
     end
