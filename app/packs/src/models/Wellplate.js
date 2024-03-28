@@ -133,11 +133,10 @@ export default class Wellplate extends Element {
   }
 
   calculatePositionOfWellByIndex(i) {
-    const columns = this.width;
-    const columnOfIndex = (i + 1) % columns;
+    const columnOfIndex = (i + 1) % this.width;
 
-    const x = (columnOfIndex === 0) ? columns : columnOfIndex;
-    const y = Math.floor(i / columns) + 1;
+    const x = (columnOfIndex === 0) ? this.width : columnOfIndex;
+    const y = Math.floor(i / this.width) + 1;
 
     return { x, y };
   }

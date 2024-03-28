@@ -107,9 +107,9 @@ export default class WellplateDetailsAttachments extends Component {
   }
 
   handleTemplateDownload() { // eslint-disable-line class-methods-use-this
-    const { wellplate }=this.props;
+    const { wellplate } = this.props;
     Utils.downloadFile({ 
-      contents: '/api/v1/wellplates/template/'+wellplate.id,
+      contents: '/api/v1/wellplates/template/' + wellplate.id,
       name: 'wellplate_import_template.xlsx' 
     });
   }
