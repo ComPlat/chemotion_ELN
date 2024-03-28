@@ -10,8 +10,8 @@ module Usecases
       end
 
       def execute!
-        raise 'Width of wellplate to high' if @wellplate.width > 100
-        raise 'Height of wellplate to high' if @wellplate.height > 100
+        raise "Wellplate width of #{@wellplat.width} exceeds maximum allowed width of 100" if @wellplate.width > 100
+        raise "Wellplate height of #{@wellplat.height} exceeds maximum allowed height of 100" if @wellplate.height > 100
 
         xfile = create_excel_object
         create_data_content(xfile.workbook.worksheets.first)
