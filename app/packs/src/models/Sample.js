@@ -1122,21 +1122,17 @@ export default class Sample extends Element {
     }
   }
 
-  updateMixtureComponentEquivalent(){
-    const minAmountIndex = this.mixture_components.reduce((minIndex, component, currentIndex) => {
-      return component.amount_mol < this.mixture_components[minIndex].amount_mol ? currentIndex : minIndex;
+  updateMixtureComponentEquivalent() {
+    const totalAmountMol = this.mixture_components.reduce((total, component) => {
+        return total + component.amount_mol;
     }, 0);
 
-    const referenceAmountMol = this.mixture_components[minAmountIndex].amount_mol;
-    this.mixture_components[minAmountIndex].equivalent = 1;
+    const minRatio = Math.min(...this.mixture_components.map(component => component.amount_mol / totalAmountMol));
 
-    this.mixture_components.forEach((component, index) => {
-      if (index !== minAmountIndex) {
-        component.equivalent = component.amount_mol / referenceAmountMol;
-      }
+    this.mixture_components.forEach((component) => {
+        component.equivalent = (component.amount_mol / totalAmountMol) / minRatio;
     });
   }
-
 
   splitMolfileToMolecule(mixtureMolfiles, editor) {
     const promises = mixtureMolfiles.map(molfile => {

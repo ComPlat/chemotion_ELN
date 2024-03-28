@@ -52,7 +52,7 @@ const SampleComponentsGroup = ({
       group: 'Component',
       amount: 'Amount',
       stockConc: 'Stock conc.',
-      concn: 'Conc',
+      concn: 'Target conc',
       eq: 'Ratio'
     };
   
