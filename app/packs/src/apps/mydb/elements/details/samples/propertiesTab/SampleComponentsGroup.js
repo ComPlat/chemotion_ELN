@@ -51,6 +51,7 @@ const SampleComponentsGroup = ({
     const headers = {
       group: 'Component',
       amount: 'Amount',
+      stockConc: 'Stock conc.',
       concn: 'Conc',
       eq: 'Ratio'
     };
@@ -73,12 +74,13 @@ const SampleComponentsGroup = ({
         <table width="100%" className="sample-scheme">
           <colgroup>
           <col style={{ width: '4%' }} />
-          <col style={{ width: '16%' }} />
-          <col style={{ width: '16%' }} />
-          <col style={{ width: '16%' }} />
-          <col style={{ width: '16%' }} />
-          <col style={{ width: '16%' }} />
-          <col style={{ width: '11%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '4%' }} />
           </colgroup>
           <thead>
             <tr>
@@ -87,6 +89,7 @@ const SampleComponentsGroup = ({
             <th style={{ padding: '3px 3px' }}>{headers.amount}</th>
             <th />
             <th />
+            <th>{headers.stockConc}</th>
             <th>{headers.concn}</th>
             <th>{headers.eq}</th>
             </tr>

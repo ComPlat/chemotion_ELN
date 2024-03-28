@@ -374,7 +374,7 @@ class Material extends Component {
     }
   }
 
-  handleAmountUnitChange(e, value) {
+  handleAmountUnitChange(e, value, concType) {
     if (e.value === value) return;
     if (this.props.onChange && e) {
       const event = {
@@ -382,6 +382,7 @@ class Material extends Component {
         type: 'amountUnitChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
+        concType: concType,
 
       };
       this.props.onChange(event);
@@ -598,7 +599,22 @@ class Material extends Component {
         <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.concn}
+            value={material.stockConc}
+            unit="mol/l"
+            metricPrefix={metricMolConc}
+            metricPrefixes={metricPrefixesMolConc}
+            precision={4}
+            disabled={!isMixture}
+            onChange={e => this.handleAmountUnitChange(e, material.stockConc, 'stockConc')}
+            onMetricsChange={this.handleMetricsChange}
+          />
+        </td>
+
+        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}
+        onDoubleClick={(e) => this.handleInputDoubleClick(e)}>
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={material.concn} 
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}

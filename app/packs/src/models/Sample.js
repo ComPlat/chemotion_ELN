@@ -1091,12 +1091,35 @@ export default class Sample extends Element {
     this.combineSVG()
   }
 
-  updateMixtureComponent(componentToUpdate) {
-    const tmpComponents = [...(this.mixture_components || [])];
-    const updatedComponents = tmpComponents.map((comp) =>
-      comp === componentToUpdate ? componentToUpdate : comp
-    );
-    this.mixture_components = updatedComponents;
+  updateMixtureComponent(componentIndex, amount, concType) {
+    const componentToUpdate = this.mixture_components[componentIndex];
+    if  (!amount.unit || isNaN(amount.value)) { return }
+    const totalVolume = this.amount_l
+
+    if (amount.unit === 'l') { 
+      componentToUpdate.amount_value = amount.value;
+      componentToUpdate.amount_unit = amount.unit;
+      if (componentToUpdate.stockConc && totalVolume) {
+        componentToUpdate.concn = componentToUpdate.amount_value * componentToUpdate.stockConc / totalVolume
+        componentToUpdate.molarity_value = componentToUpdate.concn 
+      }
+    } else if (amount.unit === 'mol/l' && concType !== 'stockConc') {
+      componentToUpdate.concn = amount.value;
+      componentToUpdate.molarity_value = amount.value;
+      if (componentToUpdate.stockConc && totalVolume) { 
+        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stockConc
+        componentToUpdate.amount_unit = 'l'
+      }
+    } else if (amount.unit === 'mol/l' && concType === 'stockConc') {
+      componentToUpdate.stockConc = amount.value;
+      if (totalVolume && componentToUpdate.concn) { 
+        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stockConc
+        componentToUpdate.amount_unit = 'l' 
+      }
+    } else {
+      componentToUpdate.amount_value = amount.value;
+      componentToUpdate.amount_unit = amount.unit;
+    }
   }
 
   updateMixtureComponentEquivalent(){

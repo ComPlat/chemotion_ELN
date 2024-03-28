@@ -53,15 +53,12 @@ export default class SampleDetailsComponents extends React.Component {
     const { sample } = this.props;
     const sampleID = changeEvent.sampleID;
     const amount = changeEvent.amount;
+    const concType = changeEvent.concType;
     const componentIndex = this.props.sample.mixture_components.findIndex(
       (component) => component.id === sampleID
     );
 
-    if (amount.unit == "mol/l"){
-      sample.mixture_components[componentIndex].setConc(amount)
-    } else {
-      sample.mixture_components[componentIndex].setAmount(amount)
-    }
+    sample.updateMixtureComponent(componentIndex, amount, concType)
 
     // update components ratio
     sample.updateMixtureComponentEquivalent()

@@ -545,6 +545,37 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  totalAmount(sample) {
+    const content = [];
+    const isDisabled = !sample.can_update;
+
+    if (sample.isMethodDisabled('amount_value') === false) {
+      if (!sample.contains_residues) {
+        content.push(this.numInput(
+          sample,
+          'amount_l',
+          'l',
+          ['m', 'u', 'n'],
+          5,
+          'Total volume',
+          'l',
+          isDisabled,
+          '',
+          false
+        ));
+      }
+
+      return content;
+    }
+
+    return (
+      <FormGroup>
+        <ControlLabel>Target Total Volume</ControlLabel>
+        <FormControl type="text" disabled defaultValue="***" readOnly />
+      </FormGroup>
+    );
+  }
+
   sampleAmount(sample) {
     const content = [];
     const isDisabled = !sample.can_update;
@@ -884,6 +915,9 @@ export default class SampleForm extends React.Component {
             )}
             </ListGroupItem>
           </ListGroup>
+          <tr>
+            {this.totalAmount(sample)}
+          </tr>
           {this.state.selectedSampleType === 'Mixture' ? this.mixtureComponentsList(sample) : null}
           <tr>
             {this.additionalProperties(sample)}
