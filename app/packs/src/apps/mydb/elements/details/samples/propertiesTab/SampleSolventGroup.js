@@ -9,6 +9,7 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
 function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
   if (!solvent) {
@@ -25,7 +26,14 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
     onChangeSolvent(solvent);
   };
 
+  const changeVolume = (event) => {
+    solvent.amount_l = event.value;
+    onChangeSolvent(solvent);
+  };
+
   // onChangeRatio
+  const metricPrefixes = ['m', 'n', 'u'];
+  const metric = (solvent.metrics && solvent.metrics.length > 2 && metricPrefixes.indexOf(solvent.metrics[1]) > -1) ? solvent.metrics[1] : 'm';
   return (
     <tr>
       <td>
@@ -35,6 +43,16 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
           value={solvent.label}
           onChange={changeLabel}
           disabled
+        />
+      </td>
+      <td style={{verticalAlign: 'bottom'}}>  
+        <NumeralInputWithUnitsCompo
+          value={solvent.amount_l}
+          unit="l"
+          metricPrefix={metric}
+          metricPrefixes={metricPrefixes}
+          precision={3}
+          onChange={changeVolume}
         />
       </td>
       <td>
@@ -135,8 +153,9 @@ function SampleSolventGroup({
               />
               { sampleSolvents && sampleSolvents.length > 0 && (
                 <>
-                  <td style={{ width: '50%', fontWeight: 'bold' }}>Label:</td>
-                  <td style={{ width: '50%', fontWeight: 'bold' }}>Ratio:</td>
+                  <td style={{ width: '35%', fontWeight: 'bold' }}>Label:</td>
+                  <td style={{ width: '35%', fontWeight: 'bold' }}>Volume:</td>
+                  <td style={{ width: '30%', fontWeight: 'bold' }}>Ratio:</td>
                 </>
               )}
               {contents.map((item) => item)}
