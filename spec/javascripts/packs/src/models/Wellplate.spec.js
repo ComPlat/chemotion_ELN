@@ -128,7 +128,7 @@ describe('Wellplate', async () => {
 
       it('an error was thrown', async () => {
         expect(() => Wellplate.buildFromSamplesAndCollectionId(samples, collectionId, width, height))
-          .toThrowError('Size of wellplate to small for samples!');
+          .toThrowError('Wellplate of size 2 to small for 3 samples!');
       });
     });
   });
