@@ -53,7 +53,7 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
       let(:wellplate) { create(:wellplate, :with_transient_wells, width: 101, height: 1) }
 
       it 'an error was thrown' do
-        expect { usecase.execute! }.to raise_error('Width of wellplate to high')
+        expect { usecase.execute! }.to raise_error('Wellplate width of 101 exceeds maximum allowed width of 100')
       end
     end
 
@@ -61,7 +61,7 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
       let(:wellplate) { create(:wellplate, :with_transient_wells, width: 1, height: 101) }
 
       it 'an error was thrown' do
-        expect { usecase.execute! }.to raise_error('Height of wellplate to high')
+        expect { usecase.execute! }.to raise_error('Wellplate height of 101 exceeds maximum allowed height of 100')
       end
     end
   end
