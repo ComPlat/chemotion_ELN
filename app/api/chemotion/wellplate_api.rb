@@ -15,7 +15,6 @@ module Chemotion
         params do
           requires :wellplates, type: Array do
             requires :name, type: String
-            optional :size, type: Integer
             optional :description, type: Hash
             optional :wells, type: Array
             optional :readout_titles, type: Array
@@ -142,7 +141,6 @@ module Chemotion
       params do
         requires :id, type: Integer
         optional :name, type: String
-        optional :size, type: Integer
         optional :description, type: Hash
         optional :wells, type: Array
         optional :readout_titles, type: Array
@@ -177,7 +175,6 @@ module Chemotion
       desc 'Create a wellplate'
       params do
         requires :name, type: String
-        optional :size, type: Integer
         optional :description, type: Hash
         requires :wells, type: Array
         optional :readout_titles, type: Array
