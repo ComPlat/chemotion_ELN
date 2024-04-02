@@ -170,8 +170,10 @@ class UIStore {
     this.state[type].activeTab = tabKey;
   }
 
-  handleSelectActiveAnalysis(index) {
-    this.state.sample.activeAnalysis = index;
+  handleSelectActiveAnalysis(params = {}) {
+    const type = params.type || 'sample';
+    const analysisIndex = params.analysisIndex || 0;
+    this.state[type].activeAnalysis = analysisIndex;
   }
 
   handleCheckAllElements(params) {
