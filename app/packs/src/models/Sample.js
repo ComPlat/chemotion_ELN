@@ -1074,6 +1074,16 @@ export default class Sample extends Element {
         && solv.inchikey && solventToUpdate.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents[filteredIndex] = solventToUpdate;
+
+      if (tmpSolvents.length > 1 && tmpSolvents.every(solv => solv.amount_l)) {
+        const totalVolume = tmpSolvents.reduce((acc, solv) => acc + solv.amount_l, 0);
+        const minRatio = Math.min(...tmpSolvents.map(solv => solv.amount_l / totalVolume));
+        const scale = 1 / minRatio;
+
+        tmpSolvents.forEach(solv => {
+          solv.ratio = Number((solv.amount_l / totalVolume) * scale).toFixed(1);
+        });
+      }
     }
     this.solvent = tmpSolvents;
   }
@@ -1139,6 +1149,17 @@ export default class Sample extends Element {
     }
   }
 
+  updateMixtureComponentVolume() {
+    if (this.mixture_components.length < 1) {return}
+    const totalVolume = this.amount_l
+
+    this.mixture_components.forEach((component) => {
+      if (component.concn > 0 && component.stock_molarity_value > 0)
+      component.amount_value = component.concn * totalVolume / component.stock_molarity_value
+      component.amount_unit = 'l' 
+    })
+  }
+
   updateMixtureComponentEquivalent() {
     const totalAmountMol = this.mixture_components.reduce((total, component) => {
         return total + component.amount_mol;
@@ -1147,7 +1168,7 @@ export default class Sample extends Element {
     const minRatio = Math.min(...this.mixture_components.map(component => component.amount_mol / totalAmountMol));
 
     this.mixture_components.forEach((component) => {
-        component.equivalent = (component.amount_mol / totalAmountMol) / minRatio;
+        component.equivalent = Number((component.amount_mol / totalAmountMol) / minRatio).toFixed(1);
     });
   }
 

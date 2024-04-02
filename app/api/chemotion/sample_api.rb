@@ -440,6 +440,7 @@ module Chemotion
 
             components_to_remove.each do |component_id|
               Sample.find_by(id: component_id)&.destroy
+              SampleType.find_by(sampleable_id: component_id)&.destroy
             end
 
             components_to_add.each do |component_id|

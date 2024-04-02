@@ -51,6 +51,9 @@ export default class SampleForm extends React.Component {
 
   handleAmountChanged(amount) {
     this.props.sample.setAmount(amount);
+    if (amount.unit == 'l' && this.state.selectedSampleType === 'Mixture') {
+      this.props.sample.updateMixtureComponentVolume();
+    }
   }
 
   handleMolarityChanged(molarity) {
@@ -916,7 +919,7 @@ export default class SampleForm extends React.Component {
             </ListGroupItem>
           </ListGroup>
           <tr>
-            {this.totalAmount(sample)}
+            {this.state.selectedSampleType === 'Mixture' ? this.totalAmount(sample) : null}
           </tr>
           {this.state.selectedSampleType === 'Mixture' ? this.mixtureComponentsList(sample) : null}
           <tr>

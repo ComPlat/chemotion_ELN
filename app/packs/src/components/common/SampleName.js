@@ -33,6 +33,15 @@ const SampleName = ({ sample }) => {
       </div>
     );
   }
+
+  if (sample.sample_type_name == 'Mixture') {
+    return (
+      <div>
+        {sample.name}
+      </div>
+    );
+  }
+
   return (
     <div>
       <p><ClipboardCopyText text={sumFormulaCom} clipText={clipText} /></p>
