@@ -159,8 +159,7 @@ export default class ReactionDetails extends Component {
     if (type === 'temperatureUnit' || type === 'temperatureData'
       || type === 'description' || type === 'role'
       || type === 'observation' || type === 'durationUnit'
-      || type === 'duration' || type === 'rxno'
-      || type === 'variations') {
+      || type === 'duration' || type === 'rxno') {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -477,7 +476,7 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="variations" title="Variations" key={`variations_${reaction.id}`} unmountOnExit={false}>
           <ReactionVariations
             reaction={reaction}
-            onEditVariations={(event) => this.handleInputChange('variations', event)}
+            onReactionChange={this.handleReactionChange}
           />
         </Tab>
       )

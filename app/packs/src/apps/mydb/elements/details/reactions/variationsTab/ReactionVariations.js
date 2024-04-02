@@ -397,7 +397,7 @@ function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials) {
   return updatedColumnDefinitions;
 }
 
-export default function ReactionVariations({ reaction, onEditVariations }) {
+export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const [reactionVariations, setReactionVariations] = useState(reaction.variations);
   const [columnDefinitions, setColumnDefinitions] = useState([
@@ -477,7 +477,8 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
   useEffect(() => {
     // Push changes to parent component. Treat parent component as external system,
     // since it's not obvious when and how state is mutated in the parent component.
-    onEditVariations(reactionVariations);
+    reaction.variations = reactionVariations;
+    onReactionChange(reaction);
   }, [reactionVariations]);
 
   if ((reactionVariations.length > 0) && reactionMaterialsChanged(reactionVariations, reaction)) {
@@ -596,5 +597,5 @@ export default function ReactionVariations({ reaction, onEditVariations }) {
 
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  onEditVariations: PropTypes.func.isRequired,
+  onReactionChange: PropTypes.func.isRequired,
 };
