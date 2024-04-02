@@ -93,17 +93,19 @@ module Chemotion
       namespace :restoreAccount do
         desc 'restore deleted user account'
         params do
-          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'          
+          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'
         end
         post do
-          user = User.only_deleted.find_by(name_abbreviation: params[:name_abbreviation])
-          error!('Record not found', 404) unless user
-          begin
-            user.update_columns(deleted_at: nil)
-            status 201
-          rescue ActiveRecord::RecordInvalid => e
-            { error: e.message }
+          existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
+          user = User.only_deleted.find_by('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
+          error!('User not found', 404) if user.blank?
+          if existing_user.present?
+            user.update_columns(deleted_at: nil, account_active: false)
+            error!(id: user.id,
+                   warning: 'Account Restored. Warning:  Abbreviation already exists! Please update the Abbreviation and Email')
           end
+          user.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
+          status 205
         end
       end  
 
