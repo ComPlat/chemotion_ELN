@@ -299,7 +299,7 @@ export default class SampleForm extends React.Component {
   matchSelectedCollection(currentCollection) {
     const { sample } = this.props;
     const { collection_labels } = sample.tag?.taggable_data || [];
-    const result = collection_labels.filter((object) => object.id === currentCollection.id).length > 0;
+    const result = collection_labels?.filter((object) => object.id === currentCollection.id).length > 0;
     return result;
   }
 
