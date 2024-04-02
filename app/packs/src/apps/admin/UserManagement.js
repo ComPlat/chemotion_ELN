@@ -108,9 +108,11 @@ export default class UserManagement extends React.Component {
       showEditUserModal: false,
       showGenericAdminModal: false,
       showRestoreAccountModal: false,
-      messageNewUserModal: '',
-      messageEditUserModal: '',
-      messageRestoreAccountModal:'',
+      showError: false,
+      showSuccess: false,
+      messageNewUserModal: "",
+      messageEditUserModal: "",
+      messageRestoreAccountModal: "",
       processingSummaryUserFile: '',
       filterCriteria: {}
     };
@@ -183,15 +185,17 @@ export default class UserManagement extends React.Component {
   handleRestoreAccountShow() {
     this.setState({
       showRestoreAccountModal: true,
-      messageRestoreAccountModal: '',   
+      messageRestoreAccountModal: "",
+      showSuccess: false,
+      showError: false,  
     });
   }
 
   handleRestoreAccountClose() {
     this.setState({
       showRestoreAccountModal: false,
-      messageRestoreAccountModal: '',
     });
+    this.handleFetchUsers();
   }
 
   handleGenericAdminModalCb(user) {
@@ -398,9 +402,27 @@ export default class UserManagement extends React.Component {
     return true;
   }
 
-  handleRestoreAccount(user) {
-   console.log('Restore Account')
-  }
+  handleRestoreAccount = () => {
+    if (this.nameAbbreviation.value.trim() === "") {
+      this.setState({ messageRestoreAccountModal: "Please enter the name abbreviation!", showError: true });
+      return false;
+    }
+    AdminFetcher.restoreAccount({
+      name_abbreviation: this.nameAbbreviation.value.trim(),
+    }).then((result) => {
+      if (result?.error || result?.warning) {
+        this.setState({ messageRestoreAccountModal: result.error ?? result.warning, showError: true });
+        return false;
+      }
+      this.setState({ messageRestoreAccountModal: "Successfully restored the account!", showSuccess: true });
+      setTimeout(() => {
+        this.nameAbbreviation.value = "";
+        this.handleRestoreAccountClose();
+      }, 3000);
+      return true;
+    });
+    return true;
+  };
 
   updateFilter = (key, value) => {
     this.setState((prevState) => ({
@@ -909,32 +931,16 @@ export default class UserManagement extends React.Component {
       </Modal>
     );
   }
+  
   renderRestoreAccountModal() {
-    //const { user } = this.state;
     return (
-      <Modal
-        show={this.state.showRestoreAccountModal}
-        onHide={this.handleRestoreAccountClose}
-      >
+      <Modal show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
           <Modal.Title>Restore Account</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
+        <Modal.Body style={{ overflow: "auto" }}>
           <div className="col-md-9">
             <Form horizontal>
-              <FormGroup controlId="formControlEmail">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Email:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="email"
-                    name="u_email"
-                   // defaultValue={user.email}
-                    inputRef={(ref) => { this.u_email = ref; }}
-                  />
-                </Col>
-              </FormGroup>
               <FormGroup controlId="formControlAbbr">
                 <Col componentClass={ControlLabel} sm={3}>
                   Abbr:
@@ -942,20 +948,17 @@ export default class UserManagement extends React.Component {
                 <Col sm={9}>
                   <FormControl
                     type="text"
-                    name="nameAbbrevation"
-                    //defaultValue={user.initials}
-                    inputRef={(ref) => { this.nameAbbrevation = ref; }}
+                    name="nameAbbreviation"
+                    placeholder="Please enter the name abbreviation"
+                    inputRef={(ref) => {
+                      this.nameAbbreviation = ref;
+                    }}
                   />
                 </Col>
               </FormGroup>
-              <FormGroup controlId="formControlMessage">
+              <FormGroup controlId="formControlMessage" validationState={`${this.state.showError ? "error" : this.state.showSuccess ? "success" : null}`}>
                 <Col sm={12}>
-                  <FormControl
-                    type="text"
-                    readOnly
-                    name="messageRestoreAccountModal"
-                    value={this.state.messageRestoreAccountModal}
-                  />
+                  <FormControl type="text" readOnly name="messageRestoreAccountModal" value={this.state.messageRestoreAccountModal} />
                 </Col>
               </FormGroup>
               <FormGroup>
@@ -1279,7 +1282,7 @@ export default class UserManagement extends React.Component {
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
         {this.renderRestoreAccountModal()}
-        { this.renderGenericAdminModal() }
+        {this.renderGenericAdminModal()}
       </div>
     );
   }
