@@ -974,7 +974,7 @@ export default class UserManagement extends React.Component {
             <Form horizontal>
               <FormGroup controlId="formControlAbbr">
                 <Col componentClass={ControlLabel} sm={3}>
-                  Abbr:
+                  Abbr (3):
                 </Col>
                 <Col sm={9}>
                   <FormControl
