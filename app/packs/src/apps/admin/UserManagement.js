@@ -134,7 +134,6 @@ export default class UserManagement extends React.Component {
       messageNewUserModal: '',
       messageEditUserModal: '',
       messageRestoreAccountModal: '',
-      messageRestoreAccountModal: '',
       processingSummaryUserFile: '',
       filterCriteria: {}
     };
@@ -964,14 +963,13 @@ export default class UserManagement extends React.Component {
       </Modal>
     );
   }
-
   renderRestoreAccountModal() {
     return (
       <Modal show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
           <Modal.Title>Restore Account</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
+        <Modal.Body style={{ overflow: "auto" }}>
           <div className="col-md-9">
             <Form horizontal>
               <FormGroup controlId="formControlAbbr">
@@ -1343,6 +1341,7 @@ export default class UserManagement extends React.Component {
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
+        {this.renderRestoreAccountModal()}
         {this.renderGenericAdminModal()}
       </div>
     );
