@@ -213,23 +213,6 @@ export default class AdminFetcher {
       });
   }
 
-  static restoreAccount(params) {
-    return fetch("/api/v1/admin_user/restoreAccount/", {
-      credentials: "same-origin",
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
   static fetchUsers() {
     return fetch('/api/v1/admin_user/listUsers/all.json', {
       credentials: 'same-origin',
