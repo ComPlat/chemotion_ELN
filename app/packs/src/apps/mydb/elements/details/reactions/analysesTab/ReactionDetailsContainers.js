@@ -23,6 +23,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -46,7 +47,7 @@ export default class ReactionDetailsContainers extends Component {
     const { reaction } = props;
     this.state = {
       reaction,
-      activeContainer: 0
+      activeContainer: UIStore.getState().reaction.activeAnalysis
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -56,10 +57,25 @@ export default class ReactionDetailsContainers extends Component {
     this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
     this.handleSpChange = this.handleSpChange.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentDidMount() {
+    UIStore.listen(this.onUIStoreChange);
     TextTemplateActions.fetchTextTemplates('reaction');
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange);
+  }
+
+  onUIStoreChange(state) {
+    const { activeContainer } = this.state;
+    if (state.reaction.activeContainer !== activeContainer) {
+      this.setState({
+        activeContainer: state.reaction.activeContainer
+      });
+    }
   }
 
   // eslint-disable-next-line camelcase
@@ -167,6 +183,10 @@ export default class ReactionDetailsContainers extends Component {
           confirmRegenerate={confirmRegenerate}
           toggleNMRDisplayerModal={toggleNMRDisplayerModal}
           hasNMRium={hasNMRium}
+        />
+        <AnalysisVariationLink
+          reaction={reaction}
+          analysisID={container.id}
         />
       </div>
     );
