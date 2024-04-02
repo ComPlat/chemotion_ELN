@@ -453,6 +453,8 @@ module Chemotion
                   target_amount_unit: component[:_target_amount_unit],
                   molarity_unit: component[:_molarity_unit],
                   molarity_value: component[:_molarity_value],
+                  stock_molarity_value: component[:_stock_molarity_value],
+                  stock_molarity_unit: component[:_stock_molarity_unit],
                   sample_type_name: 'MixtureComponent',
                 }
                 component_sample.update!(component_quantities)
@@ -463,6 +465,8 @@ module Chemotion
                   target_amount_unit: component[:_target_amount_unit],
                   molarity_value: component[:_molarity_value],
                   molarity_unit: component[:_molarity_unit],
+                  stock_molarity_value: component[:_stock_molarity_value],
+                  stock_molarity_unit: component[:_stock_molarity_unit],
                   molecule_id: component[:_molecule][:id],
                   sample_svg_file: component[:sample_svg_file],
                   created_by: current_user.id,
@@ -492,6 +496,8 @@ module Chemotion
                 target_amount_unit: component[:_target_amount_unit],
                 molarity_unit: component[:_molarity_unit],
                 molarity_value: component[:_molarity_value],
+                stock_molarity_value: component[:_stock_molarity_value],
+                stock_molarity_unit: component[:_stock_molarity_unit],
                 sample_type_name: 'MixtureComponent',
               }
               subsample.update!(component_quantities)
@@ -685,6 +691,8 @@ module Chemotion
                 target_amount_unit: component[:_target_amount_unit],
                 molarity_unit: component[:_molarity_unit],
                 molarity_value: component[:_molarity_value],
+                stock_molarity_value: component[:_stock_molarity_value],
+                stock_molarity_unit: component[:_stock_molarity_unit],
                 sample_type_name: 'MixtureComponent',
               }
               component_sample.update!(component_quantities)
@@ -694,6 +702,8 @@ module Chemotion
                 target_amount_unit: component[:_target_amount_unit],
                 molarity_value: component[:_molarity_value],
                 molarity_unit: component[:_molarity_unit],
+                stock_molarity_value: component[:_stock_molarity_value],
+                stock_molarity_unit: component[:_stock_molarity_unit],
                 molecule_id: component[:_molecule][:id],
                 sample_svg_file: component[:sample_svg_file],
                 created_by: current_user.id,

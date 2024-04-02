@@ -282,13 +282,13 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.string "content"
     t.integer "created_by", null: false
     t.string "section"
-    t.string "status", default: "Pending"
-    t.string "submitter"
-    t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
@@ -1088,8 +1088,8 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
   end
 
   create_table "research_plans_screens", force: :cascade do |t|
-    t.integer "screen_id"
-    t.integer "research_plan_id"
+    t.bigint "screen_id", null: false
+    t.bigint "research_plan_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1098,8 +1098,8 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
   end
 
   create_table "research_plans_wellplates", force: :cascade do |t|
-    t.integer "research_plan_id"
-    t.integer "wellplate_id"
+    t.bigint "research_plan_id", null: false
+    t.bigint "wellplate_id", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.datetime "deleted_at"
@@ -1181,9 +1181,12 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.string "sum_formula"
     t.jsonb "solvent"
     t.boolean "inventory_sample", default: false
+    t.boolean "dry_solvent", default: false
     t.bigint "mixture_id"
     t.bigint "micromolecule_id"
     t.string "sample_type_name", default: "Micromolecule"
+    t.float "stock_molarity_value", default: 0.0
+    t.string "stock_molarity_unit", default: "M"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1504,14 +1507,14 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
        RETURNS TABLE(instrument text)
        LANGUAGE sql
       AS $function$
-             select distinct extended_metadata -> 'instrument' as instrument from containers c
-             where c.container_type='dataset' and c.id in
-             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-             order by extended_metadata -> 'instrument' limit 10
-           $function$
+         select distinct extended_metadata -> 'instrument' as instrument from containers c
+         where c.container_type='dataset' and c.id in
+         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+         order by extended_metadata -> 'instrument' limit 10
+       $function$
   SQL
   create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
@@ -1533,39 +1536,39 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
        RETURNS TABLE(user_ids integer)
        LANGUAGE sql
       AS $function$
-             select $1 as id
-             union
-             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-             and users.type in ('Group') and users_groups.user_id = $1)
-           $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
   SQL
   create_function :user_as_json, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
        RETURNS json
        LANGUAGE sql
       AS $function$
-             select row_to_json(result) from (
-            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           	   from users where id = $1
-         	   ) as result
-           $function$
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
   SQL
   create_function :shared_user_as_json, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
        RETURNS json
        LANGUAGE plpgsql
       AS $function$
-             begin
-             	if (in_user_id = in_current_user_id) then
-             		return null;
-             	else
-             		return (select row_to_json(result) from (
-             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-             		from users where id = $1
-             		) as result);
-             	end if;
-              end;
-           $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
+       $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)

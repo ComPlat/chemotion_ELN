@@ -599,7 +599,7 @@ class Material extends Component {
         <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.stockConc}
+            value={material.stock_molarity_value}
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}

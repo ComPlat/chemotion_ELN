@@ -515,6 +515,22 @@ export default class Sample extends Element {
     this._molarity_unit = molarity_unit;
   }
 
+  get stock_molarity_value() {
+    return this._stock_molarity_value;
+  }
+
+  set stock_molarity_value(stock_molarity_value) {
+    this._stock_molarity_value = stock_molarity_value;
+  }
+
+  get stock_molarity_unit() {
+    return this._stock_molarity_unit;
+  }
+
+  set stock_molarity_unit(stock_molarity_unit) {
+    this._stock_molarity_unit = stock_molarity_unit;
+  }
+
   get imported_readout() {
     return this._imported_readout;
   }
@@ -1099,21 +1115,22 @@ export default class Sample extends Element {
     if (amount.unit === 'l') { 
       componentToUpdate.amount_value = amount.value;
       componentToUpdate.amount_unit = amount.unit;
-      if (componentToUpdate.stockConc && totalVolume) {
-        componentToUpdate.concn = componentToUpdate.amount_value * componentToUpdate.stockConc / totalVolume
+      if (componentToUpdate.stock_molarity_value > 0 && totalVolume) {
+        componentToUpdate.concn = componentToUpdate.amount_value * componentToUpdate.stock_molarity_value / totalVolume
         componentToUpdate.molarity_value = componentToUpdate.concn 
       }
     } else if (amount.unit === 'mol/l' && concType !== 'stockConc') {
       componentToUpdate.concn = amount.value;
       componentToUpdate.molarity_value = amount.value;
-      if (componentToUpdate.stockConc && totalVolume) { 
-        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stockConc
+      if (componentToUpdate.stock_molarity_value > 0 && totalVolume) { 
+        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stock_molarity_value
         componentToUpdate.amount_unit = 'l'
       }
     } else if (amount.unit === 'mol/l' && concType === 'stockConc') {
-      componentToUpdate.stockConc = amount.value;
+      componentToUpdate.stock_molarity_value = amount.value;
+      componentToUpdate.stock_molarity_unit = amount.unit;
       if (totalVolume && componentToUpdate.concn) { 
-        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stockConc
+        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stock_molarity_value
         componentToUpdate.amount_unit = 'l' 
       }
     } else {
