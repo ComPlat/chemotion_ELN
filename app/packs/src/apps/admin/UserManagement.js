@@ -185,7 +185,7 @@ export default class UserManagement extends React.Component {
   handleRestoreAccountShow() {
     this.setState({
       showRestoreAccountModal: true,
-      messageRestoreAccountModal: "",
+      messageRestoreAccountModal: '',
       showSuccess: false,
       showError: false,  
     });
@@ -943,7 +943,7 @@ export default class UserManagement extends React.Component {
             <Form horizontal>
               <FormGroup controlId="formControlAbbr">
                 <Col componentClass={ControlLabel} sm={3}>
-                  Abbr (3):
+                  Abbr:
                 </Col>
                 <Col sm={9}>
                   <FormControl
