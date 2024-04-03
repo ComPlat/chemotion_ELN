@@ -97,15 +97,26 @@ module Chemotion
         end
         post do
           existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
-          user = User.only_deleted.find_by('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
-          error!('User not found', 404) if user.blank?
-          if existing_user.present?
-            user.update_columns(deleted_at: nil, account_active: false)
-            error!(id: user.id,
-                   warning: 'Account Restored. Warning:  Abbreviation already exists! Please update the Abbreviation and Email')
-          end
-          user.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
-          status 205
+          #user = User.only_deleted.find_by('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
+          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
+          error!('Deleted user not found', 404) if user.blank?
+          $users_json = []
+          if user.length > 1
+            user.each do |item|
+              users = {  id: item.id, deleted_at: item.deleted_at }
+              $users_json << users
+            end
+            $msg = {status: 'error', warning: 'Warning:  More than one deleted account',  users: $users_json }
+            error!($msg)                  
+          elsif user.length == 1 && existing_user.present?
+            user.first.update_columns(deleted_at: nil, account_active: false)
+            error!(warning: 'Account Restored. Warning: Abbreviation already exists! Please update the Abbreviation and Email')
+            #msg = { :status => "ok", :message => "Success!" }
+          else
+            user.first.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
+            #render json: {status: 'Successfully restored'}
+            status 205
+          end                
         end
       end  
 
