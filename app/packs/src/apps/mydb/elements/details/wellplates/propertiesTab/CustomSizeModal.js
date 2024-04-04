@@ -96,7 +96,7 @@ export default class CustomSizeModal extends Component {
       <Modal
         show={showCustomSizeModal}
         onHide={handleClose}
-        onShow={this.updateDimensionsFromWellplate()}
+        onShow={this.updateDimensionsFromWellplate}
       >
         <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
         <Modal.Body>
