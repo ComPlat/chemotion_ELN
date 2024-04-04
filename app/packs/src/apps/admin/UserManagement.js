@@ -96,12 +96,33 @@ const accountInActiveTooltip = (
   </Tooltip>
 );
 
+const renderDeletedUsersTable = (deletedUsers) => (
+  <Table striped bordered hover>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Deleted at</th>
+      </tr>
+    </thead>
+    <tbody>
+      {deletedUsers.map((item) => (
+        <tr key={item.id}>
+          <td>{item.id}</td>
+          <td>{item.deleted_at}</td>
+        </tr>
+      ))}
+
+    </tbody>
+  </Table>
+);
+
 export default class UserManagement extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       users: [],
       user: {},
+      deletedUsers: [],
       selectedUsers: null,
       showMsgModal: false,
       showNewUserModal: false,
@@ -110,9 +131,9 @@ export default class UserManagement extends React.Component {
       showRestoreAccountModal: false,
       showError: false,
       showSuccess: false,
-      messageNewUserModal: "",
-      messageEditUserModal: "",
-      messageRestoreAccountModal: "",
+      messageNewUserModal: '',
+      messageEditUserModal: '',
+      messageRestoreAccountModal: '',
       processingSummaryUserFile: '',
       filterCriteria: {}
     };
@@ -187,7 +208,8 @@ export default class UserManagement extends React.Component {
       showRestoreAccountModal: true,
       messageRestoreAccountModal: '',
       showSuccess: false,
-      showError: false,  
+      showError: false,
+      deletedUsers: [],
     });
   }
 
@@ -201,7 +223,7 @@ export default class UserManagement extends React.Component {
   handleGenericAdminModalCb(user) {
     AdminFetcher.fetchUsers()
       .then((result) => {
-        let updated = result.users.find(u => u.id === user.id);
+        let updated = result.users.find((u) => u.id === user.id);
         updated = updated || user;
         this.setState({
           users: result.users, user: updated
@@ -403,20 +425,25 @@ export default class UserManagement extends React.Component {
   }
 
   handleRestoreAccount = () => {
-    if (this.nameAbbreviation.value.trim() === "") {
-      this.setState({ messageRestoreAccountModal: "Please enter the name abbreviation!", showError: true });
+    if (this.nameAbbreviation.value.trim() === '') {
+      this.setState({ messageRestoreAccountModal: 'Please enter the name abbreviation!', showError: true });
       return false;
     }
     AdminFetcher.restoreAccount({
       name_abbreviation: this.nameAbbreviation.value.trim(),
     }).then((result) => {
+      if (result?.users) {
+        this.setState({ messageRestoreAccountModal: result.warning, showError: true, deletedUsers: result.users });
+        return false;
+      }
       if (result?.error || result?.warning) {
         this.setState({ messageRestoreAccountModal: result.error ?? result.warning, showError: true });
         return false;
       }
-      this.setState({ messageRestoreAccountModal: "Successfully restored the account!", showSuccess: true });
+      this.setState({ messageRestoreAccountModal: 'Successfully restored the account!', showSuccess: true });
+      // this.setState({ messageRestoreAccountModal: result.status ?? 'OK' , showSuccess: true });
       setTimeout(() => {
-        this.nameAbbreviation.value = "";
+        this.nameAbbreviation.value = '';
         this.handleRestoreAccountClose();
       }, 3000);
       return true;
@@ -472,7 +499,7 @@ export default class UserManagement extends React.Component {
     if (nUsers > nUsersMax) {
       this.setState({
         processingSummaryUserFile: 'The file contains too many users. '
-        + `Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
+          + `Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
       });
       return false;
     }
@@ -483,7 +510,7 @@ export default class UserManagement extends React.Component {
       && fileHeader.every((val, index) => val === validHeader[index]))) {
       this.setState({
         processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. `
-      + `Please make sure that your file's header is organized as follows: ${validHeader}.`
+          + `Please make sure that your file's header is organized as follows: ${validHeader}.`
       });
       return false;
     }
@@ -513,7 +540,7 @@ export default class UserManagement extends React.Component {
       const userType = user.data.type.trim();
       if (!validTypes.includes(userType)) {
         invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. `
-        + `Please select a valid type from ${validTypes}.\n\n`;
+          + `Please select a valid type from ${validTypes}.\n\n`;
       }
     });
     if (!(invalidTypeMessage === '')) {
@@ -531,7 +558,7 @@ export default class UserManagement extends React.Component {
     if (duplicateUserEmails.size) {
       this.setState({
         processingSummaryUserFile: 'The file contains duplicate user '
-      + `emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
+          + `emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
       });
       return false;
     }
@@ -567,7 +594,7 @@ export default class UserManagement extends React.Component {
       this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
       return false;
     } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
-        || this.nameAbbr.value.trim() === '') { // also validated in backend
+      || this.nameAbbr.value.trim() === '') { // also validated in backend
       this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
@@ -931,14 +958,14 @@ export default class UserManagement extends React.Component {
       </Modal>
     );
   }
-  
+
   renderRestoreAccountModal() {
     return (
       <Modal show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
           <Modal.Title>Restore Account</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: "auto" }}>
+        <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-9">
             <Form horizontal>
               <FormGroup controlId="formControlAbbr">
@@ -956,11 +983,13 @@ export default class UserManagement extends React.Component {
                   />
                 </Col>
               </FormGroup>
-              <FormGroup controlId="formControlMessage" validationState={`${this.state.showError ? "error" : this.state.showSuccess ? "success" : null}`}>
+              <FormGroup controlId="formControlMessage" validationState={`${this.state.showError ? 'error' : this.state.showSuccess ? 'success' : null}`}>
                 <Col sm={12}>
                   <FormControl type="text" readOnly name="messageRestoreAccountModal" value={this.state.messageRestoreAccountModal} />
                 </Col>
               </FormGroup>
+              {this.state.deletedUsers.length > 0
+                && renderDeletedUsersTable(this.state.deletedUsers)}
               <FormGroup>
                 <Col smOffset={0} sm={10}>
                   <Button bsStyle="primary" onClick={() => this.handleRestoreAccount()}>
@@ -983,11 +1012,13 @@ export default class UserManagement extends React.Component {
   renderGenericAdminModal() {
     const { user, showGenericAdminModal } = this.state;
     if (showGenericAdminModal) {
-      return (<GenericAdminModal
-        user={user}
-        fnShowModal={this.handleGenericAdminModal}
-        fnCb={this.handleGenericAdminModalCb}
-      />);
+      return (
+        <GenericAdminModal
+          user={user}
+          fnShowModal={this.handleGenericAdminModal}
+          fnCb={this.handleGenericAdminModalCb}
+        />
+      );
     }
     return null;
   }
@@ -1196,7 +1227,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>} >
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}>
             <Button
               bsSize="xsmall"
               bsStyle={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
