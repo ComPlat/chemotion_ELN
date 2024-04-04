@@ -963,13 +963,14 @@ export default class UserManagement extends React.Component {
       </Modal>
     );
   }
+
   renderRestoreAccountModal() {
     return (
       <Modal show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
           <Modal.Title>Restore Account</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ overflow: "auto" }}>
+        <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-9">
             <Form horizontal>
               <FormGroup controlId="formControlAbbr">
@@ -1256,7 +1257,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}>
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>} >
             <Button
               bsSize="xsmall"
               bsStyle={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
