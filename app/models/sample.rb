@@ -563,14 +563,18 @@ class Sample < ApplicationRecord
     tag&.taggable_data&.fetch('user_labels', nil)
   end
 
-  def update_inventory_label(collection_id = nil)
+  def update_inventory_label(inventory_label, collection_id = nil)
     return if collection_id.blank? || !should_update_inventory_label?
 
     collection = Collection.find_by(id: collection_id)
     inventory = collection.inventory
     return if inventory.blank?
 
-    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
+    label_number = inventory_label.match(/(?<=-)?\d+/)[0].to_i
+    next_inventory_counter = inventory.counter + 1
+    condition = (label_number == next_inventory_counter)
+
+    inventory = inventory.increment_inventory_label_counter(collection_id.to_s) if condition
     self['xref']['inventory_label'] =
       "#{inventory['prefix']}-#{inventory['counter']}"
   end
