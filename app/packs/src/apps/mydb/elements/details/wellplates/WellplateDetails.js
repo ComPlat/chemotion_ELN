@@ -172,6 +172,7 @@ export default class WellplateDetails extends Component {
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
       const newAttachments = files.map((file) => Attachment.fromFile(file));
+
       prevState.wellplate.attachments = [
         ...prevState.wellplate.attachments || [],
         ...newAttachments
@@ -240,7 +241,6 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
     const datetp = formatTimeStampsOfElement(wellplate || {});
-    const { showCommentSection, comments } = this.props;
 
     return (
       <div>

@@ -35,16 +35,11 @@ export default class Wellplate extends Element {
 
     const samples = clipboardSamples.map((sample) => sample.buildChild());
 
-    const wells = samples.map((sample) => new Well({
-      sample,
-      readouts: []
-    }));
     const wellplate = Wellplate.buildEmpty(collectionId, width, height);
 
-    for (let i = 0; i < wells.length; i += 1) {
-      wells[i].position = wellplate.#calculatePositionFromIndex(i);
-      wellplate.wells[i] = wells[i];
-    }
+    samples.forEach((sample, index) => {
+      wellplate.wells[index].sample = sample;
+    });
 
     return wellplate;
   }
