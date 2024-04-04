@@ -383,7 +383,6 @@ export default class SampleForm extends React.Component {
 
   textInput(sample, field, label, disabled = false) {
     const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
-    const isDisabled = (field === 'xref_inventory_label') ? true : disabled;
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
         <ControlLabel>{label}</ControlLabel>
@@ -392,7 +391,7 @@ export default class SampleForm extends React.Component {
           type="text"
           value={(/^xref_/.test(field) ? sample.xref[field.split('xref_')[1]] : sample[field]) || ''}
           onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
-          disabled={isDisabled || !sample.can_update}
+          disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
       </FormGroup>

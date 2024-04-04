@@ -394,10 +394,13 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
-          inventory_label_changed = @sample.xref['inventory_label'] != params[:xref][:inventory_label]
+          inventory_label = params[:xref][:inventory_label]
+
+          inventory_label_changed = @sample.xref['inventory_label'] != inventory_label
           # update inventory_label only if sample inventory label has a new value
           collection_id = params[:collection_id]
-          @sample.update_inventory_label(collection_id) if inventory_label_changed && !collection_id.nil?
+          condition = inventory_label_changed && !collection_id.nil?
+          @sample.update_inventory_label(inventory_label, collection_id) if condition
           # remove collection_id from sample attributes after updating inventory label
           attributes.delete(:collection_id)
 
@@ -415,6 +418,16 @@ module Chemotion
             policy: @element_policy,
             root: :sample,
           )
+        rescue ActiveRecord::RecordNotUnique => e
+          # Extract the column or index name from the error message
+          match = e.message.match(/duplicate key value violates unique constraint "(?<index_name>.+)"/)
+          index_name = match[:index_name] if match
+
+          error_info = {
+            error_type: 'ActiveRecord::RecordNotUnique',
+            index_name: index_name,
+          }
+          error!(error_info, 500)
         end
       end
 
@@ -552,7 +565,7 @@ module Chemotion
         end
 
         sample.container = update_datamodel(params[:container])
-        sample.update_inventory_label(params[:collection_id])
+        sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
 
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
