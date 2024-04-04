@@ -4,8 +4,8 @@ import {
   describe, it
 } from 'mocha';
 import Wellplate from '../../../../../app/packs/src/models/Wellplate';
-import { wellplate2x3EmptyJson } from '../../../fixture/wellplates/wellplate_2_3_empty';
-import { wellplate8x12EmptyJson } from '../../../fixture/wellplates/wellplate_8_12_empty';
+import wellplate2x3EmptyJson from '../../../fixture/wellplates/wellplate_2_3_empty';
+import wellplate8x12EmptyJson from '../../../fixture/wellplates/wellplate_8_12_empty';
 
 describe('Wellplate', async () => {
   const sampleMock = {};
