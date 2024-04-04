@@ -10,8 +10,7 @@ module Usecases
       end
 
       def execute!
-        raise "Wellplate width of #{@wellplate.width} exceeds maximum allowed width of 100" if @wellplate.width > 100
-        raise "Wellplate height of #{@wellplate.height} exceeds maximum allowed height of 100" if @wellplate.height > 100
+        check_wellplate_bounds
 
         xfile = create_excel_object
         create_data_content(xfile.workbook.worksheets.first)
@@ -20,6 +19,17 @@ module Usecases
       end
 
       private
+
+      def check_wellplate_bounds
+        max = 100
+
+        value = @wellplate.width > max ? @wellplate.width : @wellplate.height
+        parameter = @wellplate.width > max ? 'width' : 'height'
+
+        should_throw = @wellplate.width > max || @wellplate.height > max
+
+        raise "Wellplate #{parameter} of #{value} exceeds maximum allowed #{parameter} of #{max}" if should_throw
+      end
 
       def create_excel_object
         xfile = Axlsx::Package.new
