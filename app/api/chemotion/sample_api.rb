@@ -394,13 +394,15 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
-          inventory_label = params[:xref][:inventory_label]
+          inventory_label = params[:xref]&.fetch(:inventory_label, nil)
 
-          inventory_label_changed = @sample.xref['inventory_label'] != inventory_label
-          # update inventory_label only if sample inventory label has a new value
-          collection_id = params[:collection_id]
-          condition = inventory_label_changed && !collection_id.nil?
-          @sample.update_inventory_label(inventory_label, collection_id) if condition
+          if inventory_label
+            inventory_label_changed = @sample.xref['inventory_label'] != inventory_label
+            collection_id = params[:collection_id]
+            condition = inventory_label_changed && !collection_id.nil?
+            # update inventory_label only if sample inventory label has a new value
+            @sample.update_inventory_label(inventory_label, collection_id) if condition
+          end
           # remove collection_id from sample attributes after updating inventory label
           attributes.delete(:collection_id)
 
