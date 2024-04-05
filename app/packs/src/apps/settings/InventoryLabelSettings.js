@@ -80,8 +80,14 @@ function InventoryLabelSettings() {
   }, []);
 
   const handlePrefixChange = (event) => {
-    setPrefixValue(event.target.value);
-    setErrorMessage(null);
+    const prefixString = event.target.value;
+    const regex = /^[A-Za-z]+$/;
+    if (regex.test(prefixString)) {
+      setPrefixValue(prefixString);
+      setErrorMessage(null);
+    } else {
+      setErrorMessage('prefix must be a string');
+    }
   };
 
   const handleNameChange = (event) => {
