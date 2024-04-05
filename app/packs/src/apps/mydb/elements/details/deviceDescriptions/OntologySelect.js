@@ -76,7 +76,7 @@ const OntologySelect = props => {
 
   const fetchData = async inputValue => {
     try {
-      if (!inputValue.trim() || inputValue.length < 2) {
+      if (!inputValue.trim() || inputValue.length < 3) {
         return [];
       }
 

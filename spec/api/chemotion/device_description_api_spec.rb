@@ -29,7 +29,7 @@ describe Chemotion::DeviceDescriptionAPI do
     it 'creates a device description' do
       post '/api/v1/device_descriptions', params: device_description_params
 
-      expect(parsed_json_response['device_description']['short_label']).to include('DD')
+      expect(parsed_json_response['device_description']['short_label']).to include('Dev')
     end
   end
 

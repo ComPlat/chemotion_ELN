@@ -73,6 +73,16 @@ const AnalysisHeader = ({ container, readonly }) => {
     }
   };
 
+  const confirmRegenerateEdited = (e) => {
+    e.stopPropagation();
+    if (confirm('Regenerate edited spectra?\nWARNING: This process will override the simulated signals')) {
+      LoadingActions.start();
+      SpectraActions.RegenerateEdited(jcampIds, '', () => {
+        LoadingActions.stop();
+      });
+    }
+  }
+
   const hasEditedJcamp = jcampIds.edited.length > 0;
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
   const { chmos } = UserStore.getState();
@@ -140,6 +150,7 @@ const AnalysisHeader = ({ container, readonly }) => {
             hasEditedJcamp={hasEditedJcamp}
             toggleSpectraModal={toggleSpectraModal}
             confirmRegenerate={confirmRegenerate}
+            confirmRegenerateEdited={confirmRegenerateEdited}
             toggleNMRDisplayerModal={toggleNMRDisplayerModal}
             hasNMRium={hasNMRium}
           />

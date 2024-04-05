@@ -51,9 +51,12 @@ class DeviceDescription < ApplicationRecord
   attr_accessor :collection_id
 
   include ElementUIStateScopes
+  # include PgSearch::Model
   include Collectable
   include ElementCodes
+  include AnalysisCodes
   include Taggable
+  include Labimotion::Segmentable
 
   acts_as_paranoid
 
@@ -77,7 +80,7 @@ class DeviceDescription < ApplicationRecord
   end
 
   def set_short_label
-    prefix = 'DD'
+    prefix = 'Dev'
     counter = creator.increment_counter 'device_descriptions' # rubocop:disable Rails/SkipsModelValidations
     user_label = creator.name_abbreviation
 

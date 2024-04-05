@@ -1,13 +1,12 @@
 import React from 'react';
 import {
   FormGroup, ControlLabel, FormControl, InputGroup,
-  OverlayTrigger, Tooltip, Button, Modal, ListGroup, ListGroupItem,
+  OverlayTrigger, Tooltip, Button,
 } from 'react-bootstrap';
 import Select from 'react-select3';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
-import OntologySelect from './OntologySelect';
 
 const valueByType = (type, event) => {
   switch (type) {
@@ -40,94 +39,6 @@ const handleFieldChanged = (store, field, type, element_type) => (event) => {
 
 const toggleContent = (store, content) => {
   store.toggleContent(content);
-}
-
-const addOntology = (selectedData, paths, store, element) => {
-  const newOntology = { data: selectedData, paths: paths };
-  const ontologies = element['ontologies'] || [];
-
-  const value = ontologies.concat(newOntology);
-  store.changeDeviceDescription('ontologies', value);
-  store.toggleOntologyModal();
-}
-
-const deleteOntology = (store, element, i) => {
-  if (!element['ontologies']) { return }
-
-  element['ontologies'].splice(i, (i >= 0 ? 1 : 0));
-  store.changeDeviceDescription('ontologies', element['ontologies']);
-}
-
-const ontologyModal = (store, element) => {
-  return (
-    <Modal backdrop="static" show={store.show_ontology_modal} onHide={() => store.toggleOntologyModal()}>
-      <Modal.Header closeButton>
-        <Modal.Title>Select Ontology</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <OntologySelect fnSelected={addOntology} store={store} element={element} />
-      </Modal.Body>
-    </Modal>
-  );
-}
-
-const addOntologyButton = (store, element) => {
-  return (
-    <>
-      <Button
-        bsStyle="primary"
-        bsSize="xsmall"
-        className="add-row"
-        onClick={() => store.toggleOntologyModal()}
-      >
-        <i className="fa fa-plus" />
-      </Button>
-      Add ontology
-      {ontologyModal(store, element)}
-    </>
-  );
-}
-
-const deleteOntologyButton = (store, element, i) => {
-  return (
-    <Button
-      bsSize="xsmall"
-      bsStyle="danger"
-      onClick={() => deleteOntology(store, element, i)}
-      className="delete-in-list"
-    >
-      <i className="fa fa-trash-o" />
-    </Button>
-  );
-}
-
-const ontologiesList = (store, element, label, info) => {
-  let list = [];
-  let rows = [];
-
-  if (element['ontologies']) {
-    element['ontologies'].map((ontology, i) => {
-      rows.push(
-        <ListGroupItem header={ontology.data.label}>
-          {ontology.paths.join(' / ')}
-          {deleteOntologyButton(store, element, i)}
-        </ListGroupItem>
-      );
-    });
-    list.push(
-      <ListGroup className="ontology-list">
-        {rows}
-      </ListGroup>
-    );
-  }
-
-  return (
-    <FormGroup key={`${store.key_prefix}-${label}`}>
-      {labelWithInfo(label, info)}
-      <div>{addOntologyButton(store, element)}</div>
-      {list}
-    </FormGroup>
-  );
 }
 
 const allowedAnnotationFileTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
@@ -179,6 +90,8 @@ const headlineWithToggle = (store, type, text) => {
 }
 
 const labelWithInfo = (label, info) => {
+  if (label === '') { return null; }
+
   let controlLabel = <ControlLabel>{label}</ControlLabel>;
 
   if (info) {
@@ -255,7 +168,7 @@ const operatorInput = (element, store, label, info) => {
   let operators = [];
   element['operators'].forEach((operator, i) => {
     operators.push(
-      <div className="grouped-fields-row cols-5">
+      <div className="grouped-fields-row cols-5" key={`${operator}-${i}`}>
         {textInput(element, store, `operators_name_${i}`, 'Name')}
         {textInput(element, store, `operators_phone_${i}`, 'Phone')}
         {textInput(element, store, `operators_email_${i}`, 'eMail')}
@@ -302,26 +215,24 @@ const multipleInputGroups = (element, label, fields, store, info) => {
   let formGroupKey = '';
   let idOrNew = element.id !== '' ? element.id : 'new';
 
-  fields.forEach((field) => {
+  fields.forEach((field, i) => {
     formGroupKey += `-${field.value}`;
+    inputGroupForms.push(<InputGroup.Addon key={`${field.label}-${i}`}>{field.label}</InputGroup.Addon>);
     inputGroupForms.push(
-      <>
-        <InputGroup.Addon>{field.label}</InputGroup.Addon>
-        <FormControl
-          name={field.value}
-          type="text"
-          key={`${store.key_prefix}${field.value}`}
-          value={element[field.value]}
-          onChange={handleFieldChanged(store, field.value, field.type, element.type)}
-        />
-      </>
+      <FormControl
+        name={field.value}
+        type="text"
+        key={`${store.key_prefix}${field.value}`}
+        value={element[field.value]}
+        onChange={handleFieldChanged(store, field.value, field.type, element.type)}
+      />
     );
   });
 
   return (
     <FormGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
       {labelWithInfo(label, info)}
-      <InputGroup>
+      <InputGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}-group`}>
         {inputGroupForms}
       </InputGroup>
     </FormGroup>
@@ -385,5 +296,5 @@ const textInput = (element, store, field, label, info) => {
 export {
   selectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, ontologiesList, annotationButton,
+  operatorInput, annotationButton,
 }

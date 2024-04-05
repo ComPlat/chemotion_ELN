@@ -40,12 +40,12 @@ export default class DeviceDescription extends Element {
       vendor_url: '',
       policies_and_user_information: '',
       description_for_methods_part: '',
-      // setting components
       isNew: true,
       changed: false,
       updated: false,
       container: Container.init(),
       attachments: [],
+      segments: [],
     });
   }
 

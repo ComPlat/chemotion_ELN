@@ -12,7 +12,6 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const PropertiesForm = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
-  deviceDescriptionsStore.setKeyPrefix('properties');
 
   const deviceType = [
     {
@@ -152,7 +151,6 @@ const PropertiesForm = () => {
         <div>
           {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
           {multipleInputGroups(deviceDescription, vendorCompanyNameLabel, vendorCompanyName, deviceDescriptionsStore)}
-          {ontologiesList(deviceDescriptionsStore, deviceDescription, 'ONTOLOGY Classification', '')}
           {textareaInput(deviceDescription, deviceDescriptionsStore, 'description', 'Description', 3)}
           {selectInput(deviceDescription, deviceDescriptionsStore, 'tags', 'Tags', deviceTags)}
         </div>

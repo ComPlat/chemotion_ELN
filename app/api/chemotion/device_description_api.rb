@@ -7,6 +7,76 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
 
+    helpers do
+      params :create_params do
+        requires :collection_id, type: Integer
+      end
+
+      params :update_params do
+        requires :id, type: Integer
+        optional :device_id, type: Integer
+      end
+
+      params :default_params do
+        optional :name, type: String
+        optional :short_label, type: String
+        optional :device_type, type: String
+        optional :device_type_detail, type: String
+        optional :operation_mode, type: String
+        optional :vendor_device_name, type: String
+        optional :vendor_device_id, type: String
+        optional :serial_number, type: String
+        optional :vendor_company_name, type: String
+        optional :vendor_id, type: String
+        optional :description, type: String
+        optional :tags, type: String
+        optional :version_number, type: String
+        optional :version_installation_start_date, type: DateTime, allow_blank: true
+        optional :version_installation_end_date, type: DateTime, allow_blank: true
+        optional :version_doi, type: String
+        optional :version_doi_url, type: String
+        optional :version_characterization, type: String
+        optional :operators, type: Array do
+          optional :name, type: String
+          optional :phone, type: String
+          optional :email, type: String
+          optional :type, type: String
+          optional :comment, type: String
+        end
+        optional :university_campus, type: String
+        optional :institute, type: String
+        optional :building, type: String
+        optional :room, type: String
+        optional :infrastructure_assignment, type: String
+        optional :access_options, type: String
+        optional :comments, type: String
+        optional :size, type: String
+        optional :weight, type: String
+        optional :application_name, type: String
+        optional :application_version, type: String
+        optional :vendor_url, type: String
+        optional :policies_and_user_information, type: String
+        optional :description_for_methods_part, type: String
+        optional :container, type: Hash
+        optional :ontologies, type: Array do
+          optional :data, type: Hash
+          optional :paths, type: Array
+          optional :segments, type: Array
+          optional :index, type: Integer
+        end
+      end
+
+      def device_description_with_entity(device_description)
+        present(
+          device_description,
+          with: Entities::DeviceDescriptionEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
+                                                     .detail_levels,
+          root: :device_description,
+        )
+      end
+    end
+
     resource :device_descriptions do
       # Return serialized device description by collection id
       params do
@@ -69,65 +139,15 @@ module Chemotion
 
       # create a device description
       params do
-        optional :name, type: String
-        optional :short_label, type: String
-        optional :device_type, type: String
-        optional :device_type_detail, type: String
-        optional :operation_mode, type: String
-        optional :vendor_device_name, type: String
-        optional :vendor_device_id, type: String
-        optional :serial_number, type: String
-        optional :vendor_company_name, type: String
-        optional :vendor_id, type: String
-        optional :description, type: String
-        optional :tags, type: String
-        optional :version_number, type: String
-        optional :version_installation_start_date, type: DateTime, allow_blank: true
-        optional :version_installation_end_date, type: DateTime, allow_blank: true
-        optional :version_doi, type: String
-        optional :version_doi_url, type: String
-        optional :version_characterization, type: String
-        optional :operators, type: Array do
-          optional :name, type: String
-          optional :phone, type: String
-          optional :email, type: String
-          optional :type, type: String
-          optional :comment, type: String
-        end
-        optional :university_campus, type: String
-        optional :institute, type: String
-        optional :building, type: String
-        optional :room, type: String
-        optional :infrastructure_assignment, type: String
-        optional :access_options, type: String
-        optional :comments, type: String
-        optional :size, type: String
-        optional :weight, type: String
-        optional :application_name, type: String
-        optional :application_version, type: String
-        optional :vendor_url, type: String
-        optional :policies_and_user_information, type: String
-        optional :description_for_methods_part, type: String
-        requires :collection_id, type: Integer
-        optional :container, type: Hash
-        optional :ontologies, type: Array do
-          optional :data, type: Hash
-          optional :paths, type: Array
-        end
+        use :default_params
+        use :create_params
       end
       post do
         attributes = declared(params.except(:container), include_missing: false)
         attributes[:created_by] = current_user.id
         device_description = Usecases::DeviceDescriptions::Create.new(attributes, current_user).execute
         device_description.container = update_datamodel(params[:container]) if params[:container].present?
-
-        present(
-          device_description,
-          with: Entities::DeviceDescriptionEntity,
-          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                     .detail_levels,
-          root: :device_description,
-        )
+        device_description_with_entity(device_description)
       rescue ActiveRecord::RecordInvalid
         { errors: device_description.errors.messages }
       end
@@ -141,79 +161,23 @@ module Chemotion
           device_description = DeviceDescription.find(params[:id])
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).read?
 
-          present(
-            device_description,
-            with: Entities::DeviceDescriptionEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                       .detail_levels,
-            root: :device_description,
-          )
+          device_description_with_entity(device_description)
         end
       end
 
       # update a device description
       params do
-        requires :id, type: Integer
-        optional :device_id, type: Integer, description: 'Linked device'
-        optional :name, type: String
-        optional :short_label, type: String
-        optional :device_type, type: String
-        optional :device_type_detail, type: String
-        optional :operation_mode, type: String
-        optional :vendor_device_name, type: String
-        optional :vendor_device_id, type: String
-        optional :serial_number, type: String
-        optional :vendor_company_name, type: String
-        optional :vendor_id, type: String
-        optional :description, type: String
-        optional :tags, type: String
-        optional :version_number, type: String
-        optional :version_installation_start_date, type: DateTime, allow_blank: true
-        optional :version_installation_end_date, type: DateTime, allow_blank: true
-        optional :version_doi, type: String
-        optional :version_doi_url, type: String
-        optional :version_characterization, type: String
-        optional :operators, type: Array do
-          optional :name, type: String
-          optional :phone, type: String
-          optional :email, type: String
-          optional :type, type: String
-          optional :comment, type: String
-        end
-        optional :university_campus, type: String
-        optional :institute, type: String
-        optional :building, type: String
-        optional :room, type: String
-        optional :infrastructure_assignment, type: String
-        optional :access_options, type: String
-        optional :comments, type: String
-        optional :size, type: String
-        optional :weight, type: String
-        optional :application_name, type: String
-        optional :application_version, type: String
-        optional :vendor_url, type: String
-        optional :policies_and_user_information, type: String
-        optional :description_for_methods_part, type: String
-        optional :container, type: Hash
-        optional :ontologies, type: Array do
-          optional :data, type: Hash
-          optional :paths, type: Array
-        end
+        use :update_params
+        use :default_params
       end
       put ':id' do
         device_description = DeviceDescription.find(params[:id])
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).update?
         attributes = declared(params.except(:container), include_missing: false)
-        device_description.update!(attributes)
+        device_description =
+          Usecases::DeviceDescriptions::Update.new(attributes, device_description, current_user).execute
         device_description.container = update_datamodel(params[:container]) if params[:container].present?
-
-        present(
-          device_description,
-          with: Entities::DeviceDescriptionEntity,
-          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                     .detail_levels,
-          root: :device_description,
-        )
+        device_description_with_entity(device_description)
       rescue ActiveRecord::RecordInvalid
         { errors: device_description.errors.messages }
       end

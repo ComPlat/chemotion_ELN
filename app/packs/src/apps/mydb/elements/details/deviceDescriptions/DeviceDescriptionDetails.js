@@ -33,6 +33,7 @@ import { DeviceDescriptionsStore } from '../../../../../stores/mobx/DeviceDescri
 const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
+  deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
   const [activeTab, setActiveTab] = useState('properties'); // state from store
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());

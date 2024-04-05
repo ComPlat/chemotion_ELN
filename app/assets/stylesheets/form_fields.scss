@@ -168,7 +168,7 @@ form-group.small-comment-form {
   margin-top: 10px;
 }
 
-ul.list-group {
+ul.list-group.ontology-list {
   margin-bottom: 0;
 }
 
@@ -184,4 +184,100 @@ ul.list-group.ontology-list li {
 
 ul.list-group.ontology-list li:nth-child(even) {
   background-color: #fff;
+}
+
+ul.list-group.ontology-list li.without-segments {
+  color: #999;
+}
+
+li.list-group-with-button p {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+li.list-group-with-button p button {
+  margin-left: 10px;
+}
+
+li.list-group-item.deleted-ontology {
+  text-decoration: line-through;
+}
+
+li.list-group-item.list-group-sortable:hover {
+  cursor: move;
+}
+
+li.list-group-item.list-group-sortable p, li.list-group-item.list-group-sortable h4 {
+  margin-left: 27px;
+}
+
+li.list-group-item.list-group-sortable:before {
+  font-family: FontAwesome;
+  content: "\f047";
+  color: #337ab7;
+  font-size: 20px;
+  float: left;
+  margin-top: -2px;
+}
+
+.ontology-segments.panel {
+  width: 100%;
+  border: none;
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+.ontology-segments.panel.first {
+  margin-top: 17px;
+}
+
+.ontology-segments.panel-default > .panel-heading {
+  color: #333333;
+  background-color: #f5f5f5;
+  border-top: 1px solid #ddd;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 5px;
+  margin-top: 10px;
+  min-height: 34px;
+  position: relative;
+}
+
+.ontology-segments .panel-title a {
+  display: block;
+  text-decoration: none;
+  &:hover {
+    cursor: pointer;
+    text-decoration: none;
+  }
+}
+
+.ontology-segments.panel-default > .panel-heading .panel-title a:after,
+.ontology-segments.panel-default > .panel-heading .panel-title a.collapsed:after {
+  font-family: FontAwesome;
+  position: absolute;
+  top: 5px;
+  right: 7px;
+}
+
+.ontology-segments.panel-default > .panel-heading .panel-title a:after {
+  content: "\f078";
+}
+
+.ontology-segments.panel-default > .panel-heading .panel-title a.collapsed:after {
+  content: "\f054";
+}
+
+.ontology-segments .panel_generic_properties {
+  border-color: transparent !important;
+}
+
+.ontology-segments .panel-body {
+  padding: 5px 5px 0 5px;
+}
+
+.ontology-segments div.panel_generic_properties>.panel-heading {
+  background-color: #fff !important;
+  min-height: 34px;
 }

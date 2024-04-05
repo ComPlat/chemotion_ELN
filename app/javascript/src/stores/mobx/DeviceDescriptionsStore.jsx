@@ -15,6 +15,8 @@ const toggableContents = {
   'manuals': true,
   'publications': true,
   'settings': true,
+  'ontology': true,
+  'ontology_segments': true,
 };
 
 export const DeviceDescriptionsStore = types
@@ -39,6 +41,7 @@ export const DeviceDescriptionsStore = types
     attachment_sort_direction: types.optional(types.string, 'asc'),
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
     show_ontology_modal: types.optional(types.boolean, false),
+    ontology_mode: types.optional(types.string, 'edit'),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -176,6 +179,9 @@ export const DeviceDescriptionsStore = types
     },
     toggleOntologyModal() {
       self.show_ontology_modal = !self.show_ontology_modal;
+    },
+    changeOntologyMode(mode) {
+      self.ontology_mode = mode;
     },
   }))
   .views(self => ({
