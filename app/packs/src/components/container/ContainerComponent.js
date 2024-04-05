@@ -171,7 +171,7 @@ export default class ContainerComponent extends Component {
           <FormControl
             type="text"
             label="Name"
-            value={container.name || '***'}
+            value={container.name}
             // eslint-disable-next-line react/jsx-no-bind
             onChange={this.handleInputChange.bind(this, 'name')}
             disabled={readOnly || disabled}
