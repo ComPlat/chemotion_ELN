@@ -42,6 +42,7 @@ module Entities
     expose :container, using: 'Entities::ContainerEntity'
     expose :attachments, using: 'Entities::AttachmentEntity'
     expose :ontologies
+    expose :segments, using: 'Labimotion::SegmentEntity'
 
     def type
       'device_description'
