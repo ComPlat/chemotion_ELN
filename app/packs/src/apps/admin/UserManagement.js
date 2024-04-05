@@ -441,7 +441,6 @@ export default class UserManagement extends React.Component {
         return false;
       }
       this.setState({ messageRestoreAccountModal: 'Successfully restored the account!', showSuccess: true });
-      // this.setState({ messageRestoreAccountModal: result.status ?? 'OK' , showSuccess: true });
       setTimeout(() => {
         this.nameAbbreviation.value = '';
         this.handleRestoreAccountClose();
@@ -983,9 +982,17 @@ export default class UserManagement extends React.Component {
                   />
                 </Col>
               </FormGroup>
-              <FormGroup controlId="formControlMessage" validationState={`${this.state.showError ? 'error' : this.state.showSuccess ? 'success' : null}`}>
+              <FormGroup
+                controlId="formControlMessage"
+                validationState={`${this.state.showError
+                  ? 'error'
+                  : this.state.showSuccess ? 'success' : null}`}>
                 <Col sm={12}>
-                  <FormControl type="text" readOnly name="messageRestoreAccountModal" value={this.state.messageRestoreAccountModal} />
+                  <FormControl
+                    type="text"
+                    readOnly
+                    name="messageRestoreAccountModal"
+                    value={this.state.messageRestoreAccountModal} />
                 </Col>
               </FormGroup>
               {this.state.deletedUsers.length > 0
