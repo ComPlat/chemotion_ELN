@@ -364,18 +364,20 @@ export default class ElementsTableSampleEntries extends Component {
             onClick={showDetails.bind(this, sample.id)}
           >
             {sample.title(selected)}
-            <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
-              <CommentIcon commentCount={sample.comment_count} />
-              {showDecoupledIcon(sample)}
-              <ShowUserLabels element={sample} />
-              <XvialIcon label={sample.external_label} />
-              <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+
+            <div style={{
+              float: 'right', display: 'flex', alignItems: 'center', gap: '5px'
+            }}
+            >
+              <div style={{ marginTop: '1px' }}><CommentIcon commentCount={sample.comment_count} /></div>
+              <div style={{ marginTop: '3px' }}><ShowUserLabels element={sample} /></div>
+              <div style={{ marginTop: '3px' }}><XvialIcon label={sample.external_label} /></div>
+              <div style={{ marginTop: '1px' }}><ElementReactionLabels element={sample} key={`${sample.id}_reactions`} /></div>
               <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
               <GenericElementLabels element={sample} key={`${sample.id}_element`} />
-              <div style={{ marginLeft: '5px', marginTop: '-1px' }}>
-                <ElementCollectionLabels element={sample} key={`${sample.id}`} />
-              </div>
+              <ElementCollectionLabels element={sample} key={`${sample.id}`} />
               <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+              {showDecoupledIcon(sample)}
               <TopSecretIcon element={sample} />
             </div>
           </td>
