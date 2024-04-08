@@ -153,6 +153,7 @@ class InboxStore {
         children: updatedChildren,
       },
       currentContainerPage: payload.currentContainerPage,
+      activeDeviceBoxId: payload.containerId
     }));
 
     this.sync();
