@@ -9,10 +9,8 @@ import ResearchPlan from 'src/models/ResearchPlan';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
-    const { selection, collectionId, page, isSync, moleculeSort, isPublic, sorting } = params;
-    if (sorting==undefined){
-      sorting={'direction':'ascending','column':'created_at'}
-    }
+    const { selection, collectionId, page, isSync, moleculeSort, isPublic } = params;
+    
     return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
       credentials: 'same-origin',
       method: 'POST',
