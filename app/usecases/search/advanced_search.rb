@@ -44,7 +44,7 @@ module Usecases
                                         .where(query_with_condition)
                                         .joins(@conditions[:joins].join(' '))
 
-        scope =  @shared_methods.order_by_updated_at(scope) if @conditions[:model_name] == Sample
+        scope =  scope.order('samples.updated_at DESC') if @conditions[:model_name] == Sample
         
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
