@@ -17,7 +17,6 @@ export default class ImageModal extends Component {
       isPdf: false,
       pageIndex: 1,
       numOfPages: 0,
-      hover: false,
     };
 
     this.fetchImage = this.fetchImage.bind(this);
@@ -102,19 +101,17 @@ export default class ImageModal extends Component {
 
   render() {
     const {
-      hasPop, previewObject, popObject, imageStyle,
+      hasPop, previewObject, popObject, imageStyle, showPopImage
     } = this.props;
-    const { pageIndex, numOfPages, hover } = this.state;
+    const { pageIndex, numOfPages } = this.state;
 
     if (!hasPop) {
       return (
         <div className="preview-table">
           <img
-            src={hover ? popObject.src : previewObject.src}
+            src={previewObject.src}
             alt=""
             style={{ cursor: 'default', ...imageStyle }}
-            onMouseEnter={() => this.setState({ hover: true })}
-            onMouseLeave={() => this.setState({ hover: false })}
           />
         </div>
       );
@@ -130,11 +127,9 @@ export default class ImageModal extends Component {
           tabIndex={0}
         >
           <img
-            src={hover ? popObject.src : previewObject.src}
+            src={showPopImage ? popObject.src : previewObject.src}
             alt=""
             style={{ cursor: 'pointer', ...imageStyle }}
-            onMouseEnter={() => this.setState({ hover: true })}
-            onMouseLeave={() => this.setState({ hover: false })}
           />
         </div>
         <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
@@ -209,9 +204,11 @@ ImageModal.propTypes = {
     fetchId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
   disableClick: PropTypes.bool,
+  showPopImage: PropTypes.bool,
 };
 
 ImageModal.defaultProps = {
   imageStyle: {},
-  disableClick: false
+  disableClick: false,
+  showPopImage: false
 };
