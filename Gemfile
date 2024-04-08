@@ -94,7 +94,7 @@ gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 6.1.7.7'
 gem 'rdkit_chem', git: 'https://github.com/ptrxyz/rdkit_chem.git', branch: 'pk01'
-gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
+gem 'rinchi-gem', '1.0.1', git: 'https://github.com/ComPlat/rinchi-gem.git'
 gem 'rmagick'
 gem 'roo'
 gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-
