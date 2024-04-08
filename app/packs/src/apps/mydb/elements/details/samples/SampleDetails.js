@@ -164,7 +164,7 @@ export default class SampleDetails extends React.Component {
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
-    this.splitMolfile = this.splitMolfile.bind(this);
+    this.splitSmiles = this.splitSmiles.bind(this);
   }
 
   componentDidMount() {
@@ -326,7 +326,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
-          this.splitMolfile(editor);
+          this.splitSmiles(editor, svgFile)
           this.hideStructureEditor();
         });
     };
@@ -1456,17 +1456,13 @@ export default class SampleDetails extends React.Component {
     });
   }
 
-  splitMolfile(editor) {
+  splitSmiles(editor, svgFile) {
     const { sample } = this.state;
     if (sample.sample_type_name !== 'Mixture') { return }
-    
-    const splitMolfiles = sample.molfile.match(/\$MOL[\s\S]*?M\s+END/g);
-    const cleanedMolfiles = splitMolfiles.map(section => section.replace(/\$MOL|null/g, '').trim());
-    const mixtureMolfiles = cleanedMolfiles.map(molfile => `\n ${molfile}`)
-  
-    sample.mixtureMolfiles = mixtureMolfiles;
-    if (sample.mixtureMolfiles) {
-      sample.splitMolfileToMolecule(mixtureMolfiles, editor)
+
+    const mixtureSmiles = sample.molecule_cano_smiles.split('.')
+    if (mixtureSmiles) {
+      sample.splitSmilesToMolecule(mixtureSmiles, editor, svgFile)
         .then(() => {
           this.setState({ sample });
         });

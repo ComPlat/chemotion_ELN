@@ -262,10 +262,19 @@ export default class StructureEditorModal extends React.Component {
         });
       });
     } else if (editor.id === 'ketcher2' && isMixture) {
-      structure.editor.getRxn().then((molfile) => {
-        structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
-          imgfile.text().then((text) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
+      structure.editor.getKet().then((molfile) => {
+        Promise.all([
+          structure.editor.generateImage(molfile, { outputFormat: 'svg' }),
+          structure.editor.getSmiles() 
+        ]).then(([imgfile, smiles]) => {
+          Promise.all([
+            imgfile.text(),
+          ]).then(([imgText]) => {
+            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { 
+              if (this.props.onSave) { 
+                this.props.onSave(molfile, imgText, { smiles: smiles }, editor.id); 
+              } 
+            });
           });
         });
       });

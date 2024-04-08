@@ -1104,8 +1104,9 @@ export default class Sample extends Element {
     if (isNew){
       tmpComponents.push(newComponent);
       this.mixture_components = tmpComponents;
+
+      // update SMILES
     }
-    this.combineSVG()
   }
 
   deleteMixtureComponent(componentToDelete) {
@@ -1114,7 +1115,7 @@ export default class Sample extends Element {
       (comp) => comp !== componentToDelete
     );
     this.mixture_components = filteredComponents;
-    this.combineSVG()
+    // update SMILES
   }
 
   updateMixtureComponent(componentIndex, amount, concType) {
@@ -1172,11 +1173,13 @@ export default class Sample extends Element {
     });
   }
 
-  splitMolfileToMolecule(mixtureMolfiles, editor) {
-    const promises = mixtureMolfiles.map(molfile => {
-      return MoleculesFetcher.fetchByMolfile(molfile, null, editor, false);
+  splitSmilesToMolecule(mixtureSmiles, editor, svgFile) {
+    const promises = mixtureSmiles.map(smiles => {
+      return MoleculesFetcher.fetchBySmi(smiles, null, null, editor);
     });
-  
+
+    this.sample_svg_file = svgFile;
+    
     return Promise.all(promises)
       .then(mixtureMolecules => {
         return this.mixtureMoleculeToSubsample(mixtureMolecules);
@@ -1191,28 +1194,6 @@ export default class Sample extends Element {
     mixtureMolecules.map(molecule => {
       const newSample = Sample.buildNew(molecule, this.collection_id);
       this.addMixtureComponent(newSample);
-    });
-  }
-
-  combineSVG(){
-    let materialsSvgPaths = {
-      starting_materials: [],
-      reactants: [],
-      products: []
-    };
-    let molFiles = [];
-
-    if (this.mixture_components.length < 1) { return }
-
-    this.mixture_components.forEach(component => {
-        let moleculeSvg = component.molecule.molecule_svg_file;
-        materialsSvgPaths.products.push(`/images/molecules/${moleculeSvg}`);
-        molFiles.push(component.molecule.molfile);
-    });
-
-    SampleSvgFetcher.fetchCombinedSampleSvg(materialsSvgPaths, molFiles).then((result) => {
-      this.sample_svg_file = result.sample_svg;
-      this.molfile = result.molfile;
     });
   }
 
