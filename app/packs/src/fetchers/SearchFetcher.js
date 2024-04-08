@@ -20,7 +20,6 @@ export default class SearchFetcher {
       },
       body: JSON.stringify({
         selection,
-        sorting,
         collection_id: collectionId,
         page: page || 1,
         per_page: selection.page_size,
