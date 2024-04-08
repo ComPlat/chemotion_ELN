@@ -193,6 +193,7 @@ export default class ContainerDatasetModalContent extends Component {
       }, this.timeout),
     });
     this.handleInputChange('instrument', event);
+    this.props.onInstrumentChange(value);
   }
 
   handleAddLink(link) {
@@ -707,6 +708,7 @@ ContainerDatasetModalContent.propTypes = {
     })),
   }).isRequired,
   onChange: PropTypes.func.isRequired,
+  onInstrumentChange: PropTypes.func,
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
@@ -734,5 +736,6 @@ ContainerDatasetModalContent.defaultProps = {
   disabled: false,
   readOnly: false,
   attachments: [],
-  kind: null
+  kind: null,
+  onInstrumentChange: () => {},
 };
