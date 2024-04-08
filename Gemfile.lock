@@ -1,15 +1,15 @@
 GIT
-  remote: https://git.scc.kit.edu/ComPlat/rinchi-gem.git
-  revision: 214f7db7947c8098685d0617909de229b3dbb7ef
-  specs:
-    rinchi-gem (1.0.1)
-
-GIT
   remote: https://github.com/ComPlat/inchi-gem.git
   revision: 9a95669b42e18a20d2a0c2d5440670ff94e46c37
   branch: main
   specs:
     inchi-gem (1.06.1)
+
+GIT
+  remote: https://github.com/ComPlat/rinchi-gem.git
+  revision: 214f7db7947c8098685d0617909de229b3dbb7ef
+  specs:
+    rinchi-gem (1.0.1)
 
 GIT
   remote: https://github.com/ComPlat/sablon
