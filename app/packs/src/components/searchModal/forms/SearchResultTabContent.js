@@ -150,8 +150,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
                 {moleculeName}
               </div>
               <span className="search-result-tab-content-list-name">
-                {"id: "+object.id+" | updated_at: "+object.updated_at.substring(0,20)}
-                
+                {shortLabelWithName}
               </span>
             </div>
           )
