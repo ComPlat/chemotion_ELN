@@ -51,6 +51,12 @@ module Entities
     expose :ancestry do |obj|
       obj['ancestry']
     end
+    expose :inventory_id do |obj|
+      obj['inventory_id']
+    end
+    expose :inventory_prefix do |obj|
+      obj['inventory_prefix']
+    end
     expose :children, as: 'children', using: 'Entities::CollectionRootEntity'
   end
 end
