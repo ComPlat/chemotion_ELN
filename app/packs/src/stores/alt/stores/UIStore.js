@@ -27,6 +27,7 @@ class UIStore {
         page: 1,
         activeTab: 0,
         activeAnalysis: 0,
+        activeAnalysisTab: 0,
       },
       wellplate: {
         checkedAll: false,
@@ -82,6 +83,7 @@ class UIStore {
       handleInitialize: UIActions.initialize,
       handleSelectTab: UIActions.selectTab,
       handleSelectActiveAnalysis: UIActions.selectActiveAnalysis,
+      handleSelectActiveAnalysisTab: UIActions.selectActiveAnalysisTab,
 
       handleSelectCollection: UIActions.selectCollection,
       handleSelectSyncCollection: UIActions.selectSyncCollection,
@@ -174,6 +176,10 @@ class UIStore {
     const type = params.type || 'sample';
     const analysisIndex = params.analysisIndex || 0;
     this.state[type].activeAnalysis = analysisIndex;
+  }
+
+  handleSelectActiveAnalysisTab(tabKey) {
+    this.state.reaction.activeAnalysisTab = tabKey;
   }
 
   handleCheckAllElements(params) {

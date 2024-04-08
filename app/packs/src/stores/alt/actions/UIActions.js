@@ -35,6 +35,10 @@ class UIActions {
     return params;
   }
 
+  selectActiveAnalysisTab(tabKey) {
+    return tabKey;
+  }
+
   selectActiveAnalysis(params) {
     return params;
   }

@@ -54,6 +54,7 @@ export default class ReactionDetails extends Component {
       reaction: reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
+      activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
@@ -101,14 +102,18 @@ export default class ReactionDetails extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const nextReaction = nextProps.reaction;
     const nextActiveTab = nextState.activeTab;
+    const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
-    const { reaction, activeTab, visible } = this.state;
+    const {
+      reaction, activeTab, visible, activeAnalysisTab
+    } = this.state;
     return (
       nextReaction.id !== reaction.id ||
       nextReaction.updated_at !== reaction.updated_at ||
       nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible
+      nextActiveTab !== activeTab || nextVisible !== visible ||
+      nextActiveAnalysisTab !== activeAnalysisTab
     );
   }
 
@@ -117,9 +122,11 @@ export default class ReactionDetails extends Component {
   }
 
   onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab) {
+    if (state.reaction.activeTab != this.state.activeTab ||
+      state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
       this.setState({
-        activeTab: state.reaction.activeTab
+        activeTab: state.reaction.activeTab,
+        activeAnalysisTab: state.reaction.activeAnalysisTab
       });
     }
   }
@@ -206,6 +213,7 @@ export default class ReactionDetails extends Component {
 
   productData(reaction) {
     const { products } = this.state.reaction;
+    const { activeAnalysisTab } = this.state;
 
     const tabs = products.map((product, key) => {
       const title = this.productLink(product);
@@ -234,6 +242,8 @@ export default class ReactionDetails extends Component {
         id="data-detail-tab"
         style={{ marginTop: '10px' }}
         unmountOnExit
+        activeKey={activeAnalysisTab}
+        onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
       >
         {tabs}
         <Tab eventKey={4.1} title={reactionTab}>
@@ -371,6 +381,13 @@ export default class ReactionDetails extends Component {
     UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
       activeTab: key
+    });
+  }
+
+  handleSelectActiveAnalysisTab(key) {
+    UIActions.selectActiveAnalysisTab(key);
+    this.setState({
+      activeAnalysisTab: key
     });
   }
 

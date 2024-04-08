@@ -78,6 +78,7 @@ function AnalysesCellEditor({
       type: 'reaction',
       analysisIndex: allReactionAnalyses.findIndex((analysis) => analysis.id === analysisID)
     });
+    UIActions.selectActiveAnalysisTab(4.1);
     UIActions.selectTab({ type: 'reaction', tabKey: 'analyses' });
     stopEditing();
   };
