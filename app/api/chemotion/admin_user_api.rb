@@ -94,26 +94,35 @@ module Chemotion
         desc 'restore deleted user account'
         params do
           requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'
+          optional :id, type: Integer, desc: 'user ID'
         end
         post do
           existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
-          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
-          error!('Deleted user not found', 404) if user.blank?
-          $users_json = []
-          if user.length > 1
+          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")  
+          user = user.where(id: params[:id]) if params[:id].present?
+            
+          error!({ status: 'error', message: 'Deleted user not found'}) if user.blank?
+
+          if user.length > 1 
+            users_json = []
             user.each do |item|
               users = { id: item.id, deleted_at: item.deleted_at }
-              $users_json << users
+              users_json << users
             end
-            $msg = { status: 'error', warning: 'Error: More than one deleted account exists!', users: $users_json }
-            error!($msg)
-          elsif user.length == 1 && existing_user.present?
-            user.first.update_columns(deleted_at: nil, account_active: false)
-            error!(warning: 'Account Restored. Warning: Abbreviation already exists! Please update the Abbreviation and Email')
-          else
+            error!( { status: 'error', 
+                      message: 'Error: More than one deleted account exists! Enter the ID of the account to be restored', 
+                      users: users_json })
+
+          elsif existing_user.nil?
             user.first.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
-            status 205
-          end
+            { status: 'success', 
+              message: 'Account successfully restored'}
+
+          elsif existing_user.present?
+            user.first.update_columns(deleted_at: nil, account_active: false)
+            { status: 'warning', 
+              message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbreviation and Email'}
+          end             
         end
       end
 

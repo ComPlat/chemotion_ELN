@@ -425,24 +425,30 @@ export default class UserManagement extends React.Component {
   }
 
   handleRestoreAccount = () => {
+    this.setState({ deletedUsers: [] });
     if (this.nameAbbreviation.value.trim() === '') {
       this.setState({ messageRestoreAccountModal: 'Please enter the name abbreviation!', showError: true });
       return false;
     }
+
     AdminFetcher.restoreAccount({
       name_abbreviation: this.nameAbbreviation.value.trim(),
+      id: this.id.value === '' ? null : this.id.value,
+
     }).then((result) => {
       if (result?.users) {
-        this.setState({ messageRestoreAccountModal: result.warning, showError: true, deletedUsers: result.users });
+        this.setState({ messageRestoreAccountModal: result.message, showError: true, deletedUsers: result.users });
         return false;
       }
-      if (result?.error || result?.warning) {
-        this.setState({ messageRestoreAccountModal: result.error ?? result.warning, showError: true });
+
+      if (result.status === 'error' || result.status === 'warning') {
+        this.setState({ messageRestoreAccountModal: result.message, showError: true });
         return false;
       }
-      this.setState({ messageRestoreAccountModal: 'Successfully restored the account!', showSuccess: true });
+      this.setState({ messageRestoreAccountModal: result.message, showSuccess: true });
       setTimeout(() => {
         this.nameAbbreviation.value = '';
+        this.id.value = '';
         this.handleRestoreAccountClose();
       }, 3000);
       return true;
@@ -978,6 +984,23 @@ export default class UserManagement extends React.Component {
                     placeholder="Please enter the name abbreviation"
                     inputRef={(ref) => {
                       this.nameAbbreviation = ref;
+                    }}
+                  />
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlAbbr">
+                <Col componentClass={ControlLabel} sm={3}>
+                  ID:
+                </Col>
+                <Col sm={9}>
+                  <FormControl
+                    type="text"
+                    name="id"
+                    placeholder="Please enter the user ID"
+                    defaultValue=""
+                    onFocus={() => this.setState({ showError: false, showSuccess: false })}
+                    inputRef={(ref) => {
+                      this.id = ref;
                     }}
                   />
                 </Col>
