@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import { AgGridReact } from 'ag-grid-react';
+import PropTypes, { string } from 'prop-types';
 import {
   Label, FormGroup, Checkbox, Button, Modal
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
+import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
@@ -43,6 +45,11 @@ function AnalysisVariationLink({ reaction, analysisID }) {
   }
   return null;
 }
+
+AnalysisVariationLink.propTypes = {
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  analysisID: PropTypes.string.isRequired,
+};
 
 function AnalysesCellRenderer({ value: analysesIDs }) {
   return (
@@ -118,6 +125,15 @@ function AnalysesCellEditor({
 
   return cellContent;
 }
+
+AnalysesCellEditor.propTypes = {
+  data: PropTypes.instanceOf(AgGridReact.data).isRequired,
+  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  onValueChange: PropTypes.func.isRequired,
+  stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
+  allReactionAnalyses: PropTypes.arrayOf(string).isRequired,
+  reactionShortLabel: PropTypes.string.isRequired,
+};
 
 export {
   AnalysesCellRenderer,
