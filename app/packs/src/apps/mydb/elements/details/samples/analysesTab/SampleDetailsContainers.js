@@ -52,12 +52,6 @@ export default class SampleDetailsContainers extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onUIStoreChange(state) {
-    if (state.sample.activeAnalysis !== this.state.activeAnalysis) {
-      this.setState({ activeAnalysis: state.sample.activeAnalysis });
-    }
-  }
-
   handleChange(container) {
     const { sample } = this.props;
     // const analyses = sample.container.children.find(child => (
@@ -90,7 +84,8 @@ export default class SampleDetailsContainers extends Component {
     const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
-    this.props.setState(prevState => ({ ...prevState, sample }),
+    this.props.setState(
+      (prevState) => ({ ...prevState, sample }),
       this.handleAccordionOpen(newContainer.id),
     );
   }
@@ -103,7 +98,38 @@ export default class SampleDetailsContainers extends Component {
     const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
-    this.props.setState(prevState => ({ ...prevState, sample }));
+    this.props.setState((prevState) => ({ ...prevState, sample }));
+  }
+
+  handleRemove(container) {
+    const { sample } = this.props;
+    container.is_deleted = true;
+
+    this.props.setState((prevState) => ({ ...prevState, sample }));
+  }
+
+  handleUndo(container) {
+    const { sample } = this.props;
+    container.is_deleted = false;
+
+    this.props.setState((prevState) => ({ ...prevState, sample }));
+  }
+
+  handleAccordionOpen(newKey) {
+    this.setState((prevState) => {
+      const prevKey = prevState.activeAnalysis;
+      return {
+        ...prevState,
+        mode: 'edit',
+        activeAnalysis: prevKey === newKey ? 0 : newKey,
+      };
+    });
+  }
+
+  onUIStoreChange(state) {
+    if (state.sample.activeAnalysis !== this.state.activeAnalysis) {
+      this.setState({ activeAnalysis: state.sample.activeAnalysis });
+    }
   }
 
   sortedContainers(sample) {
@@ -113,7 +139,7 @@ export default class SampleDetailsContainers extends Component {
 
   buildEmptyAnalyContainer() {
     const newContainer = Container.buildEmpty();
-    newContainer.container_type = "analysis";
+    newContainer.container_type = 'analysis';
     newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
     return newContainer;
   }
@@ -130,31 +156,6 @@ export default class SampleDetailsContainers extends Component {
     });
   }
 
-  handleRemove(container) {
-    const { sample } = this.props;
-    container.is_deleted = true;
-
-    this.props.setState(prevState => ({ ...prevState, sample }));
-  }
-
-  handleUndo(container) {
-    const { sample } = this.props;
-    container.is_deleted = false;
-
-    this.props.setState(prevState => ({ ...prevState, sample }));
-  }
-
-  handleAccordionOpen(newKey) {
-    this.setState((prevState) => {
-      const prevKey = prevState.activeAnalysis;
-      return {
-        ...prevState,
-        mode: 'edit',
-        activeAnalysis: prevKey === newKey ? 0 : newKey,
-      };
-    });
-  }
-
   addButton() {
     const { readOnly, sample } = this.props;
     if (readOnly) {
@@ -168,7 +169,8 @@ export default class SampleDetailsContainers extends Component {
         onClick={this.handleAdd}
         disabled={!sample.can_update}
       >
-        <i className="fa fa-plus" />&nbsp;
+        <i className="fa fa-plus" />
+        &nbsp;
         Add analysis
       </Button>
     );
@@ -256,7 +258,6 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
-          
         </div>
       );
     }
