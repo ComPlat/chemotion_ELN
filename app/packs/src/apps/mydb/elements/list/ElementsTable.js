@@ -359,6 +359,7 @@ export default class ElementsTable extends React.Component {
     const {
       moleculeSort,
       productOnly,
+      searchResult,
     } = this.state;
 
     const options = [
@@ -368,6 +369,8 @@ export default class ElementsTable extends React.Component {
     const color = productOnly ? '#5cb85c' : 'currentColor';
     const tooltipText = productOnly ? 'Show all' : 'Show products only';
 
+    const isSearchResult = UIStore.getState().currentSearchByID != null && UIStore.getState().currentSearchByID != undefined
+
     return (
       <>
         <Select
@@ -375,6 +378,7 @@ export default class ElementsTable extends React.Component {
           options={options}
           clearable={false}
           searchable
+          disabled={isSearchResult}
           value={moleculeSort}
           onChange={this.changeSampleSort}
           className="header-group-select"
