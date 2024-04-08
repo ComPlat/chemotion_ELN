@@ -6,8 +6,6 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SearchResultTabContent from './SearchResultTabContent';
-import { handleSearch } from './SearchModalFunctions';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 const SearchResult = ({ handleClear }) => {
   const searchStore = useContext(StoreContext).search;
