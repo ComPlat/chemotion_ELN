@@ -27,27 +27,28 @@ module Usecases
       def perform!
         scope = basic_scope
         scope = search_filter_scope(scope)
+        scope = create_molecule_buckets(scope)
 
-        scope=scope.sort_by{|o| o.created_at}.reverse
-        map={}
-        
-        scope.each do |o| 
-          map[o.molecule.cano_smiles]=[] unless map[o.molecule.cano_smiles]
-          map[o.molecule.cano_smiles] << o
-        end
-
-        bucketSortedSamples=[];
-        map.keys.each do |o|
-          bucketSortedSamples+=map[o]
-        end
-        
-        scope=bucketSortedSamples
-        x = serialize_result_by_ids(scope)
-        
-        x
+        serialize_result_by_ids(scope)
       end
 
       private
+
+      def create_molecule_buckets(scope)
+        map = {}
+
+        scope.each do |o|
+          map[o.molecule.cano_smiles] = [] unless map[o.molecule.cano_smiles]
+          map[o.molecule.cano_smiles] << o
+        end
+
+        bucket_sorted_samples = []
+        map.each_key do |o|
+          bucket_sorted_samples += map[o]
+        end
+
+        bucket_sorted_samples
+      end
 
       def model_name(id_params)
         id_params[:model_name] == 'element' ? Labimotion::Element : id_params[:model_name].camelize.constantize
@@ -75,7 +76,7 @@ module Usecases
           if @params[:molecule_sort]
             @shared_methods.order_by_molecule(scope)
           else
-            scope.order('samples.updated_at ASC')
+            scope.order('samples.updated_at DESC')
           end
         scope = scope.page(@params[:page]).per(@params[:page_size]) if ids.size > @params[:page_size].to_i
         scope
@@ -90,15 +91,16 @@ module Usecases
       end
 
       def ids_by_params
-        return @id_params[:ids] if !@id_params[:with_filter] || @filter_params.present? || @params[:molecule_sort]
+        # Why should i not get all ids if the sorting mode is by updated at instead of molecule sort?
+        @id_params[:ids] # if !@id_params[:with_filter] || @filter_params.present? || @params[:molecule_sort]
 
-        start_number =
-          if @params[:page].to_i > @shared_methods.pages(@id_params[:total_elements], @params[:per_page].to_i)
-            0
-          else
-            @params[:page_size].to_i * (@params[:page].to_i - 1)
-          end
-        @id_params[:ids][start_number, start_number + @params[:page_size].to_i]
+        # start_number =
+        #  if @params[:page].to_i > @shared_methods.pages(@id_params[:total_elements], @params[:per_page].to_i)
+        #    0
+        #  else
+        #    @params[:page_size].to_i * (@params[:page].to_i - 1)
+        #  end
+        # @id_params[:ids][start_number, start_number + @params[:page_size].to_i]
       end
 
       def search_filter_scope(scope)
@@ -139,8 +141,7 @@ module Usecases
               serialized_result_by_id(s, serialized_scope)
             end
         end
-        serialized_scope
-        #serialized_scope.sort_by! { |object| @id_params['ids'].index object[:id] }
+        serialized_scope.sort_by! { |object| @id_params['ids'].index object[:id] }
       end
 
       def serialized_result_by_id_for_sample(sample, serialized_scope)
