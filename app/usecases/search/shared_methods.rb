@@ -9,15 +9,11 @@ class SharedMethods
     @result = {}
   end
 
-  def order_by_updated_at(scope)
-    scope.order('samples.updated_at DESC')
-  end
-
   def order_by_molecule(scope)
     scope.includes(:molecule)
          .joins(:molecule)
          .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
-         .order('samples.updated_at DESC')
+         .order('molecules.sum_formular')
   end
 
   def pages(total_elements, per_page)
@@ -30,7 +26,6 @@ class SharedMethods
         serialize_generic_elements(element, error)
       else
         paginated_ids = Kaminari.paginate_array(element.last).page(@params[:page]).per(@params[:per_page])
-       
         @result[element.first.to_s.gsub('_ids', '').pluralize] = {
           elements: serialized_elements(element, paginated_ids),
           ids: element.last,
@@ -54,7 +49,6 @@ class SharedMethods
   end
 
   def serialize_sample(paginated_ids)
-   
     serialized_sample_array = []
     Sample.includes_for_list_display
           .where(id: paginated_ids)
@@ -68,15 +62,7 @@ class SharedMethods
             ).serializable_hash
             serialized_sample_array.push(serialized_sample)
           end
-
-      map = {}
-      serialized_sample_array.each do |sample|
-        bucket_key = 'no molecule'
-        bucket_key = sample.dig(:molecule,:id).to_s if sample.dig(:molecule,:id)
-        map[bucket_key] = [] unless map[bucket_key] 
-        map[bucket_key].push(sample)
-      end 
-      map.values.flatten
+    serialized_sample_array
   end
 
   def serialize_generic_elements(element, error)
