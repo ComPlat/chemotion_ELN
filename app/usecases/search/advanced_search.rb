@@ -35,25 +35,9 @@ module Usecases
         result = @shared_methods.serialization_by_elements_and_page(@elements, @conditions[:error])
 
         # reorder first page of samples
-        result['samples'][:elements] = create_molecule_buckets(result.dig('samples', :elements))
+        result['samples'][:elements] =
+          @shared_methods.group_samples_by_molecule(result.dig('samples', :elements))
         result
-      end
-
-      def create_molecule_buckets(scope)
-        map = {}
-        scope.each do |o|
-          smiles = o.dig(:molecule, :cano_smiles)
-          smiles = 'detached' if smiles.nil?
-          map[smiles] = [] unless map[smiles]
-          map[smiles] << o
-        end
-
-        bucket_sorted_samples = []
-        map.each_key do |o|
-          bucket_sorted_samples += map[o]
-        end
-
-        bucket_sorted_samples
       end
 
       private

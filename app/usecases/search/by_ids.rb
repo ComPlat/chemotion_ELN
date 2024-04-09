@@ -27,28 +27,14 @@ module Usecases
       def perform!
         scope = basic_scope
         scope = search_filter_scope(scope)
-        scope = create_molecule_buckets(scope)
 
-        serialize_result_by_ids(scope)
+        scope = serialize_result_by_ids(scope)
+        scope['samples'][:elements] =
+          @shared_methods.group_samples_by_molecule(scope.dig('samples', :elements))
+        scope
       end
 
       private
-
-      def create_molecule_buckets(scope)
-        map = {}
-
-        scope.each do |o|
-          map[o.molecule.cano_smiles] = [] unless map[o.molecule.cano_smiles]
-          map[o.molecule.cano_smiles] << o
-        end
-
-        bucket_sorted_samples = []
-        map.each_key do |o|
-          bucket_sorted_samples += map[o]
-        end
-
-        bucket_sorted_samples
-      end
 
       def model_name(id_params)
         id_params[:model_name] == 'element' ? Labimotion::Element : id_params[:model_name].camelize.constantize

@@ -95,4 +95,21 @@ class SharedMethods
       entities.represent(model, displayed_in_list: true).serializable_hash
     end
   end
+
+  def group_samples_by_molecule(scope)
+    map = {}
+    scope.each do |o|
+      smiles = o.dig(:molecule, :cano_smiles)
+      smiles = 'detached' if smiles.nil?
+      map[smiles] = [] unless map[smiles]
+      map[smiles] << o
+    end
+
+    bucket_sorted_samples = []
+    map.each_key do |o|
+      bucket_sorted_samples += map[o]
+    end
+
+    bucket_sorted_samples
+  end
 end
