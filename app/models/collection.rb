@@ -187,7 +187,7 @@ class Collection < ApplicationRecord
     end
   end
 
-  def self.find_inventory_id_for_collection(collection_id)
+  def self.find_inventory_for_collection(collection_id)
     Collection.find(collection_id).inventory
   end
 end
