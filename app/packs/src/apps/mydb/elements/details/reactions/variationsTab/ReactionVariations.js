@@ -219,17 +219,18 @@ MaterialOverlay.propTypes = {
 };
 
 function RowToolsCellRenderer({
-  data: variationsRow, reactionShortLabel, context
+  data: variationsRow, context
 }) {
+  const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
       <Badge>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
       {' '}
       <ButtonGroup>
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => context.copyRow(variationsRow)}>
+        <Button bsSize="xsmall" bsStyle="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />
         </Button>
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => context.removeRow(variationsRow)}>
+        <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeRow(variationsRow)}>
           <i className="fa fa-trash-o" />
         </Button>
       </ButtonGroup>
@@ -239,7 +240,6 @@ function RowToolsCellRenderer({
 
 RowToolsCellRenderer.propTypes = {
   data: PropTypes.instanceOf(AgGridReact.data).isRequired,
-  reactionShortLabel: PropTypes.string.isRequired,
   context: PropTypes.instanceOf(AgGridReact.context).isRequired,
 };
 
@@ -402,7 +402,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     {
       field: null,
       cellRenderer: RowToolsCellRenderer,
-      cellRendererParams: { reactionShortLabel: reaction.short_label },
       lockPosition: 'left',
       editable: false,
       sortable: false,
@@ -417,7 +416,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       cellEditor: AnalysesCellEditor,
       cellEditorParams: {
         allReactionAnalyses: getReactionAnalyses(reaction),
-        reactionShortLabel: reaction.short_label
       },
       cellEditorPopup: true,
       cellEditorPopupPosition: 'under',
@@ -662,7 +660,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             copyRow,
             removeRow,
             updateColumnDefinitions,
-            reactionHasPolymers: reaction.hasPolymers()
+            reactionHasPolymers: reaction.hasPolymers(),
+            reactionShortLabel: reaction.short_label
           }}
           /*
           IMPORTANT: In conjunction with `onCellEditRequest`,

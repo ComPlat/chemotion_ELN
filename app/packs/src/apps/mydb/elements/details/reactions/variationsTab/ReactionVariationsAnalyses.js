@@ -63,9 +63,10 @@ function AnalysesCellEditor({
   onValueChange,
   stopEditing,
   allReactionAnalyses,
-  reactionShortLabel
+  context
 }) {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
+  const { reactionShortLabel } = context;
 
   const onAnalysisSelectionReady = () => {
     onValueChange(selectedAnalysisIDs);
@@ -132,7 +133,7 @@ AnalysesCellEditor.propTypes = {
   onValueChange: PropTypes.func.isRequired,
   stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
   allReactionAnalyses: PropTypes.arrayOf(string).isRequired,
-  reactionShortLabel: PropTypes.string.isRequired,
+  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
 };
 
 export {
