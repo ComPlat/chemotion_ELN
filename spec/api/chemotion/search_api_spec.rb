@@ -15,8 +15,8 @@ describe Chemotion::SearchAPI do
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
   let(:sample_c) { create(:sample, name: 'SampleC', creator: other_user) }
   let(:sample_d) { create(:sample, name: 'SampleD', creator: other_user) }
-  let(:molecule_a) { create(:molecule, sum_formular:'H2O') }
-  let(:molecule_b) { create(:molecule, sum_formular:'CO2') }
+  let(:molecule_a) { create(:molecule, sum_formular:'H2O', cano_smiles:'H20') }
+  let(:molecule_b) { create(:molecule, sum_formular:'CO2', cano_smiles:'CO2') }
   let(:sample_sorting_a) do
     create(:sample, name: 'Sorting_Sample_A', creator: user,
                     molecule: molecule_a,
