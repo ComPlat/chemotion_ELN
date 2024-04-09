@@ -54,8 +54,7 @@ describe Chemotion::InventoryAPI do
 
   describe 'GET inventory/collection_id' do
     before do
-      allow(Collection).to receive(:find_inventory_id_for_collection).and_return(1)
-      allow(Inventory).to receive(:find).with(1).and_return(build(:inventory))
+      allow(Collection).to receive(:find_inventory_id_for_collection).and_return(build(:inventory))
     end
 
     it 'fetch inventory for collection' do
