@@ -30,7 +30,7 @@ export default class Wellplate extends Element {
 
   static buildFromSamplesAndCollectionId(clipboardSamples, collectionId, width = 12, height = 8) {
     if (clipboardSamples.length > width * height) {
-      throw new Error('Size of wellplate to small for samples!');
+      throw new Error(`Wellplate of size ${width * height} to small for ${clipboardSamples.length} samples!`);
     }
 
     const samples = clipboardSamples.map((sample) => sample.buildChild());
