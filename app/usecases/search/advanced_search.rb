@@ -32,7 +32,28 @@ module Usecases
       def perform!
         scope = @conditions[:model_name] == Literature ? basic_literature_scope : basic_scope
         elements_by_scope(scope)
-        @shared_methods.serialization_by_elements_and_page(@elements, @conditions[:error])
+        result = @shared_methods.serialization_by_elements_and_page(@elements, @conditions[:error])
+
+        # reorder first page of samples
+        result['samples'][:elements] = create_molecule_buckets(result.dig('samples', :elements))
+        result
+      end
+
+      def create_molecule_buckets(scope)
+        map = {}
+        scope.each do |o|
+          smiles = o.dig(:molecule, :cano_smiles)
+          smiles = 'detached' if smiles.nil?
+          map[smiles] = [] unless map[smiles]
+          map[smiles] << o
+        end
+
+        bucket_sorted_samples = []
+        map.each_key do |o|
+          bucket_sorted_samples += map[o]
+        end
+
+        bucket_sorted_samples
       end
 
       private
@@ -44,8 +65,8 @@ module Usecases
                                         .where(query_with_condition)
                                         .joins(@conditions[:joins].join(' '))
 
-        scope =  scope.order('samples.updated_at DESC') if @conditions[:model_name] == Sample
-        
+        scope = scope.order('samples.updated_at DESC') if @conditions[:model_name] == Sample
+
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
 
