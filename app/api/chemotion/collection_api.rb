@@ -101,7 +101,7 @@ module Chemotion
       desc "Return all unlocked unshared serialized collection roots of current user"
       get :roots do
         collects = Collection.where(user_id: current_user.id).unlocked.unshared
-                             .joins('JOIN inventories ON collections.inventory_id = inventories.id')
+                             .joins('LEFT JOIN inventories ON collections.inventory_id = inventories.id')
                              .order('id').select(
           <<~SQL
             collections.id, label, ancestry, is_synchronized, permission_level, tabs_segment, position, collection_shared_names(user_id, collections.id) as shared_names,
@@ -116,7 +116,7 @@ module Chemotion
       desc "Return all shared serialized collections"
       get :shared_roots do
         collects = Collection.shared(current_user.id)
-                             .joins('JOIN inventories ON collections.inventory_id = inventories.id')
+                             .joins('LEFT JOIN inventories ON collections.inventory_id = inventories.id')
                              .order('id').select(
           <<~SQL
             collections.id, user_id, label, ancestry, permission_level, user_as_json(user_id) as shared_to,
@@ -131,7 +131,7 @@ module Chemotion
       desc "Return all remote serialized collections"
       get :remote_roots do
         collects = Collection.remote(current_user.id)
-                             .joins('JOIN inventories ON collections.inventory_id = inventories.id')
+                             .joins('LEFT JOIN inventories ON collections.inventory_id = inventories.id')
                              .where(user_id: current_user.id).order(:id).select(
           <<~SQL
             collections.id, user_id, label, ancestry, permission_level, user_as_json(shared_by_id) AS shared_by, tabs_segment,

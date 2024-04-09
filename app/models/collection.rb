@@ -188,7 +188,7 @@ class Collection < ApplicationRecord
   end
 
   def self.find_inventory_id_for_collection(collection_id)
-    Collection.find(collection_id).inventory&.id
+    Collection.find(collection_id).inventory
   end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
