@@ -38,9 +38,9 @@ export default class CustomSizeModal extends Component {
     handleClose();
   }
 
-  updateDimension(dimesion, value) {
+  updateDimension(dimension, value) {
     if (CustomSizeModal.isPositiveInteger(value)) {
-      this.setState({ [dimesion]: value });
+      this.setState({ [dimension]: value });
     }
   }
 
@@ -96,7 +96,7 @@ export default class CustomSizeModal extends Component {
       <Modal
         show={showCustomSizeModal}
         onHide={handleClose}
-        onShow={this.updateDimensionsFromWellplate}
+        onShow={() => this.updateDimensionsFromWellplate()}
       >
         <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
         <Modal.Body>
