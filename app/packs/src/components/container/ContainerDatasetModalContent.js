@@ -277,7 +277,7 @@ export default class ContainerDatasetModalContent extends Component {
 
       if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
         groups.BagitZip.push(attachment);
-      } else if (attachment.aasm_state === 'image' && attachment.filename.includes('.combined')) {
+      } else if (attachment.aasm_state === 'image' && (attachment.filename.includes('.combined') ||  attachment.filename.includes('.new_combined'))) {
         groups.Combined.push(attachment);
       } else if (attachment.filename.includes('bagit')) {
         const baseName = attachment.filename.split('_bagit')[0].trim();
@@ -285,6 +285,8 @@ export default class ContainerDatasetModalContent extends Component {
           groups.Processed[baseName] = [];
         }
         groups.Processed[baseName].push(attachment);
+      } else if (attachment.aasm_state === 'non_jcamp' && attachment.filename.includes('.new_combined')) {
+        groups.Combined.push(attachment);
       } else {
         groups.Original.push(attachment);
       }

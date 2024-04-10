@@ -61,6 +61,8 @@ export default class CopyElementModal extends React.Component {
       ClipboardActions.fetchElementAndBuildCopy(element, selectedCol, 'copy_sample');
     } else if (element.type === 'reaction') {
       ElementActions.copyReaction(element, selectedCol);
+    } else if (element.type === 'research_plan') {
+      ElementActions.copyResearchPlan(element, selectedCol);
     } else {
       ElementActions.copyElement(element, selectedCol);
     }
@@ -79,7 +81,7 @@ export default class CopyElementModal extends React.Component {
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="CopyElement">Copy</Tooltip>}>
-          <Button id="copy-element-btn" style={{ marginLeft: '5px', display: `${canCopy}` }} bsSize="xsmall" className="button-right" bsStyle="success" onClick={this.handleModalShow}>
+          <Button id="copy-element-btn" style={{ marginLeft: '2px', display: `${canCopy}` }} bsSize="xsmall" className="button-right" bsStyle="success" onClick={this.handleModalShow}>
             <i className="fa fa-clone" />
           </Button>
         </OverlayTrigger>

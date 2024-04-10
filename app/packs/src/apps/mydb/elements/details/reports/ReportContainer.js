@@ -76,7 +76,7 @@ export default class ReportContainer extends Component {
     if (fetchPreviewTabs.indexOf(key) >= 0) { // preview
       LoadingActions.start.defer();
       const reportState = ReportStore.getState();
-      ReportActions.loadRreview.defer({ reportState });
+      ReportActions.loadReview.defer({ reportState });
     }
   }
 

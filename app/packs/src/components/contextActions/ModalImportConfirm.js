@@ -194,7 +194,7 @@ export default class ModalImportConfirm extends React.Component {
     let columns={
           columnDefs: [
             {headerName: '#', field: 'index', width: 60, pinned: 'left'},
-            {headerName: 'Structure', field: 'svg', cellRenderer: SvgCellRenderer, pinned: 'left' },
+            {headerName: 'Structure', field: 'svg', cellRenderer: SvgCellRenderer, pinned: 'left', autoHeight: true },
             {headerName: 'name', field: 'name', editable:true},
             {headerName: 'Select', field: 'checked', cellRenderer: SelectCellRenderer,
               cellRendererParams:{onSelectChange: this.onSelectChange}, width: 30,
