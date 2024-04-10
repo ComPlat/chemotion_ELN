@@ -6,12 +6,12 @@ import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
 
 export default class CustomSizeModal extends Component {
-  static isPositiveInteger(value) {
-    return !Number.isNaN(value) && Number.isInteger(Number(value)) && Number(value) > 0;
+  static isInteger(value) {
+    return !Number.isNaN(value) && Number.isInteger(Number(value));// && Number(value) > 0;
   }
 
   static propertyIsInvalid(value) {
-    return value > Wellplate.MAX_DIMENSION;
+    return value > Wellplate.MAX_DIMENSION || value <= 0;
   }
 
   constructor(props) {
@@ -39,9 +39,10 @@ export default class CustomSizeModal extends Component {
   }
 
   updateDimension(dimension, value) {
-    if (CustomSizeModal.isPositiveInteger(value)) {
-      this.setState({ [dimension]: value });
+    if (!CustomSizeModal.isInteger(value)) {
+      return; // state is not updated if value is not an integer
     }
+    this.setState({ [dimension]: value });
   }
 
   renderApplyButton() {
@@ -61,7 +62,13 @@ export default class CustomSizeModal extends Component {
     const invalidStyleClass = CustomSizeModal.propertyIsInvalid(value)
       ? 'invalid-wellplate-size' : 'size-without-error';
     const errorMessage = CustomSizeModal.propertyIsInvalid(value)
-      ? <div className="invalid-wellplate-size-text">Size must be smaller than 100.</div>
+      ? (
+        <div className="invalid-wellplate-size-text">
+          {label}
+          {' '}
+          must be between 0 and 100.
+        </div>
+      )
       : null;
     return (
       <div className="floating-left">
