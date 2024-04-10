@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import PropTypes, { string } from 'prop-types';
+import PropTypes from 'prop-types';
 import {
   Label, FormGroup, Checkbox, Button, Modal
 } from 'react-bootstrap';
@@ -11,14 +11,13 @@ import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/v
 
 function getReactionAnalyses(reaction) {
   const analysesContainer = reaction.container?.children?.find((child) => child.container_type === 'analyses');
-  const analyses = analysesContainer?.children?.filter((analysis) => !analysis.is_deleted && !analysis.is_new);
+  const analyses = analysesContainer?.children?.filter((analysis) => !analysis.is_new);
 
   return analyses ?? [];
 }
 
-function updateAnalyses(variations, reaction) {
-  const reactionAnalyses = getReactionAnalyses(reaction);
-  const analysesIDs = reactionAnalyses.map((child) => child.id);
+function updateAnalyses(variations, allReactionAnalyses) {
+  const analysesIDs = allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((child) => child.id);
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     row.analyses = row.analyses.filter((id) => analysesIDs.includes(id));
@@ -57,16 +56,19 @@ function AnalysesCellRenderer({ value: analysesIDs }) {
   );
 }
 
+AnalysesCellRenderer.propTypes = {
+  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+};
+
 function AnalysesCellEditor({
   data: variationsRow,
   value: analysesIDs,
   onValueChange,
   stopEditing,
-  allReactionAnalyses,
   context
 }) {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
-  const { reactionShortLabel } = context;
+  const { reactionShortLabel, allReactionAnalyses } = context;
 
   const onAnalysisSelectionReady = () => {
     onValueChange(selectedAnalysisIDs);
@@ -94,7 +96,7 @@ function AnalysesCellEditor({
   const analysesSelection = (
     <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
       <FormGroup>
-        {allReactionAnalyses.map((analysis) => (
+        {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
           <div key={analysis.id} style={{ display: 'flex', alignItems: 'center' }}>
             <Checkbox
               onChange={() => onChange(analysis.id)}
@@ -132,7 +134,6 @@ AnalysesCellEditor.propTypes = {
   value: PropTypes.instanceOf(AgGridReact.value).isRequired,
   onValueChange: PropTypes.func.isRequired,
   stopEditing: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  allReactionAnalyses: PropTypes.arrayOf(string).isRequired,
   context: PropTypes.instanceOf(AgGridReact.context).isRequired,
 };
 

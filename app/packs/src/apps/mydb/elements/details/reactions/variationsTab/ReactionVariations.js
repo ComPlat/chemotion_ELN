@@ -336,13 +336,6 @@ function reactionMaterialsChanged(reactionVariations, reaction) {
   return !isEqual(reactionVariationsMaterialIDs, reactionMaterialIDs);
 }
 
-function reactionAnalysesChanged(columnDefinitions, reaction) {
-  const allReactionAnalyses = getReactionAnalyses(reaction);
-  const analysesColumnDefinition = columnDefinitions.find((column) => column.field === 'analyses');
-
-  return !isEqual(analysesColumnDefinition.cellEditorParams.allReactionAnalyses.sort(), allReactionAnalyses.sort());
-}
-
 function getMaterialColumnGroupChild(material, materialType) {
   let entries = [null];
   if (materialType === 'solvents') {
@@ -398,6 +391,7 @@ function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials) {
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const [reactionVariations, setReactionVariations] = useState(reaction.variations);
+  const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
       field: null,
@@ -414,9 +408,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       field: 'analyses',
       cellRenderer: AnalysesCellRenderer,
       cellEditor: AnalysesCellEditor,
-      cellEditorParams: {
-        allReactionAnalyses: getReactionAnalyses(reaction),
-      },
       cellEditorPopup: true,
       cellEditorPopupPosition: 'under',
       cellDataType: 'object',
@@ -529,7 +520,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     setReactionVariations(updatedReactionVariations);
   }
 
-  if (reactionAnalysesChanged(columnDefinitions, reaction)) {
+  if (!isEqual(allReactionAnalyses, getReactionAnalyses(reaction))) {
     /*
     The "Variations" tab holds references to analyses in the "Analyses" tab.
     Users can add, remove, or edit analyses in the "Analyses" tab.
@@ -570,10 +561,10 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     |               |                | only displays associations to existing rows.   |
     `-------------- ---------------- -------------------------------------------------`
     */
-    updateColumnDefinitions('analyses', 'cellEditorParams', { allReactionAnalyses: getReactionAnalyses(reaction) });
-
-    const updatedReactionVariations = updateAnalyses(reactionVariations, reaction);
+    const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
+    const updatedReactionVariations = updateAnalyses(reactionVariations, updatedAllReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
+    setAllReactionAnalyses(updatedAllReactionAnalyses);
   }
 
   const addRow = useCallback(() => {
@@ -661,7 +652,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             removeRow,
             updateColumnDefinitions,
             reactionHasPolymers: reaction.hasPolymers(),
-            reactionShortLabel: reaction.short_label
+            reactionShortLabel: reaction.short_label,
+            allReactionAnalyses
           }}
           /*
           IMPORTANT: In conjunction with `onCellEditRequest`,

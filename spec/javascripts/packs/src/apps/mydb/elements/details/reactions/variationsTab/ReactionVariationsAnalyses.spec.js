@@ -1,7 +1,7 @@
 import expect from 'expect';
 import Container from 'src/models/Container';
 import {
-  updateAnalyses,
+  updateAnalyses, getReactionAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
@@ -30,28 +30,28 @@ describe('ReactionVariationsAnalyses', async () => {
       let { variations } = reaction;
       variations[0].analyses = [analysisFoo.id];
       variations[1].analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, reaction)).toEqual(variations);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))).toEqual(variations);
     });
     it('when analysis is removed', async () => {
       let { variations } = reaction;
       variations[0].analyses = [analysisFoo.id];
-      expect(updateAnalyses(variations, reaction)[0].analyses).toEqual([analysisFoo.id]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].analyses).toEqual([analysisFoo.id]);
       reaction.container.children[0].children = reaction.container.children[0].children.filter((child) => child.id !== analysisFoo.id);
-      expect(updateAnalyses(variations, reaction)[0].analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].analyses).toEqual([]);
     });
     it('when analysis is marked as deleted', async () => {
       let { variations } = reaction;
       variations[1].analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, reaction)[1].analyses).toEqual([analysisBar.id]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([analysisBar.id]);
       analysisBar.is_deleted = true;
-      expect(updateAnalyses(variations, reaction)[1].analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([]);
     });
     it('when analysis is new', async () => {
       let { variations } = reaction;
       variations[1].analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, reaction)[1].analyses).toEqual([analysisBar.id]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([analysisBar.id]);
       analysisBar.is_new = true;
-      expect(updateAnalyses(variations, reaction)[1].analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].analyses).toEqual([]);
     });
   });
 });
