@@ -519,12 +519,14 @@ module Chemotion
         end
 
         post do
-          Usecases::Search::StructureSearch.new(
+          results = Usecases::Search::StructureSearch.new(
             collection_id: @c_id,
             params: params,
             user: current_user,
             detail_levels: @dl,
           ).perform!
+          results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: params["per_page"], pages: 0, totalElements: 0, error: '' }
+          results
         end
       end
 
