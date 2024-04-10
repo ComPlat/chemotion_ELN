@@ -1,30 +1,32 @@
+// eslint-disable-next-line max-classes-per-file
 import React, { Component } from 'react';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
 
-function newOption(wellplate, optionsKey) {
-  const size = (wellplate.width * wellplate.height).toString();
-  const width = wellplate.width.toString();
-  const height = wellplate.height.toString();
-  return {
-    value: optionsKey,
-    label: `${size} (${width}x${height})`
-  };
+class Option {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  get label() {
+    return `${this.height * this.width} (${this.width}x${this.height})`;
+  }
 }
 
 export default class WellplateSizeDropdown extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      options: [
-        { value: '24;16', label: '384 (24x16)' },
-        { value: '12;8', label: '96 (12x8)' },
-        { value: '6;4', label: '24 (6x4)' },
-        { value: '4;3', label: '12 (4x3)' }
-      ]
-    };
+    const rawOptions = [new Option(24, 16), new Option(12, 8), new Option(6, 4), new Option(4, 3)];
+
+    const options = rawOptions.map((option) => (
+      { value: option, label: option.label }
+    ));
+
+    this.state = { options };
+
     const { wellplate } = this.props;
     this.state.currentSize = this.selectOptionOfWellplate(wellplate);
   }
@@ -34,8 +36,8 @@ export default class WellplateSizeDropdown extends Component {
     wellplate.edited = true;
     this.setState({ currentSize: selectedOption });
 
-    const width = parseInt(selectedOption.value.split(';')[0], 10);
-    const height = parseInt(selectedOption.value.split(';')[1], 10);
+    const width = parseInt(selectedOption.value.width, 10);
+    const height = parseInt(selectedOption.value.height, 10);
 
     wellplate.changeSize(width, height);
 
@@ -43,12 +45,10 @@ export default class WellplateSizeDropdown extends Component {
   }
 
   selectOptionOfWellplate(wellplate) {
-    const optionsKey = `${wellplate.width.toString()};${wellplate.height.toString()}`;
-
     const { options } = this.state;
 
-    const option = options.find((o) => o.value === optionsKey);
-    return option !== undefined ? option : newOption(wellplate, optionsKey);
+    const option = options.find((o) => o.width === wellplate.width && o.height === wellplate.height);
+    return option !== undefined ? option : new Option(wellplate.width, wellplate.height);
   }
 
   render() {
