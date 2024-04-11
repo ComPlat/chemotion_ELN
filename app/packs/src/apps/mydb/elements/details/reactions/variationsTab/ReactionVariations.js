@@ -18,7 +18,7 @@ import {
   updateYields, updateEquivalents, getReactionMaterials, getMaterialHeaderNames, getVariationsRowName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses
+  AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 
 function MenuHeader({
@@ -406,6 +406,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     {
       headerName: 'Analyses',
       field: 'analyses',
+      tooltipValueGetter: getAnalysesOverlay,
+      tooltipComponent: AnalysisOverlay,
       cellRenderer: AnalysesCellRenderer,
       cellEditor: AnalysesCellEditor,
       cellEditorPopup: true,

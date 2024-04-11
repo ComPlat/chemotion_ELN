@@ -26,6 +26,42 @@ function updateAnalyses(variations, allReactionAnalyses) {
   return updatedVariations;
 }
 
+function getAnalysesOverlay({ data: variationsRow, context }) {
+  const { analyses: analysesIDs } = variationsRow;
+  const { allReactionAnalyses } = context;
+
+  return allReactionAnalyses.filter((analysis) => analysesIDs.includes(analysis.id));
+}
+
+function AnalysisOverlay({ value: analyses }) {
+  if (analyses.length === 0) {
+    return ''; // Don't return null, it breaks AG's logic to determine if component is rendered.
+  }
+  return (
+    <div
+      className="custom-tooltip"
+      style={{
+        padding: '3px 8px',
+        color: '#fff',
+        backgroundColor: '#000',
+        borderRadius: '4px',
+      }}
+    >
+      Linked analyses:
+      <ul style={{ paddingLeft: '15px' }}>
+        {analyses.map((analysis) => (
+          <li key={analysis.id}>{analysis.name}</li>
+        ))}
+      </ul>
+
+    </div>
+  );
+}
+
+AnalysisOverlay.propTypes = {
+  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
+};
+
 function AnalysisVariationLink({ reaction, analysisID }) {
   const { variations } = cloneDeep(reaction);
   const linkedVariations = variations.filter((row) => row.analyses.includes(analysisID)) ?? [];
@@ -141,6 +177,8 @@ export {
   AnalysesCellRenderer,
   AnalysesCellEditor,
   AnalysisVariationLink,
+  AnalysisOverlay,
+  getAnalysesOverlay,
   updateAnalyses,
   getReactionAnalyses
 };
