@@ -19,15 +19,19 @@ module Usecases
             CollectionsDeviceDescription.create(device_description: device_description, collection: user_collection)
           elsif sync_collection_user
             is_shared_collection = true
-            CollectionsDeviceDescription.create(device_description: device_description, collection: sync_collection_user.collection)
+            CollectionsDeviceDescription.create(device_description: device_description,
+                                                collection: sync_collection_user.collection)
 
-            CollectionsDeviceDescription.create(device_description: device_description, collection: all_collection_of_sharer)
+            CollectionsDeviceDescription.create(device_description: device_description,
+                                                collection: all_collection_of_sharer)
           end
 
-          CollectionsDeviceDescription.create(
-            device_description: device_description,
-            collection: all_collection_of_current_user
-          ) unless is_shared_collection
+          unless is_shared_collection
+            CollectionsDeviceDescription.create(
+              device_description: device_description,
+              collection: all_collection_of_current_user,
+            )
+          end
 
           device_description
         end
