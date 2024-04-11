@@ -51,6 +51,8 @@ const OntologySortableList = ({ store, element }) => {
 
     const deletedClass = item.data.is_deleted ? 'deleted-ontology' : '';
     const hasNoSegmentsClass = !item.segments ? 'without-segments' : '';
+    let paths = [];
+    item.paths.map((p) => paths.push(p.label));
 
     return (
       <li
@@ -60,7 +62,7 @@ const OntologySortableList = ({ store, element }) => {
         style={{ opacity: isDragging ? 0.2 : 1, border: isOver && canDrop ? '2px dashed #337ab7' : '1px solid #bbb' }}
       >
         <h4 class="list-group-item-heading">{item.data.label}</h4>
-        <p class="list-group-item-text">{item.paths.join(' / ')}</p>
+        <p class="list-group-item-text">{paths.join(' / ')}</p>
       </li>
     );
   };

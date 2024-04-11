@@ -25,6 +25,24 @@ export default class DeviceDescriptionFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static fetchSegmentKlassIdsByNewOntology(deviceDescriptionId, params) {
+    return fetch(
+      `/api/v1/device_descriptions/byontology/${deviceDescriptionId}`,
+      {
+        ...this._httpOptions('PUT'),
+        body: JSON.stringify(params)
+      }
+    ).then(response => response.json())
+      .then((json) => {
+        if (json.error) {
+          return [];
+        } else {
+          return json;
+        }
+      })
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static createDeviceDescription(deviceDescription) {
     const containerFiles = AttachmentFetcher.getFileListfrom(deviceDescription.container);
     const newFiles = (deviceDescription.attachments || []).filter((a) => a.is_new && !a.is_deleted);

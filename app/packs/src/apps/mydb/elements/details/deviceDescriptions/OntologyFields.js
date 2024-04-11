@@ -1,14 +1,18 @@
-import React, { useCallback } from 'react';
-import { FormGroup, Modal, Button, ListGroup, ListGroupItem, Panel } from 'react-bootstrap';
+import React from 'react';
+import { FormGroup, Modal, Button, ListGroup, ListGroupItem, Panel, ButtonToolbar } from 'react-bootstrap';
 import OntologySelect from './OntologySelect';
 import { cloneDeep } from 'lodash';
 import GenericSGDetails from 'src/components/generic/GenericSGDetails';
 import { GenInterface, GenButtonReload } from 'chem-generic-ui';
+import { FlowViewerBtn } from 'src/apps/generic/Utils';
+import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
+import OntologySortableList from './OntologySortableList';
+
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DeviceDescription from 'src/models/DeviceDescription';
+import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import Segment from 'src/models/Segment';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import OntologySortableList from './OntologySortableList';
 
 const onNaviClick = (type, id) => {
   console.log('navi', type, id);
@@ -22,46 +26,85 @@ const onNaviClick = (type, id) => {
 };
 
 const addOntology = (selectedData, paths, store, element) => {
-  const newOntology = { data: selectedData, paths: paths };
+  let newOntology = { data: selectedData, paths: paths };
   const ontologies = element['ontologies'] || [];
+  let params = {
+    id: element['id'],
+    ontology: newOntology,
+  }
+  const oid = ontologies.findIndex((o) => o.data.short_form === newOntology.data.short_form);
+  if (oid >= 0) {
+    store.toggleOntologyModal();
+    return;
+  }
 
-  const value = ontologies.concat(newOntology);
-  store.changeDeviceDescription('ontologies', value);
-  store.toggleOntologyModal();
+  DeviceDescriptionFetcher.fetchSegmentKlassIdsByNewOntology(element['id'], params)
+    .then((result) => {
+      if (result.length >= 1) {
+        newOntology.segments = result;
+      }
+      const value = ontologies.concat(newOntology);
+      store.changeDeviceDescription('ontologies', value);
+      store.toggleOntologyModal();
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
 }
 
 const deleteOntology = (store, element, index) => {
   if (!element['ontologies']) { return }
 
   let ontologies = [];
+  let segmentKlassIds = [];
+
+  // delete directly
+  // element['ontologies'].splice(index, (index >= 0 ? 1 : 0));
+
   element['ontologies'].map((currentOntology) => {
     if (currentOntology.data.short_form === element['ontologies'][index].data.short_form) {
       const deletedOntology = { ...currentOntology };
       deletedOntology.data.is_deleted = true;
       ontologies.push(deletedOntology);
+      segmentKlassIds = currentOntology.segments ? currentOntology.segments : [];
     } else {
       ontologies.push(currentOntology);
     }
   });
 
-  // delete directly
-  // element['ontologies'].splice(index, (index >= 0 ? 1 : 0));
+  deleteOrUndoDeleteSegments(store, element, segmentKlassIds, true);
   store.changeDeviceDescription('ontologies', ontologies);
 }
 
 const undoDelete = (store, element, index) => {
   let ontologies = [];
+  let segmentKlassIds = [];
   element['ontologies'].map((currentOntology) => {
     if (currentOntology.data.short_form === element['ontologies'][index].data.short_form) {
       const deletedOntology = { ...currentOntology };
       deletedOntology.data.is_deleted = false;
       ontologies.push(deletedOntology);
+      segmentKlassIds = currentOntology.segments ? currentOntology.segments : [];
     } else {
       ontologies.push(currentOntology);
     }
   });
 
+  deleteOrUndoDeleteSegments(store, element, segmentKlassIds, false);
   store.changeDeviceDescription('ontologies', ontologies);
+}
+
+const deleteOrUndoDeleteSegments = (store, element, segmentKlassIds, isDeleted) => {
+  if (segmentKlassIds.length === 0) { return }
+
+  let segments = [...element['segments']];
+
+  segmentKlassIds.map((segment) => {
+    const sid = segments.findIndex((s) => s.segment_klass_id === segment.segment_klass_id);
+    if (sid >= 0) {
+      segments[sid].is_deleted = isDeleted;
+    }
+  });
+  store.changeDeviceDescription('segments', segments);
 }
 
 const changeOntologyMode = (store) => {
@@ -149,10 +192,33 @@ const undoDeleteButton = (store, element, index) => {
   );
 }
 
-const ontologySegmentList = (store, element, handleSegmentsChange) => {
+const setSelectedSegmentId = (segment, store) => {
+  store.setSelectedSegmentId(segment.id);
+}
+
+const segmentVersionToolbar = (store, segment, segmentKlass, handleSegmentsChange, handleRetrieveRevision) => {
+  return (
+    <ButtonToolbar style={{ margin: '5px 0px' }}>
+      <FlowViewerBtn generic={segment} />
+      <div onClick={() => setSelectedSegmentId(segment, store)}>
+        <RevisionViewerBtn
+          fnRetrieve={handleRetrieveRevision}
+          generic={segment}
+        />
+      </div>
+      <GenButtonReload
+        klass={segmentKlass}
+        generic={segment}
+        fnReload={handleSegmentsChange}
+      />
+    </ButtonToolbar>
+  );
+}
+
+const ontologySegmentList = (store, element, handleSegmentsChange, handleRetrieveRevision) => {
   let list = [];
   const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-  let segmentKlass = {}
+  let existingSegment = {}
 
   if (element['ontologies']) {
     element['ontologies']
@@ -162,25 +228,31 @@ const ontologySegmentList = (store, element, handleSegmentsChange) => {
 
         let rows = [];
         const className = i == 0 ? 'first' : '';
+        let deletedClass = '';
+        let collapsedClass = '';
 
         ontology['segments'].forEach((segment) => {
-          //segmentKlass = segmentKlasses.find(
-          //  (s) => s.element_klass && s.element_klass.name === element.type && segment['segment_klass_id'] == s.id
-          //);
-          segmentKlass = element['segments'].find((s) => {
+          const segmentKlass = segmentKlasses.find(
+            (s) => s.element_klass && s.element_klass.name === element.type && segment['segment_klass_id'] == s.id
+          );
+          existingSegment = element['segments'].find((s) => {
             return segment['segment_klass_id'] === s.segment_klass_id;
           });
-          //console.log(segmentKlass, element['segments'], segment['segment_klass_id']);
 
           let segmentElement = {};
-          if (segmentKlass) {
-            segmentElement = segmentKlass;
+          if (existingSegment) {
+            segmentElement = existingSegment;
           } else {
             segmentElement = Segment.buildEmpty(cloneDeep(segmentKlass));
           }
-          // revision und reload buttons (GenericSGDetail)
-          // <div className="grouped-fields-row ontology-segments">
+          if (segmentElement.is_deleted) {
+            deletedClass = 'deleted';
+            collapsedClass = 'collapse-deleted';
+          }
 
+          rows.push(
+            segmentVersionToolbar(store, segmentElement, segmentKlass, handleSegmentsChange, handleRetrieveRevision)
+          );
           rows.push(
             <GenInterface
               generic={segmentElement}
@@ -195,11 +267,11 @@ const ontologySegmentList = (store, element, handleSegmentsChange) => {
           );
         });
         list.push(
-          <Panel className={`ontology-segments ${className}`} defaultExpanded>
+          <Panel className={`ontology-segments ${className} ${deletedClass}`} defaultExpanded>
             <Panel.Heading>
               <Panel.Title toggle>{`Ontology: ${ontology['data']['label']}`}</Panel.Title>
             </Panel.Heading>
-            <Panel.Collapse>
+            <Panel.Collapse className={collapsedClass}>
               <Panel.Body>{rows}</Panel.Body>
             </Panel.Collapse>
           </Panel>
@@ -209,63 +281,6 @@ const ontologySegmentList = (store, element, handleSegmentsChange) => {
 
   return list;
 }
-
-//const ontologySegmentList = (store, element, handleSegmentsChange) => {
-//  let list = [];
-//  const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-//  let segmentKlass = {}
-//
-//  if (element['ontologies']) {
-//    element['ontologies']
-//      .sort((a, b) => a.index - b.index)
-//      .forEach((ontology, i) => {
-//        if (!ontology['segments']) { return }
-//
-//        let rows = [];
-//        const className = i == 0 ? 'first' : '';
-//
-//        ontology['segments'].forEach((segment) => {
-//          segmentKlass = segmentKlasses.find(
-//            (s) => s.element_klass && s.element_klass.name === element.type && segment['segment_klass_id'] == s.id
-//          );
-//
-//          let segmentElement = {};
-//          if (Object.keys(segment['segment']).length > 0) {
-//            segmentElement = segment['segment'];
-//          } else {
-//            segmentElement = Segment.buildEmpty(cloneDeep(segmentKlass));
-//          }
-//          // revision und reload buttons (GenericSGDetail)
-//          // <div className="grouped-fields-row ontology-segments">
-//
-//          rows.push(
-//            <GenInterface
-//              generic={segmentElement}
-//              fnChange={handleSegmentsChange}
-//              extLayers={[]}
-//              genId={0}
-//              isPreview={false}
-//              isSearch={false}
-//              isActiveWF={false}
-//              fnNavi={onNaviClick}
-//            />
-//          );
-//        });
-//        list.push(
-//          <Panel className={`ontology-segments ${className}`} defaultExpanded>
-//            <Panel.Heading>
-//              <Panel.Title toggle>{`Ontology: ${ontology['data']['label']}`}</Panel.Title>
-//            </Panel.Heading>
-//            <Panel.Collapse>
-//              <Panel.Body>{rows}</Panel.Body>
-//            </Panel.Collapse>
-//          </Panel>
-//        );
-//      });
-//  }
-//
-//  return list;
-//}
 
 const ontologySortableListItem = (store, element) => {
   return (
@@ -284,13 +299,16 @@ const ontologyListItem = (store, element) => {
     .map((ontology, i) => {
       const deletedClass = ontology.data.is_deleted ? 'deleted-ontology' : '';
       const hasNoSegmentsClass = !ontology.segments ? 'without-segments' : '';
+      let paths = [];
+      ontology.paths.map((p) => paths.push(p.label));
+
       rows.push(
         <ListGroupItem
           header={ontology.data.label}
           key={`${store.key_prefix}-${ontology.data.label}-${i}`}
           className={`list-group-with-button ${deletedClass} ${hasNoSegmentsClass}`}
         >
-          {ontology.paths.join(' / ')}
+          {paths.join(' / ')}
           {undoDeleteButton(store, element, i)}
           {deleteOntologyButton(store, element, i)}
         </ListGroupItem>

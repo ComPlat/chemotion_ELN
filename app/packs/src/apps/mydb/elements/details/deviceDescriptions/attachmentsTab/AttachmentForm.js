@@ -34,13 +34,12 @@ const AttachmentForm = ({ readonly }) => {
   let deviceDescription = deviceDescriptionsStore.device_description;
 
   useEffect(() => {
-    console.log('init');
     editorInitial();
     deviceDescriptionsStore.setFilteredAttachments(deviceDescription.attachments);
   }, []);
 
   useEffect(() => {
-    console.log('did update', deviceDescription.updated, deviceDescription);
+    // console.log('did update', deviceDescription.updated, deviceDescription);
     if (deviceDescription.updated) {
       deviceDescriptionsStore.setFilteredAttachments(deviceDescription.attachments);
     }

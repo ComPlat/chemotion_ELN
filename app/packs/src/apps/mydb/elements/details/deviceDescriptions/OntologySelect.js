@@ -58,13 +58,21 @@ const constructPaths = (terms, data) => {
   let stopIteration = false;
   if (!terms) { return paths; }
 
-  paths.push(data.label);
+  paths.push({
+    label: data.label,
+    iri: data.iri,
+    short_form: data.short_form,
+  });
 
   terms.map((path) => {
     if (path.label === 'planned process' || stopIteration) {
       stopIteration = true;
     } else {
-      paths.push(path.label);
+      paths.push({
+        label: path.label,
+        iri: path.iri,
+        short_form: path.short_form,
+      });
     }
   });
   return paths.reverse();

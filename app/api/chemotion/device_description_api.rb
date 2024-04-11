@@ -64,6 +64,7 @@ module Chemotion
           optional :segments, type: Array
           optional :index, type: Integer
         end
+        optional :segments, type: Array
       end
 
       def device_description_with_entity(device_description)
@@ -152,9 +153,28 @@ module Chemotion
         { errors: device_description.errors.messages }
       end
 
-      # Return serialized device description by id
+      # get segment klass ids by new ontology
+      namespace :byontology do
+        params do
+          requires :id, type: Integer
+          requires :ontology, type: Hash do
+            optional :data, type: Hash
+            optional :paths, type: Array
+          end
+        end
+        put ':id' do
+          device_description = DeviceDescription.find(params[:id])
+          attributes = declared(params, include_missing: false)
+          segment_klass_ids =
+            Usecases::DeviceDescriptions::Update.new(attributes, device_description, current_user)
+                                                .segment_klass_ids_by_new_ontology
+          segment_klass_ids
+        end
+      end
+
+      # return serialized device description by id
       params do
-        requires :id, type: Integer, desc: 'Device description id'
+        requires :id, type: Integer
       end
       route_param :id do
         get do

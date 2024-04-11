@@ -42,6 +42,7 @@ export const DeviceDescriptionsStore = types
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
     show_ontology_modal: types.optional(types.boolean, false),
     ontology_mode: types.optional(types.string, 'edit'),
+    selected_segment_id: types.optional(types.number, 0),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -182,6 +183,9 @@ export const DeviceDescriptionsStore = types
     },
     changeOntologyMode(mode) {
       self.ontology_mode = mode;
+    },
+    setSelectedSegmentId(segment_id) {
+      self.selected_segment_id = segment_id;
     },
   }))
   .views(self => ({
