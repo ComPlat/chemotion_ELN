@@ -261,12 +261,24 @@ li.list-group-item.list-group-sortable:before {
   right: 7px;
 }
 
+.ontology-segments.deleted.panel-default > .panel-heading {
+  text-decoration: line-through;
+}
+
 .ontology-segments.panel-default > .panel-heading .panel-title a:after {
   content: "\f078";
 }
 
 .ontology-segments.panel-default > .panel-heading .panel-title a.collapsed:after {
   content: "\f054";
+}
+
+.ontology-segments.deleted.panel-default > .panel-heading .panel-title a:after {
+  content: "\f054";
+}
+
+.ontology-segments.panel-default > div.collapse-deleted.panel-collapse {
+  display: none;
 }
 
 .ontology-segments .panel_generic_properties {
@@ -277,7 +289,14 @@ li.list-group-item.list-group-sortable:before {
   padding: 5px 5px 0 5px;
 }
 
-.ontology-segments div.panel_generic_properties>.panel-heading {
+.ontology-segments div.panel_generic_properties > .panel-heading {
   background-color: #fff !important;
+  color: #333;
+  border-color: #ddd;
   min-height: 34px;
+  padding: 5px 0 !important;
+}
+
+.ontology-segments div.panel_generic_properties > .panel-heading + .panel-collapse > .panel-body {
+  border-top-color: #ddd;
 }
