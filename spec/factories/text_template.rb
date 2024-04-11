@@ -15,14 +15,14 @@ FactoryBot.define do
   end
 
   with_options(parent: :text_template) do
-    factory :element_text_template, class: ElementTextTemplate
-    factory :predefined_text_template, class: PredefinedTextTemplate
-    factory :reaction_description_text_template, class: ReactionDescriptionTextTemplate
-    factory :reaction_text_template, class: ReactionTextTemplate
-    factory :research_plan_text_template, class: ResearchPlanTextTemplate
-    factory :sample_text_template, class: SampleTextTemplate
-    factory :screen_text_template, class: ScreenTextTemplate
-    factory :wellplate_text_template, class: WellplateTextTemplate
-    factory :device_description_text_template, class: DeviceDescriptionTextTemplate
+    factory :element_text_template, class: 'ElementTextTemplate'
+    factory :predefined_text_template, class: 'PredefinedTextTemplate'
+    factory :reaction_description_text_template, class: 'ReactionDescriptionTextTemplate'
+    factory :reaction_text_template, class: 'ReactionTextTemplate'
+    factory :research_plan_text_template, class: 'ResearchPlanTextTemplate'
+    factory :sample_text_template, class: 'SampleTextTemplate'
+    factory :screen_text_template, class: 'ScreenTextTemplate'
+    factory :wellplate_text_template, class: 'WellplateTextTemplate'
+    factory :device_description_text_template, class: 'DeviceDescriptionTextTemplate'
   end
 end

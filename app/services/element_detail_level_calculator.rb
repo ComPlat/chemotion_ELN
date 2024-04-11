@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/CyclomaticComplexity
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
@@ -23,7 +23,7 @@ class ElementDetailLevelCalculator
 
   private
 
-  def calculate_detail_levels # rubocop:disable Metrics/AbcSize
+  def calculate_detail_levels # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     detail_levels = Hash.new(0)
     all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
 
@@ -75,4 +75,4 @@ class ElementDetailLevelCalculator
                                        .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
   end
 end
-# rubocop: enable Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/CyclomaticComplexity Metrics/PerceivedComplexity
