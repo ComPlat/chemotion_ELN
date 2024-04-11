@@ -51,12 +51,6 @@ export default class DeviceBox extends React.Component {
     if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
       this.setState({ visible: deviceBoxVisible });
     }
-
-    if (deviceBoxVisible) {
-      if (Array.isArray(device_box.children) && !device_box.children.length) {
-        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
-      }
-    }
   }
 
   componentWillUnmount() {
