@@ -95,6 +95,7 @@ class InboxActions {
           dispatch({
             inbox: result.inbox,
             currentContainerPage,
+            containerId,
           });
         }).catch((errorMessage) => {
           console.log(errorMessage);

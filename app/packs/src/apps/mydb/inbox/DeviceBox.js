@@ -60,8 +60,6 @@ export default class DeviceBox extends React.Component {
   handleDeviceBoxClick(deviceBox) {
     const { visible, currentDeviceBoxPage } = this.state;
 
-    InboxActions.setActiveDeviceBoxId(deviceBox.id);
-
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
         LoadingActions.start();
