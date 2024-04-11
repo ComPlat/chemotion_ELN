@@ -413,6 +413,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       cellEditorPopup: true,
       cellEditorPopupPosition: 'under',
       cellDataType: 'object',
+      sortable: false,
     },
     {
       headerName: 'Properties',
