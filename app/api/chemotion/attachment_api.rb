@@ -82,6 +82,7 @@ module Chemotion
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
+        # rubocop:disable Performance/StringInclude
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -126,6 +127,7 @@ module Chemotion
           end
           error!('401 Unauthorized', 401) unless can_dwnld
         end
+        # rubocop:enable Performance/StringInclude
       end
 
       desc 'Bulk Delete Attachments'
@@ -370,11 +372,13 @@ module Chemotion
 
       desc 'Download the zip attachment file by device_description_id'
       get 'device_description_analyses/:device_description_id' do
+        # rubocop:disable Performance/Sum
         tts = @device_description.analyses&.map do |a|
                 a.children&.map do |d|
                   d.attachments&.map(&:filesize)
                 end
               end&.flatten&.reduce(:+) || 0
+        # rubocop:enable Performance/Sum
         if tts > 300_000_000
           DownloadAnalysesJob.perform_later(@device_description.id, current_user.id, false, 'device_description')
           nil

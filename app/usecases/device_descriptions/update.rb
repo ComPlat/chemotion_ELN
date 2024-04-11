@@ -72,7 +72,7 @@ module Usecases
           next if segment_klasses.blank?
 
           segment_ids = []
-          segment_klasses.each do |segment_klass|
+          segment_klasses.map do |segment_klass|
             segment_ids << { segment_klass_id: segment_klass.segment_klass_id }
           end
           attributes[:ontologies][i][:segments] = segment_ids
