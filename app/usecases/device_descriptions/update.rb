@@ -17,8 +17,9 @@ module Usecases
           attributes = remove_ontologies_marked_as_deleted
           attributes = add_matching_segment_klasses(attributes)
 
-          device_description.update!(attributes.except(:segments))
           save_segments
+          device_description.reload
+          device_description.update!(attributes.except(:segments))
 
           device_description
         end
@@ -122,11 +123,23 @@ module Usecases
         segments
       end
 
+      def segments_to_save
+        segments = []
+        @segments.each_with_index do |segment, i|
+          dd_index = device_description.segments.index { |s| s[:id] == segment[:id] }
+          dd_segment = device_description.segments[dd_index ||= i]
+          layer = dd_segment.present? ? dd_segment.properties['layers'] : []
+          next if dd_index.present? && layer == segment['properties']['layers']
+
+          segments << segment
+        end
+        segments
+      end
+
       def save_segments
         return if @segments.blank?
 
-        # wenn es keine Änderungen gibt, werden segmente trotzdem nochmal geupdate
-        device_description.save_segments(segments: @segments, current_user_id: current_user.id)
+        device_description.save_segments(segments: segments_to_save, current_user_id: current_user.id)
       end
     end
   end
