@@ -33,6 +33,10 @@ module Usecases
         scope = basic_scope
         elements_by_scope(scope)
         @shared_methods.serialization_by_elements_and_page(@elements, '')
+
+        results = @shared_methods.serialization_by_elements_and_page(@elements, '')
+        results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: params["per_page"], pages: 0, totalElements: 0, error: '' }
+        results
       end
 
       private
