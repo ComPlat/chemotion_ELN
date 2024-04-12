@@ -27,8 +27,6 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
-import DeviceDescription from '../../../../../models/DeviceDescription';
-import { DeviceDescriptionsStore } from '../../../../../stores/mobx/DeviceDescriptionsStore';
 
 const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
@@ -68,10 +66,15 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     );
   }
 
-  visibleTabs.forEach((key) => {
+  const disabled = (index) => {
+    return deviceDescription.id.toString().length < 30 || index === 0 ? false : true;
+  }
+
+  visibleTabs.forEach((key, i) => {
     let title = key.charAt(0).toUpperCase() + key.slice(1);
+
     tabContents.push(
-      <Tab eventKey={key} title={title} key={`${key}_${deviceDescription.id}`}>
+      <Tab eventKey={key} title={title} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
         {React.createElement(tabContentComponents[key], {
           key: `${deviceDescription.id}-${key}`,
           readonly: isReadOnly()
