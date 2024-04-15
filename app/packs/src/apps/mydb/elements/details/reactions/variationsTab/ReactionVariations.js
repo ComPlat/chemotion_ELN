@@ -313,29 +313,6 @@ function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue })
   return { ...cellData, value, aux: { ...cellData.aux, equivalent } };
 }
 
-function reactionMaterialsChanged(reactionVariations, reaction) {
-  const reactionMaterialIDs = Object.entries(materialTypes).reduce((
-    materialIDsByType,
-    [materialType, { reactionAttributeName }]
-  ) => {
-    materialIDsByType[materialType] = reaction[reactionAttributeName].map(
-      (material) => material.id
-    ).map(String).sort(); // Sort to ensure consistency and unambiguous comparison.
-    return materialIDsByType;
-  }, {});
-
-  const reactionVariationsMaterialIDs = Object.keys(materialTypes).reduce((
-    materialsByType,
-    materialType
-  ) => {
-    // Sort to ensure consistency and unambiguous comparison.
-    materialsByType[materialType] = Object.keys(reactionVariations[0][materialType]).sort();
-    return materialsByType;
-  }, {});
-
-  return !isEqual(reactionVariationsMaterialIDs, reactionMaterialIDs);
-}
-
 function getMaterialColumnGroupChild(material, materialType) {
   let entries = [null];
   if (materialType === 'solvents') {
@@ -392,6 +369,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const [reactionVariations, setReactionVariations] = useState(reaction.variations);
   const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
+  const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [columnDefinitions, setColumnDefinitions] = useState([
     {
       field: null,
@@ -505,20 +483,21 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     onReactionChange(reaction);
   }, [reactionVariations]);
 
-  if ((reactionVariations.length > 0) && reactionMaterialsChanged(reactionVariations, reaction)) {
+  if (!isEqual(reactionMaterials, getReactionMaterials(reaction))) {
     /*
     Keep set of materials up-to-date.
     Materials could have been added or removed in the "Scheme" tab.
     These changes need to be reflected in the variations.
     */
-    const currentMaterials = getReactionMaterials(reaction);
+    const updatedReactionMaterials = getReactionMaterials(reaction);
 
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials);
-    setColumnDefinitions(updatedColumnDefinitions);
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, updatedReactionMaterials);
+    let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
+    updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, updatedReactionMaterials);
 
-    let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, currentMaterials);
-    updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, currentMaterials);
     setReactionVariations(updatedReactionVariations);
+    setColumnDefinitions(updatedColumnDefinitions);
+    setReactionMaterials(updatedReactionMaterials);
   }
 
   const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
