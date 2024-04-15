@@ -10,7 +10,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const TextSearch = () => {
-  const elnElements = ['cell_line','samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
+  const elnElements = ['cell_line', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
   const genericElements = UserStore.getState().genericEls || [];
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
@@ -54,16 +54,18 @@ const TextSearch = () => {
   const SelectSearchTable = () => {
     const layout = UserStore.getState().profile.data.layout;
 
-    const elnElements = ['cell_line','sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const elnElements = ['cell_line', 'sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
 
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0
     })
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
+        const genericElement = (genericElements && genericElements.find(el => el.name === value[0])) || {};
+        if (genericElement.id === undefined && !elnElements.includes(value[0])) { return }
+
         let iconClass = `icon-${value[0]}`;
         if (!elnElements.includes(value[0])) {
-          const genericElement = (genericElements && genericElements.find(el => el.name === value[0])) || {};
           iconClass = `${genericElement.icon_name} icon_generic_nav`;
         }
         let tooltip = (

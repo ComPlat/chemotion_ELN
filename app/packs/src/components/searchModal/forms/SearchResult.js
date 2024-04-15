@@ -28,7 +28,7 @@ const SearchResult = ({ handleClear }) => {
         .map((value, i) => {
           let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
           let totalElements = tab === undefined ? 0 : tab.results.total_elements;
-          if (value[1] > 0) {
+          if (value[1] > 0 && tab !== undefined) {
             visible.push({ key: value[0], index: i, totalElements: totalElements });
           }
         });
@@ -114,7 +114,7 @@ const SearchResult = ({ handleClear }) => {
   const searchResultNavItem = (list, tabResult) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const elnElements = ['cell_line', 'sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconClass = `icon-${list.key}`;
     let tooltipText = list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
     

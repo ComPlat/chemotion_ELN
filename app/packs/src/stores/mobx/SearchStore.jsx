@@ -254,7 +254,9 @@ export const SearchStore = types
       self.error_messages = error_messages;
     },
     changeTabCurrentPage(key, index, id) {
-      self.tab_current_page[id] = { [key]: index };
+      const tabs = [...self.tab_current_page];
+      tabs[id] = { [key]: index };
+      self.tab_current_page = tabs;
     },
     clearTabCurrentPage() {
       self.tab_current_page.splice(0, self.tab_current_page.length);
