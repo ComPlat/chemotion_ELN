@@ -18,17 +18,19 @@ function getVariationsRowName(reactionLabel, variationsRowId) {
 }
 
 function getReactionMaterials(reaction) {
+  const reactionCopy = cloneDeep(reaction);
   return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
-    materialsByType[materialType] = reaction[reactionAttributeName];
+    materialsByType[materialType] = reactionCopy[reactionAttributeName];
     return materialsByType;
   }, {});
 }
 
 function getMaterialHeaderNames(material) {
-  const names = [`ID: ${material.id.toString()}`];
+  const materialCopy = cloneDeep(material);
+  const names = [`ID: ${materialCopy.id.toString()}`];
   ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
-    if (material[name]) {
-      names.push(material[name]);
+    if (materialCopy[name]) {
+      names.push(materialCopy[name]);
     }
   });
   return names;
@@ -80,7 +82,8 @@ function getGramFromMol(mol, material) {
 }
 
 function getReferenceMaterial(variationsRow) {
-  const potentialReferenceMaterials = { ...variationsRow.startingMaterials, ...variationsRow.reactants };
+  const variationsRowCopy = cloneDeep(variationsRow);
+  const potentialReferenceMaterials = { ...variationsRowCopy.startingMaterials, ...variationsRowCopy.reactants };
   return Object.values(potentialReferenceMaterials).find((material) => material.aux?.isReference || false);
 }
 
@@ -155,17 +158,18 @@ function addMissingMaterialsToVariations(variations, currentMaterials) {
 }
 
 function getMaterialData(material, materialType) {
+  const materialCopy = cloneDeep(material);
   const unit = materialType === 'solvents' ? volumeUnits[0] : massUnits[0];
-  let value = materialType === 'solvents' ? (material.amount_l ?? null) : (material.amount_g ?? null);
+  let value = materialType === 'solvents' ? (materialCopy.amount_l ?? null) : (materialCopy.amount_g ?? null);
   value = materialType === 'solvents' ? convertUnit(value, 'l', unit) : convertUnit(value, 'g', unit);
   const aux = {
-    coefficient: material.coefficient ?? null,
-    isReference: material.reference ?? false,
-    loading: (Array.isArray(material.residues) && material.residues.length) ? material.residues[0].custom_info?.loading : null,
-    purity: material.purity ?? null,
-    molarity: material.molarity_value ?? null,
-    molecularWeight: material.molecule_molecular_weight ?? null,
-    sumFormula: material.molecule_formula ?? null,
+    coefficient: materialCopy.coefficient ?? null,
+    isReference: materialCopy.reference ?? false,
+    loading: (Array.isArray(materialCopy.residues) && materialCopy.residues.length) ? materialCopy.residues[0].custom_info?.loading : null,
+    purity: materialCopy.purity ?? null,
+    molarity: materialCopy.molarity_value ?? null,
+    molecularWeight: materialCopy.molecule_molecular_weight ?? null,
+    sumFormula: materialCopy.molecule_formula ?? null,
     yield: null,
     equivalent: null
   };
@@ -173,8 +177,9 @@ function getMaterialData(material, materialType) {
 }
 
 function createVariationsRow(reaction, id) {
-  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
-  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
+  const reactionCopy = cloneDeep(reaction);
+  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
+  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
   let row = {
     id,
     properties: {
@@ -188,11 +193,11 @@ function createVariationsRow(reaction, id) {
     analyses: [],
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
-    row[materialType] = reaction[reactionAttributeName].reduce((a, v) => (
+    row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
       { ...a, [v.id]: getMaterialData(v, materialType) }), {});
   });
 
-  row = updateYields(row, reaction.has_polymers);
+  row = updateYields(row, reactionCopy.has_polymers);
   row = updateEquivalents(row);
 
   return row;

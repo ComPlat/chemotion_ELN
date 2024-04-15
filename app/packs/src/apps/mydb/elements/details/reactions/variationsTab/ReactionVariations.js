@@ -314,6 +314,7 @@ function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue })
 }
 
 function getMaterialColumnGroupChild(material, materialType) {
+  const materialCopy = cloneDeep(material);
   let entries = [null];
   if (materialType === 'solvents') {
     entries = ['volume'];
@@ -323,19 +324,19 @@ function getMaterialColumnGroupChild(material, materialType) {
   }
   if (['startingMaterials', 'reactants'].includes(materialType)) {
     entries = ['mass'];
-    if (!material.reference ?? false) {
+    if (!materialCopy.reference ?? false) {
       entries.push('equivalent');
     }
   }
   return {
-    field: `${materialType}.${material.id}`, // Must be unique.
-    tooltipField: `${materialType}.${material.id}`,
+    field: `${materialType}.${materialCopy.id}`, // Must be unique.
+    tooltipField: `${materialType}.${materialCopy.id}`,
     tooltipComponent: MaterialOverlay,
     _variationsUnit: materialTypes[materialType].units[0],
     headerComponent: MenuHeader,
     headerComponentParams: {
       units: materialTypes[materialType].units,
-      names: getMaterialHeaderNames(material),
+      names: getMaterialHeaderNames(materialCopy),
       entries
     },
   };

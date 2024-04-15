@@ -4,7 +4,6 @@ import {
   addMissingMaterialsToVariations,
   updateYields,
   updateEquivalents,
-  getReferenceMaterial,
   getReactionMaterials,
   getMaterialHeaderNames,
   getSequentialId,
@@ -98,8 +97,11 @@ describe('ReactionVariationsUtils', () => {
     const reaction = await setUpReaction();
     const reactantID = reaction.reactants[0].id;
     expect(reaction.variations[0].reactants[reactantID].aux.equivalent).toBe(1);
-    const referenceMaterial = getReferenceMaterial(reaction.variations[0]);
-    referenceMaterial.value = 2000;
+    Object.values(reaction.variations[0].startingMaterials).forEach((material) => {
+      if (material.aux.isReference) {
+        material.value = 2000;
+      }
+    });
     const updatedVariationsRow = updateEquivalents(reaction.variations[0]);
     expect(updatedVariationsRow.reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
   });
