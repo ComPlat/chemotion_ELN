@@ -1,232 +1,194 @@
 # frozen_string_literal: true
 
+TPA_EXPIRATION = 48.hours
+
 module Chemotion
   # Publish-Subscription MessageAPI
   class ThirdPartyAppAPI < Grape::API
     helpers do
-      def extract_values(payload)
-        att_id = payload[0]['attID']&.to_i
-        user_id = payload[0]['userID']&.to_i
-        name_third_party_app = payload[0]['nameThirdPartyApp']&.to_s
-        [att_id, user_id, name_third_party_app]
+      # desc: expiry time for the token and the cached upload/download counters
+      def expiry_time
+        @expiry_time ||= TPA_EXPIRATION.from_now
       end
 
-      def decode_token(token)
-        payload = JWT.decode(token, Rails.application.secrets.secret_key_base) unless token.nil?
-        error!('401 Unauthorized', 401) if payload&.length&.zero?
-        extract_values(payload)
+      # desc: instantiate local file cache for TPA
+      def cache
+        @cache ||= ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: TPA_EXPIRATION)
       end
 
-      def verify_token(token)
-        payload = decode_token(token)
-        @attachment = Attachment.find_by(id: payload[0])
-        @user = User.find_by(id: payload[1])
-        error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+      # desc: fetch the token and download/upload counters from the cache
+      def cached_token
+        @cached_token ||= cache.read(cache_key)
       end
 
-      def perform_download(token_cached, attachment)
-        if token_cached.counter <= 3
-          attachment.read_file
-        else
-          error!('Too many requests with this token', 403)
-        end
+      # desc: define the cache key based on the attachment/user/app ids
+      def cache_key
+        @cache_key ||= "#{@attachment&.id}/#{@user&.id}/#{@app&.id}"
       end
 
-      def update_cache(cache_key, token_cached)
-        error!('Invalid token', 403) if token_cached.nil?
-        token_cached.counter = token_cached.counter + 1
-        Rails.cache.write(cache_key, token_cached)
+      # desc: prepare the token payload from the params
+      def prepare_payload
+        @payload = {
+          'appID' => params[:appID],
+          'userID' => current_user.id,
+          'attID' => params[:attID],
+        }
       end
 
-      def download_third_party_app(token)
+      # desc: find records from the payload
+      def parse_payload(payload = @payload)
+        # TODO: implement attachment authorization
+        @attachment = Attachment.find(payload['attID']&.to_i)
+        @user = User.find(payload['userID']&.to_i)
+        @app = ThirdPartyApp.find(payload['appID']&.to_i)
+      rescue ActiveRecord::RecordNotFound
+        error!('Record not found', 404)
+      end
+
+      # desc: decrement the counters / check if token permission is expired
+      def update_cache(key)
+        return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
+
+        # TODO: expire token when both counters reach 0
+        # IDEA: split counters into two caches?
+        return error!("Token #{key} permission expired", 403) if cached_token[key].negative?
+
+        cached_token[key] -= 1
+        cache.write(cache_key, cached_token)
+      end
+
+      # desc: return file for download to third party app
+      def download_third_party_app
+        update_cache(:download)
         content_type 'application/octet-stream'
-        verify_token(token)
-        payload = decode_token(token)
-        @attachment = Attachment.find_by(id: payload[0])
-        @user = User.find_by(id: payload[1])
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
         env['api.format'] = :binary
-        cache_key = "token/#{payload[0]}/#{payload[1]}/#{payload[2]}"
-        token_cached = Rails.cache.read(cache_key)
-        update_cache(cache_key, token_cached)
-        perform_download(token_cached, @attachment)
+        @attachment.read_file
       end
 
-      def upload_third_party_app(token, file_name, file, file_type)
-        payload = decode_token(token)
-        cache_key = "token/#{payload[0]}/#{payload[1]}/#{payload[2]}"
-        token_cached = Rails.cache.read(cache_key)
-        update_cache(cache_key, token_cached)
-        if token_cached.counter > 30
-          error!('To many request with this token', 403)
-        else
-          attachment = Attachment.find_by(id: payload[0])
-          new_attachment = Attachment.new(attachable: attachment.attachable,
-                                          created_by: attachment.created_by,
-                                          created_for: attachment.created_for,
-                                          content_type: file_type)
-          File.open(file[:tempfile].path, 'rb') do |f|
-            new_attachment.update(file_path: f, filename: file_name)
+      # desc: upload file from the third party app
+      def upload_third_party_app
+        update_cache(:upload)
+        new_attachment = Attachment.new(
+          attachable: @attachment.attachable,
+          created_by: @attachment.created_by,
+          created_for: @attachment.created_for,
+          filename: params[:attachmentName].presence&.strip || "#{@app.name[0, 20]}-#{params[:file][:filename]}",
+        )
+        new_attachment.save
+        new_attachment.attachment_attacher.attach params[:file][:tempfile].to_io
+        new_attachment.save
+        { message: 'File uploaded successfully' }
+      end
+
+      def encode_and_cache_token(payload = @payload)
+        @token = JsonWebToken.encode(payload, expiry_time)
+        cache.write(
+          cache_key,
+          { token: @token, download: 3, upload: 10 },
+          expires_at: expiry_time,
+        )
+      end
+    end
+
+    # desc: public endpoint for third party apps to {down,up}load files
+    namespace :public do
+      resource :third_party_apps, requirements: { token: /.*/ } do
+        route_param :token, regexp: /^[\w-]+\.[\w-]+\.[\w-]+$/ do
+          after_validation do
+            parse_payload(JsonWebToken.decode(params[:token]))
           end
-          { message: 'File uploaded successfully' }
+          desc 'download file to 3rd party app'
+          get '/', requirements: { token: /.*/ } do
+            download_third_party_app
+          end
+
+          desc 'Upload file from 3rd party app'
+          params do
+            requires :file, type: File, desc: 'File to upload'
+            optional :attachmentName, type: String, desc: 'Name of the file'
+          end
+          post '/' do
+            upload_third_party_app
+          end
         end
-      end
-
-      def encode_token(payload, name_third_party_app)
-        cache_key = cache_key_for_encoded_token(payload)
-        Rails.cache.fetch(cache_key, expires_in: 48.hours) do
-          token = JsonWebToken.encode(payload, 48.hours.from_now)
-          CachedTokenThirdPartyApp.new(token, 0, name_third_party_app)
-        end
-      end
-
-      def cache_key_for_encoded_token(payload)
-        "encoded_token/#{payload[:attID]}/#{payload[:userID]}/#{payload[:nameThirdPartyApp]}"
-      end
-    end
-
-    namespace :public_third_party_app do
-      desc 'download file from third party app'
-      params do
-        requires :token, type: String, desc: 'Token for authentication'
-      end
-      get '/download' do
-        error!('401 Unauthorized', 401) if params[:token].nil?
-        download_third_party_app(params[:token])
-      end
-
-      desc 'Upload file from third party app'
-      params do
-        requires :token, type: String, desc: 'Token for authentication'
-        requires :attachmentName, type: String, desc: 'Name of the attachment'
-        requires :fileType, type: String, desc: 'Type of the file'
-      end
-      post '/upload' do
-        error!('401 Unauthorized', 401) if params[:token].nil?
-        error!('401 Unauthorized', 401) if params[:attachmentName].nil?
-        error!('401 Unauthorized', 401) if params[:fileType].nil?
-        verify_token(params[:token])
-        upload_third_party_app(params[:token],
-                               params[:attachmentName],
-                               params[:file],
-                               params[:file_type])
-      end
-    end
-
-    resource :third_party_apps_administration do
-      before do
-        error(401) unless current_user.is_a?(Admin)
-      end
-
-      desc 'check that name is unique'
-      params do
-        requires :name
-      end
-      post '/name_unique' do
-        declared(params, include_missing: false)
-        result = ThirdPartyApp.all_names
-        if result.nil?
-          { message: 'Name is unique' }
-        elsif ThirdPartyApp.all_names.exclude?(params[:name])
-          { message: 'Name is unique' }
-        else
-          { message: 'Name is not unique' }
-        end.to_json
-      rescue ActiveRecord::RecordInvalid
-        error!('Unauthorized. User has to be admin.', 401)
-      end
-
-      desc 'create new third party app entry'
-      params do
-        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
-        requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
-      end
-      post '/new_third_party_app' do
-        declared(params, include_missing: false)
-        ThirdPartyApp.create!(IPAddress: params[:IPAddress], name: params[:name])
-        status 201
-      rescue ActiveRecord::RecordInvalid
-        error!('Unauthorized. User has to be admin.', 401)
-      end
-
-      desc 'update a third party app entry'
-      params do
-        requires :id, type: String, desc: 'The id of the app which should be updated'
-        requires :IPAddress, type: String, desc: 'The IPAddress in order to redirect to the app.'
-        requires :name, type: String, desc: 'name of third party app. User will chose correct app based on names.'
-      end
-      post '/update_third_party_app' do
-        declared(params, include_missing: false)
-        entry = ThirdPartyApp.find(params[:id])
-        entry.update!(IPAddress: params[:IPAddress], name: params[:name])
-        status 201
-      rescue ActiveRecord::RecordInvalid
-        error!('Unauthorized. User has to be admin.', 401)
-      end
-
-      desc 'delete third party app entry'
-      params do
-        requires :id, type: String, desc: 'The id of the app which should be deleted'
-      end
-      post '/delete_third_party_app' do
-        id = params[:id].to_i
-        ThirdPartyApp.delete(id)
-        status 201
-      rescue ActiveRecord::RecordInvalid
-        error!('Unauthorized. User has to be admin.', 401)
       end
     end
 
     resource :third_party_apps do
-      desc 'Find all thirdPartyApps'
-      get 'all' do
+      rescue_from ActiveRecord::RecordNotFound do
+        error!('Record not found', 404)
+      end
+      namespace :admin do
+        before do
+          error!('Unauthorized. User has to be admin.', 401) unless current_user.is_a?(Admin)
+        end
+        after_validation do
+          params[:name]&.strip!
+          params[:url]&.strip!
+        end
+
+        desc 'create new third party app entry'
+        params do
+          requires :url, type: String, allow_blank: false, desc: 'The url in order to redirect to the app.'
+          requires :name, type: String, allow_blank: false,
+                          desc: 'name of third party app. User will chose correct app based on names.'
+        end
+
+        rescue_from ActiveRecord::RecordInvalid do |e|
+          error!(e.record.errors.full_messages.join(', '), 400)
+        end
+
+        post do
+          ThirdPartyApp.create!(declared(params))
+          status 201
+        end
+
+        route_param :id, type: Integer, desc: '3rd party app id' do
+          desc 'update a third party app entry'
+          params do
+            optional :url, type: String, allow_blank: false, desc: 'The url where the 3rd party app lives.'
+            optional :name, type: String, allow_blank: false, desc: 'Name of third party app.'
+          end
+
+          put do
+            ThirdPartyApp.find(params[:id]).update!(declared(params, include_missing: false))
+            status 201
+          end
+
+          desc 'delete third party app entry'
+          delete do
+            ThirdPartyApp.delete(params[:id])
+            status 201
+          end
+        end
+      end
+
+      desc 'get all thirdPartyApps'
+      get do
         ThirdPartyApp.all
       end
 
-      desc 'get third party app by id'
-      params do
-        requires :id, type: String, desc: 'The id of the app'
-      end
-      get 'get_by_id' do
-        ThirdPartyApp.find(params[:id])
-      end
-
-      desc 'get ip address of third party app'
-      params do
-        requires :name, type: String, desc: 'The name of the app for which the ip address should be get.'
-      end
-      get 'IP' do
-        tpa = ThirdPartyApp.find_by(name: params[:name])
-        return tpa.IPAddress if tpa
-
-        error_msg = "Third party app with ID: #{id} not found"
-        { error: error_msg }
-      end
-
-      desc 'get public ip address of ELN'
-      get 'public_IP' do
-        uri = URI.parse(ENV['PUBLIC_URL'] || 'http://localhost:3000')
-      end
-      
       desc 'create token for use in download public_api'
       params do
-        requires :attID, type: String, desc: 'Attachment ID'
-        requires :userID, type: String, desc: 'User ID'
-        requires :nameThirdPartyApp, type: String, desc: 'name of the third party app'
+        requires :attID, type: Integer, desc: 'Attachment ID'
+        requires :appID, type: Integer, desc: 'id of the third party app'
       end
-      get 'Token' do
-        cache_key = "token/#{params[:attID]}/#{params[:userID]}/#{params[:nameThirdPartyApp]}"
-        payload = { attID: params[:attID], userID: params[:userID], nameThirdPartyApp: params[:nameThirdPartyApp] }
-        cached_token = encode_token(payload, params[:nameThirdPartyApp])
-        Rails.cache.write(cache_key, cached_token, expires_in: 48.hours)
-        cached_token.token
-      end
-    end
 
-    resource :names do
-      desc 'Find all names of all third party app'
-      get 'all' do
-        ThirdPartyApp.all_names
+      get 'token' do
+        prepare_payload
+        parse_payload
+        encode_and_cache_token
+        # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
+        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
+        "#{@app.url}?url=#{url}"
+      end
+
+      route_param :id, type: Integer, desc: '3rd party app id' do
+        desc 'get a thirdPartyApps by id'
+        get do
+          ThirdPartyApp.find(params[:id])
+        end
       end
     end
   end

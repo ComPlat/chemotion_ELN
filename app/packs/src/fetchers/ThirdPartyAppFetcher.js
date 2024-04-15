@@ -1,138 +1,52 @@
 import 'whatwg-fetch';
+import { ThirdPartyAppServices } from 'src/endpoints/ApiServices';
+
+const { TPA_ENDPOINT } = ThirdPartyAppServices;
+const TPA_ENDPOINT_ADMIN = `${TPA_ENDPOINT}/admin`;
 
 export default class ThirdPartyAppFetcher {
-
-  static fetchThirdPartyApps() {
-    return fetch('/api/v1/third_party_apps/all.json', {
+  static fetchThirdPartyApps(id = null) {
+    const url = id ? `${TPA_ENDPOINT}/${id}` : TPA_ENDPOINT;
+    return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static isNameUnique(name) {
-    const obj = {
-      name
-    };
-    return fetch('/api/v1/third_party_apps_administration/name_unique', {
+  static createOrUpdateThirdPartyApp(id, name, url) {
+    const idPath = id ? `/${id}` : '';
+    return fetch(`${TPA_ENDPOINT_ADMIN}${idPath}`, {
       credentials: 'same-origin',
-      method: 'POST',
+      method: id ? 'PUT' : 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(obj)
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static newThirdPartyApp(name, IPAddress) {
-    const obj = {
-      name,
-      IPAddress
-    };
-    return fetch('/api/v1/third_party_apps_administration/new_third_party_app', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(obj)
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static editThirdPartyApp(id, name, IPAddress) {
-    const obj = {
-      id: id,
-      IPAddress: IPAddress,
-      name: name
-    };
-    return fetch('/api/v1/third_party_apps_administration/update_third_party_app', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(obj)
+      body: JSON.stringify({ name, url })
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static deleteThirdPartyApp(id) {
-    const obj = {
-      id
-    };
-    return fetch('/api/v1/third_party_apps_administration/delete_third_party_app', {
+    return fetch(`${TPA_ENDPOINT_ADMIN}/${id}`, {
       credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(obj)
+      method: 'DELETE',
     }).then(response => response.json())
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static fetchThirdPartyAppByID(id) {
-    const obj = {
-      id
-    };
-    const queryParams = new URLSearchParams(obj).toString();
-    const url = `/api/v1/third_party_apps/get_by_id.json?${queryParams}`;
-
+  static fetchAttachmentToken(attID, appID) {
+    console.log(attID, appID)
+    const queryParams = new URLSearchParams({ attID, appID }).toString();
+    const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {
       credentials: 'same-origin'
     }).then(response => response.json())
+  
       .then(json => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
-
-  static fetchThirdPartyAppNames() {
-    return fetch('/api/v1/names/all.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static fetchThirdPartyAppIp(name) {
-    const obj = { name };
-    const queryParams = new URLSearchParams(obj).toString();
-
-    const url = `/api/v1/third_party_apps/IP.json?${queryParams}`;
-
-    return fetch(url, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static fetchPublicURL() {
-    return fetch('/api/v1/third_party_apps/public_IP.json', {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static fetchAttachmentToken(attID, userID, nameThirdPartyApp) {
-    const obj = { attID, userID, nameThirdPartyApp };
-    const queryParams = new URLSearchParams(obj).toString();
-    const url = `/api/v1/third_party_apps/Token.json?${queryParams}`;
-    return fetch(url, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
 }
