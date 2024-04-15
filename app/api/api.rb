@@ -60,7 +60,6 @@ class API < Grape::API
     def public_request?
       request.path.start_with?(
         '/api/v1/public/',
-        '/api/v1/public_third_party_app/',
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
