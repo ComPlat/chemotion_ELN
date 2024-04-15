@@ -10,7 +10,6 @@ import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlan
 import { Button } from 'react-bootstrap';
 import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import ImageAttachmentFilter from 'src/utilities/ImageAttachmentFilter';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
@@ -23,7 +22,6 @@ import {
   sortingAndFilteringUI,
   formatFileSize,
   attachmentThumbnail,
-  thirdPartyAppBtn,
   thirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
@@ -33,6 +31,8 @@ export default class ResearchPlanDetailsAttachments extends Component {
     super(props);
     this.importButtonRefs = [];
     const { thirdPartyApps } = UIStore.getState() || [];
+    this.thirdPartyApps = thirdPartyApps;
+
     this.state = {
       attachmentEditor: false,
       extension: null,
@@ -42,9 +42,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
       filterText: '',
       sortBy: 'name',
       sortDirection: 'asc',
-      TPAoptions: thirdPartyApps.map((app) => app?.name),
-      TPADefaultOptions: {},
-      thirdPartyApps,
     };
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -56,7 +53,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     this.confirmAttachmentImport = this.confirmAttachmentImport.bind(this);
     this.showImportConfirm = this.showImportConfirm.bind(this);
     this.hideImportConfirm = this.hideImportConfirm.bind(this);
-    this.TPASelect = this.TPASelect.bind(this);
   }
 
   componentDidMount() {
@@ -236,18 +232,6 @@ export default class ResearchPlanDetailsAttachments extends Component {
     );
   }
 
-  TPASelect(attachment, selection) {
-    const { TPADefaultOptions } = this.state;
-    TPADefaultOptions[attachment.id] = selection
-    this.setState({ TPADefaultOptions });
-  }
-
-  thirdPartyAppCall(attachment, app) {
-	  console.log(app)
-    ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, app.name)
-      .then((result) => window.open(result, '_blank'));
-  };	  
-
   render() {
     const {
       filteredAttachments, sortDirection, attachmentEditor, extension
@@ -315,8 +299,7 @@ export default class ResearchPlanDetailsAttachments extends Component {
                     {downloadButton(attachment)}
                     {thirdPartyAppButton(
                       attachment,
-                      this.state.thirdPartyApps,
-                      this.thirdPartyAppCall,
+                      this.thirdPartyApps,
                     )}
                     {editButton(
                       attachment,

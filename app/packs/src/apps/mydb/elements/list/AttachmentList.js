@@ -4,10 +4,12 @@ import {
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import { values } from 'lodash';
+import uuid from 'uuid';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -312,4 +314,25 @@ export const sortingAndFilteringUI = (
       />
     </div>
   </div>
+);
+
+export const thirdPartyAppButton = (attachment, options) => (
+  <Dropdown id={`dropdown-TPA-attachment${attachment.id}`} style={{ float: 'right' }}>
+    <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
+      <i className="fa  fa-external-link " aria-hidden="true" />
+    </Dropdown.Toggle>
+    <Dropdown.Menu>
+      {options.map((option) => (
+        <MenuItem
+          key={uuid.v4()}
+          eventKey={option.id}
+          onClick={() => ThirdPartyAppFetcher.fetchAttachmentToken(attachment.id, option.id)
+            .then((result) => window.open(result, '_blank'))}
+          // disabled={!isImageFile(attachment.filename) || attachment.isNew}
+        >
+          {option.name}
+        </MenuItem>
+      ))}
+    </Dropdown.Menu>
+  </Dropdown>
 );

@@ -1,5 +1,7 @@
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Col, FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import {
+  Panel, Table, Button, Modal, FormGroup, ControlLabel, Col, FormControl, Tooltip, OverlayTrigger
+} from 'react-bootstrap';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 const editTip = <Tooltip id="inchi_tooltip">edit third party app</Tooltip>;
@@ -15,32 +17,18 @@ export default class ThirdPartyApp extends React.Component {
       showMsgModalDelete: false,
       messageNewThirdPartyAppModal: '',
       thirdPartyApps: [],
-      tpaNotEmpty: true,
-      errorMessageNewTPA: '',
-      errorMessageEditTPA: '',
-      thirdPartyAppNames: [""],
+      errorMessage: '',
       currentName: '',
       currentIP: '',
       currentID: ''
     };
-    this.thirdPartyApps();
     this.closeNewThirdPartyAppModal = this.closeNewThirdPartyAppModal.bind(this);
     this.closeEditThirdPartyAppModal = this.closeEditThirdPartyAppModal.bind(this);
     this.closeDeleteThirdPartyAppModal = this.closeDeleteThirdPartyAppModal.bind(this);
-    this.toggleTPANotEmpty = this.toggleTPANotEmpty.bind(this);
-  }
-
-  toggleTPANotEmpty() {
-    if (this.state.thirdPartyApps.length == 0) {
-      this.setState(prevState => ({
-        tpaNotEmpty: !prevState.tpaNotEmpty
-      })
-      );
-    }
   }
 
   componentDidMount() {
-    this.getThirdPartyAppNames();
+    this.thirdPartyApps();
   }
 
   thirdPartyApps() {
@@ -49,23 +37,11 @@ export default class ThirdPartyApp extends React.Component {
         this.setState({
           thirdPartyApps: result
         });
-      })
-      .then(() => {
-        if (this.state.thirdPartyApps.length == 0) {
-          this.setState({
-            tpaNotEmpty: false
-          });
-        }
-      })
-      .then(() => {
-        this.toggleTPANotEmpty()
       });
   }
 
-  new(name, IPAddress) {
-    ThirdPartyAppFetcher.newThirdPartyApp(
-      name,
-      IPAddress)
+  newApp(name, url) {
+    ThirdPartyAppFetcher.createOrUpdateThirdPartyApp(null, name, url)
       .then((result) => {
         if (result.error) {
           this.setState({ messageNewThirdPartyAppModal: result.error });
@@ -77,15 +53,16 @@ export default class ThirdPartyApp extends React.Component {
     return true;
   }
 
-  edit(name, IPAddress) {
-    return ThirdPartyAppFetcher.editThirdPartyApp(
+  edit(name, url) {
+    return ThirdPartyAppFetcher.createOrUpdateThirdPartyApp(
       this.state.currentID,
       name,
-      IPAddress)
+      url
+    )
       .then((result) => {
         if (result.error) {
           return this.thirdPartyApps().then((res) => {
-            res.messageNewThirdPartyAppModal = result.error
+            res.messageNewThirdPartyAppModal = result.error;
             this.setState(res);
             return false;
           });
@@ -96,14 +73,14 @@ export default class ThirdPartyApp extends React.Component {
 
   delete(id) {
     ThirdPartyAppFetcher.deleteThirdPartyApp(
-      id)
+      id
+    )
       .then((result) => {
         if (result.error) {
           this.setState({ messageNewThirdPartyAppModal: result.error });
           return false;
         }
         this.thirdPartyApps();
-        this.getThirdPartyAppNames();
         return true;
       });
     this.setState({
@@ -119,10 +96,15 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   showEditThirdPartyAppModal(key) {
+    const { thirdPartyApps } = this.state;
+    // select app by key from thirdPartyApps
+    const app = thirdPartyApps.find((tpa) => tpa.id === key);
     this.setState({
-      showMsgModalEdit: true
-    })
-    this.getThirdPartyAppByID(key);
+      showMsgModalEdit: true,
+      currentName: app?.name,
+      currentIP: app?.url,
+      currentID: key
+    });
   }
 
   showDeleteThirdPartyAppModal(key) {
@@ -130,12 +112,12 @@ export default class ThirdPartyApp extends React.Component {
       showMsgModalDelete: true,
       currentID: key
     });
-    this.getThirdPartyAppByID(key);
   }
 
   closeNewThirdPartyAppModal() {
     this.setState({
-      showMsgModal: false
+      showMsgModal: false,
+      errorMessage: null,
     });
   }
 
@@ -152,71 +134,44 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   checkInput(name, ip) {
-    return new Promise((resolve, reject) => {
-
+    const { thirdPartyApps, currentID } = this.state;
+    let appId = 0;
     if (name.length < 1) {
       this.setState({
-        errorMessageNewTPA: "name is shorter than 1 character"
+        errorMessage: 'Name is shorter than 1 character'
       });
-      reject();
+      return false;
     }
 
-    if ((ip.slice(0, 7) != "http://") &&
-      (ip.slice(0, 8) != "https://")) {
+    if ((ip.slice(0, 7) !== 'http://')
+      && (ip.slice(0, 8) !== 'https://')) {
       this.setState({
-        errorMessageNewTPA: "Begin of ip address has to be http:// or https://"
+        errorMessage: 'URL should start with http:// or https://'
       });
-      reject();
+      return false;
     }
-
-    ThirdPartyAppFetcher.isNameUnique(name)
-      .then((result) => {
-        const message = JSON.parse(result).message
-        if (message == "Name is not unique") {
-          this.setState({
-            errorMessageNewTPA: "name is not unique"
-          });
-          reject();
-        } else {
-          resolve();
-        }
-      }) 
-
-    })
-
-  }
-
-  getThirdPartyAppNames() {
-    ThirdPartyAppFetcher.fetchThirdPartyAppNames()
-      .then((result) => {
-        this.setState({
-          thirdPartyAppNames: result
-        })
-      })
-      .then(() => {
-        if (this.state.thirdPartyAppNames == null || !Array.isArray(this.state.thirdPartyAppNames) || this.state.thirdPartyAppNames.length === 0) {
-          this.setState({
-            thirdPartyAppNames: []
-          })
-        }
+    // check if name is already used
+    if (thirdPartyApps.find((tpa) => { appId = tpa.id; return currentID !== tpa.id && tpa.name === name; })) {
+      this.setState({
+        errorMessage: `Name is already used by app with id: ${appId}`
       });
-  }
-
-  getThirdPartyAppByID(key) {
-    ThirdPartyAppFetcher.fetchThirdPartyAppByID(key)
-      .then((result) => {
-        this.setState({
-          currentName: result.name,
-          currentIP: result.IPAddress,
-          currentID: key
-        })
+      return false;
+    }
+    // check if url is already used
+    if (thirdPartyApps.find((tpa) => { appId = tpa.id; return currentID !== tpa.id && tpa.url === ip; })) {
+      this.setState({
+        errorMessage: `URL already used by app with id: ${appId}`
       });
+      return false;
+    }
+    return true;
   }
 
   renderDeleteThirdPartyAppModal() {
+    const { showMsgModalDelete, currentName, currentID } = this.state;
     return (
       <Modal
-        show={this.state.showMsgModalDelete}
+        show={showMsgModalDelete}
         onHide={this.closeDeleteThirdPartyAppModal}
       >
         <Modal.Header closeButton>
@@ -224,53 +179,57 @@ export default class ThirdPartyApp extends React.Component {
         </Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
-            <p><strong> Do you really want to delete {this.state.currentName}?</strong></p>
+            <p>
+              <strong>
+                {` Do you really want to delete ${currentName}?`}
+              </strong>
+            </p>
 
-            <OverlayTrigger placement="bottom" overlay={deleteTip} >
-              <Button bsStyle="danger" bsSize="small" onClick={() => this.delete(this.state.currentID)}>
-                Delete&nbsp;<i className="fa fa" />
+            <OverlayTrigger placement="bottom" overlay={deleteTip}>
+              <Button bsStyle="danger" bsSize="small" onClick={() => this.delete(currentID)}>
+                Delete&nbsp;
+                <i className="fa fa" />
               </Button>
             </OverlayTrigger>
           </div>
         </Modal.Body>
       </Modal>
-    )
+    );
   }
 
-
   renderEditThirdPartyAppModal() {
-
     let nameRef = null;
-    let IPAddressRef = null;
+    let urlRef = null;
 
     const handleEdit = () => {
-
-      const IPAddress = IPAddressRef.value;
-      const name = nameRef.value;
-      this.checkInput(name, IPAddress)
-        .then(() => {
-          this.edit(name, IPAddress).then(() => {
-            this.getThirdPartyAppNames();
+      const url = urlRef.value?.trim();
+      const name = nameRef.value?.trim();
+      if (this.checkInput(name, url)) {
+        this.edit(name, url)
+          .then(() => {
             this.closeEditThirdPartyAppModal();
             this.thirdPartyApps();
-          });
-        })
-        .catch(() => {
-        })
-
-    }
+          })
+          .catch(() => {});
+      }
+    };
 
     const handleNameChange = (event) => {
-      this.setState({
-        currentName: event.target.value
-      })
-    }
+      // if current errorMessage start with Name, clear it
+      const newState = { currentName: event.target.value };
+      if (this.state.errorMessage.startsWith('Name')) {
+	newState.errorMessage = '';
+      }
+      this.setState(newState);
+    };
 
     const handleIPChange = (event) => {
-      this.setState({
-        currentIP: event.target.value
-      })
-    }
+      const newState = { currentIP: event.target.value };
+      if (this.state.errorMessage.startsWith('URL')) {
+	newState.errorMessage = '';
+      }
+      this.setState(newState);
+    };
 
     return (
       <Modal
@@ -287,7 +246,13 @@ export default class ThirdPartyApp extends React.Component {
                 Name:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="Name" value={this.state.currentName} onChange={handleNameChange} inputRef={(ref) => { nameRef = ref; }} />
+                <FormControl
+                  type="text"
+                  name="Name"
+                  value={this.state.currentName}
+                  onChange={handleNameChange}
+                  inputRef={(ref) => { nameRef = ref; }}
+                />
               </Col>
             </FormGroup>
 
@@ -296,46 +261,40 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => { IPAddressRef = ref; }} />
+                <FormControl type="text" name="IP address" value={this.state.currentIP} onChange={handleIPChange} inputRef={(ref) => { urlRef = ref; }} />
               </Col>
             </FormGroup>
 
-            <OverlayTrigger placement="bottom" overlay={editTip} >
+            <OverlayTrigger placement="bottom" overlay={editTip}>
               <Button bsStyle="primary" bsSize="small" onClick={handleEdit}>
-                Update&nbsp;<i className="fa fa" />
+                Update&nbsp;
+                <i className="fa fa" />
               </Button>
             </OverlayTrigger>
 
             <Modal.Footer>
               <FormGroup controlId="formControlMessage">
-                <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.errorMessageEditTPA} />
+                <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.errorMessage} />
               </FormGroup>
             </Modal.Footer>
           </div>
         </Modal.Body>
       </Modal>
-    )
+    );
   }
 
   renderMessageModal() {
-
     let nameRef = null;
-    let IPAddressRef = null;
+    let urlRef = null;
 
     const handleCreate = () => {
-
-      this.getThirdPartyAppNames();
-      const IPAddress = IPAddressRef.value;
+      const url = urlRef.value;
       const name = nameRef.value;
-      this.checkInput(name, IPAddress)
-        .then(() => {
-          this.new(name, IPAddress);
-          this.closeNewThirdPartyAppModal();
-        })
-        .catch(() => {
-        });
-
-    }
+      if (this.checkInput(name, url)) {
+        this.newApp(name, url);
+        this.closeNewThirdPartyAppModal();
+      }
+    };
 
     return (
       <Modal
@@ -362,38 +321,38 @@ export default class ThirdPartyApp extends React.Component {
                 IP address:
               </Col>
               <Col sm={9}>
-                <FormControl type="text" name="IP address" inputRef={(ref) => { IPAddressRef = ref; }} />
+                <FormControl type="text" name="IP address" inputRef={(ref) => { urlRef = ref; }} />
               </Col>
             </FormGroup>
 
-            <OverlayTrigger placement="bottom" overlay={newTip} >
+            <OverlayTrigger placement="bottom" overlay={newTip}>
               <Button bsStyle="primary" bsSize="small" onClick={() => handleCreate()}>
-                Create&nbsp;<i className="fa fa-plus" />
+                Create&nbsp;
+                <i className="fa fa-plus" />
               </Button>
             </OverlayTrigger>
 
             <Modal.Footer>
               <FormGroup controlId="formControlMessage">
-                <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.errorMessageNewTPA} />
+                <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.errorMessage} />
               </FormGroup>
             </Modal.Footer>
 
           </div>
         </Modal.Body>
       </Modal>
-    )
+    );
   }
 
-
   render() {
-
     return (
       <div>
 
         <Panel>
 
           <Button bsStyle="primary" bsSize="small" onClick={() => this.showNewThirdPartyAppModal()}>
-            New ThirdPartyApp&nbsp;<i className="fa fa-plus" />
+            New ThirdPartyApp&nbsp;
+            <i className="fa fa-plus" />
           </Button>
           {this.renderMessageModal()}
 
@@ -411,12 +370,12 @@ export default class ThirdPartyApp extends React.Component {
 
           <tbody>
 
-            {this.state.tpaNotEmpty && this.state.thirdPartyApps.map((entry) => (
+            {this.state.thirdPartyApps.map((entry) => (
               <tr key={entry.id}>
 
                 <td>
 
-                  <OverlayTrigger placement="bottom" overlay={editTip} >
+                  <OverlayTrigger placement="bottom" overlay={editTip}>
                     <Button bsStyle="info" bsSize="xsmall" onClick={() => this.showEditThirdPartyAppModal(entry.id)}>
                       Edit&nbsp;
                     </Button>
@@ -424,7 +383,7 @@ export default class ThirdPartyApp extends React.Component {
 
                   {this.renderEditThirdPartyAppModal()}
 
-                  <OverlayTrigger placement="bottom" overlay={deleteTip} >
+                  <OverlayTrigger placement="bottom" overlay={deleteTip}>
                     <Button bsStyle="danger" bsSize="xsmall" onClick={() => this.showDeleteThirdPartyAppModal(entry.id)}>
                       <i className="fa fa-trash-o" aria-hidden="true" />
                     </Button>
@@ -435,11 +394,10 @@ export default class ThirdPartyApp extends React.Component {
                 </td>
 
                 <td>{entry.name}</td>
-                <td>{entry.IPAddress}</td>
+                <td>{entry.url}</td>
                 <td>{entry.id}</td>
               </tr>
-            )
-            )}
+            ))}
 
           </tbody>
         </Table>
@@ -448,8 +406,5 @@ export default class ThirdPartyApp extends React.Component {
 
       </div>
     );
-
   }
-
-
 }
