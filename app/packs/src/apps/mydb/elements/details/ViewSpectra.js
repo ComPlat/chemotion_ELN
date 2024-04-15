@@ -205,7 +205,7 @@ class ViewSpectra extends React.Component {
 
   formatPks({
     peaks, shift, layout, isAscend, decimal, body,
-    isIntensity, integration, curveSt
+    isIntensity, integration, curveSt, waveLength
   }) {
     const layoutOpsObj = SpectraOps[layout];
     if (!layoutOpsObj) {
@@ -226,6 +226,7 @@ class ViewSpectra extends React.Component {
     const { jcamp } = this.getContent();
     const { entity } = FN.buildData(jcamp);
     const { features } = entity;
+    const { temperature } = entity;
     const { observeFrequency } = Array.isArray(features)
       ? features[0]
       : (features.editPeak || features.autoPeak);
@@ -237,11 +238,24 @@ class ViewSpectra extends React.Component {
       : (features.editPeak || features.autoPeak);
     const boundary = { maxY, minY };
     const mBody = body || FN.peaksBody({
-      peaks, layout, decimal, shift, isAscend, isIntensity, boundary, integration: selectedIntegration
+      peaks,
+      layout,
+      decimal,
+      shift,
+      isAscend,
+      isIntensity,
+      boundary,
+      integration: selectedIntegration,
+      waveLength,
+      temperature
     });
+    let solventDecimal = decimal
+    if (FN.is13CLayout(layout)){
+      solventDecimal = 2
+    }
 
     const { label, value, name } = selectedShift.ref;
-    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
+    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(solventDecimal)} ppm], ` : '';
     return [
       ...layoutOpsObj.head(freqStr, solvent),
       { insert: mBody },
@@ -294,6 +308,7 @@ class ViewSpectra extends React.Component {
       });
     }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
     let couplings = [].concat(...macs.map((m) => {
+      m.js.sort((a, b) => (isAscend ? a - b : b - a));
       const c = m.center;
       const type = m.mpyType;
       const it = Math.round(m.area);
@@ -331,14 +346,15 @@ class ViewSpectra extends React.Component {
 
   writeCommon({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
-    keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt
+    keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt,
+    waveLength, axesUnitsSt, detectorSt,
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo();
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '19F'].indexOf(layout) >= 0 && isMpy) {
+    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
@@ -352,7 +368,8 @@ class ViewSpectra extends React.Component {
         body,
         isIntensity,
         integration,
-        curveSt
+        curveSt,
+        waveLength
       });
     }
 
@@ -364,12 +381,17 @@ class ViewSpectra extends React.Component {
           ...ai.extended_metadata.content.ops,
           ...ops,
         ];
+        const firstOps = ai.extended_metadata.content.ops[0];
+        if (firstOps.insert && firstOps.insert === '\n') {
+          ai.extended_metadata.content.ops.shift();
+        }
+
       });
     });
 
     const cb = () => (
       this.saveOp({
-        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt
+        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, waveLength, axesUnitsSt, detectorSt,
       })
     );
     handleSampleChanged(sample, cb);
@@ -386,7 +408,7 @@ class ViewSpectra extends React.Component {
   }
 
   saveOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr = false
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr = false, layout, axesUnitsSt, detectorSt,
   }) {
     const { handleSubmit } = this.props;
     const { curveIdx } = curveSt;
@@ -397,6 +419,8 @@ class ViewSpectra extends React.Component {
     const predict = JSON.stringify(rmRefreshed(analysis));
     const waveLengthStr = JSON.stringify(waveLength);
     const cyclicvolta = JSON.stringify(cyclicvoltaSt);
+    const axesUnitsStr = JSON.stringify(axesUnitsSt);
+    const detector = JSON.stringify(detectorSt);
 
     const { shifts } = shift;
     const selectedShift = shifts[curveIdx];
@@ -404,7 +428,10 @@ class ViewSpectra extends React.Component {
     const selectedIntegration = integrations[curveIdx];
     const { multiplicities } = multiplicity;
     const selectedMutiplicity = multiplicities[curveIdx];
-
+  
+    const isSaveCombined = FN.isCyclicVoltaLayout(layout);
+    const { spcInfos } = this.state;
+    const previousSpcInfos = spcInfos.filter((spc) => spc.idDt === si.idDt);
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
       si,
@@ -421,14 +448,18 @@ class ViewSpectra extends React.Component {
       cyclicvolta,
       curveIdx,
       simulatenmr,
+      previousSpcInfos,
+      isSaveCombined,
+      axesUnitsStr,
+      detector,
     );
   }
 
   refreshOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, axesUnitsSt, detectorSt
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, axesUnitsSt, detectorSt
     });
   }
 
@@ -454,10 +485,10 @@ class ViewSpectra extends React.Component {
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
+    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt,
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt,
     });
     this.closeOp();
   }
@@ -524,8 +555,8 @@ class ViewSpectra extends React.Component {
   buildOpsByLayout(et) {
     if (this.props.sample && this.props.sample instanceof ResearchPlan) {
       return [
-        { name: 'write & save', value: this.writeOp },
-        { name: 'write, save & close', value: this.writeCloseOp },
+        { name: 'write & save', value: this.saveOp },
+        { name: 'write, save & close', value: this.saveCloseOp },
       ];
     }
     const updatable = this.props.sample && this.props.sample.can_update;
@@ -533,7 +564,7 @@ class ViewSpectra extends React.Component {
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
     ] : [];
-    const isNmr = updatable && ['1H', '13C', '19F'].indexOf(et.layout) >= 0;
+    const isNmr = updatable && ['1H', '13C', '15N', '19F', '29Si', '31P'].includes(et.layout);
     if (isNmr) {
       baseOps = [
         ...baseOps,
@@ -658,10 +689,11 @@ class ViewSpectra extends React.Component {
                 operations={operations}
                 forecast={forecast}
                 molSvg={sample.svgPath}
+                theoryMass={sample.molecule_molecular_weight}
                 descriptions={descriptions}
                 canChangeDescription
                 onDescriptionChanged={this.onSpectraDescriptionChanged}
-                userManualLink={{ cv: 'https://chemotion.net/docs/chemspectra/cv' }}
+                userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
             />
         }
       </Modal.Body>

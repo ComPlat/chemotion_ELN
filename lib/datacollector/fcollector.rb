@@ -63,7 +63,7 @@ class Fcollector
           inspect_folder(device)
           @sftp = nil
         end
-      rescue => e
+      rescue StandardError => e
         log_error("#{e.message} >>> #{device.info}\n#{e.backtrace.join('\n')}")
       end
     end
@@ -77,7 +77,7 @@ class Fcollector
   private
 
   def devices(use_sftp)
-    sql = <<~SQL
+    sql = <<~SQL.squish
       profiles."data"->>'method' = '#{self.class::FCOLL}watcher#{use_sftp ? 'sftp' : 'local'}'
     SQL
     Device.joins(:profile).where(sql).includes(:profile)
@@ -102,5 +102,19 @@ class Fcollector
     DCLogger.log.error(self.class.name) do
       "#{@current_collector&.path} >>> #{message}"
     end
+  end
+
+  def new_folders(monitored_folder_p)
+    if @sftp
+      new_folders_p = @sftp.dir.glob(monitored_folder_p, '*').select(
+        &:directory?
+      )
+      new_folders_p.map! { |dir| File.join(monitored_folder_p, dir.name) }
+    else
+      new_folders_p = Dir.glob(File.join(monitored_folder_p, '*')).select do |e|
+        File.directory?(e)
+      end
+    end
+    new_folders_p
   end
 end

@@ -15,7 +15,7 @@ module Usecases
           annotation = File.open(location_of_annotation, 'rb') if File.exist?(location_of_annotation)
           raise 'could not find annotation of attachment (file not found)' unless annotation
 
-          annotation.read
+          annotation.read.force_encoding('UTF-8')
         end
 
         def annotation_json_present(data)

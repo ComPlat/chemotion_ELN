@@ -3,6 +3,7 @@ import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import Wellplate from 'src/models/Wellplate';
+import Attachment from './Attachment';
 
 const uuidv4 = require('uuid/v4');
 
@@ -198,7 +199,7 @@ export default class ResearchPlan extends Element {
     return this._wellplates || [];
   }
 
-  upsertAttachments(attachmentsToAdd=[]) {
+  upsertAttachments(attachmentsToAdd = []) {
     const idsOfAttachmentsInResearchPlan = this.attachments.map(
       (attachmentInResearchPlan) => attachmentInResearchPlan.identifier
     );
@@ -252,8 +253,52 @@ export default class ResearchPlan extends Element {
         delete value.old_value;
       });
   }
-  getAttachmentByIdentifier(identifier){
-     return this.attachments
-     .filter((attachment)=>attachment.identifier===identifier)[0];
+
+  getAttachmentByIdentifier(identifier) {
+    return this.attachments
+      .filter((attachment) => attachment.identifier === identifier)[0];
+  }
+
+  getNewAttachments() {
+    return this.attachments
+      .filter((attachment) => attachment.is_new === true && !attachment.is_deleted);
+  }
+
+  getMarkedAsDeletedAttachments() {
+    return this.attachments
+      .filter((attachment) => attachment.is_deleted === true && !attachment.is_new);
+  }
+
+  buildCopy(params = {}) {
+    const copy = super.buildCopy();
+    Object.assign(copy, params);
+    copy.attachments = this.attachments;
+    copy.container = Container.init();
+    copy.is_new = true;
+    copy.is_copy = true;
+    copy.can_update = true;
+    copy.can_copy = true;
+
+    return copy;
+  }
+
+  static copyFromResearchPlanAndCollectionId(research_plan, collection_id) {
+    const attachments = research_plan.attachments.map(
+      attach => Attachment.buildCopy(attach)
+    );
+    const params = {
+      collection_id,
+      name: research_plan.name,
+      body: research_plan.body,
+    }
+    const copy = research_plan.buildCopy(params);
+    copy.can_copy = false;
+    copy.changed = true;
+    copy.collection_id = collection_id;
+    copy.mode = 'edit';
+    copy.attachments = attachments;
+    copy.origin = { id: research_plan.id };
+
+    return copy;
   }
 }

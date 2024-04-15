@@ -3,11 +3,27 @@
 module Chemotion
   # Publish-Subscription MessageAPI
   class AdminUserAPI < Grape::API
-    resource :admin_user do # rubocop:disable Metrics/BlockLength
+    resource :admin_user do
       namespace :listUsers do
         desc 'Find all users'
         get 'all' do
           present User.all.order('type desc, id'), with: Entities::UserEntity, root: 'users'
+        end
+
+        desc 'Find top (5) matched user by name and by type'
+        params do
+          requires :name, type: String, desc: 'user name'
+          optional :type, type: [String], desc: 'user types',
+                          coerce_with: ->(val) { val.split(/[\s|,]+/) }, values: %w[Group Device Person Admin]
+          optional :limit, type: Integer, default: 5
+        end
+        get 'byname' do
+          return { users: [] } if params[:name].blank?
+
+          users = params[:type] ? User.where(type: params[:type]) : User
+          users = users.by_name(params[:name])
+                       .limit(params[:limit])
+          present users, with: Entities::UserSimpleEntity, root: 'users'
         end
       end
 
@@ -74,7 +90,7 @@ module Chemotion
         end
       end
 
-      namespace :updateAccount do # rubocop:disable Metrics/BlockLength
+      namespace :updateAccount do
         desc 'update account'
         params do
           requires :user_id, type: Integer, desc: 'user id'
@@ -85,6 +101,11 @@ module Chemotion
           optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
           optional :converter_admin, type: Boolean, desc: 'converter profile'
           optional :account_active, type: Boolean, desc: 'active or inactive this user'
+          optional :auth_generic_admin, type: Hash do
+            optional :elements, type: Boolean, desc: 'un-authorize the user as generic elements admin'
+            optional :segments, type: Boolean, desc: 'un-authorize the user as generic segments admin'
+            optional :datasets, type: Boolean, desc: 'un-authorize the user as generic datasets admin'
+          end
         end
 
         post do
@@ -98,8 +119,9 @@ module Chemotion
             end
           end
 
-          if params[:reconfirm_user].present?
-            user.update_columns(email: user.unconfirmed_email, unconfirmed_email: nil) if params[:reconfirm_user] == true
+          if params[:reconfirm_user].present? && (params[:reconfirm_user] == true)
+            user.update_columns(email: user.unconfirmed_email,
+                                unconfirmed_email: nil)
           end
 
           unless params[:confirm_user].nil?
@@ -142,32 +164,19 @@ module Chemotion
           end
 
           user.update!(account_active: params[:account_active]) unless params[:account_active].nil?
+          if params[:auth_generic_admin].present?
+            profile = user.profile
+            pdata = profile.data || {}
+            data = pdata.deep_merge('generic_admin' => params[:auth_generic_admin])
+            profile.update!(data: data)
+          end
 
           present user, with: Entities::UserEntity
         end
       end
     end
 
-    resource :matrix do # rubocop:disable Metrics/BlockLength
-      namespace :find_user do
-        desc 'Find top 5 matched user/group names by type'
-        params do
-          requires :name, type: String
-        end
-        get do
-          if params[:name].present?
-            users = User.where(type: %w[Person Group])
-                        .by_name(params[:name])
-                        .limit(5)
-                        .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type')
-                        .map(&:attributes)
-            { users: users }
-          else
-            { users: [] }
-          end
-        end
-      end
-
+    resource :matrix do
       namespace :list do
         desc 'Find all matrices'
         get do

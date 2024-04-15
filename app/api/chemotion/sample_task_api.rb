@@ -20,7 +20,7 @@ module Chemotion
         optional :status, type: String, values: %w[open with_missing_scan_results done], default: 'open'
       end
       get do
-        tasks = SampleTask.for(current_user).public_send(params[:status])
+        tasks = SampleTask.for(current_user).public_send(params[:status]).order(created_at: :desc)
 
         present tasks, with: Entities::SampleTaskEntity
       end
@@ -58,6 +58,14 @@ module Chemotion
         finisher.perform! if finisher.sample_task_can_be_finished?
 
         present updater.sample_task, with: Entities::SampleTaskEntity
+      end
+
+      # delete an open sample task
+      delete ':id' do
+        task = SampleTask.for(current_user).open.find_by(id: params[:id])
+        error!('Task could not be deleted', 400) unless task.present? && task.destroy
+
+        { deleted: task.id }
       end
 
       route_param :id do

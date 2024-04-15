@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 # module API
 require 'grape-entity'
 require 'grape-swagger'
@@ -9,13 +11,13 @@ class API < Grape::API
   prefix :api
   version 'v1'
 
-  # TODO needs to be tested,
+  # TODO: needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
     def present(*args)
       options = args.count > 1 ? args.extract_options! : {}
 
-      options.merge!(current_user: current_user)
+      options[:current_user] = current_user
 
       super(*args, options)
     end
@@ -36,7 +38,7 @@ class API < Grape::API
       decoded_token = JsonWebToken.decode(current_token)
       user_id = decoded_token[:user_id]
 
-      User.find_by!(id: user_id)
+      User.find(user_id)
     rescue StandardError
       nil
     end
@@ -65,25 +67,23 @@ class API < Grape::API
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
-        '/api/v1/gate/ping'
+        '/api/v1/gate/ping',
       )
     end
 
-    def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
-      molecule_sort = molecule_sort == 1 ? true : false
+    def cache_key(search_method, arg, molfile, collection_id, molecule_sort, opt) # rubocop:disable Metrics/ParameterLists
+      molecule_sort = molecule_sort == 1
       inchikey = Chemotion::OpenBabelService.inchikey_from_molfile molfile
 
-      cache_key = [
+      [
         latest_updated,
         search_method,
         arg,
         inchikey,
         collection_id,
         molecule_sort,
-        opt
+        opt,
       ]
-
-      return cache_key
     end
 
     def to_snake_case_key(k)
@@ -95,7 +95,7 @@ class API < Grape::API
       when Array
         val.map { |v| to_rails_snake_case(v) }
       when Hash
-        Hash[val.map { |k, v| [to_snake_case_key(k), to_rails_snake_case(v)] }]
+        Hash[val.map { |k, v| [to_snake_case_key(k), to_rails_snake_case(v)] }] # rubocop:disable Style/HashConversion
       else
         val
       end
@@ -110,7 +110,7 @@ class API < Grape::API
       when Array
         val.map { |v| to_json_camel_case(v) }
       when Hash
-        Hash[val.map { |k, v| [to_camelcase_key(k), to_json_camel_case(v)] }]
+        Hash[val.map { |k, v| [to_camelcase_key(k), to_json_camel_case(v)] }] # rubocop:disable Style/HashConversion
       else
         val
       end
@@ -123,13 +123,29 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w(name short_label external_label xref)
-  }
+    'samples' => %w[
+      name short_label external_label xref content is_top_secret decoupled
+      stereo boiling_point melting_point density molarity_value target_amount_value
+      description location purity solvent inventory_sample sum_formula molecular_mass
+      dry_solvent
+    ],
+    'reactions' => %w[
+      name short_label status conditions rxno content temperature duration
+      role purification tlc_solvents tlc_description rf_value dangerous_products
+      plain_text_description plain_text_observation
+    ],
+    'wellplates' => %w[name short_label readout_titles content plain_text_description],
+    'screens' => %w[name collaborator requirements conditions result content plain_text_description],
+    'research_plans' => %w[name body content],
+    'elements' => %w[name short_label],
+  }.freeze
+
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
-  ELEMENTS = %w[research_plan screen wellplate reaction sample]
+  ELEMENTS = %w[research_plan screen wellplate reaction sample cell_line].freeze
 
-  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate ]
+  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
+                     ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate].freeze
 
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
@@ -164,28 +180,34 @@ class API < Grape::API
   mount Chemotion::MessageAPI
   mount Chemotion::AdminAPI
   mount Chemotion::AdminUserAPI
-  mount Chemotion::AdminGenericAPI
   mount Chemotion::EditorAPI
   mount Chemotion::UiAPI
   mount Chemotion::OlsTermsAPI
   mount Chemotion::PredictionAPI
   mount Chemotion::ComputeTaskAPI
   mount Chemotion::TextTemplateAPI
-  mount Chemotion::GenericElementAPI
-  mount Chemotion::SegmentAPI
-  mount Chemotion::GenericDatasetAPI
   mount Chemotion::ReportTemplateAPI
   mount Chemotion::PrivateNoteAPI
   mount Chemotion::NmrdbAPI
   mount Chemotion::MeasurementsAPI
-  mount Chemotion::ConverterAPI
   mount Chemotion::AttachableAPI
   mount Chemotion::SampleTaskAPI
   mount Chemotion::ThirdPartyAppAPI
   mount Chemotion::CalendarEntryAPI
+  mount Chemotion::CommentAPI
+  mount Chemotion::CellLineAPI
+  mount Labimotion::ConverterAPI
+  mount Labimotion::GenericElementAPI
+  mount Labimotion::GenericDatasetAPI
+  mount Labimotion::SegmentAPI
+  mount Labimotion::LabimotionHubAPI
+  mount Chemotion::InventoryAPI
 
-  add_swagger_documentation(info: {
-    "title": "Chemotion ELN",
-    "version": "1.0"
-  }) if Rails.env.development?
+  if Rails.env.development?
+    add_swagger_documentation(info: {
+                                title: 'Chemotion ELN',
+                                version: '1.0',
+                              })
+  end
 end
+# rubocop:enable Metrics/ClassLength

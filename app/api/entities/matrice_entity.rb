@@ -1,6 +1,8 @@
 module Entities
-  class MatriceEntity < Grape::Entity
-    expose :id, :enabled, :name, :label, :include_ids, :exclude_ids, :created_at, :updated_at, :include_users, :exclude_users, :configs
+  class MatriceEntity < ApplicationEntity
+    expose :id, :enabled, :name, :label, :include_ids, :exclude_ids, :include_users, :exclude_users, :configs
+
+    expose_timestamps
 
     def include_users
       [] if object&.include_ids.nil?

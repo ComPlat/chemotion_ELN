@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import SampleName from 'src/components/common/SampleName';
@@ -21,14 +21,30 @@ const collect = (connect, monitor) => ({
 });
 
 const hasAuth = (id) => {
-  if (typeof id === 'string' && id.includes('error')) return false; return true;
+  if (typeof id === 'string' && id.includes('error')) {
+    return false;
+  }
+  return true;
 };
 
-const noAuth = el => (
+const noAuth = (el) => (
   <div className="research-plan-no-auth">
-    <h4>{el.id.split(':')[2]}&nbsp;<i className="fa fa-eye-slash" aria-hidden="true" /></h4>
+    <h4>
+      {el.id.split(':')[2]}
+      &nbsp;
+      <i className="fa fa-eye-slash" aria-hidden="true" />
+    </h4>
   </div>
 );
+
+function elementError() {
+  return (
+    <div style={{ color: 'red', textAlign: 'center' }}>
+      <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+      <span style={{ fontWeight: 'bold' }}>Internal Server Error: Sample can not be found!</span>
+    </div>
+  );
+}
 
 class ResearchPlanDetailsFieldSample extends Component {
   constructor(props) {
@@ -37,7 +53,8 @@ class ResearchPlanDetailsFieldSample extends Component {
       idle: true,
       sample: {
         id: null
-      }
+      },
+      error: false
     };
   }
 
@@ -58,9 +75,19 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   fetch() {
     const { field } = this.props;
-    SamplesFetcher.fetchById(field.value.sample_id).then((sample) => {
-      this.setState({ idle: true, sample });
-    });
+    SamplesFetcher.fetchById(field.value.sample_id)
+      .then((sample) => {
+        if (sample && sample.id) {
+          this.setState({ idle: true, sample });
+        } else {
+          console.error('Fetched sample does not contain an id or is in incorrect format:', sample);
+          this.setState({ idle: true, error: true });
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching sample:', error);
+        this.setState({ idle: true, error: true });
+      });
   }
 
   showSample() {
@@ -69,63 +96,85 @@ class ResearchPlanDetailsFieldSample extends Component {
     ElementActions.fetchSampleById(sample.id);
   }
 
-  // modified from sampleInfo in SampleDetails.js
   renderSample(sample) {
     if (!hasAuth(sample.id)) {
       return noAuth(sample);
     }
     const { edit } = this.props;
-    const title = sample.title();
-    let link;
-    if (edit) {
-      link = (
-        <p>
-          Sample: {title}
-        </p>
-      );
-    }
+    const link = (
+      <button
+        type="button"
+        style={{
+          cursor: 'pointer',
+          color: '#003366',
+          backgroundColor: 'transparent',
+          border: '1px solid #003366',
+          borderRadius: '4px',
+          margin: '5px',
+          outline: 'none',
+        }}
+        onClick={() => this.showSample()}
+      >
+        {sample.title()}
+      </button>
+    );
+
     let image;
     if (sample.svgPath) {
-      image = (
-        <div className="image-container">
-          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-            <img src={sample.svgPath} alt={title} />
-          </a>
-          <SampleName sample={sample} />
-        </div>)
+      image = <img src={sample.svgPath} alt={sample.title()} />;
     }
-    // render name of sample if no image exists
-    else {
-      image = (
-        <div className="image-container">
-          <a role="link" tabIndex={0} onClick={() => this.showSample()} style={{ cursor: 'pointer' }}>
-            {title}
-          </a>
-        </div>)
-    }
+
+    const sampleStyle = edit ? {} : {
+      border: '1px solid #cccccc',
+      padding: '5px',
+    };
+
     return (
-      <div className="research-plan-field-image">
+      <div className="research-plan-field-image" style={sampleStyle}>
         {link}
-        {image}
+        <div className="image-container">
+          {image}
+          <SampleName sample={sample} />
+        </div>
       </div>
     );
   }
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { sample } = this.state;
+    const { sample, error } = this.state;
     if (!hasAuth(sample.id)) {
       return noAuth(sample);
     }
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
-    return connectDropTarget(<div className={className}>{sample.id ? this.renderSample(sample) : 'Drop sample here.'}</div>);
+    let content;
+    if (error) {
+      content = elementError();
+    } else if (sample.id) {
+      content = this.renderSample(sample);
+    } else {
+      content = 'Drop sample here.';
+    }
+    return connectDropTarget(
+      <div className={className}>
+        {content}
+      </div>
+    );
   }
 
   renderStatic() {
-    const { sample } = this.state;
-    return sample.id ? this.renderSample(sample) : '';
+    const { sample, error } = this.state;
+    let content;
+    if (error) {
+      content = elementError();
+    } else if (sample.id) {
+      content = this.renderSample(sample);
+    } else {
+      content = null;
+    }
+    return content;
   }
 
   render() {

@@ -41,6 +41,7 @@
 #  index_reactions_on_role            (role)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
   acts_as_paranoid
   include ElementUIStateScopes
@@ -49,7 +50,7 @@ class Reaction < ApplicationRecord
   include ElementCodes
   include Taggable
   include ReactionRinchi
-  include Segmentable
+  include Labimotion::Segmentable
 
   serialize :description, Hash
   serialize :observation, Hash
@@ -88,11 +89,12 @@ class Reaction < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_rinchi_string, ->(query) { where('rinchi_string ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
-  scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
-  scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
-  scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
+  scope :by_material_ids, ->(ids) { joins(:starting_materials).where(samples: { id: ids }) }
+  scope :by_solvent_ids, ->(ids) { joins(:solvents).where(samples: { id: ids }) }
+  scope :by_reactant_ids, ->(ids) { joins(:reactants).where(samples: { id: ids }) }
+  scope :by_product_ids,  ->(ids) { joins(:products).where(samples: { id: ids }) }
   scope :by_sample_ids, ->(ids) { joins(:reactions_samples).where(reactions_samples: { sample_id: ids }) }
+  scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
@@ -137,6 +139,7 @@ class Reaction < ApplicationRecord
   has_many :sync_collections_users, through: :collections
 
   has_many :private_notes, as: :noteable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, presence: true
@@ -145,6 +148,7 @@ class Reaction < ApplicationRecord
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
+  around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
   after_create :update_counter
@@ -283,7 +287,30 @@ class Reaction < ApplicationRecord
   private
 
   def scrubber(value)
-    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    Loofah.scrub_fragment(value, :strip).to_s
+    Chemotion::Sanitizer.scrub_xml(value)
   end
+
+  def update_fields_to_plain_text
+    description_changed = description_changed?
+    observation_changed = observation_changed?
+    yield
+    update_to_plain_text(description_changed, observation_changed)
+  end
+
+  # rubocop:disable Rails/SkipsModelValidations
+  def update_to_plain_text(description_changed, observation_changed)
+    update_columns(
+      {
+        plain_text_observation: observation_changed.presence && Chemotion::QuillToPlainText.convert(observation),
+        plain_text_description: description_changed.presence && Chemotion::QuillToPlainText.convert(description),
+      }.compact,
+    )
+  # NB: we don't want to raise an error if the conversion fails
+  rescue StandardError => e
+    Rails.logger.error("Error converting quill to plain text: #{e}")
+  end
+  # rubocop:enable Rails/SkipsModelValidations
+
+  handle_asynchronously :update_to_plain_text, queue: 'plain_text_reaction'
 end
+# rubocop:enable Metrics/ClassLength

@@ -34,7 +34,7 @@
 class Attachment < ApplicationRecord
   include AttachmentJcampAasm
   include AttachmentJcampProcess
-  include AttachmentConverter
+  include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
@@ -74,14 +74,6 @@ class Attachment < ApplicationRecord
   scope :where_template, lambda {
     where(attachable_type: 'Template')
   }
-
-  def copy(**args)
-    d = dup
-    d.identifier = nil
-    d.duplicated = true
-    d.update(args)
-    d
-  end
 
   def extname
     File.extname(filename.to_s)

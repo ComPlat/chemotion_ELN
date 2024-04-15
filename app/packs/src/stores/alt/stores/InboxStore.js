@@ -5,6 +5,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 class InboxStore {
   constructor() {
@@ -15,14 +16,19 @@ class InboxStore {
       numberOfAttachments: 0,
       checkedIds: [],
       checkedAll: false,
+      checkedDeviceIds: [],
+      checkedDeviceAll: false,
       inboxModalVisible: false,
       inboxVisible: false,
       currentPage: 1,
       itemsPerPage: 20,
       currentContainerPage: 1,
+      currentUnsortedBoxPage: 1,
+      currentDeviceBoxPage: 1,
       dataItemsPerPage: 35,
       totalPages: null,
       activeDeviceBoxId: null,
+      inboxSize: 'Medium',
     };
 
     this.bindListeners({
@@ -35,11 +41,17 @@ class InboxStore {
       handleRemoveUnlinkedAttachmentFromList: InboxActions.removeUnlinkedAttachmentFromList,
       handleRemoveDatasetFromList: InboxActions.removeDatasetFromList,
       handleDeleteAttachment: InboxActions.deleteAttachment,
+      handleBulkDeleteAttachment: InboxActions.bulkDeleteAttachments,
       handleDeleteContainer: InboxActions.deleteContainer,
       handleBackToInbox: InboxActions.backToInbox,
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
       handleCheckedAll: InboxActions.checkedAll,
       handleCheckedIds: InboxActions.checkedIds,
+      handleCheckDeviceAttachments: InboxActions.checkDeviceAttachments,
+      handleCheckedDeviceIds: InboxActions.checkedDeviceIds,
+      handleCheckedDeviceAll: InboxActions.checkedDeviceAll,
+      handlePrevClick: InboxActions.prevClick,
+      handleNextClick: InboxActions.nextClick,
 
       handleUpdateCreateElementDict: [
         ElementActions.createSample,
@@ -59,6 +71,9 @@ class InboxStore {
       handleSetPagination: InboxActions.setInboxPagination,
       setInboxVisible: InboxActions.setInboxVisible,
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
+      handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
+      handleChangeInboxFilter: InboxActions.changeInboxFilter,
+      handleChangeInboxSize: InboxActions.changeInboxSize,
     });
   }
 
@@ -76,14 +91,46 @@ class InboxStore {
     }
   }
 
-  handleFetchInbox(result) {
-    const { itemsPerPage } = this.state;
-    this.state.inbox = result;
+  handleFetchInbox(payload) {
+    const { itemsPerPage, currentDeviceBoxPage } = this.state;
+    this.state.inbox = payload.inbox;
     this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
-    this.state.activeDeviceBoxId = null;
+    this.state.activeDeviceBoxId = payload.activeDeviceBoxId ? payload.activeDeviceBoxId : null;
+
+    if (this.state.activeDeviceBoxId) {
+      InboxActions.fetchInboxContainer(this.state.activeDeviceBoxId, currentDeviceBoxPage);
+    }
 
     this.sync();
     this.countAttachments();
+  }
+
+  handleFetchInboxUnsorted(payload) {
+    this.setState((prevState) => ({
+      inbox: {
+        ...prevState.inbox,
+        unlinked_attachments: payload.unlinked_attachments,
+        inbox_count: payload.inbox_count,
+      },
+      currentUnsortedBoxPage: 1,
+    }));
+  }
+
+  handleChangeInboxFilter(filter) {
+    const userState = UserStore.getState();
+    if (!userState.profile.filters) {
+      userState.profile.data.filters = {};
+    }
+    userState.profile.data.filters[filter.name] = {
+      sort: filter.sort,
+    };
+
+    const { currentPage, itemsPerPage, activeDeviceBoxId } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId });
+  }
+
+  handleChangeInboxSize(inboxSize) {
+    this.state.inboxSize = inboxSize;
   }
 
   handleFetchInboxCount(result) {
@@ -110,6 +157,7 @@ class InboxStore {
         children: updatedChildren,
       },
       currentContainerPage: payload.currentContainerPage,
+      activeDeviceBoxId: payload.containerId
     }));
 
     this.sync();
@@ -131,6 +179,22 @@ class InboxStore {
     this.setState(inbox);
     this.countAttachments();
   }
+
+  handlePrevClick() {
+    this.setState((prevState) => ({
+      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage - 1,
+      checkedAll: false,
+      checkedIds: [],
+    }));
+  }
+
+  handleNextClick = () => {
+    this.setState((prevState) => ({
+      currentUnsortedBoxPage: prevState.currentUnsortedBoxPage + 1,
+      checkedAll: false,
+      checkedIds: [],
+    }));
+  };
 
   handleRemoveUnlinkedAttachmentFromList(attachment) {
     const { inbox } = this.state;
@@ -184,6 +248,28 @@ class InboxStore {
     }
   }
 
+  handleBulkDeleteAttachment(payload) {
+    if (payload?.fromUnsorted) {
+      const { inbox } = this.state;
+
+      const updatedAttachments = inbox.unlinked_attachments.filter(
+        (attachment) => attachment.id !== payload?.result.id
+      );
+
+      this.setState({
+        inbox: {
+          ...inbox,
+          unlinked_attachments: updatedAttachments,
+        },
+      });
+      this.countAttachments();
+    } else {
+      const { activeDeviceBoxId, currentContainerPage } = this.state;
+
+      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentContainerPage);
+    }
+  }
+
   handleDeleteContainerLink(result) {
     const { currentPage, itemsPerPage } = this.state;
     InboxActions.fetchInbox({ currentPage, itemsPerPage });
@@ -199,7 +285,17 @@ class InboxStore {
       newInbox.children.splice(parentIndex, 1);
       this.setState({ inbox: newInbox });
     } else {
-      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentContainerPage);
+      const updatedChildren = inbox.children.map((parent) => {
+        if (parent.children && parent.children.length > 0) {
+          const newParent = { ...parent };
+          newParent.children = parent.children.filter((child) => child.id !== result.id);
+          return newParent;
+        }
+        return parent;
+      });
+
+      const updatedInbox = { ...inbox, children: updatedChildren };
+      this.setState({ inbox: updatedInbox });
     }
   }
 
@@ -304,19 +400,84 @@ class InboxStore {
   }
 
   handleCheckedIds(params) {
-    const { inbox, checkedIds } = this.state;
-    const unlikedAttachments = inbox.unlinked_attachments;
+    const {
+      inbox, checkedIds, currentUnsortedBoxPage, dataItemsPerPage,
+    } = this.state;
+    const unlinkedAttachments = inbox.unlinked_attachments;
+    const startIndex = (currentUnsortedBoxPage - 1) * dataItemsPerPage;
+    const endIndex = startIndex + dataItemsPerPage;
+    const currentAttachments = unlinkedAttachments.slice(startIndex, endIndex);
+
     if (params.type && params.range === 'child') {
       ArrayUtils.pushUniq(checkedIds, params.ids);
     } else if (params.type === false && params.range === 'child') {
       ArrayUtils.removeFromListByValue(checkedIds || [], params.ids);
     } else if (params.range === 'all' && params.type === true) {
-      unlikedAttachments.map(attachment => ArrayUtils.pushUniq(checkedIds, attachment.id));
+      currentAttachments.forEach((attachment) => ArrayUtils.pushUniq(checkedIds, attachment.id));
+
       this.handleCheckedAll(params);
     } else if (params.range === 'all' && params.type === false) {
-      unlikedAttachments.map(attachment => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
+      currentAttachments.forEach((attachment) => ArrayUtils.removeFromListByValue(checkedIds || [], attachment.id));
       this.handleCheckedAll(params);
     }
+
+    // If unsortedBox, remove devicebox attachments from checkedIds
+    if (this.state.activeDeviceBoxId === -1) {
+      for (let i = checkedIds.length - 1; i >= 0; i--) {
+        const checkedId = checkedIds[i];
+        const hasCorrespondingAttachment = currentAttachments.some((attachment) => attachment.id === checkedId);
+        if (!hasCorrespondingAttachment) {
+          checkedIds.splice(i, 1);
+        }
+      }
+    }
+  }
+
+  handleCheckedDeviceAll(params) {
+    const { checkedDeviceAll, inbox, activeDeviceBoxId } = this.state;
+
+    if (params.range === 'all') {
+      if (params.type) {
+        const currentDeviceBox = inbox.children.find((deviceBox) => deviceBox.id === activeDeviceBoxId);
+        if (currentDeviceBox) {
+          const allDatasetIdsFlat = currentDeviceBox.children.map((dataset) => dataset.id);
+          const allAttachments = currentDeviceBox.children.reduce((acc, dataset) => {
+            acc.push(...dataset.attachments);
+            return acc;
+          }, []);
+          const allAttachmentsFlat = _.flatten(allAttachments).map((attachment) => attachment.id);
+
+          this.setState({
+            checkedDeviceIds: allDatasetIdsFlat,
+            checkedIds: allAttachmentsFlat,
+          });
+        }
+      } else {
+        this.setState({
+          checkedDeviceIds: [],
+          checkedIds: [],
+        });
+      }
+    }
+
+    this.setState({ checkedDeviceAll: !checkedDeviceAll });
+  }
+
+  handleCheckedDeviceIds(params) {
+    this.setState({
+      checkedDeviceIds: params.checkedDeviceIds,
+      checkedIds: params.checkedIds
+    });
+  }
+
+  handleCheckDeviceAttachments(params) {
+    const { checkedIds } = this.state;
+
+    const newCheckedIds = (params.isSelected)
+      ? checkedIds.filter((checkedId) => checkedId !== params.ids)
+      : [...checkedIds, params.ids];
+
+    this.setState({ checkedIds: newCheckedIds });
   }
 }
 

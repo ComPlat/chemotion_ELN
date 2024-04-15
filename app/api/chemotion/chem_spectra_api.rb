@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 # Belong to Chemotion module
 module Chemotion
   # API for ChemSpectra manipulation
@@ -80,6 +82,41 @@ module Chemotion
           nil
         end
       end
+
+      def compare_data_type_mapping(response) # rubocop:disable Metrics/AbcSize
+        default_data_types = JSON.parse(response.body)
+        file_path = Rails.configuration.path_spectra_data_type
+
+        current_data_types = {}
+        current_data_types = JSON.parse(File.read(file_path)) if File.exist?(file_path)
+
+        keys_to_check = default_data_types['datatypes'].keys
+        result = {
+          'default_data_types' => {},
+          'current_data_types' => {},
+        }
+        keys_to_check.each do |key|
+          current_values = current_data_types['datatypes'][key] || [] if current_data_types != {}
+          default_values = default_data_types['datatypes'][key] || []
+
+          if current_values.nil?
+            current_data_types = default_data_types
+            result['current_data_types'][key] = default_values
+          else
+            merged_values = (current_values | default_values).uniq
+            current_data_types['datatypes'][key] = merged_values
+            result['current_data_types'][key] = merged_values
+          end
+
+          result['default_data_types'][key] = default_values
+        end
+        save_data_types(file_path, current_data_types)
+        result
+      end
+
+      def save_data_types(file_path, current_data_types)
+        File.write(file_path, JSON.pretty_generate(current_data_types))
+      end
     end
 
     resource :chemspectra do # rubocop:disable BlockLength
@@ -145,6 +182,48 @@ module Chemotion
         post 'refresh' do
           convert_for_refresh(params)
         end
+
+        desc 'Combine spectra'
+        params do
+          requires :spectra_ids, type: [Integer]
+          requires :front_spectra_idx, type: Integer # index of front spectra
+        end
+        post 'combine_spectra' do
+          pm = to_rails_snake_case(params)
+
+          list_file = []
+          list_file_names = []
+          container_id = -1
+          combined_image_filename = ''
+          Attachment.where(id: pm[:spectra_ids]).each do |att|
+            container = att.container
+            combined_image_filename = "#{container.name}.new_combined.png"
+            container_id = att.attachable_id
+            list_file_names.push(att.filename)
+            list_file.push(att.abs_path)
+          end
+
+          _, image = Chemotion::Jcamp::CombineImg.combine(
+            list_file, pm[:front_spectra_idx], list_file_names
+          )
+
+          content_type('application/json')
+          unless image.nil?
+            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
+            att.destroy! unless att.nil?
+            att = Attachment.new(
+              filename: combined_image_filename,
+              created_by: current_user.id,
+              created_for: current_user.id,
+              file_path: image.path,
+              attachable_type: 'Container',
+              attachable_id: container_id,
+            )
+            att.save!
+          end
+
+          { status: true }
+        end
       end
 
       resource :predict do
@@ -196,6 +275,25 @@ module Chemotion
         end
       end
 
+      resource :spectra_layouts do
+        desc 'Get all spectra layouts and data types'
+        get do
+          url = Rails.configuration.spectra.chemspectra.url
+          if url
+            api_endpoint = "#{url}/api/v1/chemspectra/spectra_layouts"
+            response = HTTParty.get(api_endpoint)
+            case response.code
+            when 404
+              error_message = 'API endpoint not found'
+              error!(error_message, 404)
+            when 200
+              data_types = compare_data_type_mapping(response)
+              data_types
+            end
+          end
+        end
+      end
+
       resource :nmrium_wrapper do
         desc 'Return url of nmrium wrapper'
         route_param :host_name do
@@ -208,3 +306,5 @@ module Chemotion
     end
   end
 end
+
+# rubocop:enable Metrics/ClassLength

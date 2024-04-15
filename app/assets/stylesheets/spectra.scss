@@ -8,7 +8,7 @@
     top: auto;
     left: 1vw;
     width: 98vw;
-    text-align: center;
+    text-align: left;
   }
 }
 
@@ -47,7 +47,6 @@
     text-align: center;
   }
 
-  .txt-sv-panel-title,
   .txt-sv-panel-head {
     font-size: 12px !important;
     font-family: 'Helvetica'!important;
@@ -95,6 +94,11 @@
 }
 
 .txt-sv-panel-txt {
+  font-size: 14px !important;
+  font-family: 'Helvetica'!important;
+}
+
+.txt-sv-panel-title {
   font-size: 14px !important;
   font-family: 'Helvetica'!important;
 }

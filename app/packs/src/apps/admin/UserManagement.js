@@ -1,26 +1,23 @@
+/* eslint-disable react/destructuring-assignment */
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab } from 'react-bootstrap';
+import {
+  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab
+} from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
 
 const loadUserByName = (input) => {
   if (!input) {
     return Promise.resolve({ options: [] });
   }
 
-  return UsersFetcher.fetchUsersByName(input)
-    .then((res) => {
-      const usersEntries = res.users.filter(u => u.user_type === 'Person')
-        .map(u => ({
-          value: u.id,
-          name: u.name,
-          label: `${u.name}(${u.abb})`
-        }));
-      return { options: usersEntries };
-    }).catch((errorMessage) => {
+  return AdminFetcher.fetchUsersByNameType(input, 'Person')
+    .then((res) => selectUserOptionFormater({ data: res }))
+    .catch((errorMessage) => {
       console.log(errorMessage);
     });
 };
@@ -44,22 +41,60 @@ const handleResetPassword = (id, random) => {
     });
 };
 
-const validateEmail = mail => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
-const editTooltip = <Tooltip id="inchi_tooltip">edit User Info</Tooltip>;
-const resetPasswordTooltip = <Tooltip id="assign_button">reset password</Tooltip>;
-const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">send password instructions</Tooltip>;
-const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Tooltip>;
-const confirmEmailChangeTooltip = email => (<Tooltip id="email_change_button">confirm email: <br /> {email}</Tooltip>);
-const disableTooltip = <Tooltip id="assign_button">lock this account</Tooltip>;
-const enableTooltip = <Tooltip id="assign_button">unlock this account</Tooltip>;
-const converterEnableTooltip = <Tooltip id="assign_button">Enable Converter profiles editing for this user (currently disabled)</Tooltip>;
-const converterDisableTooltip = <Tooltip id="assign_button">Disable Converter profiles editing for this user (currently enabled)</Tooltip>;
-const templateModeratorEnableTooltip = <Tooltip id="assign_button">Enable Ketcher template editing for this user (currently disabled)</Tooltip>;
-const templateModeratorDisableTooltip = <Tooltip id="assign_button">Disable Ketcher template editing for this user (currently enabled)</Tooltip>;
-const moleculeModeratorEnableTooltip = <Tooltip id="assign_button">Enable editing the representation of the global molecules for this user (currently disabled)</Tooltip>;
-const moleculeModeratorDisableTooltip = <Tooltip id="assign_button">Disable editing the representation of the global molecules for this user (currently enabled)</Tooltip>;
-const accountActiveTooltip = <Tooltip id="assign_button">This user account is deactivated, press button to [activate]</Tooltip>;
-const accountInActiveTooltip = <Tooltip id="assign_button">This user account is activated, press button to [deactivate]</Tooltip>;
+const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(mail));
+const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
+const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
+const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
+const confirmUserTooltip = <Tooltip id="assign_button">Confirm this account</Tooltip>;
+const confirmEmailChangeTooltip = (email) => (
+  <Tooltip id="email_change_button">
+    Confirm E-Mail:
+    <br />
+    {email}
+  </Tooltip>
+);
+const disableTooltip = <Tooltip id="assign_button">Lock this account</Tooltip>;
+const enableTooltip = <Tooltip id="assign_button">Unlock this account</Tooltip>;
+const converterEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable Converter profiles editing for this user (currently disabled)
+  </Tooltip>
+);
+const converterDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable Converter profiles editing for this user (currently enabled)
+  </Tooltip>
+);
+const templateModeratorEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable Ketcher template editing for this user (currently disabled)
+  </Tooltip>
+);
+const templateModeratorDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable Ketcher template editing for this user (currently enabled)
+  </Tooltip>
+);
+const moleculeModeratorEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable editing the representation of the global molecules for this user (currently disabled)
+  </Tooltip>
+);
+const moleculeModeratorDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable editing the representation of the global molecules for this user (currently enabled)
+  </Tooltip>
+);
+const accountActiveTooltip = (
+  <Tooltip id="assign_button">
+    This user account is deactivated, press button to [activate]
+  </Tooltip>
+);
+const accountInActiveTooltip = (
+  <Tooltip id="assign_button">
+    This user account is activated, press button to [deactivate]
+  </Tooltip>
+);
 
 export default class UserManagement extends React.Component {
   constructor(props) {
@@ -71,9 +106,11 @@ export default class UserManagement extends React.Component {
       showMsgModal: false,
       showNewUserModal: false,
       showEditUserModal: false,
+      showGenericAdminModal: false,
       messageNewUserModal: '',
       messageEditUserModal: '',
       processingSummaryUserFile: '',
+      filterCriteria: {}
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -86,6 +123,8 @@ export default class UserManagement extends React.Component {
     this.handleEditUserShow = this.handleEditUserShow.bind(this);
     this.handleEditUserClose = this.handleEditUserClose.bind(this);
     this.handleUpdateUser = this.handleUpdateUser.bind(this);
+    this.handleGenericAdminModal = this.handleGenericAdminModal.bind(this);
+    this.handleGenericAdminModalCb = this.handleGenericAdminModalCb.bind(this);
   }
 
   componentDidMount() {
@@ -136,6 +175,21 @@ export default class UserManagement extends React.Component {
     });
   }
 
+  handleGenericAdminModalCb(user) {
+    AdminFetcher.fetchUsers()
+      .then((result) => {
+        let updated = result.users.find(u => u.id === user.id);
+        updated = updated || user;
+        this.setState({
+          users: result.users, user: updated
+        });
+      });
+  }
+
+  handleGenericAdminModal(show, user = {}) {
+    this.setState({ showGenericAdminModal: show, user });
+  }
+
   handleFetchUsers() {
     AdminFetcher.fetchUsers()
       .then((result) => {
@@ -147,7 +201,7 @@ export default class UserManagement extends React.Component {
 
   handleEnableDisableAccount(id, lockedAt) {
     AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
         alert(message);
@@ -156,34 +210,38 @@ export default class UserManagement extends React.Component {
 
   handleConverterAdmin(id, isConverterAdmin) {
     AdminFetcher.updateAccount({ user_id: id, converter_admin: !isConverterAdmin })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isConverterAdmin === true ? 'Disable Converter profiles editing for this user' : 'Enable Converter profiles editing for this user';
+        const message = isConverterAdmin === true
+          ? 'Disable Converter profiles editing for this user' : 'Enable Converter profiles editing for this user';
         alert(message);
       });
   }
 
   handleTemplatesModerator(id, isTemplatesModerator) {
     AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isTemplatesModerator === true ? 'Disable Ketcher template editing for this user' : 'Enable Ketcher template editing for this user';
+        const message = isTemplatesModerator === true
+          ? 'Disable Ketcher template editing for this user' : 'Enable Ketcher template editing for this user';
         alert(message);
       });
   }
 
   handleMoleculesModerator(id, isMoleculesEditor) {
     AdminFetcher.updateAccount({ user_id: id, molecule_editor: !isMoleculesEditor })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
-        const message = isMoleculesEditor === true ? 'Disable editing the representation of the global molecules for this user' : 'Enable editing the representation of the global molecules for this user';
+        const message = isMoleculesEditor === true
+          ? 'Disable editing the representation of the global molecules for this user'
+          : 'Enable editing the representation of the global molecules for this user';
         alert(message);
       });
   }
 
   handleActiveInActiveAccount(id, isActive) {
     AdminFetcher.updateAccount({ user_id: id, account_active: !isActive })
-      .then((result) => {
+      .then(() => {
         this.handleFetchUsers();
         const message = isActive === true ? 'User is In-Active!' : 'User is Active now!';
         alert(message);
@@ -214,29 +272,6 @@ export default class UserManagement extends React.Component {
           alert('User New Email has been confirmed!');
         }
       });
-  }
-
-  validateUserInput() {
-    if (this.email.value === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input email.' });
-      return false;
-    } else if (!validateEmail(this.email.value.trim())) { // also validated in backend
-      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
-      return false;
-    } else if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
-      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
-      return false;
-    } else if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
-      this.setState({ messageNewUserModal: 'passwords do not mach!' });
-      return false;
-    } else if (this.password.value.trim().length < 8) { // also validated in backend
-      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
-      return false;
-    } else if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') { // also validated in backend
-      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
-      return false;
-    }
-    return true;
   }
 
   handleCreateNewUser() {
@@ -271,23 +306,26 @@ export default class UserManagement extends React.Component {
 
   handleOnDropUserFile = (data, file) => {
     const validFileTypes = ['text/csv', 'application/vnd.ms-excel'];
-    if (!validFileTypes.includes(file.type)) { // Note that MIME type doesn't reliably indicate file type. It's only an initial guard and data is validated more thoroughly during processing.
-      this.setState({ processingSummaryUserFile: `Invalid file type ${file.type}. Please make sure to upload a CSV file.` });
+    if (!validFileTypes.includes(file.type)) {
+      this.setState(
+        { processingSummaryUserFile: `Invalid file type ${file.type}. Please make sure to upload a CSV file.` }
+      );
       this.newUsers = null;
       return false;
     }
     this.newUsers = data;
-    for (let i = 0; i < this.newUsers.length; i++) {
+    for (let i = 0; i < this.newUsers.length; i += 1) {
       this.newUsers[i].data.row = i + 1;
     }
+    return true;
   };
 
-  handleOnErrorUserFile = (err, file, inputElem, reason) => {
+  handleOnErrorUserFile = (err) => {
     console.log(err);
     this.newUsers = null;
   };
 
-  handleOnRemoveUserFile = (data) => {
+  handleOnRemoveUserFile = () => {
     this.newUsers = null;
   };
 
@@ -296,7 +334,7 @@ export default class UserManagement extends React.Component {
       this.newUsers = null;
       this.setState({ messageNewUserModal: 'Finished processing user file.' });
     } else {
-      const promisedNewUsers = this.newUsers.map(user => this.createNewUserFromFile(user));
+      const promisedNewUsers = this.newUsers.map((user) => this.createNewUserFromFile(user));
       Promise.allSettled(promisedNewUsers)
         .then((userResults) => {
           this.showProcessingSummaryUserFile(userResults);
@@ -306,6 +344,57 @@ export default class UserManagement extends React.Component {
           this.setState({ messageNewUserModal: `Failed to process user file: ${reason}.` });
         });
     }
+  }
+
+  handleUpdateUser(user) {
+    if (!validateEmail(this.u_email.value.trim())) {
+      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
+      return false;
+    } if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim()
+      === '' || this.u_abbr.value.trim() === '') {
+      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
+      return false;
+    }
+    AdminFetcher.updateUser({
+      id: user.id,
+      email: this.u_email.value.trim(),
+      first_name: this.u_firstname.value.trim(),
+      last_name: this.u_lastname.value.trim(),
+      name_abbreviation: this.u_abbr.value.trim(),
+      type: this.u_type.value
+    })
+      .then((result) => {
+        if (result.error) {
+          this.setState({ messageEditUserModal: result.error });
+          return false;
+        }
+        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
+        this.u_email.value = '';
+        this.u_firstname.value = '';
+        this.u_lastname.value = '';
+        this.u_abbr.value = '';
+        this.handleFetchUsers();
+        return true;
+      });
+    return true;
+  }
+
+  updateFilter = (key, value) => {
+    this.setState((prevState) => ({
+      filterCriteria: {
+        ...prevState.filterCriteria,
+        [key]: value
+      }
+    }));
+  };
+
+  updateDropdownFilter(field, value) {
+    this.setState((prevState) => ({
+      filterCriteria: {
+        ...prevState.filterCriteria,
+        [field]: value
+      }
+    }));
   }
 
   createNewUserFromFile(newUser) {
@@ -336,15 +425,21 @@ export default class UserManagement extends React.Component {
     const nUsers = this.newUsers.length;
     const nUsersMax = 100;
     if (nUsers > nUsersMax) {
-      this.setState({ processingSummaryUserFile: `The file contains too many users. Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.` });
+      this.setState({
+        processingSummaryUserFile: 'The file contains too many users. '
+        + `Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
+      });
       return false;
     }
 
     const fileHeader = this.newUsers[0].meta.fields;
     const validHeader = ['email', 'password', 'firstname', 'lastname', 'nameabbr', 'type'];
-    if (!(fileHeader.length === validHeader.length &&
-      fileHeader.every((val, index) => val === validHeader[index]))) {
-      this.setState({ processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. Please make sure that your file's header is organized as follows: ${validHeader}.` });
+    if (!(fileHeader.length === validHeader.length
+      && fileHeader.every((val, index) => val === validHeader[index]))) {
+      this.setState({
+        processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. `
+      + `Please make sure that your file's header is organized as follows: ${validHeader}.`
+      });
       return false;
     }
 
@@ -372,7 +467,8 @@ export default class UserManagement extends React.Component {
     this.newUsers.forEach((user) => {
       const userType = user.data.type.trim();
       if (!validTypes.includes(userType)) {
-        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. Please select a valid type from ${validTypes}.\n\n`;
+        invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. `
+        + `Please select a valid type from ${validTypes}.\n\n`;
       }
     });
     if (!(invalidTypeMessage === '')) {
@@ -380,15 +476,18 @@ export default class UserManagement extends React.Component {
       return false;
     }
 
-    const sortedUserEmails = this.newUsers.map(user => user.data.email).sort();
+    const sortedUserEmails = this.newUsers.map((user) => user.data.email).sort();
     const duplicateUserEmails = new Set();
-    for (let i = 0; i < sortedUserEmails.length - 1; i++) {
-      if (sortedUserEmails[i + 1] == sortedUserEmails[i]) {
+    for (let i = 0; i < sortedUserEmails.length - 1; i += 1) {
+      if (sortedUserEmails[i + 1] === sortedUserEmails[i]) {
         duplicateUserEmails.add(sortedUserEmails[i]);
       }
     }
     if (duplicateUserEmails.size) {
-      this.setState({ processingSummaryUserFile: `The file contains duplicate user emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.` });
+      this.setState({
+        processingSummaryUserFile: 'The file contains duplicate user '
+      + `emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
+      });
       return false;
     }
 
@@ -406,37 +505,30 @@ export default class UserManagement extends React.Component {
     });
   }
 
-  handleUpdateUser(user) {
-    if (!validateEmail(this.u_email.value.trim())) {
-      this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
+  validateUserInput() {
+    if (this.email.value === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input email.' });
       return false;
-    } else if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '' || this.u_abbr.value.trim() === '') {
-      this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
+    } if (!validateEmail(this.email.value.trim())) { // also validated in backend
+      this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
+      return false;
+    } if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
+      this.setState({ messageNewUserModal: 'Please input password with correct format.' });
+      return false;
+    } if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
+      this.setState({ messageNewUserModal: 'passwords do not mach!' });
+      return false;
+    } if (this.password.value.trim().length < 8) { // also validated in backend
+      this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
+      return false;
+    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
+        || this.nameAbbr.value.trim() === '') { // also validated in backend
+      this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
-    AdminFetcher.updateUser({
-      id: user.id,
-      email: this.u_email.value.trim(),
-      first_name: this.u_firstname.value.trim(),
-      last_name: this.u_lastname.value.trim(),
-      name_abbreviation: this.u_abbr.value.trim(),
-      type: this.u_type.value
-    })
-      .then((result) => {
-        if (result.error) {
-          this.setState({ messageEditUserModal: result.error });
-          return false;
-        }
-        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
-        this.u_email.value = '';
-        this.u_firstname.value = '';
-        this.u_lastname.value = '';
-        this.u_abbr.value = '';
-        this.handleFetchUsers();
-        return true;
-      });
     return true;
   }
+
   messageSend() {
     const { selectedUsers } = this.state;
     if (this.myMessage.value === '') {
@@ -457,7 +549,7 @@ export default class UserManagement extends React.Component {
             user_ids: userIds
           };
           MessagesFetcher.createMessage(params)
-            .then((result) => {
+            .then(() => {
               this.myMessage.value = '';
               this.setState({
                 selectedUsers: null
@@ -586,7 +678,7 @@ export default class UserManagement extends React.Component {
                     Type:
                   </Col>
                   <Col sm={9}>
-                    <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }} >
+                    <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
                       <option value="Person">Person</option>
                       <option value="Admin">Admin</option>
                       <option value="Device">Device</option>
@@ -595,7 +687,7 @@ export default class UserManagement extends React.Component {
                 </FormGroup>
                 <FormGroup>
                   <Col smOffset={0} sm={10}>
-                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()} >
+                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()}>
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -647,13 +739,14 @@ export default class UserManagement extends React.Component {
                     addRemoveButton
                     onRemoveFile={this.handleOnRemoveUserFile}
                   >
-                    <span>Drop a CSV user file here or click to upload.
+                    <span>
+                      Drop a CSV user file here or click to upload.
                       The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
                     </span>
                   </CSVReader>
                 </FormGroup>
                 <FormGroup>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()} >
+                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()}>
                     Create users&nbsp;
                     <i className="fa fa-plus" />
                   </Button>
@@ -676,13 +769,12 @@ export default class UserManagement extends React.Component {
             <FormGroup controlId="formControlMessage">
               <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
             </FormGroup>
-            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()} >Cancel</Button>
+            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()}>Cancel</Button>
           </Modal.Footer>
         </Modal.Body>
       </Modal>
     );
   }
-
 
   renderEditUserModal() {
     const { user } = this.state;
@@ -702,7 +794,12 @@ export default class UserManagement extends React.Component {
                   Email:
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="email" name="u_email" defaultValue={user.email} inputRef={(ref) => { this.u_email = ref; }} />
+                  <FormControl
+                    type="email"
+                    name="u_email"
+                    defaultValue={user.email}
+                    inputRef={(ref) => { this.u_email = ref; }}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup controlId="formControlFirstName">
@@ -710,7 +807,12 @@ export default class UserManagement extends React.Component {
                   First name:
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" name="u_firstname" defaultValue={user.first_name} inputRef={(ref) => { this.u_firstname = ref; }} />
+                  <FormControl
+                    type="text"
+                    name="u_firstname"
+                    defaultValue={user.first_name}
+                    inputRef={(ref) => { this.u_firstname = ref; }}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup controlId="formControlLastName">
@@ -718,7 +820,12 @@ export default class UserManagement extends React.Component {
                   Last name:
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" name="u_lastname" defaultValue={user.last_name} inputRef={(ref) => { this.u_lastname = ref; }} />
+                  <FormControl
+                    type="text"
+                    name="u_lastname"
+                    defaultValue={user.last_name}
+                    inputRef={(ref) => { this.u_lastname = ref; }}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup controlId="formControlAbbr">
@@ -726,7 +833,12 @@ export default class UserManagement extends React.Component {
                   Abbr (3):
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" name="u_abbr" defaultValue={user.initials} inputRef={(ref) => { this.u_abbr = ref; }} />
+                  <FormControl
+                    type="text"
+                    name="u_abbr"
+                    defaultValue={user.initials}
+                    inputRef={(ref) => { this.u_abbr = ref; }}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup controlId="formControlsType">
@@ -734,7 +846,11 @@ export default class UserManagement extends React.Component {
                   Type:
                 </Col>
                 <Col sm={9}>
-                  <FormControl componentClass="select" defaultValue={user.type} inputRef={(ref) => { this.u_type = ref; }} >
+                  <FormControl
+                    componentClass="select"
+                    defaultValue={user.type}
+                    inputRef={(ref) => { this.u_type = ref; }}
+                  >
                     <option value="Person">Person</option>
                     <option value="Group">Group</option>
                     <option value="Device">Device</option>
@@ -744,17 +860,22 @@ export default class UserManagement extends React.Component {
               </FormGroup>
               <FormGroup controlId="formControlMessage">
                 <Col sm={12}>
-                  <FormControl type="text" readOnly name="messageEditUserModal" value={this.state.messageEditUserModal} />
+                  <FormControl
+                    type="text"
+                    readOnly
+                    name="messageEditUserModal"
+                    value={this.state.messageEditUserModal}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)} >
+                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)}>
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()} >
+                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()}>
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -764,6 +885,18 @@ export default class UserManagement extends React.Component {
         </Modal.Body>
       </Modal>
     );
+  }
+
+  renderGenericAdminModal() {
+    const { user, showGenericAdminModal } = this.state;
+    if (showGenericAdminModal) {
+      return (<GenericAdminModal
+        user={user}
+        fnShowModal={this.handleGenericAdminModal}
+        fnCb={this.handleGenericAdminModalCb}
+      />);
+    }
+    return null;
   }
 
   render() {
@@ -783,7 +916,7 @@ export default class UserManagement extends React.Component {
       }
       return <span />;
     };
-
+    /* eslint-disable camelcase */
     const renderReConfirmButton = (unconfirmed_email, userId) => {
       if (unconfirmed_email) {
         return (
@@ -799,30 +932,95 @@ export default class UserManagement extends React.Component {
         );
       }
       return <span />;
-    };
+    };/* eslint-enable camelcase */
 
-    const { users } = this.state;
+    const { users, filterCriteria } = this.state;
+
+    // filtering logic
+    const filteredUsers = users.filter((user) => Object.keys(filterCriteria).every((key) => {
+      // skip if filter field is empty
+      if (!filterCriteria[key]) return true;
+      // special case for dropdowns
+      if (key === 'account_active' || key === 'locked_at' || key === 'type') {
+        return filterCriteria[key] === (user[key] ? 'true' : 'false') || filterCriteria[key] === user[key];
+      }
+      return String(user[key]).toLowerCase().includes(String(filterCriteria[key]).toLowerCase());
+    }));
 
     const tcolumn = (
-      <tr style={{ height: '26px', verticalAlign: 'middle' }}>
-        <th width="1%">#</th>
-        <th width="12%">Actions</th>
-        <th width="12%">Name</th>
-        <th width="6%">Abbr.</th>
-        <th width="8%">Email</th>
-        <th width="7%">Type</th>
-        <th width="15%">Login at</th>
-        <th width="2%">ID</th>
-      </tr>
+      <thead>
+        <tr style={{ height: '26px', verticalAlign: 'middle' }}>
+          <th width="1%">#</th>
+          <th width="17%">Actions</th>
+          <th width="12%">Name</th>
+          <th width="6%">Abbr.</th>
+          <th width="8%">Email</th>
+          <th width="7%">Type</th>
+          <th width="10%">Login at</th>
+          <th width="2%">ID</th>
+        </tr>
+        <tr>
+          <th aria-label="Empty header for the '#' column" />
+          <th>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <FormControl
+                componentClass="select"
+                placeholder="Active-Inactive"
+                onChange={(e) => this.updateDropdownFilter('account_active', e.target.value)}
+              >
+                <option value="">Active & Inactive</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </FormControl>
+              <FormControl
+                componentClass="select"
+                placeholder="Locked-Unlocked"
+                onChange={(e) => this.updateDropdownFilter('locked_at', e.target.value)}
+              >
+                <option value="">Locked & Unlocked</option>
+                <option value="true">Locked</option>
+                <option value="false">Unlocked</option>
+              </FormControl>
+            </div>
+          </th>
+          <th>
+            <FormControl type="text" placeholder="Name" onChange={(e) => this.updateFilter('name', e.target.value)} />
+          </th>
+          <th>
+            <FormControl
+              type="text"
+              placeholder="Abbr."
+              onChange={(e) => this.updateFilter('initials', e.target.value)}
+            />
+          </th>
+          <th>
+            <FormControl type="text" placeholder="Email" onChange={(e) => this.updateFilter('email', e.target.value)} />
+          </th>
+          <th>
+            <FormControl
+              componentClass="select"
+              placeholder="Person-Device-Admin"
+              onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="Person">Person</option>
+              <option value="Device">Device</option>
+              <option value="Admin">Admin</option>
+            </FormControl>
+          </th>
+          <th aria-label="Empty header for the 'Login at' column" />
+          <th aria-label="Empty header for the 'ID' column" />
+        </tr>
+      </thead>
     );
 
-    const tbody = users.map((g, idx) => (
+    const tbody = filteredUsers.map((g, idx) => (
       <tr key={`row_${g.id}`} style={{ height: '26px', verticalAlign: 'middle' }}>
-        <td width="1%">
+        <td width="2%">
           {idx + 1}
         </td>
-        <td width="12%">
-          <OverlayTrigger placement="bottom" overlay={editTooltip} >
+        <td width="17%">
+          <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle="info"
@@ -832,7 +1030,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip} >
+          <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle="success"
@@ -842,7 +1040,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip} >
+          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle="primary"
@@ -852,7 +1050,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip} >
+          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle={g.locked_at === null ? 'default' : 'warning'}
@@ -862,7 +1060,11 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={(g.converter_admin === null || g.converter_admin === false) ? converterEnableTooltip : converterDisableTooltip} >
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.converter_admin === null || g.converter_admin === false)
+              ? converterEnableTooltip : converterDisableTooltip}
+          >
             <Button
               bsSize="xsmall"
               bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
@@ -872,23 +1074,42 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip} >
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.is_templates_moderator === null || g.is_templates_moderator
+              === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
+          >
             <Button
               bsSize="xsmall"
-              bsStyle={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? 'default' : 'success'}
+              bsStyle={(g.is_templates_moderator === null
+                || g.is_templates_moderator === false) ? 'default' : 'success'}
               onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
             >
               <i className="fa fa-book" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={(g.molecule_editor == null || g.molecule_editor === false) ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip} >
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.molecule_editor == null || g.molecule_editor === false)
+              ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
+          >
             <Button
               bsSize="xsmall"
               bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
               onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
             >
               <i className="icon-sample" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
+              onClick={() => this.handleGenericAdminModal(true, g)}
+            >
+              <i className="fa fa-empire" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;
@@ -905,12 +1126,36 @@ export default class UserManagement extends React.Component {
           {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
           {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
-        <td width="12%"> {g.name} </td>
-        <td width="6%"> {g.initials} </td>
-        <td width="8%"> {g.email} </td>
-        <td width="7%"> {g.type} </td>
-        <td width="15%"> {g.current_sign_in_at} </td>
-        <td width="2%"> {g.id} </td>
+        <td width="12%">
+          {' '}
+          {g.name}
+          {' '}
+        </td>
+        <td width="6%">
+          {' '}
+          {g.initials}
+          {' '}
+        </td>
+        <td width="8%">
+          {' '}
+          {g.email}
+          {' '}
+        </td>
+        <td width="7%">
+          {' '}
+          {g.type}
+          {' '}
+        </td>
+        <td width="15%">
+          {' '}
+          {g.current_sign_in_at}
+          {' '}
+        </td>
+        <td width="2%">
+          {' '}
+          {g.id}
+          {' '}
+        </td>
       </tr>
     ));
 
@@ -918,18 +1163,18 @@ export default class UserManagement extends React.Component {
       <div>
         <Panel>
           <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
-            Send Message&nbsp;<i className="fa fa-commenting-o" />
+            Send Message&nbsp;
+            <i className="fa fa-commenting-o" />
           </Button>
           &nbsp;
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()}>
-            New User&nbsp;<i className="fa fa-plus" />
+          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()} data-cy="create-user">
+            New User&nbsp;
+            <i className="fa fa-plus" />
           </Button>
         </Panel>
         <Panel>
           <Table>
-            <thead>
-              {tcolumn}
-            </thead>
+            {tcolumn}
             <tbody>
               {tbody}
             </tbody>
@@ -938,6 +1183,7 @@ export default class UserManagement extends React.Component {
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
+        { this.renderGenericAdminModal() }
       </div>
     );
   }

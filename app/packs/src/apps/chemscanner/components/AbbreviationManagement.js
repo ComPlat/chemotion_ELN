@@ -14,11 +14,10 @@ function ManagementTable({
     <div className="ag-theme-balham" style={style}>
       <AgGridReact
         floatingFilter
-        enableColResize
         pagination
         suppressHorizontalScroll
         columnDefs={columnDefs}
-        defaultColDef={defaultColDef || {}}
+        defaultColDef={defaultColDef || { resizable: true }}
         rowData={data}
         onGridReady={onGridReady}
         domLayout="autoHeight"

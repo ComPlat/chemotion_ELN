@@ -17,6 +17,7 @@ module Entities
       expose! :solvents,                                                                using: 'Entities::ReactionMaterialEntity'
       expose! :starting_materials,                                                      using: 'Entities::ReactionMaterialEntity'
       expose! :type
+      expose :comment_count
     end
 
     with_options(anonymize_below: 10) do
@@ -34,7 +35,7 @@ module Entities
       expose! :rinchi_short_key
       expose! :rinchi_web_key
       expose! :rxno
-      expose! :segments,              anonymize_with: [],                               using: 'Entities::SegmentEntity'
+      expose! :segments,              anonymize_with: [],                               using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status
@@ -44,6 +45,7 @@ module Entities
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
+      expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
     end
 
     expose_timestamps
@@ -52,10 +54,6 @@ module Entities
 
     def can_update
       options[:policy].try(:update?) || false
-    end
-
-    def can_copy
-      options[:policy].try(:copy?) || false
     end
 
     def code_log
@@ -96,6 +94,14 @@ module Entities
 
     def type
       'reaction'
+    end
+
+    def comment_count
+      object.comments.count
+    end
+
+    def variations
+      object.variations.map(&:deep_symbolize_keys)
     end
   end
 end

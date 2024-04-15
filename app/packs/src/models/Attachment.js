@@ -1,5 +1,6 @@
+/* eslint-disable no-underscore-dangle */
 import Element from 'src/models/Element';
-import { formatBytes } from 'src/utilities/MathUtils';
+import { cloneDeep } from 'lodash';
 
 export default class Attachment extends Element {
   static NO_PREVIEW_AVAILABLE_PATH = '/images/wild_card/not_available.svg';
@@ -34,6 +35,11 @@ export default class Attachment extends Element {
 
   set preview(preview) {
     this._preview = preview;
+  }
+
+  static buildCopy(_attachments) {
+    const newAttachments = cloneDeep(_attachments);
+    return newAttachments;
   }
 
   serialize() {

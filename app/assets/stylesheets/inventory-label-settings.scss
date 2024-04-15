@@ -1,0 +1,37 @@
+.inventory-label-settings {
+    .select-collection-id {
+      padding-top: 15px;
+      padding-right: 10px;
+      display: flex;
+      justify-content: space-between;
+
+      & b, .select-collection-name, .inventory-counter-prefix-name, .inventory-counter-starts-at {
+        padding-top: 7px;
+        padding-right: 6px;
+        padding-left: 6px;
+      }
+    }
+  
+    .update-user-button {
+      margin-left: 190px;
+      margin-top: 20px;
+  
+      .inventory-label-next-counter {
+        padding-top: 8px;
+        width: 50%;
+      }
+  
+      .update-inventory-user-button {
+        margin-bottom : 20px;
+        .text-center {
+            width: 155px;
+            margin-left: 80px;
+  
+          .fa-spinner {
+            display: inline-block;
+            width: 120px;
+          }
+        }
+      }
+    }
+}

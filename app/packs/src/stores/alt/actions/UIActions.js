@@ -95,11 +95,19 @@ class UIActions {
     return selection;
   }
 
+  setSearchById(selection) {
+    return selection;
+  }
+
   selectCollectionWithoutUpdating(collection) {
     return collection;
   }
 
   clearSearchSelection() {
+    return null;
+  }
+
+  clearSearchById() {
     return null;
   }
 
@@ -130,6 +138,9 @@ class UIActions {
   setProductOnly(bool) {
     return bool;
   }
+
+  rerenderGenericWorkflow(params) { return params; }
+  showGenericWorkflowModal(show) { return show; }
 }
 
 export default alt.createActions(UIActions);

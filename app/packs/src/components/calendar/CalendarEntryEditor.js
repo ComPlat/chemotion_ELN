@@ -46,8 +46,7 @@ export default class CalendarEntryEditor extends React.Component {
 
     const e = { type: eventableType, params: {} };
     e.params[`${eventableType}ID`] = eventableId;
-
-    if (eventableType === 'element') {
+    if (/\blabimotion\b/.test(eventableType)) {
       e.klassType = 'GenericEl';
     }
 
@@ -225,7 +224,7 @@ export default class CalendarEntryEditor extends React.Component {
                 clearIcon={null}
                 value={entry.start}
                 onChange={(date) => updateEntry('start', date)}
-                format="y-MM-dd H:mm"
+                format="dd-MM-y H:mm"
                 style={{
                   alignItems: 'baseline',
                 }}
@@ -240,7 +239,7 @@ export default class CalendarEntryEditor extends React.Component {
                 clearIcon={null}
                 value={entry.end}
                 onChange={(date) => updateEntry('end', date)}
-                format="y-MM-dd H:mm"
+                format="dd-MM-y H:mm"
               />
             </FormGroup>
             {notAccessible ? (

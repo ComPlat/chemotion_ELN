@@ -1,26 +1,30 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
+# rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/ClassLength
+
+# rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/SafeNavigationChain, Style/RedundantParentheses
+
+# rubocop:disable Naming/VariableName, Naming/MethodParameterName, Layout/LineLength
 
 module Chemotion
   class SearchAPI < Grape::API
     include Grape::Kaminari
 
-    # TODO implement search cache?
+    # TODO: implement search cache?
     helpers CollectionHelpers
     helpers do
       params :search_params do
         optional :page, type: Integer
         requires :selection, type: Hash do
           optional :search_by_method, type: String # , values: %w[
-            # advanced substring structure
-            # screen_name wellplate_name reaction_name reaction_short_label
-            # sample_name sample_short_label
-            # sample_external_label sum_formula iupac_name inchistring cano_smiles
-            # polymer_type
-          #]
+          #  advanced substring structure
+          #  screen_name wellplate_name reaction_name reaction_short_label
+          #  sample_name sample_short_label
+          #  sample_external_label sum_formula iupac_name inchistring cano_smiles
+          #  polymer_type
+          # ]
           optional :elementType, type: String, values: %w[
-            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements cell_lines by_ids advanced structure
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -30,9 +34,28 @@ module Chemotion
           optional :name, type: String
           optional :advanced_params, type: Array do
             optional :link, type: String, values: ['', 'AND', 'OR'], default: ''
-            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE'], default: 'LIKE'
+            optional :match, type: String, values: ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '@>', '<@'], default: 'LIKE'
+            optional :table, type: String, values: %w[samples reactions wellplates screens research_plans elements segments literatures]
+            optional :element_id, type: Integer
+            optional :unit, type: String
             requires :field, type: Hash
             requires :value, type: String
+            optional :smiles, type: String
+            optional :sub_values, type: Array
+          end
+          optional :id_params, type: Hash do
+            requires :model_name, type: String, values: %w[
+              sample reaction wellplate screen element research_plan
+            ]
+            requires :ids, type: Array
+            optional :total_elements, type: Integer
+            optional :with_filter, type: Boolean
+          end
+          optional :list_filter_params, type: Hash do
+            optional :filter_created_at, type: Boolean
+            optional :from_date, type: Date
+            optional :to_date, type: Date
+            optional :product_only, type: Boolean
           end
         end
         requires :collection_id, type: String
@@ -58,109 +81,80 @@ module Chemotion
         params[:selection][:advanced_params]
       end
 
-      def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1 )
+      def id_params
+        params[:selection][:id_params]
+      end
+
+      def list_filter_params
+        params[:selection][:list_filter_params]
+      end
+
+      def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1)
         return Sample.none if not_permitted
+
         molfile = Fingerprint.standardized_molfile(params[:selection][:molfile])
         threshold = params[:selection][:tanimoto_threshold]
 
-        # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
-        if params[:selection][:search_type] == 'similar'
-          Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile,threshold)
-        else
-          Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
-        end
+        # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
+        scope =
+          if params[:selection][:search_type] == 'similar'
+            Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
+          else
+            Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
+          end
+        order_by_molecule(scope)
+      end
+
+      def order_by_molecule(scope)
+        scope.includes(:molecule)
+             .joins(:molecule)
+             .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
+             .order('molecules.sum_formular')
       end
 
       def whitelisted_table(table:, column:, **_)
-        API::WL_TABLES.has_key?(table) && API::WL_TABLES[table].include?(column)
+        return true if %w[elements segments chemicals containers measurements molecules].include?(table)
+
+        API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
 
       # desc: return true if the detail level allow to access the column
-      def filter_with_detail_level(table:, column:, sample_detail_level:, reaction_detail_level:,  **_)
-        # TODO filter according to columns
+      def filter_with_detail_level(table:, column:, sample_detail_level:, reaction_detail_level:, **_)
+        # TODO: filter according to columns
 
         return true unless table.in?(%w[samples reactions])
-        return true if table == 'samples' && (sample_detail_level > 0 || column == 'external_label')
+        return true if table == 'samples' && (sample_detail_level.positive? || column == 'external_label')
         return true if table == 'reactions' && reaction_detail_level > -1
 
         false
       end
 
-      def advanced_search(c_id = @c_id, dl = @dl) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Naming/MethodParameterName
-        query = ''
-        cond_val = []
-        tables = []
+      def advanced_search(c_id = @c_id, dl = @dl)
+        conditions = Usecases::Search::ConditionsForAdvancedSearch.new(
+          detail_levels: dl,
+          params: params[:selection][:advanced_params],
+        ).filter!
 
-        adv_params.each do |filter|
-          adv_field = filter['field'].to_h.merge(dl).symbolize_keys
-          next unless whitelisted_table(**adv_field)
-          next unless filter_with_detail_level(**adv_field)
-          table = filter['field']['table']
-          tables.push(table: table, ext_key: filter['field']['ext_key'])
-          field = filter['field']['column']
-          words = filter['value'].split(/(\r)?\n/).map!(&:strip)
-          words = words.map { |e| "%#{ActiveRecord::Base.send(:sanitize_sql_like, e)}%" } unless filter['match'] == '='
-          field = "xref ->> 'cas'" if field == 'xref' && filter['field']['opt'] == 'cas'
-          conditions = words.collect { "#{table}.#{field} #{filter['match']} ? " }.join(' OR ')
-          query = "#{query} #{filter['link']} (#{conditions}) "
-          cond_val += words
-        end
-
-        scope = Sample.by_collection_id(c_id.to_i)
-        tables.each do |table_info|
-          table = table_info[:table]
-          ext_key = table_info[:ext_key]
-          next if table.casecmp('samples').zero?
-
-          scope = if ext_key.nil?
-                    scope = scope.joins("INNER JOIN #{table} ON "\
-                                        "#{table}.sample_id = samples.id")
-                  else
-                    scope = scope.joins("INNER JOIN #{table} ON "\
-                                        "samples.#{ext_key} = #{table}.id")
-                  end
-        end
-        scope = scope.where([query] + cond_val)
+        query_cond = conditions[:value].present? ? [conditions[:query]] + conditions[:value] : conditions[:query]
+        scope = conditions[:model_name].by_collection_id(c_id.to_i)
+                                       .where(query_cond)
+                                       .joins(conditions[:joins].join(' '))
+        scope = order_by_molecule(scope) if conditions[:model_name] == Sample
+        scope = scope.group("#{conditions[:model_name].table_name}.id") if %w[ResearchPlan Wellplate].include?(conditions[:model_name].to_s)
         scope
       end
 
-      def elements_search(c_id = @c_id, dl = @dl)
-        collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(c_id)
-        element_scope = Element.joins(:collections_elements).where('collections_elements.collection_id = ? and collections_elements.element_type = (?)', collection.id, params[:selection][:genericElName])
-        element_scope = element_scope.where("name like (?)", "%#{params[:selection][:searchName]}%") if params[:selection][:searchName].present?
-        element_scope = element_scope.where("short_label like (?)", "%#{params[:selection][:searchShowLabel]}%") if params[:selection][:searchShowLabel].present?
-        if params[:selection][:searchProperties].present?
-          params[:selection][:searchProperties] && params[:selection][:searchProperties][:layers] && params[:selection][:searchProperties][:layers].keys.each do |lk|
-            layer = params[:selection][:searchProperties][:layers][lk]
-            qs = layer[:fields].select{ |f| f[:value].present? || f[:type] == "input-group" }
-            qs.each do |f|
-              if f[:type] == "input-group"
-                sfs = f[:sub_fields].map{ |e| { "id": e[:id], "value": e[:value] } }
-                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "sub_fields": sfs }] } } if sfs.length > 0
-              elsif f[:type] == "checkbox" || f[:type] == "integer" || f[:type] == "system-defined"
-                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value] }] } }
-              else
-                query = { "#{lk}": { "fields": [{ "field": f[:field].to_s, "value": f[:value].to_s }] } }
-              end
-              element_scope = element_scope.where("properties @> ?", query.to_json)
-            end
-          end
-        end
-        element_scope
-      end
-
-      def serialize_samples sample_ids, page, search_method, molecule_sort
+      def serialize_samples(sample_ids, page, molecule_sort)
         return { data: [], size: 0 } if sample_ids.empty?
 
         samples_size = sample_ids.size
         samplelist = []
 
-
         if molecule_sort == true
           # Sorting by molecule for non-advanced search
           molecule_scope =
-            Molecule.joins(:samples).where('samples.id IN (?)', sample_ids)
-                    .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+            Molecule.joins(:samples).where(samples: { id: sample_ids })
+                    .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                     .order(:sum_formular)
           molecule_scope = molecule_scope.page(page).per(page_size)
           samples = Sample.includes_for_list_display.find(sample_ids)
@@ -173,7 +167,7 @@ module Chemotion
               serialized_sample = Entities::SampleEntity.represent(
                 sample,
                 detail_levels: detail_levels,
-                displayed_in_list: true
+                displayed_in_list: true,
               ).serializable_hash
               samplelist.push(serialized_sample)
             end
@@ -189,25 +183,26 @@ module Chemotion
                   serialized_sample = Entities::SampleEntity.represent(
                     sample,
                     detail_levels: detail_levels,
-                    displayed_in_list: true
+                    displayed_in_list: true,
                   ).serializable_hash
                   samplelist.push(serialized_sample)
                 end
         end
 
-        return {
-          data: samplelist,
-          size: samples_size
-        }
+        { data: samplelist, size: samples_size }
       end
+
+      # rubocop:disable Style/OptionalBooleanParameter
 
       def serialization_by_elements_and_page(elements, page = 1, molecule_sort = false)
         element_ids = elements.fetch(:element_ids, [])
         reaction_ids = elements.fetch(:reaction_ids, [])
         sample_ids = elements.fetch(:sample_ids, [])
-        samples_data = serialize_samples(sample_ids, page, search_by_method, molecule_sort)
+        samples_data = serialize_samples(sample_ids, page, molecule_sort)
         screen_ids = elements.fetch(:screen_ids, [])
         wellplate_ids = elements.fetch(:wellplate_ids, [])
+        cell_line_ids = elements.fetch(:cell_line_ids, [])
+        research_plan_ids = elements.fetch(:research_plan_ids, [])
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
@@ -224,6 +219,16 @@ module Chemotion
           Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
         end
 
+        paginated_cell_line_ids = Kaminari.paginate_array(cell_line_ids).page(page).per(page_size)
+        serialized_cell_lines = CelllineSample.find(paginated_cell_line_ids).map do |cell_line|
+          Entities::CellLineSampleEntity.represent(cell_line, displayed_in_list: true).serializable_hash
+        end
+
+        paginated_research_plan_ids = Kaminari.paginate_array(research_plan_ids).page(page).per(page_size)
+        serialized_research_plans = ResearchPlan.find(paginated_research_plan_ids).map do |research_plan|
+          Entities::ResearchPlanEntity.represent(research_plan, displayed_in_list: true).serializable_hash
+        end
+
         result = {
           samples: {
             elements: samples_data[:data],
@@ -231,7 +236,7 @@ module Chemotion
             page: page,
             pages: pages(samples_data[:size]),
             perPage: page_size,
-            ids: sample_ids
+            ids: sample_ids,
           },
           reactions: {
             elements: serialized_reactions,
@@ -239,7 +244,7 @@ module Chemotion
             page: page,
             pages: pages(reaction_ids.size),
             perPage: page_size,
-            ids: reaction_ids
+            ids: reaction_ids,
           },
           wellplates: {
             elements: serialized_wellplates,
@@ -247,7 +252,7 @@ module Chemotion
             page: page,
             pages: pages(wellplate_ids.size),
             perPage: page_size,
-            ids: wellplate_ids
+            ids: wellplate_ids,
           },
           screens: {
             elements: serialized_screens,
@@ -255,16 +260,32 @@ module Chemotion
             page: page,
             pages: pages(screen_ids.size),
             perPage: page_size,
-            ids: screen_ids
-          }
+            ids: screen_ids,
+          },
+          cell_lines: {
+            elements: serialized_cell_lines,
+            totalElements: cell_line_ids.size,
+            page: page,
+            pages: pages(cell_line_ids.size),
+            perPage: page_size,
+            ids: cell_line_ids,
+          },
+          research_plans: {
+            elements: serialized_research_plans,
+            totalElements: research_plan_ids.size,
+            page: page,
+            pages: pages(research_plan_ids.size),
+            perPage: page_size,
+            ids: research_plan_ids,
+          },
         }
 
-        klasses = ElementKlass.where(is_active: true, is_generic: true)
+        klasses = Labimotion::ElementKlass.where(is_active: true, is_generic: true)
         klasses.each do |klass|
-          element_ids_for_klass = Element.where(id: element_ids, element_klass_id: klass.id).pluck(:id)
+          element_ids_for_klass = Labimotion::Element.where(id: element_ids, element_klass_id: klass.id).pluck(:id)
           paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass).page(page).per(page_size)
-          serialized_elements = Element.find(paginated_element_ids).map do |element|
-            Entities::ElementEntity.represent(element, displayed_in_list: true).serializable_hash
+          serialized_elements = Labimotion::Element.find(paginated_element_ids).map do |element|
+            Labimotion::ElementEntity.represent(element, displayed_in_list: true).serializable_hash
           end
 
           result["#{klass.name}s"] = {
@@ -273,45 +294,48 @@ module Chemotion
             page: page,
             pages: pages(element_ids_for_klass.size),
             perPage: page_size,
-            ids: element_ids_for_klass
+            ids: element_ids_for_klass,
           }
         end
         result
       end
+
+      # rubocop:enable Style/OptionalBooleanParameter
 
       # Generate search query
       def search_elements(c_id = @c_id, dl = @dl)
         search_method = search_by_method
         molecule_sort = params[:molecule_sort]
         arg = params[:selection][:name]
-        return if !(search_method =~ /advanced|structure/) && !arg.presence
+        return if (search_method !~ /advanced|structure/) && !arg.presence
+
         dl_s = dl[:sample_detail_level] || 0
         scope = case search_method
                 when 'polymer_type'
-                  if dl_s > 0
-                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  if dl_s.positive?
+                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .by_residues_custom_info('polymer_type', arg)
                   else
                     Sample.none
                   end
                 when 'sum_formula', 'sample_external_label'
                   if dl_s > -1
-                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .search_by(search_method, arg)
                   else
                     Sample.none
                   end
                 when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
                      'sample_name', 'sample_short_label'
-                  if dl_s > 0
-                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  if dl_s.positive?
+                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .search_by(search_method, arg)
                   else
                     Sample.none
                   end
                 when 'cas'
-                  if dl_s > 0
-                    Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  if dl_s.positive?
+                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .by_sample_xref_cas(arg)
                   else
                     Sample.none
@@ -326,7 +350,7 @@ module Chemotion
                   # NB we'll have to split the content of the pg_search_document into
                   # MW + external_label (dl_s = 0) and the other info only available
                   # from dl_s > 0. For now one can use the suggested search instead.
-                  if dl_s > 0
+                  if dl_s.positive?
                     AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id, current_user)
                   else
                     AllElementSearch::Results.new(Sample.none)
@@ -335,26 +359,20 @@ module Chemotion
                   sample_structure_search
                 when 'advanced'
                   advanced_search(c_id)
-                when 'elements'
-                  elements_search(c_id)
+                when 'cell_line_material_name'
+                  CelllineSample.by_material_name(arg, c_id)
+                when 'cell_line_sample_name'
+                  CelllineSample.by_sample_name(arg, c_id)
                 end
 
-        if search_method == 'advanced' && molecule_sort == false
-          arg_value_str = adv_params.first['value'].split(/(\r)?\n/).map(&:strip)
-                                    .select{ |s| !s.empty? }.join(',')
-          return scope.order(Arel.sql(
-            "position(','||(#{adv_params.first['field']['column']}::text)||',' in ','||(#{ActiveRecord::Base.connection.quote(arg_value_str)}::text)||',')"
-          ))
-        elsif search_method == 'advanced' && molecule_sort == true
-          return scope.order('samples.updated_at DESC')
-        elsif search_method != 'advanced' && molecule_sort == true
-          return scope.includes(:molecule)
-                      .joins(:molecule)
-                      .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
-                      .order('molecules.sum_formular')
-        elsif search_by_method.start_with?("element_short_label_")
-          klass = ElementKlass.find_by(name: search_by_method.sub("element_short_label_",""))
-          return Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
+        if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
+          scope.includes(:molecule)
+               .joins(:molecule)
+               .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
+               .order('molecules.sum_formular')
+        elsif search_by_method.start_with?('element_short_label_')
+          klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub('element_short_label_', ''))
+          return Labimotion::Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
         end
         scope
       end
@@ -365,36 +383,50 @@ module Chemotion
         user_reactions = Reaction.by_collection_id(collection_id)
         user_wellplates = Wellplate.by_collection_id(collection_id)
         user_screens = Screen.by_collection_id(collection_id)
-        user_elements = Element.by_collection_id(collection_id)
+        user_research_plans = ResearchPlan.by_collection_id(collection_id)
+        user_elements = Labimotion::Element.by_collection_id(collection_id)
 
         case scope&.first
         when Sample
           elements[:sample_ids] = scope&.ids
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
-          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Reaction
           elements[:reaction_ids] = scope&.ids
           elements[:sample_ids] = user_samples.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
           elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
-          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
+          elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
         when Wellplate
           elements[:wellplate_ids] = scope&.ids
           elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = ResearchPlansWellplate.get_research_plans(elements[:wellplate_ids]).uniq
+          # elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Screen
           elements[:screen_ids] = scope&.ids
           elements[:wellplate_ids] = user_wellplates.by_screen_ids(elements[:screen_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
-          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
-        when Element
+          elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+          elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
+        when ResearchPlan
+          elements[:research_plan_ids] = scope&.ids
+          sample_ids = ResearchPlan.sample_ids_by_research_plan_ids(elements[:research_plan_ids])
+          reaction_ids = ResearchPlan.reaction_ids_by_research_plan_ids(elements[:research_plan_ids])
+          elements[:sample_ids] = sample_ids.map(&:sample_id).uniq
+          elements[:reaction_ids] = reaction_ids.map(&:reaction_id).uniq
+          elements[:wellplate_ids] = ResearchPlansWellplate.get_wellplates(elements[:research_plan_ids]).uniq
+        when Labimotion::Element
           elements[:element_ids] = scope&.ids
-          sample_ids = ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
+          sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
           elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
         when AllElementSearch::Results
-          # TODO check this samples_ids + molecules_ids ????
+          # TODO: check this samples_ids + molecules_ids ????
           elements[:sample_ids] = (scope&.samples_ids + scope&.molecules_ids)
           elements[:reaction_ids] = (
             scope&.reactions_ids +
@@ -410,15 +442,18 @@ module Chemotion
             scope&.screens_ids +
             user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
           ).uniq
+
           elements[:element_ids] = (scope&.element_ids).uniq
+        when CelllineSample
+          elements[:cell_line_ids] = scope&.ids
         end
         elements
       end
     end
 
     resource :search do
-      namespace :elements do
-        desc "Return all matched elements and associations for substring query"
+      namespace :cell_lines do
+        desc 'Return all matched cell lines and associations for substring query'
         params do
           use :search_params
         end
@@ -428,20 +463,30 @@ module Chemotion
         end
 
         post do
-          scope = elements_search(@c_id)
-          return unless scope
-          elements_ids = elements_by_scope(scope)
+          query = @params[:selection][:name]
+          collection_id = @params[:collection_id]
+          cell_lines =
+            case search_by_method
+            when 'cell_line_material_name'
+              CelllineSample.by_material_name(query, collection_id)
+            when 'cell_line_sample_name'
+              CelllineSample.by_sample_name(query, collection_id)
+            end
+
+          return unless cell_lines
+
+          elements_ids = elements_by_scope(cell_lines)
 
           serialization_by_elements_and_page(
             elements_ids,
             params[:page],
-            params[:molecule_sort]
+            params[:molecule_sort],
           )
         end
       end
 
       namespace :all do
-        desc "Return all matched elements and associations for substring query"
+        desc 'Return all matched elements and associations for substring query'
         params do
           use :search_params
         end
@@ -453,18 +498,86 @@ module Chemotion
         post do
           scope = search_elements(@c_id, @dl)
           return unless scope
-          elements_ids = elements_by_scope(scope)
 
+          elements_ids = elements_by_scope(scope)
           serialization_by_elements_and_page(
             elements_ids,
             params[:page],
-            params[:molecule_sort]
+            params[:molecule_sort],
           )
         end
       end
 
+      namespace :structure do
+        desc 'Return all matched elements and associations for structure search'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          Usecases::Search::StructureSearch.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+            detail_levels: @dl,
+          ).perform!
+        end
+      end
+
+      namespace :advanced do
+        desc 'Return all matched elements and associations for advanced / detail search'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          conditions =
+            Usecases::Search::ConditionsForAdvancedSearch.new(
+              detail_levels: @dl,
+              params: params[:selection][:advanced_params],
+            ).filter!
+
+          results = Usecases::Search::AdvancedSearch.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+            conditions: conditions,
+          ).perform!
+
+          results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
+          results
+        end
+      end
+
+      namespace :by_ids do
+        desc 'Return elements by ids'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          Usecases::Search::ByIds.new(
+            collection_id: @c_id,
+            params: params,
+            user: current_user,
+          ).perform!
+        end
+      end
+
       namespace :samples do
-        desc "Return samples and associated elements by search selection"
+        desc 'Return samples and associated elements by search selection'
         params do
           use :search_params
         end
@@ -479,20 +592,20 @@ module Chemotion
             when 'structure'
               sample_structure_search
             when 'cas'
-              Sample.by_collection_id(@c_id).by_sample_xref_cas( params[:selection][:name])
+              Sample.by_collection_id(@c_id).by_sample_xref_cas(params[:selection][:name])
             else
               Sample.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
             end
 
           serialization_by_elements_and_page(
             elements_by_scope(samples),
-            params[:page]
+            params[:page],
           )
         end
       end
 
       namespace :reactions do
-        desc "Return reactions and associated elements by search selection"
+        desc 'Return reactions and associated elements by search selection'
         params do
           use :search_params
         end
@@ -520,13 +633,13 @@ module Chemotion
 
           serialization_by_elements_and_page(
             elements_by_scope(reactions),
-            params[:page]
+            params[:page],
           )
         end
       end
 
       namespace :wellplates do
-        desc "Return wellplates and associated elements by search selection"
+        desc 'Return wellplates and associated elements by search selection'
         params do
           use :search_params
         end
@@ -547,13 +660,13 @@ module Chemotion
 
           serialization_by_elements_and_page(
             elements_by_scope(wellplates),
-            params[:page]
+            params[:page],
           )
         end
       end
 
       namespace :screens do
-        desc "Return screens and associated elements by search selection"
+        desc 'Return screens and associated elements by search selection'
         params do
           use :search_params
         end
@@ -575,7 +688,7 @@ module Chemotion
 
           serialization_by_elements_and_page(
             elements_by_scope(screens),
-            params[:page]
+            params[:page],
           )
         end
       end
@@ -583,4 +696,8 @@ module Chemotion
   end
 end
 
-# rubocop:enable Metrics/ClassLength
+# rubocop:enable Naming/VariableName, Naming/MethodParameterName, Layout/LineLength
+
+# rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/SafeNavigationChain, Style/RedundantParentheses
+
+# rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/ClassLength

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 const listSource = { beginDrag(props) { return props; } };
 
@@ -21,6 +21,8 @@ const ElementContainer = ({ connectDragSource, sourceType }) => {
   } else if (sourceType === DragDropItemTypes.WELLPLATE ||
              sourceType === DragDropItemTypes.REACTION ||
              sourceType === DragDropItemTypes.RESEARCH_PLAN) {
+    return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
+  } else if (sourceType === DragDropItemTypes.ELEMENT) {
     return connectDragSource(<span className="fa fa-arrows dnd-arrow-enable text-info" />);
   }
   return <span className="fa fa-arrows dnd-arrow-disable" />;

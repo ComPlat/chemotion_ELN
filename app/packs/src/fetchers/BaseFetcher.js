@@ -1,6 +1,8 @@
 import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
+import CellLine from 'src/models/cellLine/CellLine'
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class BaseFetcher {
   /**
@@ -18,9 +20,11 @@ export default class BaseFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(bodyData)
-    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => jsonTranformation(json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -34,9 +38,11 @@ export default class BaseFetcher {
     const promise = fetch(apiEndpoint, {
       credentials: 'same-origin',
       method: requestMethod
-    }).then((response) => response.json()).then((json) => jsonTranformation(json)).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then((response) => response.json())
+      .then((json) => jsonTranformation(json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
 
     return promise;
   }
@@ -44,22 +50,71 @@ export default class BaseFetcher {
   static fetchByCollectionId(id, queryParams = {}, isSync = false, type = 'samples', ElKlass) {
     const page = queryParams.page || 1;
     const perPage = queryParams.per_page || UIStore.getState().number_of_results;
-    const filterCreatedAt = queryParams.filterCreatedAt === true ? '&filter_created_at=true' : '&filter_created_at=false';
+    const filterCreatedAt = queryParams.filterCreatedAt === true
+      ? '&filter_created_at=true' : '&filter_created_at=false';
     const fromDate = queryParams.fromDate ? `&from_date=${queryParams.fromDate.unix()}` : '';
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
-    const product_only = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
+    const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?${isSync ? 'sync_' : ''}`
-              + `collection_id=${id}&page=${page}&per_page=${perPage}&`
-              + `${fromDate}${toDate}${filterCreatedAt}${product_only}`;
-    let addQuery = type === 'samples'
-      ? `&product_only=${queryParams.productOnly || false}&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`
-      : '';
-    addQuery = type === 'generic_elements' ? `&el_type=${queryParams.name}` : '';
+      + `collection_id=${id}&page=${page}&per_page=${perPage}&`
+      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
+    let addQuery = '';
+    let userState;
+    let group;
+    let sort;
+    let direction;
+    let filters;
+    let reaction;
+    let sortColumn;
+
+    switch (type) {
+      case 'samples':
+        addQuery = `&product_only=${queryParams.productOnly || false}`
+          + `&molecule_sort=${queryParams.moleculeSort ? 1 : 0}`;
+        break;
+      case 'reactions':
+        userState = UserStore.getState();
+        filters = userState?.profile?.data?.filters || {};
+        reaction = userState?.profile?.data?.filters?.reaction || {};
+        group = filters.reaction?.group || 'created_at';
+        sort = filters.reaction?.sort || false;
+        direction = filters.reaction?.direction || 'DESC';
+
+        if (group === 'none') {
+          sortColumn = sort ? 'created_at' : 'updated_at';
+        } else if (sort && group) {
+          sortColumn = group;
+        } else {
+          sortColumn = 'updated_at';
+        }
+
+        addQuery = `&sort_column=${sortColumn}&sort_direction=${direction}`;
+
+        // if the user has not updated its profile yet, we set the default sort to created_at
+        if (!filters.reaction) {
+          addQuery = '&sort_column=created_at&sort_direction=DESC';
+        }
+        break;
+      case 'generic_elements':
+        userState = UserStore.getState();
+        filters = userState?.profile?.data?.filters || {};
+        group = filters[queryParams.name]?.group || 'none';
+        sort = filters[queryParams.name]?.sort || false;
+        addQuery = `&el_type=${queryParams.name}&sort_column=${(sort && group) || 'updated_at'}`;
+        break;
+      default:
+    }
+
     return fetch(api.concat(addQuery), {
       credentials: 'same-origin'
     }).then((response) => (
       response.json().then((json) => ({
-        elements: json[type].map((r) => (new ElKlass(r))),
+        elements: json[type].map((r) => {
+          if (type === 'cell_lines') {
+            return CellLine.createFromRestResponse(id, r);
+          }
+          return (new ElKlass(r));
+        }),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
         page: parseInt(response.headers.get('X-Page'), 10),
         pages: parseInt(response.headers.get('X-Total-Pages'), 10),
@@ -98,5 +153,34 @@ export default class BaseFetcher {
       });
 
     return Promise.all(updateTasks);
+  }
+
+  static updateAnnotationsOfAttachments(element) {
+    const updateTasks = [];
+    element.attachments
+      .filter(((attach) => attach.hasOwnProperty('updatedAnnotation')))
+      .forEach((attach) => {
+        const data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        updateTasks.push(fetch(`/api/v1/attachments/${attach.id}/annotation`, {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          }));
+      });
+
+    return Promise.all(updateTasks);
+  }
+
+  static updateAnnotations(element) {
+    return Promise.all(
+      [
+        BaseFetcher.updateAnnotationsOfAttachments(element),
+        BaseFetcher.updateAnnotationsInContainer(element, [])
+      ]
+    );
   }
 }

@@ -42,6 +42,7 @@
 #  molecular_mass      :float
 #  sum_formula         :string
 #  solvent             :jsonb
+#  dry_solvent         :boolean          default(FALSE)
 #  inventory_sample    :boolean          default(FALSE)
 #
 # Indexes
@@ -64,7 +65,7 @@ class Sample < ApplicationRecord
   include AnalysisCodes
   include UnitConvertable
   include Taggable
-  include Segmentable
+  include Labimotion::Segmentable
 
   STEREO_ABS = ['any', 'rac', 'meso', 'delta', 'lambda', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)', '(Ra)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para', 'cis', 'trans', 'fac', 'mer'].freeze
@@ -133,7 +134,8 @@ class Sample < ApplicationRecord
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
   scope :by_reaction_ids,          ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
-  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, molecule: :tag) }
+  scope :by_literature_ids,        ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
+  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, :comments, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, -> {
@@ -167,6 +169,7 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
+  before_save :update_inventory_label, if: :new_record?
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -182,7 +185,7 @@ class Sample < ApplicationRecord
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
-  has_many :elements_samples, dependent: :destroy
+  has_many :elements_samples, dependent: :destroy, class_name: 'Labimotion::ElementsSample'
 
   has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
@@ -196,6 +199,7 @@ class Sample < ApplicationRecord
   has_many :devices_samples
   has_many :analyses_experiments
   has_many :private_notes, as: :noteable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
@@ -345,7 +349,7 @@ class Sample < ApplicationRecord
   # rubocop:disable Style/MethodDefParentheses
   # rubocop:disable Style/OptionalBooleanParameter
   # rubocop:disable Layout/TrailingWhitespace
-  def create_subsample user, collection_ids, copy_ea = false, type = nil 
+  def create_subsample user, collection_ids, copy_ea = false, type = nil
     subsample = self.dup
     subsample.name = self.name if self.name.present?
     subsample.external_label = self.external_label if self.external_label.present?
@@ -462,7 +466,7 @@ class Sample < ApplicationRecord
       FileUtils.remove(src)
     end
     if svg.start_with?(/\s*\<\?xml/, /\s*\<svg/)
-      File.write(full_svg_path(svg_file_name), scrub(svg))
+      File.write(full_svg_path(svg_file_name), Chemotion::Sanitizer.scrub_svg(svg))
       self.sample_svg_file = svg_file_name
     end
     unless sample_svg_file =~ /\A[0-9a-f]{128}.svg\z/
@@ -648,6 +652,27 @@ private
     end
   end
 
+  def find_collection_id
+    collection_ids = collections_samples.map(&:collection_id)
+    all_collection_id = Collection.where(id: collection_ids, label: 'All').pick(:id)
+    collection_ids.delete(all_collection_id)
+    # on sample create, sample is assigned only to the collection in which it will be created along with All collection
+    collection_ids.first
+  end
+
+  def update_inventory_label
+    collection_id = find_collection_id
+    return if collection_id.blank?
+
+    collection = Collection.find_by(id: collection_id)
+    inventory = collection.inventory
+    return if inventory.blank?
+
+    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
+    self['xref']['inventory_label'] =
+      "#{inventory['prefix']}-#{inventory['counter']}"
+  end
+
   # rubocop: enable Metrics/AbcSize
   # rubocop: enable Metrics/CyclomaticComplexity
   # rubocop: enable Metrics/PerceivedComplexity
@@ -698,12 +723,6 @@ private
 
   def has_density
     density.present? && density.positive? && (!molarity_value.present? || molarity_value.zero?)
-  end
-
-  def scrub(value)
-    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    Loofah.scrub_fragment(value, :strip).to_s.gsub('viewbox', 'viewBox')
-#   value
   end
 
   # build a full path of the sample svg, nil if not buildable

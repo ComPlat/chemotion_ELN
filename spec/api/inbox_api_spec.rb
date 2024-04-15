@@ -52,5 +52,50 @@ describe Chemotion::InboxAPI do
         end
       end
     end
+
+    describe 'GET /api/v1/inbox' do
+      context 'when fetching the inbox' do
+        let!(:inbox_container_root) { create(:inbox_container_root) }
+        let!(:inbox_container_child_first) do
+          create(:inbox_container_with_attachments,
+                 name: '1-Dev',
+                 number_of_attachments: 2,
+                 created_at: Time.zone.parse('2023-10-08 12:00:00'))
+        end
+        let!(:inbox_container_child_second) do
+          create(:inbox_container_with_attachments,
+                 name: '2-Dev',
+                 number_of_attachments: 3,
+                 created_at: Time.zone.parse('2023-11-08 12:00:00'))
+        end
+
+        before do
+          inbox_container_root.children << inbox_container_child_first
+          inbox_container_root.children << inbox_container_child_second
+          inbox_container_root.save!
+
+          user.container = inbox_container_root
+        end
+
+        it 'returns the inbox contents sorted by name as default' do
+          get '/api/v1/inbox', params: { cnt_only: false }
+
+          expect(JSON.parse(response.body)['inbox']['children'].size).to eq(2)
+          expect(JSON.parse(response.body)['inbox']['children'].pluck('id')).to eq(
+            [
+              inbox_container_child_first.id,
+              inbox_container_child_second.id,
+            ],
+          )
+        end
+
+        it 'gives error for invalid value for sort_column' do
+          get '/api/v1/inbox', params: { cnt_only: false, sort_column: 'not_allowed' }
+
+          expect(response).to have_http_status(:bad_request)
+          expect(JSON.parse(response.body)['error']).to eq('sort_column does not have a valid value')
+        end
+      end
+    end
   end
 end

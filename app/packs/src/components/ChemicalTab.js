@@ -47,7 +47,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { saveInventory, parent } = this.props;
+    const { saveInventory } = this.props;
     const { chemical } = this.state;
 
     if (prevState.chemical !== chemical) {
@@ -61,15 +61,21 @@ export default class ChemicalTab extends React.Component {
 
   handleFieldChanged(parameter, value) {
     const { chemical } = this.state;
+    const { editChemical } = this.props;
     if (chemical) {
       chemical.buildChemical(parameter, value);
+      editChemical(chemical.isEdited);
     }
     this.setState({ chemical });
   }
 
   handleSubmitSave() {
     const { chemical } = this.state;
-    const { sample, parent } = this.props;
+    const {
+      sample,
+      parent,
+      editChemical,
+    } = this.props;
     if (!sample || !chemical) {
       return;
     }
@@ -83,7 +89,6 @@ export default class ChemicalTab extends React.Component {
     if (chemical.isNew) {
       ChemicalFetcher.create(params).then((response) => {
         if (response) {
-          chemical.changed = false;
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
@@ -93,7 +98,8 @@ export default class ChemicalTab extends React.Component {
     } else {
       ChemicalFetcher.update(params).then((response) => {
         if (response) {
-          chemical.changed = false;
+          editChemical(false);
+          chemical.updateChecksum();
           this.setState({ chemical });
         }
       }).catch((errorMessage) => {
@@ -196,7 +202,13 @@ export default class ChemicalTab extends React.Component {
       const obj = JSON.parse(result);
       safetySheets.splice(0, 1);
       this.setState({ safetySheets });
-      this.setState({ safetySheets: Object.values(obj) });
+      if (obj !== null && obj !== undefined) {
+        this.setState({ safetySheets: Object.values(obj) });
+      } else {
+        // using a mock value if obj undefined or null -> for testing purposes
+        const mockValue = ['mockValue'];
+        this.setState({ safetySheets: mockValue });
+      }
       this.setState({ loadingQuerySafetySheets: false });
       this.setState({ displayWell: true });
     }).catch((errorMessage) => {
@@ -207,27 +219,32 @@ export default class ChemicalTab extends React.Component {
   // eslint-disable-next-line class-methods-use-this
   stylePhrases = (str) => {
     const HazardPhrases = [];
-    // eslint-disable-next-line no-restricted-syntax
-    for (const [key, value] of Object.entries(str.h_statements)) {
-      // eslint-disable-next-line react/jsx-one-expression-per-line
-      const st = <p> {key}:{value} </p>;
-      HazardPhrases.push(st);
+    if (str && str.h_statements && str.h_statements.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const [key, value] of Object.entries(str.h_statements)) {
+        // eslint-disable-next-line react/jsx-one-expression-per-line
+        const st = <p key={key}> {key}:{value} </p>;
+        HazardPhrases.push(st);
+      }
     }
 
     const precautionaryPhrases = [];
-    // eslint-disable-next-line no-restricted-syntax
-    for (const [key, value] of Object.entries(str.p_statements)) {
-      // eslint-disable-next-line react/jsx-one-expression-per-line
-      const st = <p>{key}:{value}</p>;
-      precautionaryPhrases.push(st);
+    if (str && str.p_statements && str?.p_statements?.length !== 0) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const [key, value] of Object.entries(str?.p_statements || {})) {
+        // eslint-disable-next-line react/jsx-one-expression-per-line
+        const st = <p key={key}>{key}:{value}</p>;
+        precautionaryPhrases.push(st);
+      }
     }
 
-    const pictogramsArray = str.pictograms.map((i) => (i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
+    const pictogramsArray = str.pictograms?.map((i) => (
+      i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
 
     return (
       <div>
         <p className="safety-phrases">Pictograms: </p>
-        {(str.pictograms !== undefined || str.pictograms.length !== 0)
+        {(str.pictograms !== undefined && str.pictograms.length !== 0)
           ? pictogramsArray : <p>Could not find pictograms</p>}
         <p className="safety-phrases">Hazard Statements: </p>
         {HazardPhrases}
@@ -279,7 +296,9 @@ export default class ChemicalTab extends React.Component {
         if (chemical && vendor === 'thermofischer') {
           chemical._chemical_data[0].alfaProductInfo.properties = result;
         } else if (chemical && vendor === 'merck') {
-          chemical._chemical_data[0].merckProductInfo.properties = result;
+          if (chemical._chemical_data && chemical._chemical_data[0] && chemical._chemical_data[0].merckProductInfo) {
+            chemical._chemical_data[0].merckProductInfo.properties = result;
+          }
         }
         this.mapToSampleProperties(vendor);
       }
@@ -485,10 +504,17 @@ export default class ChemicalTab extends React.Component {
 
   numInputWithoutTable(data, label, parameter) {
     const value = data?.[parameter]?.value ?? 0;
-    const unit = data?.[parameter]?.unit ?? 'mg';
+    let unit; let field;
+    if (parameter === 'amount') {
+      unit = data?.[parameter]?.unit ?? 'mg';
+      field = 'chemical_amount_in_g';
+    } else if (parameter === 'volume') {
+      unit = data?.[parameter]?.unit ?? 'ml';
+      field = 'chemical_amount_in_l';
+    }
     return (
       <NumericInputUnit
-        field="inventory_amount"
+        field={field}
         inputDisabled={false}
         onInputChange={
           (newValue, newUnit) => this.handleMetricsChange(parameter, newValue, newUnit)
@@ -560,7 +586,7 @@ export default class ChemicalTab extends React.Component {
       vendor_product: vendorProduct
     };
     ChemicalFetcher.saveSafetySheets(params).then((result) => {
-      if (result || result === 'file is already saved') {
+      if (result) {
         const value = `/safety_sheets/${productInfo.productNumber}_${productInfo.vendor}.pdf`;
         const chemicalData = chemical._chemical_data;
         const pathArr = [];
@@ -660,9 +686,9 @@ export default class ChemicalTab extends React.Component {
   chooseVendor() {
     const { vendorValue } = this.state;
     const vendorOptions = [
-      { label: 'All', value: 'All' },
+      // { label: 'All', value: 'All' },
       { label: 'Merck', value: 'Merck' },
-      { label: 'Thermofisher', value: 'Thermofisher' },
+      // { label: 'Thermofisher', value: 'Thermofisher' },
     ];
 
     return (
@@ -901,10 +927,13 @@ export default class ChemicalTab extends React.Component {
                 {this.numInputWithoutTable(data, 'Amount', 'amount')}
               </div>
               <div className="inventory-text-input">
-                {this.textInput(data, 'Price', 'price')}
+                {this.numInputWithoutTable(data, '', 'volume')}
               </div>
             </div>
             <div className="text-input-group">
+              <div className="inventory-text-input">
+                {this.textInput(data, 'Price', 'price')}
+              </div>
               <div className="text-input-person">
                 {this.textInput(data, 'Person', 'person')}
               </div>
@@ -1173,5 +1202,6 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
-  saveInventory: PropTypes.bool.isRequired
+  saveInventory: PropTypes.bool.isRequired,
+  editChemical: PropTypes.func.isRequired,
 };

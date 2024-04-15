@@ -34,6 +34,24 @@ FactoryBot.define do
         sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
       end
     end
+
+    factory :sample_with_valid_inventory_label do
+      callback(:before_create) do |sample|
+        inventory = FactoryBot.create(:inventory)
+        inventory['name'] = 'Bräse Group Camp North'
+        inventory['prefix'] = 'BGCN'
+        inventory['counter'] = 1
+        creator = FactoryBot.create(:user)
+        sample.creator = creator unless sample.creator
+        collection = sample.collections.first
+        collection.inventory_id = inventory.id
+        sample.collections << FactoryBot.create(:collection, user_id: creator.id, inventory_id: inventory.id)
+      end
+      after(:build) do |sample|
+        sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
+        sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+      end
+    end
   end
 
   factory :sample_without_analysis, class: Sample do

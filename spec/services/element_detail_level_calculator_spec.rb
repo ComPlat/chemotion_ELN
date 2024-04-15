@@ -35,13 +35,14 @@ describe ElementDetailLevelCalculator do
 
     it 'returns a hash with matching keys' do
       expect(subject).to eq({
-        Element => 0,
+        Labimotion::Element => 0,
         Reaction => 0,
         ResearchPlan => 0,
         Sample => 0,
         Screen => 0,
         Well => 0,
         Wellplate => 0,
+        CelllineSample => 0,
       })
     end
 

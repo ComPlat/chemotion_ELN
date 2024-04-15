@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Sample from 'src/models/Sample';
-import { SampleSolventGroup } from './SampleSolventGroup';
+import { SampleSolventGroup } from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
 
 const target = {
   drop(tagProps, monitor) {
@@ -35,10 +35,6 @@ const collect = (connect, monitor) => ({
 });
 
 class SampleDetailsSolventsDnd extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
     const {
       sample,
@@ -47,7 +43,7 @@ class SampleDetailsSolventsDnd extends React.Component {
       isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
     } = this.props;
     const style = {
-      padding: '2px 5px',
+      padding: '0px 0px',
     };
     if (isOver && canDrop) {
       style.borderStyle = 'dashed';
@@ -63,7 +59,7 @@ class SampleDetailsSolventsDnd extends React.Component {
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
           headIndex={headIndex ?? 0}
-          materialGroup={materialGroup ?? ""}
+          materialGroup={materialGroup ?? ''}
           deleteMaterial={deleteMaterial ?? (() => true)}
           onChange={onChange ?? (() => true)}
           addDefaultSolvent={addDefaultSolvent ?? (() => true)}
@@ -90,4 +86,4 @@ SampleDetailsSolventsDnd.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
   deleteSolvent: PropTypes.func.isRequired,
-}
+};

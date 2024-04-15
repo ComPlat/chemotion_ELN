@@ -66,7 +66,7 @@ const extractJcampWithFailedFiles = (container) => {
         const isJcamp = acceptables.indexOf(ext.toLowerCase()) >= 0;
         const isApp = [
           'idle', 'queueing', 'done',
-          'backup', 'image','non_jcamp',
+          'backup', 'image', 'non_jcamp',
         ].indexOf(att.aasm_state) < 0;
         if (isJcamp && isApp) {
           const file = Object.assign({}, att, {
@@ -90,7 +90,7 @@ const extractNMRiumFiles = (container) => {
         const fns = att.filename.split('.');
         const ext = fns[fns.length - 1];
         const isNMRium = ext.toLowerCase() === 'nmrium';
-        
+
         if (isNMRium) {
           const file = Object.assign({}, att, {
             idDt: dt.id,
@@ -122,7 +122,7 @@ const BuildSpcInfos = (sample, container) => {
   const files = extractJcampFiles(container);
   if (files.length < 1) return [];
   const idAe = extractAnalysesId(sample, container);
-  return files.map(file => (
+  return files.map((file) => (
     {
       value: null,
       label: file.filename,
@@ -143,7 +143,7 @@ const BuildSpcInfosForNMRDisplayer = (sample, container) => {
   files.push(...nmriumFiles);
   if (files.length < 1) return [];
   const idAe = extractAnalysesId(sample, container);
-  return files.map(file => (
+  return files.map((file) => (
     {
       value: null,
       label: file.filename,
@@ -157,4 +157,72 @@ const BuildSpcInfosForNMRDisplayer = (sample, container) => {
   ));
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds }; // eslint-disable-line
+const listNMROntology = (chmos, storedSet, parentIsNMR = false) => {
+  if (Array.isArray(chmos)) {
+    chmos.forEach((obj) => {
+      const { children } = obj;
+      if (children && children.length > 0) {
+        children.forEach((child) => {
+          listNMROntology(child, storedSet);
+        });
+      } else {
+        return storedSet;
+      }
+    });
+  } else {
+    const { children, value } = chmos;
+    let isNMR = parentIsNMR;
+    if (value && (value.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
+      storedSet.add(value);
+      isNMR = true;
+    } else if(typeof chmos === 'string' && (chmos.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
+      storedSet.add(value);
+      isNMR = true;
+    } else {
+      isNMR = false;
+    }
+    if (children && children.length > 0) {
+      children.forEach((child) => {
+        listNMROntology(child, storedSet, isNMR);
+      });
+    } else {
+      return storedSet;
+    }
+  }
+  return storedSet;
+};
+
+const isNMRKind = (container, chmos = []) => {
+  if (!(container && container.extended_metadata && container.extended_metadata.kind)) return false;
+  const { extended_metadata } = container; // eslint-disable-line
+  const { kind } = extended_metadata; // eslint-disable-line
+  let setToBeStored = new Set([]);
+  const ontologies = Array.from(listNMROntology(chmos, setToBeStored));
+  const filtered = ontologies.filter((ontology) => {
+    return kind === ontology || kind.toLowerCase().includes(ontology);
+  });
+  return filtered.length > 0;
+};
+
+const cleaningNMRiumData = (nmriumData) => {
+  if (!nmriumData) return null;
+  const cleanedNMRiumData = { ...nmriumData };
+
+  const { data } = cleanedNMRiumData;
+  if (!data) return cleanedNMRiumData;
+
+  const { spectra } = data;
+  if (!spectra) return cleanedNMRiumData;
+
+  const newSpectra = spectra.map((spc) => {
+    const tmpSpc = { ...spc };
+    delete tmpSpc.originalData;
+    return tmpSpc;
+  });
+
+  data.spectra = [...newSpectra];
+
+  return cleanedNMRiumData;
+};
+
+export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData }; // eslint-disable-line

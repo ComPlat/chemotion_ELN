@@ -1,11 +1,15 @@
+/* eslint-disable react/destructuring-assignment */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem
+  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
+  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -14,18 +18,30 @@ import ResearchPlansLiteratures from 'src/apps/mydb/elements/details/literature/
 import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/ResearchPlanWellplates';
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
-import Utils from 'src/utilities/Functions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ResearchPlan from 'src/models/ResearchPlan';
-import ResearchPlanDetailsAttachments from 'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
-import ResearchPlanDetailsBody from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
-import ResearchPlanDetailsName from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
-import ResearchPlanDetailsContainers from 'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
+import ResearchPlanDetailsAttachments from
+  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+import ResearchPlanDetailsBody from
+  'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
+import ResearchPlanDetailsName from
+  'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
+import ResearchPlanDetailsContainers from
+  'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
+import CopyElementModal from 'src/components/common/CopyElementModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import { commentActivation } from 'src/utilities/CommentHelper';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -35,6 +51,7 @@ export default class ResearchPlanDetails extends Component {
       researchPlan,
       update: false,
       visible: Immutable.List(),
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -47,20 +64,18 @@ export default class ResearchPlanDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
   }
 
+  componentDidMount() {
+    const { researchPlan } = this.props;
+    const { currentUser } = this.state;
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !researchPlan.isNew) {
+      CommentActions.fetchComments(researchPlan);
+    }
+  }
+
   UNSAFE_componentWillReceiveProps(nextProps) {
     const { researchPlan } = nextProps;
     this.setState({ researchPlan });
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
-  toggleFullScreen() {
-    this.props.toggleFullScreen();
-
-    // toogle update prop to notify react data grid for view change
-    this.setState({ update: !this.state.update });
   }
 
   handleResearchPlanChange(el) {
@@ -147,22 +162,25 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ researchPlan });
   }
 
-  handleBodyDelete(id, attachments) {
+  handleBodyDelete(id) {
     const { researchPlan } = this.state;
     researchPlan.removeFieldFromBody(id);
     this.setState({ researchPlan });
   }
 
   // handle attachment actions
-
   handleAttachmentDrop(files) {
-    const { researchPlan } = this.state;
-    researchPlan.changed = true;
-    files.forEach((file) => {
-      const attachment = Attachment.fromFile(file);
-      researchPlan.attachments.push(attachment);
+    this.setState((prevState) => {
+      const newAttachments = files.map((file) => Attachment.fromFile(file));
+      const updatedAttachments = prevState.researchPlan.attachments.concat(newAttachments);
+      const updatedResearchPlan = new ResearchPlan({
+        ...prevState.researchPlan,
+        attachments: updatedAttachments,
+        changed: true
+      });
+
+      return { researchPlan: updatedResearchPlan };
     });
-    this.setState({ researchPlan });
   }
 
   handleAttachmentDelete(attachment) {
@@ -178,10 +196,6 @@ export default class ResearchPlanDetails extends Component {
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.attachments[index].is_deleted = false;
     this.setState({ researchPlan });
-  }
-
-  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
-    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentEdit(attachment) {
@@ -203,6 +217,51 @@ export default class ResearchPlanDetails extends Component {
   handleExportField(field) {
     const { researchPlan } = this.props;
     ResearchPlansFetcher.exportTable(researchPlan, field);
+  }
+
+  handleCopyToMetadata(id, fieldName) {
+    const { researchPlan } = this.state;
+    const researchPlanMetadata = researchPlan.research_plan_metadata;
+    const args = { research_plan_id: researchPlanMetadata.research_plan_id };
+    const index = researchPlan.body.findIndex((field) => field.id === id);
+    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
+    if (fieldName === 'name') {
+      researchPlanMetadata.title = researchPlan.name;
+      args.title = researchPlan.name.trim();
+    } else if (fieldName === 'subject') {
+      researchPlanMetadata.subject = value;
+      args.subject = value;
+    } else {
+      const type = researchPlan.body[index]?.title?.trim() || '';
+      const newItem = this.newItemByType(fieldName, value, type);
+
+      const currentCollection = researchPlanMetadata[fieldName]
+        ? researchPlanMetadata[fieldName] : [];
+      const newCollection = currentCollection.concat(newItem);
+      researchPlanMetadata[fieldName] = newCollection;
+      args[`${fieldName}`] = researchPlanMetadata[fieldName];
+    }
+
+    ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
+      if (result.error) {
+        alert(result.error);
+      }
+    });
+  }
+
+  handleAttachmentImportComplete() {
+    this.setState({ activeTab: 0 });
+  }
+
+  onTabPositionChanged(visible) {
+    this.setState({ visible });
+  }
+
+  toggleFullScreen() {
+    this.props.toggleFullScreen();
+
+    // toogle update prop to notify react data grid for view change
+    this.setState({ update: !this.state.update });
   }
 
   dropWellplate(wellplate) {
@@ -258,39 +317,6 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
-  handleCopyToMetadata(id, fieldName) {
-    const { researchPlan } = this.state;
-    const researchPlanMetadata = researchPlan.research_plan_metadata;
-    const args = { research_plan_id: researchPlanMetadata.research_plan_id };
-    const index = researchPlan.body.findIndex((field) => field.id === id);
-    const value = researchPlan.body[index]?.value?.ops[0]?.insert?.trim() || '';
-    if (fieldName === 'name') {
-      researchPlanMetadata.title = researchPlan.name;
-      args.title = researchPlan.name.trim();
-    } else if (fieldName === 'subject') {
-      researchPlanMetadata.subject = value;
-      args.subject = value;
-    } else {
-      const type = researchPlan.body[index]?.title?.trim() || '';
-      const newItem = this.newItemByType(fieldName, value, type);
-
-      const currentCollection = researchPlanMetadata[fieldName]
-        ? researchPlanMetadata[fieldName] : [];
-      const newCollection = currentCollection.concat(newItem);
-      researchPlanMetadata[fieldName] = newCollection;
-      args[`${fieldName}`] = researchPlanMetadata[fieldName];
-    }
-
-    ResearchPlansFetcher.postResearchPlanMetadata(args).then((result) => {
-      if (result.error) {
-        alert(result.error);
-      }
-    });
-  }
-
-  handleAttachmentImportComplete() {
-    this.setState({ activeTab: 0 });
-  }
   // render functions
 
   renderExportButton(disabled) {
@@ -329,16 +355,77 @@ export default class ResearchPlanDetails extends Component {
       name, body, changed, attachments
     } = researchPlan;
     const edit = researchPlan.mode === 'edit';
+
+    const editTooltip = (<Tooltip id="edit-tooltip">Click to switch to edit mode</Tooltip>);
+    const viewTooltip = (<Tooltip id="view-tooltip">Click to switch to view mode</Tooltip>);
+
+    const EditButton = (
+      <Button
+        bsStyle={researchPlan.mode === 'edit' ? 'warning' : 'default'}
+        style={{
+          pointerEvents: 'none',
+          backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
+        }}
+      >
+        <i className="fa fa-pencil" />
+      </Button>
+    );
+
+    const ViewButton = (
+      <Button
+        bsStyle={researchPlan.mode === 'view' ? 'info' : 'default'}
+        style={{
+          pointerEvents: 'none',
+          backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,
+        }}
+      >
+        <i className="fa fa-eye fa-sm" />
+      </Button>
+    );
+
+    const btnMode = (
+      <div
+        role="button"
+        tabIndex={0}
+        style={{ cursor: 'pointer' }}
+        onClick={() => {
+          if (researchPlan.mode === 'view') {
+            this.handleSwitchMode('edit');
+          } else {
+            this.handleSwitchMode('view');
+          }
+        }}
+        onKeyPress={() => {}}
+      >
+        <OverlayTrigger placement="top" overlay={researchPlan.mode === 'view' ? editTooltip : viewTooltip}>
+          <ButtonGroup>
+            {EditButton}
+            {ViewButton}
+          </ButtonGroup>
+        </OverlayTrigger>
+      </div>
+    );
+
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          {this.renderExportButton(changed)}
-          <ResearchPlanDetailsName
-            value={name}
-            disabled={researchPlan.isMethodDisabled("name")}
-            onChange={this.handleNameChange}
-            edit={edit}
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <ResearchPlanDetailsName
+                value={name}
+                disabled={researchPlan.isMethodDisabled('name')}
+                onChange={this.handleNameChange}
+                edit={edit}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+              <div style={{ marginRight: '5px', marginLeft: '5px' }}>
+                {btnMode}
+              </div>
+              {this.renderExportButton(changed)}
+            </div>
+          </div>
+
           <ResearchPlanDetailsBody
             body={body}
             attachments={attachments}
@@ -352,56 +439,14 @@ export default class ResearchPlanDetails extends Component {
             update={update}
             edit={edit}
             copyableFields={[
-              { title: "Subject", fieldName: "subject" },
+              { title: 'Subject', fieldName: 'subject' },
               {
-                title: "Alternate Identifier",
-                fieldName: "alternate_identifier",
+                title: 'Alternate Identifier',
+                fieldName: 'alternate_identifier',
               },
-              { title: "Related Identifier", fieldName: "related_identifier" },
-              { title: "Description", fieldName: "description" },
+              { title: 'Related Identifier', fieldName: 'related_identifier' },
+              { title: 'Description', fieldName: 'description' },
             ]}
-            researchPlan={researchPlan}
-          />
-        </ListGroupItem>
-      </ListGroup>
-    );
-  } /* eslint-enable */
-
-  renderPropertiesTab(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
-    const { name, body } = researchPlan;
-    return (
-      <ListGroup fill="true">
-        <ListGroupItem>
-          <ResearchPlanDetailsName
-            value={name}
-            isNew={researchPlan.isNew}
-            disabled={researchPlan.isMethodDisabled("name")}
-            onChange={this.handleNameChange}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            edit
-          />
-          <ResearchPlanDetailsBody
-            body={body}
-            disabled={researchPlan.isMethodDisabled("body")}
-            onChange={this.handleBodyChange.bind(this)}
-            onDrop={this.handleBodyDrop.bind(this)}
-            onAdd={this.handleBodyAdd}
-            onDelete={this.handleBodyDelete.bind(this)}
-            onExport={this.handleExportField.bind(this)}
-            onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
-            isNew={researchPlan.isNew}
-            copyableFields={[
-              { title: "Subject", fieldName: "subject" },
-              {
-                title: "Alternate Identifier",
-                fieldName: "alternate_identifier",
-              },
-              { title: "Related Identifier", fieldName: "related_identifier" },
-              { title: "Description", fieldName: "description" },
-            ]}
-            update={update}
-            edit
-            attachments={researchPlan.attachments}
             researchPlan={researchPlan}
           />
         </ListGroupItem>
@@ -434,7 +479,6 @@ export default class ResearchPlanDetails extends Component {
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onDownload={this.handleAttachmentDownload.bind(this)}
             onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
             readOnly={false}
@@ -445,28 +489,42 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
-    const titleTooltip = `Created at: ${researchPlan.created_at} \n Updated at: ${researchPlan.updated_at}`;
+    const { currentCollection } = UIStore.getState();
+    const rootCol = currentCollection && currentCollection.is_shared === false &&
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+    const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
+    const copyBtn = (
+      <CopyElementModal
+        element={researchPlan}
+        defCol={rootCol}
+      />
+    );
 
     return (
       <Panel.Heading>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
           <span>
             <i className="fa fa-file-text-o" />
-            &nbsp;
-            {' '}
+            &nbsp;&nbsp;
             <span>{researchPlan.name}</span>
-            {' '}
-            &nbsp;
+            &nbsp;&nbsp;
           </span>
         </OverlayTrigger>
         <ElementCollectionLabels element={researchPlan} placement="right" />
+        <HeaderCommentSection element={researchPlan} />
         <ConfirmClose el={researchPlan} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => this.handleSubmit()} style={{ display: (researchPlan.changed || false) ? '' : 'none' }}>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.handleSubmit()}
+            style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+          >
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Fullresearch_plan</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
           <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={this.toggleFullScreen}>
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
@@ -474,6 +532,7 @@ export default class ResearchPlanDetails extends Component {
         {researchPlan.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+        {copyBtn}
       </Panel.Heading>
     );
   }
@@ -481,33 +540,37 @@ export default class ResearchPlanDetails extends Component {
   render() {
     const { researchPlan, update, visible } = this.state;
 
-    let btnMode = <Button bsSize="xs" bsStyle="success" onClick={() => this.handleSwitchMode('edit')}>click to edit</Button>;
-    if (researchPlan.mode !== 'view') {
-      btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
-    }
-
     const tabContentsMap = {
       research_plan: (
         <Tab eventKey="research_plan" title="Research plan" key={`rp_${researchPlan.id}`}>
-          <div style={{ margin: '5px 0px 5px 5px' }}>
-            {btnMode}
-          </div>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_research_plan" element={researchPlan} />
+          }
           {this.renderResearchPlanMain(researchPlan, update)}
           <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
         </Tab>
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_analyses" element={researchPlan} />
+          }
           {this.renderAnalysesTab(researchPlan)}
         </Tab>
       ),
       attachments: (
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_attachments" element={researchPlan} />
+          }
           {this.renderAttachmentsTab(researchPlan)}
         </Tab>
       ),
       references: (
         <Tab eventKey="references" title="References" key={`lit_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_references" element={researchPlan} />
+          }
           <ResearchPlansLiteratures element={researchPlan} />
         </Tab>
       ),
@@ -523,7 +586,10 @@ export default class ResearchPlanDetails extends Component {
         </Tab>
       ),
       metadata: (
-        <Tab eventKey={4} title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+        <Tab eventKey="metadata" title="Metadata" disabled={researchPlan.isNew} key={`metadata_${researchPlan.id}`}>
+          {
+            !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
+          }
           <ResearchPlanMetadata
             parentResearchPlan={researchPlan}
             parentResearchPlanMetadata={researchPlan.research_plan_metadata}
@@ -536,7 +602,6 @@ export default class ResearchPlanDetails extends Component {
       research_plan: 'Research Plan',
       analyses: 'Analyses',
       attachments: 'Attachments',
-      literature: 'Literature',
       wellplates: 'Wellplates',
       references: 'References',
       metadata: 'Metadata',
@@ -548,10 +613,14 @@ export default class ResearchPlanDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
+    // eslint-disable-next-line react/destructuring-assignment
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail research-plan-details">
+      <Panel
+        bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'}
+        className="eln-panel-detail research-plan-details"
+      >
         {this.renderPanelHeading(researchPlan)}
         <Panel.Body>
           <ElementDetailSortTab
@@ -566,9 +635,14 @@ export default class ResearchPlanDetails extends Component {
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              researchPlan.changed ? <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{researchPlan.isNew ? 'Create' : 'Save'}</Button> : <div />
+              (researchPlan.changed || researchPlan.is_copy) ? (
+                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                  {researchPlan.isNew ? 'Create' : 'Save'}
+                </Button>
+              ) : <div />
             }
           </ButtonToolbar>
+          <CommentModal element={researchPlan} />
         </Panel.Body>
       </Panel>
     );

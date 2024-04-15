@@ -12,7 +12,7 @@ export default class ElementAnalysesLabels extends React.Component {
   render() {
 
     return (
-      <div style={{ display: 'inline-block' }}
+      <div style={{ display: 'inline-block', marginTop: '-5px' }}
         onClick={(e) => { e.stopPropagation() }}>
         {this.analysesLabels(this.state.element)}
       </div>

@@ -9,6 +9,7 @@ import ScanCodeButton from 'src/components/contextActions/ScanCodeButton';
 import NoticeButton from 'src/components/contextActions/NoticeButton';
 import InboxButton from 'src/components/contextActions/InboxButton';
 import { PermissionConst } from 'src/utilities/PermissionConst';
+import SampleTaskNavigationElement from 'src/components/sampleTaskInbox/SampleTaskNavigationElement';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -37,7 +38,7 @@ export default class ContextActions extends React.Component {
   isCreateDisabled() {
     const { currentCollection } = this.state.uiState;
     return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked)
-      || (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write));
+      || (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level < PermissionConst.Write));
   }
 
   isDisabled() {
@@ -71,6 +72,9 @@ export default class ContextActions extends React.Component {
         </ButtonGroup>
         <ButtonGroup style={{ marginLeft: '10px' }}>
           <InboxButton />
+        </ButtonGroup>
+        <ButtonGroup style={{ marginLeft: '10px' }}>
+          <SampleTaskNavigationElement />
         </ButtonGroup>
         <ButtonGroup style={{ marginLeft: '20px' }}>
           <NoticeButton />

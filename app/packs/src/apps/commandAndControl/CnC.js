@@ -71,7 +71,7 @@ class CnC extends React.Component {
   }
 
   UserStoreChange(UserStoreState) {
-    this.setState(prevState => ({ ...prevState, devices: UserStoreState.devices }));
+    this.setState((prevState) => ({ ...prevState, devices: UserStoreState.devices }));
   }
 
   connected() {
@@ -139,7 +139,7 @@ class CnC extends React.Component {
     rfb.show_dot = true;
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       rfb,
       isNotFocused: true,
@@ -153,11 +153,11 @@ class CnC extends React.Component {
     } = this.state;
     fetch(`/api/v1/devices/current_connection?id=${selected.id}&status=${isNotFocused}`, {
       credentials: 'same-origin'
-    }).then(response => response.json())
+    }).then((response) => response.json())
       .then((json) => {
         let using = 0;
         let watching = 0;
-        const data = uniq(json.result).map(line => line.split(','));
+        const data = uniq(json.result).map((line) => line.split(','));
         const conn = Object.fromEntries(data);
 
         Object.keys(conn).forEach((k) => {
@@ -179,7 +179,7 @@ class CnC extends React.Component {
       return;
     }
     this.state.rfb.disconnect();
-    this.setState(prevState => ({ ...prevState, rfb: null }));
+    this.setState((prevState) => ({ ...prevState, rfb: null }));
   }
 
   toggleDeviceList() {
@@ -193,22 +193,34 @@ class CnC extends React.Component {
 
   deviceClick(device) {
     UsersFetcher.fetchNoVNCDevices(device.id)
-      .then(devices => this.setState(
-        prevState => ({ ...prevState, selected: devices[0] }),
+      .then((devices) => this.setState(
+        (prevState) => ({ ...prevState, selected: devices[0] }),
         this.connect
       ));
   }
 
   tree(dev, selectedId) {
+    const sortedDevices = dev.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
+
     return (
       <Col className="small-col collec-tree">
         <div className="tree-view">
           <div className="title" style={{ backgroundColor: 'white' }}>
-            <i className="fa fa-list" /> &nbsp;&nbsp; Devices
+            <i className="fa fa-list" />
+            {' '}
+&nbsp;&nbsp; Devices
           </div>
         </div>
         <div className="tree-wrapper">
-          {dev.map((device, index) => (
+          {sortedDevices.map((device, index) => (
             <div
               className="tree-view"
               key={`device${device.id}`}
@@ -243,9 +255,9 @@ class CnC extends React.Component {
           <Row className="card-navigation">
             <Navigation toggleDeviceList={this.toggleDeviceList} />
           </Row>
-          <Row className="card-content container-fluid" >
+          <Row className="card-content container-fluid">
             {showDeviceList ? this.tree(devices, selected.id) : null}
-            <Col className="small-col main-content" >
+            <Col className="small-col main-content">
               <FocusNovnc
                 isNotFocused={isNotFocused}
                 handleFocus={this.handleFocus}

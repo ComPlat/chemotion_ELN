@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength, Rails/SkipsModelValidations, Style/MultilineIfThen
+
 module Chemotion
   class LiteratureAPI < Grape::API
     helpers CollectionHelpers
@@ -7,18 +9,28 @@ module Chemotion
 
     helpers do
       def citation_for_elements(id = params[:element_id], type = @element_klass, cat = 'detail')
-        return Literature.none unless id.present?
+        return Literature.none if id.blank?
+
         Literature.by_element_attributes_and_cat(id, type, cat).with_user_info
       end
     end
 
     resource :literatures do
       after_validation do
-        unless request.url =~ /doi\/metadata|ui_state|collection/
-          @element_klass = params[:element_type].classify
-          @element = @element_klass.constantize.find_by(id: params[:element_id])
-          @element_policy = ElementPolicy.new(current_user, @element)
-          allowed = if request.env['REQUEST_METHOD'] =~ /get/i
+        unless %r{doi/metadata|ui_state|collection}.match?(request.url)
+          if params[:element_type] == 'cell_line'
+            cell_line_sample = CelllineSample.find(params[:element_id])
+            @element = CelllineMaterial.find(cell_line_sample.cellline_material_id)
+            @element_policy = ElementPolicy.new(current_user, cell_line_sample)
+            @element_klass = 'CelllineMaterial'
+            params[:element_id] = @element.id
+          else
+            @element_klass = params[:element_type].classify
+            @element = @element_klass.constantize.find_by(id: params[:element_id])
+            @element_policy = ElementPolicy.new(current_user, @element)
+          end
+
+          allowed = if /get/i.match?(request.env['REQUEST_METHOD'])
                       @element_policy.read?
                     else
                       @element_policy.update?
@@ -30,9 +42,9 @@ module Chemotion
       desc 'Update type of literals by element'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :id, type: Integer
-        requires :litype, type: String, values: %w[citedOwn citedRef referTo]
+        requires :litype, type: String, values: %w[citedOwn citedRef referTo literatureOfSource additionalLiterature]
       end
       put do
         Literal.find(params[:id])&.update(litype: params[:litype])
@@ -42,14 +54,14 @@ module Chemotion
           with: Entities::LiteratureEntity,
           root: :literatures,
           with_element_count: false,
-          with_user_info: true
+          with_user_info: true,
         )
       end
 
       desc 'Return the literature list for the given element'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
       end
 
       get do
@@ -58,14 +70,14 @@ module Chemotion
           with: Entities::LiteratureEntity,
           root: :literatures,
           with_element_count: false,
-          with_user_info: true
+          with_user_info: true,
         )
       end
 
       desc 'create a literature entry'
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :ref, type: Hash do
           optional :is_new, type: Boolean
           optional :id, types: [Integer, String]
@@ -87,7 +99,7 @@ module Chemotion
                   doi: params[:ref][:doi],
                   url: params[:ref][:url],
                   title: params[:ref][:title],
-                  isbn: params[:ref][:isbn]
+                  isbn: params[:ref][:isbn],
                 )
               else
                 Literature.find_by(id: params[:ref][:id])
@@ -100,7 +112,7 @@ module Chemotion
           element_type: @element_klass,
           element_id: params[:element_id],
           litype: params[:ref][:litype],
-          category: 'detail'
+          category: 'detail',
         }
         unless Literal.find_by(attributes)
           Literal.create(attributes)
@@ -112,27 +124,29 @@ module Chemotion
           with: Entities::LiteratureEntity,
           root: :literatures,
           with_element_count: false,
-          with_user_info: true
+          with_user_info: true,
         )
-
       end
 
       params do
         requires :element_id, type: Integer
-        requires :element_type, type: String, values: %w[sample reaction research_plan]
+        requires :element_type, type: String, values: %w[sample reaction research_plan cell_line]
         requires :id, type: Integer
       end
 
       delete do
-        Literal.find_by(
+        literal = Literal.find_by(
           id: params[:id],
           # user_id: current_user.id,
           element_type: @element_klass,
           element_id: params[:element_id],
-          category: 'detail'
-        )&.destroy!
+          category: 'detail',
+        )
 
-        {}
+        error!('Literal not found', 400) unless literal
+
+        literal.destroy!
+        status 200
       end
 
       namespace :collection do
@@ -150,16 +164,19 @@ module Chemotion
           sample_ids = @dl_s > 1 ? @c.sample_ids : []
           reaction_ids = @dl_r > 1 ? @c.reaction_ids : []
           research_plan_ids = @dl_rp > 1 ? @c.research_plan_ids : []
-          collection_references = Literature.by_element_attributes_and_cat(@c_id, 'Collection', 'detail').group_by_element
+          collection_references = Literature.by_element_attributes_and_cat(@c_id, 'Collection',
+                                                                           'detail').group_by_element
           sample_references = Literature.by_element_attributes_and_cat(sample_ids, 'Sample', 'detail').group_by_element
-          reaction_references = Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction', 'detail').group_by_element
-          research_plan_references = Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan', 'detail').group_by_element
+          reaction_references = Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction',
+                                                                         'detail').group_by_element
+          research_plan_references = Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan',
+                                                                              'detail').group_by_element
 
           {
             collectionRefs: Entities::LiteratureEntity.represent(collection_references, with_element_count: true),
             sampleRefs: Entities::LiteratureEntity.represent(sample_references, with_element_count: true),
             reactionRefs: Entities::LiteratureEntity.represent(reaction_references, with_element_count: true),
-            researchPlanRefs: Entities::LiteratureEntity.represent(research_plan_references, with_element_count: true)
+            researchPlanRefs: Entities::LiteratureEntity.represent(research_plan_references, with_element_count: true),
           }
         end
       end
@@ -198,26 +215,26 @@ module Chemotion
         post do
           if params[:ref] && @pl >= 1
             lit = if params[:ref][:is_new]
-                  Literature.find_or_create_by(
-                    doi: params[:ref][:doi],
-                    url: params[:ref][:url],
-                    title: params[:ref][:title]
-                  )
-                else
-                  Literature.find_by(id: params[:ref][:id])
-                end
+                    Literature.find_or_create_by(
+                      doi: params[:ref][:doi],
+                      url: params[:ref][:url],
+                      title: params[:ref][:title],
+                    )
+                  else
+                    Literature.find_by(id: params[:ref][:id])
+                  end
 
             lit.update!(refs: (lit.refs || {}).merge(declared(params)[:ref][:refs])) if params[:ref][:refs]
             if lit
-              { 'Sample': @sids, 'Reaction': @rids }.each do |type, ids|
+              { Sample: @sids, Reaction: @rids }.each do |type, ids|
                 ids.each do |id|
-                  ltl = Literal.find_or_create_by(
+                  Literal.find_or_create_by(
                     literature_id: lit.id,
                     user_id: current_user.id,
                     element_type: type,
                     element_id: id,
                     litype: params[:ref][:litype],
-                    category: 'detail'
+                    category: 'detail',
                   )
                 end
               end
@@ -225,13 +242,14 @@ module Chemotion
           end
 
           sample_references = Literature.by_element_attributes_and_cat(@sids, 'Sample', @cat).with_element_and_user_info
-          reaction_references = Literature.by_element_attributes_and_cat(@rids, 'Reaction', @cat).with_element_and_user_info
+          reaction_references = Literature.by_element_attributes_and_cat(@rids, 'Reaction',
+                                                                         @cat).with_element_and_user_info
 
           present(
             sample_references + reaction_references,
             with: Entities::LiteratureEntity,
             root: :selectedRefs,
-            with_element_and_user_info: true
+            with_element_and_user_info: true,
           )
         end
       end
@@ -243,10 +261,10 @@ module Chemotion
         end
 
         after_validation do
-          params[:doi].match(/(?:\s*10\.)(\S+)\/(\S+)/)
-          @doi_prefix = $1
-          @doi_suffix = $2
-          error(400) unless (@doi_prefix.present? && @doi_suffix.present?)
+          params[:doi] =~ %r{(?:\s*10\.)(\S+)/(\S+)}
+          @doi_prefix = ::Regexp.last_match(1)
+          @doi_suffix = ::Regexp.last_match(2)
+          error(400) unless @doi_prefix.present? && @doi_suffix.present?
         end
 
         get :metadata do
@@ -255,17 +273,17 @@ module Chemotion
             faraday.headers = { 'Accept' => 'application/x-bibtex' }
           end
           resp = connection.get { |req| req.url("/10.#{@doi_prefix}/#{@doi_suffix}") }
-          unless resp.success?
-            error!({ error: reason_phrase }, resp.status)
-          end
+          error!({ error: reason_phrase }, resp.status) unless resp.success?
           resp_json = begin
-                        JSON.parse(BibTeX.parse(resp.body).to_json)
-                      rescue StandardError => e
-                        error!(e, 503)
-                      end
+            JSON.parse(BibTeX.parse(resp.body).to_json)
+          rescue StandardError => e
+            error!(e, 503)
+          end
           { bibtex: resp.body, BTjson: resp_json }
         end
       end
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
+# rubocop:enable Rails/SkipsModelValidations, Style/MultilineIfThen

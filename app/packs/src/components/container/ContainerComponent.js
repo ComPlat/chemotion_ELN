@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import { Map } from 'immutable';
 import PropTypes from 'prop-types';
@@ -56,10 +57,6 @@ export default class ContainerComponent extends Component {
     TextTemplateStore.unlisten(this.handleTemplateChange);
   }
 
-  onChange(container) {
-    this.props.onChange(container);
-  }
-
   handleTemplateChange() {
     const { templateType } = this.props;
 
@@ -102,41 +99,46 @@ export default class ContainerComponent extends Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  updateTextTemplates(textTemplate) {
-    const { templateType } = this.props;
-    TextTemplateActions.updateTextTemplates(templateType, textTemplate);
-  }
 
   handleAddLink(link) {
     const { container } = this.state;
-    let hyperlinks = container.extended_metadata['hyperlinks'];
+    let { hyperlinks } = container.extended_metadata;
     if (hyperlinks == null) {
-      container.extended_metadata['hyperlinks'] = [link];
+      container.extended_metadata.hyperlinks = [link];
     } else {
       if (typeof hyperlinks === 'string' || hyperlinks instanceof String) {
         hyperlinks = JSON.parse(hyperlinks);
       }
 
       hyperlinks.push(link);
-      container.extended_metadata['hyperlinks'] = hyperlinks;
+      container.extended_metadata.hyperlinks = hyperlinks;
     }
     this.setState({ container });
   }
 
   handleRemoveLink(link) {
     const { container } = this.state;
-    let hyperlinks = container.extended_metadata['hyperlinks'];
+    let { hyperlinks } = container.extended_metadata;
     if (typeof hyperlinks === 'string' || hyperlinks instanceof String) {
       hyperlinks = JSON.parse(hyperlinks);
     }
 
-    var index = hyperlinks.indexOf(link);
+    const index = hyperlinks.indexOf(link);
     if (index !== -1) {
       hyperlinks.splice(index, 1);
-      container.extended_metadata['hyperlinks'] = hyperlinks;
+      container.extended_metadata.hyperlinks = hyperlinks;
     }
 
     this.setState({ container });
+  }
+
+  onChange(container) {
+    this.props.onChange(container);
+  }
+
+  updateTextTemplates(textTemplate) {
+    const { templateType } = this.props;
+    TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
 
   render() {
@@ -164,23 +166,26 @@ export default class ContainerComponent extends Component {
     return (
       <div>
         <Col md={8}>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label>Name</label>
           <FormControl
             type="text"
             label="Name"
-            value={container.name || '***'}
+            value={container.name}
             // eslint-disable-next-line react/jsx-no-bind
             onChange={this.handleInputChange.bind(this, 'name')}
-            disabled={readOnly || disabled} />
+            disabled={readOnly || disabled}
+          />
         </Col>
         <Col md={4}>
           <div style={{ marginBottom: 11 }}>
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label>Status</label>
             <Select
-              name='status'
+              name="status"
               multi={false}
               options={confirmOptions}
-              value={container.extended_metadata['status']}
+              value={container.extended_metadata.status}
               disabled={readOnly || disabled}
               // eslint-disable-next-line react/jsx-no-bind
               onChange={this.handleInputChange.bind(this, 'status')}
@@ -189,11 +194,11 @@ export default class ContainerComponent extends Component {
         </Col>
         <Col md={12}>
           <div style={{ marginBottom: 11 }}>
-            <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
+            <ControlLabel>{this.props.analysisMethodTitle}</ControlLabel>
             <OlsTreeSelect
-              selectName="chmo"
+              selectName={this.props.ontologyName}
               selectedValue={container.extended_metadata.kind || ''}
-              onSelectChange={event => this.handleInputChange('kind', event)}
+              onSelectChange={(event) => this.handleInputChange('kind', event)}
               selectedDisable={readOnly || disabled || false}
             />
           </div>
@@ -216,6 +221,7 @@ export default class ContainerComponent extends Component {
           </FormGroup>
         </Col>
         <Col md={12}>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label>Datasets</label>
           <ContainerDatasets
             container={container}
@@ -225,8 +231,13 @@ export default class ContainerComponent extends Component {
           />
         </Col>
         <Col md={12}>
-          <HyperLinksSection data={container.extended_metadata['hyperlinks'] ?? []} onAddLink={this.handleAddLink} onRemoveLink={this.handleRemoveLink}
-            disabled={disabled}></HyperLinksSection>
+          <HyperLinksSection
+            data={container.extended_metadata.hyperlinks ?? []}
+            onAddLink={this.handleAddLink}
+            onRemoveLink={this.handleRemoveLink}
+            readOnly={readOnly}
+            disabled={disabled}
+          />
         </Col>
       </div>
     );
@@ -234,9 +245,21 @@ export default class ContainerComponent extends Component {
 }
 
 ContainerComponent.propTypes = {
+  ontologyName: PropTypes.string,
+  analysisMethodTitle: PropTypes.string,
   templateType: PropTypes.string,
   onChange: PropTypes.func,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   container: PropTypes.object
-}
+};
+
+ContainerComponent.defaultProps = {
+  ontologyName: 'chmo',
+  analysisMethodTitle: 'Type (Chemical Methods Ontology)',
+  templateType: '',
+  onChange: () => {},
+  readOnly: false,
+  disabled: false,
+  container: {}
+};

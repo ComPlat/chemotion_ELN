@@ -16,7 +16,7 @@ module Export
         when 'richtext'
           @fields << {
             type: field['type'],
-            text: Chemotion::QuillToHtml.new.convert(field['value']),
+            text: Chemotion::QuillToHtml.convert(field['value']),
           }
         when 'table'
           @fields << {
@@ -77,7 +77,6 @@ module Export
       ApplicationController.render(
         template: 'export/research_plan.haml',
         assigns: { name: @name, fields: @fields },
-        formats: [:docx],
         layout: false
       )
     end

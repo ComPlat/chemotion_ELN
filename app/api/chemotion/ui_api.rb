@@ -14,16 +14,21 @@ module Chemotion
         sfn_config = Rails.configuration.try(:sfn_config).try(:provider)
         converter_config = Rails.configuration.try(:converter).try(:url)
         radar_config = Rails.configuration.try(:radar).try(:url)
+        collector_config = Rails.configuration.try(:datacollectors)
+        collector_address = collector_config.present? && (
+          collector_config.dig(:mailcollector, :aliases, -1) || collector_config.dig(:mailcollector, :mail_address)
+        )
 
         {
           has_chem_spectra: has_chem_spectra,
           has_nmrium_wrapper: has_nmrium_wrapper,
           matrices: File.exist?(m_config) ? JSON.parse(File.read(m_config)) : {},
-          klasses: ElementKlass.where(is_active: true, is_generic: true)&.pluck(:name) || [],
+          klasses: Labimotion::ElementKlass.where(is_active: true, is_generic: true)&.pluck(:name) || [],
           structure_editors: Rails.configuration.structure_editors,
           has_sfn: sfn_config.present? && current_user.matrix_check_by_name('scifinderN'),
           has_converter: converter_config.present?,
           has_radar: radar_config.present?,
+          collector_address: collector_address.presence,
         }
       end
     end

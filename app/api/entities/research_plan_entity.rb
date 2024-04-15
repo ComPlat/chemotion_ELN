@@ -4,6 +4,7 @@ module Entities
   class ResearchPlanEntity < ApplicationEntity
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
+      expose! :can_copy,                                     unless: :displayed_in_list
       expose! :body
       expose! :container,                                    using: 'Entities::ContainerEntity'
       expose! :id
@@ -11,6 +12,7 @@ module Entities
       expose! :name
       expose! :thumb_svg
       expose! :type
+      expose! :comment_count
     end
 
     with_options(anonymize_below: 10) do
@@ -18,7 +20,7 @@ module Entities
       expose! :research_plan_metadata,  anonymize_with: nil, using: 'Entities::ResearchPlanMetadataEntity'
       expose! :tag,                     anonymize_with: nil, using: 'Entities::ElementTagEntity'
       expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
-      expose! :segments,                anonymize_with: [],  using: 'Entities::SegmentEntity'
+      expose! :segments,                anonymize_with: [],  using: 'Labimotion::SegmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 
@@ -48,6 +50,10 @@ module Entities
 
     def wellplates
       displayed_in_list? ? [] : object.wellplates
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end

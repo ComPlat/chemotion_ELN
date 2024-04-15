@@ -1,18 +1,22 @@
 # frozen_string_literal: true
+
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class UserAPI < Grape::API
     resource :users do
       desc 'Find top 3 matched user names'
       params do
         requires :name, type: String
+        optional :type, type: [String], desc: 'user types',
+                        coerce_with: ->(val) { val.split(/[\s|,]+/) },
+                        values: %w[Group Person],
+                        default: %w[Group Person]
       end
       get 'name' do
-        unless params[:name].nil? || params[:name].empty?
-          { users: User.where(type: %w[Person Group]).by_name(params[:name]).limit(3)
-                       .select('first_name', 'last_name', 'name', 'id', 'name_abbreviation', 'name_abbreviation as abb', 'type as user_type') }
-        else
-          { users: [] }
-        end
+        return { users: [] } if params[:name].blank?
+
+        users = User.where(type: params[:type]).by_name(params[:name]).limit(3)
+        present users, with: Entities::UserSimpleEntity, root: 'users'
       end
 
       desc 'Return current_user'
@@ -30,12 +34,14 @@ module Chemotion
       desc 'list structure editors'
       get 'list_editors' do
         editors = []
-        %w[chemdrawEditor marvinjsEditor ketcher2Editor].each { |str| editors.push(str) if current_user.matrix_check_by_name(str) }
+        %w[chemdrawEditor marvinjsEditor ketcher2Editor].each do |str|
+          editors.push(str) if current_user.matrix_check_by_name(str)
+        end
         present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices'
       end
 
       namespace :omniauth_providers do
-        desc "get omniauth providers"
+        desc 'get omniauth providers'
         get do
           { providers: Devise.omniauth_configs.keys, current_user: current_user }
         end
@@ -57,7 +63,7 @@ module Chemotion
             access_level: params[:access_level] || 0,
             title: params[:title],
             description: params[:description],
-            color: params[:color]
+            color: params[:color],
           }
           label = nil
           if params[:id].present?
@@ -88,7 +94,8 @@ module Chemotion
       namespace :scifinder do
         desc 'scifinder-n credential'
         get do
-          present(ScifinderNCredential.find_by(created_by: current_user.id) || {}, with: Entities::ScifinderNCredentialEntity)
+          present(ScifinderNCredential.find_by(created_by: current_user.id) || {},
+                  with: Entities::ScifinderNCredentialEntity)
         end
       end
 
@@ -101,7 +108,7 @@ module Chemotion
     resource :groups do
       rescue_from ActiveRecord::RecordInvalid do |error|
         message = error.record.errors.messages.map do |attr, msg|
-          "%s %s" % [attr, msg.first]
+          format('%<attr>s %<msg>s', attr: attr, msg: msg.first)
         end
         error!(message.join(', '), 404)
       end
@@ -121,7 +128,7 @@ module Chemotion
         after_validation do
           users = params[:group_param][:users] || []
           @group_params = declared(params, include_missing: false).deep_symbolize_keys[:group_param]
-          @group_params[:email] ||= "%i@eln.edu" % [Time.now.getutc.to_i]
+          @group_params[:email] ||= format('%i@eln.edu', Time.now.getutc.to_i)
           @group_params[:password] = Devise.friendly_token.first(8)
           @group_params[:password_confirmation] = @group_params[:password]
           @group_params[:users] = User.where(id: [current_user.id] + users)
@@ -157,7 +164,8 @@ module Chemotion
         end
         route_param :device_id do
           get do
-            present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity, root: 'device_metadata'
+            present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity,
+                                                                           root: 'device_metadata'
           end
         end
       end
@@ -166,32 +174,43 @@ module Chemotion
         desc 'update a group of persons'
         params do
           requires :id, type: Integer
-          optional :rm_users, type: Array
-          optional :add_users, type: Array
+          optional :rm_users, type: [Integer], desc: 'remove users from group', default: []
+          optional :add_users, type: [Integer], desc: 'add users to group', default: []
+          optional :add_admin, type: [Integer], desc: 'add admin to group', default: []
+          optional :rm_admin, type: [Integer], desc: 'remove admin from group', default: []
           optional :destroy_group, type: Boolean, default: false
         end
 
         after_validation do
-          if current_user.administrated_accounts.where(id: params[:id]).empty? &&
-             !params[:rm_users].nil? && current_user.id != params[:rm_users][0]
-            error!('401 Unauthorized', 401)
-          end
+          @group = Group.find_by(id: params[:id])
+          @as_admin = @group.administrated_by?(current_user)
+          @rm_current_user_id = !@as_admin && params[:rm_users].delete(current_user.id)
+          error!('401 Unauthorized', 401) unless @group.administrated_by?(current_user) || @rm_current_user_id
         end
 
         put ':id' do
-          group = Group.find(params[:id])
-          if params[:destroy_group]
-            User.find_by(id: params[:id])&.remove_from_matrices
-            { destroyed_id: params[:id] } if group.destroy!
+          if @rm_current_user_id
+            @group.users.delete(User.where(id: rm_user_id))
+            User.gen_matrix([@rm_current_user_id])
+            present @group, with: Entities::GroupEntity, root: 'group'
+          elsif params[:destroy_group]
+            @group.destroy! && { destroyed_id: params[:id] }
           else
-            new_users =
-              (params[:add_users] || []).map(&:to_i) - group.users.pluck(:id)
-            rm_users = (params[:rm_users] || []).map(&:to_i)
-            group.users << Person.where(id: new_users)
-            group.save!
-            group.users.delete(User.where(id: rm_users))
-            User.gen_matrix(rm_users) if rm_users&.length&.positive?
-            present group, with: Entities::GroupEntity, root: 'group'
+            # add new admins
+            params[:add_admin].delete(@group.admins.pluck(:id)) # ensure that admins are not added twice
+            @group.admins << User.where(id: params[:add_admin])
+            # remove admins
+            # ensure that current_user is not removed from admins when being last admin
+            params[:rm_admin].delete(current_user.id) if Group.last.admins.count == 1
+            @group.users_admins.where(admin_id: params[:rm_admin]).destroy_all
+            # add new users
+            params[:add_users].delete(@group.users.pluck(:id))
+            @group.users << Person.where(id: params[:add_users])
+            # remove users
+            @group.users.delete(User.where(id: params[:rm_users]))
+            User.gen_matrix(params[:rm_users]) if params[:rm_users].length.positive?
+
+            present @group, with: Entities::GroupEntity, root: 'group'
           end
         end
       end
@@ -204,19 +223,21 @@ module Chemotion
       end
 
       get :novnc do
-        if params[:id] != '0'
-          devices = Device.by_user_ids(user_ids).novnc.where(id: params[:id]).includes(:profile)
-        else
-          devices = Device.by_user_ids(user_ids).novnc.includes(:profile)
-        end
+        devices = if params[:id] == '0'
+                    Device.by_user_ids(user_ids).novnc.includes(:profile)
+                  else
+                    Device.by_user_ids(user_ids).novnc.where(id: params[:id]).includes(:profile)
+                  end
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end
 
       get 'current_connection' do
         path = Rails.root.join('tmp/novnc_devices', params[:id])
-        cmd = "echo '#{current_user.id},#{params[:status] == 'true' ? 1 : 0}' >> #{path};LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
-        { result: Open3.popen3(cmd) { |i, o, e, t| o.read.split(/\s/) } }
+        cmd = "echo '#{current_user.id},#{params[:status] == 'true' ? 1 : 0}' >> #{path};"
+        cmd += "LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
+        { result: Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s/) } }
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

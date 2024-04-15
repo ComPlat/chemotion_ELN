@@ -3,6 +3,12 @@
   height: 90px;
 }
 
+.reaction-header svg {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+}
+
 .molecule rect {
   fill: none;
   fill-opacity: 0.0;

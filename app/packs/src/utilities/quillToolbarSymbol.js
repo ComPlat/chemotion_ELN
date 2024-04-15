@@ -1,6 +1,6 @@
 import React from 'react';
 
-const minusRender = name => (
+const minusRender = (name) => (
   <span key={`${name}_key`} id={`${name}_id`} style={{ marginRight: '10px', cursor: 'pointer' }}>
     <i className="fa fa-minus" />
   </span>
@@ -232,10 +232,31 @@ const ops13CHead = (freqStr = '', solvent = '') => (
   ]
 );
 
+const ops15NHead = (freqStr = '', solvent = '') => (
+  [
+    { attributes: { script: 'super' }, insert: '15' },
+    { insert: `N NMR (${freqStr}${solvent}ppm) δ = ` },
+  ]
+);
+
 const ops19FHead = (freqStr = '', solvent = '') => (
   [
     { attributes: { script: 'super' }, insert: '19' },
     { insert: `F NMR (${freqStr}${solvent}ppm) δ = ` },
+  ]
+);
+
+const ops29SiHead = (freqStr = '', solvent = '') => (
+  [
+    { attributes: { script: 'super' }, insert: '29' },
+    { insert: `Si NMR (${freqStr}${solvent}ppm) δ = ` },
+  ]
+);
+
+const ops31PHead = (freqStr = '', solvent = '') => (
+  [
+    { attributes: { script: 'super' }, insert: '31' },
+    { insert: `P NMR (${freqStr}${solvent}ppm) δ = ` },
   ]
 );
 
@@ -347,16 +368,45 @@ const opsMSTail = () => (
   []
 );
 
+const opsDLSIntensityHead = () => (
+  [
+    { insert: 'DLS: ' },
+  ]
+);
+
+const opsEmmissionHead = () => (
+  [
+    { insert: 'Emission: ' },
+  ]
+);
+
+const opsXRDHead = () => (
+  [
+    { insert: 'XRD ' },
+  ]
+);
+
+const opsCommonHead = () => (
+  []
+);
+
 const SpectraOps = {
   PLAIN: { head: [], tail: [] },
   '1H': { head: ops1HHead, tail: opsCommonTail },
   '13C': { head: ops13CHead, tail: opsCommonTail },
+  '15N': { head: ops15NHead, tail: opsCommonTail },
   '19F': { head: ops19FHead, tail: opsCommonTail },
+  '29Si': { head: ops29SiHead, tail: opsCommonTail },
+  '31P': { head: ops31PHead, tail: opsCommonTail },
   IR: { head: opsIRHead, tail: opsIRTail },
   RAMAN: { head: opsRAMANHead, tail: opsRAMANTail },
   'UV/VIS': { head: opsUVVISHead, tail: opsUVVISTail },
   'HPLC UV/VIS': { head: opsHPLCUVVISHead, tail: opsHPLCUVVISTail },
   MS: { head: opsMSHead, tail: opsMSTail },
+  Emissions: { head: opsEmmissionHead, tail: opsCommonTail },
+  'DLS ACF': { head: opsCommonHead, tail: opsCommonTail },
+  'DLS intensity': { head: opsDLSIntensityHead, tail: opsCommonTail },
+  'X-RAY DIFFRACTION': { head: opsXRDHead, tail: opsCommonHead }
 };
 
 const reactionAnalysesMacros = {
@@ -638,28 +688,32 @@ const sampleAnalysesMacros = {
   },
   'hr-ei': {
     ops: [
-      { insert: 'HRMS–EI ' },
-      { insert: '(m/z)', attributes: { italic: true } },
-      { insert: ': [M]' },
-      { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '.' },
+      { insert: "HRMS (EI): " },
+      { insert: "m/z", attributes: { italic: true } },
+      { insert: " = calcd for " },
+      { insert: "sum-formula", attributes: { bold: true } },
+      { insert: " [M]" },
+      { insert: "+", attributes: { script: "super" } },
+      { insert: ": " },
+      { insert: "MASS", attributes: { bold: true } },
+      { insert: "; found " },
+      { insert: "MASS", attributes: { bold: true } },
+      { insert: "." }
     ],
   },
   'hr-fab': {
     ops: [
-      { insert: 'HRMS–FAB ' },
-      { insert: '(m/z)', attributes: { italic: true } },
-      { insert: ': [M + H]' },
-      { insert: '+', attributes: { script: 'super' } },
-      { insert: ' calcd for ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '; found ' },
-      { insert: 'MASS', attributes: { bold: true } },
-      { insert: '.' },
+      { insert: "HRMS (FAB, matrix NBA): " },
+      { insert: "m/z", attributes: { italic: true } },
+      { insert: " = calcd for " },
+      { insert: "sum-formula", attributes: { bold: true } },
+      { insert: " [M+H]" },
+      { insert: "+", attributes: { script: "super" } },
+      { insert: ": " },
+      { insert: "MASS", attributes: { bold: true } },
+      { insert: "; found: " },
+      { insert: "MASS", attributes: { bold: true } },
+      { insert: "." }
     ],
   },
 };

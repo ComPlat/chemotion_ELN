@@ -1,21 +1,19 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import {
-  Button, Checkbox, OverlayTrigger, Tooltip,
-  MenuItem, SplitButton, ButtonGroup
-} from 'react-bootstrap';
+import { Button, Checkbox } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer } from 'src/utilities/SpectraHelper';
+import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/utilities/imageHelper';
+import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -54,122 +52,6 @@ const qCheckMsg = (sample, container) => {
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
   return '';
-};
-
-const isNMRKind = (container) => {
-  if (container.extended_metadata.kind) {
-    return container.extended_metadata.kind.includes('NMR');
-  }
-  return false;
-}
-
-const SpectraEditorBtn = ({
-  sample, spcInfos, hasJcamp, hasChemSpectra,
-  toggleSpectraModal, confirmRegenerate, confirmRegenerateEdited, hasEditedJcamp,
-  toggleNMRDisplayerModal, hasNMRium
-}) => (
-  <span>
-    <OverlayTrigger
-    placement="bottom"
-    delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
-  >{spcInfos.length > 0 ? (
-    <ButtonGroup className="button-right">
-      <SplitButton
-        id="spectra-editor-split-button"
-        pullRight
-        bsStyle="info"
-        bsSize="xsmall"
-        title={<i className="fa fa-area-chart" />}
-        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
-        onClick={toggleSpectraModal}
-        disabled={!(spcInfos.length > 0) || !hasChemSpectra}
-      >
-        <MenuItem
-          id="regenerate-spectra"
-          key="regenerate-spectra"
-          onSelect={(eventKey, event) => {
-            event.stopPropagation();
-            confirmRegenerate(event);
-          }}
-          disabled={!hasJcamp || !sample.can_update}
-        >
-          <i className="fa fa-refresh" /> Reprocess
-        </MenuItem>
-        {
-          hasEditedJcamp ? 
-            (<MenuItem
-              id="regenerate-edited-spectra"
-              key="regenerate-edited-spectra"
-              onSelect={(eventKey, event) => {
-                event.stopPropagation();
-                confirmRegenerateEdited(event);
-              }}
-            >
-              <i className="fa fa-refresh" /> Regenerate .edit.jdx files
-            </MenuItem>) : <span></span>
-        }
-      </SplitButton>
-    </ButtonGroup>
-  ) : (
-    <Button
-      bsStyle="warning"
-      bsSize="xsmall"
-      className="button-right"
-      onClick={confirmRegenerate}
-      disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
-    >
-      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
-    </Button>
-  )}
-  </OverlayTrigger>
-
-  {
-        hasNMRium ? (
-            <OverlayTrigger
-            placement="top"
-            delayShow={500}
-            overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
-            >
-                <ButtonGroup className="button-right">
-                    <Button
-                    id="spectra-editor-split-button"
-                    pullRight
-                    bsStyle="info"
-                    bsSize="xsmall"
-                    onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
-                    onClick={toggleNMRDisplayerModal}
-                    disabled={!hasJcamp || !sample.can_update}
-                    >
-                    <i className="fa fa-bar-chart"/>
-                    </Button>
-                </ButtonGroup>
-            </OverlayTrigger>
-        ) : null
-    }
-  </span>
-);
-
-SpectraEditorBtn.propTypes = {
-  sample: PropTypes.object,
-  hasJcamp: PropTypes.bool,
-  spcInfos: PropTypes.array,
-  hasChemSpectra: PropTypes.bool,
-  toggleSpectraModal: PropTypes.func.isRequired,
-  confirmRegenerate: PropTypes.func.isRequired,
-  confirmRegenerateEdited: PropTypes.func.isRequired,
-  hasEditedJcamp: PropTypes.bool,
-  toggleNMRDisplayerModal: PropTypes.func.isRequired,
-  hasNMRium: PropTypes.bool,
-};
-
-SpectraEditorBtn.defaultProps = {
-  hasJcamp: false,
-  spcInfos: [],
-  sample: {},
-  hasChemSpectra: false,
-  hasEditedJcamp: false,
-  hasNMRium: false,
 };
 
 const editModeBtn = (toggleMode, isDisabled) => (
@@ -305,8 +187,8 @@ const headerBtnGroup = (
   }
 
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  // const hasNMRium = isNMRKind(container) && hasNmriumWrapper;
-  const hasNMRium = hasNmriumWrapper;
+  const { chmos } = UserStore.getState();
+  const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
   return (
     <div className="upper-btn">
@@ -324,8 +206,8 @@ const headerBtnGroup = (
         analyses={[container]}
         ident={container.id}
       />
-      <SpectraEditorBtn
-        sample={sample}
+      <SpectraEditorButton
+        element={sample}
         hasJcamp={hasJcamp}
         spcInfos={spcInfos}
         hasChemSpectra={hasChemSpectra}

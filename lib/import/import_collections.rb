@@ -31,9 +31,13 @@ module Import
       att = Tempfile.new(encoding: 'ascii-8bit')
       att.write(@att.read_file)
       att.rewind
+
       Zip::File.open(att.path) do |zip_file|
         # Handle entries one by one
         zip_file.each do |entry|
+          # do nothing for directory entry
+          next if entry.ftype == :directory
+
           data = entry.get_input_stream.read.force_encoding('UTF-8')
           case entry.name
           when 'export.json'
@@ -42,6 +46,7 @@ module Import
             file_name = entry.name.sub('attachments/', '')
             attachment = Attachment.new(
               transferred: true,
+              con_state: Labimotion::ConState::NONE,
               created_by: @current_user_id,
               created_for: @current_user_id,
               key: SecureRandom.uuid,
@@ -87,14 +92,20 @@ module Import
         gate_collection if @gt == true
         import_collections if @gt == false
         import_samples
+        import_chemicals if @gt == false
         import_residues
         import_reactions
         import_reactions_samples
+        CelllineImporter.new(@data, @current_user_id, @instances).execute if @gt == false
+        # import_elements if @gt == false
+        # import_elements_samples if @gt == false
         import_wellplates if @gt == false
         import_wells if @gt == false
-        import_screens if @gt == false
         import_research_plans if @gt == false
+        import_screens if @gt == false
         import_containers
+        import_segments
+        import_datasets
         import_attachments
         import_literals
       end
@@ -128,13 +139,7 @@ module Import
 
       annotation_data = annotation_entry.get_input_stream.read.force_encoding('UTF-8')
       updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
-
-      annotation_data = annotation_data.gsub(
-        %r{/api/v1/attachments/image/([0-9])*},
-        "/api/v1/attachments/image/#{attachment.id}",
-      )
-
-      updater.update_annotation(annotation_data, attachment.id)
+      updater.updated_annotated_string(annotation_data, attachment.id)
     end
 
     def import_collections
@@ -181,6 +186,21 @@ module Import
       end
     end
 
+    def import_chemicals
+      @data.fetch('Chemical', {}).each do |_uuid, fields|
+        sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+        next unless sample
+
+        chemical = Chemical.create!(fields.slice(
+          'cas',
+          'chemical_data',
+        ).merge(
+          sample_id: sample&.id,
+        ))
+        chemical.save!
+      end
+    end
+
     def import_samples
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
@@ -221,6 +241,7 @@ module Import
           'impurities',
           'location',
           'is_top_secret',
+          'dry_solvent',
           'external_label',
           'short_label',
           'real_amount_value',
@@ -235,6 +256,7 @@ module Import
           'decoupled',
           'molecular_mass',
           'sum_formula',
+          'inventory_sample',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -320,6 +342,7 @@ module Import
           'solvent',
           'short_label',
           'role',
+          'rxno',
           'origin',
           'duration',
           'created_at',
@@ -373,6 +396,10 @@ module Import
       end
     end
 
+    def import_elements
+      Labimotion::Import.import_elements(@data, @instances, @gt, @current_user_id, method(:fetch_many), &method(:update_instances!))
+    end
+
     def import_wellplates
       @data.fetch('Wellplate', {}).each do |uuid, fields|
         # create the wellplate
@@ -413,7 +440,7 @@ module Import
           'updated_at',
         ).merge(
           wellplate: @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil),
+          sample: @instances.fetch('Sample', nil)&.fetch(fields.fetch('sample_id'), nil),
         ))
 
         # add reaction to the @instances map
@@ -440,6 +467,9 @@ module Import
           ),
           wellplates: fetch_many(
             'Wellplate', 'ScreensWellplate', 'screen_id', 'wellplate_id', uuid
+          ),
+          research_plans: fetch_many(
+            'ResearchPlan', 'ResearchPlansScreen', 'screen_id', 'research_plan_id', uuid
           ),
         ))
 
@@ -539,6 +569,15 @@ module Import
       end
     rescue StandardError => e
       Rails.logger.debug(e.backtrace)
+    end
+
+    def import_segments
+      Labimotion::Import.import_segments(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
+      # nil
+    end
+
+    def import_datasets
+      Labimotion::Import.import_datasets(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
     end
 
     def import_literals

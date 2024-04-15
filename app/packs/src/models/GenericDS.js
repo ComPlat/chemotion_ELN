@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import Element from 'src/models/Element';
 
 export default class GenericDS extends Element {
@@ -8,9 +9,10 @@ export default class GenericDS extends Element {
       element_type: 'Container',
       element_id: containerId,
       properties: template,
+      properties_release: cloneDeep(template),
       klass_ols: klass.ols_term_id,
       klass_label: klass.label,
-      changed: false
+      changed: false,
     });
   }
 
@@ -20,6 +22,7 @@ export default class GenericDS extends Element {
       element_type: 'Container',
       element_id: this.element_id,
       properties: this.properties,
+      properties_release: this.properties_release,
     });
   }
 

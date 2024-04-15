@@ -35,7 +35,7 @@ module Chemotion
 
           babel_info = OpenBabelService.molecule_info_from_structure(smiles, 'smi')
           inchikey = babel_info[:inchikey]
-          return {} unless inchikey
+          return {} if inchikey.blank?
 
           molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
           unless molecule
@@ -60,6 +60,7 @@ module Chemotion
             end
             return {} unless molfile
             molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+            molecule = Molecule.find_or_create_dummy if molecule.blank?
           end
           return unless molecule
 
@@ -151,6 +152,7 @@ module Chemotion
             ob = ''
           else
             molecule = Molecule.find_or_create_by_molfile(molfile)
+            molecule = Molecule.find_or_create_dummy if molecule.blank?
             ob = molecule&.ob_log
           end
           molecule&.attributes&.merge(temp_svg: svg_name, ob_log: ob)
@@ -164,21 +166,21 @@ module Chemotion
         requires :molfile, type: String, desc: 'Molecule molfile'
         optional :svg_file, type: String, desc: 'Molecule svg file'
         optional :editor, type: String, desc: 'SVGProcessor'
-        optional :decoupled, type: Boolean, desc: 'decouple from molecule', default: false
+        optional :decoupled, type: Boolean, desc: 'Is decoupled sample?', default: false
       end
       post do
         svg = params[:svg_file]
         molfile = params[:molfile]
         decoupled = params[:decoupled]
-        molecule = Molecule.find_or_create_by_molfile(molfile)
-        molecule = Molecule.find_by(inchikey: 'DUMMY') if molecule.blank? && decoupled
+        molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
+        molecule = Molecule.find_or_create_dummy if molecule.blank?
         ob = molecule&.ob_log
-        if params[:svg_file].present?
+        if svg.present?
           svg_process = SVG::Processor.new.structure_svg(params[:editor], svg, molfile)
         else
           svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
           if File.exist?(svg_file_src)
-            mol = molecule.molfile.lines[0..1]
+            mol = molecule.molfile.lines.first(2)
             if mol[1]&.strip&.match?('OpenBabel')
               svg = File.read(svg_file_src)
               svg_process = SVG::Processor.new.structure_svg('openbabel', svg, molfile)
@@ -189,7 +191,6 @@ module Chemotion
           end
         end
         molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
-
         Entities::MoleculeEntity.represent(molecule, temp_svg: svg_process[:svg_file_name], ob_log: ob)
       end
 

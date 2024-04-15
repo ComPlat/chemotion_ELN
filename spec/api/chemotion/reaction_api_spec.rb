@@ -47,7 +47,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.map { |reaction| reaction['id'] }).to eq([r2.id, r1.id])
+        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
       end
     end
 
@@ -72,7 +72,7 @@ describe Chemotion::ReactionAPI do
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.map { |reaction| reaction['id'] }).to eq([r2.id, r1.id])
+        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
       end
     end
 
@@ -84,6 +84,100 @@ describe Chemotion::ReactionAPI do
       it 'does not return reaction' do
         reactions = JSON.parse(response.body)['reactions']
         expect(reactions.size).to be(0)
+      end
+    end
+
+    context 'with sort_column' do
+      let(:collection) { create(:collection, user: user, is_shared: false) }
+      let(:reaction1) do
+        create(
+          :reaction,
+          updated_at: Time.current,
+          rxno: 'A',
+          rinchi_short_key: 'C',
+          collections: [collection],
+        )
+      end
+      let(:reaction2) do
+        create(
+          :reaction,
+          updated_at: 1.minute.ago,
+          rxno: 'C',
+          rinchi_short_key: 'B',
+          collections: [collection],
+        )
+      end
+      let(:reaction3) do
+        create(
+          :reaction,
+          updated_at: 1.minute.from_now,
+          rxno: 'B',
+          rinchi_short_key: 'A',
+          collections: [collection],
+        )
+      end
+
+      before do
+        Reaction.skip_callback(:save, :before, :generate_rinchis)
+        reaction1
+        reaction2
+        reaction3
+        Reaction.set_callback(:save, :before, :generate_rinchis)
+      end
+
+      it 'returns sorted reactions per default by short_label' do
+        get '/api/v1/reactions', params: { collection_id: collection.id }
+
+        expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
+          [
+            reaction3.id,
+            reaction2.id,
+            reaction1.id,
+          ],
+        )
+      end
+
+      it 'returns sorted reactions by updated_at' do
+        get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'created_at' }
+
+        expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
+          [
+            reaction3.id,
+            reaction2.id,
+            reaction1.id,
+          ],
+        )
+      end
+
+      it 'returns sorted reactions by rxno' do
+        get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'rxno' }
+
+        expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
+          [
+            reaction1.id,
+            reaction3.id,
+            reaction2.id,
+          ],
+        )
+      end
+
+      it 'returns sorted reactions by rinchi_short_key' do
+        get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'rinchi_short_key' }
+
+        expect(JSON.parse(response.body)['reactions'].pluck('id')).to eq(
+          [
+            reaction3.id,
+            reaction2.id,
+            reaction1.id,
+          ],
+        )
+      end
+
+      it 'gives error for invalid value for sort_column' do
+        get '/api/v1/reactions', params: { collection_id: collection.id, sort_column: 'not_allowed' }
+
+        expect(response).to have_http_status(:bad_request)
+        expect(JSON.parse(response.body)['error']).to eq('sort_column does not have a valid value')
       end
     end
   end

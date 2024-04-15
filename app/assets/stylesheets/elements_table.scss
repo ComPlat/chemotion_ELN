@@ -60,6 +60,7 @@ th.drag {
 }
 
 .collection-overlay > .popover-content {
+  overflow-y: scroll;
   padding: 0px !important;
 }
 
@@ -78,9 +79,6 @@ th.drag {
 }
 
 .sample-list-from-date, .sample-list-to-date {
-  float: right;
-  margin-right: 2px;
-
   input {
     font-size: 13px;
     border-radius: 4px;
@@ -91,22 +89,6 @@ th.drag {
     width: 95px;
   }
 }
-
-/* .panel-title div:empty:after {
-  content: ".";
-  visibility: hidden;
-} */
-
-
-/*.number-shown-select {
-  float: right !important;
-  text-align: right;
-  width: 55% !important;
-}*/
-
-/*.element-svg-checkbox {
-  margin: 0px 0 0;
-}*/
 
 .list-container-bottom {
   width: 100%;
@@ -139,17 +121,17 @@ th.drag {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px;
+  min-height: 40px;
   background-color: #ddd;
   padding: 5px;
 }
 
-.header-right {
-  display: flex;
-  margin-right: 12px;
-}
-
-.select-all {
+@media (max-width: 600px) {
+  .table-header {
+    height: auto;
+    flex-wrap: wrap;
+    overflow: auto;
+  }
 }
 
 #tabList .active a {

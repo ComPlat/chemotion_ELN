@@ -24,54 +24,54 @@ const createWrapper = (label, unit, value, field, inputDisable) => shallow(
 
 describe('NumericInputUnit component', () => {
   it('renders correctly', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
-    const expectedHtml = '<div class="numericInputWithUnit_g"><label class="control-label">Amount</label><span class="input-group"><input type="text" value="1" name="inventory_amount" label="Amount" class="bs-form--compact form-control"/><span class="input-group-btn"><button type="button" class="btn btn-default active">g</button></span></span></div>';
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
+    const expectedHtml = '<div class="numericInputWithUnit_g"><label class="control-label">Amount</label><span class="input-group"><input type="text" value="1" name="chemical_amount_in_g" label="Amount" class="bs-form--compact form-control"/><span class="input-group-btn"><button type="button" class="btn btn-default active">g</button></span></span></div>';
     expect(wrapper.html()).toEqual(expectedHtml);
   });
 
   it('should render without errors', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     expect(wrapper.find('.numericInputWithUnit_g')).toHaveLength(1);
   });
 
   it('renders ControlLabel component', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     const label = wrapper.find(ControlLabel);
     expect(label.exists()).toBeTruthy();
   });
 
   it('renders correct label text', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     const label = wrapper.find(ControlLabel);
     expect(label.props().children).toEqual('Amount');
   });
 
-  it('should not render the label when it is not passed as a prop', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
+  it('should render the label even when it is not passed as a prop', () => {
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     wrapper.setProps({ label: undefined });
     wrapper.update();
-    expect(wrapper.find('ControlLabel').exists()).toBe(false);
+    expect(wrapper.find('ControlLabel').exists()).toBe(true);
   });
 
   it('calls the onInputChange function when the value is changed and updates state of value, then convert unit', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     wrapper.find('FormControl').simulate('change', { target: { value: 3 } });
     expect(mockFn.calledWith(3, 'g')).toEqual(true);
     wrapper.find('Button').simulate('click');
-    const inputComponent = wrapper.find('[name="inventory_amount"]');
+    const inputComponent = wrapper.find('[name="chemical_amount_in_g"]');
     inputComponent.simulate('change', { target: { value: 3000 } });
     expect(mockFn.calledWith(3000, 'mg')).toEqual(true);
   });
 
   it('toggles input unit for weight', () => {
-    const wrapper = createWrapper('Amount', 'g', 1, 'inventory_amount', false);
+    const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     wrapper.find('Button').simulate('click');
-    let inputComponent = wrapper.find('[name="inventory_amount"]');
+    let inputComponent = wrapper.find('[name="chemical_amount_in_g"]');
     inputComponent.simulate('change', { target: { value: 1000 } });
     expect(mockFn.calledWith(1000, 'mg')).toEqual(true);
 
     wrapper.find('Button').simulate('click');
-    inputComponent = wrapper.find('[name="inventory_amount"]');
+    inputComponent = wrapper.find('[name="chemical_amount_in_g"]');
     inputComponent.simulate('change', { target: { value: 1000000 } });
     expect(mockFn.calledWith(1000000, 'μg')).toEqual(true);
   });

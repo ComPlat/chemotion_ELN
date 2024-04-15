@@ -58,7 +58,7 @@ module Chemotion
           end
         end
 
-        desc 'Sychronize chemotion deviceMetadata to DataCite'
+        desc 'Synchronize chemotion deviceMetadata to DataCite'
         params do
           requires :device_id, type: Integer, desc: 'device id'
         end
@@ -163,14 +163,20 @@ module Chemotion
               optional :authen, type: String
               optional :key_name, type: String
               optional :number_of_files, type: Integer
+              optional :selected_user_level, type: Boolean
             end
           end
         end
 
         after_validation do
           @p_method = params[:data][:method]
+          user_level_selected = params.dig(:data, :method_params, :user_level_selected)
           if @p_method.end_with?('local')
-            p_dir = params[:data][:method_params][:dir]
+            p_dir = if user_level_selected
+                      params[:data][:method_params][:dir].gsub(%r{/\{UserSubDirectories\}}, '')
+                    else
+                      params[:data][:method_params][:dir]
+                    end
             @pn = Pathname.new(p_dir)
             error!('Dir is not a valid directory', 500) unless @pn.directory?
 
@@ -182,6 +188,11 @@ module Chemotion
             error!('Dir is not in white-list for local data collection', 500) if localpath.nil?
 
           end
+
+          if @p_method.end_with?('sftp') && user_level_selected
+            params[:data][:method_params][:dir].chomp!('/{UserSubDirectories}')
+          end
+
           key_path(params[:data][:method_params][:key_name]) if @p_method.end_with?('sftp') && params[:data][:method_params][:authen] == 'keyfile'
         end
 
@@ -231,22 +242,6 @@ module Chemotion
           get do
             data = User.where(type: params[:type])
             present data, with: Entities::GroupDeviceEntity, root: 'list'
-          end
-        end
-
-        namespace :name do
-          desc 'Find top 4 matched user names by type'
-          params do
-            requires :type, type: String, values: %w[Group Device User Person Admin]
-            requires :name, type: String, desc: 'user name'
-          end
-          get do
-            return { users: [] } if params[:name].blank?
-
-            users = User.where(type: params[:type])
-                        .by_name(params[:name])
-                        .limit(4)
-            present users, with: Entities::UserSimpleEntity, root: 'users'
           end
         end
 
@@ -406,6 +401,19 @@ module Chemotion
             OlsTerm.write_public_file("#{owl_name}.edited", ols_terms: result)
 
             status 204
+          end
+        end
+      end
+
+      namespace :data_types do
+        desc 'Update data types'
+        put do
+          file_path = Rails.configuration.path_spectra_data_type
+          new_data_types = JSON.parse(request.body.read)
+          begin
+            File.write(file_path, JSON.pretty_generate(new_data_types))
+          rescue Errno::EACCES
+            error!('Save files error!', 500)
           end
         end
       end

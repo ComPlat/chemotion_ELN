@@ -9,40 +9,49 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { reOrderArr } from 'src/utilities/DndControl';
 import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/utilities/ReportHelper';
 
+const splSettings = [
+  { checked: true, text: 'diagram' },
+  { checked: true, text: 'collection' },
+  { checked: true, text: 'analyses' },
+  { checked: true, text: 'reaction description' },
+  { checked: true, text: 'literature' },
+];
+
+const rxnSettings = [
+  { checked: true, text: 'diagram' },
+  { checked: true, text: 'material' },
+  { checked: true, text: 'description' },
+  { checked: true, text: 'purification' },
+  { checked: true, text: 'dangerous products' },
+  { checked: true, text: 'tlc' },
+  { checked: true, text: 'observation' },
+  { checked: true, text: 'analysis' },
+  { checked: true, text: 'literature' },
+  { checked: true, text: 'variations' },
+];
+
+const siRxnSettings = [
+  { checked: true, text: 'Name' },
+  { checked: true, text: 'CAS' },
+  { checked: true, text: 'Formula' },
+  { checked: true, text: 'Smiles' },
+  { checked: true, text: 'InChI' },
+  { checked: true, text: 'Molecular Mass' },
+  { checked: true, text: 'Exact Mass' },
+  { checked: true, text: 'EA' },
+];
+
+const configs = [
+  { checked: true, text: 'Page Break' },
+  { checked: true, text: 'Show all chemicals in schemes (unchecked to show products only)' },
+];
+
 class ReportStore {
   constructor() {
-    this.splSettings = [
-      { checked: true, text: 'diagram' },
-      { checked: true, text: 'collection' },
-      { checked: true, text: 'analyses' },
-      { checked: true, text: 'reaction description' },
-      { checked: true, text: 'literature' },
-    ];
-    this.rxnSettings = [
-      { checked: true, text: 'diagram' },
-      { checked: true, text: 'material' },
-      { checked: true, text: 'description' },
-      { checked: true, text: 'purification' },
-      { checked: true, text: 'dangerous products' },
-      { checked: true, text: 'tlc' },
-      { checked: true, text: 'observation' },
-      { checked: true, text: 'analysis' },
-      { checked: true, text: 'literature' },
-    ];
-    this.siRxnSettings = [
-      { checked: true, text: 'Name' },
-      { checked: true, text: 'CAS' },
-      { checked: true, text: 'Formula' },
-      { checked: true, text: 'Smiles' },
-      { checked: true, text: 'InChI' },
-      { checked: true, text: 'Molecular Mass' },
-      { checked: true, text: 'Exact Mass' },
-      { checked: true, text: 'EA' },
-    ];
-    this.configs = [
-      { checked: true, text: 'Page Break' },
-      { checked: true, text: 'Show all chemicals in schemes (unchecked to show products only)' },
-    ];
+    this.splSettings = splSettings;
+    this.rxnSettings = rxnSettings;
+    this.siRxnSettings = siRxnSettings;
+    this.configs = configs;
     this.checkedAllSplSettings = true;
     this.checkedAllRxnSettings = true;
     this.checkedAllSiRxnSettings = true;
@@ -86,12 +95,12 @@ class ReportStore {
       handleUpdateTemplate: ReportActions.updateTemplate,
       handleClone: ReportActions.clone,
       handleDelete: ReportActions.delete,
-      hadnleRemove: ReportActions.remove,
-      hadnleReset: [ReportActions.reset, UserActions.fetchCurrentUser],
+      handleRemove: ReportActions.remove,
+      handleReset: [ReportActions.reset, UserActions.fetchCurrentUser],
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
-      handleLoadRreview: ReportActions.loadRreview,
+      handleLoadReview: ReportActions.loadReview,
       handleFetchTemplate: ReportActions.fetchTemplates
     });
   }
@@ -452,6 +461,7 @@ class ReportStore {
           { text: 'observation', checked: rs.observation },
           { text: 'analysis', checked: rs.analysis },
           { text: 'literature', checked: rs.literature },
+          { text: 'variations', checked: rs.variations },
         ],
       siRxnSettings:
         [
@@ -484,7 +494,7 @@ class ReportStore {
     return inp;
   }
 
-  hadnleRemove(target) {
+  handleRemove(target) {
     let dTags = this.defaultObjTags;
     let sTags = this.selectedObjTags;
     const currentObjs = this.selectedObjs;
@@ -521,7 +531,7 @@ class ReportStore {
     });
   }
 
-  hadnleReset(user) {
+  handleReset(user) {
     const { initials } = user || {};
     this.setState({
       activeKey: 0,
@@ -533,42 +543,10 @@ class ReportStore {
       checkedAllRxnSettings: true,
       checkedAllSiRxnSettings: true,
       checkedAllConfigs: true,
-      splSettings:
-        [
-          { text: 'diagram', checked: true },
-          { text: 'collection', checked: true },
-          { text: 'analyses', checked: true },
-          { text: 'reaction description', checked: true },
-          { text: 'literature', checked: true },
-        ],
-      rxnSettings:
-        [
-          { text: 'diagram', checked: true },
-          { text: 'material', checked: true },
-          { text: 'description', checked: true },
-          { text: 'purification', checked: true },
-          { text: 'dangerous products', checked: true },
-          { text: 'tlc', checked: true },
-          { text: 'observation', checked: true },
-          { text: 'analysis', checked: true },
-          { text: 'literature', checked: true },
-        ],
-      siRxnSettings:
-        [
-          { checked: true, text: 'Name' },
-          { checked: true, text: 'CAS' },
-          { checked: true, text: 'Formula' },
-          { checked: true, text: 'Smiles' },
-          { checked: true, text: 'InChI' },
-          { checked: true, text: 'Molecular Mass' },
-          { checked: true, text: 'Exact Mass' },
-          { checked: true, text: 'EA' },
-        ],
-      configs:
-        [
-          { text: 'Page Break', checked: true },
-          { text: 'Show all chemicals in schemes (unchecked to show products only)', checked: true },
-        ],
+      splSettings,
+      rxnSettings,
+      siRxnSettings,
+      configs,
       defaultObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: [],
@@ -704,7 +682,7 @@ class ReportStore {
     // TODO: update selectedObjs?
   }
 
-  handleLoadRreview({ objs }) {
+  handleLoadReview({ objs }) {
     if (!objs) return null;
     const { samples, reactions } = objs;
     let previewObjs = OrderPreviewObjs(

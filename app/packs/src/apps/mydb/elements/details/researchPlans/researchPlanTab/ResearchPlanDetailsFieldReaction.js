@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
@@ -20,24 +20,40 @@ const collect = (connect, monitor) => ({
 });
 
 const hasAuth = (id) => {
-  if (typeof id === 'string' && id.includes('error')) return false; return true;
+  if (typeof id === 'string' && id.includes('error')) {
+    return false;
+  }
+  return true;
 };
 
-const noAuth = el => (
+const noAuth = (el) => (
   <div className="research-plan-no-auth">
-    <h4>{el.id.split(':')[2]}&nbsp;<i className="fa fa-eye-slash" aria-hidden="true" /></h4>
+    <h4>
+      {el.id.split(':')[2]}
+      &nbsp;
+      <i className="fa fa-eye-slash" aria-hidden="true" />
+    </h4>
   </div>
 );
 
-class ResearchPlanDetailsFieldReaction extends Component {
+function elementError() {
+  return (
+    <div style={{ color: 'red', textAlign: 'center' }}>
+      <i className="fa fa-exclamation-triangle" aria-hidden="true" style={{ marginRight: '5px' }} />
+      <span style={{ fontWeight: 'bold' }}>Internal Server Error: Reaction can not be found!</span>
+    </div>
+  );
+}
 
+class ResearchPlanDetailsFieldReaction extends Component {
   constructor(props) {
     super(props);
     this.state = {
       idle: true,
       reaction: {
         id: null
-      }
+      },
+      error: false
     };
   }
 
@@ -58,9 +74,19 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   fetch() {
     const { field } = this.props;
-    ReactionsFetcher.fetchById(field.value.reaction_id).then((reaction) => {
-      this.setState({ idle: true, reaction });
-    });
+    ReactionsFetcher.fetchById(field.value.reaction_id)
+      .then((reaction) => {
+        if (reaction && reaction.id) {
+          this.setState({ idle: true, reaction });
+        } else {
+          console.error('Fetched reaction does not contain an id or is in incorrect format:', reaction);
+          this.setState({ idle: true, error: true });
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching reaction:', error);
+        this.setState({ idle: true, error: true });
+      });
   }
 
   showReaction() {
@@ -73,15 +99,40 @@ class ResearchPlanDetailsFieldReaction extends Component {
     if (!hasAuth(reaction.id)) {
       return noAuth(reaction);
     }
-    const link = <p>{reaction.title()}</p>;
+    const { edit } = this.props;
+    const link = (
+      <button
+        type="button"
+        style={{
+          cursor: 'pointer',
+          color: '#003366',
+          backgroundColor: 'transparent',
+          border: '1px solid #003366',
+          borderRadius: '4px',
+          margin: '5px',
+          outline: 'none',
+        }}
+        onClick={() => this.showReaction()}
+      >
+        {reaction.title()}
+      </button>
+    );
+
+    let image;
+    if (reaction.svgPath) {
+      image = <img src={reaction.svgPath} alt={reaction.title()} />;
+    }
+
+    const reactionStyle = edit ? {} : {
+      border: '1px solid #cccccc',
+      padding: '5px',
+    };
 
     return (
-      <div className="research-plan-field-reaction">
+      <div className="research-plan-field-reaction" style={reactionStyle}>
+        {link}
         <div className="image-container">
-          <img src={reaction.svgPath} alt={reaction.title()} />
-          <a role="link" tabIndex={0} onClick={() => this.showReaction()} style={{ cursor: 'pointer' }}>
-            {link}
-          </a>
+          {image}
         </div>
       </div>
     );
@@ -89,19 +140,39 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   renderEdit() {
     const { connectDropTarget, isOver, canDrop } = this.props;
-    const { reaction } = this.state;
+    const { reaction, error } = this.state;
     if (!hasAuth(reaction.id)) {
       return noAuth(reaction);
     }
     let className = 'drop-target';
     if (isOver) className += ' is-over';
     if (canDrop) className += ' can-drop';
-    return connectDropTarget(<div className={className}>{reaction.id ? this.renderReaction(reaction) : 'Drop reaction here.'}</div>);
+    let content;
+    if (error) {
+      content = elementError();
+    } else if (reaction.id) {
+      content = this.renderReaction(reaction);
+    } else {
+      content = 'Drop reaction here.';
+    }
+    return connectDropTarget(
+      <div className={className}>
+        {content}
+      </div>
+    );
   }
 
   renderStatic() {
-    const { reaction } = this.state;
-    return reaction.id ? this.renderReaction(reaction) : '';
+    const { reaction, error } = this.state;
+    let content;
+    if (error) {
+      content = elementError();
+    } else if (reaction.id) {
+      content = this.renderReaction(reaction);
+    } else {
+      content = null;
+    }
+    return content;
   }
 
   render() {
@@ -120,5 +191,4 @@ ResearchPlanDetailsFieldReaction.propTypes = {
   edit: PropTypes.bool,
 };
 
-export
-  default DropTarget(DragDropItemTypes.REACTION, spec, collect)(ResearchPlanDetailsFieldReaction);
+export default DropTarget(DragDropItemTypes.REACTION, spec, collect)(ResearchPlanDetailsFieldReaction);

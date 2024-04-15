@@ -37,6 +37,13 @@ module Chemotion
       def upload_chunk_error_message
         { ok: false, statusText: 'File key is not valid' }
       end
+
+      def remove_duplicated(att)
+        old_att = Attachment.find_by(filename: att.filename, attachable_id: att.attachable_id)
+        return unless old_att.id != att.id
+
+        old_att&.destroy
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |_error|
@@ -44,8 +51,34 @@ module Chemotion
       error!(message, 404)
     end
 
+
+    resource :export_ds do
+      before do
+        @container = Container.find_by(id: params[:container_id])
+        element = @container.root.containable
+        can_read = ElementPolicy.new(current_user, element).read?
+        can_dwnld = can_read &&
+                    ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+        error!('401 Unauthorized', 401) unless can_dwnld
+      end
+      desc "Download the dataset attachment file"
+      get 'dataset/:container_id' do
+        env['api.format'] = :binary
+        export = Labimotion::ExportDataset.new
+        export.export(params[:container_id])
+        export.spectra(params[:container_id])
+        content_type('application/vnd.ms-excel')
+        ds_filename = export.res_name(params[:container_id])
+        filename = URI.escape(ds_filename)
+        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+        export.read
+      end
+    end
+
     resource :attachments do
       before do
+        next if request.path.end_with?('bulk_delete') && request.request_method == 'DELETE'
+
         @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
@@ -79,6 +112,25 @@ module Chemotion
           end
           error!('401 Unauthorized', 401) unless can_dwnld
         end
+      end
+
+      desc 'Bulk Delete Attachments'
+      delete 'bulk_delete' do
+        ids = params[:ids]
+        attachments = Attachment.where(id: ids)
+
+        unpermitted_attachments = attachments.reject { |attachment| writable?(attachment) }
+
+        if unpermitted_attachments.any?
+          error!('401 Unauthorized', 401)
+        else
+          deleted_attachments = attachments.destroy_all
+        end
+
+        render json: { deleted_attachments: deleted_attachments }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+        Rails.logger.error("Error deleting attachments: #{e.message}")
       end
 
       desc 'Delete Attachment'
@@ -264,6 +316,14 @@ module Chemotion
             end
           end
 
+          if Labimotion::Dataset.find_by(element_id: params[:container_id], element_type: 'Container').present?
+            export = Labimotion::ExportDataset.new
+            export.export(params[:container_id])
+            export.spectra(params[:container_id])
+            zip.put_next_entry export.res_name(params[:container_id])
+            zip.write export.read
+          end
+
           hyperlinks_text = ''
           JSON.parse(@container.extended_metadata.fetch('hyperlinks', '[]')).each do |link|
             hyperlinks_text += "#{link} \n"
@@ -377,6 +437,8 @@ module Chemotion
         Attachment.where(id: pm[:original]).each do |att|
           next unless writable?(att)
 
+          remove_duplicated(att)
+
           att.set_regenerating
           att.save
         end
@@ -399,6 +461,8 @@ module Chemotion
 
         Attachment.where(id: pm[:edited]).each do |att|
           next unless writable?(att)
+
+          remove_duplicated(att)
 
           # TODO: do not use abs_path
           result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
@@ -432,6 +496,8 @@ module Chemotion
         optional :cyclicvolta, type: String
         optional :curveIdx, type: Integer
         optional :simulatenmr, type: Boolean
+        optional :axesUnits, type: String
+        optional :detector, type: String
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(

@@ -14,18 +14,6 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static fetchGenericEls() {
-    const promise = fetch('/api/v1/collections/locked.json', {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json()).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
   static fetchLockedRoots() {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: '/api/v1/collections/locked.json',
@@ -318,5 +306,52 @@ export default class CollectionsFetcher {
       if (response.ok) { return true; }
       throw new Error(response.status);
     }).catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static fetchTabsLayout(params) {
+    let promise = fetch('/api/v1/collections/tab_segments/' + params.id, {
+      credentials: 'same-origin'
+    })
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static createTabsSegment(params) {
+    return fetch('/api/v1/collections/tabs/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: params.currentCollectionId,
+        segments: params.layoutSegments
+      })
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static updateTabsLayout(params) {
+    return fetch('/api/v1/collections/tabs/', {
+      credentials: 'same-origin',
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: params.cId,
+        segment: params.segment
+      })
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

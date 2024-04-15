@@ -23,6 +23,14 @@ class InboxActions {
     return null;
   }
 
+  changeInboxFilter(filter) {
+    return filter;
+  }
+
+  changeInboxSize(size) {
+    return size;
+  }
+
   checkedAll(params) {
     return params;
   }
@@ -35,11 +43,34 @@ class InboxActions {
     return params;
   }
 
+  checkedDeviceAll(params) {
+    return params;
+  }
+
+  checkedDeviceIds(params) {
+    return params;
+  }
+
+  checkDeviceAttachments(params) {
+    return params;
+  }
+
+  prevClick() {
+    return null;
+  }
+
+  nextClick() {
+    return null;
+  }
+
   fetchInbox(queryParams = {}) {
     return (dispatch) => {
       InboxFetcher.fetchInbox(false, queryParams)
         .then((result) => {
-          dispatch(result.inbox);
+          dispatch({
+            inbox: result.inbox,
+            activeDeviceBoxId: queryParams.activeDeviceBoxId,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -64,7 +95,19 @@ class InboxActions {
           dispatch({
             inbox: result.inbox,
             currentContainerPage,
+            containerId,
           });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchInboxUnsorted() {
+    return (dispatch) => {
+      InboxFetcher.fetchInboxUnsorted()
+        .then((result) => {
+          dispatch(result.inbox);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -98,6 +141,20 @@ class InboxActions {
   deleteAttachment(params, fromUnsorted = false) {
     return (dispatch) => {
       AttachmentFetcher.deleteAttachment(params)
+        .then((result) => {
+          dispatch({
+            result,
+            fromUnsorted,
+          });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  bulkDeleteAttachments(attachmentIdsToDelete, fromUnsorted = false) {
+    return (dispatch) => {
+      AttachmentFetcher.bulkDeleteAttachments(attachmentIdsToDelete)
         .then((result) => {
           dispatch({
             result,

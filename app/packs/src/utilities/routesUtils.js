@@ -5,7 +5,8 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import DetailActions from 'src/stores/alt/actions/DetailActions'
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import { elementNames } from 'src/apps/generic/Utils';
 
 const collectionShow = (e) => {
   UIActions.showElements.defer();
@@ -16,6 +17,7 @@ const collectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
+  const currentSearchByID = uiState.currentSearchByID;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   if (collectionId === 'all') {
@@ -34,6 +36,9 @@ const collectionShow = (e) => {
         collectionId: collection.id,
         isSync: !!collection.is_sync_to_me });
     } else {
+      if (currentSearchByID) {
+        UIActions.clearSearchById();
+      }
       UIActions.selectCollection(collection);
     }
 
@@ -43,6 +48,7 @@ const collectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
     // }
   });
 };
@@ -60,6 +66,7 @@ const scollectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
+  const currentSearchByID = uiState.currentSearchByID;
   const collectionId = e.params['collectionID'];
   let collectionPromise = null;
   collectionPromise = CollectionStore.findBySId(collectionId);
@@ -75,6 +82,9 @@ const scollectionShow = (e) => {
         isSync: !!collection.is_sync_to_me });
     } else {
       UIActions.selectSyncCollection(collection);
+      if (currentSearchByID) {
+        UIActions.clearSearchById();
+      }
     }
 
     // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
@@ -82,6 +92,8 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
+
     // }
   });
 };
@@ -96,25 +108,45 @@ const predictionShowFwdRxn = () => {
 
 const sampleShowOrNew = (e) => {
   const { sampleID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'sample' && el.id === sampleID);
+
   if (sampleID === 'new') {
     ElementActions.generateEmptySample(collectionID);
   } else if (sampleID === 'copy') {
     ElementActions.copySampleFromClipboard.defer(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchSampleById(sampleID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
   // UIActions.selectTab(1);
 };
 
+const cellLineShowOrNew = (e) => { 
+  if(e.params.new_cellLine||(e.params.new_cellLine===undefined&&e.params.cell_lineID==="new")){
+     ElementActions.generateEmptyCellLine(e.params.collectionID,e.params.cell_line_template);
+  }else{
+    if(e.params.cellLineID){
+     e.params.cellLineId=e.params.cellLineID
+    }
+     ElementActions.tryFetchCellLineElById.defer(e.params.cellLineId);
+  }
+}
+
 const reactionShow = (e) => {
   const { reactionID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'reaction' && el.id === reactionID);
   // UIActions.selectTab(2);
-  if (reactionID !== 'new' && reactionID !== 'copy') {
-    ElementActions.fetchReactionById(reactionID);
+  if (reactionID === 'new') {
+    ElementActions.generateEmptyReaction(collectionID);
   } else if (reactionID === 'copy') {
     //ElementActions.copyReactionFromClipboard(collectionID);
-  } else {
-    ElementActions.generateEmptyReaction(collectionID);
+  } else if (index < 0) {
+    ElementActions.fetchReactionById(reactionID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -125,13 +157,17 @@ const reactionShowSample = (e) => {
 
 const wellplateShowOrNew = (e) => {
   const { wellplateID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'wellplate' && el.id === wellplateID);
 
   if (wellplateID === 'new') {
     ElementActions.generateEmptyWellplate(collectionID);
   } else if (wellplateID === 'template') {
     ElementActions.generateWellplateFromClipboard.defer(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchWellplateById(wellplateID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -142,12 +178,17 @@ const wellplateShowSample = (e) => {
 
 const screenShowOrNew = (e) => {
   const { screenID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex((el) => el.type === 'screen' && el.id === screenID);
+
   if (screenID === 'new') {
     ElementActions.generateEmptyScreen(collectionID);
   } else if (screenID === 'template') {
     ElementActions.generateScreenFromClipboard.defer(collectionID);
-  } else {
+  } else if (index < 0) {
     ElementActions.fetchScreenById(screenID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -172,10 +213,17 @@ const deviceShowDeviceManagement = () => {
 
 const researchPlanShowOrNew = (e) => {
   const { research_planID, collectionID } = e.params;
+  const { selecteds, activeKey } = ElementStore.getState();
+  const index = selecteds.findIndex(el => el.type === 'research_plan' && el.id === research_planID);
+
   if (research_planID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
-  } else {
+  } else if (research_planID === 'copy') {
+    //
+  } else if (index < 0) {
     ElementActions.fetchResearchPlanById(research_planID);
+  } else if (index !== activeKey) {
+    DetailActions.select(index);
   }
 };
 
@@ -210,6 +258,7 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
+    
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
@@ -234,6 +283,9 @@ const elementShowOrNew = (e) => {
       break;
     case 'metadata':
       metadataShowOrNew(e);
+      break;
+    case 'cell_line':
+      cellLineShowOrNew(e);
       break;
     default:
       if (e && e.klassType == 'GenericEl') {
@@ -264,5 +316,6 @@ export {
   metadataShowOrNew,
   elementShowOrNew,
   predictionShowFwdRxn,
-  genericElShowOrNew
+  genericElShowOrNew,
+  cellLineShowOrNew
 };

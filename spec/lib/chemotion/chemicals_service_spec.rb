@@ -4,26 +4,6 @@ require 'rails_helper'
 
 describe Chemotion::ChemicalsService do
   describe Chemotion::ChemicalsService do
-    context 'when check_if_safety_sheet_already_saved is called' do
-      it 'returns true when file is already saved' do
-        file_name = 'safety_file.pdf'
-        safety_sheet_files_names = ['safety_file.pdf', 'other_file.pdf']
-        expect(described_class.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)).to be_truthy
-      end
-
-      it 'returns false when file is not already saved' do
-        file_name = 'safety_file.pdf'
-        safety_sheet_files_names = ['other_file.pdf', 'another_file.pdf']
-        expect(described_class.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)).to be_falsey
-      end
-
-      it 'returns false when safety_sheet_files_names is empty' do
-        file_name = 'safety_file.pdf'
-        safety_sheet_files_names = []
-        expect(described_class.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)).to be_falsey
-      end
-    end
-
     context 'when write_file is called' do
       let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }
       let(:file_path) { '252549_Merck.pdf' }
@@ -49,20 +29,9 @@ describe Chemotion::ChemicalsService do
       it 'create safety data when not already saved' do
         file_path = '252549_Merck.pdf'
         link = 'https://www.sigmaaldrich.com/US/en/sds/sial/252549'
-        allow(described_class).to receive(:check_if_safety_sheet_already_saved)
-          .with(file_path, anything).and_return(false)
         allow(described_class).to receive(:write_file).with(file_path, link).and_return(true)
         result = described_class.create_sds_file(file_path, link)
         expect(result).to be_truthy
-      end
-
-      it 'returns file is already saved if already saved' do
-        file_path = '252549_Merck.pdf'
-        link = 'https://www.sigmaaldrich.com/US/en/sds/sial/252549'
-        allow(described_class).to receive(:check_if_safety_sheet_already_saved)
-          .with(file_path, anything).and_return(true)
-        result = described_class.create_sds_file(file_path, link)
-        expect(result).to eq('file is already saved')
       end
     end
 
@@ -130,30 +99,6 @@ describe Chemotion::ChemicalsService do
         pictograms = described_class.construct_pictograms(pictograms_array)
         expect(pictograms).to be_a(Array)
         expect(pictograms).to eq(expected)
-      end
-    end
-
-    context 'when construct_h_statements_merck is called' do
-      it 'constructs hazard statements from the health section' do
-        safety_array = ['GHS02', 'H226 - H301', 'P201 - P210']
-        h_statements = described_class.construct_h_statements_merck(safety_array)
-        expect(h_statements).to be_a(Hash)
-        expect(h_statements.keys).to contain_exactly('H226', 'H301')
-        expect(h_statements.values).to contain_exactly(' Flammable liquid and vapour', ' Toxic if swallowed')
-      end
-    end
-
-    context 'when construct_p_statements_merck is called' do
-      it 'constructs precautionary statements for merck vendor' do
-        safety_array = ['GHS02', 'H226 - H301', 'P201 - P102 + P103']
-        p_statements = described_class.construct_p_statements_merck(safety_array)
-        expect(p_statements).to be_a(Hash)
-        expect(p_statements.keys).to contain_exactly('P201', 'P102', 'P103')
-        expect(p_statements.values).to contain_exactly(
-          ' Obtain special instructions before use.',
-          ' Keep out of reach of children.',
-          ' Read label before use.',
-        )
       end
     end
 

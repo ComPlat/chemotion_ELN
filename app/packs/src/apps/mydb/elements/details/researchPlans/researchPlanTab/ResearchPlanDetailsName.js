@@ -1,7 +1,9 @@
 /* eslint-disable react/prefer-stateless-function */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ControlLabel, FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
+import {
+  ControlLabel, FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button
+} from 'react-bootstrap';
 
 export default class ResearchPlanDetailsName extends Component {
   renderCopyToMetadataButton() {
@@ -19,9 +21,17 @@ export default class ResearchPlanDetailsName extends Component {
           className="fa fa-laptop pull-right"
           bsStyle="info"
           bsSize="xsmall"
+          style={{
+            width: '20px',
+            height: '20px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
           onClick={() => onCopyToMetadata(null, 'name')}
           disabled={isNew}
         />
+
       </OverlayTrigger>
     );
   }
@@ -41,8 +51,9 @@ export default class ResearchPlanDetailsName extends Component {
                 <FormControl
                   type="text"
                   value={value || ''}
-                  onChange={event => onChange(event.target.value)}
+                  onChange={(event) => onChange(event.target.value)}
                   disabled={disabled}
+                  name="research_plan_name"
                 />
               </FormGroup>
             </Col>

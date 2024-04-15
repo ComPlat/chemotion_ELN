@@ -1,12 +1,14 @@
-module Chemotion
+# frozen_string_literal: true
+# rubocop: disable Style/MultilineIfModifier
 
+module Chemotion
   class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
       fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-         message: "has too many entries" if  params[attr_name].keys.size > 30
+         message: "has too many entries" if  params[attr_name].keys.size > 100
       params[attr_name].each do |key, val|
         fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-          message: "has wrong structure") unless key.to_s =~ /\A[\w \-]+\Z/
+          message: "has wrong structure") unless key.to_s =~ /\A[\w \(\)\-]+\Z/
         fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
           message: "has wrong structure") unless val.to_s =~ /\d+/
       end
@@ -26,9 +28,9 @@ module Chemotion
         end
 
         if current_user.matrix_check_by_name('genericElement')
-          available_elments = ElementKlass.where(is_active: true).pluck(:name)
+          available_elments = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
           new_layout = data['layout'] || {}
-          ElementKlass.where(is_active: true).find_each do |el|
+          Labimotion::ElementKlass.where(is_active: true).find_each do |el|
             if data['layout'] && data['layout']["#{el.name}"].nil?
               new_layout["#{el.name}"] = new_layout&.values&.min < 0 ? new_layout&.values.min-1 : -1;
             end
@@ -80,6 +82,7 @@ module Chemotion
             optional :cur_template_idx, type: Integer
           end
           optional :default_structure_editor, type: String
+          optional :filters, type: Hash
         end
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
@@ -89,9 +92,15 @@ module Chemotion
       put do
         declared_params = declared(params, include_missing: false)
         data = current_user.profile.data || {}
-        available_ements = API::ELEMENTS + ElementKlass.where(is_active: true).pluck(:name)
-
-        data['layout'] = { 'sample' => 1, 'reaction' => 2, 'wellplate' => 3, 'screen' => 4, 'research_plan' => 5 } if data['layout'].nil?
+        available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+        data['layout'] = {
+          'sample' => 1,
+          'reaction' => 2,
+          'wellplate' => 3,
+          'screen' => 4,
+          'research_plan' => 5,
+          'cell_line' => -1000,
+        } if data['layout'].nil?
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
@@ -110,3 +119,4 @@ module Chemotion
     end
   end
 end
+# rubocop: enable Style/MultilineIfModifier

@@ -10,6 +10,7 @@ describe 'Reporter::Docx::Document instance' do
   let(:reaction1) { create(:reaction, name: 'title 1', collections: [collection]) }
   let(:reaction2) { create(:reaction, name: 'title 2', collections: [collection]) }
   let(:sample) { create(:sample, collections: [collection]) }
+  let(:current_user) { build(:user) }
   let(:collection)  do
     create(:collection, user: user,
                         sample_detail_level: 10,
@@ -25,14 +26,17 @@ describe 'Reporter::Docx::Document instance' do
     serialized_objects = [
       Entities::ReactionReportEntity.represent(
         reaction1,
+        current_user: current_user,
         detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction1).detail_levels
       ).serializable_hash,
       Entities::ReactionReportEntity.represent(
         reaction2,
+        current_user: current_user,
         detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction2).detail_levels
       ).serializable_hash,
       Entities::SampleReportEntity.represent(
         sample,
+        current_user: current_user,
         detail_levels: ElementDetailLevelCalculator.new(user: user, element: sample).detail_levels
       ).serializable_hash,
     ]

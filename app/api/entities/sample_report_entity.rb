@@ -7,11 +7,11 @@ module Entities
     end
 
     with_options(anonymize_below: 2) do
-      expose! :analyses,            anonymize_with: [], using: 'Entities::ContainerEntity'
+      expose! :analyses,            anonymize_with: [], using: 'Entities::ContainerReportEntity'
     end
 
     with_options(anonymize_below: 10) do
-      expose! :reactions,           anonymize_with: [], using: 'Entities::ReactionReportEntity'
+      expose! :reactions,           anonymize_with: []
       expose! :molecule_iupac_name, anonymize_with: nil
       expose! :get_svg_path,        anonymize_with: nil
       expose! :literatures,         anonymize_with: []
@@ -25,6 +25,14 @@ module Entities
         Literature.by_element_attributes_and_cat(object.id, 'Sample', 'detail').with_user_info,
         with_user_info: true,
       )
+    end
+
+    def reaction
+      Entities::ReactionReportEntity.represent(
+        object,
+        current_user: current_user,
+        detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: object).detail_levels,
+      ).serializable_hash
     end
   end
 end

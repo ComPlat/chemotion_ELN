@@ -35,6 +35,12 @@ FactoryBot.define do
       aasm_state { :edited }
     end
 
+    trait :with_spectra_file_failure do
+      filename { 'spectra_file.jdx' }
+      file_path { Rails.root.join('spec/fixtures/spectra_file.jdx') }
+      aasm_state { :failure }
+    end
+
     trait :with_json_file do
       filename { 'upload.json' }
       file_path { Rails.root.join('spec/fixtures/upload.json') }
@@ -78,6 +84,12 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/import/collection_samples.zip') }
     end
 
+    # copy of the collection_samples.zip file but with removed schema.json file
+    # and reziped (zip contains directory entries)
+    trait :with_edited_collection_zip do
+      file_path { Rails.root.join('spec/fixtures/import/collection_samples_edited.zip') }
+    end
+
     trait :with_reaction_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/collection_reaction.zip') }
     end
@@ -92,6 +104,10 @@ FactoryBot.define do
 
     trait :with_researchplan_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/20230113_research_plan_one_attachment.zip') }
+    end
+
+    trait :with_chemicals_collection_zip do
+      file_path { Rails.root.join('spec/fixtures/import/collection_chemicals.zip') }
     end
   end
 end

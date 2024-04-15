@@ -7,10 +7,12 @@ import {
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import ReactionDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
@@ -21,6 +23,7 @@ import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
@@ -34,6 +37,13 @@ import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -46,6 +56,7 @@ export default class ReactionDetails extends Component {
       activeTab: UIStore.getState().reaction.activeTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
 
     // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
@@ -63,9 +74,15 @@ export default class ReactionDetails extends Component {
     }
   }
 
-
   componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
+    const { reaction } = this.props;
+    const { currentUser } = this.state;
+
+    UIStore.listen(this.onUIStoreChange);
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
+      CommentActions.fetchComments(reaction);
+    }
   }
 
   // eslint-disable-next-line camelcase
@@ -139,8 +156,11 @@ export default class ReactionDetails extends Component {
 
   handleInputChange(type, event) {
     let value;
-    if (type === 'temperatureUnit' || type === 'temperatureData' ||
-      type === 'description' || type === 'role' || type === 'observation' || type === 'durationUnit' || type === 'duration' || type === 'rxno') {
+    if (type === 'temperatureUnit' || type === 'temperatureData'
+      || type === 'description' || type === 'role'
+      || type === 'observation' || type === 'durationUnit'
+      || type === 'duration' || type === 'rxno'
+      || type === 'variations') {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -231,7 +251,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-
   reactionSVG(reaction) {
     if (!reaction.svgPath) {
       return false;
@@ -249,8 +268,8 @@ export default class ReactionDetails extends Component {
   }
 
   reactionHeader(reaction) {
-    let hasChanged = reaction.changed ? '' : 'none'
-    const titleTooltip = `Created at: ${reaction.created_at} \n Updated at: ${reaction.updated_at}`;
+    const hasChanged = reaction.changed ? '' : 'none';
+    const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false &&
@@ -268,7 +287,9 @@ export default class ReactionDetails extends Component {
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
 
-
+    const rsPlanLabel = (reaction.isNew || _.isEmpty(reaction.research_plans)) ? null : (
+      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+    );
 
     return (
       <div>
@@ -335,7 +356,9 @@ export default class ReactionDetails extends Component {
         </OverlayTrigger>
         <div style={{ display: "inline-block", marginLeft: "10px" }}>
           {colLabel}
+          {rsPlanLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
+          <HeaderCommentSection element={reaction} />
         </div>
         {reaction.isNew
           ? null
@@ -349,11 +372,11 @@ export default class ReactionDetails extends Component {
     UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
       activeTab: key
-    })
+    });
   }
 
   onTabPositionChanged(visible) {
-    this.setState({ visible })
+    this.setState({ visible });
   }
 
   updateReactionSvg() {
@@ -396,6 +419,9 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
+          }
           <ReactionDetailsScheme
             reaction={reaction}
             onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
@@ -405,6 +431,9 @@ export default class ReactionDetails extends Component {
       ),
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_properties" element={reaction} />
+          }
           <ReactionDetailsProperties
             reaction={reaction}
             onReactionChange={r => this.handleReactionChange(r)}
@@ -415,6 +444,9 @@ export default class ReactionDetails extends Component {
       ),
       references: (
         <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
+          }
           <ReactionDetailsLiteratures
             element={reaction}
             literatures={reaction.isNew === true ? reaction.literatures : null}
@@ -424,14 +456,28 @@ export default class ReactionDetails extends Component {
       ),
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_analyses" element={reaction} />
+          }
           {this.productData(reaction)}
         </Tab>
       ),
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
+          {
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
+          }
           <GreenChemistry
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
+          />
+        </Tab>
+      ),
+      variations: (
+        <Tab eventKey="variations" title="Variations" key={`variations_${reaction.id}`} unmountOnExit={false}>
+          <ReactionVariations
+            reaction={reaction}
+            onEditVariations={(event) => this.handleInputChange('variations', event)}
           />
         </Tab>
       )
@@ -440,7 +486,6 @@ export default class ReactionDetails extends Component {
     const tabTitlesMap = {
       green_chemistry: 'Green Chemistry'
     }
-
 
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 
@@ -481,6 +526,7 @@ export default class ReactionDetails extends Component {
             </Button>
             {exportButton}
           </ButtonToolbar>
+          <CommentModal element={reaction} />
         </Panel.Body>
       </Panel>
     );
@@ -490,4 +536,4 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   reaction: PropTypes.object,
   toggleFullScreen: PropTypes.func,
-}
+};

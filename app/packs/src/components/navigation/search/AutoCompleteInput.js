@@ -239,6 +239,10 @@ export default class AutoCompleteInput extends React.Component {
       return 0
     }
 
+    if (UIStore.getState().currentSearchByID) {
+      UIActions.clearSearchById();
+    }
+
     let selection = {name: value, search_by_method: 'substring'}
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
       let selectedSuggestion = suggestions[suggestionFocus]
@@ -292,8 +296,11 @@ export default class AutoCompleteInput extends React.Component {
       cas: { icon: 'icon-sample', label: 'cas' },
       requirements : {icon: 'icon-screen', label: 'Requirement'},
       conditions : {icon: 'icon-screen', label: 'Condition'},
-      element_short_label: {icon: 'icon-element', label: 'Element Short Label'}
+      element_short_label: {icon: 'icon-element', label: 'Element Short Label'},
+      cell_line_material_name: {icon: 'icon-cell_line', label: 'Cell line name'},
+      cell_line_sample_name: {icon: 'icon-cell_line', label: 'Cell line sample name'}
     }
+
     if(suggestions) {
       return (
         <div>

@@ -22,7 +22,7 @@ class TransferRepoJob < ApplicationJob
     @collection = Collection.find(collection_id)
     resp = transfer_data(collection_id, url, req_headers)
     if resp.status == 200
-      MoveToCollectionJob.set(queue: "move_to_collection_#{collection_id}").perform_now(collection_id)
+      MoveToCollectionJob.perform_later(collection_id)
     end
   rescue StandardError => e
     Rails.logger.debug(e.backtrace)

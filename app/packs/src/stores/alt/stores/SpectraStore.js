@@ -42,7 +42,7 @@ class SpectraStore {
     const { file, predictions, id } = target;
     if (!file) return null;
     let spectrum = { predictions: defaultPred, idx: id };
-    if (predictions.outline && predictions.outline.code) {
+    if (predictions && predictions.outline && predictions.outline.code) {
       spectrum = Object.assign({}, spectrum, { predictions });
     }
 
@@ -83,14 +83,27 @@ class SpectraStore {
 
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
     const spcMetas = this.decodeSpectra(fetchedFiles);
+    const sortedSpcInfo = [...spcInfos];
+    sortedSpcInfo.sort((a, b) => b.idx - a.idx);
+    if (spcMetas.length > 0) {
+      const spc = spcMetas[0];
+      if (spc.jcamp.layout === FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY) {
+        sortedSpcInfo.sort((a, b) => a.label.localeCompare(b.label));
+      }
+    }
+    const sortedSpcIdxs = sortedSpcInfo.map((info) => (info.idx));
+    spcMetas.sort((a, b) => {
+      return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
+    });
     let newArrSpcIdx = spcMetas.map(spci => (
       spci.idx
     )).filter(r => r !== null);
     if (newArrSpcIdx.length <= 1) {
       newArrSpcIdx = [];
     }
+    
     this.setState({
-      spcInfos,
+      spcInfos: sortedSpcInfo,
       spcMetas,
       fetched: true,
       spcIdx: (spcMetas[0].idx || 0),

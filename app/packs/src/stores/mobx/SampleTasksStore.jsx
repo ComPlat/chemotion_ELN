@@ -19,14 +19,14 @@ const SampleTask = types.model({
   display_name: types.maybeNull(types.string),
   short_label: types.maybeNull(types.string),
   sample_svg_file: types.maybeNull(types.string),
-  image: types.maybeNull(types.string),
+  required_scan_results: types.number,
   scan_results: types.array(ScanResult)
 });
 
 export const SampleTasksStore = types
   .model({
     sample_tasks: types.map(SampleTask), // automatically wrapped to types.optional(types.map(SampleTask), {})
-    inbox_visible: types.optional(types.boolean, false) // default set manually
+    inbox_visible: types.optional(types.boolean, false), // default set manually
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
@@ -54,6 +54,13 @@ export const SampleTasksStore = types
         let createdSampleTask = SampleTask.create({ ...result });
         self.sample_tasks.set(createdSampleTask.id, createdSampleTask)
       }
+    }),
+    deleteSampleTask: flow(function* deleteSampleTask(sampleTask) {
+      let result = yield SampleTasksFetcher.deleteSampleTask(sampleTask.id)
+      if (result.deleted == sampleTask.id) {
+        self.sample_tasks.delete(sampleTask.id)
+      }
+      return result
     })
   }))
   .views(self => ({
@@ -61,5 +68,6 @@ export const SampleTasksStore = types
     get inboxVisible() { return self.inbox_visible },
     sampleTaskForSample(sampleId) {
       return values(self.sample_tasks).find(task => task.sample_id == sampleId)
-    }
+    },
+    get sortedSampleTasks() { return values(self.sample_tasks).sort((taskA, taskB) => taskB.id - taskA.id) },
   }));

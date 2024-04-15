@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/LetSetup
+
 require 'rails_helper'
 
 RSpec.describe 'ImportCollection' do
@@ -9,12 +11,6 @@ RSpec.describe 'ImportCollection' do
 
   before do
     copy_target_to_import_folder(import_id)
-    stub_rest_request('OKKJLVBELUTLKV-UHFFFAOYSA-N')
-    stub_rest_request('XBDQKXXYIPTUBI-UHFFFAOYSA-N')
-    stub_rest_request('XLYOFNOQVPJJNP-UHFFFAOYSA-N')
-    stub_rest_request('UHOVQNZJYSORNB-UHFFFAOYSA-N')
-    stub_rest_request('RJUFJBKOKNCXHH-UHFFFAOYSA-N')
-
     stub_const('EPSILON', 0.001)
   end
 
@@ -23,9 +19,10 @@ RSpec.describe 'ImportCollection' do
 
     let(:importer) { Import::ImportCollections.new(attachment, user.id) }
 
-    describe 'import a collection with samples' do
+    describe 'import a collection with samples, with directories in the zip structure and missing schema.json' do
       let(:import_id) { 'collection_samples' }
-      let(:attachment) { create(:attachment, :with_sample_collection_zip) }
+      # let(:attachment) { create(:attachment, :with_sample_collection_zip) }
+      let(:attachment) { create(:attachment, :with_edited_collection_zip) }
 
       it 'successfully import 2 samples' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
@@ -171,19 +168,44 @@ RSpec.describe 'ImportCollection' do
         expect(attachment.attachment_data).not_to be_nil
       end
     end
-  end
 
-  def stub_rest_request(identifier)
-    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/#{identifier}/record/JSON")
-      .with(
-        headers: {
-          'Accept' => '*/*',
-          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-          'Content-Type' => 'text/json',
-          'User-Agent' => 'Ruby',
-        },
-      )
-      .to_return(status: 200, body: '', headers: {})
+    describe 'import a collection with a chemical' do
+      let(:import_id) { 'collection_chemicals' }
+      let(:attachment) { create(:attachment, :with_chemicals_collection_zip) }
+
+      it 'successfully imported 1 chemical' do
+        importer.execute
+
+        collection = Collection.find_by(label: 'collection_with_chemical')
+        expect(collection).to be_present
+        expect(collection.samples.map(&:chemical).length).to eq(1)
+      end
+    end
+
+    context 'with zip file including two cell line samples, material already existing' do
+      let!(:cell_line) { create(:cellline_sample) }
+      let(:import_id) { '20230629_two_cell_line_samples' }
+      let(:attachment) do
+        create(:attachment, file_path: Rails.root.join('spec/fixtures/import/20230629_two_cell_line_samples.zip'))
+      end
+
+      before do
+        importer.execute
+      end
+
+      it 'collection was created and has two cell lines' do
+        expect(Collection.find_by(label: 'Awesome Collection')).not_to be_nil
+        expect(Collection.find_by(label: 'Awesome Collection').cellline_samples.length).to be 2
+      end
+
+      it 'Two cell line samples were imported, one from the original state' do
+        expect(CelllineSample.count).to be 3
+      end
+
+      it 'Only one material exists' do
+        expect(CelllineMaterial.count).to be 1
+      end
+    end
   end
 
   def copy_target_to_import_folder(import_id)
@@ -193,3 +215,4 @@ RSpec.describe 'ImportCollection' do
     FileUtils.copy_file(src_location, target_location)
   end
 end
+# rubocop:enable RSpec/LetSetup

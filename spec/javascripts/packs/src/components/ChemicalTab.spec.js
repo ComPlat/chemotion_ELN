@@ -4,11 +4,18 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import {
-  describe, it
+  describe, it, beforeEach, afterEach
 } from 'mocha';
 import ChemicalTab from 'src/components/ChemicalTab';
-import ChemicalFactory from 'factories/ChemicalFactory';
-import Sample from '../../../../../app/packs/src/models/Sample';
+import Sample from 'src/models/Sample';
+import Chemical from 'src/models/Chemical';
+
+const createChemical = (chemicalData = [{}], cas = null) => {
+  const chemical = new Chemical();
+  chemical.chemical_data = chemicalData;
+  chemical.cas = cas;
+  return chemical;
+};
 
 Enzyme.configure({ adapter: new Adapter() });
 
@@ -18,17 +25,20 @@ const parent = {
   setState: sinon.spy() // Create a mock parent object with a setState function
 };
 
-const createWrapper = (saveInventoryAction) => shallow(
+const createWrapper = (saveInventoryAction, editChemical) => shallow(
   <ChemicalTab
     sample={sample}
     parent={parent}
     saveInventory={saveInventoryAction}
+    editChemical={editChemical}
     key="ChemicalTab29"
   />
 );
 
 describe('ChemicalTab component', () => {
-  const wrapper = createWrapper(false);
+  const editChemicalMock = sinon.stub();
+  const wrapper = createWrapper(false, editChemicalMock);
+
   it('should render without errors', () => {
     // Assert that the parent element has the specified className;
     expect(wrapper.find('.table.table-borderless')).toHaveLength(1);
@@ -88,6 +98,28 @@ describe('ChemicalTab component', () => {
   });
 
   describe('render component and update chemical object', () => {
+    const stubMethod = (object, method, fakeImplementation) => {
+      const originalMethod = object[method];
+      return sinon.stub(object, method).callsFake((...args) => (args[0] !== null && args[0] !== undefined
+        ? originalMethod(...args)
+        : fakeImplementation(...args)));
+    };
+
+    beforeEach(() => {
+      // Stub fetch
+      sinon.stub(global, 'fetch').callsFake(() => Promise.resolve({
+        json: () => Promise.resolve({ some: 'data' }),
+      }));
+
+      // Stub Object.values and Object.entries
+      stubMethod(Object, 'values', () => ['default1']);
+      stubMethod(Object, 'entries', () => ({ defaultKey1: 'defaultValue1', defaultKey2: 'defaultValue2' }));
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
     const instance = wrapper.instance();
 
     it('update state of chemical object and assert functionality of handleFieldChanged function', () => {
@@ -96,7 +128,7 @@ describe('ChemicalTab component', () => {
       // update state of chemical object
       const chemicalData = [{ status: 'Out of stock' }];
       // use chemical factory to create a new chemical object
-      const newChemical = ChemicalFactory.createChemical(chemicalData, '7681-82-5', false);
+      const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
       expect(wrapper.state().chemical).toEqual(newChemical);
 
@@ -121,7 +153,7 @@ describe('ChemicalTab component', () => {
         ]
       }];
       // use chemical factory to create a new chemical object with safety sheets
-      const newChemical = ChemicalFactory.createChemical(chemicalData, '7681-82-5', false);
+      const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
       // expect elements with class names to be rendered
       expect(wrapper.find('.safety-sheets-form')).toHaveLength(1);
@@ -231,7 +263,7 @@ describe('ChemicalTab component', () => {
           ]
         }
       }];
-      const newChemical = ChemicalFactory.createChemical(chemicalData, '7681-82-5', false);
+      const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
       const stylePhrasesSpy = sinon.spy(wrapper.instance(), 'stylePhrases');
       wrapper.find('#safetyPhrases-btn').simulate('click');

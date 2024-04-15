@@ -1,12 +1,14 @@
 import React from 'react';
 import { Modal, Panel, Table, Button, FormGroup, ControlLabel, Form, Tooltip, FormControl, OverlayTrigger, Col, Row } from 'react-bootstrap';
 import Select from 'react-select';
-import moment from 'moment';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
 import AdminDeviceElement from 'src/apps/admin/AdminDeviceElement';
+import { formatDate } from 'src/utilities/timezoneHelper';
+
 export default class GroupsDevices extends React.Component {
   constructor(props) {
     super(props);
@@ -172,15 +174,8 @@ export default class GroupsDevices extends React.Component {
     }
 
     return AdminFetcher.fetchUsersByNameType(input, actionType)
-      .then((res) => {
-        const usersEntries = res.users.filter(u => u.type == actionType)
-          .map(u => ({
-            value: u.id,
-            name: u.name,
-            label: `${u.name} (${u.initials})`
-          }));
-        return { options: usersEntries };
-      }).catch((errorMessage) => {
+      .then((res) => selectUserOptionFormater({ data: res, withType: false }))
+      .catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
@@ -706,7 +701,7 @@ export default class GroupsDevices extends React.Component {
                   <Col smOffset={0} sm={12}>
                     <p className="text-right">
                       DataCiteVersion: {deviceMetadata.data_cite_version}<br />
-                      DataCiteUpdatedAt: {moment(deviceMetadata.data_cite_updated_at).format('YYYY-MM-DD HH:mm')}<br />
+                      DataCiteUpdatedAt: {formatDate(deviceMetadata.data_cite_updated_at)}<br />
                     </p>
                   </Col>
                 </Row>
