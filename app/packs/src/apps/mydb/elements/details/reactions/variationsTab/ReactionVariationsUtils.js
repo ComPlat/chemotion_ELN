@@ -25,17 +25,6 @@ function getReactionMaterials(reaction) {
   }, {});
 }
 
-function getMaterialHeaderNames(material) {
-  const materialCopy = cloneDeep(material);
-  const names = [`ID: ${materialCopy.id.toString()}`];
-  ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
-    if (materialCopy[name]) {
-      names.push(materialCopy[name]);
-    }
-  });
-  return names;
-}
-
 function convertUnit(value, fromUnit, toUnit) {
   if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
     return convertTemperature(value, fromUnit, toUnit);
@@ -222,6 +211,5 @@ export {
   getSequentialId,
   computePercentYield,
   getReactionMaterials,
-  getMaterialHeaderNames,
   getVariationsRowName,
 };

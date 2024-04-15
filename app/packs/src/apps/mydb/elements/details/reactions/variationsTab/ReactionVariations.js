@@ -15,7 +15,7 @@ import {
   createVariationsRow, temperatureUnits, durationUnits, convertUnit, materialTypes,
   getSequentialId, removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
   getReferenceMaterial, getMolFromGram, getGramFromMol, computeEquivalent, computePercentYield,
-  updateYields, updateEquivalents, getReactionMaterials, getMaterialHeaderNames, getVariationsRowName
+  updateYields, updateEquivalents, getReactionMaterials, getVariationsRowName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
@@ -328,6 +328,12 @@ function getMaterialColumnGroupChild(material, materialType) {
       entries.push('equivalent');
     }
   }
+  const names = [`ID: ${materialCopy.id.toString()}`];
+  ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
+    if (materialCopy[name]) {
+      names.push(materialCopy[name]);
+    }
+  });
   return {
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
     tooltipField: `${materialType}.${materialCopy.id}`,
@@ -336,7 +342,7 @@ function getMaterialColumnGroupChild(material, materialType) {
     headerComponent: MenuHeader,
     headerComponentParams: {
       units: materialTypes[materialType].units,
-      names: getMaterialHeaderNames(materialCopy),
+      names,
       entries
     },
   };

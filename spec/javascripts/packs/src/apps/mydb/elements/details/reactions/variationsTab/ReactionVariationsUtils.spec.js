@@ -5,7 +5,6 @@ import {
   updateYields,
   updateEquivalents,
   getReactionMaterials,
-  getMaterialHeaderNames,
   getSequentialId,
   getGramFromMol,
   getMolFromGram,
@@ -14,11 +13,6 @@ import {
 import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {
-  it('gets material names', async () => {
-    const material = await setUpMaterial();
-    material.id = 42;
-    expect(getMaterialHeaderNames(material)).toEqual(['ID: 42', 'NEW SAMPLE']);
-  });
   it('gets sequential ID', () => {
     const variations = [];
     expect(getSequentialId(variations)).toBe(1);
