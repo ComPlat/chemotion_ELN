@@ -26,7 +26,8 @@ export default class CurationModal extends Component {
         mispelled_words : [],
         suggestion : [],
         suggestion_index : 0,
-        correct_word : ""
+        correct_word : "",
+        subscript_list : []
       }
       
     }
@@ -65,6 +66,17 @@ export default class CurationModal extends Component {
       this.setState( {suggestion_index : input} ) 
     }
 
+    reverse_suggestion(input,miss_spelled_words){
+      if (input < miss_spelled_words.length-1){
+      input = input -1 }
+      else {
+        input = 0
+      }
+      this.handleSuggest(miss_spelled_words, input)
+      this.setState( {suggestion_index : input} ) 
+    }
+
+
     handleDesc(){
       const old_desc = this.clean_data(this.props.description);
       const new_desc = old_desc.replaceAll("  ", " ");
@@ -83,40 +95,25 @@ export default class CurationModal extends Component {
       this.setState({ show: true });
     }
 
-    add_new_word_to_custom_dic(new_word){
-      // const axios = require('axios');
-      // axios({
-      //   method: 'post',
-      //   url: '/typojs/custom',
-      //   data: {
-      //     firstName: 'Fred',
-      //     lastName: 'Flintstone'
-      //   }
-      // });
-
-      // fetch("/typojs/custom/custom.dic")
-      // .then(response => (response.text()))
-      // // .then(responsetext => console.log(responsetext))
-      // .then(responsetext => {var text = responsetext 
-      //         console.log(new_word)
-      //         var ammendedDictionairy = (text + new_word + "\n")
-      //         fetch("/typojs/custom/custom.dic", {method: "POST", headers:{"Content-Type": "text/plain"}, body : ammendedDictionairy})} )
-    }
-
-    
-
-
     handleSuggest(miss_spelled_words, index){
       var Typo = require("typo-js");
       var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
       var mispelled_word = miss_spelled_words[index]
+      // console.log("sug 1")
       if (typeof mispelled_word === "string" )
       {
+        // console.log("sug 1.5" + mispelled_word)
+        // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         var ms_suggestion = dictionary.suggest(mispelled_word)
-        this.setState({ suggestion : ms_suggestion}) }   
+        // console.log("sug 2" + ms_suggestion.toString())
+        this.setState({ suggestion : ms_suggestion}) 
+        // console.log("sug 3")
+      }   
+        
       else {
         console.log("run spell check")
       }
+      // console.log("sug 4")
     }
 
     use_all_dicitonary(en_dictionary,custom_dictionary, word){
@@ -127,66 +124,63 @@ export default class CurationModal extends Component {
       else { if(custom_dictionary.check(word)){
         is_word_correct = true
       }}
-
-      console.log(word + ": " +is_word_correct)
       return is_word_correct
     }
 
     check_sub_script(input_text){
+      if(/\b[a-z]\w*\d[a-z]*/gi.test(input_text)){
       var potential_mol_form = input_text.match(/\b[a-z]\w*\d[a-z]*/gi)
-      console.log(potential_mol_form)
-      for( let step = 0; step < potential_mol_form.length; step++){
-        var split_form = potential_mol_form[step].split(/(\d)/g)
-        split_form = split_form.filter(n) 
-        console.log(split_form)
-        for (let int = 0; int < split_form.length ; int++)
-        {
-    //       return split_form.map((part, index) => (
-    //         <React.Fragment key={index}>
-    //           {(split_form[int] != "" && split_form[int].match(/\d/))
-    //           ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
-    //           : (part)}
-    //         </React.Fragment>
-    // ))
-          if(split_form[int] != ""){
-          if (split_form[int].match(/\d/)){
-            console.log("number found: " + split_form[int])
-          }
-          else{
-            console.log("number not found: "+ split_form[int])
-          }}
-        }
-       
-      }
-    }
+      var split_form = potential_mol_form[0].split(/(\d)/g) 
+        // Clean off empty strings
+        split_form = split_form.filter(n => n) 
+        return split_form.map((part, index) => (
+          <React.Fragment key={index}>
+            {(split_form[index].match(/\d/))
+              ? (<sub>{part}</sub>) 
+              : (part)}
+          </React.Fragment>
+        )) 
+    }}
 
 
     spell_check(description){
-      // var unit_dictionary =  new Typo("sci_units",false, false, { dictionaryPath: "/typo/dictionaries"});
       var Typo = require("typo-js");
-      var dictionary_array = []
-      var en_dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
-      var cus_dictionary = new Typo( "custom", false, false, { dictionaryPath: "/typojs" });
-      dictionary_array.push(en_dictionary, cus_dictionary);
+      var en_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
+      var cus_dictionary = new Typo("custom", false, false, { dictionaryPath: "/typojs" });
+      var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
       var ms_words = [];
+      var ss_list = []
       var word_array = description.split(' ')
       for (let i = 0; i < word_array.length; i++){
-        var punctuation = /[\.,?!\(\)]/g;
+        var punctuation = /[\.\,\?\!\(\) \"]/g;
+        var double_space_regex= /\s\s/g
         word_array[i] = word_array[i].replace(punctuation, "");
+        word_array[i] = word_array[i].replace(double_space_regex, " ")
         // check if word has a number in it
-        if (word_array[i] == ""||  /\b\d\S*\b/.test(word_array[i]))
-          {console.log("number detected "  + word_array[i])}
-
-        // if no number, check if in the dictionary, and set varible s_c_w to false if not in dictionary
-        else {var spell_checked_word = this.use_all_dicitonary(en_dictionary,cus_dictionary,word_array[i]);
-        // if word is misspelled add word to ms_word array
+        if (/\b[\p{Script=Latin}]+\b/giu.test(word_array[i])){
+          if(word_array[i].includes("°") ){
+            var spell_checked_word = true
+          }
+          else
+            {var spell_checked_word = this.use_all_dicitonary(en_dictionary,cus_dictionary,word_array[i]);
+          }
+        }
+        else
+          {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
+            {
+              ss_list.push(word_array[i])
+              console.log("sub found: "+ word_array[i])
+            }
+          else{
+            var spell_checked_word = true; console.log("num found: "+ word_array[i])
+              }
+          } 
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
-        }
-        }  
+        } 
       }
-      ms_words = this.uniq(ms_words)
-      this.setState({mispelled_words: ms_words})
+      // ms_words = this.uniq(ms_words)
+      this.setState({mispelled_words: ms_words, subscript_list:ss_list})
       this.handleSuggest(ms_words, 0)
     }
 
@@ -200,29 +194,42 @@ export default class CurationModal extends Component {
       else {
           index = 0
         }
-      this.setState({desc :fixed_description});
-      this.setState({suggestion_index : index});
+      this.setState({suggestion_index : index,desc :fixed_description});
       this.handleSuggest(ms_words, index);
       this.setState({correct_word: ""})
     }
-
     
-    getHighlightedText(text, highlight) {
-        var parts = text.split(new RegExp(`(${highlight})`, "gi"));
-        let highlight_array = highlight.split("|")
-          return parts.map((part, index) => (
-            <React.Fragment key={index}>
-              {highlight_array.includes(part.toLowerCase())
-              ? (<b style={{ backgroundColor: "#e8bb49" }}>{part}</b>) 
-              : (part)}
-            </React.Fragment>
-    ));}
+    getHighlightedText(text, mispelled_words,ms_index,subscript_list) {
+      var combined_array = mispelled_words.concat(subscript_list)
+      var highlight = combined_array.join("|")
+      var parts = text.split(new RegExp(`(${highlight})`, "gi"));
+      var output_div
+      var list_items = parts.map((part, index) => (
+        <React.Fragment key={index}>
+          {(()=> {
+            var miss_spelled_words_wo_current_word = mispelled_words.toSpliced(ms_index, 1)
 
-    highlight_mispelled_words(text,ms_word_array){
-      var ms_word_regex = ms_word_array.join("|")
-      var test = this.getHighlightedText(text,ms_word_regex)
-      return test
-    }
+            if(subscript_list.includes(part)){
+              output_div =  this.check_sub_script(part)   
+            }
+            else if(part === mispelled_words[ms_index])
+              {output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
+              }
+            else if(miss_spelled_words_wo_current_word.includes(part)) 
+              {output_div =  (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+              }
+            })()
+          }
+          {combined_array.includes(part)
+            ? (output_div)
+            : (part)} 
+            
+        </React.Fragment>))
+        return (
+          <div>
+            {list_items}
+          </div>
+        );}
 
     uniq(a) {
       var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
@@ -250,8 +257,13 @@ export default class CurationModal extends Component {
     }
 
     render() {
-      const Compo = ({ highlight, text }) => {
-        return <p>{this.highlight_mispelled_words(text, highlight)}</p>;
+      const Compo = ({ text, mispelled_words,index ,subscript_list}) => {
+        
+        return <p>{this.getHighlightedText(text, mispelled_words,index, subscript_list )}</p>;
+      };
+
+      const SubscriptBox =({text}) => {
+        return <p>{this.check_sub_script(text)}</p>
       };
 
       const SuggestBox = ({suggest_array}) =>{
@@ -284,18 +296,22 @@ export default class CurationModal extends Component {
               <Modal.Title>Spell Check</Modal.Title>
             </Modal.Header>
             <Modal.Body>
+            <div>{this.state.mispelled_words[this.state.suggestion_index]}</div>
               <div style={{border: "ridge",
                 padding: "10px",
                 fontFamily: "Arial",
                 borderRadius: "10px",}}>
-                <Compo text={this.state.desc} highlight= {this.state.mispelled_words} /> 
+                <Compo text={this.state.desc} mispelled_words={this.state.mispelled_words} index={this.state.suggestion_index} subscript_list={this.state.subscript_list} /> 
               </div>         
-              
+              <div>
+                <SubscriptBox text= {this.state.desc}></SubscriptBox>
+              </div>
               <div className="row"> 
              
                 <Button onClick={()=>this.spell_check(this.state.desc) }>spell check</Button>
                 <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
                 <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
+                <Button onClick={()=>this.reverse_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Go Back</Button>
                 <Button onClick={()=>this.handleChange()}> save </Button>
                 <Button onClick={()=> this.check_sub_script(this.state.desc)}> check subscript</Button>
               </div>
