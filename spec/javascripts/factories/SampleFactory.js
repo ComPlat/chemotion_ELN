@@ -26,6 +26,7 @@ export default class SampleFactory {
         sample.amountType="target";
         sample.amount_unit="g";
         sample.coefficient=1;
+        sample.is_new = false;
 
         return sample;
       });

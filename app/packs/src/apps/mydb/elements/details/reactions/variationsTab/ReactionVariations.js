@@ -4,7 +4,7 @@ import React, {
   useRef, useState, useEffect, useMemo, useCallback
 } from 'react';
 import {
-  Button, ButtonGroup, OverlayTrigger, Tooltip, Badge
+  Button, ButtonGroup, OverlayTrigger, Tooltip, Badge, Alert
 } from 'react-bootstrap';
 import {
   set, cloneDeep, isEqual
@@ -596,6 +596,14 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );
   }, [reactionVariations, reaction]);
+
+  if (reaction.isNew) {
+    return (
+      <Alert bsStyle="info">
+        Save the reaction to enable the variations tab.
+      </Alert>
+    );
+  }
 
   return (
     <div>

@@ -20,7 +20,7 @@ function getVariationsRowName(reactionLabel, variationsRowId) {
 function getReactionMaterials(reaction) {
   const reactionCopy = cloneDeep(reaction);
   return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
-    materialsByType[materialType] = reactionCopy[reactionAttributeName];
+    materialsByType[materialType] = reactionCopy[reactionAttributeName].filter((material) => !material.isNew);
     return materialsByType;
   }, {});
 }
