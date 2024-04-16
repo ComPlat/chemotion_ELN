@@ -2,17 +2,14 @@ import React from 'react';
 import { FormGroup, Modal, Button, ListGroup, ListGroupItem, Panel, ButtonToolbar } from 'react-bootstrap';
 import OntologySelect from './OntologySelect';
 import { cloneDeep } from 'lodash';
-import GenericSGDetails from 'src/components/generic/GenericSGDetails';
 import { GenInterface, GenButtonReload } from 'chem-generic-ui';
 import { FlowViewerBtn } from 'src/apps/generic/Utils';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OntologySortableList from './OntologySortableList';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
-import DeviceDescription from 'src/models/DeviceDescription';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import Segment from 'src/models/Segment';
-import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const onNaviClick = (type, id) => {
   console.log('navi', type, id);
@@ -196,20 +193,22 @@ const setSelectedSegmentId = (segment, store) => {
   store.setSelectedSegmentId(segment.id);
 }
 
-const segmentVersionToolbar = (store, segment, segmentKlass, handleSegmentsChange, handleRetrieveRevision) => {
+const segmentVersionToolbar = (store, segment, segmentKlass, handleSegmentsChange, handleRetrieveRevision, i, j) => {
   return (
-    <ButtonToolbar style={{ margin: '5px 0px' }}>
+    <ButtonToolbar style={{ margin: '5px 0px' }} key={`revisions-buttons-${i}-${j}`}>
       <FlowViewerBtn generic={segment} />
       <div onClick={() => setSelectedSegmentId(segment, store)}>
         <RevisionViewerBtn
           fnRetrieve={handleRetrieveRevision}
           generic={segment}
+          key={`revision-viewer-button-${i}-${j}`}
         />
       </div>
       <GenButtonReload
         klass={segmentKlass}
         generic={segment}
         fnReload={handleSegmentsChange}
+        key={`revision-reload-button-${i}-${j}`}
       />
     </ButtonToolbar>
   );
@@ -231,7 +230,7 @@ const ontologySegmentList = (store, element, handleSegmentsChange, handleRetriev
         let deletedClass = '';
         let collapsedClass = '';
 
-        ontology['segments'].forEach((segment) => {
+        ontology['segments'].forEach((segment, j) => {
           const segmentKlass = segmentKlasses.find(
             (s) => s.element_klass && s.element_klass.name === element.type && segment['segment_klass_id'] == s.id
           );
@@ -251,7 +250,7 @@ const ontologySegmentList = (store, element, handleSegmentsChange, handleRetriev
           }
 
           rows.push(
-            segmentVersionToolbar(store, segmentElement, segmentKlass, handleSegmentsChange, handleRetrieveRevision)
+            segmentVersionToolbar(store, segmentElement, segmentKlass, handleSegmentsChange, handleRetrieveRevision, i, j)
           );
           rows.push(
             <GenInterface
@@ -263,11 +262,16 @@ const ontologySegmentList = (store, element, handleSegmentsChange, handleRetriev
               isSearch={false}
               isActiveWF={false}
               fnNavi={onNaviClick}
+              key={`ontology-${i}-${j}`}
             />
           );
         });
         list.push(
-          <Panel className={`ontology-segments ${className} ${deletedClass}`} defaultExpanded>
+          <Panel
+            className={`ontology-segments ${className} ${deletedClass}`}
+            key={`ontology-segments-list-${i}`}
+            defaultExpanded
+          >
             <Panel.Heading>
               <Panel.Title toggle>{`Ontology: ${ontology['data']['label']}`}</Panel.Title>
             </Panel.Heading>

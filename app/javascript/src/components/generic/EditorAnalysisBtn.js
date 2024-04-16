@@ -18,7 +18,6 @@ const EditorAnalysisBtn = ({
     <ButtonGroup>
       <SplitButton
         id="spectra-editor-split-button"
-        pullRight
         variant="info"
         size="sm"
         title={<i className="fa fa-area-chart" />}
@@ -48,7 +47,7 @@ const EditorAnalysisBtn = ({
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
-    )}
+  )}
   </OverlayTrigger>
 );
 
