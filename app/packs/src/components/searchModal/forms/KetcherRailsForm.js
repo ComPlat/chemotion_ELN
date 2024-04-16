@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
 import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -23,6 +23,22 @@ const KetcherRailsform = () => {
 
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
+  let iframe;
+  
+  useEffect(() => {
+    iframe = document.getElementById('ketcher');
+
+    const checkIframeLoaded = setInterval(function () {
+      if (iframe !== null && editor && searchStore.ketcherRailsValues.queryMolfile) {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        if (iframeDoc.readyState === 'complete' && iframeDoc.body.children.length > 0) {
+          editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
+          clearInterval(checkIframeLoaded);
+        }
+      }
+    }, 100);
+  }, []);
  
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);
