@@ -2,10 +2,14 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Button, Alert } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import SearchResultTabContent from './SearchResultTabContent';
+import Aviator from 'aviator';
 
 const SearchResult = ({ handleClear }) => {
   const searchStore = useContext(StoreContext).search;
@@ -49,6 +53,28 @@ const SearchResult = ({ handleClear }) => {
     ElementActions.changeSorting(true);
     ElementActions.dispatchSearchResult(preparedResult);
     searchStore.handleAdopt();
+  }
+
+  const adoptResultAndOpenDetail = (element) => {
+    const { currentCollection, isSync } = UIStore.getState();
+    const { id, type } = element;
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = id;
+
+    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+    if (genericEls.find((el) => el.name === type)) {
+      e.klassType = 'GenericEl';
+    }
+
+    elementShowOrNew(e);
+    handleAdoptResult();
+
+    return null;
   }
 
   const prepareResultForDispatch = () => {
@@ -157,8 +183,11 @@ const SearchResult = ({ handleClear }) => {
 
       const navItem = searchResultNavItem(list, tabResult);
       const tabContent =
-        <SearchResultTabContent key={`${list.key}-result-tab`}
-          list={list} tabResult={tabResult}
+        <SearchResultTabContent
+          key={`${list.key}-result-tab`}
+          list={list}
+          tabResult={tabResult}
+          openDetail={adoptResultAndOpenDetail}
         />
 
       navItems.push(navItem);

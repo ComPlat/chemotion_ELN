@@ -1,12 +1,12 @@
 import React, { useContext, useEffect } from 'react';
-import { Tab, Pagination } from 'react-bootstrap';
+import { Tab, Pagination, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
-const SearchResultTabContent = ({ list, tabResult }) => {
+const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
   let currentPage = searchStore.tabCurrentPage.length >= 1 ? searchStore.tab_current_page[list.index] : undefined;
   let currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
@@ -131,17 +131,28 @@ const SearchResultTabContent = ({ list, tabResult }) => {
   }
 
   const shortLabelWithMoreInfos = (object) => {
-    if (['screen', 'research_plan'].includes(object.type)) { return object.name; }
+    let names;
+    const tooltip = <Tooltip id="detailTip">Open detail</Tooltip>;
 
-    if (object.type == 'sample') {
+    if (['screen', 'research_plan'].includes(object.type) || object.short_label === undefined) { 
+      names = object.name;
+    } else if (object.type == 'sample') {
       let infos = [];
       if (object.external_label) { infos.push(object.external_label) }
       if (object.xref && object.xref.inventory_label) { infos.push(object.xref.inventory_label) }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas) }
-      return [object.short_label, object.name].concat(infos).join(" | ")
+      names = [object.short_label, object.name].concat(infos).join(" | ");
     } else {
-      return [object.short_label, object.name].join(" | ");
+      names = [object.short_label, object.name].join(" | ");
     }
+
+    return (
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <span onClick={() => openDetail(object)}>
+          {names}
+        </span>
+      </OverlayTrigger>
+    );
   }
 
   const tabContentList = () => {
