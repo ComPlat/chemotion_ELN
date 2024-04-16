@@ -4,8 +4,11 @@ import { Row, Col } from 'react-bootstrap';
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class Elements extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -25,6 +28,9 @@ export default class Elements extends Component {
 
   handleOnChange(state) {
     const { currentElement } = state;
+    if (currentElement && currentElement.type == 'device_description') {
+      this.context.deviceDescriptions.setDeviceDescription(currentElement, true);
+    }
     this.setState({ currentElement });
   }
 
