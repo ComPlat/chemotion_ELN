@@ -1097,7 +1097,7 @@ export default class Sample extends Element {
       const currentCollection = UIStore.getState().currentCollection;
       newComponent.collection_id = currentCollection.id
     }
-
+ 
     const tmpComponents = [...(this.mixture_components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey);
@@ -1105,18 +1105,39 @@ export default class Sample extends Element {
       tmpComponents.push(newComponent);
       this.mixture_components = tmpComponents;
 
-      // update SMILES
+      if (!this.molecule_cano_smiles.includes(newComponent.molecule_cano_smiles)) {
+        const newSmiles = this.molecule_cano_smiles ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}` : newComponent.molecule_cano_smiles;
+
+        MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
+        .then(result => {
+          this.molecule = result;
+          this.molfile = result.molfile
+        });
+      }
     }
   }
-
+ 
   deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.mixture_components || [])];
     const filteredComponents = tmpComponents.filter(
       (comp) => comp !== componentToDelete
     );
     this.mixture_components = filteredComponents;
-    // update SMILES
-  }
+
+    const smilesToRemove = componentToDelete.molecule_cano_smiles;
+    const newSmiles = this.molecule_cano_smiles
+    .split('.')
+    .filter(smiles => smiles !== smilesToRemove)
+    .join('.');
+
+    if (newSmiles !== this.molecule_cano_smiles ){
+      MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
+      .then(result => {
+        this.molecule = result;
+        this.molfile = result.molfile
+      }); 
+    }
+  } 
 
   updateMixtureComponent(componentIndex, amount, concType) {
     const componentToUpdate = this.mixture_components[componentIndex];

@@ -34,10 +34,12 @@ const SampleName = ({ sample }) => {
     );
   }
 
-  if (sample.sample_type_name == 'Mixture') {
+  if (sample.sample_type_name == 'Mixture' && sample.mixture_components) {
+    const title = sample.mixture_components.map(comp => comp.molecule.iupac_name).join(', ');
     return (
       <div>
-        {sample.name}
+        <p>{sample.name}</p>
+        {title}
       </div>
     );
   }
