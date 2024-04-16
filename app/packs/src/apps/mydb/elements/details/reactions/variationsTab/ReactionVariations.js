@@ -351,18 +351,17 @@ function getMaterialColumnGroupChild(material, materialType) {
 function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.keys(materialTypes).forEach((materialType) => {
-    const currentMaterialsOfType = currentMaterials[materialType]; // Array of material objects.
-    const currentMaterialsOfTypeIDs = currentMaterials[materialType].map((material) => material.id.toString());
+  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
+    const materialIDs = materials.map((material) => material.id.toString());
     const materialColumnGroup = updatedColumnDefinitions.find((columnGroup) => columnGroup.groupId === materialType);
 
     // Remove obsolete materials.
     materialColumnGroup.children = materialColumnGroup.children.filter((child) => {
       const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
-      return currentMaterialsOfTypeIDs.includes(childID);
+      return materialIDs.includes(childID);
     });
     // Add missing materials.
-    currentMaterialsOfType.forEach((material) => {
+    materials.forEach((material) => {
       if (!materialColumnGroup.children.some((child) => child.field === `${materialType}.${material.id}`)) {
         materialColumnGroup.children.push(getMaterialColumnGroupChild(material, materialType));
       }
@@ -428,11 +427,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       ]
     },
   ].concat(
-    Object.entries(materialTypes).map(([materialType, { label, reactionAttributeName }]) => ({
-      headerName: label,
+    Object.entries(reactionMaterials).map(([materialType, materials]) => ({
+      headerName: materialTypes[materialType].label,
       groupId: materialType,
       marryChildren: true,
-      children: reaction[reactionAttributeName].map((material) => getMaterialColumnGroupChild(material, materialType))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType))
     }))
   ));
 
