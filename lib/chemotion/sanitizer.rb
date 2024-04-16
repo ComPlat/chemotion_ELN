@@ -11,7 +11,9 @@ module Chemotion
         base_scrub_ml(fragment, type: :html, encoding: encoding)
       end
 
-      alias_method :scrub_svg, :scrub_xml
+      def scrub_svg(fragment, encoding: nil)
+        base_scrub_ml(fragment, type: :svg, encoding: encoding)
+      end
 
       private
 
