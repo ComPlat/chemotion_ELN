@@ -130,6 +130,20 @@ const SearchResultTabContent = ({ list, tabResult }) => {
     }
   }
 
+  const shortLabelWithMoreInfos = (object) => {
+    if (['screen', 'research_plan'].includes(object.type)) { return object.name; }
+
+    if (object.type == 'sample') {
+      let infos = [];
+      if (object.external_label) { infos.push(object.external_label) }
+      if (object.xref && object.xref.inventory_label) { infos.push(object.xref.inventory_label) }
+      if (object.xref && object.xref.cas) { infos.push(object.xref.cas) }
+      return [object.short_label, object.name].concat(infos).join(" | ")
+    } else {
+      return [object.short_label, object.name].join(" | ");
+    }
+  }
+
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
     let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
@@ -140,7 +154,6 @@ const SearchResultTabContent = ({ list, tabResult }) => {
         let previous = elements[i - 1];
         let previousMolecule = previous ? previous.molecule_formula : '';
         let moleculeName = previous && previousMolecule == object.molecule_formula ? '' : <SampleName sample={object} />;
-        let shortLabelWithName = ['screen', 'research_plan'].includes(object.type) ? object.name : [object.short_label, object.name].join(" - ");
 
         if (['sample', 'reaction'].includes(object.type)) {
           return (
@@ -150,7 +163,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
                 {moleculeName}
               </div>
               <span className="search-result-tab-content-list-name">
-                {shortLabelWithName}
+                {shortLabelWithMoreInfos(object)}
               </span>
             </div>
           )
@@ -158,7 +171,7 @@ const SearchResultTabContent = ({ list, tabResult }) => {
           return (
             <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
               <div key={object.type}>
-                {shortLabelWithName}
+                {shortLabelWithMoreInfos(object)}
               </div>
             </div>
           )
