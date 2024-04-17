@@ -86,7 +86,6 @@ module Usecases
       private
 
       def create_sub_sample(sample, fixed_label)
-        @skip_inventory_label_update = true
         parent_sample = Sample.find(sample.parent_id)
 
         subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
@@ -131,12 +130,13 @@ module Usecases
         )
 
         new_sample.short_label = fixed_label if fixed_label
+        new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
+        new_sample.skip_inventory_label_update = true
 
         # add new data container
         new_sample.container = update_datamodel(container_info)
 
         new_sample.collections << @reaction.collections
-        new_sample.skip_inventory_label_update = true
         new_sample.save!
         new_sample
       end
