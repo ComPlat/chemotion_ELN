@@ -290,7 +290,6 @@ const genericElShowOrNew = (e, type) => {
 };
 
 const elementShowOrNew = (e) => {
-  console.log('routes', e);
   const type = e.type;
   switch (type) {
     case 'sample':

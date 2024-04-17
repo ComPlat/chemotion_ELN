@@ -15,7 +15,7 @@ module Entities
     expose :vendor_company_name
     expose :vendor_id
     expose :description
-    expose :tags
+    expose :general_tags
     expose :version_number
     expose :version_installation_start_date
     expose :version_installation_end_date
@@ -29,7 +29,7 @@ module Entities
     expose :room
     expose :infrastructure_assignment
     expose :access_options
-    expose :comments
+    expose :access_comments
     expose :size
     expose :weight
     expose :application_name
@@ -43,6 +43,8 @@ module Entities
     expose :attachments, using: 'Entities::AttachmentEntity'
     expose :ontologies
     expose :segments, using: 'Labimotion::SegmentEntity'
+    expose :comments, using: 'Entities::CommentEntity'
+    expose :tag, using: 'Entities::ElementTagEntity'
 
     def type
       'device_description'
