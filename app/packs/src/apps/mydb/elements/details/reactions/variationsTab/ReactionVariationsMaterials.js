@@ -292,6 +292,24 @@ function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials, h
   return updatedColumnDefinitions;
 }
 
+function updateNonReferenceMaterialOnMassChange(variationsRow, cellData, materialType, reactionHasPolymers) {
+  const referenceMaterial = getReferenceMaterial(variationsRow);
+
+  // Adapt equivalent to updated mass.
+  const equivalent = (!cellData.aux.isReference && ['startingMaterials', 'reactants'].includes(materialType))
+    ? computeEquivalent(cellData, referenceMaterial) : cellData.aux.equivalent;
+
+  // Adapt yield to updated mass.
+  const percentYield = (materialType === 'products')
+    ? computePercentYield(cellData, referenceMaterial, reactionHasPolymers) : cellData.aux.yield;
+
+  const updatedAux = { ...cellData.aux, equivalent, yield: percentYield };
+
+  return {
+    ...cellData, aux: updatedAux
+  };
+}
+
 export {
   MaterialOverlay,
   EquivalentFormatter,
@@ -309,4 +327,5 @@ export {
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
   getMaterialData,
+  updateNonReferenceMaterialOnMassChange
 };

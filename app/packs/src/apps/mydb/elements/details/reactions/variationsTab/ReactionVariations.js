@@ -18,7 +18,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   EquivalentParser, EquivalentFormatter, getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
-  getReactionMaterials, getReferenceMaterial, computeEquivalent, computePercentYield,
+  getReactionMaterials, updateNonReferenceMaterialOnMassChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
@@ -176,7 +176,6 @@ function ValueUnitParser({
   const standardUnit = cellData.unit;
   const columnGroup = field.split('.')[0];
   const column = field.split('.').splice(1).join('.');
-  const referenceMaterial = getReferenceMaterial(variationsRow);
   let value = Number(newValue);
   if (column !== 'temperature' && value < 0) {
     value = 0;
@@ -194,20 +193,12 @@ function ValueUnitParser({
   Non-reference materials require adaptation of their own equivalent only.
   Those are handled here.
   */
-
-  // Adapt equivalent to updated mass.
-  const equivalent = (!updatedCellData.aux.isReference && ['startingMaterials', 'reactants'].includes(columnGroup))
-    ? computeEquivalent(updatedCellData, referenceMaterial) : updatedCellData.aux.equivalent;
-
-  // Adapt yield to updated mass.
-  const percentYield = (columnGroup === 'products')
-    ? computePercentYield(updatedCellData, referenceMaterial, context.reactionHasPolymers) : updatedCellData.aux.yield;
-
-  const updatedAux = { ...updatedCellData.aux, equivalent, yield: percentYield };
-
-  return {
-    ...updatedCellData, aux: updatedAux
-  };
+  return updateNonReferenceMaterialOnMassChange(
+    variationsRow,
+    updatedCellData,
+    columnGroup,
+    context.reactionHasPolymers
+  );
 }
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
