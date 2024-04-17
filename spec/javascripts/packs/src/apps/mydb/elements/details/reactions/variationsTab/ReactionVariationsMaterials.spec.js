@@ -3,29 +3,12 @@ import {
   convertUnit,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  getReactionMaterials, getMolFromGram, getGramFromMol,
-  updateYields, updateEquivalents, removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
+  getReactionMaterials, updateYields, updateEquivalents,
+  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsMaterials', () => {
-  it('converts gram to mol', () => {
-    const material = { aux: { loading: 2 } };
-    expect(getMolFromGram(1, material)).toBe((1 * 2) / 1e4);
-    material.aux.loading = null;
-    material.aux.molarity = 1;
-    material.aux.purity = 2;
-    material.aux.molecularWeight = 3;
-    expect(getMolFromGram(1, material)).toBe((1 * 2) / (1 * 3));
-  });
-  it('converts mol to gram', () => {
-    const material = { aux: { loading: 2 } };
-    expect(getGramFromMol(1, material)).toBe((1 / 2) * 1e4);
-    material.aux.loading = null;
-    material.aux.purity = 2;
-    material.aux.molecularWeight = 1;
-    expect(getGramFromMol(1, material)).toBe(1 / 2);
-  });
   it('converts units', () => {
     expect(convertUnit(1, 'g', 'mg')).toBe(1000);
     expect(convertUnit(1, 'mg', 'g')).toBe(0.001);

@@ -6,14 +6,6 @@ import {
   convertUnit, materialTypes, massUnits, volumeUnits
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
-function getReactionMaterials(reaction) {
-  const reactionCopy = cloneDeep(reaction);
-  return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
-    materialsByType[materialType] = reactionCopy[reactionAttributeName].filter((material) => !material.isNew);
-    return materialsByType;
-  }, {});
-}
-
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
     return (material.aux.loading * gram) / 1e4;
@@ -53,6 +45,14 @@ function computePercentYield(material, referenceMaterial, reactionHasPolymers) {
     / stoichiometryCoefficient;
   return reactionHasPolymers ? (equivalent * 100)
     : ((equivalent <= 1 ? equivalent : 1) * 100);
+}
+
+function getReactionMaterials(reaction) {
+  const reactionCopy = cloneDeep(reaction);
+  return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
+    materialsByType[materialType] = reactionCopy[reactionAttributeName].filter((material) => !material.isNew);
+    return materialsByType;
+  }, {});
 }
 
 function updateYields(variationsRow, reactionHasPolymers) {
@@ -315,17 +315,12 @@ export {
   EquivalentFormatter,
   EquivalentParser,
   getMaterialColumnGroupChild,
-  updateColumnDefinitionsMaterials,
   getReactionMaterials,
-  getMolFromGram,
-  getGramFromMol,
-  getReferenceMaterial,
-  computeEquivalent,
-  computePercentYield,
+  getMaterialData,
+  updateColumnDefinitionsMaterials,
+  updateNonReferenceMaterialOnMassChange,
   updateYields,
   updateEquivalents,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
-  getMaterialData,
-  updateNonReferenceMaterialOnMassChange
 };
