@@ -71,9 +71,10 @@ class DeviceDescription < ApplicationRecord
   has_many :attachments, as: :attachable, dependent: :nullify
   has_many :sync_collections_users, through: :collections
 
-  # has_many :comments, as: :commentable, dependent: :destroy
-
+  has_many :comments, as: :commentable, dependent: :destroy
   has_one :container, as: :containable, dependent: :nullify
+
+  scope :includes_for_list_display, -> { includes(:tag) }
 
   after_create :set_short_label
 

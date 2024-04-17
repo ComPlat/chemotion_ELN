@@ -11,6 +11,7 @@ import MaintainanceForm from './maintainanceTab/MaintainanceForm';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import CommentModal from 'src/components/common/CommentModal';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
@@ -182,6 +183,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
           </Button>
           {downloadAnalysisButton()}
         </ButtonToolbar>
+        <CommentModal element={deviceDescription} />
       </Panel.Body>
     </Panel>
   );

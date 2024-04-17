@@ -126,7 +126,7 @@ const PropertiesForm = () => {
   const accessOptions = [
     { value: 'infrastructure_assignment', label: 'Infrastructure Assignment', type: 'text' },
     { value: 'access_options', label: 'Access options', type: 'text' },
-    { value: 'comments', label: 'Comments', type: 'text' },
+    { value: 'access_comments', label: 'Comments', type: 'text' },
   ];
   const accessOptionsLabel = 'Access options';
 
@@ -152,7 +152,7 @@ const PropertiesForm = () => {
           {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
           {multipleInputGroups(deviceDescription, vendorCompanyNameLabel, vendorCompanyName, deviceDescriptionsStore)}
           {textareaInput(deviceDescription, deviceDescriptionsStore, 'description', 'Description', 3)}
-          {selectInput(deviceDescription, deviceDescriptionsStore, 'tags', 'Tags', deviceTags)}
+          {selectInput(deviceDescription, deviceDescriptionsStore, 'general_tags', 'Tags', deviceTags)}
         </div>
       </Collapse>
 

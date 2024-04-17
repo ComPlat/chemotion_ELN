@@ -29,7 +29,7 @@ module Chemotion
         optional :vendor_company_name, type: String
         optional :vendor_id, type: String
         optional :description, type: String
-        optional :tags, type: String
+        optional :general_tags, type: String
         optional :version_number, type: String
         optional :version_installation_start_date, type: DateTime, allow_blank: true
         optional :version_installation_end_date, type: DateTime, allow_blank: true
@@ -49,7 +49,7 @@ module Chemotion
         optional :room, type: String
         optional :infrastructure_assignment, type: String
         optional :access_options, type: String
-        optional :comments, type: String
+        optional :access_comments, type: String
         optional :size, type: String
         optional :weight, type: String
         optional :application_name, type: String
@@ -118,7 +118,7 @@ module Chemotion
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
-        # scope = scope.includes_for_list_display
+        scope = scope.includes_for_list_display
         scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
         scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
         scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
