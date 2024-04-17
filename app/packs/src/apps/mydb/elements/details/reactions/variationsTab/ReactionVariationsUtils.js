@@ -106,12 +106,12 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
 export {
   massUnits,
   volumeUnits,
+  temperatureUnits,
+  durationUnits,
+  materialTypes,
+  convertUnit,
+  getVariationsRowName,
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
-  temperatureUnits,
-  durationUnits,
-  convertUnit,
-  materialTypes,
-  getVariationsRowName,
 };
