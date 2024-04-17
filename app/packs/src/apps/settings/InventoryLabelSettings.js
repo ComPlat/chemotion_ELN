@@ -156,7 +156,7 @@ function InventoryLabelSettings() {
     setSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
     if (prefixValue && counterValue && nameValue
-        && nameValue.length && prefixValue.length && counterValue.length) {
+        && nameValue.length && prefixValue.length) {
       setErrorMessage(null);
       InventoryFetcher.updateInventoryLabel({
         prefix: prefixValue,

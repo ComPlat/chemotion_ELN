@@ -243,7 +243,7 @@ export default class CollectionSubtree extends React.Component {
           {gated}
           {label}
           {inventoryPrefix ? (
-            <div style={{ position: 'relative', float: 'right' }}>
+            <div style={{ position: 'relative', float: 'right', paddingRight: '5px' }}>
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip id="collection_inventory_label">Inventory Label</Tooltip>}
