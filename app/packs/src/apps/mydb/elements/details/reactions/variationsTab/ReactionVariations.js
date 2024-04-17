@@ -6,21 +6,19 @@ import React, {
 import {
   Button, ButtonGroup, OverlayTrigger, Tooltip, Badge, Alert
 } from 'react-bootstrap';
-import {
-  set, cloneDeep, isEqual
-} from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-  createVariationsRow, temperatureUnits, durationUnits, convertUnit, materialTypes,
-  getSequentialId, getVariationsRowName
+  createVariationsRow, copyVariationsRow, updateVariationsRow,
+  temperatureUnits, durationUnits, convertUnit, materialTypes, getVariationsRowName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   EquivalentParser, EquivalentFormatter, getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
-  getReactionMaterials, getReferenceMaterial, computeEquivalent, computePercentYield, updateYields, updateEquivalents,
+  getReactionMaterials, getReferenceMaterial, computeEquivalent, computePercentYield,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
@@ -400,14 +398,12 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   const addRow = useCallback(() => {
     setReactionVariations(
-      [...reactionVariations, createVariationsRow(reaction, getSequentialId(reactionVariations))]
+      [...reactionVariations, createVariationsRow(reaction, reactionVariations)]
     );
   }, [reaction, reactionVariations]);
 
   const copyRow = useCallback((data) => {
-    const copiedRow = cloneDeep(data);
-    copiedRow.id = getSequentialId(reactionVariations);
-    copiedRow.analyses = [];
+    const copiedRow = copyVariationsRow(data, reactionVariations);
     setReactionVariations(
       [...reactionVariations, copiedRow]
     );
@@ -418,25 +414,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }, [reactionVariations]);
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
-    /*
-    Some properties of a material need to be updated in response to changes in other properties:
-
-    property   | needs to be updated in response to
-    -----------|----------------------------------
-    equivalent | own mass changes*, reference material's mass changes+
-    mass       | own equivalent changes*
-    yield      | own mass changes*, reference material's mass change
-
-    *: handled in corresponding cell parsers (local, cell-internal changes)
-    +: handled here (non-local, row-wide changes)
-    */
     const { field } = colDef;
-    let updatedRow = { ...oldRow };
-    set(updatedRow, field, newValue);
-    // TODO: Only run the following two updates if `newValue` pertains to the mass of the reference material.
-    // It's not incorrect to run those updates for other changes as well, just wasteful.
-    updatedRow = updateEquivalents(updatedRow);
-    updatedRow = updateYields(updatedRow, reaction.hasPolymers());
+    const updatedRow = updateVariationsRow(oldRow, field, newValue, reaction.hasPolymers());
     setReactionVariations(
       reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );

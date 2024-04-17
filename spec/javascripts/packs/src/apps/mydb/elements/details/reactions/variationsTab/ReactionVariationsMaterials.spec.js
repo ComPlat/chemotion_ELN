@@ -1,6 +1,5 @@
 import expect from 'expect';
 import {
-  getSequentialId,
   convertUnit,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
@@ -9,13 +8,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
 
-describe('ReactionVariationsUtils', () => {
-  it('gets sequential ID', () => {
-    const variations = [];
-    expect(getSequentialId(variations)).toBe(1);
-    variations.push({ id: 42 });
-    expect(getSequentialId(variations)).toBe(43);
-  });
+describe('ReactionVariationsMaterials', () => {
   it('converts gram to mol', () => {
     const material = { aux: { loading: 2 } };
     expect(getMolFromGram(1, material)).toBe((1 * 2) / 1e4);

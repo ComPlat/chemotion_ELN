@@ -14,7 +14,7 @@ async function setUpReaction() {
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
-    variations.push(createVariationsRow(reaction, id));
+    variations.push(createVariationsRow(reaction, variations));
   }
   reaction.variations = variations;
 

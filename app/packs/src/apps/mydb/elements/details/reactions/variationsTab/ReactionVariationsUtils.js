@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { set, cloneDeep } from 'lodash';
 import { convertTemperature, convertDuration } from 'src/models/Reaction';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
@@ -44,12 +44,12 @@ function getSequentialId(variations) {
   return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
 }
 
-function createVariationsRow(reaction, id) {
+function createVariationsRow(reaction, variations) {
   const reactionCopy = cloneDeep(reaction);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reactionCopy.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reactionCopy.temperature ?? {};
   let row = {
-    id,
+    id: getSequentialId(variations),
     properties: {
       temperature: {
         value: convertUnit(temperatureValue, temperatureUnit, temperatureUnits[0]), unit: temperatureUnits[0]
@@ -71,14 +71,47 @@ function createVariationsRow(reaction, id) {
   return row;
 }
 
+function copyVariationsRow(row, variations) {
+  const copiedRow = cloneDeep(row);
+  copiedRow.id = getSequentialId(variations);
+  copiedRow.analyses = [];
+
+  return copiedRow;
+}
+
+function updateVariationsRow(row, field, value, reactionHasPolymers) {
+  let updatedRow = { ...row };
+  set(updatedRow, field, value);
+  /*
+  Some properties of a material need to be updated in response to changes in other properties:
+
+  property   | needs to be updated in response to
+  -----------|----------------------------------
+  equivalent | own mass changes*, reference material's mass changes+
+  mass       | own equivalent changes*
+  yield      | own mass changes*, reference material's mass change
+
+  *: handled in corresponding cell parsers (local, cell-internal changes)
+  +: handled here (non-local, row-wide changes)
+
+  TODO: Only run the following two updates if `value` pertains to the mass of the reference material.
+  It's not incorrect to run those updates for other changes as well, just wasteful.
+  */
+  updatedRow = updateEquivalents(updatedRow);
+  updatedRow = updateYields(updatedRow, reactionHasPolymers);
+
+  return updatedRow;
+}
+
 export {
   massUnits,
   volumeUnits,
   createVariationsRow,
+  copyVariationsRow,
+  updateVariationsRow,
   temperatureUnits,
   durationUnits,
   convertUnit,
   materialTypes,
-  getSequentialId,
   getVariationsRowName,
 };
