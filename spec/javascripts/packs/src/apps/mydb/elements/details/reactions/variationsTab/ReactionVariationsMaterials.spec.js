@@ -1,24 +1,11 @@
 import expect from 'expect';
 import {
-  convertUnit,
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-import {
   getReactionMaterials, updateYields, updateEquivalents,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsMaterials', () => {
-  it('converts units', () => {
-    expect(convertUnit(1, 'g', 'mg')).toBe(1000);
-    expect(convertUnit(1, 'mg', 'g')).toBe(0.001);
-    expect(convertUnit(1, 'l', 'ml')).toBe(1000);
-    expect(convertUnit(1, 'ml', 'l')).toBe(0.001);
-    expect(convertUnit(1, '°C', '°F')).toBe(33.8);
-    expect(convertUnit(1, '°F', '°C')).toBeCloseTo(-17.2, 0.1);
-    expect(convertUnit(1, 'Second(s)', 'Minute(s)')).toBeCloseTo(0.0167, 0.00001);
-    expect(convertUnit(1, 'Minute(s)', 'Second(s)')).toBe(60);
-  });
   it('removes obsolete materials', async () => {
     const reaction = await setUpReaction();
     const productIDs = reaction.products.map((product) => product.id);
