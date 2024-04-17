@@ -13,13 +13,16 @@ import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, temperatureUnits, durationUnits, convertUnit, materialTypes,
-  getSequentialId, removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  getReferenceMaterial, getMolFromGram, getGramFromMol, computeEquivalent, computePercentYield,
-  updateYields, updateEquivalents, getReactionMaterials, getVariationsRowName
+  getSequentialId, getVariationsRowName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import {
+  EquivalentParser, EquivalentFormatter, getMaterialColumnGroupChild, updateColumnDefinitionsMaterials,
+  getReactionMaterials, getReferenceMaterial, computeEquivalent, computePercentYield, updateYields, updateEquivalents,
+  removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 function MenuHeader({
   column, context, setSort, units, names, entries
@@ -136,88 +139,6 @@ MenuHeader.propTypes = {
   entries: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
-function MaterialOverlay({
-  value: cellData, colDef
-}) {
-  const { aux = null, value, unit: standardUnit } = cellData;
-  const { _variationsUnit: displayUnit } = colDef;
-
-  return (
-    <div
-      className="custom-tooltip"
-      style={{
-        padding: '3px 8px',
-        color: '#fff',
-        backgroundColor: '#000',
-        borderRadius: '4px',
-      }}
-    >
-      <p>
-        <span>
-          {Number(convertUnit(value, standardUnit, displayUnit)).toPrecision(4)}
-          {' '}
-          [
-          {displayUnit}
-          ]
-        </span>
-      </p>
-      {aux?.isReference ? (
-        <p>
-          <span>Reference</span>
-        </p>
-      ) : null}
-
-      {aux?.equivalent !== null && (
-      <p>
-        <span>
-          Equivalent:
-        </span>
-        {' '}
-        {Number(aux.equivalent).toPrecision(4)}
-      </p>
-      )}
-
-      {aux?.coefficient !== null && (
-      <p>
-        <span>
-          Coefficient:
-        </span>
-        {' '}
-        {Number(aux.coefficient).toPrecision(4)}
-      </p>
-      )}
-
-      {aux?.yield !== null && (
-      <p>
-        <span>
-          Yield:
-        </span>
-        {' '}
-        {Number(aux.yield).toPrecision(4)}
-        %
-      </p>
-      )}
-
-      {aux?.molecularWeight !== null && (
-        <p>
-          <span>
-            Molar mass:
-          </span>
-          {' '}
-          {Number(aux.molecularWeight).toPrecision(2)}
-          {' '}
-          g/mol
-        </p>
-      )}
-    </div>
-  );
-}
-
-MaterialOverlay.propTypes = {
-  value: PropTypes.instanceOf(AgGridReact.value).isRequired,
-  colDef: PropTypes.instanceOf(AgGridReact.colDef).isRequired,
-};
-
 function RowToolsCellRenderer({
   data: variationsRow, context
 }) {
@@ -291,86 +212,6 @@ function ValueUnitParser({
   };
 }
 
-function EquivalentFormatter({ value: cellData }) {
-  const { equivalent } = cellData.aux;
-
-  return `${Number(equivalent).toPrecision(4)}`;
-}
-
-function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue }) {
-  let equivalent = Number(newValue);
-  if (equivalent < 0) {
-    equivalent = 0;
-  }
-  // Adapt mass to updated equivalent.
-  const referenceMaterial = getReferenceMaterial(variationsRow);
-  const referenceMol = getMolFromGram(
-    convertUnit(referenceMaterial.value, referenceMaterial.unit, 'g'),
-    referenceMaterial
-  );
-  const value = Number(convertUnit(getGramFromMol(referenceMol * equivalent, cellData), 'g', cellData.unit));
-
-  return { ...cellData, value, aux: { ...cellData.aux, equivalent } };
-}
-
-function getMaterialColumnGroupChild(material, materialType) {
-  const materialCopy = cloneDeep(material);
-  let entries = [null];
-  if (materialType === 'solvents') {
-    entries = ['volume'];
-  }
-  if (materialType === 'products') {
-    entries = ['mass'];
-  }
-  if (['startingMaterials', 'reactants'].includes(materialType)) {
-    entries = ['mass'];
-    if (!materialCopy.reference ?? false) {
-      entries.push('equivalent');
-    }
-  }
-  const names = [`ID: ${materialCopy.id.toString()}`];
-  ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
-    if (materialCopy[name]) {
-      names.push(materialCopy[name]);
-    }
-  });
-  return {
-    field: `${materialType}.${materialCopy.id}`, // Must be unique.
-    tooltipField: `${materialType}.${materialCopy.id}`,
-    tooltipComponent: MaterialOverlay,
-    _variationsUnit: materialTypes[materialType].units[0],
-    headerComponent: MenuHeader,
-    headerComponentParams: {
-      units: materialTypes[materialType].units,
-      names,
-      entries
-    },
-  };
-}
-
-function updateColumnDefinitionsMaterials(columnDefinitions, currentMaterials) {
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-
-  Object.entries(currentMaterials).forEach(([materialType, materials]) => {
-    const materialIDs = materials.map((material) => material.id.toString());
-    const materialColumnGroup = updatedColumnDefinitions.find((columnGroup) => columnGroup.groupId === materialType);
-
-    // Remove obsolete materials.
-    materialColumnGroup.children = materialColumnGroup.children.filter((child) => {
-      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
-      return materialIDs.includes(childID);
-    });
-    // Add missing materials.
-    materials.forEach((material) => {
-      if (!materialColumnGroup.children.some((child) => child.field === `${materialType}.${material.id}`)) {
-        materialColumnGroup.children.push(getMaterialColumnGroupChild(material, materialType));
-      }
-    });
-  });
-
-  return updatedColumnDefinitions;
-}
-
 export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const [reactionVariations, setReactionVariations] = useState(reaction.variations);
@@ -431,7 +272,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       headerName: materialTypes[materialType].label,
       groupId: materialType,
       marryChildren: true,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType))
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, MenuHeader))
     }))
   ));
 
@@ -497,7 +338,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     */
     const updatedReactionMaterials = getReactionMaterials(reaction);
 
-    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, updatedReactionMaterials);
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(
+      columnDefinitions,
+      updatedReactionMaterials,
+      MenuHeader
+    );
     let updatedReactionVariations = removeObsoleteMaterialsFromVariations(reactionVariations, updatedReactionMaterials);
     updatedReactionVariations = addMissingMaterialsToVariations(updatedReactionVariations, updatedReactionMaterials);
 

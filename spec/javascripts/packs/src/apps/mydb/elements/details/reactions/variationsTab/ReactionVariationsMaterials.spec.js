@@ -1,15 +1,12 @@
 import expect from 'expect';
 import {
-  removeObsoleteMaterialsFromVariations,
-  addMissingMaterialsToVariations,
-  updateYields,
-  updateEquivalents,
-  getReactionMaterials,
   getSequentialId,
-  getGramFromMol,
-  getMolFromGram,
   convertUnit,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  getReactionMaterials, getMolFromGram, getGramFromMol,
+  updateYields, updateEquivalents, removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {
