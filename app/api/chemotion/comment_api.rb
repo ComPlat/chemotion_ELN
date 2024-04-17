@@ -100,6 +100,7 @@ module Chemotion
                          Comment.wellplate_sections.values +
                          Comment.screen_sections.values +
                          Comment.research_plan_sections.values +
+                         Comment.device_description_sections.values +
                          Comment.header_sections.values
       end
 
