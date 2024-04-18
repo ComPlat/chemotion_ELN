@@ -347,8 +347,7 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         # use :root_container_params
-        optional :sample_type_name, type: String, default: 'Micromolecule'
-        optional :mixture_components, type: Array, desc: 'Sample ids and quantities for mixture components (subsamples)'
+        optional :sample_type, type: String, default: 'Micromolecule'
       end
 
       route_param :id do
@@ -400,112 +399,6 @@ module Chemotion
             molfile: params[:molfile],
             stereo: params[:stereo],
           }
-
-          new_sample_type = params[:sample_type_name]
-          current_sample_type = @sample.sample_type_name
-
-          if current_sample_type != new_sample_type
-            # CASE 1: Changed from micromolecule to mixture component
-            if current_sample_type == 'Micromolecule' && new_sample_type == 'ComponentStock'
-              s_type = SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)
-              s_type.update(sampleable: @sample, component_stock: true)
-
-              @sample.micromolecule&.destroy
-
-            # CASE 2: Change from component stock to micromolecule
-            elsif current_sample_type == 'ComponentStock' && new_sample_type == 'Micromolecule'
-
-              micromolecule = Micromolecule.new(micro_att)
-              micromolecule.samples << @sample
-              micromolecule.save!
-
-              s_type = SampleType.find_by(sample: @sample, sampleable: @sample, component_stock: true)
-              s_type.update(sampleable: micromolecule)
-            end
-          end
-
-          # CASE 3: A mixture
-          if new_sample_type == 'Mixture'
-            @sample.micromolecule&.destroy
-            SampleType.find_by(sample: @sample, sampleable: @sample.micromolecule)&.destroy
-
-            # add/delete components
-            current_component_ids = @sample.mixture_components.pluck(:id)
-            new_component_ids = params[:mixture_components].map do |component|
-              component[:parent_id] ? component[:parent_id] : component[:id]
-            end
-
-            components_to_remove = current_component_ids - new_component_ids
-            components_to_add = new_component_ids - current_component_ids
-
-            components_to_remove.each do |component_id|
-              Sample.find_by(id: component_id)&.destroy
-              SampleType.find_by(sampleable_id: component_id)&.destroy
-            end
-
-            components_to_add.each do |component_id|
-              stock_component_sample = Sample.find_by(id: component_id)
-              
-              if !stock_component_sample.blank?
-                component = params[:mixture_components].find { |c| c[:parent_id] == component_id }
-                component_sample = stock_component_sample.create_subsample(current_user, @sample.collection_ids, true, 'sample')
-                component_quantities = {
-                  target_amount_value: component[:_target_amount_value],
-                  target_amount_unit: component[:_target_amount_unit],
-                  molarity_unit: component[:_molarity_unit],
-                  molarity_value: component[:_molarity_value],
-                  stock_molarity_value: component[:_stock_molarity_value],
-                  stock_molarity_unit: component[:_stock_molarity_unit],
-                  sample_type_name: 'MixtureComponent',
-                }
-                component_sample.update!(component_quantities)
-              else
-                component = params[:mixture_components].find { |c| c[:id] == component_id }
-                att = {
-                  target_amount_value: component[:_target_amount_value],
-                  target_amount_unit: component[:_target_amount_unit],
-                  molarity_value: component[:_molarity_value],
-                  molarity_unit: component[:_molarity_unit],
-                  stock_molarity_value: component[:_stock_molarity_value],
-                  stock_molarity_unit: component[:_stock_molarity_unit],
-                  molecule_id: component[:_molecule][:id],
-                  sample_svg_file: component[:sample_svg_file],
-                  created_by: current_user.id,
-                  sum_formula: component[:_molecule][:sum_formular],
-                  molfile: component[:molfile],
-                  stereo: component[:stereo],
-                  sample_type_name: 'MixtureComponent',
-                }
-                component_sample = Sample.new(att)
-                collection = current_user.collections.where(id: component[:collection_id]).take
-                component_sample.collections << collection if collection.present?
-                component_sample.save!
-              end
-              SampleType.create(sample: @sample, sampleable: component_sample, component_stock: false)
-              @sample.mixture_components << component_sample
-            end
-
-            # update current subsamples
-            params[:mixture_components].each do |component|
-              next if components_to_remove.include?(component[:id]) || components_to_add.include?(component[:parent_id])
-
-              subsample = Sample.find_by(id: component[:id])
-              next unless subsample
-
-              component_quantities = {
-                target_amount_value: component[:_target_amount_value],
-                target_amount_unit: component[:_target_amount_unit],
-                molarity_unit: component[:_molarity_unit],
-                molarity_value: component[:_molarity_value],
-                stock_molarity_value: component[:_stock_molarity_value],
-                stock_molarity_unit: component[:_stock_molarity_unit],
-                sample_type_name: 'MixtureComponent',
-              }
-              subsample.update!(component_quantities)
-            end
-          end
-
-          attributes.delete(:mixture_components)
 
           @sample.update!(attributes)
           @sample.micromolecule&.update(micro_att)
@@ -568,8 +461,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        optional :sample_type_name, type: String, default: 'Micromolecule'
-        optional :mixture_components, type: Array, desc: 'Sample ids and quantities for component stock solutions'
+        optional :sample_type, type: String, default: 'Micromolecule'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -666,64 +558,15 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        case params[:sample_type_name]
-        when 'ComponentStock'
-          SampleType.create(sample: sample, sampleable: sample, component_stock: true)
+        case params[:sample_type]
         when 'Micromolecule'
           micromolecule = Micromolecule.new(micro_att)
           micromolecule.samples << sample
           micromolecule.save!
-          SampleType.create(sample: sample, sampleable: micromolecule, component_stock: false)
         end
 
         sample.container = update_datamodel(params[:container])
         sample.save!
-
-        mixture_components = params[:mixture_components]
-        if params[:sample_type_name] == 'Mixture' && mixture_components.present?
-          mixture_components.each do |component|
-            stock_component_sample = Sample.find_by(id: component[:parent_id])
-
-            if stock_component_sample
-              component_sample = stock_component_sample.create_subsample(current_user, sample.collection_ids, true, 'sample')
-
-              component_quantities = {
-                target_amount_value: component[:_target_amount_value],
-                target_amount_unit: component[:_target_amount_unit],
-                molarity_unit: component[:_molarity_unit],
-                molarity_value: component[:_molarity_value],
-                stock_molarity_value: component[:_stock_molarity_value],
-                stock_molarity_unit: component[:_stock_molarity_unit],
-                sample_type_name: 'MixtureComponent',
-              }
-              component_sample.update!(component_quantities)
-            else
-              att = {
-                target_amount_value: component[:_target_amount_value],
-                target_amount_unit: component[:_target_amount_unit],
-                molarity_value: component[:_molarity_value],
-                molarity_unit: component[:_molarity_unit],
-                stock_molarity_value: component[:_stock_molarity_value],
-                stock_molarity_unit: component[:_stock_molarity_unit],
-                molecule_id: component[:_molecule][:id],
-                sample_svg_file: component[:sample_svg_file],
-                created_by: current_user.id,
-                sum_formula: component[:_molecule][:sum_formular],
-                molfile: component[:molfile],
-                stereo: component[:stereo],
-                sample_type_name: 'MixtureComponent',
-              }
-              component_sample = Sample.new(att)
-              component_sample.collections << collection if collection.present?
-              component_sample.save!
-            end
-
-            SampleType.create(sample: sample, sampleable: component_sample, component_stock: false)
-            sample.mixture_components << component_sample
-          end
-          sample.save
-        end
-
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
         # save to profile
