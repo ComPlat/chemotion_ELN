@@ -9,23 +9,23 @@ module Usecases
       end
 
       def execute!
-        create_cellline_sample(@cell_line_sample_to_copy.cellline_material)
+        copy_cellline_sample
       end
 
-      # TODO: REMOVE REDUNDANT FUNCTION
-      def create_cellline_sample(material)
+      def copy_cellline_sample
         CelllineSample.create(
-          # cellline_material: material,
-          # creator: @current_user,
-          # amount: @params[:amount],
-          # unit: @params[:unit],
-          # passage: @params[:passage],
-          # contamination: @params[:contamination],
-          # name: @params[:name],
-          # description: @params[:description],
+          cellline_material: @cell_line_sample_to_copy.cellline_material,
+          creator: @current_user,
+          amount: @cell_line_sample_to_copy[:amount],
+          unit: @cell_line_sample_to_copy[:unit],
+          passage: @cell_line_sample_to_copy[:passage],
+          contamination: @cell_line_sample_to_copy[:contamination],
+          name: @cell_line_sample_to_copy[:name],
+          description: @cell_line_sample_to_copy[:description],
           # short_label: @params[:short_label],
         )
       end
+
     end
   end
 end

@@ -9,6 +9,9 @@ FactoryBot.define do
     amount { 999 }
     passage { 10 }
     unit { 'g' }
+    description { 'description' }
+    contamination { 'contamination' }
+    name { 'name' }
     container { FactoryBot.create(:container, :with_analysis) }
   end
 
