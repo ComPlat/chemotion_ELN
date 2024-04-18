@@ -89,7 +89,7 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   -----------|----------------------------------
   equivalent | own mass changes*, reference material's mass changes+
   mass       | own equivalent changes*
-  yield      | own mass changes*, reference material's mass change
+  yield      | own mass changes*, reference material's mass changes+
 
   *: handled in corresponding cell parsers (local, cell-internal changes)
   +: handled here (non-local, row-wide changes)
