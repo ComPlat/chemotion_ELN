@@ -13,9 +13,11 @@ RSpec.describe Usecases::CellLines::Copy do
 
     context 'when cell line is copyable' do
       it 'cell line sample was copied' do
+        expect(cell_line_sample_copied).not_to be_nil
       end
 
       it 'cell line sample match' do
+        
       end
 
       it 'cell line sample label was created' do
