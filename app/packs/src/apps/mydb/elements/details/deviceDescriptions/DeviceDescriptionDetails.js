@@ -15,6 +15,7 @@ import CommentModal from 'src/components/common/CommentModal';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
@@ -146,8 +147,17 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
         <ElementCollectionLabels element={deviceDescription} placement="right" />
         <HeaderCommentSection element={deviceDescription} />
         <ConfirmClose el={deviceDescription} />
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveDeviceDescription">Save device description</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right" onClick={() => handleSubmit()} style={{ display: saveBtnDisplay }}>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="saveDeviceDescription">Save device description</Tooltip>}
+        >
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => handleSubmit()}
+            style={{ display: saveBtnDisplay }}
+          >
             <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
@@ -157,6 +167,9 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={deviceDescription} />
+        {deviceDescription.isNew
+          ? null
+          : <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
       </div>
     );
   }
