@@ -24,21 +24,32 @@ const KetcherRailsform = () => {
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
   let iframe;
+  let checkIframeLoaded;
   
   useEffect(() => {
     iframe = document.getElementById('ketcher');
 
-    const checkIframeLoaded = setInterval(function () {
-      if (iframe !== null && editor && searchStore.ketcherRailsValues.queryMolfile) {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
+      checkIframeLoaded = setInterval(function () {
+        if (iframe !== null) {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
-        if (iframeDoc.readyState === 'complete' && iframeDoc.body.children.length > 0) {
-          editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
-          clearInterval(checkIframeLoaded);
+          if (iframeDoc.readyState === 'complete' && iframeDoc.body.children.length > 0) {
+            editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
+            clearInterval(checkIframeLoaded);
+          }
         }
-      }
-    }, 100);
+      }, 100);
+    }
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (!searchStore.searchModalVisible || searchStore.searchModalSelectedForm.value !== 'ketcher') {
+        clearInterval(checkIframeLoaded);
+      }
+    }
+  }, [searchStore.searchModalVisible, searchStore.searchModalSelectedForm]);
  
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);

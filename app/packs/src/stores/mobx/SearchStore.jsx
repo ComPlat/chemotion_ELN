@@ -218,6 +218,7 @@ export const SearchStore = types
     clearSearchResults() {
       self.clearSearchAndTabResults();
       self.hideSearchResults();
+      self.search_result_panel_visible = false;
       self.search_filters.clear();
       self.search_values.clear();
       self.error_messages = [];
@@ -269,6 +270,8 @@ export const SearchStore = types
       self.hideSearchResults();
       if (!self.show_search_result_list) {
         self.clearSearchResults();
+      } else {
+        self.search_result_panel_visible = true;
       }
       self.active_tab_key = 0;
       self.result_error_messages = [];
@@ -277,6 +280,7 @@ export const SearchStore = types
       self.hideSearchModal();
       self.hideSearchResults();
       self.active_tab_key = 0;
+      self.search_result_panel_visible = true;
       self.changeShowSearchResultListValue(true);
       self.result_error_messages = [];
     },
