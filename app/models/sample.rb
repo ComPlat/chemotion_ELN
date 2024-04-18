@@ -200,11 +200,8 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
-  has_many :sample_types, dependent: :destroy
   belongs_to :micromolecule, optional: true
-  # self join mixture samples
-  belongs_to :mixture, class_name: 'Sample', optional: true
-  has_many :mixture_components, class_name: 'Sample', foreign_key: 'mixture_id', dependent: :destroy
+  has_many :components, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
