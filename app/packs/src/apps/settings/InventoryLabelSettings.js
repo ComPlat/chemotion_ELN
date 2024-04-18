@@ -86,7 +86,8 @@ function InventoryLabelSettings() {
       setPrefixValue(prefixString);
       setErrorMessage(null);
     } else {
-      setErrorMessage('prefix must be a string');
+      setPrefixValue('');
+      setErrorMessage('prefix must be alphabetic');
     }
   };
 
@@ -98,8 +99,10 @@ function InventoryLabelSettings() {
   const handleCounterChange = (event) => {
     const inputValue = event.target.value;
     const parsedValue = parseInt(inputValue, 10);
-    if (!Number.isNaN(parsedValue) || inputValue === '') {
-      setCounterValue(parsedValue || inputValue);
+    if (Number.isInteger(parsedValue) && !Number.isNaN(parsedValue)) {
+      setCounterValue(parsedValue);
+    } else {
+      setCounterValue('');
     }
   };
 
@@ -155,8 +158,10 @@ function InventoryLabelSettings() {
   const updateUserSettings = () => {
     setSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
-    if (prefixValue && counterValue && nameValue
-        && nameValue.length && prefixValue.length) {
+    const prefixCondition = prefixValue !== undefined && prefixValue !== '';
+    const nameCondition = nameValue !== undefined && nameValue !== '';
+    const counterCondition = counterValue !== undefined && counterValue !== '';
+    if (prefixCondition && nameCondition && counterCondition && collectionIds.length !== 0) {
       setErrorMessage(null);
       InventoryFetcher.updateInventoryLabel({
         prefix: prefixValue,
@@ -169,7 +174,7 @@ function InventoryLabelSettings() {
           if (result.error_type === 'ActiveRecord::RecordNotUnique') {
             setErrorMessage('Entered Prefix is not available. Please use a different prefix');
           } else {
-            setErrorMessage('Please enter a valid prefix and counter values before updating user settings');
+            setErrorMessage('Please enter a valid name, prefix, and counter inputs before updating user settings');
           }
           setPrefixValue('');
         } else {
@@ -177,8 +182,8 @@ function InventoryLabelSettings() {
         }
       });
     } else {
-      const message = 'Please enter a valid prefix and counter values for the chosen option(s) '
-      + 'before updating user settings';
+      const message = 'Please select the desired collection(s) and enter a valid name, prefix,'
+      + 'and counter inputs before updating user settings';
       setErrorMessage(message);
       setSpinner(false);
     }
@@ -217,14 +222,16 @@ function InventoryLabelSettings() {
       setPrefixValue(inventory.prefix);
       setNameValue(inventory.name);
     } else {
-      setCounterValue('');
-      setPrefixValue('');
-      setNameValue('');
+      setCounterValue(counterValue);
+      setPrefixValue(prefixValue);
+      setNameValue(nameValue);
     }
   };
 
   const nextValue = counterValue !== '' ? `-${parseInt(counterValue + 1, 10)}` : '';
-  const nextInventoryLabel = counterValue && prefixValue ? `${prefixValue}${nextValue}` : null;
+  const prefixCondition = prefixValue !== undefined && prefixValue !== '';
+  const nameCondition = nameValue !== undefined && nameValue !== '';
+  const nextInventoryLabel = prefixCondition && nameCondition ? `${prefixValue}${nextValue}` : null;
   const message = (
     <div className="text-danger">
       { errorMessage }
