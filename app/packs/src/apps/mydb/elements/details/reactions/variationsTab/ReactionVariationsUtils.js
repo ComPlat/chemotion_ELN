@@ -80,7 +80,7 @@ function copyVariationsRow(row, variations) {
 }
 
 function updateVariationsRow(row, field, value, reactionHasPolymers) {
-  let updatedRow = { ...row };
+  let updatedRow = cloneDeep(row);
   set(updatedRow, field, value);
   /*
   Some properties of a material need to be updated in response to changes in other properties:
