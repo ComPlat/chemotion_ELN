@@ -24,32 +24,15 @@ const KetcherRailsform = () => {
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
   let iframe;
-  let checkIframeLoaded;
   
   useEffect(() => {
     iframe = document.getElementById('ketcher');
-
-    if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
-      checkIframeLoaded = setInterval(function () {
-        if (iframe !== null) {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-          if (iframeDoc.readyState === 'complete' && iframeDoc.body.children.length > 0) {
-            editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
-            clearInterval(checkIframeLoaded);
-          }
-        }
-      }, 100);
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (!searchStore.searchModalVisible || searchStore.searchModalSelectedForm.value !== 'ketcher') {
-        clearInterval(checkIframeLoaded);
+    iframe.onload = () => {
+      if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
+        editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
       }
     }
-  }, [searchStore.searchModalVisible, searchStore.searchModalSelectedForm]);
+  }, [iframe]);
  
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);

@@ -129,7 +129,7 @@ export const SearchStore = types
     },
     changeSearchModalSelectedForm(value) {
       self.search_modal_selected_form = value;
-      self.clearSearchResults();
+      // self.clearSearchResults();
       self.showMinimizedSearchModal();
     },
     changeSearchType(e) {
