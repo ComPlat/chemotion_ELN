@@ -245,7 +245,7 @@ export default class StructureEditorModal extends React.Component {
     const { editor } = this.state;
     const { sample } = this.props
     const structure = editor.structureDef;
-    const isMixture = sample.sample_type_name === 'Mixture';
+    const isMixture = sample.sample_type === 'Mixture';
     if (editor.id === 'marvinjs') {
       structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
         const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });

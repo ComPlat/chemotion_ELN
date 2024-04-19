@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 
-export default class ComponentFetcher {
+export default class ComponentsFetcher {
   static fetchComponentsBySampleId(sampleId) {
     return fetch(`/api/v1/components/${sampleId}`, {
       credentials: 'same-origin',
@@ -11,8 +11,8 @@ export default class ComponentFetcher {
       }
       return response.json();
     })
-    .catch((error) => {
-      console.error('Error fetching components:', error);
+    .catch((errorMessage) => {
+      console.error(errorMessage);
     });
   }
 

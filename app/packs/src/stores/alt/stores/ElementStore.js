@@ -1256,8 +1256,8 @@ class ElementStore {
     const { selecteds } = this.state;
   
     selecteds.forEach(selectedElement => {
-      if (selectedElement instanceof Sample && selectedElement.mixture_components) {
-        const mixtureComponents = selectedElement.mixture_components;
+      if (selectedElement instanceof Sample && selectedElement.components) {
+        const mixtureComponents = selectedElement.components;
         const componentIndex = mixtureComponents.findIndex(
           component => component.id === deleteEl.id
         );

@@ -124,7 +124,7 @@ class Material extends Component {
 
   handleMaterialClick(sample) {
     const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'mixture_components' && sample.ancestors.length > 0){
+    if (materialGroup === 'components' && sample.ancestors.length > 0){
       const stockSample = new Sample(sample.ancestors[0]);
       stockSample.type = 'sample';
       UrlSilentNavigation(stockSample);
@@ -138,7 +138,7 @@ class Material extends Component {
   }
 
   materialVolume(material) {
-    const isMixture = this.props.materialGroup === 'mixture_components'
+    const isMixture = this.props.materialGroup === 'components'
     if (material.contains_residues) { return notApplicableInput(); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
@@ -249,7 +249,7 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'mixture_components'){
+    if (materialGroup === 'components'){
       reaction.updateMixtureComponentEquivalent();
     }
     if (materialGroup === 'products') {
@@ -517,7 +517,7 @@ class Material extends Component {
       paddingLeft: 2,
     };
 
-    const isMixture = this.props.materialGroup === 'mixture_components';
+    const isMixture = this.props.materialGroup === 'components';
 
     return (
       <tr className="general-material">
@@ -643,7 +643,7 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isMixture = this.props.materialGroup === 'mixture_components'
+    const isMixture = this.props.materialGroup === 'components'
     const isProduct = !isMixture && reaction.products.includes(sample);
     const molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);

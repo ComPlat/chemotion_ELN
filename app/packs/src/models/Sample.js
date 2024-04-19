@@ -204,8 +204,8 @@ export default class Sample extends Element {
       molecular_mass: 0,
       sum_formula: '',
       xref: {},
-      sample_type_name: 'Micromolecule',
-      mixture_components: []
+      sample_type: 'Micromolecule',
+      components: []
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -337,8 +337,8 @@ export default class Sample extends Element {
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
-      sample_type_name: this.sample_type_name,
-      mixture_components: this.mixture_components
+      sample_type: this.sample_type,
+      components: this.components
     });
 
     return serialized;
@@ -923,7 +923,7 @@ export default class Sample extends Element {
   }
 
   get isValid() {
-    const isValidMixture = this.sample_type_name === 'Mixture' && this.mixture_components?.length > 0;
+    const isValidMixture = this.sample_type === 'Mixture' && this.components?.length > 0;
     return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
       && !this.error_loading && !this.error_polymer_type);
   }
@@ -1089,7 +1089,11 @@ export default class Sample extends Element {
   }
 
   updateSampleType(newSampleType) {
-    this.sample_type_name = newSampleType;
+    this.sample_type = newSampleType;
+  }
+
+  initialComponents(components) {
+    this.components = components;
   }
 
   addMixtureComponent(newComponent) {
@@ -1098,12 +1102,12 @@ export default class Sample extends Element {
       newComponent.collection_id = currentCollection.id
     }
  
-    const tmpComponents = [...(this.mixture_components || [])];
+    const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey);
     if (isNew){
       tmpComponents.push(newComponent);
-      this.mixture_components = tmpComponents;
+      this.components = tmpComponents;
 
       if (!this.molecule_cano_smiles.includes(newComponent.molecule_cano_smiles)) {
         const newSmiles = this.molecule_cano_smiles ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}` : newComponent.molecule_cano_smiles;
@@ -1118,11 +1122,11 @@ export default class Sample extends Element {
   }
  
   deleteMixtureComponent(componentToDelete) {
-    const tmpComponents = [...(this.mixture_components || [])];
+    const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
       (comp) => comp !== componentToDelete
     );
-    this.mixture_components = filteredComponents;
+    this.components = filteredComponents;
 
     const smilesToRemove = componentToDelete.molecule_cano_smiles;
     const newSmiles = this.molecule_cano_smiles
@@ -1140,7 +1144,7 @@ export default class Sample extends Element {
   } 
 
   updateMixtureComponent(componentIndex, amount, concType) {
-    const componentToUpdate = this.mixture_components[componentIndex];
+    const componentToUpdate = this.components[componentIndex];
     if  (!amount.unit || isNaN(amount.value)) { return }
     const totalVolume = this.amount_l
 
@@ -1172,10 +1176,10 @@ export default class Sample extends Element {
   }
 
   updateMixtureComponentVolume() {
-    if (this.mixture_components.length < 1) {return}
+    if (this.components.length < 1) {return}
     const totalVolume = this.amount_l
 
-    this.mixture_components.forEach((component) => {
+    this.components.forEach((component) => {
       if (component.concn > 0 && component.stock_molarity_value > 0)
       component.amount_value = component.concn * totalVolume / component.stock_molarity_value
       component.amount_unit = 'l' 
@@ -1183,13 +1187,13 @@ export default class Sample extends Element {
   }
 
   updateMixtureComponentEquivalent() {
-    const totalAmountMol = this.mixture_components.reduce((total, component) => {
+    const totalAmountMol = this.components.reduce((total, component) => {
         return total + component.amount_mol;
     }, 0);
 
-    const minRatio = Math.min(...this.mixture_components.map(component => component.amount_mol / totalAmountMol));
+    const minRatio = Math.min(...this.components.map(component => component.amount_mol / totalAmountMol));
 
-    this.mixture_components.forEach((component) => {
+    this.components.forEach((component) => {
         component.equivalent = Number((component.amount_mol / totalAmountMol) / minRatio).toFixed(1);
     });
   }

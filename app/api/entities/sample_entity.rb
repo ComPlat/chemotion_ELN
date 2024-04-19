@@ -1,21 +1,6 @@
 # frozen_string_literal: true
 
 module Entities
-  class MixtureComponentEntity < Grape::Entity
-    expose :id
-    expose :molecule, using: 'Entities::MoleculeEntity'
-    expose :molecular_mass
-    expose :target_amount_unit,      unless: :displayed_in_list
-    expose :target_amount_value,     unless: :displayed_in_list
-    expose :molarity_unit,           unless: :displayed_in_list
-    expose :molarity_value,          unless: :displayed_in_list
-    expose :stock_molarity_unit,           unless: :displayed_in_list
-    expose :stock_molarity_value,          unless: :displayed_in_list
-    expose :short_label
-    expose :ancestor_ids
-    expose :ancestors
-  end
-
   class SampleEntity < ApplicationEntity
     # rubocop:disable Layout/LineLength, Layout/ExtraSpacing
     # Level 0 attributes and relations
@@ -86,8 +71,7 @@ module Entities
       expose! :target_amount_value,     unless: :displayed_in_list
       expose! :user_labels
       expose! :xref
-      expose! :sample_type_name
-      expose! :mixture_components, using: 'Entities::MixtureComponentEntity'
+      expose! :sample_type
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 

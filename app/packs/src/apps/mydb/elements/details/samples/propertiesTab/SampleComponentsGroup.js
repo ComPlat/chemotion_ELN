@@ -18,13 +18,13 @@ const SampleComponentsGroup = ({
     headIndex, dropSample,
   }) => {
     const contents = [];
-    sample.mixture_components = sample.mixture_components.map((component) => {
+    sample.components = sample.components.map((component) => {
       if (!(component instanceof Sample)) {
-        return createSample(component)
+        return createSample(component.component_properties)
       }
       return component;
     });
-    let sampleComponents = sample.mixture_components;
+    let sampleComponents = sample.components;
     let index = headIndex;
     if (sampleComponents && sampleComponents.length > 0) {
       sampleComponents.forEach((sampleComponent) => {

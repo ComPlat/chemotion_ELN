@@ -24,7 +24,7 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
-      selectedSampleType: props.sample.sample_type_name ? props.sample.sample_type_name : SampleTypesOptions[0],
+      selectedSampleType: props.sample.sample_type ? props.sample.sample_type : SampleTypesOptions[0],
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);

@@ -586,7 +586,7 @@ private
   end
 
   def check_molfile_polymer_section
-    return if decoupled || sample_type_name == 'Mixture'
+    return if decoupled || sample_type == 'Mixture'
     return unless self.molfile.include? 'R#'
 
     lines = self.molfile.lines

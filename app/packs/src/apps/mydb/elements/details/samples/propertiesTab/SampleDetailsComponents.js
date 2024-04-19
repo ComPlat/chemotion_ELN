@@ -28,7 +28,7 @@ export default class SampleDetailsComponents extends React.Component {
   onChangeComponent(changeEvent) {
     const { sample } = this.state;
 
-    sample.mixture_components = sample.mixture_components.map((component) => {
+    sample.components = sample.components.map((component) => {
       if (!(component instanceof Sample)) {
         return createSample(component)
       }
@@ -54,7 +54,7 @@ export default class SampleDetailsComponents extends React.Component {
     const sampleID = changeEvent.sampleID;
     const amount = changeEvent.amount;
     const concType = changeEvent.concType;
-    const componentIndex = this.props.sample.mixture_components.findIndex(
+    const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
 
@@ -67,10 +67,10 @@ export default class SampleDetailsComponents extends React.Component {
   updatedSampleForMetricsChange(changeEvent) {
     const { sample } = this.props;
     const { sampleID, metricUnit, metricPrefix } = changeEvent;
-    const componentIndex = this.props.sample.mixture_components.findIndex(
+    const componentIndex = this.props.sample.components.findIndex(
       (component) => (component.parent_id === sampleID || component.id === sampleID)
     );
-    sample.mixture_components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
+    sample.components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
   }
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {

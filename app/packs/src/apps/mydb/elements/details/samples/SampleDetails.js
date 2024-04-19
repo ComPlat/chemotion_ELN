@@ -80,7 +80,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.sample_type_name == 'Mixture') {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.sample_type == 'Mixture') {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -762,7 +762,7 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if (!sample.molecule_formula || sample.sample_type_name === 'Mixture') {
+    if (!sample.molecule_formula || sample.sample_type === 'Mixture') {
       return false;
     }
 
@@ -809,7 +809,7 @@ export default class SampleDetails extends React.Component {
 
   chemicalIdentifiersItem(sample) {
     const show = this.state.showChemicalIdentifiers;
-    if (sample.sample_type_name === 'Mixture') return false;
+    if (sample.sample_type === 'Mixture') return false;
     return (
       <div
         width="100%"
@@ -1046,7 +1046,7 @@ export default class SampleDetails extends React.Component {
       </Checkbox>
     ) : null;
 
-    const isMixture = sample.sample_type_name === 'Mixture';
+    const isMixture = sample.sample_type === 'Mixture';
 
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -1115,7 +1115,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const isMixture = sample.sample_type_name === 'Mixture';
+    const isMixture = sample.sample_type === 'Mixture';
     const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
@@ -1458,7 +1458,7 @@ export default class SampleDetails extends React.Component {
 
   splitSmiles(editor, svgFile) {
     const { sample } = this.state;
-    if (sample.sample_type_name !== 'Mixture') { return }
+    if (sample.sample_type !== 'Mixture') { return }
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.')
     if (mixtureSmiles) {
@@ -1637,7 +1637,7 @@ export default class SampleDetails extends React.Component {
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
-    const isMixture = sample.sample_type_name === 'Mixture';
+    const isMixture = sample.sample_type === 'Mixture';
 
     return (
       <Panel

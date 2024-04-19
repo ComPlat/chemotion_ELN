@@ -497,7 +497,7 @@ module Chemotion
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
-          sample_type_name: params[:sample_type_name],
+          sample_type: params[:sample_type],
           molfile: params[:molfile],
           stereo: params[:stereo],
         }
