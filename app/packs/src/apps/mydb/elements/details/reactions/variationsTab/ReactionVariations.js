@@ -523,7 +523,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     setReactionVariations(updatedReactionVariations);
   }
 
-  if (!isEqual(allReactionAnalyses, getReactionAnalyses(reaction))) {
+  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
+  if (!isEqual(allReactionAnalyses, updatedAllReactionAnalyses)) {
     /*
     The "Variations" tab holds references to analyses in the "Analyses" tab.
     Users can add, remove, or edit analyses in the "Analyses" tab.
@@ -564,7 +565,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     |               |                | only displays associations to existing rows.   |
     `-------------- ---------------- -------------------------------------------------`
     */
-    const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
     const updatedReactionVariations = updateAnalyses(reactionVariations, updatedAllReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
     setAllReactionAnalyses(updatedAllReactionAnalyses);
