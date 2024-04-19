@@ -488,9 +488,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             child[property] = newValue;
           }
         });
-        return;
-      }
-      if (columnDefinition.field === column) {
+      } else if (columnDefinition.field === column) {
         columnDefinition[property] = newValue;
       }
     });
