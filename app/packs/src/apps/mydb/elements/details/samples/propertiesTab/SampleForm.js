@@ -401,18 +401,23 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  nextInventoryLabel() {
+  nextInventoryLabel(sample) {
+    const overlayMessage = sample.isNew
+      ? 'Inventory label will be auto generated on sample create,'
+       + ' if sample belongs to a collection with a predefined label'
+      : 'click to assign next inventory label';
     return (
       <div>
         <ControlLabel> &nbsp; </ControlLabel>
         <OverlayTrigger
           placement="top"
           overlay={
-            <Tooltip id="FetchNextInventoryLabel">click to assign next inventory label</Tooltip>
+            <Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>
           }
         >
           <Button
             onClick={this.fetchNextInventoryLabel}
+            disabled={sample.isNew}
           >
             <Glyphicon glyph="tag" />
           </Button>

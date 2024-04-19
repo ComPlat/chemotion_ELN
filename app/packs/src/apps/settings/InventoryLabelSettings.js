@@ -158,9 +158,9 @@ function InventoryLabelSettings() {
   const updateUserSettings = () => {
     setSpinner(true);
     const collectionIds = collectCollectionIds(selectedCollections);
-    const prefixCondition = prefixValue !== undefined && prefixValue !== '';
-    const nameCondition = nameValue !== undefined && nameValue !== '';
-    const counterCondition = counterValue !== undefined && counterValue !== '';
+    const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
+    const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
+    const counterCondition = counterValue !== undefined && counterValue !== null && counterValue !== '';
     if (prefixCondition && nameCondition && counterCondition && collectionIds.length !== 0) {
       setErrorMessage(null);
       InventoryFetcher.updateInventoryLabel({
@@ -228,9 +228,9 @@ function InventoryLabelSettings() {
     }
   };
 
-  const nextValue = counterValue !== '' ? `-${parseInt(counterValue + 1, 10)}` : '';
-  const prefixCondition = prefixValue !== undefined && prefixValue !== '';
-  const nameCondition = nameValue !== undefined && nameValue !== '';
+  const nextValue = counterValue !== '' && counterValue !== null ? `-${parseInt(counterValue + 1, 10)}` : '';
+  const prefixCondition = prefixValue !== undefined && prefixValue !== null && prefixValue !== '';
+  const nameCondition = nameValue !== undefined && nameValue !== null && nameValue !== '';
   const nextInventoryLabel = prefixCondition && nameCondition ? `${prefixValue}${nextValue}` : null;
   const message = (
     <div className="text-danger">
