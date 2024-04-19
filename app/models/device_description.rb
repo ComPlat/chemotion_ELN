@@ -74,6 +74,9 @@ class DeviceDescription < ApplicationRecord
   has_many :comments, as: :commentable, dependent: :destroy
   has_one :container, as: :containable, dependent: :nullify
 
+  accepts_nested_attributes_for :collections_device_descriptions
+
+
   scope :includes_for_list_display, -> { includes(:tag) }
 
   after_create :set_short_label
