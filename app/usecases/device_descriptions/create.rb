@@ -13,6 +13,7 @@ module Usecases
       def execute
         ActiveRecord::Base.transaction do
           device_description = DeviceDescription.create!(params)
+          device_description.reload
 
           is_shared_collection = false
           if user_collection
