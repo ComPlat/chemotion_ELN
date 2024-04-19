@@ -66,19 +66,19 @@ function AnalysisVariationLink({ reaction, analysisID }) {
   const { variations } = cloneDeep(reaction);
   const linkedVariations = variations.filter((row) => row.analyses.includes(analysisID)) ?? [];
 
-  if (linkedVariations.length > 0) {
-    return (
-      <Label
-        bsStyle="info"
-        onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: 'variations' })}
-      >
-        {`Linked to ${linkedVariations.length} variation(s)`}
-        {' '}
-        <i className="fa fa-external-link" />
-      </Label>
-    );
+  if (linkedVariations.length === 0) {
+    return null;
   }
-  return null;
+  return (
+    <Label
+      bsStyle="info"
+      onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: 'variations' })}
+    >
+      {`Linked to ${linkedVariations.length} variation(s)`}
+      {' '}
+      <i className="fa fa-external-link" />
+    </Label>
+  );
 }
 
 AnalysisVariationLink.propTypes = {
