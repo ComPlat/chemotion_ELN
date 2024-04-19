@@ -66,7 +66,7 @@ export default class ReactionDetailsContainers extends Component {
     UIStore.listen(this.onUIStoreChange);
     TextTemplateActions.fetchTextTemplates('reaction');
     if (this.containerRefs[activeContainer]) {
-      this.containerRefs[activeContainer].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      this.containerRefs[activeContainer].scrollIntoView({ behavior: 'instant', block: 'start' });
     }
   }
 
