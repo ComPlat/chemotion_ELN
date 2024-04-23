@@ -156,6 +156,10 @@ class Wellplate < ApplicationRecord
     update(short_label: "#{user_label}-#{prefix}#{counter}")
   end
 
+  def size
+    width * height
+  end
+
   private
 
   def description_to_plain_text
