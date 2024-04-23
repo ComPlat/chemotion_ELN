@@ -16,6 +16,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import CopyElementModal from 'src/components/common/CopyElementModal';
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
@@ -34,6 +35,9 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
+
+  const { currentCollection, isSync } = UIStore.getState();
+  const { currentUser } = UserStore.getState();
 
   const [activeTab, setActiveTab] = useState('properties'); // state from store
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
@@ -58,9 +62,6 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   };
 
   const isReadOnly = () => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { currentUser } = UserStore.getState();
-
     return CollectionUtils.isReadOnly(
       currentCollection,
       currentUser.id,
@@ -135,6 +136,15 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
   const deviceDescriptionHeader = () => {
     const saveBtnDisplay = deviceDescription.isEdited ? '' : 'none';
     const datetp = formatTimeStampsOfElement(deviceDescription || {});
+    const defCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+    const copyButton = (deviceDescription.can_copy && !deviceDescription.isNew) ? (
+      <CopyElementModal
+        element={deviceDescription}
+        defCol={defCol}
+      />
+    ) : null;
 
     return (
       <div>
@@ -161,6 +171,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
             <i className="fa fa-floppy-o " />
           </Button>
         </OverlayTrigger>
+        {copyButton}
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
           <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => toggleFullScreen()}>
             <i className="fa fa-expand" />
