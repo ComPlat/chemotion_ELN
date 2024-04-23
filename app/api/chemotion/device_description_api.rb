@@ -68,11 +68,13 @@ module Chemotion
       end
 
       def device_description_with_entity(device_description)
+        @element_policy = ElementPolicy.new(current_user, device_description)
         present(
           device_description,
           with: Entities::DeviceDescriptionEntity,
           detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
                                                      .detail_levels,
+          policy: @element_policy,
           root: :device_description,
         )
       end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Entities
-  class DeviceDescriptionEntity < Grape::Entity
+  class DeviceDescriptionEntity < ApplicationEntity
     expose :id
     expose :device_id
     expose :name
@@ -45,6 +45,7 @@ module Entities
     expose :segments, using: 'Labimotion::SegmentEntity'
     expose :comments, using: 'Entities::CommentEntity'
     expose :tag, using: 'Entities::ElementTagEntity'
+    expose! :can_copy, unless: :displayed_in_list
 
     def type
       'device_description'
