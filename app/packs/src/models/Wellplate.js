@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 /* eslint-disable no-underscore-dangle */
 import Element from 'src/models/Element';
 import Well from 'src/models/Well';
@@ -8,17 +7,17 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
-    this.wells = this.initWellsWithPosition(this.wells, 96);
-    this._checksum = this.checksum();
+    this.#initEmptyWells();
   }
 
-  static buildEmpty(collection_id) {
+  static buildEmpty(collectionId, width = 12, height = 8) {
     return new Wellplate(
       {
-        collection_id,
+        collectionId,
         type: 'wellplate',
         name: 'New Wellplate',
-        size: 96,
+        width,
+        height,
         description: Wellplate.quillDefault(),
         wells: [],
         readout_titles: [],
@@ -29,28 +28,24 @@ export default class Wellplate extends Element {
     );
   }
 
-  static buildFromSamplesAndCollectionId(clipboardSamples, collection_id) {
+  static buildFromSamplesAndCollectionId(clipboardSamples, collectionId, width = 12, height = 8) {
+    if (clipboardSamples.length > width * height) {
+      throw new Error(`Wellplate of size ${width * height} to small for ${clipboardSamples.length} samples!`);
+    }
+
     const samples = clipboardSamples.map((sample) => sample.buildChild());
 
-    const wells = samples.map((sample) => new Well({
-      sample,
-      readouts: []
-    }));
+    const wellplate = Wellplate.buildEmpty(collectionId, width, height);
 
-    return new Wellplate(
-      {
-        collection_id,
-        type: 'wellplate',
-        name: 'New Wellplate',
-        size: 96,
-        description: Wellplate.quillDefault(),
-        wells,
-        readout_titles: [],
-        container: Container.init(),
-        segments: [],
-        attachments: [],
-      }
-    );
+    samples.forEach((sample, index) => {
+      wellplate.wells[index].sample = sample;
+    });
+
+    return wellplate;
+  }
+
+  static get MAX_DIMENSION() {
+    return 99;
   }
 
   get name() {
@@ -85,6 +80,15 @@ export default class Wellplate extends Element {
     return this._segments || [];
   }
 
+  get size() {
+    return this.width * this.height;
+  }
+
+  title() {
+    const shortLabel = this.short_label ? this.short_label : '';
+    return this.name ? `${shortLabel} ${this.name}` : shortLabel;
+  }
+
   serialize() {
     return super.serialize({
       name: this.name,
@@ -93,39 +97,62 @@ export default class Wellplate extends Element {
       wells: this.wells.map((w) => w.serialize()),
       readout_titles: this.readout_titles,
       container: this.container,
+      height: this.height,
+      width: this.width,
       attachments: this.attachments,
       segments: this.segments.map((s) => s.serialize())
     });
   }
 
-  // ---
+  changeSize(width, height) {
+    // change actual dimensions
+    this.width = Number(width);
+    this.height = Number(height);
 
-  initWellsWithPosition(wells, size) {
-    const placeholdersCount = size - wells.length;
-    const placeholders = Array(placeholdersCount).fill({});
-    const allWells = wells.concat(placeholders);
-    return allWells.map((well, i) => this.initWellWithPositionByIndex(well, i));
+    // copy wells, so that we can set a new size for the wells while keeping the old positions
+    const oldWells = this.wells.map((well) => well);
+
+    // initalize wells with new size
+    this.#initEmptyWells();
+
+    // calculate new index from old position and set well at new index if it is within the new size
+    this.#moveWellsToNewIndexWhileKeepingOldPosition(oldWells);
   }
 
-  initWellWithPositionByIndex(well, i) {
+  #moveWellsToNewIndexWhileKeepingOldPosition(oldWells) {
+    oldWells.forEach((well) => {
+      const index = this.#calculateIndexFromPosition(well.position);
+      if (index < this.size) {
+        this.wells[index] = well;
+      }
+    });
+    this._checksum = this.checksum();
+  }
+
+  #initEmptyWells() {
+    this.wells = Array(this.size).fill({});
+    this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
+    this._checksum = this.checksum();
+  }
+
+  #initWellWithPositionByIndex(well, i) {
     return {
       ...well,
-      position: this.calculatePositionOfWellByIndex(i),
+      position: this.#calculatePositionFromIndex(i),
       readouts: well.readouts || []
     };
   }
 
-  calculatePositionOfWellByIndex(i) { // eslint-disable-line class-methods-use-this
-    const cols = 12;
-    const remainder = (i + 1) % cols;
-    return {
-      x: (remainder === 0) ? cols : remainder,
-      y: Math.floor(i / cols) + 1
-    };
+  #calculatePositionFromIndex(i) {
+    const columnOfIndex = (i + 1) % this.width;
+
+    const x = (columnOfIndex === 0) ? this.width : columnOfIndex;
+    const y = Math.floor(i / this.width) + 1;
+
+    return { x, y };
   }
 
-  title() {
-    const short_label = this.short_label ? this.short_label : '';
-    return this.name ? `${short_label} ${this.name}` : short_label;
+  #calculateIndexFromPosition(position) {
+    return (position.y - 1) * this.width + position.x - 1;
   }
 }

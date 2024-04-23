@@ -84,7 +84,7 @@ module Import
     end
 
     def check_wells
-      expected_positions = WellPosition.from_dimension(@wellplate.width,@wellplate.height)
+      expected_positions = WellPosition.from_dimension(@wellplate.width, @wellplate.height)
       wells = xlsx.column(1).drop(1)
 
       expected_positions.each_with_index do |expected_position, index|

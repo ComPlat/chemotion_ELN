@@ -37,6 +37,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import WellplateModel from 'src/models/Wellplate';
 
 export default class WellplateDetails extends Component {
   constructor(props) {
@@ -142,7 +143,7 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
-  handleChangeProperties(change) {
+  handleChangeProperties(change = {}) {
     const { wellplate } = this.state;
     const { type, value } = change;
     switch (type) {
@@ -171,6 +172,7 @@ export default class WellplateDetails extends Component {
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
       const newAttachments = files.map((file) => Attachment.fromFile(file));
+
       prevState.wellplate.attachments = [
         ...prevState.wellplate.attachments || [],
         ...newAttachments
@@ -237,9 +239,8 @@ export default class WellplateDetails extends Component {
   }
 
   wellplateHeader(wellplate) {
-    const saveBtnDisplay = wellplate.isEdited ? '' : 'none';
+    const saveBtnDisplay = wellplate.isEdited || wellplate.isNew ? '' : 'none';
     const datetp = formatTimeStampsOfElement(wellplate || {});
-    const { showCommentSection, comments } = this.props;
 
     return (
       <div>
@@ -299,15 +300,10 @@ export default class WellplateDetails extends Component {
     const {
       wellplate, showWellplate, visible
     } = this.state;
-    const {
-      wells, name, size, description
-    } = wellplate;
+    const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
     const exportButton = (wellplate && wellplate.isNew)
       ? null : <ExportSamplesBtn type="wellplate" id={wellplate.id} />;
-    const properties = {
-      name, size, description, readoutTitles
-    };
 
     const tabContentsMap = {
       designer: (
@@ -318,11 +314,11 @@ export default class WellplateDetails extends Component {
           <Well id="wellplate-designer" style={{ overflow: 'scroll' }}>
             <Wellplate
               show={showWellplate}
-              size={size}
+              size={wellplate.size}
               readoutTitles={readoutTitles}
-              wells={wells}
+              wells={wellplate.wells}
               handleWellsChange={(w) => this.handleWellsChange(w)}
-              cols={12}
+              cols={wellplate.width}
               width={60}
             />
           </Well>
@@ -335,7 +331,7 @@ export default class WellplateDetails extends Component {
           }
           <Well style={{ overflow: 'scroll', height: '100%', maxHeight: 'calc(100vh - 375px)' }}>
             <WellplateList
-              wells={wells}
+              wells={wellplate.wells}
               readoutTitles={readoutTitles}
               handleWellsChange={(w) => this.handleWellsChange(w)}
             />
@@ -348,7 +344,8 @@ export default class WellplateDetails extends Component {
             !wellplate.isNew && <CommentSection section="wellplate_properties" element={wellplate} />
           }
           <WellplateProperties
-            {...properties}
+            readoutTitles={readoutTitles}
+            wellplate={wellplate}
             changeProperties={(c) => this.handleChangeProperties(c)}
             handleAddReadout={(c) => this.handleAddReadout(c)}
             handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
@@ -414,7 +411,11 @@ export default class WellplateDetails extends Component {
               ) : <div />
             }
             {exportButton}
-            <Button bsStyle="primary" onClick={() => this.handlePrint()}>
+            <Button
+              bsStyle="primary"
+              onClick={() => this.handlePrint()}
+              disabled={printButtonDisabled}
+            >
               Print Wells
             </Button>
           </ButtonToolbar>
@@ -425,7 +426,7 @@ export default class WellplateDetails extends Component {
   }
 }
 
-WellplateDetails.propTypes = { /* eslint-disable react/forbid-prop-types */
-  wellplate: PropTypes.object.isRequired,
+WellplateDetails.propTypes = {
+  wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
   toggleFullScreen: PropTypes.func.isRequired,
 };
