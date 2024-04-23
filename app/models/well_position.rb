@@ -43,7 +43,7 @@ class WellPosition
   def alphanumeric_position
     row = ('A'..'ZZ').to_a[y - 1] # -1 to account for 1 based positions
 
-    "#{row}#{format('%02i', x)}"
+    "#{row}#{format('%04i', x)}"
   end
   alias_method :to_s, :alphanumeric_position # rubocop:disable Style/Alias
 end

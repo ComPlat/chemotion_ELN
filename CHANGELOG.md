@@ -3,6 +3,29 @@
 ## Latest
 * Bug fixes
 
+
+
+## [v1.9.1]
+> (2024-04-16)
+
+* Bug fixes
+  * analysis name issue  ([#1846](https://github.com/ComPlat/chemotion_ELN/pull/1846))
+  * NMRium button disabled on 2D NMR  ([#1848](https://github.com/ComPlat/chemotion_ELN/pull/1848))
+  * multiple API calls for empty deviceBox  ([#1867](https://github.com/ComPlat/chemotion_ELN/pull/1867))
+  * add cell lines to structure search result  ([#1871](https://github.com/ComPlat/chemotion_ELN/pull/1871))
+  * svg scrubber  ([#1876](https://github.com/ComPlat/chemotion_ELN/pull/1876))
+
+  UX/UI
+  * sample entry alignment and spacing  ([#1853](https://github.com/ComPlat/chemotion_ELN/pull/1853))
+  * attachment list disappearing from Inbox-device when toggling sorting  ([#1869](https://github.com/ComPlat/chemotion_ELN/pull/1869))
+  * attachment list  ([#1852](https://github.com/ComPlat/chemotion_ELN/pull/1852))
+
+* Chores
+  * change rinchi-gem to github  ([#1854](https://github.com/ComPlat/chemotion_ELN/pull/1854))
+  * unpin `rubocop` gem  ([#1858](https://github.com/ComPlat/chemotion_ELN/pull/1858))
+  * Bump tar from 6.1.11 to 6.2.1  ([#1859](https://github.com/ComPlat/chemotion_ELN/pull/1859))
+
+
 ## [v1.9.0]
 > (2024-03-28)
 

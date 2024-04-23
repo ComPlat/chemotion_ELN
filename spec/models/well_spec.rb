@@ -47,7 +47,7 @@ RSpec.describe Well do
     context 'when position is [1,1]' do
       let(:well) { create(:well, wellplate_id: wellplate.id, position_x: 1, position_y: 1) }
 
-      it 'returns the string A0001' do
+      it 'returns the string A01' do
         expect(well.sortable_alphanumeric_position).to eq('A01')
       end
     end
@@ -55,7 +55,7 @@ RSpec.describe Well do
     context 'when position is [30,30]' do
       let(:well) { create(:well, wellplate_id: wellplate.id, position_x: 30, position_y: 30) }
 
-      it 'returns the string AD0030' do
+      it 'returns the string AD30' do
         expect(well.sortable_alphanumeric_position).to eq('AD30')
       end
     end

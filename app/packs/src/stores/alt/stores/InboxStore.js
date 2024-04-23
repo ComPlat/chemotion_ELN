@@ -92,10 +92,14 @@ class InboxStore {
   }
 
   handleFetchInbox(payload) {
-    const { itemsPerPage } = this.state;
+    const { itemsPerPage, currentDeviceBoxPage } = this.state;
     this.state.inbox = payload.inbox;
     this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
     this.state.activeDeviceBoxId = payload.activeDeviceBoxId ? payload.activeDeviceBoxId : null;
+
+    if (this.state.activeDeviceBoxId) {
+      InboxActions.fetchInboxContainer(this.state.activeDeviceBoxId, currentDeviceBoxPage);
+    }
 
     this.sync();
     this.countAttachments();
@@ -153,6 +157,7 @@ class InboxStore {
         children: updatedChildren,
       },
       currentContainerPage: payload.currentContainerPage,
+      activeDeviceBoxId: payload.containerId
     }));
 
     this.sync();
