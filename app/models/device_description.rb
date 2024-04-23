@@ -68,14 +68,13 @@ class DeviceDescription < ApplicationRecord
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', inverse_of: :device_descriptions
 
-  has_many :attachments, as: :attachable, dependent: :nullify
+  has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
   has_many :sync_collections_users, through: :collections
 
-  has_many :comments, as: :commentable, dependent: :destroy
-  has_one :container, as: :containable, dependent: :nullify
+  has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
+  has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
 
   accepts_nested_attributes_for :collections_device_descriptions
-
 
   scope :includes_for_list_display, -> { includes(:tag) }
 
