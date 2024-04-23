@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   # Publish-Subscription MessageAPI
   class AdminUserAPI < Grape::API
@@ -98,31 +99,33 @@ module Chemotion
         end
         post do
           existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
-          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")  
+          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
           user = user.where(id: params[:id]) if params[:id].present?
-            
-          error!({ status: 'error', message: 'Deleted user not found'}) if user.blank?
 
-          if user.length > 1 
+          error!({ status: 'error', message: 'Deleted user not found' }) if user.blank?
+
+          if user.length > 1
             users_json = []
             user.each do |item|
               users = { id: item.id, deleted_at: item.deleted_at }
               users_json << users
             end
-            error!( { status: 'error', 
-                      message: 'Error: More than one deleted account exists! Enter the ID of the account to be restored', 
-                      users: users_json })
+            error!({ status: 'error',
+                     message: 'Error: More than one deleted account exists! Enter the ID of the account to be restored',
+                     users: users_json })
 
+          # rubocop:disable Rails::SkipsModelValidations
           elsif existing_user.nil?
             user.first.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
-            { status: 'success', 
-              message: 'Account successfully restored'}
+            { status: 'success',
+              message: 'Account successfully restored' }
 
           elsif existing_user.present?
             user.first.update_columns(deleted_at: nil, account_active: false)
-            { status: 'warning', 
-              message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbreviation and Email'}
-          end             
+            { status: 'warning',
+              message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbr and Email' }
+          end
+          # rubocop:enable Rails::SkipsModelValidations
         end
       end
 
@@ -264,3 +267,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
