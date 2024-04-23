@@ -43,6 +43,7 @@ export default class DeviceDescription extends Element {
       isNew: true,
       changed: false,
       updated: false,
+      can_copy: false,
       container: Container.init(),
       attachments: [],
       segments: [],
