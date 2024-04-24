@@ -18,6 +18,7 @@ import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import Screen from 'src/models/Screen';
+import DeviceDescription from 'src/models/DeviceDescription';
 
 import Device from 'src/models/Device';
 import Container from 'src/models/Container';
@@ -221,6 +222,7 @@ class ElementStore {
 
       handlefetchDeviceDescriptionById: ElementActions.fetchDeviceDescriptionById,
       handleCreateDeviceDescription: ElementActions.createDeviceDescription,
+      handleCopyDeviceDescriptionFromClipboard: ElementActions.copyDeviceDescriptionFromClipboard,
 
       handleCreatePrivateNote: ElementActions.createPrivateNote,
       handleUpdatePrivateNote: ElementActions.updatePrivateNote,
@@ -971,6 +973,13 @@ class ElementStore {
   handleCreateDeviceDescription(device_description) {
     this.handleRefreshElements('device_description');
     this.navigateToNewElement(device_description);
+  }
+
+  handleCopyDeviceDescriptionFromClipboard(collection_id) {
+    const clipboardDeviceDescriptions = ClipboardStore.getState().device_descriptions;
+    if (clipboardDeviceDescriptions && clipboardDeviceDescriptions.length > 0) {
+      this.changeCurrentElement(DeviceDescription.copyFromDeviceDescriptionAndCollectionId(clipboardDeviceDescriptions[0], collection_id));
+    }
   }
 
   // -- Reactions --

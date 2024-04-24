@@ -8,6 +8,21 @@ export default class DeviceDescriptionFetcher {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'device_descriptions', DeviceDescription);
   }
 
+  static fetchDeviceDescriptionsByUIStateAndLimit(params) {
+    const limit = params.limit ? limit : null;
+
+    return fetch('/api/v1/device_descriptions/ui_state/', 
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify(params)
+      }
+    ).then(response => response.json())
+      .then((json) => {
+        return json.device_descriptions.map((d) => new DeviceDescription(d))
+      })
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static fetchById(deviceDescriptionId) {
     return fetch(
       `/api/v1/device_descriptions/${deviceDescriptionId}`,
