@@ -10,6 +10,7 @@ module Entities
     expose :samples_count, documentation: { type: 'Integer', desc: 'Sample count' }
     expose :reactions_count, documentation: { type: 'Integer', desc: 'Reactions count' }
     expose :cell_lines_count, documentation: { type: 'Integer', desc: 'Cellline Samples count' }
+    expose :device_descriptions_count, documentation: { type: 'Integer', desc: 'Device Descriptions count' }
     expose :type, if: ->(obj, _opts) { obj.respond_to? :type }
     expose :reaction_name_prefix, if: ->(obj, _opts) { obj.respond_to? :reaction_name_prefix }
     expose :layout, if: ->(obj, _opts) { obj.respond_to? :layout }
@@ -36,6 +37,10 @@ module Entities
 
     def cell_lines_count
       object.counters['celllines'].to_i
+    end
+
+    def device_descriptions_count
+      object.counters['device_descriptions'].to_i
     end
 
     expose :current_sign_in_at do |obj|
