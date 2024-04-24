@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_03_28_150631) do
+ActiveRecord::Schema.define(version: 2024_04_24_120634) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -520,6 +520,7 @@ ActiveRecord::Schema.define(version: 2024_03_28_150631) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
+    t.string "ancestry"
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -1586,8 +1587,8 @@ ActiveRecord::Schema.define(version: 2024_03_28_150631) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -1627,29 +1628,6 @@ ActiveRecord::Schema.define(version: 2024_03_28_150631) do
             PERFORM generate_users_matrix(new.exclude_ids || old.exclude_ids);
       	  end if;
       	end if;
-        return new;
-      end
-      $function$
-  SQL
-  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
-       RETURNS TABLE(reaction_ids integer)
-       LANGUAGE sql
-      AS $function$
-          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
-           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
-           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
-           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
-           and s.molecule_id = m.id and m.id=$2)
-        $function$
-  SQL
-  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	update segment_klasses set identifier = gen_random_uuid() where identifier is null;
         return new;
       end
       $function$

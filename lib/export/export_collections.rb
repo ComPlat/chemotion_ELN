@@ -18,7 +18,6 @@ module Export
       @data = {}
       @uuids = {}
       @attachments = []
-      @segments = []
       @datasets = []
       @images = []
     end
@@ -127,12 +126,13 @@ module Export
         fetch_samples collection
         fetch_chemicals collection
         fetch_reactions collection
-        # fetch_elements collection if @gt == false
+        fetch_elements collection
         fetch_wellplates collection if @gt == false
         fetch_screens collection if @gt == false
         fetch_research_plans collection if @gt == false
         add_cell_line_material_to_package collection if @gt == false
         add_cell_line_sample_to_package collection if @gt == false
+        fetch_segments
       end
     end
 
@@ -209,8 +209,8 @@ module Export
                      'sample_id' => 'Sample',
                    })
 
-        segment, @attachments = Labimotion::Export.fetch_segments(sample, @attachments, &method(:fetch_one))
-        @segments += segment if segment.present?
+        upload_att = Labimotion::Export.fetch_segments(sample, @uuids, nil, &method(:fetch_one))
+        @attachments += upload_att if upload_att&.length&.positive?
 
         # fetch containers, attachments and literature
         fetch_containers(sample)
@@ -248,8 +248,8 @@ module Export
                      })
         end
 
-        segment, @attachments = Labimotion::Export.fetch_segments(reaction, @attachments, &method(:fetch_one))
-        @segments += segment if segment.present?
+        upload_att = Labimotion::Export.fetch_segments(reaction, @uuids, nil, &method(:fetch_one))
+        @attachments += upload_att if upload_att&.length&.positive?
 
         # fetch containers, attachments and literature
         fetch_containers(reaction)
@@ -261,9 +261,18 @@ module Export
     end
 
     def fetch_elements(collection)
-      @segments, @attachments = Labimotion::Export.fetch_elements(collection, @segments, @attachments,
-                                                                  method(:fetch_many), method(:fetch_one),
-                                                                  method(:fetch_containers))
+      upload_att = Labimotion::Export.fetch_elements(
+        collection,
+        @uuids,
+        method(:fetch_many),
+        method(:fetch_one),
+        method(:fetch_containers),
+      )
+      @attachments += upload_att if upload_att&.length&.positive?
+    end
+
+    def fetch_segments
+      @data = Labimotion::Export.fetch_segments_prop(@data, @uuids)
     end
 
     def fetch_wellplates(collection)
@@ -280,8 +289,8 @@ module Export
                      'wellplate_id' => 'Wellplate',
                    })
 
-        segment, @attachments = Labimotion::Export.fetch_segments(wellplate, @attachments, &method(:fetch_one))
-        @segments += segment if segment.present?
+        upload_att = Labimotion::Export.fetch_segments(wellplate, @uuids, nil, &method(:fetch_one))
+        @attachments += upload_att if upload_att&.length&.positive?
 
         fetch_containers(wellplate)
       end
@@ -307,8 +316,8 @@ module Export
                      'research_plan_id' => 'ResearchPlan',
                    })
 
-        segment, @attachments = Labimotion::Export.fetch_segments(screen, @attachments, &method(:fetch_one))
-        @segments += segment if segment.present?
+        upload_att = Labimotion::Export.fetch_segments(screen, @uuids, nil, &method(:fetch_one))
+        @attachments += upload_att if upload_att&.length&.positive?
 
         # fetch containers and attachments
         fetch_containers(screen)
@@ -333,8 +342,8 @@ module Export
                      'created_by' => 'User',
                      'created_for' => 'User',
                    })
-        segment, @attachments = Labimotion::Export.fetch_segments(research_plan, @attachments, &method(:fetch_one))
-        @segments += segment if segment.present?
+        upload_att = Labimotion::Export.fetch_segments(research_plan, @uuids, nil, &method(:fetch_one))
+        @attachments += upload_att if upload_att&.length&.positive?
 
         # add attachments to the list of attachments
         @attachments += research_plan.attachments
