@@ -1182,17 +1182,12 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
-    t.bigint "mixture_id"
     t.bigint "micromolecule_id"
-    t.string "sample_type_name", default: "Micromolecule"
-    t.float "stock_molarity_value", default: 0.0
-    t.string "stock_molarity_unit", default: "M"
     t.string "sample_type"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["micromolecule_id"], name: "index_samples_on_micromolecule_id"
-    t.index ["mixture_id"], name: "index_samples_on_mixture_id"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
@@ -1502,7 +1497,6 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
   add_foreign_key "samples", "samples", column: "micromolecule_id"
-  add_foreign_key "samples", "samples", column: "mixture_id"
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
