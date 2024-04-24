@@ -121,4 +121,20 @@ export default class MoleculesFetcher {
     }).then(response => response.json()).then(json => json)
       .catch(errorMessage => console.log(errorMessage));
   }
+
+  static calculateMolecularMassFromSumFormula(molecularFormula) {
+    const encodedMolecularFormula = encodeURIComponent(molecularFormula);
+
+    const promise = fetch(`/api/v1/molecules/molecular_weight?molecular_formula=${encodedMolecularFormula}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }

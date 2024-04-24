@@ -12,8 +12,8 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
-import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -22,6 +22,7 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
+      sumFormula: null,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -33,6 +34,9 @@ export default class SampleForm extends React.Component {
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.markSumFormulaUndefined = this.markSumFormulaUndefined.bind(this);
+    this.handleMassCalculation = this.handleMassCalculation.bind(this);
+    this.calculateMolecularMass = this.calculateMolecularMass.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -341,10 +345,110 @@ export default class SampleForm extends React.Component {
     } else { this.props.parent.setState({ sample }); }
   }
 
+  btnCalculateMolecularMass(sample) {
+    const { sumFormula } = this.state;
+
+    return (
+      <div>
+        <ControlLabel> &nbsp; </ControlLabel>
+        <div>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id="molMass">calculate the molecular mass</Tooltip>
+            }
+          >
+            <Button
+              className="btn btn-sm"
+              onClick={() => this.handleMassCalculation(sumFormula)}
+            >
+              <Glyphicon glyph="cog" />
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
+    );
+  }
+
+  markUndefinedButton(sample) {
+    const resetTooltip = 'click to mark as undefined structure - it will reset the Molecular mass';
+
+    return (
+      <div>
+        <ControlLabel> &nbsp; </ControlLabel>
+        <div>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id="markUndefined">{resetTooltip}</Tooltip>
+            }
+          >
+            <Button
+              className="btn btn-sm"
+              onClick={this.markSumFormulaUndefined}
+            >
+              <Glyphicon glyph="tag" />
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
+    );
+  }
+
+  handleMassCalculation(sumFormula) {
+    if (sumFormula === 'undefined structure') {
+      this.handleError();
+    } else {
+      this.calculateMolecularMass(sumFormula);
+    }
+  }
+
+  handleError() {
+    this.clearMolecularMass();
+    NotificationActions.add({
+      message: 'Could not calculate the molecular mass for this sum formula',
+      level: 'error'
+    });
+  }
+
+  markSumFormulaUndefined() {
+    this.setState({ sumFormula: 'undefined structure' });
+    this.handleFieldChanged('sum_formula', 'undefined structure');
+    this.clearMolecularMass();
+  }
+
+  calculateMolecularMass(sumFormula) {
+    MoleculeFetcher.calculateMolecularMassFromSumFormula(sumFormula)
+      .then((result) => {
+        if (result !== undefined) {
+          this.handleFieldChanged('molecular_mass', { value: result });
+        } else {
+          NotificationActions.add({
+            message: 'Could not calculate the molecular mass for this sum formula',
+            level: 'error'
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+
+        NotificationActions.add({
+          message: 'An error occurred while calculating the molecular mass',
+          level: 'error'
+        });
+      });
+  }
+
+  clearMolecularMass() {
+    this.handleFieldChanged('molecular_mass', { value: null });
+  }
+
   textInput(sample, field, label, disabled = false, readOnly = false) {
     const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+    const onBlurHandler = field === 'sum_formula' ? this.handleMassCalculation : null;
+
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
         <ControlLabel>{label}</ControlLabel>
@@ -352,7 +456,11 @@ export default class SampleForm extends React.Component {
           id={`txinput_${field}`}
           type="text"
           value={updateValue}
-          onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            this.setState({ sumFormula: newValue });
+            this.handleFieldChanged(field, newValue);
+          }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update || readOnly}
         />
@@ -455,6 +563,10 @@ export default class SampleForm extends React.Component {
           const isAmountLValid = sample.metrics && sample.metrics.length > 3;
           const prefixAmountL = isAmountLValid ? sample.metrics[3] : 'm';
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
+          break;
+        }
+        case 'molecular_mass': {
+          metric = 'n';
           break;
         }
         default:
@@ -770,12 +882,14 @@ export default class SampleForm extends React.Component {
                   && (
                     <tr>
                       {
-                        this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
+                        this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)
                       }
                       <td colSpan="3">
-                        {
-                          this.textInput(sample, 'sum_formula', 'Sum formula')
-                        }
+                        <div style={{ display: 'flex' }}>
+                          {this.textInput(sample, 'sum_formula', 'Sum formula')}
+                          {this.btnCalculateMolecularMass(sample)}
+                          {this.markUndefinedButton(sample)}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -784,7 +898,7 @@ export default class SampleForm extends React.Component {
                   <td colSpan="6">
                     <table>
                       <tbody>
-                        <tr>
+                      <tr>
                           <td style={{ width: '3%' }}>
                             <div style={{ marginBottom: '15px' }}>
                               {/* eslint-disable-next-line jsx-a11y/label-has-for */}
@@ -837,7 +951,7 @@ export default class SampleForm extends React.Component {
           <td colSpan="4">
             {customizableField}
           </td>
-  
+
         </tbody>
       </Table>
     );
