@@ -1,5 +1,7 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
+import Segment from 'src/models/Segment';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class DeviceDescription extends Element {
   static buildEmpty(collectionID) {
@@ -50,6 +52,20 @@ export default class DeviceDescription extends Element {
     });
   }
 
+  static buildNewShortLabel() {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return 'NEW DEVICE DESCRIPTION'; }
+    return `${currentUser.initials}-Dev${currentUser.device_descriptions_count + 1}`;
+  }
+
+  static copyFromDeviceDescriptionAndCollectionId(device_description, collection_id) {
+    const newDeviceDescription = device_description.buildCopy();
+    newDeviceDescription.collection_id = collection_id;
+    if (device_description.name) { newDeviceDescription.name = device_description.name; }
+
+    return newDeviceDescription;
+  }
+
   title() {
     const short_label = this.short_label ? this.short_label : '';
     return this.name ? `${short_label} ${this.name}` : short_label;
@@ -63,5 +79,14 @@ export default class DeviceDescription extends Element {
   getAttachmentByIdentifier(identifier) {
     return this.attachments
       .filter((attachment) => attachment.identifier === identifier)[0];
+  }
+
+  buildCopy() {
+    const device_description = super.buildCopy();
+    device_description.short_label = DeviceDescription.buildNewShortLabel();
+    device_description.container = Container.init();
+    device_description.can_copy = false;
+    device_description.attachments = []
+    return device_description;
   }
 }

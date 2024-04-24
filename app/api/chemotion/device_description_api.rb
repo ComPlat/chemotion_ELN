@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   class DeviceDescriptionAPI < Grape::API
     include Grape::Kaminari
@@ -174,6 +175,35 @@ module Chemotion
         end
       end
 
+      # get device descriptions by UI state
+      namespace :ui_state do
+        params do
+          requires :ui_state, type: Hash, desc: 'Selected device descriptions from the UI' do
+            optional :all, type: Boolean
+            optional :included_ids, type: Array
+            optional :excluded_ids, type: Array
+            optional :from_date, type: Date
+            optional :to_date, type: Date
+            optional :collection_id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
+          end
+          optional :limit, type: Integer, desc: 'Limit number of device descriptions'
+        end
+
+        before do
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @device_descriptions =
+            DeviceDescription.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read?
+        end
+
+        post do
+          @device_descriptions = @device_descriptions.limit(params[:limit]) if params[:limit]
+
+          present @device_descriptions, with: Entities::DeviceDescriptionEntity, root: :device_descriptions
+        end
+      end
+
       # return serialized device description by id
       params do
         requires :id, type: Integer
@@ -216,3 +246,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

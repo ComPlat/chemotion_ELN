@@ -8,11 +8,13 @@ module Usecases
       def initialize(params, current_user)
         @params = params
         @current_user = current_user
+        @segments = params[:segments]
       end
 
       def execute
         ActiveRecord::Base.transaction do
-          device_description = DeviceDescription.create!(params)
+          device_description = DeviceDescription.create!(params.except(:segments))
+          save_segments(device_description)
           device_description.reload
 
           is_shared_collection = false
@@ -54,6 +56,12 @@ module Usecases
 
       def all_collection_of_current_user
         Collection.get_all_collection_for_user(@current_user.id)
+      end
+
+      def save_segments(device_description)
+        return if @segments.blank?
+
+        device_description.save_segments(segments: @segments, current_user_id: current_user.id)
       end
     end
   end

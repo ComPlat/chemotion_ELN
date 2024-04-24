@@ -975,6 +975,10 @@ class ElementActions {
     };
   }
 
+  copyDeviceDescriptionFromClipboard(collection_id) {
+    return collection_id;
+  }
+
   // -- DataCite/Radar metadata --
 
   fetchMetadata(collection_id) {

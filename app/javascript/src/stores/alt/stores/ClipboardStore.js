@@ -6,19 +6,25 @@ class ClipboardStore {
   constructor() {
     this.state = {
       samples: [],
-      wellplates: []
+      wellplates: [],
+      device_descriptions: [],
     };
 
     this.bindListeners({
-      handleFetchSamplesByUIStateAndLimit: [ClipboardActions.fetchSamplesByUIStateAndLimit, ClipboardActions.fetchElementAndBuildCopy],
-      handleFetchWellplatesByUIState: ClipboardActions.fetchWellplatesByUIState
+      handleFetchSamplesByUIStateAndLimit: [
+        ClipboardActions.fetchSamplesByUIStateAndLimit, ClipboardActions.fetchElementAndBuildCopy
+      ],
+      handleFetchWellplatesByUIState: ClipboardActions.fetchWellplatesByUIState,
+      handleFetchDeviceDescriptionAndBuildCopy: [
+        ClipboardActions.fetchDeviceDescriptionAndBuildCopy, ClipboardActions.fetchDeviceDescriptionsByUIState
+      ],
     })
   }
 
   handleFetchSamplesByUIStateAndLimit(result) {
     this.state.samples = result.samples;
 
-    switch(result.action) {
+    switch (result.action) {
       case 'template_wellplate':
         Aviator.navigate(result.isSync
           ? `/scollection/${result.collection_id}/wellplate/template`
@@ -33,12 +39,19 @@ class ClipboardStore {
 
   handleFetchWellplatesByUIState(result) {
     this.state.wellplates = result.wellplates;
-    switch(result.action) {
+    switch (result.action) {
       case 'template_screen':
         Aviator.navigate(result.isSync
           ? `/scollection/${result.collection_id}/screen/template`
           : `/collection/${result.collection_id}/screen/template`);
     }
+  }
+
+  handleFetchDeviceDescriptionAndBuildCopy(result) {
+    this.state.device_descriptions = result.device_descriptions;
+    Aviator.navigate(result.isSync
+      ? `/scollection/${result.collection_id}/device_description/copy`
+      : `/collection/${result.collection_id}/device_description/copy`);
   }
 }
 

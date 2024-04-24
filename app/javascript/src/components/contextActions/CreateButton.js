@@ -76,7 +76,7 @@ export default class CreateButton extends React.Component {
     return uiState.reaction.checkedIds.first();
   }
 
-  getCellLineId(){
+  getCellLineId() {
     let uiState = UIStore.getState();
     return uiState.cell_line.checkedIds.first();
   }
@@ -98,6 +98,11 @@ export default class CreateButton extends React.Component {
     ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'copy_sample');
   }
 
+  getReactionId() {
+    let uiState = UIStore.getState();
+    return uiState.reaction.checkedIds.first();
+  }
+
   isCopyReactionDisabled() {
     let reactionId = this.getReactionId();
     return !reactionId;
@@ -116,7 +121,28 @@ export default class CreateButton extends React.Component {
   copyCellLine() {
     let uiState = UIStore.getState();
     let cellLineId = this.getCellLineId();
-    ElementActions.copyCellLineFromId(parseInt(cellLineId),uiState.currentCollection.id);
+    ElementActions.copyCellLineFromId(parseInt(cellLineId), uiState.currentCollection.id);
+  }
+
+  getDeviceDescriptionFilter() {
+    let uiState = UIStore.getState();
+    return this.filterParamsFromUIStateByElementType(uiState, "device_description");
+  }
+
+  isCopyDeviceDescriptionDisabled() {
+    let deviceDescriptionFilter = this.getDeviceDescriptionFilter();
+    return !deviceDescriptionFilter.all && deviceDescriptionFilter.included_ids.size == 0;
+  }
+
+  copyDeviceDescription() {
+    let deviceDescriptionFilter = this.getDeviceDescriptionFilter();
+    // Set limit to 1 because we are only interested in one device description
+    let params = {
+      ui_state: deviceDescriptionFilter,
+      limit: 1,
+    }
+
+    ClipboardActions.fetchDeviceDescriptionsByUIState(params, 'copy_device_description');
   }
 
   createWellplateFromSamples() {
@@ -307,6 +333,9 @@ export default class CreateButton extends React.Component {
         </Dropdown.Item>
         <Dropdown.Item onClick={() => this.copyCellLine()} disabled={this.isCopyCellLineDisabled()}>
           Copy Cell line
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.copyDeviceDescription()} disabled={this.isCopyDeviceDescriptionDisabled()}>
+          Copy Device Description
         </Dropdown.Item>
       </SplitButton>
     );

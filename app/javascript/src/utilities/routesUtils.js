@@ -261,6 +261,8 @@ const deviceDescriptionShowOrNew = (e) => {
 
   if (device_descriptionID === 'new' || device_descriptionID === undefined) {
     ElementActions.generateEmptyDeviceDescription(collectionID);
+  } else if (device_descriptionID === 'copy') {
+    ElementActions.copyDeviceDescriptionFromClipboard.defer(collectionID);
   } else if (index < 0) {
     ElementActions.fetchDeviceDescriptionById(device_descriptionID);
   } else if (index !== activeKey) {
