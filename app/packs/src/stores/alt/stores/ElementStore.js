@@ -40,6 +40,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -663,12 +664,30 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.changeCurrentElement(result);
-    }
-  }
+   if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+     if (result.sample_type && result.sample_type === 'Mixture') {
+       ComponentsFetcher.fetchComponentsBySampleId(result.id)
+         .then(components => {
+           result.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+     }
+     this.changeCurrentElement(result);
+   }
+ }
 
-  handleCreateSample({ element, closeView }) {
+  handleCreateSample({ element, closeView, components }) {
+    if (element.sample_type && element.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(element, components)
+         .then(() => {
+           element.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     UserActions.fetchCurrentUser();
     fetchOls('sample');
     this.handleRefreshElements('sample');
@@ -719,7 +738,16 @@ class ElementStore {
     this.handleUpdateElement(sample);
   }
 
-  handleUpdateLinkedElement({ element, closeView }) {
+   handleUpdateLinkedElement({ element, closeView, components }) {
+    if (element.sample_type && element.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(element, components)
+         .then(() => {
+           element.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     if (closeView) {
       this.deleteCurrentElement(element);
     } else {

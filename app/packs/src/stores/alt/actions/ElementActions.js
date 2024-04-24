@@ -371,7 +371,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView, components: params.components })
         });
     };
   }
@@ -449,7 +449,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView, components: params.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

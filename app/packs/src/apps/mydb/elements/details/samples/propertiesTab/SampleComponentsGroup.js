@@ -18,15 +18,15 @@ const SampleComponentsGroup = ({
     headIndex, dropSample,
   }) => {
     const contents = [];
-    sample.components = sample.components.map((component) => {
-      if (!(component instanceof Sample)) {
-        return createSample(component.component_properties)
-      }
-      return component;
-    });
     let sampleComponents = sample.components;
-    let index = headIndex;
     if (sampleComponents && sampleComponents.length > 0) {
+      sampleComponents = sampleComponents.map((component) => {
+        if (!(component instanceof Sample)) {
+          return createSample(component)
+        }
+        return component;
+      });    
+      let index = headIndex;
       sampleComponents.forEach((sampleComponent) => {
         index += 1;
         contents.push((

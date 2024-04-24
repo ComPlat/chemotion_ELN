@@ -986,6 +986,24 @@ export default class Sample extends Element {
     return params;
   }
 
+  serializeComponent() {
+    return {
+      id: this.id,
+      name: this.name,
+      position: this.position,
+      component_properties: {
+        target_amount_value: this.target_amount_value,
+        target_amount_unit: this.target_amount_unit,
+        molarity_unit: this.molarity_unit,
+        molarity_value: this.molarity_value,
+        stock_molarity_value: this.stock_molarity_value,
+        stock_molarity_unit: this.stock_molarity_unit,
+        molecule_id: this.molecule.id,
+        equivalent: this.equivalent,
+      }
+     }
+  }
+
   // Container & Analyses routines
   addAnalysis(analysis) {
     this.container.children.filter(
@@ -1093,7 +1111,14 @@ export default class Sample extends Element {
   }
 
   initialComponents(components) {
-    this.components = components;
+    this.components = components.map(component => {
+      const { component_properties, ...rest } = component;
+      const sampleData = {
+        ...rest,
+        ...component_properties
+      };
+      return new Sample(sampleData);
+    });
   }
 
   addMixtureComponent(newComponent) {

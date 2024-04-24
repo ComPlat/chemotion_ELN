@@ -8,8 +8,17 @@ module Chemotion
         requires :sample_id, type: Integer, desc: 'sample id'
       end
 
-      get do
-        Component.where(sample_id: params[:sample_id])
+      route_param :sample_id do
+        get do
+          components = Component.where(sample_id: params[:sample_id])
+          components_with_molecule_data = components.map do |component|
+            molecule_id = component.component_properties['molecule_id']
+            molecule = Molecule.find_by(id: molecule_id)
+            component.component_properties['molecule'] = molecule
+            component
+          end
+          present components_with_molecule_data
+        end
       end
 
       desc 'Save or update components for a given sample'
@@ -23,7 +32,11 @@ module Chemotion
         components_params = params[:components]
 
         components_params.each do |component_params|
-          component_id = component_params[:id]
+          component_id = begin
+            Integer(component_params[:id])
+          rescue ArgumentError
+            nil
+          end
           component = Component.find_or_create_by(id: component_id, sample_id: sample_id)
           component.update(
             name: component_params[:name],
@@ -31,6 +44,11 @@ module Chemotion
             component_properties: component_params[:component_properties],
           )
         end
+        # Delete components
+        molecule_ids_to_keep = components_params.map { |cp| cp[:component_properties][:molecule_id] }.compact
+        Component.where(sample_id: sample_id)
+                 .where.not("CAST(component_properties ->> 'molecule_id' AS INTEGER) IN (?)", molecule_ids_to_keep)
+                 &.destroy_all
       end
     end
   end

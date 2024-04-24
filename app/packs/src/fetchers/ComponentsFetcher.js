@@ -17,6 +17,7 @@ export default class ComponentsFetcher {
   }
 
   static saveOrUpdateComponents(sample, components) {
+    const serializedComponents = components.map(component => (component.serializeComponent()));
     return fetch( '/api/v1/components', {
       credentials: 'same-origin',
       method: 'PUT',
@@ -25,7 +26,7 @@ export default class ComponentsFetcher {
       },
       body: JSON.stringify({
         sample_id: sample.id,
-        components: components,
+        components: serializedComponents,
       }),
     })
     .then((response) => {
