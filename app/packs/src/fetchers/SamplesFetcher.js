@@ -194,4 +194,20 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static calculateMolecularMassFromSumFormula(molecularFormula) {
+    const encodedMolecularFormula = encodeURIComponent(molecularFormula);
+
+    const promise = fetch(`/api/v1/samples/calculate_molecular_mass?molecular_formula=${encodedMolecularFormula}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
 }

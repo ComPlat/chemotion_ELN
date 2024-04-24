@@ -81,6 +81,7 @@ gem 'omniauth_openid_connect'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth-shibboleth'
 
+gem 'chemical_elements'
 gem 'openbabel', '2.4.90.3', git: 'https://github.com/ptrxyz/openbabel-gem.git', branch: 'ptrxyz-ctime-fix'
 gem 'pandoc-ruby'
 gem 'paranoia'

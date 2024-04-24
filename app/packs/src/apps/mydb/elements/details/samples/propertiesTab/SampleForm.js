@@ -15,6 +15,7 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -34,6 +35,9 @@ export default class SampleForm extends React.Component {
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
     this.handleSolventChanged = this.handleSolventChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.markSumFormulaUndefined = this.markSumFormulaUndefined.bind(this);
+    this.handleMassCalculation = this.handleMassCalculation.bind(this);
+    this.calculateMolecularMass = this.calculateMolecularMass.bind(this);
   }
 
   // eslint-disable-next-line camelcase
@@ -342,10 +346,72 @@ export default class SampleForm extends React.Component {
     } else { this.props.parent.setState({ sample }); }
   }
 
+  markUndefinedButton(sample) {
+    return (
+      <div>
+        <ControlLabel> &nbsp; </ControlLabel>
+        <div>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id="markUndefined">'click to mark as undefined structure'</Tooltip>
+            }
+          >
+            <Button
+              className="btn btn-sm"
+              onClick={this.markSumFormulaUndefined}
+            >
+              <Glyphicon glyph="tag" />
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
+    );
+  }
+
+  handleMassCalculation(sumFormula) {
+    if (sumFormula === 'undefined structure') {
+      this.clearMolecularMass();
+    } else {
+      this.calculateMolecularMass(sumFormula);
+    }
+  }
+
+  markSumFormulaUndefined() {
+    this.handleFieldChanged('sum_formula', 'undefined structure');
+    this.clearMolecularMass();
+  }
+
+  calculateMolecularMass(sumFormula) {
+    SamplesFetcher.calculateMolecularMassFromSumFormula(sumFormula)
+      .then((result) => {
+        if (result !== undefined) {
+          this.handleFieldChanged('molecular_mass', { value: result });
+        } else {
+          NotificationActions.add({
+          message: 'Could not calculate the molecular mass for this sum formula',
+          level: 'error'
+          });
+        }
+      })
+    .catch((error) => {
+      NotificationActions.add({
+        message: 'An error occurred while calculating the molecular mass',
+        level: 'error'
+      });
+    });
+  }
+
+  clearMolecularMass() {
+    this.handleFieldChanged('molecular_mass', { value: null });
+  }
+
   textInput(sample, field, label, disabled = false) {
     const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
     const updateValue = (/^xref_/.test(field) && sample.xref
       ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+    const onBlurHandler = field === 'sum_formula' ? this.handleMassCalculation : null;
+
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
         <ControlLabel>{label}</ControlLabel>
@@ -354,6 +420,7 @@ export default class SampleForm extends React.Component {
           type="text"
           value={updateValue}
           onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
+          onBlur={(e) => this.handleMassCalculation(e.target.value)}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
@@ -768,9 +835,11 @@ export default class SampleForm extends React.Component {
                 this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
               }
               <td colSpan="3">
-                {
-                  this.textInput(sample, 'sum_formula', 'Sum formula')
-                }
+                <div style={{ display: 'flex' }}
+                >
+                  {this.textInput(sample, 'sum_formula', 'Sum formula')}
+                  {this.markUndefinedButton(sample)}
+                </div>
               </td>
             </tr>
             )}
