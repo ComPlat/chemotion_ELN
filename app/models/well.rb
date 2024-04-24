@@ -50,6 +50,6 @@ class Well < ApplicationRecord
     return 'n/a' if position_x.nil? || position_y.nil?
 
     row = ('A'..'ZZ').to_a[position_y - 1]
-    "#{row}#{format('%04i', position_x)}"
+    "#{row}#{format('%02i', position_x)}"
   end
 end

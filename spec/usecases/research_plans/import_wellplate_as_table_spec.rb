@@ -36,7 +36,7 @@ RSpec.describe Usecases::ResearchPlans::ImportWellplateAsTable do
                   .wells
                   .find { |well| well.position_x == 12 && well.position_y == 8 } # wellplate and wells are not persisted
 
-      expect(last_row['wellplate_position']).to eq 'H0012'
+      expect(last_row['wellplate_position']).to eq 'H12'
       expect(last_row['readout_1_value']).to eq last_well.readouts.first['value']
       expect(last_row['readout_1_unit']).to eq last_well.readouts.first['unit']
       expect(last_row['readout_2_value']).to eq last_well.readouts.second['value']
