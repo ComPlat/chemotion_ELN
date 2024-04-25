@@ -19,7 +19,10 @@ class Fcollector
     devices(use_sftp).each do |device| # rubocop:disable Metrics/BlockLength
       @current_collector = nil
       method_params = device.profile.data['method_params']
-      host = method_params['host']
+      uri = URI.parse("ssh://#{method_params['host']}")
+      host = uri.host
+      port = uri.port
+
       case method_params['authen']
       when 'keyfile'
         user = method_params['user']
@@ -56,6 +59,7 @@ class Fcollector
       end
       args[:timeout] = 10
       args[:number_of_password_prompts] = 0
+      args[:port] = port if port.present?
 
       begin
         Net::SFTP.start(host, user, **args) do |sftp|
