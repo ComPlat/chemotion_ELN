@@ -7,15 +7,15 @@ class MoveToCollectionJob < ApplicationJob
     1
   end
 
-  def perform(id)
+  def perform(id, msg = nil)
     col = Collection.find(id)
     tr_col = col.children.find_or_create_by(user_id: col.user_id, label: 'transferred')
     move_col(col, tr_col)
-    send_message(col.user_id, 'operation completed', 'success')
+    send_message(col.user_id, "operation completed. #{msg}", 'success')
   rescue StandardError => e
     Delayed::Worker.logger.error <<~TXT
       --------- gate move collection FAIL error message.BEGIN ------------
-      message:  #{e.backtrace}
+      message:  #{e.message}
       --------- gate move collection FAIL error message.END ---------------
     TXT
     send_message(col.user_id, e.message, 'error')
