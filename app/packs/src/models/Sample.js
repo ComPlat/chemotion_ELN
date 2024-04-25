@@ -1121,7 +1121,7 @@ export default class Sample extends Element {
     });
   }
 
-  addMixtureComponent(newComponent) {
+  async addMixtureComponent(newComponent) {
     if (!newComponent.collection_id) {
       const currentCollection = UIStore.getState().currentCollection;
       newComponent.collection_id = currentCollection.id
@@ -1134,14 +1134,13 @@ export default class Sample extends Element {
       tmpComponents.push(newComponent);
       this.components = tmpComponents;
 
-      if (!this.molecule_cano_smiles.includes(newComponent.molecule_cano_smiles)) {
+      if (!this.molecule_cano_smiles
+        || !this.molecule_cano_smiles.split('.').some(smiles => smiles === newComponent.molecule_cano_smiles)) {
         const newSmiles = this.molecule_cano_smiles ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}` : newComponent.molecule_cano_smiles;
 
-        MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
-        .then(result => {
-          this.molecule = result;
-          this.molfile = result.molfile
-        });
+        const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+        this.molecule = result;
+        this.molfile = result.molfile;
       }
     }
   }

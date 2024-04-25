@@ -4,6 +4,7 @@ import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
 import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
 import UIStore from 'src/stores/alt/stores/UIStore';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 
 function createSample(component) {
   return new Sample(component)
@@ -84,8 +85,28 @@ export default class SampleDetailsComponents extends React.Component {
       splitSample = srcSample.buildChildWithoutCounter();
     }
 
-    sample.addMixtureComponent(splitSample);
-    this.props.onChange(sample);
+    if (splitSample.sample_type === 'Mixture') {
+      ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+      .then(async components => {
+        for (const component of components) {
+          const { component_properties, ...rest } = component;
+          const sampleData = {
+            ...rest,
+            ...component_properties
+          };
+          let sampleComponent = new Sample(sampleData);
+          sampleComponent.id = 'comp'
+          await sample.addMixtureComponent(sampleComponent);
+        }
+        this.props.onChange(sample);
+      })
+        .catch(errorMessage => {
+          console.error(errorMessage);
+        });
+    } else {
+      sample.addMixtureComponent(splitSample);
+      this.props.onChange(sample);
+    }
   }
 
   deleteMixtureComponent(component) {
