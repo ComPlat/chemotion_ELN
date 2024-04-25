@@ -9,18 +9,14 @@ class TransferRepoJob < ApplicationJob
   end
 
   after_perform do |job|
-    if @success
-      begin
-        CleanExportFilesJob.set(queue: "remove_files_#{job.job_id}", wait: 3.minutes).perform_now(job.job_id, 'zip')
-      rescue StandardError => e
-        log_exception('after_perform', e)
-      end
-    end
+    CleanExportFilesJob.set(queue: "remove_files_#{job.job_id}", wait: 3.minutes).perform_now(job.job_id, 'zip')
+  rescue StandardError => e
+    log_exception('after_perform', e)
   end
 
-  def perform(collection_id, _user_id, url, req_headers)
+  def perform(collection_id, user__id, url, req_headers)
     @collection = Collection.find(collection_id)
-    @user_id = _user_id
+    @user_id = user__id
     resp = transfer_data(collection_id, url, req_headers)
     if resp&.status == 200
       msg = JSON.parse(resp.body)&.fetch('message', nil) || '' if resp&.body.present?
@@ -49,7 +45,6 @@ class TransferRepoJob < ApplicationJob
   def transfer_data(collection_id, url, req_headers)
     @url = url
     @req_headers = req_headers
-    @no_error = true
     file = nil
     req_payload = payload(collection_id)
     connection = Faraday.new(url: @url) do |faraday|
@@ -67,11 +62,11 @@ class TransferRepoJob < ApplicationJob
       file = f
       while (chunk = file.read(chunk_size))
         payload = { uuid: uuid, chunk: Faraday::UploadIO.new(StringIO.new(chunk), 'application/octet-stream') }
-        if file.eof?
-          resp = connection.post '/api/v1/gate/received', payload
-        else
-          resp = connection.post '/api/v1/gate/receiving_chunk', payload
-        end
+        resp = if file.eof?
+                 connection.post '/api/v1/gate/received', payload
+               else
+                 connection.post '/api/v1/gate/receiving_chunk', payload
+               end
         raise StandardError, "Error in transfer_data: #{resp.status}, #{resp.body}" if resp.status != 200
       end
     end
