@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength, Rails/HelperInstanceVariable
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   # desc: AdminUserApi class to manage the users and their roles
   class AdminUserAPI < Grape::API
@@ -11,7 +11,7 @@ module Chemotion
       namespace :users do
         desc 'Find all users'
         get do
-          present User.all.order('type desc, id'), with: Entities::UserEntity, root: 'users'
+          present User.order(type: :desc, id: :asc), with: Entities::UserEntity, root: 'users'
         end
 
         desc 'Find top (5) matched user by name and by type'
@@ -32,19 +32,25 @@ module Chemotion
 
         desc 'restore deleted user account'
         params do
-          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'
+          optional :name_abbreviation, type: String, desc: 'user name name_abbreviation'
           optional :id, type: Integer, desc: 'user ID'
+          at_least_one_of :id, :name_abbreviation
         end
         post :restoreAccount do
           existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
-          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
-          user = user.where(id: params[:id]) if params[:id].present?
+          deleted_users = User.only_deleted
+          if params[:name_abbreviation].present?
+            deleted_users = deleted_users.where('email LIKE ?',
+                                                "%#{params[:name_abbreviation]}@deleted")
+          end
+          deleted_users = deleted_users.where(id: params[:id]) if params[:id].present?
+          deleted_user = deleted_users.first
 
-          error!({ status: 'error', message: 'Deleted user not found' }) if user.blank?
+          error!({ status: 'error', message: 'Deleted user not found' }) unless deleted_user
 
-          if user.length > 1
+          if deleted_users.length > 1
             users_json = []
-            user.each do |item|
+            deleted_users.each do |item|
               users = { id: item.id, deleted_at: item.deleted_at }
               users_json << users
             end
@@ -52,18 +58,21 @@ module Chemotion
                      message: 'Error: More than one deleted account exists! Enter the ID of the account to be restored',
                      users: users_json })
 
-          # rubocop:disable Rails::SkipsModelValidations
+          # rubocop:disable Rails/SkipsModelValidations
           elsif existing_user.nil?
-            user.first.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
+            deleted_user.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
+            # create a default user profile
+            deleted_user.has_profile
             { status: 'success',
               message: 'Account successfully restored' }
-
           elsif existing_user.present?
-            user.first.update_columns(deleted_at: nil, account_active: false)
+            deleted_user.update_columns(deleted_at: nil, account_active: false)
+            # create a default user profile
+            deleted_user.has_profile
             { status: 'warning',
               message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbr and Email' }
           end
-          # rubocop:enable Rails::SkipsModelValidations
+          # rubocop:enable Rails/SkipsModelValidations
         end
 
         desc 'create new user account'
@@ -84,6 +93,7 @@ module Chemotion
         end
 
         route_param :user_id, type: Integer, desc: 'user ID' do
+          # rubocop:disable Rails/HelperInstanceVariable
           after_validation do
             @user = User.find(params.delete(:user_id))
           end
@@ -121,9 +131,9 @@ module Chemotion
 
             # confirm user new email - does nothing when params[:reconfirm_user] is nil
             if params.delete(:reconfirm_user) == true
-              # rubocop:disable Rails::SkipsModelValidations
+              # rubocop:disable Rails/SkipsModelValidations
               @user.update_columns(email: @user.unconfirmed_email, unconfirmed_email: nil)
-              # rubocop:enable Rails::SkipsModelValidations
+              # rubocop:enable Rails/SkipsModelValidations
             end
 
             # confirm user - does nothing when params[:confirm_user] is nil
@@ -135,12 +145,10 @@ module Chemotion
             end
 
             attributes = declared(params, include_missing: false)
-            begin
-              @user.update!(attributes) unless attributes.empty?
-              present @user, with: Entities::UserEntity
-            rescue ActiveRecord::RecordInvalid => e
-              { error: e.message }
-            end
+            @user.update!(attributes) unless attributes.empty?
+            present @user, with: Entities::UserEntity
+          rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
+            { error: e.message }
           end
 
           desc 'delete user account'
@@ -212,6 +220,7 @@ module Chemotion
               present @user, with: Entities::UserEntity
             end
           end
+          # rubocop:enable Rails/HelperInstanceVariable
         end
       end
       resource :matrix do
@@ -250,4 +259,4 @@ module Chemotion
     end
   end
 end
-# rubocop:enable Metrics/ClassLength, Rails/HelperInstanceVariable
+# rubocop:enable Metrics/ClassLength

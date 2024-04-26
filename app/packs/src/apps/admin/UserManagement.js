@@ -462,13 +462,15 @@ export default class UserManagement extends React.Component {
 
   handleRestoreAccount = () => {
     this.setState({ deletedUsers: [] });
-    if (this.nameAbbreviation.value.trim() === '') {
-      this.setState({ messageRestoreAccountModal: 'Please enter the name abbreviation!', showError: true });
+    // trim the params
+    this.id.value = this.id.value.trim();
+    this.nameAbbreviation.value = this.nameAbbreviation.value.trim();
+    if (this.nameAbbreviation.value.trim() === '' && this.id.value.trim() === '') {
+      this.setState({ messageRestoreAccountModal: 'Please enter the name abbreviation or an id!', showError: true });
       return false;
     }
-
     AdminFetcher.restoreAccount({
-      name_abbreviation: this.nameAbbreviation.value.trim(),
+      name_abbreviation: this.nameAbbreviation.value === '' ? null : this.nameAbbreviation.value,
       id: this.id.value === '' ? null : this.id.value,
 
     }).then((result) => {
@@ -478,15 +480,15 @@ export default class UserManagement extends React.Component {
       }
 
       if (result.status === 'error' || result.status === 'warning') {
-        this.setState({ messageRestoreAccountModal: result.message, showError: true });
+        this.setState({ messageRestoreAccountModal: result.message, alertMessage: result.message, showError: true });
         return false;
       }
-      this.setState({ messageRestoreAccountModal: result.message, showSuccess: true });
+      this.setState({ messageRestoreAccountModal: result.message, alertMessage: result.message, showSuccess: true });
       setTimeout(() => {
         this.nameAbbreviation.value = '';
         this.id.value = '';
         this.handleRestoreAccountClose();
-      }, 3000);
+      }, 2000);
       return true;
     });
     return true;
@@ -1154,7 +1156,7 @@ export default class UserManagement extends React.Component {
                   <FormControl
                     type="text"
                     name="nameAbbreviation"
-                    placeholder="Please enter the name abbreviation"
+                    placeholder="Please enter the name abbreviation .."
                     inputRef={(ref) => {
                       this.nameAbbreviation = ref;
                     }}
@@ -1169,7 +1171,7 @@ export default class UserManagement extends React.Component {
                   <FormControl
                     type="text"
                     name="id"
-                    placeholder="Please enter the user ID"
+                    placeholder=".. or enter the user ID"
                     defaultValue=""
                     onFocus={() => this.setState({ showError: false, showSuccess: false })}
                     inputRef={(ref) => {
