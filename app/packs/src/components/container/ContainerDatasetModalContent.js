@@ -1,8 +1,10 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+
 import {
-  FormGroup, FormControl, ControlLabel,
+  FormGroup, FormControl, ControlLabel, ListGroup,
   ListGroupItem, Button, Overlay
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
@@ -20,7 +22,6 @@ import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
-import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import PropTypes from 'prop-types';
@@ -630,30 +631,25 @@ export default class ContainerDatasetModalContent extends Component {
               event,
               this.doneInstrumentTyping
             )}
-            ref={(input) => {
-              // eslint-disable-next-line react/no-unused-class-component-methods
-              this.autoComplete = input;
-            }}
+            ref={(form) => { this.instRef = form; }}
             autoComplete="off"
           />
           <Overlay
+            target={() => ReactDOM.findDOMNode(this.instRef)}
+            shouldUpdatePosition
             placement="bottom"
             show={showInstruments}
             container={this}
             rootClose
             onHide={() => this.abortAutoSelection()}
           >
-            <ChildOverlay
-              dataList={this.renderInstruments()}
-              overlayAttributes={{
-                style: {
-                  position: 'absolute',
-                  width: 300,
-                  marginTop: -144,
-                  marginLeft: 17,
-                },
+            <ListGroup
+              style={{
+                position: 'absolute', marginLeft: 0, marginTop: 17, width: '95%'
               }}
-            />
+            >
+              {this.renderInstruments()}
+            </ListGroup>
           </Overlay>
         </FormGroup>
         <FormGroup controlId="datasetDescription">
