@@ -260,6 +260,7 @@ class ElementStore {
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
       handleSplitAsSubCellLines: ElementActions.splitAsSubCellLines,
+      handleSplitAsSubDeviceDescription: ElementActions.splitAsSubDeviceDescription,
       // formerly from DetailStore
       handleSelect: DetailActions.select,
       handleClose: DetailActions.close,
@@ -982,6 +983,12 @@ class ElementStore {
     }
   }
 
+  handleSplitAsSubDeviceDescription(ui_state) {
+    ElementActions.fetchDeviceDescriptionsByCollectionId(
+      ui_state.currentCollectionId, {}, ui_state.isSync
+    );
+  }
+
   // -- Reactions --
 
   handleFetchReactionById(result) {
@@ -1052,7 +1059,7 @@ class ElementStore {
     Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
   }
 
-  handleCopyCellLine(result){
+  handleCopyCellLine(result) {
     UserActions.fetchCurrentUser(); //Needed to update the cell line counter in frontend
     Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
   }
