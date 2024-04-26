@@ -979,6 +979,17 @@ class ElementActions {
     return collection_id;
   }
 
+  splitAsSubDeviceDescription(ui_state) {
+    return (dispatch) => {
+      DeviceDescriptionFetcher.splitAsSubDeviceDescription(ui_state)
+        .then((result) => {
+          dispatch(ui_state.ui_state);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   // -- DataCite/Radar metadata --
 
   fetchMetadata(collection_id) {

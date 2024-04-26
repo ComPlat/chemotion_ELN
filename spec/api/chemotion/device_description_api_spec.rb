@@ -8,6 +8,12 @@ describe Chemotion::DeviceDescriptionAPI do
   let(:device_description) do
     create(:device_description, :with_ontologies, collection_id: collection.id, created_by: collection.user_id)
   end
+  let(:device_description2) do
+    create(:device_description, :with_ontologies, collection_id: collection.id, created_by: collection.user_id)
+  end
+  let(:device_description_collection) do
+    create(:collections_device_description, device_description: device_description, collection: collection)
+  end
   let(:segment_klass) { create(:segment_klass, :with_ontology_properties_template) }
 
   describe 'GET /api/v1/device_descriptions/' do
@@ -27,12 +33,20 @@ describe Chemotion::DeviceDescriptionAPI do
   end
 
   describe 'POST /api/v1/device_descriptions' do
-    let(:device_description_params) { attributes_for(:device_description) }
+    let(:device_description_params) { attributes_for(:device_description, collection_id: collection.id) }
 
-    it 'creates a device description' do
-      post '/api/v1/device_descriptions', params: device_description_params
+    context 'when creating a device description' do
+      it 'returns a device description' do
+        post '/api/v1/device_descriptions', params: device_description_params
 
-      expect(parsed_json_response['device_description']['short_label']).to include('Dev')
+        expect(parsed_json_response['device_description']['short_label']).to include('Dev')
+      end
+
+      it 'has taggable_data' do
+        post '/api/v1/device_descriptions', params: device_description_params
+
+        expect(parsed_json_response['device_description']['tag']['taggable_data'].size).to be(1)
+      end
     end
   end
 
@@ -79,6 +93,56 @@ describe Chemotion::DeviceDescriptionAPI do
 
         expect(parsed_json_response).to eql([])
       end
+    end
+  end
+
+  describe 'POST /api/v1/device_descriptions/ui_state/' do
+    before do
+      device_description_collection
+    end
+
+    let(:params) do
+      {
+        ui_state: {
+          all: false,
+          included_ids: [device_description.id, device_description2.id],
+          excluded_ids: [],
+          collection_id: collection.id,
+        },
+        limit: 1,
+      }
+    end
+
+    it 'fetches only one device description' do
+      post '/api/v1/device_descriptions/ui_state/', params: params, as: :json
+
+      expect(parsed_json_response['device_descriptions'].size).to be(1)
+    end
+  end
+
+  describe 'POST /api/v1/device_descriptions/sub_device_descriptions/' do
+    before do
+      device_description_collection
+    end
+
+    let(:params) do
+      {
+        ui_state: {
+          currentCollectionId: collection.id,
+          device_description: {
+            all: false,
+            included_ids: [device_description.id],
+            excluded_ids: [],
+          },
+          isSync: false,
+        },
+      }
+    end
+
+    it 'creates a split of selected device description' do
+      post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+      expect(device_description.reload.children.size).to be(1)
     end
   end
 

@@ -204,6 +204,26 @@ module Chemotion
         end
       end
 
+      # split device description into sub device description
+      namespace :sub_device_descriptions do
+        params do
+          requires :ui_state, type: Hash, desc: 'Selected device descriptions from the UI'
+        end
+        post do
+          ui_state = params[:ui_state]
+          col_id = ui_state[:currentCollectionId]
+          element_params = ui_state[:device_description]
+          device_description_ids =
+            DeviceDescription.for_user(current_user.id)
+                             .for_ui_state_with_collection(element_params, CollectionsDeviceDescription, col_id)
+          DeviceDescription.where(id: device_description_ids).each do |device_description|
+            device_description.create_sub_device_description(current_user, col_id)
+          end
+
+          {} # JS layer does not use the reply
+        end
+      end
+
       # return serialized device description by id
       params do
         requires :id, type: Integer
