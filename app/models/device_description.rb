@@ -44,13 +44,14 @@
 #  deleted_at                      :datetime
 #  created_by                      :integer
 #  ontologies                      :jsonb
+#  ancestry                        :string
 #
 # Indexes
 #
 #  index_device_descriptions_on_device_id  (device_id)
 #
 class DeviceDescription < ApplicationRecord
-  attr_accessor :collection_id
+  attr_accessor :collection_id, :is_split
 
   include ElementUIStateScopes
   # include PgSearch::Model
@@ -73,6 +74,7 @@ class DeviceDescription < ApplicationRecord
 
   has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
   has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
+  has_ancestry orphan_strategy: :adopt
 
   accepts_nested_attributes_for :collections_device_descriptions
 
@@ -85,10 +87,43 @@ class DeviceDescription < ApplicationRecord
   end
 
   def set_short_label
+    return if is_split == true
+
     prefix = 'Dev'
     counter = creator.increment_counter 'device_descriptions' # rubocop:disable Rails/SkipsModelValidations
     user_label = creator.name_abbreviation
 
     update(short_label: "#{user_label}-#{prefix}#{counter}")
+  end
+
+  def counter_for_split_short_label
+    element_children = children.with_deleted.order('created_at')
+    last_child_label = element_children.where('short_label LIKE ?', "#{short_label}-%").last&.short_label
+    last_child_counter = (last_child_label&.match(/^#{short_label}-(\d+)/) && ::Regexp.last_match(1).to_i) || 0
+
+    [last_child_counter, element_children.count].max
+  end
+
+  def all_collections(user, collection_ids)
+    Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
+  end
+
+  def create_sub_device_description(user, collection_ids)
+    device_description = dup
+    segments = device_description.segments
+
+    device_description.is_split = true
+    device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
+    device_description.parent = self
+    device_description.created_by = user.id
+    device_description.container = Container.create_root_container
+    device_description.attachments = []
+    device_description.segments = []
+    device_description.collections << all_collections(user, collection_ids)
+    device_description.save!
+
+    device_description.save_segments(segments: segments, current_user_id: user.id) if segments
+
+    device_description.reload
   end
 end

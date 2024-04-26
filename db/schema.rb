@@ -474,6 +474,8 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.datetime "deleted_at"
     t.integer "created_by"
     t.jsonb "ontologies"
+    t.string "ancestry"
+    t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
 

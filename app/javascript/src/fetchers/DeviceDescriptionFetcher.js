@@ -23,6 +23,17 @@ export default class DeviceDescriptionFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static splitAsSubDeviceDescription(params) {
+    return fetch('/api/v1/device_descriptions/sub_device_descriptions/', 
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify(params)
+      }
+    ).then(response => response.json())
+      .then((json) => json)
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static fetchById(deviceDescriptionId) {
     return fetch(
       `/api/v1/device_descriptions/${deviceDescriptionId}`,
