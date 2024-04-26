@@ -20,6 +20,7 @@ export default class SampleDetailsComponents extends React.Component {
     };
 
     this.dropSample = this.dropSample.bind(this);
+    this.dropMaterial = this.dropMaterial.bind(this);
     this.deleteMixtureComponent = this.deleteMixtureComponent.bind(this);
     this.onChangeComponent = this.onChangeComponent.bind(this);
     this.updatedSampleForAmountUnitChange = this.updatedSampleForAmountUnitChange.bind(this);
@@ -95,7 +96,7 @@ export default class SampleDetailsComponents extends React.Component {
             ...component_properties
           };
           let sampleComponent = new Sample(sampleData);
-          sampleComponent.id = 'comp'
+          sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
           await sample.addMixtureComponent(sampleComponent);
         }
         this.props.onChange(sample);
@@ -108,6 +109,13 @@ export default class SampleDetailsComponents extends React.Component {
       this.props.onChange(sample);
     }
   }
+
+  dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
+    const { sample } = this.state;
+    sample.moveMaterial(srcMat, tagMat);
+    this.props.onChange(sample);
+  }
+
 
   deleteMixtureComponent(component) {
     const { sample } = this.state;
@@ -132,6 +140,7 @@ export default class SampleDetailsComponents extends React.Component {
       <SampleDetailsComponentsDnd
         sample={sample}
         dropSample={this.dropSample}
+        dropMaterial={this.dropMaterial}
         deleteMixtureComponent={this.deleteMixtureComponent}
         onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
       />

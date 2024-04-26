@@ -1112,13 +1112,14 @@ export default class Sample extends Element {
 
   initialComponents(components) {
     this.components = components.map(component => {
-      const { component_properties, ...rest } = component;
-      const sampleData = {
-        ...rest,
-        ...component_properties
-      };
-      return new Sample(sampleData);
-    });
+        const { component_properties, ...rest } = component;
+        const sampleData = {
+          ...rest,
+          ...component_properties
+        };
+        return new Sample(sampleData);
+      })
+      .sort((a, b) => a.position - b.position);
   }
 
   async addMixtureComponent(newComponent) {
@@ -1133,6 +1134,7 @@ export default class Sample extends Element {
     if (isNew){
       tmpComponents.push(newComponent);
       this.components = tmpComponents;
+      this.setComponentPositions()
 
       if (!this.molecule_cano_smiles
         || !this.molecule_cano_smiles.split('.').some(smiles => smiles === newComponent.molecule_cano_smiles)) {
@@ -1165,6 +1167,7 @@ export default class Sample extends Element {
         this.molfile = result.molfile
       }); 
     }
+    this.setComponentPositions()
   } 
 
   updateMixtureComponent(componentIndex, amount, concType) {
@@ -1221,6 +1224,25 @@ export default class Sample extends Element {
         component.equivalent = Number((component.amount_mol / totalAmountMol) / minRatio).toFixed(1);
     });
   }
+
+  moveMaterial(srcMat, tagMat) {
+    const srcIndex = this.components.findIndex(mat => mat === srcMat);
+    const tagIndex = this.components.findIndex(mat => mat === tagMat);
+  
+    if (srcIndex === -1 || tagIndex === -1 || srcIndex === tagIndex) {
+      return;
+    }
+  
+    const movedMat = this.components.splice(srcIndex, 1)[0];
+    this.components.splice(tagIndex, 0, movedMat);
+    this.setComponentPositions()
+  }
+  
+  setComponentPositions() {
+    this.components.forEach((mat, index) => {
+      mat.position = index;
+    });
+  }  
 
   splitSmilesToMolecule(mixtureSmiles, editor, svgFile) {
     const promises = mixtureSmiles.map(smiles => {

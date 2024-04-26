@@ -7,7 +7,7 @@ import SampleComponentsGroup from 'src/apps/mydb/elements/details/samples/proper
 
 const target = {
   drop(tagProps, monitor) {
-    const { dropSample } = tagProps;
+    const { dropSample, dropMaterial } = tagProps;
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
     if (srcType === DragDropItemTypes.SAMPLE) {
@@ -17,6 +17,13 @@ const target = {
         srcItem.element,
         null,
         true,
+      );
+    } else if (srcType === DragDropItemTypes.MATERIAL) {
+      dropMaterial(
+        srcItem.material,
+        srcItem.materialGroup,
+        tagProps.material,
+        tagProps.materialGroup,
       );
     }
   },
@@ -41,6 +48,7 @@ class SampleDetailsComponentsDnd extends React.Component {
       headIndex,
       onChangeComponent,
       dropSample,
+      dropMaterial,
       deleteMixtureComponent,
       isOver,
       canDrop,
@@ -62,6 +70,7 @@ class SampleDetailsComponentsDnd extends React.Component {
           headIndex={headIndex ?? 0}
           onChange={onChangeComponent}
           dropSample={dropSample}
+          dropMaterial={dropMaterial}
           deleteMixtureComponent={deleteMixtureComponent}
           isOver={isOver}
           canDrop={canDrop}
@@ -83,6 +92,7 @@ SampleDetailsComponentsDnd.propTypes = {
   headIndex: PropTypes.number,
   onChangeComponent: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
+  dropMaterial: PropTypes.func.isRequired,
   deleteMixtureComponent: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
