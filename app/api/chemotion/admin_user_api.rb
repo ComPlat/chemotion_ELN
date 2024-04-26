@@ -2,13 +2,16 @@
 
 # rubocop:disable Metrics/ClassLength
 module Chemotion
-  # Publish-Subscription MessageAPI
+  # desc: AdminUserApi class to manage the users and their roles
   class AdminUserAPI < Grape::API
-    resource :admin_user do
-      namespace :listUsers do
+    resource :admin do
+      before { error!('401 Unauthorized', 401) unless current_user.is_a?(Admin) }
+
+      # users resource for admin - CRUD + specific actions
+      namespace :users do
         desc 'Find all users'
-        get 'all' do
-          present User.all.order('type desc, id'), with: Entities::UserEntity, root: 'users'
+        get do
+          present User.order(type: :desc, id: :asc), with: Entities::UserEntity, root: 'users'
         end
 
         desc 'Find top (5) matched user by name and by type'
@@ -26,31 +29,53 @@ module Chemotion
                        .limit(params[:limit])
           present users, with: Entities::UserSimpleEntity, root: 'users'
         end
-      end
 
-      namespace :resetPassword do
-        desc 'reset user password'
+        desc 'restore deleted user account'
         params do
-          requires :user_id, type: Integer, desc: 'user id'
-          requires :random, type: Boolean, desc: 'random password?'
-          optional :password, type: String, desc: 'user pwd', values: ->(v) { v.length > 7 }
+          optional :name_abbreviation, type: String, desc: 'user name name_abbreviation'
+          optional :id, type: Integer, desc: 'user ID'
+          at_least_one_of :id, :name_abbreviation
         end
-        post do
-          u = User.find(params[:user_id])
-          pwd = nil
-          rp = if params[:password] || !Rails.env.production? || params[:random]
-                 pwd = params[:password].presence || Devise.friendly_token.first(8)
-                 u.reset_password(pwd, pwd)
-               else
-                 u.respond_to?(:send_reset_password_instructions) && u.send_reset_password_instructions
-               end
-          status(400) unless rp
-          { pwd: pwd, rp: rp, email: u.email }
-        end
-      end
+        post :restoreAccount do
+          existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
+          deleted_users = User.only_deleted
+          if params[:name_abbreviation].present?
+            deleted_users = deleted_users.where('email LIKE ?',
+                                                "%#{params[:name_abbreviation]}@deleted")
+          end
+          deleted_users = deleted_users.where(id: params[:id]) if params[:id].present?
+          deleted_user = deleted_users.first
 
-      namespace :newUser do
-        desc 'crate new user account'
+          error!({ status: 'error', message: 'Deleted user not found' }) unless deleted_user
+
+          if deleted_users.length > 1
+            users_json = []
+            deleted_users.each do |item|
+              users = { id: item.id, deleted_at: item.deleted_at }
+              users_json << users
+            end
+            error!({ status: 'error',
+                     message: 'Error: More than one deleted account exists! Enter the ID of the account to be restored',
+                     users: users_json })
+
+          # rubocop:disable Rails/SkipsModelValidations
+          elsif existing_user.nil?
+            deleted_user.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
+            # create a default user profile
+            deleted_user.has_profile
+            { status: 'success',
+              message: 'Account successfully restored' }
+          elsif existing_user.present?
+            deleted_user.update_columns(deleted_at: nil, account_active: false)
+            # create a default user profile
+            deleted_user.has_profile
+            { status: 'warning',
+              message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbr and Email' }
+          end
+          # rubocop:enable Rails/SkipsModelValidations
+        end
+
+        desc 'create new user account'
         params do
           requires :email, type: String, desc: 'user email'
           requires :password, type: String, desc: 'user password'
@@ -66,202 +91,169 @@ module Chemotion
         rescue ActiveRecord::RecordInvalid => e
           { error: e.message }
         end
-      end
 
-      namespace :updateUser do
-        desc 'update user account'
-        params do
-          requires :id, type: Integer, desc: 'user ID'
-          requires :email, type: String, desc: 'user email'
-          requires :first_name, type: String, desc: 'user first_name'
-          requires :last_name, type: String, desc: 'user last_name'
-          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'
-          requires :type, type: String, desc: 'user type'
-        end
-        post do
-          attributes = declared(params, include_missing: false)
-          user = User.find_by(id: params[:id])
-          error!('401 Not found', 404) unless user
-          begin
-            user.update!(attributes) unless attributes.empty?
-            status 201
-          rescue ActiveRecord::RecordInvalid => e
+        route_param :user_id, type: Integer, desc: 'user ID' do
+          # rubocop:disable Rails/HelperInstanceVariable
+          after_validation do
+            @user = User.find(params.delete(:user_id))
+          end
+
+          rescue_from ActiveRecord::RecordNotFound do
+            error!('404 user with given id not found', 404)
+          end
+
+          desc 'Find user by ID'
+          get do
+            present @user, with: Entities::UserEntity
+          end
+
+          desc 'update user account'
+          params do
+            optional :email, type: String, desc: 'user email'
+            optional :first_name, type: String, desc: 'user first_name'
+            optional :last_name, type: String, desc: 'user last_name'
+            optional :name_abbreviation, type: String, desc: 'user name name_abbreviation'
+            optional :type, type: String, desc: 'user type'
+            optional :account_active, type: Boolean, desc: '(in)activate or activate user account'
+            # special params
+            optional :enable, type: Boolean, desc: '(un)lock user account'
+            optional :confirm_user, type: Boolean, desc: 'confirm account'
+            optional :reconfirm_user, type: Boolean, desc: 'reconfirm account (email changed)'
+          end
+          put do
+            # (un)lock user - does nothing when params[:enable] is nil
+            case params.delete(:enable)
+            when true
+              @user.unlock_access!
+            when false
+              @user.lock_access!(send_instructions: false)
+            end
+
+            # confirm user new email - does nothing when params[:reconfirm_user] is nil
+            if params.delete(:reconfirm_user) == true
+              # rubocop:disable Rails/SkipsModelValidations
+              @user.update_columns(email: @user.unconfirmed_email, unconfirmed_email: nil)
+              # rubocop:enable Rails/SkipsModelValidations
+            end
+
+            # confirm user - does nothing when params[:confirm_user] is nil
+            case params.delete(:confirm_user)
+            when true
+              @user.update!(confirmed_at: DateTime.now)
+            when false
+              @user.update!(confirmed_at: nil)
+            end
+
+            attributes = declared(params, include_missing: false)
+            @user.update!(attributes) unless attributes.empty?
+            present @user, with: Entities::UserEntity
+          rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
             { error: e.message }
           end
+
+          desc 'delete user account'
+          delete do
+            @user.destroy!
+            status 204
+          end
+
+          desc 'reset user password'
+          params do
+            requires :random, type: Boolean, desc: 'random password?'
+            optional :password, type: String, desc: 'user pwd', values: ->(v) { v.length > 7 }
+          end
+          put :resetPassword do
+            pwd = nil
+            rp = if params[:password] || params[:random]
+                   pwd = params[:password].presence || Devise.friendly_token.first(10)
+                   @user.reset_password(pwd, pwd)
+                 else
+                   @user.respond_to?(:send_reset_password_instructions) && @user.send_reset_password_instructions
+                 end
+            status(400) unless rp
+            { pwd: pwd, rp: rp, email: @user.email }
+          end
+
+          # desc: manage user roles saved in user profile
+          namespace :profile do
+            desc 'get user profile'
+            get do
+              @user.profile
+            end
+
+            desc 'update user profile'
+            params do
+              optional :is_templates_moderator, type: Boolean,
+                                                desc: 'enable or disable ketcherails template moderation'
+              optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
+              optional :converter_admin, type: Boolean, desc: 'converter profile'
+              optional :auth_generic_admin, type: Hash do
+                optional :elements, type: Boolean, desc: 'un-authorize the user as generic elements admin'
+                optional :segments, type: Boolean, desc: 'un-authorize the user as generic segments admin'
+                optional :datasets, type: Boolean, desc: 'un-authorize the user as generic datasets admin'
+              end
+            end
+
+            put do
+              profile = @user.profile
+              pdata = profile.data || {}
+              case params[:is_templates_moderator]
+              when true, false
+                pdata = pdata.merge('is_templates_moderator' => params[:is_templates_moderator])
+              end
+
+              case params[:converter_admin]
+              when true, false
+                pdata = pdata.merge('converter_admin' => params[:converter_admin])
+              end
+
+              case params[:molecule_editor]
+              when true, false
+                pdata = pdata.merge('molecule_editor' => params[:molecule_editor])
+              end
+
+              if params[:auth_generic_admin].present?
+                pdata = pdata.deep_merge('generic_admin' => params[:auth_generic_admin])
+              end
+
+              profile.update!(data: pdata)
+              present @user, with: Entities::UserEntity
+            end
+          end
+          # rubocop:enable Rails/HelperInstanceVariable
         end
       end
-
-      namespace :restoreAccount do
-        desc 'restore deleted user account'
-        params do
-          requires :name_abbreviation, type: String, desc: 'user name name_abbreviation'
-          optional :id, type: Integer, desc: 'user ID'
-        end
-        post do
-          existing_user = User.find_by(name_abbreviation: params[:name_abbreviation])
-          user = User.only_deleted.where('email LIKE ?', "%#{params[:name_abbreviation]}@deleted")
-          user = user.where(id: params[:id]) if params[:id].present?
-
-          error!({ status: 'error', message: 'Deleted user not found' }) if user.blank?
-
-          if user.length > 1
-            users_json = []
-            user.each do |item|
-              users = { id: item.id, deleted_at: item.deleted_at }
-              users_json << users
-            end
-            error!({ status: 'error',
-                     message: 'Error: More than one deleted account exists! Enter the ID of the account to be restored',
-                     users: users_json })
-
-          # rubocop:disable Rails::SkipsModelValidations
-          elsif existing_user.nil?
-            user.first.update_columns(deleted_at: nil, name_abbreviation: params[:name_abbreviation])
-            { status: 'success',
-              message: 'Account successfully restored' }
-
-          elsif existing_user.present?
-            user.first.update_columns(deleted_at: nil, account_active: false)
-            { status: 'warning',
-              message: 'Account restored. Warning: Abbreviation already exists! Please update the Abbr and Email' }
-          end
-          # rubocop:enable Rails::SkipsModelValidations
-        end
-      end
-
-      namespace :updateAccount do
-        desc 'update account'
-        params do
-          requires :user_id, type: Integer, desc: 'user id'
-          optional :enable, type: Boolean, desc: 'enable or disable account'
-          optional :is_templates_moderator, type: Boolean, desc: 'enable or disable ketcherails template moderation'
-          optional :confirm_user, type: Boolean, desc: 'confirm account'
-          optional :reconfirm_user, type: Boolean, desc: 'reconfirm account'
-          optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
-          optional :converter_admin, type: Boolean, desc: 'converter profile'
-          optional :account_active, type: Boolean, desc: 'active or inactive this user'
-          optional :auth_generic_admin, type: Hash do
-            optional :elements, type: Boolean, desc: 'un-authorize the user as generic elements admin'
-            optional :segments, type: Boolean, desc: 'un-authorize the user as generic segments admin'
-            optional :datasets, type: Boolean, desc: 'un-authorize the user as generic datasets admin'
-          end
-        end
-
-        post do
-          user = User.find_by(id: params[:user_id])
-          unless params[:enable].nil?
-            case params[:enable]
-            when true
-              user.unlock_access!
-            when false
-              user.lock_access!(send_instructions: false)
-            end
-          end
-
-          if params[:reconfirm_user].present? && (params[:reconfirm_user] == true)
-            user.update_columns(email: user.unconfirmed_email,
-                                unconfirmed_email: nil)
-          end
-
-          unless params[:confirm_user].nil?
-            case params[:confirm_user]
-            when true
-              user.update!(confirmed_at: DateTime.now)
-            when false
-              user.update!(confirmed_at: nil)
-            end
-          end
-
-          unless params[:is_templates_moderator].nil?
-            case params[:is_templates_moderator]
-            when true, false
-              profile = user.profile
-              pdata = profile.data || {}
-              data = pdata.merge('is_templates_moderator' => params[:is_templates_moderator])
-              profile.update!(data: data)
-            end
-          end
-
-          unless params[:converter_admin].nil?
-            case params[:converter_admin]
-            when true, false
-              profile = user.profile
-              pdata = profile.data || {}
-              data = pdata.merge('converter_admin' => params[:converter_admin])
-              profile.update!(data: data)
-            end
-          end
-
-          unless params[:molecule_editor].nil?
-            case params[:molecule_editor]
-            when true, false
-              profile = user.profile
-              pdata = profile.data || {}
-              data = pdata.merge('molecule_editor' => params[:molecule_editor])
-              profile.update!(data: data)
-            end
-          end
-
-          user.update!(account_active: params[:account_active]) unless params[:account_active].nil?
-          if params[:auth_generic_admin].present?
-            profile = user.profile
-            pdata = profile.data || {}
-            data = pdata.deep_merge('generic_admin' => params[:auth_generic_admin])
-            profile.update!(data: data)
-          end
-
-          present user, with: Entities::UserEntity
-        end
-      end
-    end
-
-    resource :matrix do
-      namespace :list do
+      resource :matrix do
         desc 'Find all matrices'
         get do
           present Matrice.all.order('id'), with: Entities::MatriceEntity, root: 'matrices'
         end
-      end
 
-      namespace :update do
         desc 'update matrice'
         params do
           requires :id, type: Integer, desc: 'Matrice ID'
-          requires :label, type: String, desc: 'Matrice label'
-          requires :enabled, type: Boolean, desc: 'globally enabled'
+          optional :label, type: String, desc: 'Matrice label'
+          optional :enabled, type: Boolean, desc: 'globally enabled'
           optional :include_ids, type: Array, desc: 'include_ids'
           optional :exclude_ids, type: Array, desc: 'exclude_ids'
+          optional :configs, type: Hash, desc: 'configs'
         end
-        post do
+        put do
           attributes = declared(params, include_missing: false)
-          matrice = Matrice.find_by(id: params[:id])
-          error!('401 Not found', 404) unless matrice
+          matrice = Matrice.find(params.delete(:id))
           begin
             matrice.update!(attributes) unless attributes.empty?
+            load Rails.root.join('config/initializers/devise.rb') if params[:configs].present?
             status 201
           rescue ActiveRecord::RecordInvalid => e
+            if params[:configs].present?
+              Rails.logger.error ['update_json', e.message,
+                                  *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+            end
             { error: e.message }
           end
-        end
-      end
-
-      namespace :update_json do
-        desc 'update matrice configs'
-        params do
-          requires :id, type: Integer, desc: 'Matrice ID'
-          requires :configs, type: Hash, desc: 'Matrice configs'
-        end
-        post do
-          matrice = Matrice.find_by(id: params[:id])
-          error!('401 Not found', 401) unless matrice
-          begin
-            matrice.update!(configs: params[:configs])
-            load Rails.root.join('config/initializers/devise.rb')
-            status 201
-          rescue ActiveRecord::RecordInvalid => e
-            Rails.logger.error ['update_json', e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-            { error: e.message }
-          end
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not found', 404) unless matrice
         end
       end
     end
