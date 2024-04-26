@@ -243,6 +243,7 @@ class ElementStore {
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
+      handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
       // formerly from DetailStore
       handleSelect: DetailActions.select,
@@ -731,6 +732,15 @@ class ElementStore {
       ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort
     );
+  }
+
+  handleSplitElements(obj) {
+    const { name, ui_state } = obj;
+    const page = ui_state[name] ? ui_state[name].page : 1;
+    const per_page = ui_state.number_of_results;
+    const { fromDate, toDate, productOnly } = ui_state;
+    const params = { page, per_page, fromDate, toDate, productOnly, name };
+    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, ui_state.isSync, name);
   }
 
   handleSplitAsSubwellplates(ui_state) {

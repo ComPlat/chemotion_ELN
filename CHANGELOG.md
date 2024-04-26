@@ -4,6 +4,13 @@
 * Bug fixes
 
 
+## [v1.9.2]
+> (2024-04-24)
+
+* Features and enhancements
+  * revamp gate transfer: streaming data transfer to Chemotion Repository
+  * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))
+
 
 ## [v1.9.1]
 > (2024-04-16)
