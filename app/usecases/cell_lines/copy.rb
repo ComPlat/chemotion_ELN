@@ -22,7 +22,6 @@ module Usecases
           contamination: @cell_line_sample_to_copy[:contamination],
           name: @cell_line_sample_to_copy[:name],
           description: @cell_line_sample_to_copy[:description],
-          # short_label: @params[:short_label],
         )
       end
 
