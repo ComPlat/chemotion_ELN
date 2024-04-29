@@ -146,12 +146,32 @@ module Chemotion
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 
+      desc 'Copy a cell line'
+      params do
+        requires :id, type: Integer, desc: 'id of cell line sample to copy'
+      end
+      namespace :copy do
+        post do
+          cell_line_to_copy = @current_user.cellline_samples.find(params[:id])
+          use_case = Usecases::CellLines::Copy.new(cell_line_to_copy, @current_user)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, CelllineSample).update?
+
+          begin
+            copied_cell_line_sample = use_case.execute!
+          rescue StandardError => e
+            error!(e, 400)
+          end
+          return present copied_cell_line_sample, with: Entities::CellLineSampleEntity
+        end
+      end
+
       resource :names do
         desc 'Returns all accessable cell line material names and their id'
         get 'all' do
           return present CelllineMaterial.all, with: Entities::CellLineMaterialNameEntity
         end
       end
+
       resource :material do
         params do
           requires :id, type: Integer, desc: 'id of cell line material to load'

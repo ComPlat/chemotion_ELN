@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/LetSetup, RSpec/NestedGroups
+# rubocop:disable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance
 
 require 'rails_helper'
 
@@ -249,5 +249,50 @@ describe Chemotion::CellLineAPI do
       end
     end
   end
+
+  describe 'POST /api/v1/cell_lines/copy' do
+    let(:collection) { create(:collection) }
+    let!(:user) { create(:user, collections: [collection]) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let(:allow_creation) { true }
+    let(:params) { { id: cell_line.id } }
+
+    before do
+      allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
+      post '/api/v1/cell_lines/copy', params: params
+    end
+
+    context 'when cell line not accessable' do
+      let(:params) { { id: '-1' } }
+
+      it 'returns correct response code 401' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when user only has read access' do
+      let(:allow_creation) { false }
+
+      before do
+        allow_any_instance_of(ElementPolicy).to receive(:update?).and_return(false)
+        post '/api/v1/cell_lines/copy', params: params
+      end
+
+      it 'returns correct response code 401' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when user has write access' do
+      it 'returns correct response code' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'copied cell line sample was created' do
+        loaded_cell_line_sample = CelllineSample.find(parsed_json_response['id'])
+        expect(loaded_cell_line_sample).not_to be_nil
+      end
+    end
+  end
 end
-# rubocop:enable RSpec/LetSetup, RSpec/NestedGroups
+# rubocop:enable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance
