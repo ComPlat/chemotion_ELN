@@ -4753,10 +4753,10 @@ cheerio@^1.0.0-rc.3:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chem-generic-ui@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.1.1.tgz#6bfc9648803f3772324bc21f8fb552b514503361"
-  integrity sha512-6Sv4+liMXvt3CQRAL9WguFlD3mVXPiUcPq7MLQC31PN/xjRl2ZHjuZoI1MhQr90nVEmUDwQAjUmHc0lzKZuprg==
+chem-generic-ui@^1.3.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-1.3.1.tgz#8f2ac4a86fbfa916f4877ff31a48c1cd45ae2b0a"
+  integrity sha512-s/r57PfV7nan4RYGZcMe/LSF7IkvK0UBXRKpLJPvGpND4qqTvQ14rDDDhvp8mOMA6vX2MgS1CszinvxnEGVa5A==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.1.2"
     "@fortawesome/free-regular-svg-icons" "^6.1.2"
@@ -4765,7 +4765,8 @@ chem-generic-ui@^1.1.1:
     ag-grid-community "^28.2.1"
     ag-grid-react "^28.2.1"
     date-fns "^2.29.3"
-    generic-ui-core "^1.0.0"
+    generic-ui-core "^1.3.0"
+    html-to-image "^1.11.11"
     lodash "^4.17.21"
     moment "^2.29.4"
     moment-precise-range-plugin "^1.3.0"
@@ -4780,10 +4781,10 @@ chem-generic-ui@^1.1.1:
     reactflow "^11.7.2"
     uuid "^9.0.0"
 
-chem-units@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-0.0.5.tgz#b5621a6c132ee58e7c0d7999c88ccd63a128498a"
-  integrity sha512-obZvfyKjDDgCk0s4FIt5eZxcB+l+3GLnskMnqcE4FaJPNJtJtQwql3JkxsO5BdniK2wKycfHy95aCy7+sOCieA==
+chem-units@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.1.0.tgz#65d93db9686a50bb59430e34732f497aa2804be8"
+  integrity sha512-A3jY/B2aEb5s9bmg2lk77QYUl4xCTTCeeKQPbKfwvcD7DseuL40UF6o5Veusfkip8NOcdQ3X6m2hNLMdJKXHbg==
 
 chemotion-converter-client@0.5.0:
   version "0.5.0"
@@ -7603,12 +7604,12 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.0.0.tgz#cdd40d15f398731ba9dc6b92840051985eee0a56"
-  integrity sha512-i2BwJHB4i3IcgJnLtKLEKuzOXdWG4Bht93gv+Olz5NsIXn2u19zKPPrqbRj3xGsq1s0Ek++VjPXvTJdsGBRteQ==
+generic-ui-core@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.3.0.tgz#29c07d1be94987feec608eda5dab2905a9979a9d"
+  integrity sha512-/W72fWPhxNsszWVKO0LVSy8ketl4eUrc8G/fl/WY3jUbuUkgHzq8MbZqvUfIqyQwrnWH9PCiEiFKWUUC9Y2pRQ==
   dependencies:
-    chem-units "^0.0.5"
+    chem-units "^1.1.0"
     lodash "^4.17.21"
 
 gensync@^1.0.0-beta.2:
@@ -8005,6 +8006,11 @@ html-escaper@^2.0.0:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/html-escaper/-/html-escaper-2.0.2.tgz#dfd60027da36a36dfcbe236262c00a5822681453"
   integrity sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==
+
+html-to-image@^1.11.11:
+  version "1.11.11"
+  resolved "https://registry.yarnpkg.com/html-to-image/-/html-to-image-1.11.11.tgz#c0f8a34dc9e4b97b93ff7ea286eb8562642ebbea"
+  integrity sha512-9gux8QhvjRO/erSnDPv28noDZcPZmYE7e1vFsBLKLlRlKDSqNJYebj6Qz1TGd5lsRV+X+xYyjCKjuZdABinWjA==
 
 html2canvas@1.4.1, html2canvas@^1.0.0, html2canvas@^1.0.0-rc.5:
   version "1.4.1"

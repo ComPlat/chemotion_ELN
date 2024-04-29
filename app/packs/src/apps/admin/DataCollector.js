@@ -260,7 +260,7 @@ class ModelConfig extends Component {
                 className="form-control is-invalid"
                 type="text"
                 id="inputHost"
-                placeholder="e.g. google.com"
+                placeholder="e.g. remote.address or localhost:2222"
                 required
                 readOnly={endsWith(selectedMethod, 'local')}
                 defaultValue={`${(this.props.device.data.method_params && this.props.device.data.method_params.host ? this.props.device.data.method_params.host : '')}`}

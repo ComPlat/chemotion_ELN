@@ -23,6 +23,7 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -46,8 +47,9 @@ export default class ReactionDetailsContainers extends Component {
     const { reaction } = props;
     this.state = {
       reaction,
-      activeContainer: 0
+      activeContainer: UIStore.getState().reaction.activeAnalysis
     };
+    this.containerRefs = {};
 
     this.handleChange = this.handleChange.bind(this);
     this.handleAdd = this.handleAdd.bind(this);
@@ -56,10 +58,29 @@ export default class ReactionDetailsContainers extends Component {
     this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
     this.handleSpChange = this.handleSpChange.bind(this);
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentDidMount() {
+    const { activeContainer } = this.state;
+    UIStore.listen(this.onUIStoreChange);
     TextTemplateActions.fetchTextTemplates('reaction');
+    if (this.containerRefs[activeContainer]) {
+      this.containerRefs[activeContainer].scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange);
+  }
+
+  onUIStoreChange(state) {
+    const { activeContainer } = this.state;
+    if (state.reaction.activeContainer !== activeContainer) {
+      this.setState({
+        activeContainer: state.reaction.activeContainer
+      });
+    }
   }
 
   // eslint-disable-next-line camelcase
@@ -167,6 +188,10 @@ export default class ReactionDetailsContainers extends Component {
           confirmRegenerate={confirmRegenerate}
           toggleNMRDisplayerModal={toggleNMRDisplayerModal}
           hasNMRium={hasNMRium}
+        />
+        <AnalysisVariationLink
+          reaction={reaction}
+          analysisID={container.id}
         />
       </div>
     );
@@ -314,35 +339,37 @@ export default class ReactionDetailsContainers extends Component {
                 }
 
                 return (
-                  <Panel
-                    eventKey={key}
+                  <div
+                    ref={(element) => { this.containerRefs[key] = element; }}
                     key={`reaction_container_${container.id}`}
                   >
-                    <Panel.Heading>
-                      <Panel.Title toggle>
-                        {containerHeader(container)}
-                      </Panel.Title>
-                    </Panel.Heading>
-                    <Panel.Body collapsible="true">
-                      <ContainerComponent
-                        disabled={readOnly}
-                        readOnly={readOnly}
-                        templateType="reaction"
-                        container={container}
-                        onChange={this.handleChange.bind(this, container)}
-                      />
-                      <ViewSpectra
-                        sample={reaction}
-                        handleSampleChanged={this.handleSpChange}
-                        handleSubmit={this.props.handleSubmit}
-                      />
-                      <NMRiumDisplayer
-                        sample={reaction}
-                        handleSampleChanged={this.handleSpChange}
-                        handleSubmit={this.props.handleSubmit}
-                      />
-                    </Panel.Body>
-                  </Panel>
+                    <Panel eventKey={key}>
+                      <Panel.Heading>
+                        <Panel.Title toggle>
+                          {containerHeader(container)}
+                        </Panel.Title>
+                      </Panel.Heading>
+                      <Panel.Body collapsible="true">
+                        <ContainerComponent
+                          disabled={readOnly}
+                          readOnly={readOnly}
+                          templateType="reaction"
+                          container={container}
+                          onChange={this.handleChange.bind(this, container)}
+                        />
+                        <ViewSpectra
+                          sample={reaction}
+                          handleSampleChanged={this.handleSpChange}
+                          handleSubmit={this.props.handleSubmit}
+                        />
+                        <NMRiumDisplayer
+                          sample={reaction}
+                          handleSampleChanged={this.handleSpChange}
+                          handleSubmit={this.props.handleSubmit}
+                        />
+                      </Panel.Body>
+                    </Panel>
+                  </div>
                 );
               })}
             </PanelGroup>

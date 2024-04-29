@@ -196,6 +196,7 @@ class API < Grape::API
   mount Chemotion::CommentAPI
   mount Chemotion::CellLineAPI
   mount Labimotion::ConverterAPI
+  mount Labimotion::GenericKlassAPI
   mount Labimotion::GenericElementAPI
   mount Labimotion::GenericDatasetAPI
   mount Labimotion::SegmentAPI

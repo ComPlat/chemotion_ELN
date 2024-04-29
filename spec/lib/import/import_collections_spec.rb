@@ -206,6 +206,29 @@ RSpec.describe 'ImportCollection' do
         expect(CelllineMaterial.count).to be 1
       end
     end
+
+    context 'with zip file including one empty wellplate with height and width parameter' do
+      let(:imported_collection) { Collection.find_by(label: 'Wellplate-Export-Example') }
+      let(:import_id) { '20240129_empty_wellplate' }
+      let(:attachment) do
+        create(:attachment, file_path: Rails.root.join('spec/fixtures/import/20240129_empty_wellplate.zip'))
+      end
+
+      before do
+        importer.execute
+      end
+
+      it 'Collection was created and contains one wellplate' do
+        expect(imported_collection).not_to be_nil
+        expect(imported_collection.wellplates.length).to be 1
+      end
+
+      it 'One wellplate was imported with height 8 and width 12' do
+        expect(Wellplate.count).to be 1
+        expect(Wellplate.first.width).to be 12
+        expect(Wellplate.first.height).to be 8
+      end
+    end
   end
 
   def copy_target_to_import_folder(import_id)

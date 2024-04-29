@@ -52,6 +52,16 @@ const handleFetch = (dispatch, fetch) => {
 }
 
 class ElementActions {
+  exportElement(element, klass, exportFormat) {
+    return (dispatch) => {
+      GenericElsFetcher.export(element, klass, exportFormat)
+        .then((result) => {
+          dispatch({ element: result });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
   // -- Devices --
   fetchAllDevices() {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
@@ -266,6 +276,17 @@ class ElementActions {
     };
   }
 
+  splitElements(ui_state, name) {
+    return (dispatch) => {
+      GenericElsFetcher.split(ui_state, name)
+        .then((result) => {
+          dispatch({ui_state: ui_state, name: name});
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+  
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
     moleculeSort = false) {
     return (dispatch) => {
@@ -330,7 +351,7 @@ class ElementActions {
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
-    };   
+    };
   }
 
   // -- Samples --

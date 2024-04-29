@@ -14,7 +14,21 @@ Rails.application.config.content_security_policy do |policy|
 
 #   # Specify URI for violation reports
 #   # policy.report_uri "/csp-violation-report-endpoint"
-  policy.connect_src :self, :https, "http://localhost:3035", "ws://localhost:3035" if Rails.env.development?
+
+  # connect_src for log and webpack-dev-serverwebsockets in development
+  if Rails.env.development?
+    url = URI.parse(ENV['PUBLIC_URL'] || '')
+    scheme = url.scheme || 'http'
+    host = url.host
+    port = url.port
+
+    src = [:self, :https, 'http://localhost:3035', 'ws://localhost:3035']
+    src += ["ws://#{host}:3035", "#{scheme}://#{host}:3035"] if host.present?
+    src += ["#{scheme}://#{host}:#{url.port}"] if host.present? && port.present?
+    puts "connect_src: #{src}"
+
+    policy.connect_src *src
+  end
 end
 
 # If you are using UJS then enable automatic nonce generation
