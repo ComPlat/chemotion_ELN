@@ -251,11 +251,11 @@ describe Chemotion::CellLineAPI do
   end
 
   describe 'POST /api/v1/cell_lines/copy' do
-    let(:collection) { create(:collection) }
+    let(:collection) { create(:collection, label: 'other collection') }
     let!(:user) { create(:user, collections: [collection]) }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
     let(:allow_creation) { true }
-    let(:params) { { id: cell_line.id } }
+    let(:params) { { id: cell_line.id, collection_id: collection.id } }
 
     before do
       allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
@@ -263,7 +263,7 @@ describe Chemotion::CellLineAPI do
     end
 
     context 'when cell line not accessable' do
-      let(:params) { { id: '-1' } }
+      let(:params) { { id: '-1', collection_id: collection.id } }
 
       it 'returns correct response code 401' do
         expect(response).to have_http_status :unauthorized
@@ -291,6 +291,12 @@ describe Chemotion::CellLineAPI do
       it 'copied cell line sample was created' do
         loaded_cell_line_sample = CelllineSample.find(parsed_json_response['id'])
         expect(loaded_cell_line_sample).not_to be_nil
+      end
+
+      it 'copied cell line added to all and original collection' do
+        loaded_cell_line_sample = CelllineSample.find(parsed_json_response['id'])
+        collection_labels = loaded_cell_line_sample.collections.order(:label).pluck(:label)
+        expect(collection_labels).to eq ['All', 'other collection']
       end
     end
   end

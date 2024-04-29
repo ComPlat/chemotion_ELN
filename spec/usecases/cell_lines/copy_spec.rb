@@ -8,7 +8,7 @@ RSpec.describe Usecases::CellLines::Copy do
   let(:user) { create(:user) }
   let(:collection) { create(:collection) }
   let(:cell_line_sample_to_copy) { create(:cellline_sample) }
-  let(:use_case) { described_class.new(cell_line_sample_to_copy, user) }
+  let(:use_case) { described_class.new(cell_line_sample_to_copy, user, collection.id) }
 
   describe 'execute!' do
     let(:cell_line_sample_copied) { use_case.execute! }
