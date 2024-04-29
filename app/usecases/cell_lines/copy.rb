@@ -9,8 +9,11 @@ module Usecases
       end
 
       def execute!
+        @current_user.increment_counter('celllines')  # rubocop: disable Rails/SkipsModelValidations
         copy_cellline_sample
       end
+
+      private
 
       def copy_cellline_sample
         CelllineSample.create(
@@ -22,9 +25,13 @@ module Usecases
           contamination: @cell_line_sample_to_copy[:contamination],
           name: @cell_line_sample_to_copy[:name],
           description: @cell_line_sample_to_copy[:description],
+          short_label: create_short_label,
         )
       end
 
+      def create_short_label
+        "#{@current_user.name_abbreviation}-C#{@current_user.counters['celllines']}"
+      end
     end
   end
 end
