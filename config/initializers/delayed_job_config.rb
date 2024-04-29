@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Delayed::Worker.destroy_failed_jobs = false
 # Delayed::Worker.sleep_delay = 60
 # Delayed::Worker.max_attempts = 3
@@ -8,47 +10,51 @@
 # Delayed::Worker.raise_signal_exceptions = :term
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 
+# NB: this initialiser is NOT idempotent (yet), do NOT use:  `Rails.application.reloader.to_prepare do` block
+# to supress:
+# ```
+# DEPRECATION WARNING: Initialization autoloaded the constants  ApplicationRecord
+#  ApplicationJob, CollectDataFromMailJob, CollectDataFromSftpJob, CollectDataFromLocalJob,
+#  CollectFileFromLocalJob, CollectFileFromSftpJob, PubchemCidJob, PubchemLcssJob,
+#  RefreshElementTagJob, ChemrepoIdJob, and InitCronJobsJob.
+#
+# Being able to do this is deprecated. Autoloading during initialization is going
+# to be an error condition in future versions of Rails.
+# ```
+# otherwise InitCronJobsJob will be called multiple times
+
 ActiveSupport.on_load(:active_record) do
-  if ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
-    Delayed::Job.where("handler like ?", "%CollectDataFrom%").destroy_all
-    Delayed::Job.where("handler like ?", "%CollectFileFrom%").destroy_all
-    if Rails.configuration.datacollectors && Rails.configuration.datacollectors.services
-      for service in Rails.configuration.datacollectors.services do
-        cron_config = nil
-        config = service[:every].to_s.strip
-        cron_config = '*/' + config + ' * * * *' if config.split(/\s/).size == 1
-        config = service[:cron].to_s.strip
-        cron_config = config if config.split(/\s/).size == 5
-        case service[:name].to_s
-        when 'mailcollector'
-          CollectDataFromMailJob
-        when 'folderwatchersftp'
-          CollectDataFromSftpJob
-        when 'folderwatcherlocal'
-          CollectDataFromLocalJob
-        when 'filewatcherlocal'
-          CollectFileFromLocalJob
-        when 'filewatchersftp'
-          CollectFileFromSftpJob
-        else
-          nil
-        end&.set(cron: cron_config).perform_later if cron_config
-      end
-    end
-    Delayed::Job.where("handler like ?", "%PubchemCidJob%").destroy_all
-    cron_config = ENV['CRON_CONFIG_PC_CID'].presence
-    cron_config ||= "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}"
-    PubchemCidJob.set(cron: cron_config ).perform_later
-    Delayed::Job.where("handler like ?", "%PubchemLcssJob%").destroy_all
-    cron_config = ENV['CRON_CONFIG_PC_LCSS'].presence
-    cron_config ||= "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}"
-    PubchemLcssJob.set(cron: cron_config).perform_later
-    Delayed::Job.where("handler like ?", "%RefreshElementTagJob%").destroy_all
-    cron_config = ENV['CRON_CONFIG_ELEMENT_TAG'].presence
-    cron_config ||= "#{rand(0..59)} #{rand(20..23)} * * #{rand(6..7)}"
-    RefreshElementTagJob.set(cron: cron_config).perform_later
-    Delayed::Job.where("handler like ?", "%ChemrepoIdJob%").destroy_all
-  end
+  next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
+
+  # List of recuringreccuring jobs with default attributes JobClass, enabled, cron_variable
+  reccuring_jobs = [
+    # Data Collectors Classes
+    { job_class: CollectDataFromMailJob,  enabled: :datacollector },
+    { job_class: CollectDataFromSftpJob,  enabled: :datacollector },
+    { job_class: CollectDataFromLocalJob, enabled: :datacollector },
+    { job_class: CollectFileFromLocalJob, enabled: :datacollector },
+    { job_class: CollectFileFromSftpJob,  enabled: :datacollector },
+
+    # Other Classes
+    { job_class: PubchemCidJob,        enabled: :default, cron_variable: 'CRON_CONFIG_PC_CID' },
+    { job_class: PubchemLcssJob,       enabled: :default, cron_variable: 'CRON_CONFIG_PC_LCSS' },
+    { job_class: RefreshElementTagJob, enabled: :default, cron_variable: 'CRON_CONFIG_REFRESH_ELEMENT_TAG' },
+    { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },
+  ]
+
+  # Delete all reccuring jobs
+  like_array = ['%InitCronJobsJob%']
+  like_array += reccuring_jobs.map { |job| "%#{job[:job_class].name}%" }
+  puts "Deleting all reccuring jobs: #{like_array}"
+  Rails.logger.info "Deleting all reccuring jobs: #{like_array}"
+  Delayed::Job.where('handler like any (array[?])', like_array).destroy_all
+
+  # Reschedule all reccuring jobs
+  #    InitCronJobsJob.perform_later(reccuring_jobs)
+  puts 'Rescheduling reccuring jobs'
+  Rails.logger.info 'Rescheduling reccuring jobs'
+  InitCronJobsJob.perform_now(reccuring_jobs)
 rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e
   puts e.message
 end
+# end
