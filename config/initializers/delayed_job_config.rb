@@ -24,6 +24,19 @@ Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 # ```
 # otherwise InitCronJobsJob will be called multiple times
 
+# NB: this initialiser is NOT idempotent (yet), do NOT use:  `Rails.application.reloader.to_prepare do` block
+# to supress:
+# ```
+# DEPRECATION WARNING: Initialization autoloaded the constants  ApplicationRecord
+#  ApplicationJob, CollectDataFromMailJob, CollectDataFromSftpJob, CollectDataFromLocalJob,
+#  CollectFileFromLocalJob, CollectFileFromSftpJob, PubchemCidJob, PubchemLcssJob,
+#  RefreshElementTagJob, ChemrepoIdJob, and InitCronJobsJob.
+#
+# Being able to do this is deprecated. Autoloading during initialization is going
+# to be an error condition in future versions of Rails.
+# ```
+# otherwise InitCronJobsJob will be called multiple times
+
 ActiveSupport.on_load(:active_record) do
   next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
 
