@@ -216,7 +216,7 @@ module Chemotion
           device_description_ids =
             DeviceDescription.for_user(current_user.id)
                              .for_ui_state_with_collection(element_params, CollectionsDeviceDescription, col_id)
-          DeviceDescription.where(id: device_description_ids).each do |device_description|
+          DeviceDescription.where(id: device_description_ids).find_each do |device_description|
             device_description.create_sub_device_description(current_user, col_id)
           end
 
