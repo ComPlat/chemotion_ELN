@@ -208,6 +208,7 @@ export default class Reaction extends Element {
             "temperature": {"value": <number>, "unit": <string>},
             "duration": {"value": <number>, "unit": <string>}
         },
+        "analyses": [<id>, <id>, ...],
         "startingMaterials": {
             <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
             <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},

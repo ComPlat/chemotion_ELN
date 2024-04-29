@@ -13,6 +13,10 @@ const materialTypes = {
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents', units: volumeUnits }
 };
 
+function getVariationsRowName(reactionLabel, variationsRowId) {
+  return `${reactionLabel}-${variationsRowId}`;
+}
+
 function getReactionMaterials(reaction) {
   return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
     materialsByType[materialType] = reaction[reactionAttributeName];
@@ -181,6 +185,7 @@ function createVariationsRow(reaction, id) {
         value: convertUnit(durationValue, durationUnit, durationUnits[0]), unit: durationUnits[0]
       }
     },
+    analyses: [],
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reaction[reactionAttributeName].reduce((a, v) => (
@@ -212,5 +217,6 @@ export {
   getSequentialId,
   computePercentYield,
   getReactionMaterials,
-  getMaterialHeaderNames
+  getMaterialHeaderNames,
+  getVariationsRowName,
 };

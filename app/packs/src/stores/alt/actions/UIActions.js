@@ -35,8 +35,12 @@ class UIActions {
     return params;
   }
 
-  selectActiveAnalysis(index) {
-    return index;
+  selectActiveAnalysisTab(tabKey) {
+    return tabKey;
+  }
+
+  selectActiveAnalysis(params) {
+    return params;
   }
 
   toggleAdvancedSearch(show) {
