@@ -338,7 +338,6 @@ export default class Sample extends Element {
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
-      components: this.components
     });
 
     return serialized;
@@ -1000,6 +999,7 @@ export default class Sample extends Element {
         stock_molarity_unit: this.stock_molarity_unit,
         molecule_id: this.molecule.id,
         equivalent: this.equivalent,
+        parent_id: this.parent_id,
       }
      }
   }

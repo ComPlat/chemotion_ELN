@@ -24,7 +24,22 @@ module Chemotion
       desc 'Save or update components for a given sample'
       params do
         requires :sample_id, type: Integer, desc: 'sample id'
-        requires :components, type: Array, desc: 'components'
+        requires :components, type: Array, desc: 'components' do
+          requires :id, types: [Integer, String], desc: 'Component ID'
+          optional :name, type: String, desc: 'Component name'
+          optional :position, type: Integer, desc: 'Component position in the table'
+          requires :component_properties, type: Hash, desc: 'Component properties' do
+            optional :target_amount_value, type: Float, desc: 'Target amount value'
+            optional :target_amount_unit, type: String, desc: 'Target amount unit'
+            optional :molarity_unit, type: String, desc: 'Molarity unit'
+            optional :molarity_value, type: Float, desc: 'Molarity value'
+            optional :stock_molarity_value, type: Float, desc: 'Stock molarity value'
+            optional :stock_molarity_unit, type: String, desc: 'Stock molarity unit'
+            requires :molecule_id, type: Integer, desc: 'Molecule ID'
+            optional :equivalent, types: [Float, String], desc: 'Equivalent'
+            optional :parent_id, type: Integer, desc: 'Parent ID'
+          end
+        end
       end
 
       put do

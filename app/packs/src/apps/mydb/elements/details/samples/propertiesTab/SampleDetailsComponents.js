@@ -96,6 +96,7 @@ export default class SampleDetailsComponents extends React.Component {
             ...component_properties
           };
           let sampleComponent = new Sample(sampleData);
+          sampleComponent.parent_id = splitSample.parent_id
           sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
           await sample.addMixtureComponent(sampleComponent);
         }
