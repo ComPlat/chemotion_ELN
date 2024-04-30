@@ -5,11 +5,23 @@
 
 
 ## [v1.9.2]
-> (2024-04-24)
+> (2024-04-26)
 
 * Features and enhancements
-  * revamp gate transfer: streaming data transfer to Chemotion Repository
-  * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))
+  * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))([#1881](https://github.com/ComPlat/chemotion_ELN/pull/1881))
+  * datacollector device config sftp port  ([#1885](https://github.com/ComPlat/chemotion_ELN/pull/1885))
+  * admin can restore deleted user account  ([#1845](https://github.com/ComPlat/chemotion_ELN/pull/1845))
+  * admin can delete single user account  ([#1883](https://github.com/ComPlat/chemotion_ELN/pull/1883)) 
+  
+
+* Bug fixes
+  * lock screen spinner on select close and save function in chemspectra  ([#1879](https://github.com/ComPlat/chemotion_ELN/pull/1879))
+  * instrument suggestion dropdown position in analyses metadata  ([#1887](https://github.com/ComPlat/chemotion_ELN/pull/1887))
+  * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))([#1881](https://github.com/ComPlat/chemotion_ELN/pull/1881))
+
+* Refactor
+  *  gate transfer - streaming data transfer to Chemotion Rep…  ([#1882](https://github.com/ComPlat/chemotion_ELN/pull/1882))
+
 
 
 ## [v1.9.1]

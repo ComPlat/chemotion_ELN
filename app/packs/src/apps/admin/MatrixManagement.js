@@ -137,7 +137,7 @@ export default class MatrixManagement extends React.Component {
 
 
   handleJsonSave(matrice) {
-    AdminFetcher.updateMatriceJson({ id: matrice.id, configs: matrice.configs })
+    AdminFetcher.updateMatrice({ id: matrice.id, configs: matrice.configs })
       .then((result) => {
         if (result.error) {
           Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });

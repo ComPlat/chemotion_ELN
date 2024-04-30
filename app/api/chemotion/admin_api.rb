@@ -11,7 +11,7 @@ module Chemotion
     helpers AdminHelpers
     resource :admin do
       before do
-        error(401) unless current_user.is_a?(Admin)
+        error!(401) unless current_user.is_a?(Admin)
       end
 
       desc 'Check disk space'

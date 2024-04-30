@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
-import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
+import {
+  Tooltip, OverlayTrigger, Table, Label
+} from 'react-bootstrap';
 import classnames from 'classnames';
 
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
@@ -56,14 +58,10 @@ export function reactionRole(element) {
 function reactionVariations(element) {
   if (element.type === 'reaction' && element.variations && element.variations.length) {
     return (
-      <div>
-        {element.variations.length}
-        {' '}
-        variations
-      </div>
+      <Label bsStyle="info">{`${element.variations.length} variation(s)`}</Label>
     );
   }
-  return undefined;
+  return null;
 }
 
 function showDetails(element) {
