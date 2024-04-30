@@ -150,15 +150,17 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: 'id of cell line sample to copy'
         requires :collection_id, type: Integer, desc: 'id of collection of copied cell line sample'
+        requires :container, type: Hash, desc: 'root container of element'
       end
       namespace :copy do
         post do
           cell_line_to_copy = @current_user.cellline_samples.find(params[:id])
           use_case = Usecases::CellLines::Copy.new(cell_line_to_copy, @current_user, params[:collection_id])
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, CelllineSample).update?
+          #error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, CelllineSample).update?
 
           begin
             copied_cell_line_sample = use_case.execute!
+            copied_cell_line_sample.container = update_datamodel(params[:container])
           rescue StandardError => e
             error!(e, 400)
           end
