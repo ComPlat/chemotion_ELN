@@ -129,7 +129,11 @@ export const SearchStore = types
     },
     changeSearchModalSelectedForm(value) {
       self.search_modal_selected_form = value;
-      self.clearSearchResults();
+      if (!self.searchVisible) {
+        self.toggleSearch();
+        self.toggleSearchResults();
+      }
+      // self.clearSearchResults();
       self.showMinimizedSearchModal();
     },
     changeSearchType(e) {
@@ -218,6 +222,7 @@ export const SearchStore = types
     clearSearchResults() {
       self.clearSearchAndTabResults();
       self.hideSearchResults();
+      self.search_result_panel_visible = false;
       self.search_filters.clear();
       self.search_values.clear();
       self.error_messages = [];
@@ -254,7 +259,9 @@ export const SearchStore = types
       self.error_messages = error_messages;
     },
     changeTabCurrentPage(key, index, id) {
-      self.tab_current_page[id] = { [key]: index };
+      const tabs = [...self.tab_current_page];
+      tabs[id] = { [key]: index };
+      self.tab_current_page = tabs;
     },
     clearTabCurrentPage() {
       self.tab_current_page.splice(0, self.tab_current_page.length);
@@ -267,6 +274,8 @@ export const SearchStore = types
       self.hideSearchResults();
       if (!self.show_search_result_list) {
         self.clearSearchResults();
+      } else {
+        self.search_result_panel_visible = true;
       }
       self.active_tab_key = 0;
       self.result_error_messages = [];
@@ -275,6 +284,7 @@ export const SearchStore = types
       self.hideSearchModal();
       self.hideSearchResults();
       self.active_tab_key = 0;
+      self.search_result_panel_visible = true;
       self.changeShowSearchResultListValue(true);
       self.result_error_messages = [];
     },
