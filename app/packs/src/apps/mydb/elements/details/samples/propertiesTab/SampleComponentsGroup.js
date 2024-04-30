@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Glyphicon, ListGroup } from 'react-bootstrap';
+import { Button, Glyphicon, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import Material from '../../reactions/schemeTab/Material';
@@ -14,7 +14,7 @@ function createSample(component) {
 
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
-    headIndex, dropSample,dropMaterial,
+    headIndex, dropSample,dropMaterial, lockAmountColumn, switchAmount
   }) => {
     const contents = [];
     let sampleComponents = sample.components;
@@ -42,6 +42,7 @@ const SampleComponentsGroup = ({
             dropSample={dropSample}
             lockEquivColumn={false}
             showLoadingColumn={false}
+            lockAmountColumn={lockAmountColumn}
            />
         ));
       });
@@ -67,6 +68,25 @@ const SampleComponentsGroup = ({
         <Glyphicon glyph="plus" />
       </Button>
     );
+
+    const switchAmountTooltip = () => (
+      <Tooltip id="assign_button">Lock/unlock amounts <br /> (mass/volume/mol) </Tooltip>
+    );
+    
+    const SwitchAmountButton = (lockAmountColumn, switchAmount) => {
+      return (
+        <OverlayTrigger placement="top" overlay={switchAmountTooltip()} >
+          <Button
+            id="lock_amount_column_btn"
+            bsSize="xsmall"
+            bsStyle={lockAmountColumn ? 'warning' : 'default'}
+            onClick={switchAmount}
+          >
+            <i className={lockAmountColumn ? 'fa fa-lock' : 'fa fa-unlock'} />
+          </Button>
+        </OverlayTrigger>
+      );
+    };
   
     return (
       <div>
@@ -85,7 +105,7 @@ const SampleComponentsGroup = ({
             <tr>
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
-            <th style={{ padding: '3px 3px' }}>{headers.amount}</th>
+            <th style={{ padding: '3px 3px' }}>{headers.amount} {SwitchAmountButton(lockAmountColumn, switchAmount)}</th>
             <th />
             <th />
             <th>{headers.stockConc}</th>
@@ -109,6 +129,8 @@ const SampleComponentsGroup = ({
     sample: PropTypes.instanceOf(Sample).isRequired,
     dropSample: PropTypes.func.isRequired,
     dropMaterial: PropTypes.func.isRequired,
+    switchAmount: PropTypes.func.isRequired,
+    lockAmountColumn: PropTypes.bool
   };
   
   export default SampleComponentsGroup;

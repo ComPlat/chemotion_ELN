@@ -52,7 +52,9 @@ class SampleDetailsComponentsDnd extends React.Component {
       deleteMixtureComponent,
       isOver,
       canDrop,
-      connectDropTarget
+      connectDropTarget,
+      lockAmountColumn,
+      switchAmount,
     } = this.props;
     const style = {
       padding: '0px 0px',
@@ -75,6 +77,8 @@ class SampleDetailsComponentsDnd extends React.Component {
           isOver={isOver}
           canDrop={canDrop}
           materialGroup={'components'}
+          lockAmountColumn={lockAmountColumn}
+          switchAmount={switchAmount}
         />
       </div>
     );

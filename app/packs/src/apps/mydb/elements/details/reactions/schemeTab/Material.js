@@ -180,7 +180,7 @@ class Material extends Component {
               metricPrefix={metric}
               metricPrefixes={metricPrefixes}
               precision={3}
-              disabled={!permitOn(this.props.reaction) || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
+              disabled={!permitOn(this.props.reaction) || this.props.lockAmountColumn || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
@@ -567,7 +567,7 @@ class Material extends Component {
                 metricPrefix={metric}
                 metricPrefixes={metricPrefixes}
                 precision={4}
-                disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
+                disabled={!permitOn(reaction)  || this.props.lockAmountColumn || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
                 onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
                 onMetricsChange={this.handleMetricsChange}
                 bsStyle={material.error_mass ? 'error' : massBsStyle}
@@ -587,7 +587,7 @@ class Material extends Component {
             metricPrefix={metricMol}
             metricPrefixes={metricPrefixesMol}
             precision={4}
-            disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
+            disabled={!permitOn(reaction)  || this.props.lockAmountColumn || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
             onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
             onMetricsChange={this.handleMetricsChange}
             bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
@@ -604,7 +604,7 @@ class Material extends Component {
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
             precision={4}
-            disabled={!isMixture}
+            disabled={!isMixture || isMixture && !this.props.lockAmountColumn}
             onChange={e => this.handleAmountUnitChange(e, material.stockConc, 'stockConc')}
             onMetricsChange={this.handleMetricsChange}
           />
@@ -619,7 +619,7 @@ class Material extends Component {
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
             precision={4}
-            disabled={!isMixture}
+            disabled={!isMixture  || isMixture && !this.props.lockAmountColumn }
             onChange={e => this.handleAmountUnitChange(e, material.concn)}
             onMetricsChange={this.handleMetricsChange}
           />

@@ -25,6 +25,7 @@ export default class SampleDetailsComponents extends React.Component {
     this.onChangeComponent = this.onChangeComponent.bind(this);
     this.updatedSampleForAmountUnitChange = this.updatedSampleForAmountUnitChange.bind(this);
     this.updatedSampleForMetricsChange = this.updatedSampleForMetricsChange.bind(this);
+    this.switchAmount = this.switchAmount.bind(this);
   }
 
   onChangeComponent(changeEvent) {
@@ -124,6 +125,11 @@ export default class SampleDetailsComponents extends React.Component {
     this.props.onChange(sample);
   }
 
+  switchAmount() {
+    const { lockAmountColumn } = this.state;
+    this.setState({ lockAmountColumn: !lockAmountColumn });
+  }
+
   render() {
     const {
       sample, isOver, canDrop
@@ -144,6 +150,8 @@ export default class SampleDetailsComponents extends React.Component {
         dropMaterial={this.dropMaterial}
         deleteMixtureComponent={this.deleteMixtureComponent}
         onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
+        switchAmount={this.switchAmount}
+        lockAmountColumn={this.state.lockAmountColumn}
       />
     );
   }
