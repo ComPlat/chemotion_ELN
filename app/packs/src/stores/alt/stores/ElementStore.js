@@ -189,6 +189,7 @@ class ElementStore {
       handleCopyReaction: ElementActions.copyReaction,
       handleCopyResearchPlan: ElementActions.copyResearchPlan,
       handleCopyElement: ElementActions.copyElement,
+      handleCopyCellLine: ElementActions.copyCellLineFromId,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -1006,6 +1007,10 @@ class ElementStore {
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
     Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+  }
+
+  handleCopyCellLine(result){
+    Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
   }
 
   handleOpenReactionDetails(reaction) {

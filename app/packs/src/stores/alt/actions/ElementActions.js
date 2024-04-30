@@ -485,6 +485,17 @@ class ElementActions {
     return cellLineSample;
   }
 
+  copyCellLineFromId(id,collectionId ) {
+    return (dispatch) => {
+      CellLinesFetcher.copyCellLine(id,collectionId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   splitAsSubsamples(ui_state) {
     return (dispatch) => {
       SamplesFetcher.splitAsSubsamples(ui_state)

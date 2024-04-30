@@ -1,4 +1,5 @@
 import CellLine from 'src/models/cellLine/CellLine';
+import Container from 'src/models/Container';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
@@ -123,6 +124,26 @@ export default class CellLinesFetcher {
       },
       method: 'GET'
     }).then((response) => response.json());
+  }
+
+  static copyCellLine(cellLineId, collectionId){
+    const params = {
+      id: cellLineId,
+      collection_id: collectionId,
+      container: Container.init()
+    }
+
+    return fetch('/api/v1/cell_lines/copy/', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(params)
+    }).then((response) => response.json())
+    .then((json) => CellLine.createFromRestResponse(collectionId, json))
+
   }
 
   static update(cellLineItem) {
