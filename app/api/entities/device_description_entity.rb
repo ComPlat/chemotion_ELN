@@ -44,8 +44,10 @@ module Entities
     expose :ontologies
     expose :segments, using: 'Labimotion::SegmentEntity'
     expose :comments, using: 'Entities::CommentEntity'
+    expose :comment_count
     expose :tag, using: 'Entities::ElementTagEntity'
     expose! :can_copy, unless: :displayed_in_list
+    expose! :ancestor_ids
 
     def type
       'device_description'
@@ -53,6 +55,10 @@ module Entities
 
     def changed
       false
+    end
+
+    def comment_count
+      object.comments.count
     end
   end
 end
