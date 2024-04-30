@@ -53,6 +53,7 @@ module Chemotion
         arr_img = []
         arr_csv = []
         arr_nmrium = []
+        arr_json = []
         Zip::InputStream.open(rsp_io) do |io|
           while (entry = io.get_next_entry)
             ext = extract_ext(entry)
@@ -69,6 +70,9 @@ module Chemotion
             elsif %w[nmrium].include?(ext)
               tmp_nmrium = generate_tmp_file(data, ext)
               arr_nmrium.push(tmp_nmrium)
+            elsif %w[json].include?(ext)
+              tmp_json = generate_tmp_file(data, ext)
+              arr_json.push(tmp_json)
             end
           end
         end
@@ -78,7 +82,7 @@ module Chemotion
         if arr_img.count > arr_jcamp.count
           tmp_img = arr_img.last
         end
-        [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium]
+        [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, arr_json]
       end
     end
   end
