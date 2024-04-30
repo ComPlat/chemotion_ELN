@@ -43,6 +43,9 @@ export const DeviceDescriptionsStore = types
     show_ontology_modal: types.optional(types.boolean, false),
     ontology_mode: types.optional(types.string, 'edit'),
     selected_segment_id: types.optional(types.number, 0),
+    list_grouped_by: types.optional(types.string, 'short_label'),
+    show_all_groups: types.optional(types.boolean, true),
+    shown_groups: types.optional(types.array(types.string), []),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -187,8 +190,22 @@ export const DeviceDescriptionsStore = types
     setSelectedSegmentId(segment_id) {
       self.selected_segment_id = segment_id;
     },
+    setListGroupedBy(value) {
+      self.list_grouped_by = value;
+    },
+    toggleAllGroups() {
+      self.show_all_groups = !self.show_all_groups;
+    },
+    addGroupToShownGroups(value) {
+      self.shown_groups.push(value);
+    },
+    removeGroupFromShownGroups(value) {
+      const shownGroups = self.shown_groups.filter((g) => { return g !== value });
+      self.shown_groups = shownGroups;
+    },
   }))
   .views(self => ({
     get deviceDescriptionsValues() { return values(self.devices_descriptions) },
     get filteredAttachments() { return values(self.filtered_attachments) },
+    get shownGroups() { return values(self.shown_groups) },
   }));
