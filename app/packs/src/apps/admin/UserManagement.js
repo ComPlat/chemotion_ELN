@@ -927,112 +927,6 @@ export default class UserManagement extends React.Component {
   renderEditUserModal() {
     const { user } = this.state;
     return (
-<<<<<<< HEAD
-      <Modal
-        show={this.state.showEditUserModal}
-        onHide={this.handleEditUserClose}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div className="col-md-9">
-            <Form horizontal>
-              <FormGroup controlId="formControlEmail">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Email:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="email"
-                    name="u_email"
-                    defaultValue={user.email}
-                    inputRef={(ref) => { this.u_email = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlFirstName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  First name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_firstname"
-                    defaultValue={user.first_name}
-                    inputRef={(ref) => { this.u_firstname = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlLastName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Last name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_lastname"
-                    defaultValue={user.last_name}
-                    inputRef={(ref) => { this.u_lastname = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlAbbr">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Abbr (3):
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_abbr"
-                    defaultValue={user.initials}
-                    inputRef={(ref) => { this.u_abbr = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlsType">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Type:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    componentClass="select"
-                    defaultValue={user.type}
-                    inputRef={(ref) => { this.u_type = ref; }}
-                  >
-                    <option value="Person">Person</option>
-                    <option value="Group">Group</option>
-                    <option value="Admin">Admin</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlMessage">
-                <Col sm={12}>
-                  <FormControl
-                    type="text"
-                    readOnly
-                    name="messageEditUserModal"
-                    value={this.state.messageEditUserModal}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup>
-                <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)}>
-                    Update&nbsp;
-                    <i className="fa fa-save" />
-                  </Button>
-                  &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()}>
-                    Cancel&nbsp;
-                  </Button>
-                </Col>
-              </FormGroup>
-            </Form>
-          </div>
-        </Modal.Body>
-      </Modal>
-=======
       <Tab.Container id="tabs-with-dropdown" defaultActiveKey="first">
         <Modal
           show={this.state.showEditUserModal}
@@ -1117,7 +1011,6 @@ export default class UserManagement extends React.Component {
                         >
                           <option value="Person">Person</option>
                           <option value="Group">Group</option>
-                          <option value="Device">Device</option>
                           <option value="Admin">Admin</option>
                         </FormControl>
                       </Col>
@@ -1241,7 +1134,6 @@ export default class UserManagement extends React.Component {
           </Modal.Body>
         </Modal>
       </Tab.Container>
->>>>>>> hub/main
     );
   }
 
