@@ -21,12 +21,31 @@ export const attachmentThumbnail = (attachment) => (
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
         transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
       }}
-      hasPop
       alt="thumbnail"
       previewObject={{
         src: attachment.preview,
       }}
-      popObject={
+      popObject
+      disableClick
+    />
+    <div className="large-preview-modal">
+      <ImageModal
+        imageStyle={{
+          width: '400px',
+          height: '400px',
+          borderRadius: '5px',
+          backgroundColor: '#FFF',
+          objectFit: 'contain',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+        }}
+        hasPop
+        showPopImage
+        alt="thumbnail"
+        previewObject={{
+          src: attachment.preview,
+        }}
+        popObject={
         attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
           ? {
             src: `/api/v1/attachments/${attachment.id}/annotated_image`,
@@ -35,8 +54,9 @@ export const attachmentThumbnail = (attachment) => (
             src: attachment.preview,
           }
         }
-      disableClick
-    />
+        disableClick
+      />
+    </div>
   </div>
 );
 

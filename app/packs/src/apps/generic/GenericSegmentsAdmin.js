@@ -10,6 +10,7 @@ import Notifications from 'src/components/Notifications';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher'; 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { notification, submit } from 'src/apps/generic/Utils';
 import {
@@ -63,6 +64,8 @@ export default class GenericSegmentsAdmin extends React.Component {
     this.handleCreateRepo = this.handleCreateRepo.bind(this);
     this.handleShowRepo = this.handleShowRepo.bind(this);
     this.fetchElementKlasses = this.fetchElementKlasses.bind(this);
+    this.handleUploadKlass = this.handleUploadKlass.bind(this);
+    this.handleDownloadKlass = this.handleDownloadKlass.bind(this);
   }
 
   componentDidMount() {
@@ -308,6 +311,45 @@ export default class GenericSegmentsAdmin extends React.Component {
         });
     }
   }
+  
+  handleDownloadKlass(e) {
+    LoadingActions.start();
+    GenericKlassFetcher.downloadKlass(e.id,'SegmentKlass')
+      .then(result => {
+        LoadingActions.stop();
+      })
+      .finally(() => {
+        LoadingActions.stop();
+      });
+  }
+  
+  handleUploadKlass(_response) {
+    const { elements } = this.state;
+    const { element, notify } = _response;
+    if (!notify.isSuccess) {
+      notification(notify);
+      return;
+    }
+    if (!validateInput(element)) return;
+    LoadingActions.start();
+    GenericSgsFetcher.uploadKlass(element)
+      .then(result => {
+        if (result?.status === 'success') {
+          this.fetchElements();          
+        }
+        notification({
+          title: 'Upload Segment',
+          lvl: result?.status || 'error',
+          msg: result?.message || 'Unknown error',
+        });
+      })
+      .catch(errorMessage => {
+        console.log(errorMessage);
+      })
+      .finally(() => {
+        LoadingActions.stop();
+      });
+  }
 
   fetchElements() {
     GenericSgsFetcher.listSegmentKlass().then(result => {
@@ -349,6 +391,8 @@ export default class GenericSegmentsAdmin extends React.Component {
         fnActive={this.handleActivateKlass}
         fnDelete={this.handleDeleteKlass}
         fnUpdate={this.handleUpdateKlass}
+        fnUpload={this.handleUploadKlass}
+        fnDownload={this.handleDownloadKlass}
         genericType="Segment"
         gridData={els}
         klasses={this.state.klasses}

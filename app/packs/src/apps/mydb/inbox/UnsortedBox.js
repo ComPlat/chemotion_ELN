@@ -4,7 +4,7 @@ import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import Pagination from 'src/apps/mydb/inbox/Pagination';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 import Container from 'src/models/Container';
 import UnsortedDatasetModal from 'src/apps/mydb/inbox/UnsortedDatasetModal';

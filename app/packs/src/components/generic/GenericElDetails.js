@@ -16,7 +16,7 @@ import {
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import Aviator from 'aviator';
-import { GenInterface, GenButtonReload } from 'chem-generic-ui';
+import { GenInterface, GenButtonReload, GenButtonExport } from 'chem-generic-ui';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -62,6 +62,7 @@ export default class GenericElDetails extends Component {
     this.handleGenericElChanged = this.handleGenericElChanged.bind(this);
     this.handleElChanged = this.handleElChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleExport = this.handleExport.bind(this);
   }
 
   componentDidMount() {
@@ -183,6 +184,11 @@ export default class GenericElDetails extends Component {
     return true;
   }
 
+  handleExport() {
+    const { genericEl } = this.state;
+    ElementActions.exportElement(genericEl, 'Element', 'docx');
+  }
+
   handleAttachmentDrop(files) {
     const { genericEl } = this.state;
     files.map(file => genericEl.attachments.push(Attachment.fromFile(file)));
@@ -229,6 +235,10 @@ export default class GenericElDetails extends Component {
   elementalToolbar(genericEl) {
     return (
       <ButtonToolbar style={{ margin: '5px 0px' }}>
+        <GenButtonExport
+          generic={genericEl}
+          fnExport={this.handleExport}
+        />
         <FlowViewerBtn generic={genericEl} />
         <RevisionViewerBtn
           fnRetrieve={this.handleRetrieveRevision}

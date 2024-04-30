@@ -95,6 +95,7 @@ class InboxActions {
           dispatch({
             inbox: result.inbox,
             currentContainerPage,
+            containerId,
           });
         }).catch((errorMessage) => {
           console.log(errorMessage);
@@ -140,6 +141,20 @@ class InboxActions {
   deleteAttachment(params, fromUnsorted = false) {
     return (dispatch) => {
       AttachmentFetcher.deleteAttachment(params)
+        .then((result) => {
+          dispatch({
+            result,
+            fromUnsorted,
+          });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  bulkDeleteAttachments(attachmentIdsToDelete, fromUnsorted = false) {
+    return (dispatch) => {
+      AttachmentFetcher.bulkDeleteAttachments(attachmentIdsToDelete)
         .then((result) => {
           dispatch({
             result,

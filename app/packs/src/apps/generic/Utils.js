@@ -95,7 +95,7 @@ export const elementNames = (all = true, generics = null) => {
 };
 
 export const FlowViewerBtn = props => {
-  const { generic } = props;
+  const { generic, flowType, label = 'Designed Workflow', text = 'click to view defined workflow' } = props;
   const propertiesRelease = generic.properties_release || {};
 
   if (Object.keys(propertiesRelease || {}).length < 1) return null;
@@ -115,14 +115,14 @@ export const FlowViewerBtn = props => {
     <OverlayTrigger
       delayShow={500}
       placement="top"
-      overlay={<Tooltip id={uuid.v4()}>click to view defined workflow</Tooltip>}
+      overlay={<Tooltip id={uuid.v4()}>{text}</Tooltip>}
     >
       <Button
-        onClick={() => renderFlowModal(generic, true)}
+        onClick={() => renderFlowModal(generic, true, flowType)}
         bsSize="xsmall"
         bsStyle="primary"
       >
-        <i className="fa fa-sitemap" aria-hidden="true" /> Workflow
+        <i className="fa fa-sitemap" aria-hidden="true" />{` ${label}`}
       </Button>
     </OverlayTrigger>
   );

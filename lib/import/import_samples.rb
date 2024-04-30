@@ -235,7 +235,7 @@ module Import
       additional_columns = %w[cas mn.name].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
-      excluded_column = %w[description solvent location external_label].freeze
+      excluded_column = %w[description solvent location].freeze
       comparison_values = %w[melting_point boiling_point].freeze
 
       value = row[field]

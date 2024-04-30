@@ -87,10 +87,6 @@ module Entities
       options[:policy].try(:update?) || false
     end
 
-    def can_copy
-      options[:policy].try(:copy?) || false
-    end
-
     def can_publish
       options[:policy].try(:destroy?) || false
     end

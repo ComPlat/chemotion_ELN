@@ -72,6 +72,6 @@ class Screen < ApplicationRecord
   def description_to_plain_text
     return unless description_changed?
 
-    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
+    self.plain_text_description = Chemotion::QuillToPlainText.convert(description)
   end
 end

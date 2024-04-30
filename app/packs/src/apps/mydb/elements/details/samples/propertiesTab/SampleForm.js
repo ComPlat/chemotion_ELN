@@ -23,7 +23,6 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
-      openAdditionalProperties: false,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -313,6 +312,7 @@ export default class SampleForm extends React.Component {
       const object = { value: e, unit };
       sample.xref = { ...sample.xref, flash_point: object };
     } else if (/^xref_/.test(field)) {
+      sample.xref ||= {};
       const key = field.split('xref_')[1];
       sample.xref[key] = e;
     } else if (e && (e.value || e.value === 0)) {
@@ -344,13 +344,15 @@ export default class SampleForm extends React.Component {
 
   textInput(sample, field, label, disabled = false) {
     const condition = field !== 'external_label' && field !== 'xref_inventory_label' && field !== 'name';
+    const updateValue = (/^xref_/.test(field) && sample.xref
+      ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
     return (
       <FormGroup bsSize={condition ? 'small' : null}>
         <ControlLabel>{label}</ControlLabel>
         <FormControl
           id={`txinput_${field}`}
           type="text"
-          value={(/^xref_/.test(field) ? sample.xref[field.split('xref_')[1]] : sample[field]) || ''}
+          value={updateValue}
           onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
@@ -360,8 +362,8 @@ export default class SampleForm extends React.Component {
   }
 
   inputWithUnit(sample, field, label) {
-    const value = sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].value : '';
-    const unit = sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].unit : '°C';
+    const value = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].value : '';
+    const unit = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].unit : '°C';
     return (
       <NumericInputUnit
         field="flash_point"

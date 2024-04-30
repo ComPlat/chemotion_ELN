@@ -2,7 +2,12 @@
 
 require 'rails_helper'
 
-RSpec.describe 'User' do
+RSpec.describe User do
+  it_behaves_like 'acts_as_paranoid soft-deletable model'
+
+  it { is_expected.to have_many(:vessels).through(:collections) }
+  it { is_expected.to have_many(:created_vessels).class_name('Vessel').inverse_of(:creator).dependent(nil) }
+
   describe 'creation' do
     let(:user) { build(:user) }
     let(:person) { build(:person) }

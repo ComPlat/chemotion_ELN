@@ -19,7 +19,10 @@ class Fcollector
     devices(use_sftp).each do |device| # rubocop:disable Metrics/BlockLength
       @current_collector = nil
       method_params = device.profile.data['method_params']
-      host = method_params['host']
+      uri = URI.parse("ssh://#{method_params['host']}")
+      host = uri.host
+      port = uri.port
+
       case method_params['authen']
       when 'keyfile'
         user = method_params['user']
@@ -56,6 +59,7 @@ class Fcollector
       end
       args[:timeout] = 10
       args[:number_of_password_prompts] = 0
+      args[:port] = port if port.present?
 
       begin
         Net::SFTP.start(host, user, **args) do |sftp|
@@ -102,5 +106,19 @@ class Fcollector
     DCLogger.log.error(self.class.name) do
       "#{@current_collector&.path} >>> #{message}"
     end
+  end
+
+  def new_folders(monitored_folder_p)
+    if @sftp
+      new_folders_p = @sftp.dir.glob(monitored_folder_p, '*').select(
+        &:directory?
+      )
+      new_folders_p.map! { |dir| File.join(monitored_folder_p, dir.name) }
+    else
+      new_folders_p = Dir.glob(File.join(monitored_folder_p, '*')).select do |e|
+        File.directory?(e)
+      end
+    end
+    new_folders_p
   end
 end

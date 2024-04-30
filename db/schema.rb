@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_12_18_191929) do
+ActiveRecord::Schema.define(version: 2024_04_24_120634) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -249,6 +249,18 @@ ActiveRecord::Schema.define(version: 2023_12_18_191929) do
     t.index ["collection_id"], name: "index_collections_screens_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_screens_on_deleted_at"
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
+  end
+
+  create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "collection_id"
+    t.uuid "vessel_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_vessels_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_vessels_on_deleted_at"
+    t.index ["vessel_id", "collection_id"], name: "index_collections_vessels_on_vessel_id_and_collection_id", unique: true
+    t.index ["vessel_id"], name: "index_collections_vessels_on_vessel_id"
   end
 
   create_table "collections_wellplates", id: :serial, force: :cascade do |t|
@@ -508,6 +520,7 @@ ActiveRecord::Schema.define(version: 2023_12_18_191929) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
+    t.string "ancestry"
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -1361,6 +1374,38 @@ ActiveRecord::Schema.define(version: 2023_12_18_191929) do
     t.integer "group_id"
     t.index ["group_id"], name: "index_users_groups_on_group_id"
     t.index ["user_id"], name: "index_users_groups_on_user_id"
+  end
+
+  create_table "vessel_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "details"
+    t.string "material_details"
+    t.string "material_type"
+    t.string "vessel_type"
+    t.float "volume_amount"
+    t.string "volume_unit"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.float "weight_amount"
+    t.string "weight_unit"
+    t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
+  end
+
+  create_table "vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "vessel_template_id"
+    t.bigint "user_id"
+    t.string "name"
+    t.string "description"
+    t.string "short_label"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.string "bar_code"
+    t.string "qr_code"
+    t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
+    t.index ["user_id"], name: "index_vessels_on_user_id"
+    t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
   end
 
   create_table "wellplates", id: :serial, force: :cascade do |t|

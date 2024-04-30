@@ -4,7 +4,7 @@ import { Table } from 'react-bootstrap';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Aviator from 'aviator';
 import CellLineItemText from 'src/apps/mydb/elements/list/cellLine/CellLineItemText';
 import ArrayUtils from 'src/utilities/ArrayUtils';

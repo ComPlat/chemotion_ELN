@@ -24,12 +24,15 @@ import ScreenWellplates from 'src/apps/mydb/elements/details/screens/ScreenWellp
 import ResearchplanFlowDisplay from 'src/apps/mydb/elements/details/screens/ResearchplanFlowDisplay';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ScreenDetails extends Component {
@@ -41,6 +44,7 @@ export default class ScreenDetails extends Component {
       activeTab: UIStore.getState().screen.activeTab,
       visible: Immutable.List(),
       expandedResearchPlanId: null,
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
@@ -50,8 +54,10 @@ export default class ScreenDetails extends Component {
 
   componentDidMount() {
     const { screen } = this.props;
+    const { currentUser } = this.state;
+
     UIStore.listen(this.onUIStoreChange);
-    if (!screen.isNew) {
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !screen.isNew) {
       CommentActions.fetchComments(screen);
     }
   }

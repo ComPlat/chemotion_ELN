@@ -53,4 +53,30 @@ export default class GenericSgsFetcher extends GenericBaseFetcher {
       'update_segment_template'
     );
   }
+  
+  static uploadKlass(params) {
+    return this.execData(params, 'upload_klass');
+  }
+
+  static downloadKlass(id, klass) {
+    let fileName;
+    const promise = fetch(`/api/v1/segments/download_klass.json?id=${id}`, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      if (response.ok) {
+        fileName = getFileName(response);
+        return response.blob();
+      }
+    }).then((blob) => {
+      downloadBlob(fileName, blob);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
 }

@@ -53,12 +53,14 @@ class Collection < ApplicationRecord
   has_many :collections_screens, dependent: :destroy
   has_many :collections_research_plans, dependent: :destroy
   has_many :collections_elements, dependent: :destroy, class_name: 'Labimotion::CollectionsElement'
+  has_many :collections_vessels, dependent: :destroy
   has_many :collections_celllines, dependent: :destroy
   has_many :samples, through: :collections_samples
   has_many :reactions, through: :collections_reactions
   has_many :wellplates, through: :collections_wellplates
   has_many :screens, through: :collections_screens
   has_many :research_plans, through: :collections_research_plans
+  has_many :vessels, through: :collections_vessels
   has_many :elements, through: :collections_elements
   has_many :cellline_samples, through: :collections_celllines
 

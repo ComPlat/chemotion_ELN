@@ -5,14 +5,54 @@ import Delta from 'quill-delta';
 import React from 'react';
 import {
   Button, ControlLabel,
-  Form, FormControl,
+  Form, FormControl, FormGroup,
   Panel
 } from 'react-bootstrap';
 
-import ReactQuill from 'src/components/reactQuill/ReactQuill';
+import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
-import ActionHeaderBtn from 'src/apps/admin/textTemplates/ActionHeaderBtn';
-import ActionRowBtn from 'src/apps/admin/textTemplates/ActionRowBtn';
+
+function RemoveRowBtn({ removeRow, node }) {
+  const { data } = node;
+
+  const btnClick = () => {
+    removeRow(data.name);
+  };
+
+  return (
+    <Button
+      active
+      onClick={btnClick}
+      bsSize="xsmall"
+      bsStyle="danger"
+    >
+      <i className="fa fa-trash" />
+    </Button>
+  );
+}
+
+RemoveRowBtn.propTypes = {
+  removeRow: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  node: PropTypes.object.isRequired,
+};
+
+function AddRowBtn({ addRow }) {
+  return (
+    <Button
+      active
+      onClick={() => addRow()}
+      bsSize="xsmall"
+      bsStyle="primary"
+    >
+      <i className="fa fa-plus" />
+    </Button>
+  );
+}
+
+AddRowBtn.propTypes = {
+  addRow: PropTypes.func.isRequired,
+};
 
 export default class TextTemplate extends React.Component {
   constructor(props) {
@@ -46,11 +86,11 @@ export default class TextTemplate extends React.Component {
       {
         headerName: '',
         colId: 'actions',
-        headerComponentFramework: ActionHeaderBtn,
+        headerComponent: AddRowBtn,
         headerComponentParams: {
           addRow: this.addRow
         },
-        cellRendererFramework: ActionRowBtn,
+        cellRenderer: RemoveRowBtn,
         cellRendererParams: {
           removeRow: this.removeRow,
         },
@@ -81,23 +121,25 @@ export default class TextTemplate extends React.Component {
   }
 
   componentDidUpdate() {
-    if (!this.gridApi) {
+    if (this.gridApi) {
       this.gridApi.sizeColumnsToFit();
     }
   }
 
   // eslint-disable-next-line class-methods-use-this
   onGridReady(e) {
-    e.api.sizeColumnsToFit();
+    if (!e.api) return;
     this.gridApi = e.api;
+    this.gridApi.sizeColumnsToFit();
   }
 
   onSelectionChanged() {
     if (!this.gridApi) return;
 
     const selectedRows = this.gridApi.getSelectedRows();
-    const templateName = selectedRows[0].name;
+    if (selectedRows.length === 0) return;
 
+    const templateName = selectedRows[0].name;
     const { fetchedTemplates } = this.props;
     const selectedNameIdx = fetchedTemplates.findIndex(t => (
       t.name === templateName
@@ -153,7 +195,7 @@ export default class TextTemplate extends React.Component {
       return;
     }
 
-    const quill = this.reactQuillRef.current.getEditor();
+    const quill = this.reactQuillRef.current;
     const delta = quill.getContents();
 
     // Quill automatically append a trailing newline, we don't want that
@@ -170,12 +212,15 @@ export default class TextTemplate extends React.Component {
   removeRow(name) {
     const { removeTemplate } = this.props;
     removeTemplate(name);
+    this.setState({ selectedTemplate: null });
   }
 
   addRow() {
     const { addTemplate } = this.props;
     addTemplate(this.gridApi);
   }
+
+  handleInputChange = () => {}
 
   render() {
     const { predefinedTemplateNames } = this.props;
@@ -188,9 +233,9 @@ export default class TextTemplate extends React.Component {
             <div style={{ width: '35%' }}>
               <div style={{ height: '100%' }} className="ag-theme-balham">
                 <AgGridReact
-                  enableColResize
                   suppressHorizontalScroll
                   columnDefs={this.columnDefs}
+                  defaultColDef={{ resizable: true }}
                   rowSelection="single"
                   onGridReady={this.onGridReady}
                   onSelectionChanged={this.onSelectionChanged}
@@ -219,13 +264,13 @@ export default class TextTemplate extends React.Component {
                 </Form>
               </div>
               <div>
-                <ReactQuill
-                  modules={this.modules}
-                  theme="snow"
-                  style={{ height: '120px' }}
-                  ref={this.reactQuillRef}
-                  value={(selectedTemplate || {}).data}
-                />
+                <FormGroup>
+                  <QuillEditor
+                    ref={this.reactQuillRef}
+                    value={(selectedTemplate || {}).data}
+                    onChange={event => this.handleInputChange(event)}
+                  />
+                </FormGroup>
               </div>
               &nbsp;&nbsp;
               <div style={{ marginTop: '30px' }}>

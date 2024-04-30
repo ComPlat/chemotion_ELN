@@ -194,11 +194,11 @@ export default class ModalImportConfirm extends React.Component {
     let columns={
           columnDefs: [
             {headerName: '#', field: 'index', width: 60, pinned: 'left'},
-            {headerName: 'Structure', field: 'svg', cellRendererFramework: SvgCellRenderer, pinned: 'left' },
+            {headerName: 'Structure', field: 'svg', cellRenderer: SvgCellRenderer, pinned: 'left', autoHeight: true },
             {headerName: 'name', field: 'name', editable:true},
-            {headerName: 'Select', field: 'checked', cellRendererFramework: SelectCellRenderer,
+            {headerName: 'Select', field: 'checked', cellRenderer: SelectCellRenderer,
               cellRendererParams:{onSelectChange: this.onSelectChange}, width: 30,
-              editable:true, cellEditorFramework: SelectCellEditor,
+              editable:true, cellEditor: SelectCellEditor,
               cellEditorParams:{onSelectChange: this.onSelectChange}
             },
           ],
@@ -206,14 +206,15 @@ export default class ModalImportConfirm extends React.Component {
             editable:  false,
             filter: 'number',
             width: 300,
-            resizable: true
+            resizable: true,
+            sortable: true,
           },
         }
 
     custom_data_keys.map((e)=>{columns.columnDefs.push(
       {
         headerName: e, field: e ,
-        headerComponentFramework: CustomHeader,
+        headerComponent: CustomHeader,
         headerComponentParams:{
           onHeaderSelect: this.onHeaderSelect,
           defaultSelected: defaultSelected[e],
@@ -230,14 +231,10 @@ export default class ModalImportConfirm extends React.Component {
             columnDefs={columns.columnDefs}
             defaultColDef={columns.defaultColDef}
             rowData={rows}
-            enableSorting="true"
-            enableFilter="true"
             rowHeight="100"
             rowSelection="single"
             getRowStyle={(params)=>{if (params.data.checked) {return null}
              else {return {'background-color': 'red'}}}}
-            enableColResize= {true}
-
           />
         </div>
 

@@ -106,7 +106,9 @@ module Import
         match[1]
       else
         path = url.split('/')
-        path.last
+        filter = path.last
+        # extract digits from the string
+        filter.match(/.*?(?=[$%&?]|$)/)&.[](0)
       end
     end
 
@@ -115,7 +117,7 @@ module Import
       chemical['chemical_data'][0]['safetySheetPath'] ||= []
       sheet_path = { "#{vendor}_link" => "#{SAFETY_SHEET_PATH}#{file_path}" }
       is_created = Chemotion::ChemicalsService.create_sds_file(file_path, value)
-      result = [true, 'file is already saved'].include?(is_created)
+      result = [true].include?(is_created)
       chemical['chemical_data'][0]['safetySheetPath'] << sheet_path if result
       chemical
     end

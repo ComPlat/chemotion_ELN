@@ -31,9 +31,13 @@ module Import
       att = Tempfile.new(encoding: 'ascii-8bit')
       att.write(@att.read_file)
       att.rewind
+
       Zip::File.open(att.path) do |zip_file|
         # Handle entries one by one
         zip_file.each do |entry|
+          # do nothing for directory entry
+          next if entry.ftype == :directory
+
           data = entry.get_input_stream.read.force_encoding('UTF-8')
           case entry.name
           when 'export.json'
@@ -93,8 +97,7 @@ module Import
         import_reactions
         import_reactions_samples
         CelllineImporter.new(@data, @current_user_id, @instances).execute if @gt == false
-        # import_elements if @gt == false
-        # import_elements_samples if @gt == false
+        import_elements
         import_wellplates if @gt == false
         import_wells if @gt == false
         import_research_plans if @gt == false
@@ -135,13 +138,7 @@ module Import
 
       annotation_data = annotation_entry.get_input_stream.read.force_encoding('UTF-8')
       updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
-
-      annotation_data = annotation_data.gsub(
-        %r{/api/v1/attachments/image/([0-9])*},
-        "/api/v1/attachments/image/#{attachment.id}",
-      )
-
-      updater.update_annotation(annotation_data, attachment.id)
+      updater.updated_annotated_string(annotation_data, attachment.id)
     end
 
     def import_collections
@@ -398,16 +395,12 @@ module Import
       end
     end
 
-    def import_elements
-      Labimotion::Import.import_elements(@data, @instances, @gt, @current_user_id, method(:fetch_many), &method(:update_instances!))
-    end
-
     def import_wellplates
       @data.fetch('Wellplate', {}).each do |uuid, fields|
         # create the wellplate
+
         wellplate = Wellplate.create!(fields.slice(
           'name',
-          'size',
           'description',
           'short_label',
           'readout_titles',
@@ -418,6 +411,11 @@ module Import
             'Collection', 'CollectionsWellplate', 'wellplate_id', 'collection_id', uuid
           ),
         ))
+
+        if fields.key?('width') && fields.key?('height')
+          wellplate.width = fields['width'].to_i
+          wellplate.height = fields['height'].to_i
+        end
 
         # create the root container like with samples
         wellplate.container = Container.create_root_container
@@ -512,41 +510,43 @@ module Import
           # the root container was created when the containable was imported
           containable_type = fields.fetch('containable_type')
           containable_uuid = fields.fetch('containable_id')
-          containable = @instances.fetch(containable_type).fetch(containable_uuid)
-          container = containable.container
+          containable = @instances.fetch(containable_type, nil)&.fetch(containable_uuid, nil)
+          container = containable&.container
         when 'analyses'
           # get the analyses container from its parent (root) container
-          parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'))
-          container = parent.children.where("container_type = 'analyses'").first
+          parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'), nil)
+          container = parent.children.where("container_type = 'analyses'")&.first if parent.present?
         else
           # get the parent container
-          parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'))
+          parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'), nil)
 
           # create the container
-          container = parent.children.create!(fields.slice(
-                                                'containable_type',
-                                                'name',
-                                                'container_type',
-                                                'description',
-                                                'extended_metadata',
-                                                'created_at',
-                                                'updated_at',
-                                              ))
+          if parent.present?
+            container = parent.children.create!(fields.slice(
+                                                  'containable_type',
+                                                  'name',
+                                                  'container_type',
+                                                  'description',
+                                                  'extended_metadata',
+                                                  'created_at',
+                                                  'updated_at',
+                                                ))
+          end
         end
         # in any case, add container to the @instances map
         update_instances!(uuid, container)
       end
     rescue StandardError => e
-      Rails.logger.debug(e.backtrace)
+      Rails.logger.error(e.backtrace)
       raise
     end
 
     def import_attachments
       @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
-        attachable_type = fields.fetch('attachable_type')
+        attachable_type = fields.fetch('attachable_type', nil)
         attachable_uuid = fields.fetch('attachable_id')
-        attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
+        attachable = @instances.fetch(attachable_type, nil)&.fetch(attachable_uuid, nil) if attachable_type.present?
 
         attachment = Attachment.where(
           'id IN (?) AND filename LIKE ? ',
@@ -554,15 +554,17 @@ module Import
           fields.fetch('identifier') << '%',
         ).first
 
-        attachment.update!(
-          attachable: attachable,
-          transferred: true,
-          aasm_state: fields.fetch('aasm_state'),
-          filename: fields.fetch('filename'),
-          # checksum: fields.fetch('checksum'),
-          # created_at: fields.fetch('created_at'),
-          # updated_at: fields.fetch('updated_at')
-        )
+        if attachable.present? && attachment.present?
+          attachment.update!(
+            attachable: attachable,
+            transferred: true,
+            aasm_state: fields.fetch('aasm_state'),
+            filename: fields.fetch('filename'),
+            # checksum: fields.fetch('checksum'),
+            # created_at: fields.fetch('created_at'),
+            # updated_at: fields.fetch('updated_at')
+          )
+        end
         # TODO: if attachment.checksum != fields.fetch('checksum')
 
         # add attachment to the @instances map
@@ -570,16 +572,29 @@ module Import
         # attachment.regenerate_thumbnail
       end
     rescue StandardError => e
-      Rails.logger.debug(e.backtrace)
+      Rails.logger.error(e.backtrace)
+    end
+
+    def import_elements
+      # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Import.import_elements(@data, @instances, @attachments, @gt, @current_user_id, method(:fetch_many), &method(:update_instances!))
+      # rubocop:enable Performance/MethodObjectAsBlock
+    rescue StandardError => e
+      Rails.logger.error(e.backtrace)
     end
 
     def import_segments
-      Labimotion::Import.import_segments(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
-      # nil
+      # rubocop:disable Performance/MethodObjectAsBlock
+      Labimotion::Import.import_segments(@data, @instances, @attachments, @gt, @current_user_id, &method(:update_instances!))
+      # rubocop:enable Performance/MethodObjectAsBlock
+    rescue StandardError => e
+      Rails.logger.error(e.backtrace)
     end
 
     def import_datasets
       Labimotion::Import.import_datasets(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
+    rescue StandardError => e
+      Rails.logger.error(e.backtrace)
     end
 
     def import_literals
@@ -653,6 +668,8 @@ module Import
     end
 
     def update_instances!(uuid, instance)
+      return if instance.nil?
+
       if instance.respond_to?(:collections)
         instance.collections << @col_all unless @col_all.nil?
         instance.save!

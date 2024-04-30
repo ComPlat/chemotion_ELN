@@ -44,7 +44,7 @@ RSpec.describe Chemotion::AdminAPI do
     end
   end
 
-  describe 'GET /api/v1/admin_user/listUsers/byname' do
+  describe 'GET /api/v1/admin/users/byname' do
     let(:person) { create(:person) }
     let(:group) { create(:group) }
     let(:person_obj) { JSON.parse(Entities::UserSimpleEntity.new(person).to_json) }
@@ -52,7 +52,7 @@ RSpec.describe Chemotion::AdminAPI do
 
     describe 'with group type' do
       before do
-        get "/api/v1/admin_user/listUsers/byname?name=#{group.last_name[0..3]}&type=Group"
+        get "/api/v1/admin/users/byname?name=#{group.last_name[0..3]}&type=Group"
       end
 
       it 'returns the right http status' do
@@ -66,7 +66,7 @@ RSpec.describe Chemotion::AdminAPI do
 
     describe 'with person type' do
       before do
-        get "/api/v1/admin_user/listUsers/byname?name=#{person.last_name[0..3]}&type=Person"
+        get "/api/v1/admin/users/byname?name=#{person.last_name[0..3]}&type=Person"
       end
 
       it 'returns the right http status' do
@@ -80,7 +80,7 @@ RSpec.describe Chemotion::AdminAPI do
 
     describe 'with person and group type' do
       before do
-        get "/api/v1/admin_user/listUsers/byname?name=#{person.last_name[0..3]}&type=Person,Group"
+        get "/api/v1/admin/users/byname?name=#{person.last_name[0..3]}&type=Person,Group"
       end
 
       it 'returns the right http status' do
@@ -94,7 +94,7 @@ RSpec.describe Chemotion::AdminAPI do
 
     describe 'with no type' do
       before do
-        get "/api/v1/admin_user/listUsers/byname?name=#{person.last_name[0..3]}"
+        get "/api/v1/admin/users/byname?name=#{person.last_name[0..3]}"
       end
 
       it 'returns the right http status' do

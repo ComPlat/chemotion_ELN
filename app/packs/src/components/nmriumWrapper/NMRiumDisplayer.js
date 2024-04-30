@@ -63,7 +63,10 @@ export default class NMRiumDisplayer extends React.Component {
   onChange(newState) {
     const origState = this.state;
     this.setState({ ...origState, ...newState });
-    this.sendJcampDataToNMRDisplayer();
+    const { showModalNMRDisplayer } = newState;
+    if (showModalNMRDisplayer) {
+      this.sendJcampDataToNMRDisplayer();
+    }
   }
 
   getSpcInfo() {
@@ -427,6 +430,11 @@ export default class NMRiumDisplayer extends React.Component {
 
   renderModalTitle() {
     const { nmriumData } = this.state;
+    const { sample } = this.props;
+    let readOnly = false;
+    if (sample.hasOwnProperty('can_update')) {
+      readOnly = !(sample.can_update);
+    }
     let hasSpectra = false;
     if (nmriumData) {
       const { version } = nmriumData;
@@ -454,7 +462,7 @@ export default class NMRiumDisplayer extends React.Component {
           </span>
         </Button>
         {
-          hasSpectra ?
+          hasSpectra && !readOnly ? 
           (
             <Button
               bsStyle="success"

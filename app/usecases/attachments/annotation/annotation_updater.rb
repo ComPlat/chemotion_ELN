@@ -81,6 +81,14 @@ module Usecases
           xml
         end
 
+        def updated_annotated_string(annotation_data, attachment_id)
+          annotation_data = annotation_data.gsub(
+            %r{/api/v1/attachments/image/([0-9])*},
+            "/api/v1/attachments/image/#{attachment_id}",
+          )
+          update_annotation(annotation_data, attachment_id)
+        end
+
         class ThumbnailerWrapper
           def create_thumbnail(tmp_path)
             Thumbnailer.create(tmp_path)
