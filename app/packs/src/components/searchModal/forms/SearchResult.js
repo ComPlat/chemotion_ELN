@@ -2,10 +2,14 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Col, Navbar, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Button, Alert } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import SearchResultTabContent from './SearchResultTabContent';
+import Aviator from 'aviator';
 
 const SearchResult = ({ handleClear }) => {
   const searchStore = useContext(StoreContext).search;
@@ -28,7 +32,7 @@ const SearchResult = ({ handleClear }) => {
         .map((value, i) => {
           let tab = results.find(val => val.id.indexOf(value[0]) !== -1);
           let totalElements = tab === undefined ? 0 : tab.results.total_elements;
-          if (value[1] > 0) {
+          if (value[1] > 0 && tab !== undefined) {
             visible.push({ key: value[0], index: i, totalElements: totalElements });
           }
         });
@@ -49,6 +53,28 @@ const SearchResult = ({ handleClear }) => {
     ElementActions.changeSorting(true);
     ElementActions.dispatchSearchResult(preparedResult);
     searchStore.handleAdopt();
+  }
+
+  const adoptResultAndOpenDetail = (element) => {
+    const { currentCollection, isSync } = UIStore.getState();
+    const { id, type } = element;
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = id;
+
+    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
+    if (genericEls.find((el) => el.name === type)) {
+      e.klassType = 'GenericEl';
+    }
+
+    elementShowOrNew(e);
+    handleAdoptResult();
+
+    return null;
   }
 
   const prepareResultForDispatch = () => {
@@ -114,7 +140,7 @@ const SearchResult = ({ handleClear }) => {
   const searchResultNavItem = (list, tabResult) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
+    const elnElements = ['cell_line', 'sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconClass = `icon-${list.key}`;
     let tooltipText = list.key && (list.key.replace('_', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()));
     
@@ -157,8 +183,11 @@ const SearchResult = ({ handleClear }) => {
 
       const navItem = searchResultNavItem(list, tabResult);
       const tabContent =
-        <SearchResultTabContent key={`${list.key}-result-tab`}
-          list={list} tabResult={tabResult}
+        <SearchResultTabContent
+          key={`${list.key}-result-tab`}
+          list={list}
+          tabResult={tabResult}
+          openDetail={adoptResultAndOpenDetail}
         />
 
       navItems.push(navItem);
