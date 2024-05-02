@@ -37,7 +37,8 @@ module Chemotion
         %w[chemdrawEditor marvinjsEditor ketcher2Editor].each do |str|
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
-        present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices'
+        present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices',
+                                                            unexpose_include_ids: true, unexpose_exclude_ids: true
       end
 
       namespace :omniauth_providers do
