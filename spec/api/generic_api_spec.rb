@@ -101,8 +101,8 @@ describe 'GenericAPI' do
       end
 
       it 'returns updated data' do
-        resp = JSON.parse(response.body)['properties_template']['pkg']['eln']['current_revision']
-        expect(resp).to eq 0
+        resp = JSON.parse(response.body)['properties_template']['klass']
+        expect(resp).to eq 'ElementKlass'
       end
     end
 
@@ -117,8 +117,8 @@ describe 'GenericAPI' do
       end
 
       it 'returns updated data' do
-        resp = JSON.parse(response.body)['properties_template']['pkg']['eln']['current_revision']
-        expect(resp).to eq 0
+        resp = JSON.parse(response.body)['properties_template']['klass']
+        expect(resp).to eq 'SegmentKlass'
       end
     end
 
@@ -133,8 +133,8 @@ describe 'GenericAPI' do
       end
 
       it 'returns updated data' do
-        resp = JSON.parse(response.body)['properties_template']['pkg']['eln']['current_revision']
-        expect(resp).to eq 0
+        resp = JSON.parse(response.body)['properties_template']['klass']
+        expect(resp).to eq 'DatasetKlass'
       end
     end
   end
