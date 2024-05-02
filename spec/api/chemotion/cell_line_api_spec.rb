@@ -255,7 +255,32 @@ describe Chemotion::CellLineAPI do
     let!(:user) { create(:user, collections: [collection]) }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
     let(:allow_creation) { true }
-    let(:params) { { id: cell_line.id, collection_id: collection.id } }
+    let(:params) do
+      {
+        id: cell_line.id,
+        collection_id: collection.id,
+        container: { 'name' => 'new',
+                     'children' =>
+       [{ 'name' => 'new',
+          'children' => [],
+          'attachments' => [],
+          'is_deleted' => false,
+          'description' => '',
+          'extended_metadata' => { 'report' => true },
+          'container_type' => 'analyses',
+          'id' => '656936a0-0627-11ef-b812-d3c35856aafa',
+          'is_new' => true,
+          '_checksum' => '6901ba2b29f8464ede2dce839d1dfba710dbbfa6d2c4ad80f6bd3a933e792028' }],
+                     'attachments' => [],
+                     'is_deleted' => false,
+                     'description' => '',
+                     'extended_metadata' => { 'report' => true },
+                     'container_type' => 'root',
+                     'id' => '65690f90-0627-11ef-b812-d3c35856aafa',
+                     'is_new' => true,
+                     '_checksum' => '7a0f02ddb8c73d674640466b84ce50e53465a7d91265aa0e8ece271f099d04f5' },
+      }
+    end
 
     before do
       allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
