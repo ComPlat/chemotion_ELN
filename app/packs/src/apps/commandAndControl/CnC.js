@@ -1,4 +1,5 @@
 import React from 'react';
+import RFB from '@novnc/novnc/lib/rfb';
 import { Grid, Row, Col } from 'react-bootstrap';
 import { uniq } from 'lodash';
 
@@ -15,9 +16,6 @@ const TIME_DISCO = 180000;
 const TIME_BLUR = 55000;
 // Interval to query connection counter
 const TIME_CONN = 4000;
-
-// Import RFB is async since it raises errors if it is loaded before the document is reade
-let RFB = null;
 
 class CnC extends React.Component {
   constructor() {
@@ -122,24 +120,19 @@ class CnC extends React.Component {
     this.setState({ autoBlur: blurTime });
   }
 
-  async connect() {
+  connect() {
     this.disconnect();
-    const {id, novnc} = this.state.selected;
-    if (!this.canvas || !id || !novnc) {
-      return;
-    }
-    if (!RFB) {
-      RFB = (await import('@novnc/novnc/lib/rfb')).default;
-    }
+    const { id, novnc } = this.state.selected;
+    if (!this.canvas || !id || !novnc) { return; }
 
     const rfb = new RFB(
-        this.canvas,
-        novnc.target,
-        {
-          repeaterID: '',
-          shared: true,
-          credentials: {password: novnc.password},
-        }
+      this.canvas,
+      novnc.target,
+      {
+        repeaterID: '',
+        shared: true,
+        credentials: { password: novnc.password },
+      }
     );
     rfb.viewOnly = true;
     rfb.reconnect = true;
@@ -162,17 +155,16 @@ class CnC extends React.Component {
       credentials: 'same-origin'
     }).then((response) => response.json())
       .then((json) => {
-        // using is a keyname and should therefore not be used as vairable
-        let newUsing = 0;
+        let using = 0;
         let watching = 0;
         const data = uniq(json.result).map((line) => line.split(','));
         const conn = Object.fromEntries(data);
 
         Object.keys(conn).forEach((k) => {
-          if (conn[k] === '0') { newUsing += 1; }
+          if (conn[k] === '0') { using += 1; }
           if (conn[k] === '1') { watching += 1; }
         });
-        this.setState({ using: newUsing, watching });
+        this.setState({ using, watching });
       });
   }
 

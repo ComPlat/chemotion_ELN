@@ -163,7 +163,7 @@ class GeneralProperties extends React.Component {
       <div>
         <div />
         <PanelGroup
-          className="cell-line-properties"
+          class="cell-line-properties"
           id={`cellLinePropertyPanelGroupOf:${cellLineItem.id}`}
           activeKey={openPanel}
           accordion
