@@ -23,6 +23,7 @@ import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
@@ -36,10 +37,12 @@ import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 export default class ReactionDetails extends Component {
@@ -51,8 +54,10 @@ export default class ReactionDetails extends Component {
       reaction: reaction,
       literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
+      activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
 
     // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
@@ -72,8 +77,11 @@ export default class ReactionDetails extends Component {
 
   componentDidMount() {
     const { reaction } = this.props;
+    const { currentUser } = this.state;
+
     UIStore.listen(this.onUIStoreChange);
-    if (!reaction.isNew) {
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
       CommentActions.fetchComments(reaction);
     }
   }
@@ -94,14 +102,18 @@ export default class ReactionDetails extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const nextReaction = nextProps.reaction;
     const nextActiveTab = nextState.activeTab;
+    const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
-    const { reaction, activeTab, visible } = this.state;
+    const {
+      reaction, activeTab, visible, activeAnalysisTab
+    } = this.state;
     return (
       nextReaction.id !== reaction.id ||
       nextReaction.updated_at !== reaction.updated_at ||
       nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab !== activeTab || nextVisible !== visible
+      nextActiveTab !== activeTab || nextVisible !== visible ||
+      nextActiveAnalysisTab !== activeAnalysisTab
     );
   }
 
@@ -110,9 +122,11 @@ export default class ReactionDetails extends Component {
   }
 
   onUIStoreChange(state) {
-    if (state.reaction.activeTab != this.state.activeTab) {
+    if (state.reaction.activeTab != this.state.activeTab ||
+      state.reaction.activeAnalysisTab !== this.state.activeAnalysisTab) {
       this.setState({
-        activeTab: state.reaction.activeTab
+        activeTab: state.reaction.activeTab,
+        activeAnalysisTab: state.reaction.activeAnalysisTab
       });
     }
   }
@@ -152,8 +166,7 @@ export default class ReactionDetails extends Component {
     if (type === 'temperatureUnit' || type === 'temperatureData'
       || type === 'description' || type === 'role'
       || type === 'observation' || type === 'durationUnit'
-      || type === 'duration' || type === 'rxno'
-      || type === 'variations') {
+      || type === 'duration' || type === 'rxno') {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -200,6 +213,7 @@ export default class ReactionDetails extends Component {
 
   productData(reaction) {
     const { products } = this.state.reaction;
+    const { activeAnalysisTab } = this.state;
 
     const tabs = products.map((product, key) => {
       const title = this.productLink(product);
@@ -228,6 +242,8 @@ export default class ReactionDetails extends Component {
         id="data-detail-tab"
         style={{ marginTop: '10px' }}
         unmountOnExit
+        activeKey={activeAnalysisTab}
+        onSelect={this.handleSelectActiveAnalysisTab.bind(this)}
       >
         {tabs}
         <Tab eventKey={4.1} title={reactionTab}>
@@ -368,6 +384,13 @@ export default class ReactionDetails extends Component {
     });
   }
 
+  handleSelectActiveAnalysisTab(key) {
+    UIActions.selectActiveAnalysisTab(key);
+    this.setState({
+      activeAnalysisTab: key
+    });
+  }
+
   onTabPositionChanged(visible) {
     this.setState({ visible });
   }
@@ -470,7 +493,7 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="variations" title="Variations" key={`variations_${reaction.id}`} unmountOnExit={false}>
           <ReactionVariations
             reaction={reaction}
-            onEditVariations={(event) => this.handleInputChange('variations', event)}
+            onReactionChange={this.handleReactionChange}
           />
         </Tab>
       )

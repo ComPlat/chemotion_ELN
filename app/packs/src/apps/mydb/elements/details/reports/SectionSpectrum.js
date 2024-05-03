@@ -65,7 +65,7 @@ const RowProduct = ({ prd, molSerials, attThumbNails }) => (
 );
 
 class SectionSpectrum extends Component {
-  componentDidMount() {
+  componentDidUpdate() {
     this.updateThumbNails();
   }
 

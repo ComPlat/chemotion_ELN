@@ -22,7 +22,7 @@ export default class Element {
   }
 
   get isEdited() {
-    return this._checksum != this.checksum();
+    return this._checksum !== this.checksum();
   }
 
   checksum(fieldsToOmit = []) {

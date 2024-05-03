@@ -4,7 +4,7 @@ import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import capitalizeWords from 'src/utilities/textHelper';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 const layoutSource = {
   beginDrag(props) {

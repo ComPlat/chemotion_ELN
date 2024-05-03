@@ -61,7 +61,7 @@ export default class ElementReactionLabels extends React.Component {
 
 
     return (
-      <div style={{display: 'inline-block'}}>
+      <div style={{ display: 'inline-block', marginTop: '-5px' }}>
         <div onClick={this.handleOnClick}>
           <span className="collection-label" key={element.id}>
             <Label>{reaction}</Label>

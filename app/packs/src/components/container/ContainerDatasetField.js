@@ -4,54 +4,12 @@ import {
   Button, ButtonToolbar, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
+import ColoredOverlay from 'src/components/common/ColoredOverlay';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { targetContainerDataField } from 'src/utilities/DndConst';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { absOlsTermId } from 'chem-generic-ui';
 import { GenericDSMisType } from 'src/apps/generic/Utils';
-
-const dataTarget = {
-  canDrop(monitor) {
-    const itemType = monitor.getItemType();
-    return itemType === DragDropItemTypes.DATA
-      || itemType === DragDropItemTypes.UNLINKED_DATA
-      || itemType === DragDropItemTypes.DATASET;
-  },
-
-  drop(props, monitor) {
-    const item = monitor.getItem();
-    const itemType = monitor.getItemType();
-    const { datasetContainer, onChange } = props;
-
-    switch (itemType) {
-      case DragDropItemTypes.DATA:
-        datasetContainer.attachments.push(item.attachment);
-        onChange(datasetContainer);
-        InboxActions.removeAttachmentFromList(item.attachment);
-        break;
-      case DragDropItemTypes.UNLINKED_DATA:
-        datasetContainer.attachments.push(item.attachment);
-        InboxActions.removeUnlinkedAttachmentFromList(item.attachment);
-        break;
-      case DragDropItemTypes.DATASET:
-        item.dataset.attachments.forEach((attachment) => {
-          datasetContainer.attachments.push(attachment);
-        });
-        onChange(datasetContainer);
-        InboxActions.removeDatasetFromList(item.dataset);
-        break;
-      default:
-        console.warn(`Unknown itemType: ${itemType}`);
-        break;
-    }
-  }
-};
-
-const collectTarget = (connect, monitor) => ({
-  connectDropTarget: connect.dropTarget(),
-  isOver: monitor.isOver(),
-  canDrop: monitor.canDrop()
-});
 
 class ContainerDatasetField extends Component {
   removeButton(datasetContainer) {
@@ -69,22 +27,6 @@ class ContainerDatasetField extends Component {
       );
     }
     return null;
-  }
-
-  static renderOverlay(color) {
-    return (
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: '100%',
-        zIndex: 1,
-        opacity: 0.5,
-        backgroundColor: color,
-      }}
-      />
-    );
   }
 
   render() {
@@ -126,13 +68,10 @@ class ContainerDatasetField extends Component {
       <div>
         {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
           ? <GenericDSMisType /> : null}
-        <button
-          style={{ background: 'none', border: 'none', textDecoration: 'underline' }}
-          onClick={() => handleModalOpen(datasetContainer)}
-          type="button"
-        >
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(datasetContainer)}>
           {datasetContainer.name || 'new'}
-        </button>
+        </a>
         <ButtonToolbar className="pull-right">
           {gdsDownload}
           <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
@@ -142,7 +81,7 @@ class ContainerDatasetField extends Component {
           </OverlayTrigger>
           {this.removeButton(datasetContainer)}
         </ButtonToolbar>
-        {isOver && canDrop && this.renderOverlay('green')}
+        {isOver && canDrop && ColoredOverlay({color: 'green'})}
       </div>
     );
   }
@@ -172,10 +111,8 @@ ContainerDatasetField.defaultProps = {
   disabled: false,
 };
 
-const dropTargetTypes = [
-  DragDropItemTypes.DATA,
-  DragDropItemTypes.UNLINKED_DATA,
-  DragDropItemTypes.DATASET
-];
-
-export default DropTarget(dropTargetTypes, dataTarget, collectTarget)(ContainerDatasetField);
+export default DropTarget(
+  targetContainerDataField.dropTargetTypes,
+  targetContainerDataField.dataTarget,
+  targetContainerDataField.collectTarget
+)(ContainerDatasetField);

@@ -6,8 +6,61 @@ import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPl
 import { values } from 'lodash';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'react-dropzone';
+import Utils from 'src/utilities/Functions';
+import ImageModal from 'src/components/common/ImageModal';
 
-export const isImageFile = (fileName) => {
+export const attachmentThumbnail = (attachment) => (
+  <div className="attachment-row-image">
+    <ImageModal
+      imageStyle={{
+        width: '45px',
+        height: '45px',
+        borderRadius: '5px',
+        backgroundColor: '#FFF',
+        objectFit: 'contain',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+      }}
+      alt="thumbnail"
+      previewObject={{
+        src: attachment.preview,
+      }}
+      popObject
+      disableClick
+    />
+    <div className="large-preview-modal">
+      <ImageModal
+        imageStyle={{
+          width: '400px',
+          height: '400px',
+          borderRadius: '5px',
+          backgroundColor: '#FFF',
+          objectFit: 'contain',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+        }}
+        hasPop
+        showPopImage
+        alt="thumbnail"
+        previewObject={{
+          src: attachment.preview,
+        }}
+        popObject={
+        attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
+          ? {
+            src: `/api/v1/attachments/${attachment.id}/annotated_image`,
+          }
+          : {
+            src: attachment.preview,
+          }
+        }
+        disableClick
+      />
+    </div>
+  </div>
+);
+
+const isImageFile = (fileName) => {
   const acceptedImageTypes = ['png', 'jpg', 'bmp', 'tif', 'svg', 'jpeg', 'tiff'];
   const dataType = fileName.split('.').pop().toLowerCase();
   return acceptedImageTypes.includes(dataType);
@@ -22,7 +75,24 @@ export const formatFileSize = (sizeInB) => {
   return `${sizeInB} bytes`;
 };
 
-export const downloadButton = (attachment, handleDownloadOriginal, handleDownloadAnnotated) => (
+const handleDownloadAnnotated = (attachment) => {
+  const isImage = isImageFile(attachment.filename);
+  if (isImage && !attachment.isNew) {
+    Utils.downloadFile({
+      contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
+      name: attachment.filename
+    });
+  }
+};
+
+const handleDownloadOriginal = (attachment) => {
+  Utils.downloadFile({
+    contents: `/api/v1/attachments/${attachment.id}`,
+    name: attachment.filename,
+  });
+};
+
+export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
       <i className="fa fa-download" aria-hidden="true" />
@@ -198,34 +268,37 @@ export const sortingAndFilteringUI = (
   sortDirection,
   handleSortChange,
   toggleSortDirection,
-  handleFilterChange
+  handleFilterChange,
+  isSortingEnabled
 ) => (
   <div style={{
     marginBottom: '20px', display: 'flex', justifyContent: 'space-between',
   }}
   >
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label style={{ marginRight: '10px' }}>Sort: </label>
-      <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
-        <select
-          onChange={handleSortChange}
-          className="sorting-row-style"
-          style={{ width: '100px', marginRight: '10px' }}
-        >
-          <option value="name">Name</option>
-          <option value="size">Size</option>
-          <option value="date">Date</option>
-        </select>
-        <Button
-          style={{ marginRight: '10px', marginLeft: '-15px' }}
-          onClick={toggleSortDirection}
-          className="sort-icon-style"
-        >
-          {sortDirection === 'asc' ? '▲' : '▼'}
-        </Button>
+    {isSortingEnabled && (
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+        <label style={{ marginRight: '10px' }}>Sort: </label>
+        <div className="sort-container" style={{ display: 'flex', alignItems: 'center' }}>
+          <select
+            onChange={handleSortChange}
+            className="sorting-row-style"
+            style={{ width: '100px', marginRight: '10px' }}
+          >
+            <option value="name">Name</option>
+            <option value="size">Size</option>
+            <option value="date">Date</option>
+          </select>
+          <Button
+            style={{ marginRight: '10px', marginLeft: '-15px' }}
+            onClick={toggleSortDirection}
+            className="sort-icon-style"
+          >
+            {sortDirection === 'asc' ? '▲' : '▼'}
+          </Button>
+        </div>
       </div>
-    </div>
+    )}
 
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}

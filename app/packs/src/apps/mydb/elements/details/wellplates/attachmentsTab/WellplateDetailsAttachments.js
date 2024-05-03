@@ -1,8 +1,8 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ImageModal from 'src/components/common/ImageModal';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
 import {
@@ -20,7 +20,7 @@ import {
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
-  isImageFile
+  attachmentThumbnail
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 
@@ -62,8 +62,6 @@ export default class WellplateDetailsAttachments extends Component {
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
 
-    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
-    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
@@ -109,7 +107,11 @@ export default class WellplateDetailsAttachments extends Component {
   }
 
   handleTemplateDownload() { // eslint-disable-line class-methods-use-this
-    Utils.downloadFile({ contents: '/xlsx/wellplate_import_template.xlsx', name: 'wellplate_import_template.xlsx' });
+    const { wellplate } = this.props;
+    Utils.downloadFile({
+      contents: `/api/v1/wellplates/template/, ${wellplate.id}`,
+      name: 'wellplate_import_template.xlsx'
+    });
   }
 
   handleFilterChange = (e) => {
@@ -124,20 +126,6 @@ export default class WellplateDetailsAttachments extends Component {
     this.setState((prevState) => ({
       sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
     }), this.filterAndSortAttachments);
-  };
-
-  handleDownloadOriginal = (attachment) => {
-    this.props.onDownload(attachment);
-  };
-
-  handleDownloadAnnotated = (attachment) => {
-    const isImage = isImageFile(attachment.filename);
-    if (isImage && !attachment.isNew) {
-      Utils.downloadFile({
-        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
-        name: attachment.filename
-      });
-    }
   };
 
   filterAndSortAttachments() {
@@ -295,7 +283,8 @@ export default class WellplateDetailsAttachments extends Component {
           sortDirection,
           this.handleSortChange,
           this.toggleSortDirection,
-          this.handleFilterChange
+          this.handleFilterChange,
+          true
         )}
           </div>
         </div>
@@ -306,29 +295,8 @@ export default class WellplateDetailsAttachments extends Component {
         ) : (
           filteredAttachments.map((attachment) => (
             <div className="attachment-row" key={attachment.id}>
-              <div className="attachment-row-image">
-                <ImageModal
-                  imageStyle={{
-                    width: '45px',
-                    height: '45px',
-                    borderRadius: '5px',
-                    objectFit: 'cover',
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  }}
-                  hasPop={false}
-                  alt="thumbnail"
-                  previewObject={{
-                    src: attachment.preview,
-                  }}
-                  popObject={{
-                    title: attachment.filename,
-                    src: attachment.preview,
-                    fetchNeeded: false,
-                    fetchId: attachment.id,
-                  }}
-                />
-              </div>
+              {attachmentThumbnail(attachment)}
+
               <div className="attachment-row-text" title={attachment.filename}>
                 {attachment.is_deleted ? (
                   <strike>{attachment.filename}</strike>
@@ -361,7 +329,7 @@ export default class WellplateDetailsAttachments extends Component {
                   </Button>
                 ) : (
                   <>
-                    {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
+                    {downloadButton(attachment)}
                     {editButton(
                       attachment,
                       extension,
@@ -446,7 +414,6 @@ WellplateDetailsAttachments.propTypes = {
   onDrop: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onUndoDelete: PropTypes.func.isRequired,
-  onDownload: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   readOnly: PropTypes.bool.isRequired,
   onImport: PropTypes.func.isRequired,

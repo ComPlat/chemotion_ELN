@@ -10,11 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_11_06_000000) do
+ActiveRecord::Schema.define(version: 2024_04_24_120634) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "pgcrypto"
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
 
@@ -191,9 +192,11 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
+    t.bigint "inventory_id"
     t.integer "celllinesample_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
+    t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
   end
 
@@ -246,6 +249,18 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
     t.index ["collection_id"], name: "index_collections_screens_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_screens_on_deleted_at"
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
+  end
+
+  create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "collection_id"
+    t.uuid "vessel_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_vessels_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_vessels_on_deleted_at"
+    t.index ["vessel_id", "collection_id"], name: "index_collections_vessels_on_vessel_id_and_collection_id", unique: true
+    t.index ["vessel_id"], name: "index_collections_vessels_on_vessel_id"
   end
 
   create_table "collections_wellplates", id: :serial, force: :cascade do |t|
@@ -505,6 +520,7 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
+    t.string "ancestry"
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -581,6 +597,15 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.time "deleted_at"
+  end
+
+  create_table "inventories", force: :cascade do |t|
+    t.string "prefix", null: false
+    t.string "name", null: false
+    t.integer "counter", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
   end
 
   create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
@@ -1351,6 +1376,38 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
     t.index ["user_id"], name: "index_users_groups_on_user_id"
   end
 
+  create_table "vessel_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "details"
+    t.string "material_details"
+    t.string "material_type"
+    t.string "vessel_type"
+    t.float "volume_amount"
+    t.string "volume_unit"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.float "weight_amount"
+    t.string "weight_unit"
+    t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
+  end
+
+  create_table "vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "vessel_template_id"
+    t.bigint "user_id"
+    t.string "name"
+    t.string "description"
+    t.string "short_label"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.string "bar_code"
+    t.string "qr_code"
+    t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
+    t.index ["user_id"], name: "index_vessels_on_user_id"
+    t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
+  end
+
   create_table "wellplates", id: :serial, force: :cascade do |t|
     t.string "name"
     t.integer "size"
@@ -1381,6 +1438,7 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "collections", "inventories"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
@@ -1529,8 +1587,8 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -1570,29 +1628,6 @@ ActiveRecord::Schema.define(version: 2023_11_06_000000) do
             PERFORM generate_users_matrix(new.exclude_ids || old.exclude_ids);
       	  end if;
       	end if;
-        return new;
-      end
-      $function$
-  SQL
-  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
-       RETURNS TABLE(reaction_ids integer)
-       LANGUAGE sql
-      AS $function$
-          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
-           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
-           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
-           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
-           and s.molecule_id = m.id and m.id=$2)
-        $function$
-  SQL
-  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	update segment_klasses set identifier = gen_random_uuid() where identifier is null;
         return new;
       end
       $function$

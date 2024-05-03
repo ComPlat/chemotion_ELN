@@ -17,6 +17,27 @@ describe Chemotion::SearchAPI do
   let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)]) }
   let(:other_wellplate) { create(:wellplate, name: 'Other Wellplate', wells: [build(:well, sample: sample_b)]) }
   let(:reaction) { create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user) }
+  let(:invalid_reaction_with_duration) do
+    create(:reaction, name: 'invalid Reaction', creator: user, duration: 'Day(s)')
+  end
+  let(:reaction_with_temperature) do
+    create(:reaction, name: 'reaction with temperature',
+                      creator: user,
+                      temperature: { data: [], userText: '21.24', valueUnit: '°C' })
+  end
+  let(:reaction_with_negative_temperature) do
+    create(:reaction, name: 'reaction with temperature',
+                      creator: user,
+                      temperature: { data: [], userText: '-21', valueUnit: '°C' })
+  end
+
+  let(:invalid_reaction_with_temperature) do
+    create(:reaction, name: 'invalid reaction with temperature',
+                      creator: user,
+                      temperature: { data: [], userText: '-4 to rt', valueUnit: '°C' })
+  end
+
+  let(:reaction_with_duration) { create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)') }
   let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: other_user) }
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
@@ -24,6 +45,12 @@ describe Chemotion::SearchAPI do
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
+    CollectionsReaction.create!(reaction: invalid_reaction_with_duration, collection: collection)
+    CollectionsReaction.create!(reaction: reaction_with_duration, collection: collection)
+
+    CollectionsReaction.create!(reaction: reaction_with_temperature, collection: collection)
+    CollectionsReaction.create!(reaction: reaction_with_negative_temperature, collection: collection)
+    CollectionsReaction.create!(reaction: invalid_reaction_with_temperature, collection: collection)
     CollectionsSample.create!(sample: sample_a, collection: collection)
     CollectionsScreen.create!(screen: screen, collection: collection)
     CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
@@ -187,6 +214,64 @@ describe Chemotion::SearchAPI do
         expect(result.dig('screens', 'ids')).to eq [screen.id]
         expect(result.dig('wellplates', 'totalElements')).to eq 1
         expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+      end
+    end
+
+    context 'when searching a duration in reactions in correct collection' do
+      let(:advanced_params) do
+        [
+          {
+            link: '',
+            match: '>=',
+            table: 'reactions',
+            element_id: 0,
+            field: {
+              column: 'duration',
+              label: 'Duration',
+              type: 'system-defined',
+              option_layers: 'duration',
+              info: 'Only numbers are allowed',
+              advanced: true,
+            },
+            value: 12,
+            sub_values: [],
+            unit: 'Hour(s)',
+          },
+        ]
+      end
+
+      it 'returns one reaction' do
+        result = JSON.parse(response.body)
+        expect(result.dig('reactions', 'totalElements')).to eq 1
+      end
+    end
+
+    context 'when searching a temperature in reactions in correct collection' do
+      let(:advanced_params) do
+        [
+          {
+            link: '',
+            match: '>=',
+            table: 'reactions',
+            element_id: 0,
+            field: {
+              column: 'temperature',
+              label: 'Temperature',
+              type: 'system-defined',
+              option_layers: 'temperature',
+              info: 'Only numbers are allowed',
+              advanced: true,
+            },
+            value: -22,
+            sub_values: [],
+            unit: '°C',
+          },
+        ]
+      end
+
+      it 'returns one reaction' do
+        result = JSON.parse(response.body)
+        expect(result.dig('reactions', 'totalElements')).to eq 2
       end
     end
   end

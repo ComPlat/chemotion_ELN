@@ -80,10 +80,8 @@ export default class GreenMaterialGroup extends React.Component {
 
   autoSizeAll() {
     if (!this.api) return;
-    setTimeout(() => {
-      this.api.sizeColumnsToFit();
-      this.api.resetRowHeights();
-    }, 0);
+    if (this.api.isDestroyed()) return;
+    this.api.sizeColumnsToFit();
   }
 
   onCoefficientChanged(params) {
@@ -114,7 +112,7 @@ export default class GreenMaterialGroup extends React.Component {
       {
         headerName: _.startCase(group),
         width: 170,
-        cellRendererFramework: MaterialNameWithIupac,
+        cellRenderer: MaterialNameWithIupac,
         cellRendererParams: { group },
       },
       { headerName: "Mass", field: "amount_g", valueFormatter: floatFormatter },
@@ -140,7 +138,7 @@ export default class GreenMaterialGroup extends React.Component {
         headerName: group === 'products' ? 'Waste' : 'Recyclable',
         field: 'waste',
         width: 104,
-        cellRendererFramework: WasteCheckbox,
+        cellRenderer: WasteCheckbox,
         cellRendererParams: { toggleWaste: this.toggleWaste },
       },
       {
@@ -156,12 +154,12 @@ export default class GreenMaterialGroup extends React.Component {
       editable: false,
       width: 71,
       autoHeight: true,
+      resizable: true,
     };
 
     return (
       <div className="ag-theme-balham">
         <AgGridReact
-          enableColResize
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           onGridReady={this.onGridReady}

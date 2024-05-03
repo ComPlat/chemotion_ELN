@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="54.64050806878805" version="1.1" width="40.00058667999997" style="overflow:hidden;" viewBox="0 0 60 74">
+  <g transform="translate(-767, -276)">
+    <defs>
+      <radialGradient id="38r_0.2_0.3__fff-000___RB9jcsmE" fx="0.2" fy="0.3">
+        <stop offset="0%" stop-color="#ffffff"></stop>
+        <stop offset="100%" stop-color="#000000"></stop>
+      </radialGradient>
+    </defs>
+    <circle cx="785.0115136288513" cy="260.00381343121194" r="24" fill="none" stroke="#00cc00" stroke-width="0.96" transform="matrix(1,0,0,1,12.4885,45.9259)" style="display:none;"></circle>
+    <circle cx="765.0112202879889" cy="294.6443214975857" r="24" fill="none" stroke="#00cc00" stroke-width="0.96" transform="matrix(1,0,0,1,12.4885,45.9259)" style="display:none;"></circle>
+    <path fill="none" stroke="#000000" d="M785.01151363,260.00381343L765.01122029,294.6443215" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="matrix(1,0,0,1,12.4885,45.9259)" style="stroke-linecap:round;stroke-linejoin:round;"></path>
+    <path fill="none" stroke="#000000" d="M765.01122029,294.6443215L805.01180697,294.6443215" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="matrix(1,0,0,1,12.4885,45.9259)" style="stroke-linecap:round;stroke-linejoin:round;"></path>
+    <path fill="none" stroke="#000000" d="M805.01180697,294.6443215L785.01151363,260.00381343" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="matrix(1,0,0,1,12.4885,45.9259)" style="stroke-linecap:round;stroke-linejoin:round;"></path>
+    <circle cx="785.0115136288513" cy="260.00381343121194" r="20" fill="url(#38r_0.2_0.3__fff-000___RB9jcsmE)" stroke="#ffffff" style="fill-opacity:1;" opacity="1" fill-opacity="1" transform="matrix(1,0,0,1,12.4885,45.9259)"></circle>
+  </g>
+</svg>

@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
-import { Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
+import {
+  Tooltip, OverlayTrigger, Table, Label
+} from 'react-bootstrap';
 import classnames from 'classnames';
 
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
@@ -13,7 +15,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -56,14 +58,10 @@ export function reactionRole(element) {
 function reactionVariations(element) {
   if (element.type === 'reaction' && element.variations && element.variations.length) {
     return (
-      <div>
-        {element.variations.length}
-        {' '}
-        variations
-      </div>
+      <Label bsStyle="info">{`${element.variations.length} variation(s)`}</Label>
     );
   }
-  return undefined;
+  return null;
 }
 
 function showDetails(element) {

@@ -61,9 +61,10 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
-gem 'labimotion', '1.1.1'
+gem 'labimotion', '1.3.0.1'
 
 gem 'mimemagic', '0.3.10'
+gem 'mime-types'
 
 # locked to enforce latest version of net-scp. without lock net-ssh would be updated first which locks
 # out newer net-scp versions
@@ -91,9 +92,9 @@ gem 'pundit'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 6.1.7.3'
+gem 'rails', '~> 6.1.7.7'
 gem 'rdkit_chem', git: 'https://github.com/ptrxyz/rdkit_chem.git', branch: 'pk01'
-gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
+gem 'rinchi-gem', '1.0.1', git: 'https://github.com/ComPlat/rinchi-gem.git'
 gem 'rmagick'
 gem 'roo'
 gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-
@@ -195,6 +196,8 @@ group :test do
   gem 'launchy'
 
   gem 'rspec-repeat'
+
+  gem 'shoulda-matchers'
 
   gem 'simplecov', require: false
   gem 'simplecov-lcov', require: false

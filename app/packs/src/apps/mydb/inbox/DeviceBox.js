@@ -4,7 +4,7 @@ import { Button, Tooltip, ButtonGroup } from 'react-bootstrap';
 
 import DatasetContainer from 'src/apps/mydb/inbox/DatasetContainer';
 import Pagination from 'src/apps/mydb/inbox/Pagination';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -51,12 +51,6 @@ export default class DeviceBox extends React.Component {
     if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
       this.setState({ visible: deviceBoxVisible });
     }
-
-    if (deviceBoxVisible) {
-      if (Array.isArray(device_box.children) && !device_box.children.length) {
-        InboxActions.fetchInboxContainer(device_box.id, currentDeviceBoxPage);
-      }
-    }
   }
 
   componentWillUnmount() {
@@ -65,8 +59,6 @@ export default class DeviceBox extends React.Component {
 
   handleDeviceBoxClick(deviceBox) {
     const { visible, currentDeviceBoxPage } = this.state;
-
-    InboxActions.setActiveDeviceBoxId(deviceBox.id);
 
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
@@ -188,6 +180,8 @@ export default class DeviceBox extends React.Component {
     const currentItemsCount = device_box.children.length;
     const itemsDeleted = checkedDeviceIds.length;
 
+    const attachmentIdsToDelete = [];
+
     checkedDeviceIds.forEach((checkedDeviceId) => {
       const datasetToDelete = device_box.children.find((dataset) => dataset.id === checkedDeviceId);
       if (datasetToDelete) {
@@ -199,10 +193,14 @@ export default class DeviceBox extends React.Component {
       device_box.children.forEach((dataset) => {
         const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
         if (attachmentToDelete) {
-          InboxActions.deleteAttachment(attachmentToDelete, false);
+          attachmentIdsToDelete.push(checkedId);
         }
       });
     });
+
+    if (attachmentIdsToDelete.length > 0) {
+      InboxActions.bulkDeleteAttachments(attachmentIdsToDelete, false);
+    }
 
     const params = {
       checkedDeviceIds: [],

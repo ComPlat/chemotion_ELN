@@ -154,7 +154,7 @@ class ReportActions {
     };
   }
 
-  loadRreview = ({ reportState }) => {
+  loadReview = ({ reportState }) => {
     const state = LoadPreviewIds(reportState);
     return (dispatch) => {
       UIFetcher.loadReport(state, 'elements')

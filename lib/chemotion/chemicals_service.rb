@@ -4,10 +4,14 @@ module Chemotion
   class ChemicalsService
     def self.request_options
       { headers: {
-        'Access-Control-Request-Method' => 'GET',
-        'Accept' => '*/*',
-        'User-Agent': 'Google Chrome',
-      } }
+          'Access-Control-Request-Method' => 'GET',
+          'Accept' => '*/*',
+          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0',
+          'Accept-Encoding': 'gzip, deflate, br',
+          Connection: 'keep-alive',
+        },
+        timeout: 15,
+        follow_redirects: true }
     end
 
     def self.merck_request(name)
@@ -50,21 +54,10 @@ module Chemotion
       'Could not find safety data sheet from Thermofisher'
     end
 
-    def self.check_if_safety_sheet_already_saved(file_name, safety_sheet_files_names)
-      saved = false
-      unless  safety_sheet_files_names.empty?
-        safety_sheet_files_names.each do |file|
-          if file == file_name
-            saved = true
-            break
-          end
-        end
-      end
-      saved
-    end
-
     def self.write_file(file_path, link)
-      req_safety_sheet = HTTParty.get(link, request_options)
+      options = request_options.dup
+      options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
+      req_safety_sheet = HTTParty.get(link, options)
       file_name = "public/safety_sheets/#{file_path}"
       if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
         File.binwrite(file_name, req_safety_sheet)
@@ -72,15 +65,15 @@ module Chemotion
       else
         'there is no file to save'
       end
+    rescue HTTParty::RedirectionTooDeep => e
+      "Redirection limit exceeded: #{e}"
+    rescue HTTParty::TimeoutError => e
+      "Request timed out: #{e}"
     end
 
     def self.create_sds_file(file_path, link)
-      safety_sheet_files_names = Dir.children('public/safety_sheets')
-      if check_if_safety_sheet_already_saved(file_path, safety_sheet_files_names) == false
-        write_file(file_path, link)
-      else
-        'file is already saved'
-      end
+      write_file(file_path, link)
+      sleep 1
     rescue StandardError
       'could not save safety data sheet'
     end

@@ -528,7 +528,7 @@ module ReportHelpers
     # commented out lines are blacklisted attributes
     {
       sample: {
-        external_label: ['s.external_label', '"sample external label"', 0],
+        external_label: ['s."external_label"', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
         cas: ['s.xref', '"cas"', 0],
         target_amount_value: ['s.target_amount_value', '"target amount"', 0],

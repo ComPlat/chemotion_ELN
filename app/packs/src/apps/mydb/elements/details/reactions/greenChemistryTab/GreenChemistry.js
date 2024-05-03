@@ -44,6 +44,7 @@ export default class GreenChemistry extends Component {
     const defaultColDef = {
       editable: false,
       width: 120,
+      resizable: true,
     };
 
     return (
@@ -92,7 +93,6 @@ export default class GreenChemistry extends Component {
           </div>
           <div className="e-factor-refs ag-theme-balham">
             <AgGridReact
-              enableColResize
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
               headerHeight={68}

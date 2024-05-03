@@ -1,4 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -8,6 +9,7 @@ import {
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -16,7 +18,6 @@ import ResearchPlansLiteratures from 'src/apps/mydb/elements/details/literature/
 import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/ResearchPlanWellplates';
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
-import Utils from 'src/utilities/Functions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -36,7 +37,11 @@ import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
+import CopyElementModal from 'src/components/common/CopyElementModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import { commentActivation } from 'src/utilities/CommentHelper';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -46,6 +51,7 @@ export default class ResearchPlanDetails extends Component {
       researchPlan,
       update: false,
       visible: Immutable.List(),
+      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -60,7 +66,9 @@ export default class ResearchPlanDetails extends Component {
 
   componentDidMount() {
     const { researchPlan } = this.props;
-    if (!researchPlan.isNew) {
+    const { currentUser } = this.state;
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !researchPlan.isNew) {
       CommentActions.fetchComments(researchPlan);
     }
   }
@@ -188,10 +196,6 @@ export default class ResearchPlanDetails extends Component {
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.attachments[index].is_deleted = false;
     this.setState({ researchPlan });
-  }
-
-  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
-    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
   }
 
   handleAttachmentEdit(attachment) {
@@ -475,7 +479,6 @@ export default class ResearchPlanDetails extends Component {
             onDrop={this.handleAttachmentDrop.bind(this)}
             onDelete={this.handleAttachmentDelete.bind(this)}
             onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-            onDownload={this.handleAttachmentDownload.bind(this)}
             onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
             onEdit={this.handleAttachmentEdit.bind(this)}
             readOnly={false}
@@ -486,7 +489,16 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
+    const { currentCollection } = UIStore.getState();
+    const rootCol = currentCollection && currentCollection.is_shared === false &&
+      currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
+    const copyBtn = (
+      <CopyElementModal
+        element={researchPlan}
+        defCol={rootCol}
+      />
+    );
 
     return (
       <Panel.Heading>
@@ -512,7 +524,7 @@ export default class ResearchPlanDetails extends Component {
             <i className="fa fa-floppy-o" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Fullresearch_plan</Tooltip>}>
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
           <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={this.toggleFullScreen}>
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
@@ -520,6 +532,7 @@ export default class ResearchPlanDetails extends Component {
         {researchPlan.isNew
           ? null
           : <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+        {copyBtn}
       </Panel.Heading>
     );
   }
@@ -600,6 +613,7 @@ export default class ResearchPlanDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
+    // eslint-disable-next-line react/destructuring-assignment
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
@@ -621,7 +635,7 @@ export default class ResearchPlanDetails extends Component {
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
-              researchPlan.changed ? (
+              (researchPlan.changed || researchPlan.is_copy) ? (
                 <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
                   {researchPlan.isNew ? 'Create' : 'Save'}
                 </Button>

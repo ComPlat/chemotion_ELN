@@ -19,7 +19,8 @@ module ReportHelpers
       tlc: true,
       observation: true,
       analysis: true,
-      literature: true
+      literature: true,
+      variations: true,
     }
   end
 

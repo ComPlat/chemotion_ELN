@@ -6,7 +6,6 @@ export default class Chemical extends Element {
     return new Chemical({
       chemical_data: [{ }],
       cas: null,
-      changed: false
     });
   }
 
@@ -48,6 +47,5 @@ export default class Chemical extends Element {
     } else if (parameter === 'cas') {
       this._cas = value;
     }
-    this.changed = true;
   }
 }

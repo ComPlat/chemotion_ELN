@@ -10,11 +10,10 @@ import ChemicalTab from 'src/components/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 
-const createChemical = (chemicalData = [{}], cas = null, changed = false) => {
+const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
   chemical.chemical_data = chemicalData;
   chemical.cas = cas;
-  chemical.changed = changed;
   return chemical;
 };
 
@@ -26,17 +25,20 @@ const parent = {
   setState: sinon.spy() // Create a mock parent object with a setState function
 };
 
-const createWrapper = (saveInventoryAction) => shallow(
+const createWrapper = (saveInventoryAction, editChemical) => shallow(
   <ChemicalTab
     sample={sample}
     parent={parent}
     saveInventory={saveInventoryAction}
+    editChemical={editChemical}
     key="ChemicalTab29"
   />
 );
 
 describe('ChemicalTab component', () => {
-  const wrapper = createWrapper(false);
+  const editChemicalMock = sinon.stub();
+  const wrapper = createWrapper(false, editChemicalMock);
+
   it('should render without errors', () => {
     // Assert that the parent element has the specified className;
     expect(wrapper.find('.table.table-borderless')).toHaveLength(1);
@@ -126,7 +128,7 @@ describe('ChemicalTab component', () => {
       // update state of chemical object
       const chemicalData = [{ status: 'Out of stock' }];
       // use chemical factory to create a new chemical object
-      const newChemical = createChemical(chemicalData, '7681-82-5', false);
+      const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
       expect(wrapper.state().chemical).toEqual(newChemical);
 
@@ -151,7 +153,7 @@ describe('ChemicalTab component', () => {
         ]
       }];
       // use chemical factory to create a new chemical object with safety sheets
-      const newChemical = createChemical(chemicalData, '7681-82-5', false);
+      const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
       // expect elements with class names to be rendered
       expect(wrapper.find('.safety-sheets-form')).toHaveLength(1);
@@ -261,7 +263,7 @@ describe('ChemicalTab component', () => {
           ]
         }
       }];
-      const newChemical = createChemical(chemicalData, '7681-82-5', false);
+      const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical });
       const stylePhrasesSpy = sinon.spy(wrapper.instance(), 'stylePhrases');
       wrapper.find('#safetyPhrases-btn').simulate('click');

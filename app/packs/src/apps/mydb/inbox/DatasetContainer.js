@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import InboxStore from 'src/stores/alt/stores/InboxStore';

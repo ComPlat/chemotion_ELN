@@ -169,6 +169,7 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
+  before_save :update_inventory_label, if: :new_record?
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_save :update_counter
@@ -465,7 +466,7 @@ class Sample < ApplicationRecord
       FileUtils.remove(src)
     end
     if svg.start_with?(/\s*\<\?xml/, /\s*\<svg/)
-      File.write(full_svg_path(svg_file_name), scrub(svg))
+      File.write(full_svg_path(svg_file_name), Chemotion::Sanitizer.scrub_svg(svg))
       self.sample_svg_file = svg_file_name
     end
     unless sample_svg_file =~ /\A[0-9a-f]{128}.svg\z/
@@ -651,6 +652,27 @@ private
     end
   end
 
+  def find_collection_id
+    collection_ids = collections_samples.map(&:collection_id)
+    all_collection_id = Collection.where(id: collection_ids, label: 'All').pick(:id)
+    collection_ids.delete(all_collection_id)
+    # on sample create, sample is assigned only to the collection in which it will be created along with All collection
+    collection_ids.first
+  end
+
+  def update_inventory_label
+    collection_id = find_collection_id
+    return if collection_id.blank?
+
+    collection = Collection.find_by(id: collection_id)
+    inventory = collection.inventory
+    return if inventory.blank?
+
+    inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
+    self['xref']['inventory_label'] =
+      "#{inventory['prefix']}-#{inventory['counter']}"
+  end
+
   # rubocop: enable Metrics/AbcSize
   # rubocop: enable Metrics/CyclomaticComplexity
   # rubocop: enable Metrics/PerceivedComplexity
@@ -701,16 +723,6 @@ private
 
   def has_density
     density.present? && density.positive? && (!molarity_value.present? || molarity_value.zero?)
-  end
-
-  def scrub(value)
-    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
-    Loofah.scrub_fragment(value, :strip).to_s
-          .gsub('viewbox', 'viewBox')
-          .gsub('lineargradient', 'linearGradient')
-          .gsub('radialgradient', 'radialGradient')
-#   value
   end
 
   # build a full path of the sample svg, nil if not buildable

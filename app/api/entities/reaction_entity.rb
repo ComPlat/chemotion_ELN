@@ -56,10 +56,6 @@ module Entities
       options[:policy].try(:update?) || false
     end
 
-    def can_copy
-      options[:policy].try(:copy?) || false
-    end
-
     def code_log
       displayed_in_list? ? nil : object.code_log
     end

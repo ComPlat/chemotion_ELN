@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chemotion
-  class WellplateAPI < Grape::API
+  class WellplateAPI < Grape::API # rubocop:disable Metrics/ClassLength
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ParamsHelpers
@@ -15,7 +15,6 @@ module Chemotion
         params do
           requires :wellplates, type: Array do
             requires :name, type: String
-            optional :size, type: Integer
             optional :description, type: Hash
             optional :wells, type: Array
             optional :readout_titles, type: Array
@@ -37,7 +36,8 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id],
+                                                   params[:ui_state][:is_sync_to_me])
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)
@@ -63,32 +63,32 @@ module Chemotion
       end
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).wellplates
-          rescue ActiveRecord::RecordNotFound
-            Wellplate.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
-          rescue ActiveRecord::RecordNotFound
-            Wellplate.none
-          end
-        else
-          # All collection of current_user
-          Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order("created_at DESC")
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).wellplates
+                  rescue ActiveRecord::RecordNotFound
+                    Wellplate.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
+                  rescue ActiveRecord::RecordNotFound
+                    Wellplate.none
+                  end
+                else
+                  # All collection of current_user
+                  Wellplate.joins(:collections).where(collections: { user_id: current_user.id }).distinct
+                end.order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.includes_for_list_display
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
 
         reset_pagination_page(scope)
 
@@ -96,7 +96,7 @@ module Chemotion
           Entities::WellplateEntity.represent(
             wellplate,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
           )
         end
 
@@ -118,7 +118,7 @@ module Chemotion
 
           {
             wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels),
-            attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
+            attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
           }
         end
       end
@@ -141,7 +141,6 @@ module Chemotion
       params do
         requires :id, type: Integer
         optional :name, type: String
-        optional :size, type: Integer
         optional :description, type: Hash
         optional :wells, type: Array
         optional :readout_titles, type: Array
@@ -157,7 +156,8 @@ module Chemotion
           update_datamodel(params[:container])
           params.delete(:container)
 
-          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false), current_user.id).execute!
+          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false),
+                                                       current_user.id).execute!
 
           # save to profile
           kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
@@ -167,7 +167,7 @@ module Chemotion
             wellplate,
             with: Entities::WellplateEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
-            root: :wellplate
+            root: :wellplate,
           )
         end
       end
@@ -175,18 +175,18 @@ module Chemotion
       desc 'Create a wellplate'
       params do
         requires :name, type: String
-        optional :size, type: Integer
         optional :description, type: Hash
         requires :wells, type: Array
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
+        optional :height, type: Integer, default: 8, values: 1..100
+        optional :width, type: Integer, default: 12, values: 1..100
         optional :segments, type: Array, desc: 'Segments'
       end
       post do
         container = params[:container]
         params.delete(:container)
-
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user).execute!
         wellplate.container = update_datamodel(container)
 
@@ -200,7 +200,7 @@ module Chemotion
           wellplate,
           with: Entities::WellplateEntity,
           detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
-          root: :wellplate
+          root: :wellplate,
         )
       end
 
@@ -212,7 +212,8 @@ module Chemotion
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
-          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
+          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate],
+                                                                                           CollectionsWellplate, col_id)
           Wellplate.where(id: wellplate_ids).each do |wellplate|
             wellplate.create_subwellplate current_user, col_id, true
           end
@@ -230,22 +231,25 @@ module Chemotion
         end
         route_param :wellplate_id do
           before do
-            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id])).update?
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
+                                                                     Wellplate.find(params[:wellplate_id])).update?
           end
 
           put do
             wellplate_id = params[:wellplate_id]
             attachment_id = params[:attachment_id]
             begin
-              import = Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id, attachment_id: attachment_id)
+              import = Import::ImportWellplateSpreadsheet.new(wellplate_id: wellplate_id,
+                                                              attachment_id: attachment_id)
               import.process!
               wellplate = import.wellplate
               {
                 wellplate: Entities::WellplateEntity.represent(
                   wellplate,
-                  detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+                  detail_levels: ElementDetailLevelCalculator.new(user: current_user,
+                                                                  element: wellplate).detail_levels,
                 ),
-                attachments: Entities::AttachmentEntity.represent(wellplate.attachments)
+                attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
               }
             rescue StandardError => e
               error!(e, 500)
@@ -261,7 +265,8 @@ module Chemotion
           requires :label, type: String
         end
         after_validation do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Well.find(params[:id]).wellplate).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
+                                                                   Well.find(params[:id]).wellplate).update?
         end
         post do
           well = Well.find(params[:id])
@@ -277,12 +282,36 @@ module Chemotion
           requires :color_code, type: String
         end
         after_validation do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Well.find(params[:id]).wellplate).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
+                                                                   Well.find(params[:id]).wellplate).update?
         end
         post do
           well = Well.find(params[:id])
           well.update(color_code: params[:color_code])
           { color_code: well.color_code }
+        end
+      end
+
+      namespace :template do
+        desc 'Returns an xlsx template for a wellplate'
+        params do
+          requires :id, type: Integer, desc: 'Wellplate id'
+        end
+        route_param :id do
+          before do
+            error!('401 Unauthorized', 401) unless Wellplate.find_by(id: params[:id])
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).read?
+          end
+
+          get do
+            content_type 'application/octet-stream'
+            env['api.format'] = :binary
+            header['Content-Disposition'] = 'attachment; filename=\"wellplate_import_template.xlsx\"'
+            header['Content-Transfer-Encoding'] = 'binary'
+            wellplate = Wellplate.find(params[:id])
+            xlsx_template = Usecases::Wellplates::TemplateCreation.new(wellplate).execute!
+            xlsx_template.to_stream.read
+          end
         end
       end
     end

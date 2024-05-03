@@ -1,19 +1,20 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+
 import {
-  Row, Col, FormGroup, FormControl, ControlLabel,
+  FormGroup, FormControl, ControlLabel, ListGroup,
   ListGroupItem, Button, Overlay
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ImageModal from 'src/components/common/ImageModal';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import debounce from 'es6-promise-debounce';
 import {
   findIndex, cloneDeep, last, findKey
 } from 'lodash';
 import { absOlsTermId } from 'chem-generic-ui';
-import Utils from 'src/utilities/Functions';
 import Attachment from 'src/models/Attachment';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -21,7 +22,6 @@ import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
-import ChildOverlay from 'src/components/managingActions/ChildOverlay';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import PropTypes from 'prop-types';
@@ -32,14 +32,14 @@ import {
   editButton,
   sortingAndFilteringUI,
   formatFileSize,
-  isImageFile,
-  moveBackButton
+  moveBackButton,
+  attachmentThumbnail
 } from 'src/apps/mydb/elements/list/AttachmentList';
-import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
+import { formatDate } from 'src/utilities/timezoneHelper';
 
 export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
-    super();
+    super(props);
     const datasetContainer = { ...props.datasetContainer };
     this.state = {
       datasetContainer,
@@ -51,8 +51,12 @@ export default class ContainerDatasetModalContent extends Component {
       imageEditModalShown: false,
       filteredAttachments: [...props.datasetContainer.attachments],
       filterText: '',
-      sortBy: 'name',
-      sortDirection: 'asc',
+      attachmentGroups: {
+        Original: [],
+        BagitZip: [],
+        Combined: [],
+        Processed: {},
+      }
     };
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
@@ -62,26 +66,30 @@ export default class ContainerDatasetModalContent extends Component {
     this.handleDSChange = this.handleDSChange.bind(this);
     this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
-    this.handleDownloadOriginal = this.handleDownloadOriginal.bind(this);
-    this.handleDownloadAnnotated = this.handleDownloadAnnotated.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
-    this.handleSortChange = this.handleSortChange.bind(this);
-    this.toggleSortDirection = this.toggleSortDirection.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
+    this.classifyAttachments = this.classifyAttachments.bind(this);
+    this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
   }
 
   componentDidMount() {
     this.editorInitial();
     this.createAttachmentPreviews();
+    this.setState({
+      attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
+    });
   }
 
   componentDidUpdate(prevProps) {
-    const { datasetContainer } = this.props;
-    if (datasetContainer.attachments !== prevProps.datasetContainer.attachments) {
+    const { attachments } = this.props.datasetContainer;
+    if (attachments !== prevProps.datasetContainer.attachments) {
       this.createAttachmentPreviews();
-      this.setState({ filteredAttachments: [...datasetContainer.attachments] }, this.filterAndSortAttachments);
+      this.setState({
+        filteredAttachments: [...attachments],
+        attachmentGroups: this.classifyAttachments(attachments)
+      }, this.filterAttachments);
     }
   }
 
@@ -113,25 +121,24 @@ export default class ContainerDatasetModalContent extends Component {
   }
 
   handleFileDrop(files) {
-    const { datasetContainer } = this.state;
-    const attachments = files.map((f) => Attachment.fromFile(f));
-    const firstAttach = datasetContainer.attachments.length === 0;
-    datasetContainer.attachments = datasetContainer.attachments.concat(attachments);
-    if (firstAttach) {
-      let attachName = attachments[0].filename;
-      const splitted = attachName.split('.');
-      if (splitted.length > 1) {
-        splitted.splice(-1, 1);
-        attachName = splitted.join('.');
-      }
-      datasetContainer.name = attachName;
-    }
+    this.setState((prevState) => {
+      const newAttachments = files.map((f) => {
+        const newAttachment = Attachment.fromFile(f);
+        newAttachment.is_pending = true;
+        return newAttachment;
+      });
 
-    this.setState({
-      datasetContainer,
-      filteredAttachments: [...datasetContainer.attachments]
+      const updatedAttachments = [...prevState.datasetContainer.attachments, ...newAttachments];
+      const updatedDatasetContainer = { ...prevState.datasetContainer, attachments: updatedAttachments };
+
+      return {
+        datasetContainer: updatedDatasetContainer,
+        filteredAttachments: updatedAttachments,
+        attachmentGroups: this.classifyAttachments(updatedAttachments),
+      };
     }, () => {
       this.props.onChange({ ...this.state.datasetContainer });
+      this.createAttachmentPreviews();
     });
   }
 
@@ -187,6 +194,7 @@ export default class ContainerDatasetModalContent extends Component {
       }, this.timeout),
     });
     this.handleInputChange('instrument', event);
+    this.props.onInstrumentChange(value);
   }
 
   handleAddLink(link) {
@@ -207,23 +215,6 @@ export default class ContainerDatasetModalContent extends Component {
     }
     this.setState({ datasetContainer });
   }
-
-  handleDownloadAnnotated = (attachment) => {
-    const isImage = isImageFile(attachment.filename);
-    if (isImage && !attachment.isNew) {
-      Utils.downloadFile({
-        contents: `/api/v1/attachments/${attachment.id}/annotated_image`,
-        name: attachment.filename
-      });
-    }
-  };
-
-  handleDownloadOriginal = (attachment) => {
-    Utils.downloadFile({
-      contents: `/api/v1/attachments/${attachment.id}`,
-      name: attachment.filename,
-    });
-  };
 
   handleEdit(attachment) {
     const fileType = last(attachment.filename.split('.'));
@@ -247,49 +238,65 @@ export default class ContainerDatasetModalContent extends Component {
       });
   }
 
-  toggleSortDirection = () => {
-    this.setState((prevState) => ({
-      sortDirection: prevState.sortDirection === 'asc' ? 'desc' : 'asc'
-    }), this.filterAndSortAttachments);
-  };
-
   handleFilterChange = (e) => {
-    this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
+    this.setState({ filterText: e.target.value }, this.filterAttachments);
   };
 
-  handleSortChange = (e) => {
-    this.setState({ sortBy: e.target.value }, this.filterAndSortAttachments);
-  };
+  filterAttachments() {
+    const filterTextLower = this.state.filterText.toLowerCase();
+    const filteredGroups = this.classifyAttachments(this.props.datasetContainer.attachments);
 
-  filterAndSortAttachments() {
-    const { filterText, sortBy } = this.state;
-
-    const filteredAttachments = this.props.datasetContainer.attachments.filter((
-      attachment
-    ) => attachment.filename.toLowerCase().includes(filterText.toLowerCase()));
-
-    filteredAttachments.sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'name':
-          comparison = a.filename.localeCompare(b.filename);
-          break;
-        case 'size':
-          comparison = a.filesize - b.filesize;
-          break;
-        case 'date': {
-          const dateA = parseDate(a.created_at);
-          const dateB = parseDate(b.created_at);
-          comparison = dateA.valueOf() - dateB.valueOf();
-          break;
-        }
-        default:
-          break;
+    Object.keys(filteredGroups).forEach((group) => {
+      if (Array.isArray(filteredGroups[group])) {
+        filteredGroups[group] = filteredGroups[group]
+          .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
+      } else {
+        Object.keys(filteredGroups[group]).forEach((subGroup) => {
+          filteredGroups[group][subGroup] = filteredGroups[group][subGroup]
+            .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
+        });
       }
-      return this.state.sortDirection === 'asc' ? comparison : -comparison;
     });
 
-    this.setState({ filteredAttachments });
+    this.setState({ attachmentGroups: filteredGroups });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  classifyAttachments(attachments) {
+    const groups = {
+      Original: [],
+      BagitZip: [],
+      Combined: [],
+      Processed: {},
+      Pending: [],
+    };
+
+    attachments.forEach((attachment) => {
+      if (attachment.is_pending) {
+        groups.Pending.push(attachment);
+        return;
+      }
+
+      if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
+        groups.BagitZip.push(attachment);
+      } else if (attachment.aasm_state === 'image'
+          && (attachment.filename.includes('.combined')
+          || attachment.filename.includes('.new_combined'))) {
+        groups.Combined.push(attachment);
+      } else if (attachment.filename.includes('bagit')) {
+        const baseName = attachment.filename.split('_bagit')[0].trim();
+        if (!groups.Processed[baseName]) {
+          groups.Processed[baseName] = [];
+        }
+        groups.Processed[baseName].push(attachment);
+      } else if (attachment.aasm_state === 'non_jcamp' && attachment.filename.includes('.new_combined')) {
+        groups.Combined.push(attachment);
+      } else {
+        groups.Original.push(attachment);
+      }
+    });
+
+    return groups;
   }
 
   resetInstrumentComponent() {
@@ -449,6 +456,7 @@ export default class ContainerDatasetModalContent extends Component {
             <ListGroupItem
               onClick={() => this.selectInstrument()}
               onMouseEnter={() => this.focusInstrument(index)}
+              // eslint-disable-next-line react/no-array-index-key
               key={`instrument_${index}`}
               ref={`instrument_${index}`}
               header={instrument.name}
@@ -462,11 +470,93 @@ export default class ContainerDatasetModalContent extends Component {
     return <div />;
   }
 
+  renderAttachmentRow(attachment) {
+    const { extension, attachmentEditor } = this.state;
+    const { readOnly } = this.props;
+
+    return (
+      <div className="attachment-row" key={attachment.id}>
+        {attachmentThumbnail(attachment)}
+        <div className="attachment-row-text" title={attachment.filename}>
+          {attachment.is_deleted ? (
+            <strike>{attachment.filename}</strike>
+          ) : (
+            attachment.filename
+          )}
+          <div className="attachment-row-subtext">
+            <div>
+              Created:&nbsp;
+              {formatDate(attachment.created_at)}
+            </div>
+            &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+            <div>
+              Size:&nbsp;
+              <span style={{ fontWeight: 'bold', color: '#444' }}>
+                {formatFileSize(attachment.filesize)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          {attachment.is_deleted ? (
+            <Button
+              bsSize="xs"
+              bsStyle="danger"
+              className="attachment-button-size"
+              onClick={() => this.handleUndo(attachment)}
+            >
+              <i className="fa fa-undo" aria-hidden="true" />
+            </Button>
+          ) : (
+            <>
+              {downloadButton(attachment)}
+              {editButton(
+                attachment,
+                extension,
+                attachmentEditor,
+                attachment.aasm_state === 'oo_editing' && new Date().getTime()
+                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                !attachmentEditor || attachment.aasm_state === 'oo_editing'
+                  || attachment.is_new || this.documentType(attachment.filename) === null,
+                this.handleEdit
+              )}
+              {annotateButton(attachment, this)}
+              {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
+              &nbsp;
+              {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
+            </>
+          )}
+        </div>
+        {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
+      </div>
+    );
+  }
+
   renderAttachments() {
     const {
-      filteredAttachments, sortDirection, attachmentEditor, extension
+      filteredAttachments, sortDirection, attachmentGroups
     } = this.state;
     const { datasetContainer } = this.props;
+
+    const renderGroup = (attachments, title, key) => (
+      <div key={key} style={{ marginTop: '10px' }}>
+        <div style={{
+          backgroundColor: '#D3D3D3',
+          fontWeight: 'bold',
+          marginBottom: '5px',
+          borderRadius: '5px',
+          padding: '5px'
+        }}
+        >
+          {title}
+        </div>
+        {attachments.map((attachment) => this.renderAttachmentRow(attachment))}
+      </div>
+    );
+
+    const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
+      (groupName) => attachmentGroups.Processed[groupName].length > 0
+    );
 
     return (
       <div className="attachment-main-container">
@@ -477,12 +567,13 @@ export default class ContainerDatasetModalContent extends Component {
           </div>
           <div style={{ marginLeft: '20px', alignSelf: 'center' }}>
             {datasetContainer.attachments.length > 0
-        && sortingAndFilteringUI(
-          sortDirection,
-          this.handleSortChange,
-          this.toggleSortDirection,
-          this.handleFilterChange
-        )}
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                false
+              )}
           </div>
         </div>
         {filteredAttachments.length === 0 ? (
@@ -490,85 +581,16 @@ export default class ContainerDatasetModalContent extends Component {
             There are currently no attachments.
           </div>
         ) : (
-          filteredAttachments.map((attachment) => (
-            <div className="attachment-row" key={attachment.id}>
-              <div className="attachment-row-image">
-                <ImageModal
-                  imageStyle={{
-                    width: '45px',
-                    height: '45px',
-                    borderRadius: '5px',
-                    objectFit: 'cover',
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  }}
-                  hasPop={false}
-                  alt="thumbnail"
-                  previewObject={{
-                    src: attachment.preview,
-                  }}
-                  popObject={{
-                    title: attachment.filename,
-                    src: attachment.preview,
-                    fetchNeeded: false,
-                    fetchId: attachment.id,
-                  }}
-                />
-              </div>
-              <div className="attachment-row-text" title={attachment.filename}>
-                {attachment.is_deleted ? (
-                  <strike>{attachment.filename}</strike>
-                ) : (
-                  attachment.filename
-                )}
-                <div className="attachment-row-subtext">
-                  <div>
-                    Created:&nbsp;
-                    {formatDate(attachment.created_at)}
-                  </div>
-                  &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-                  <div>
-                    Size:&nbsp;
-                    <span style={{ fontWeight: 'bold', color: '#444' }}>
-                      {formatFileSize(attachment.filesize)}
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-              <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {attachment.is_deleted ? (
-                  <Button
-                    bsSize="xs"
-                    bsStyle="danger"
-                    className="attachment-button-size"
-                    onClick={() => this.handleUndo(attachment)}
-                  >
-                    <i className="fa fa-undo" aria-hidden="true" />
-                  </Button>
-                ) : (
-                  <>
-                    {downloadButton(attachment, this.handleDownloadOriginal, this.handleDownloadAnnotated)}
-                    {editButton(
-                      attachment,
-                      extension,
-                      attachmentEditor,
-                      attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                      !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                        || attachment.is_new || this.documentType(attachment.filename) === null,
-                      this.handleEdit
-                    )}
-                    {annotateButton(attachment, this)}
-                    {moveBackButton(attachment, this.handleAttachmentBackToInbox, this.props.readOnly)}
-                    &nbsp;
-                    {removeButton(attachment, this.handleAttachmentRemove, this.props.readOnly)}
-                  </>
-                )}
-              </div>
-              {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
-            </div>
-          ))
+          <div style={{ marginBottom: '20px' }}>
+            {attachmentGroups.Pending && attachmentGroups.Pending.length > 0
+            && renderGroup(attachmentGroups.Pending, 'Pending')}
+            {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
+            {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
+            {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
+              .map((groupName) => attachmentGroups.Processed[groupName].length > 0
+            && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
+            {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
+          </div>
         )}
         <HyperLinksSection
           data={this.state.datasetContainer.extended_metadata.hyperlinks}
@@ -609,29 +631,25 @@ export default class ContainerDatasetModalContent extends Component {
               event,
               this.doneInstrumentTyping
             )}
-            ref={(input) => {
-              this.autoComplete = input;
-            }}
+            ref={(form) => { this.instRef = form; }}
             autoComplete="off"
           />
           <Overlay
+            target={() => ReactDOM.findDOMNode(this.instRef)}
+            shouldUpdatePosition
             placement="bottom"
             show={showInstruments}
             container={this}
             rootClose
             onHide={() => this.abortAutoSelection()}
           >
-            <ChildOverlay
-              dataList={this.renderInstruments()}
-              overlayAttributes={{
-                style: {
-                  position: 'absolute',
-                  width: 300,
-                  marginTop: 144,
-                  marginLeft: 17,
-                },
+            <ListGroup
+              style={{
+                position: 'absolute', marginLeft: 0, marginTop: 17, width: '95%'
               }}
-            />
+            >
+              {this.renderInstruments()}
+            </ListGroup>
           </Overlay>
         </FormGroup>
         <FormGroup controlId="datasetDescription">
@@ -658,12 +676,10 @@ export default class ContainerDatasetModalContent extends Component {
     const { mode } = this.props;
 
     return (
-      <Row>
-        <Col md={12}>
-          {mode === 'attachments' && this.renderAttachments()}
-          {mode === 'metadata' && this.renderMetadata()}
-        </Col>
-      </Row>
+      <div>
+        {mode === 'attachments' && this.renderAttachments()}
+        {mode === 'metadata' && this.renderMetadata()}
+      </div>
     );
   }
 }
@@ -688,10 +704,11 @@ ContainerDatasetModalContent.propTypes = {
     })),
   }).isRequired,
   onChange: PropTypes.func.isRequired,
+  onInstrumentChange: PropTypes.func,
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  kind: PropTypes.string.isRequired,
+  kind: PropTypes.string,
   mode: PropTypes.oneOf(['attachments', 'metadata']),
   attachments: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.oneOfType([
@@ -715,4 +732,6 @@ ContainerDatasetModalContent.defaultProps = {
   disabled: false,
   readOnly: false,
   attachments: [],
+  kind: null,
+  onInstrumentChange: () => {},
 };

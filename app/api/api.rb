@@ -196,10 +196,12 @@ class API < Grape::API
   mount Chemotion::CommentAPI
   mount Chemotion::CellLineAPI
   mount Labimotion::ConverterAPI
+  mount Labimotion::GenericKlassAPI
   mount Labimotion::GenericElementAPI
   mount Labimotion::GenericDatasetAPI
   mount Labimotion::SegmentAPI
   mount Labimotion::LabimotionHubAPI
+  mount Chemotion::InventoryAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {

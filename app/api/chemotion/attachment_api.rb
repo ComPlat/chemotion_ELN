@@ -77,6 +77,8 @@ module Chemotion
 
     resource :attachments do
       before do
+        next if request.path.end_with?('bulk_delete') && request.request_method == 'DELETE'
+
         @attachment = Attachment.find_by(id: params[:attachment_id])
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
@@ -110,6 +112,25 @@ module Chemotion
           end
           error!('401 Unauthorized', 401) unless can_dwnld
         end
+      end
+
+      desc 'Bulk Delete Attachments'
+      delete 'bulk_delete' do
+        ids = params[:ids]
+        attachments = Attachment.where(id: ids)
+
+        unpermitted_attachments = attachments.reject { |attachment| writable?(attachment) }
+
+        if unpermitted_attachments.any?
+          error!('401 Unauthorized', 401)
+        else
+          deleted_attachments = attachments.destroy_all
+        end
+
+        render json: { deleted_attachments: deleted_attachments }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+        Rails.logger.error("Error deleting attachments: #{e.message}")
       end
 
       desc 'Delete Attachment'
@@ -476,6 +497,7 @@ module Chemotion
         optional :curveIdx, type: Integer
         optional :simulatenmr, type: Boolean
         optional :axesUnits, type: String
+        optional :detector, type: String
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(

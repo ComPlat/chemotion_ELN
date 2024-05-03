@@ -3,6 +3,7 @@ import GenericEl from 'src/models/GenericEl';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
+import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class GenericElsFetcher extends GenericBaseFetcher {
   static exec(path, method) {
@@ -21,6 +22,27 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       'generic_elements',
       GenericEl
     );
+  }
+  
+  static export(element, klass, exportFormat) {
+    let fileName;
+    const promise = fetch(`/api/v1/generic_elements/export.json?id=${element.id}&klass=${klass}&export_format=${exportFormat}`, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      if (response.ok) {
+        fileName = getFileName(response);
+        return response.blob();
+      }
+    }).then((blob) => {
+      downloadBlob(fileName, blob);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
   }
 
   static fetchById(id) {
@@ -162,6 +184,21 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return this.updateOrCreate(genericEl, 'create');
   }
 
+  static split(params, name) {
+    const data = {
+      ui_state: {
+        element: {
+          all: params[name].checkedAll,
+          included_ids: params[name].checkedIds,
+          excluded_ids: params[name].uncheckedIds,
+          name
+        },
+        currentCollectionId: params.currentCollection.id
+      }
+    };
+    return this.execData(data, 'split');
+  }
+
   static createElementKlass(params) {
     return this.execData(params, 'create_element_klass');
   }
@@ -189,7 +226,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   static updateElementKlass(params) {
     return this.execData(params, 'update_element_klass');
   }
-
+  
   static updateElementTemplate(params) {
     return super.updateTemplate(
       { ...params, klass: 'ElementKlass' },
@@ -226,5 +263,9 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     && element.attachments
     && element.attachments.length > 0
     && element.type !== 'research_plan';
+  }
+
+  static uploadKlass(params) {
+    return this.execData(params, 'upload_klass');
   }
 }

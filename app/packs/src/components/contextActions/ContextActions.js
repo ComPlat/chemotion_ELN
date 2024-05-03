@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { ButtonGroup } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CreateButton from 'src/components/contextActions/CreateButton';
+import SplitElementBtn from 'src/components/contextActions/SplitElementBtn';
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
 import ExportImportButton from 'src/components/contextActions/ExportImportButton';
 import ScanCodeButton from 'src/components/contextActions/ScanCodeButton';
@@ -38,7 +39,7 @@ export default class ContextActions extends React.Component {
   isCreateDisabled() {
     const { currentCollection } = this.state.uiState;
     return currentCollection && ((currentCollection.label == 'All' && currentCollection.is_locked)
-      || (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level != PermissionConst.Write));
+      || (currentCollection.is_shared && currentCollection.is_synchronized == false) || (currentCollection.is_sync_to_me && currentCollection.permission_level < PermissionConst.Write));
   }
 
   isDisabled() {
@@ -64,9 +65,12 @@ export default class ContextActions extends React.Component {
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
-          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
-        </ButtonGroup>
+        <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
+          <ButtonGroup>
+            <SplitElementBtn />
+            <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
+          </ButtonGroup>
+        </div>
         <ButtonGroup style={{ marginLeft: '10px' }}>
           <ScanCodeButton customClass={customClass} />
         </ButtonGroup>

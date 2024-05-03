@@ -37,6 +37,7 @@
 class Collection < ApplicationRecord
   acts_as_paranoid
   belongs_to :user, optional: true
+  belongs_to :inventory, optional: true
   has_ancestry
 
   has_many :collections_samples, dependent: :destroy
@@ -45,12 +46,14 @@ class Collection < ApplicationRecord
   has_many :collections_screens, dependent: :destroy
   has_many :collections_research_plans, dependent: :destroy
   has_many :collections_elements, dependent: :destroy, class_name: 'Labimotion::CollectionsElement'
+  has_many :collections_vessels, dependent: :destroy
   has_many :collections_celllines, dependent: :destroy
   has_many :samples, through: :collections_samples
   has_many :reactions, through: :collections_reactions
   has_many :wellplates, through: :collections_wellplates
   has_many :screens, through: :collections_screens
   has_many :research_plans, through: :collections_research_plans
+  has_many :vessels, through: :collections_vessels
   has_many :elements, through: :collections_elements
   has_many :cellline_samples, through: :collections_celllines
 
@@ -149,6 +152,32 @@ class Collection < ApplicationRecord
   def self.reject_shared(user_id, collection_id)
     Collection.where(id: collection_id, user_id: user_id, is_shared: true)
               .find_each(&:destroy)
+  end
+
+  def self.collections_for_user(user_id)
+    Collection.where(user_id: user_id, shared_by_id: nil)
+  end
+
+  def self.collections_group_by_inventory(collections, inventory)
+    {
+      collections: collections,
+      inventory: {
+        id: inventory&.id,
+        prefix: inventory&.prefix,
+        name: inventory&.name,
+        counter: inventory&.counter,
+      },
+    }
+  end
+
+  def self.inventory_collections(user_id)
+    collections = collections_for_user(user_id).reject { |c| c.label == 'All' }
+    grouped_collections = collections.group_by { |c| c.inventory&.id }
+    grouped_collections.values.map do |collections_group|
+      collections = collections_group.map { |c| { id: c.id, label: c.label } }
+      inventory = collections_group.first&.inventory
+      collections_group_by_inventory(collections, inventory)
+    end
   end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity

@@ -7,7 +7,7 @@ module Entities
     end
 
     with_options(anonymize_below: 2) do
-      expose! :analyses,            anonymize_with: [], using: 'Entities::ContainerEntity'
+      expose! :analyses,            anonymize_with: [], using: 'Entities::ContainerReportEntity'
     end
 
     with_options(anonymize_below: 10) do

@@ -15,16 +15,20 @@ export default class ContainerDatasetModal extends Component {
       mode: 'attachments',
       isNameEditing: false,
       localName: props.datasetContainer.name,
+      instrumentIsEmpty: !props.datasetContainer.extended_metadata?.instrument,
     };
 
     this.handleSave = this.handleSave.bind(this);
-    this.handleDiscard = this.handleDiscard.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
+    this.handleModalClose = this.handleModalClose.bind(this);
   }
 
-  handleDiscard() {
-    this.props.onDiscard();
-    this.props.onHide();
+  handleModalClose(event) {
+    if (event && event.type === 'keydown' && event.key === 'Escape') {
+      this.handleSave();
+    } else {
+      this.props.onHide();
+    }
   }
 
   handleSave() {
@@ -55,7 +59,7 @@ export default class ContainerDatasetModal extends Component {
       show, onHide, onChange, readOnly, disabled, kind, datasetContainer
     } = this.props;
 
-    const { mode } = this.state;
+    const { mode, instrumentIsEmpty } = this.state;
 
     const attachmentTooltip = (<Tooltip id="attachment-tooltip">Click to view Attachments</Tooltip>);
     const metadataTooltip = (<Tooltip id="metadata-tooltip">Click to view Metadata</Tooltip>);
@@ -120,7 +124,7 @@ export default class ContainerDatasetModal extends Component {
           show={show}
           bsSize="large"
           dialogClassName="attachment-modal"
-          onHide={() => (disabled ? onHide() : this.handleSave())}
+          onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
           <Modal.Header style={{ flexShrink: 0 }}>
             <Modal.Title>
@@ -141,19 +145,41 @@ export default class ContainerDatasetModal extends Component {
                   />
                 </div>
               ) : (
-                <div className="attachment-name-input-div">
-                  <span style={{ marginRight: '15px' }}>{this.state.localName}</span>
-                  {!readOnly && (
-                  <i
-                    className="fa fa-pencil"
-                    aria-hidden="true"
-                    onClick={this.toggleNameEditing}
-                    style={{ cursor: 'pointer', fontSize: '.8em', color: '#0275d8' }}
-                  />
-                  )}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'
+                }}
+                >
+                  <div className="attachment-name-input-div" style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '15px' }}>{this.state.localName}</span>
+                    {!readOnly && (
+                    <i
+                      className="fa fa-pencil"
+                      aria-hidden="true"
+                      onClick={this.toggleNameEditing}
+                      style={{ cursor: 'pointer', fontSize: '.8em', color: '#0275d8' }}
+                    />
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {mode === 'attachments' && instrumentIsEmpty && (
+                    <div style={{ marginRight: '15px', display: 'flex', alignItems: 'center' }}>
+                      <i
+                        className="fa fa-exclamation-triangle"
+                        style={{ color: 'red', fontSize: '1em', marginRight: '5px' }}
+                      />
+                      <span style={{
+                        color: 'red', fontSize: '0.8em', fontWeight: 'bold', flexShrink: 0
+                      }}
+                      >
+                        Instrument missing, switch to Metadata.
+                      </span>
+                    </div>
+
+                    )}
+                    {btnMode}
+                  </div>
                 </div>
               )}
-              <div>{btnMode}</div>
             </Modal.Title>
 
           </Modal.Header>
@@ -172,18 +198,26 @@ export default class ContainerDatasetModal extends Component {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, width: '100%'
           }}
           >
-            {/* <Button style={{ marginRight: '5px' }} onClick={this.handleDiscard}>Discard Changes</Button> */}
-            <small style={{ alignSelf: 'center' }}>
-              Changes are kept for this session. Remember to save the element itself to persist changes.
-              {/* Discarding changes will discard changes for the entire session. */}
-            </small>
-            <Button
-              bsStyle="primary"
-              style={{ alignSelf: 'center', marginLeft: 'auto' }}
-              onClick={this.handleSave}
-            >
-              Keep Changes
-            </Button>
+            <div>
+              <small style={{ alignSelf: 'center' }}>
+                Changes are kept for this session. Remember to save the element itself to persist changes.
+              </small>
+            </div>
+            <div style={{ alignSelf: 'right', marginLeft: 'auto' }}>
+              {/* <Button
+                style={{ marginRight: '10px' }}
+                onClick={this.handleModalClose}
+              >
+                Discard Changes
+              </Button> */}
+              <Button
+                bsStyle="primary"
+                style={{ alignSelf: 'center', marginLeft: 'auto' }}
+                onClick={this.handleSave}
+              >
+                Keep Changes
+              </Button>
+            </div>
           </Modal.Footer>
         </Modal>
       );
@@ -196,16 +230,19 @@ ContainerDatasetModal.propTypes = {
   show: PropTypes.bool.isRequired,
   datasetContainer: PropTypes.shape({
     name: PropTypes.string.isRequired,
+    extended_metadata: PropTypes.shape({
+      instrument: PropTypes.string,
+    }),
   }).isRequired,
   onHide: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  kind: PropTypes.string.isRequired,
-  onDiscard: PropTypes.func.isRequired,
+  kind: PropTypes.string,
 };
 
 ContainerDatasetModal.defaultProps = {
   readOnly: false,
   disabled: false,
+  kind: null,
 };
