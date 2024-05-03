@@ -6,6 +6,7 @@ import Sample from 'src/models/Sample';
 import Material from '../../reactions/schemeTab/Material';
 import { permitOn } from 'src/components/common/uis';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponent.js';
 
 
 function createSample(component) {
@@ -18,30 +19,21 @@ const SampleComponentsGroup = ({
   }) => {
     const contents = [];
     let sampleComponents = sample.components;
-    if (sampleComponents && sampleComponents.length > 0) {
-      sampleComponents = sampleComponents.map((component) => {
-        if (!(component instanceof Sample)) {
-          return createSample(component)
-        }
-        return component;
-      });    
+    if (sampleComponents && sampleComponents.length > 0) {    
       let index = headIndex;
       sampleComponents.forEach((sampleComponent) => {
         index += 1;
         contents.push((
-          <Material
+          <SampleComponent
             sample={sample}
             onChange={onChange}
             key={sampleComponent.id}
             material={sampleComponent}
-            reaction={sample}
             materialGroup={materialGroup}
             deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
             index={index}
             dropMaterial={dropMaterial}
             dropSample={dropSample}
-            lockEquivColumn={false}
-            showLoadingColumn={false}
             lockAmountColumn={lockAmountColumn}
            />
         ));

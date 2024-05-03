@@ -123,22 +123,13 @@ class Material extends Component {
   }
 
   handleMaterialClick(sample) {
-    const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'components' && sample.ancestors.length > 0){
-      const stockSample = new Sample(sample.ancestors[0]);
-      stockSample.type = 'sample';
-      UrlSilentNavigation(stockSample);
-      stockSample.updateChecksum();
-      ElementActions.showMixtureMaterial({ sample: stockSample })
-    } else {
-      UrlSilentNavigation(sample);
-      sample.updateChecksum();
-      ElementActions.showReactionMaterial({ sample, reaction });
-    }
+    const { reaction } = this.props;
+    UrlSilentNavigation(sample);
+    sample.updateChecksum();
+    ElementActions.showReactionMaterial({ sample, reaction });
   }
 
   materialVolume(material) {
-    const isMixture = this.props.materialGroup === 'components'
     if (material.contains_residues) { return notApplicableInput(); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
@@ -154,24 +145,7 @@ class Material extends Component {
 
     return (
       <td>
-        {!isMixture ? (
-          <OverlayTrigger placement="top" overlay={tooltip}>
-            <div>
-              <NumeralInputWithUnitsCompo
-                key={material.id}
-                value={material.amount_l}
-                unit="l"
-                metricPrefix={metric}
-                metricPrefixes={metricPrefixes}
-                precision={3}
-                disabled={!permitOn(this.props.reaction) || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
-                onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
-                onMetricsChange={this.handleMetricsChange}
-                bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
-              />
-            </div>
-          </OverlayTrigger>
-        ) : (
+        <OverlayTrigger placement="top" overlay={tooltip}>
           <div>
             <NumeralInputWithUnitsCompo
               key={material.id}
@@ -180,17 +154,16 @@ class Material extends Component {
               metricPrefix={metric}
               metricPrefixes={metricPrefixes}
               precision={3}
-              disabled={!permitOn(this.props.reaction) || this.props.lockAmountColumn || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
+              disabled={!permitOn(this.props.reaction) || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
             />
           </div>
-        )}
+        </OverlayTrigger>
       </td>
     );
   }
-
 
   materialLoading(material, showLoadingColumn) {
     if (!showLoadingColumn) {
@@ -249,9 +222,6 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     const { reaction, materialGroup } = this.props;
-    if (materialGroup === 'components'){
-      reaction.updateMixtureComponentEquivalent();
-    }
     if (materialGroup === 'products') {
       const refMaterial = reaction.getReferenceMaterial();
       let calculateYield = material.equivalent;
@@ -517,8 +487,6 @@ class Material extends Component {
       paddingLeft: 2,
     };
 
-    const isMixture = this.props.materialGroup === 'components';
-
     return (
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -531,26 +499,29 @@ class Material extends Component {
         <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
-        {!isMixture ? (
-        <>
+
         {this.materialRef(material)}
 
         <td style={{ inputsStyle }}>
-            {this.materialShowLabel(material)}
-          </td><td style={{ inputsStyle }}>
-              {this.switchTargetReal(isTarget)}
-            </td><td style={{ width: '1%', maxWidth: '5px' }}>
-              <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
-                <div>
-                  <NumeralInputWithUnitsCompo
-                    key={material.id}
-                    value={material.coefficient}
-                    onChange={this.handleCoefficientChange}
-                    name="coefficient" />
-                </div>
-              </OverlayTrigger>
-            </td></>
-            ): null}
+          {this.materialShowLabel(material)}
+        </td>
+
+        <td style={{ inputsStyle }}>
+          {this.switchTargetReal(isTarget)}
+        </td>
+
+        <td style={{ width: '1%', maxWidth: '5px' }}>
+          <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
+            <div>
+              <NumeralInputWithUnitsCompo
+                key={material.id}
+                value={material.coefficient}
+                onChange={this.handleCoefficientChange}
+                name="coefficient"
+              />
+            </div>
+          </OverlayTrigger>
+        </td>
         
         <td>
           <OverlayTrigger
@@ -567,7 +538,7 @@ class Material extends Component {
                 metricPrefix={metric}
                 metricPrefixes={metricPrefixes}
                 precision={4}
-                disabled={!permitOn(reaction)  || this.props.lockAmountColumn || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
+                disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
                 onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
                 onMetricsChange={this.handleMetricsChange}
                 bsStyle={material.error_mass ? 'error' : massBsStyle}
@@ -587,7 +558,7 @@ class Material extends Component {
             metricPrefix={metricMol}
             metricPrefixes={metricPrefixesMol}
             precision={4}
-            disabled={!permitOn(reaction)  || this.props.lockAmountColumn || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
+            disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
             onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
             onMetricsChange={this.handleMetricsChange}
             bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
@@ -596,22 +567,7 @@ class Material extends Component {
 
         {this.materialLoading(material, showLoadingColumn)}
 
-        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
-          <NumeralInputWithUnitsCompo
-            key={material.id}
-            value={material.stock_molarity_value}
-            unit="mol/l"
-            metricPrefix={metricMolConc}
-            metricPrefixes={metricPrefixesMolConc}
-            precision={4}
-            disabled={!isMixture || isMixture && !this.props.lockAmountColumn}
-            onChange={e => this.handleAmountUnitChange(e, material.stockConc, 'stockConc')}
-            onMetricsChange={this.handleMetricsChange}
-          />
-        </td>
-
-        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}
-        onDoubleClick={(e) => this.handleInputDoubleClick(e)}>
+        <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.concn} 
@@ -619,16 +575,16 @@ class Material extends Component {
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
             precision={4}
-            disabled={!isMixture  || isMixture && !this.props.lockAmountColumn }
+            disabled
             onChange={e => this.handleAmountUnitChange(e, material.concn)}
             onMetricsChange={this.handleMetricsChange}
           />
         </td>
 
-        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
+        <td>
           {this.equivalentOrYield(material)}
         </td>
-        <td style={{ verticalAlign: isMixture ? 'top' : 'inherit' }}>
+        <td>
           <Button
             disabled={!permitOn(reaction)}
             bsStyle="danger"
@@ -643,8 +599,7 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isMixture = this.props.materialGroup === 'components'
-    const isProduct = !isMixture && reaction.products.includes(sample);
+    const isProduct = reaction.products.includes(sample);
     const molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
     let theoreticalMassPart = "";
