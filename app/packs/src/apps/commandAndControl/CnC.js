@@ -1,5 +1,4 @@
 import React from 'react';
-import RFB from '@novnc/novnc/lib/rfb';
 import { Grid, Row, Col } from 'react-bootstrap';
 import { uniq } from 'lodash';
 
@@ -16,6 +15,9 @@ const TIME_DISCO = 180000;
 const TIME_BLUR = 55000;
 // Interval to query connection counter
 const TIME_CONN = 4000;
+
+// Import RFB is async since it raises errors if it is loaded before the document is reade
+let RFB = null;
 
 class CnC extends React.Component {
   constructor() {
@@ -60,9 +62,9 @@ class CnC extends React.Component {
 
   shouldComponentUpdate(nextState) {
     return this.state.connected !== nextState.connected
-      || this.state.rfb !== nextState.rfb
-      || this.state.selected.id !== nextState.selected.id
-      || this.state.isNotFocused !== nextState.isNotFocused;
+        || this.state.rfb !== nextState.rfb
+        || this.state.selected.id !== nextState.selected.id
+        || this.state.isNotFocused !== nextState.isNotFocused;
   }
 
   componentWillUnmount() {
@@ -120,19 +122,24 @@ class CnC extends React.Component {
     this.setState({ autoBlur: blurTime });
   }
 
-  connect() {
+  async connect() {
     this.disconnect();
-    const { id, novnc } = this.state.selected;
-    if (!this.canvas || !id || !novnc) { return; }
+    const {id, novnc} = this.state.selected;
+    if (!this.canvas || !id || !novnc) {
+      return;
+    }
+    if (!RFB) {
+      RFB = (await import('@novnc/novnc/lib/rfb')).default;
+    }
 
     const rfb = new RFB(
-      this.canvas,
-      novnc.target,
-      {
-        repeaterID: '',
-        shared: true,
-        credentials: { password: novnc.password },
-      }
+        this.canvas,
+        novnc.target,
+        {
+          repeaterID: '',
+          shared: true,
+          credentials: {password: novnc.password},
+        }
     );
     rfb.viewOnly = true;
     rfb.reconnect = true;
@@ -154,18 +161,19 @@ class CnC extends React.Component {
     fetch(`/api/v1/devices/current_connection?id=${selected.id}&status=${isNotFocused}`, {
       credentials: 'same-origin'
     }).then((response) => response.json())
-      .then((json) => {
-        let using = 0;
-        let watching = 0;
-        const data = uniq(json.result).map((line) => line.split(','));
-        const conn = Object.fromEntries(data);
+        .then((json) => {
+          // using is a keyname and should therefore not be used as vairable
+          let newUsing = 0;
+          let watching = 0;
+          const data = uniq(json.result).map((line) => line.split(','));
+          const conn = Object.fromEntries(data);
 
-        Object.keys(conn).forEach((k) => {
-          if (conn[k] === '0') { using += 1; }
-          if (conn[k] === '1') { watching += 1; }
+          Object.keys(conn).forEach((k) => {
+            if (conn[k] === '0') { newUsing += 1; }
+            if (conn[k] === '1') { watching += 1; }
+          });
+          this.setState({ using: newUsing, watching });
         });
-        this.setState({ using, watching });
-      });
   }
 
   autoDisconnect() {
@@ -193,10 +201,10 @@ class CnC extends React.Component {
 
   deviceClick(device) {
     UsersFetcher.fetchNoVNCDevices(device.id)
-      .then((devices) => this.setState(
-        (prevState) => ({ ...prevState, selected: devices[0] }),
-        this.connect
-      ));
+        .then((devices) => this.setState(
+            (prevState) => ({ ...prevState, selected: devices[0] }),
+            this.connect
+        ));
   }
 
   tree(dev, selectedId) {
@@ -211,35 +219,35 @@ class CnC extends React.Component {
     });
 
     return (
-      <Col className="small-col collec-tree">
-        <div className="tree-view">
-          <div className="title" style={{ backgroundColor: 'white' }}>
-            <i className="fa fa-list" />
-            {' '}
-&nbsp;&nbsp; Devices
-          </div>
-        </div>
-        <div className="tree-wrapper">
-          {sortedDevices.map((device, index) => (
-            <div
-              className="tree-view"
-              key={`device${device.id}`}
-              onClick={() => this.deviceClick(device)}
-              role="button"
-              tabIndex={index === 0 ? 0 : -1}
-            >
-              <div
-                className={`title ${selectedId === device.id ? 'selected' : null}`}
-
-              >
-                {device.name}
-                {selectedId === device.id && this.state.connected ? <ConnectedBtn /> : null}
-                {selectedId === device.id && !this.state.connected ? <DisconnectedBtn /> : null}
-              </div>
+        <Col className="small-col collec-tree">
+          <div className="tree-view">
+            <div className="title" style={{ backgroundColor: 'white' }}>
+              <i className="fa fa-list" />
+              {' '}
+              &nbsp;&nbsp; Devices
             </div>
-          ))}
-        </div>
-      </Col>
+          </div>
+          <div className="tree-wrapper">
+            {sortedDevices.map((device, index) => (
+                <div
+                    className="tree-view"
+                    key={`device${device.id}`}
+                    onClick={() => this.deviceClick(device)}
+                    role="button"
+                    tabIndex={index === 0 ? 0 : -1}
+                >
+                  <div
+                      className={`title ${selectedId === device.id ? 'selected' : null}`}
+
+                  >
+                    {device.name}
+                    {selectedId === device.id && this.state.connected ? <ConnectedBtn /> : null}
+                    {selectedId === device.id && !this.state.connected ? <DisconnectedBtn /> : null}
+                  </div>
+                </div>
+            ))}
+          </div>
+        </Col>
     );
   }
 
@@ -250,34 +258,34 @@ class CnC extends React.Component {
     } = this.state;
 
     return (
-      <div>
-        <Grid fluid>
-          <Row className="card-navigation">
-            <Navigation toggleDeviceList={this.toggleDeviceList} />
-          </Row>
-          <Row className="card-content container-fluid">
-            {showDeviceList ? this.tree(devices, selected.id) : null}
-            <Col className="small-col main-content">
-              <FocusNovnc
-                isNotFocused={isNotFocused}
-                handleFocus={this.handleFocus}
-                handleBlur={this.handleBlur}
-                connected={connected}
-                watching={watching}
-                using={using}
-                forceCursor={forceCursor}
-                handleCursor={this.handleCursor}
-              />
-              <div
-                className={forceCursor ? 'force-mouse-pointer' : ''}
-                ref={(ref) => { this.canvas = ref; }}
-                onMouseEnter={this.handleMouseEnter}
-                onMouseLeave={this.handleMouseLeave}
-              />
-            </Col>
-          </Row>
-        </Grid>
-      </div>
+        <div>
+          <Grid fluid>
+            <Row className="card-navigation">
+              <Navigation toggleDeviceList={this.toggleDeviceList} />
+            </Row>
+            <Row className="card-content container-fluid">
+              {showDeviceList ? this.tree(devices, selected.id) : null}
+              <Col className="small-col main-content">
+                <FocusNovnc
+                    isNotFocused={isNotFocused}
+                    handleFocus={this.handleFocus}
+                    handleBlur={this.handleBlur}
+                    connected={connected}
+                    watching={watching}
+                    using={using}
+                    forceCursor={forceCursor}
+                    handleCursor={this.handleCursor}
+                />
+                <div
+                    className={forceCursor ? 'force-mouse-pointer' : ''}
+                    ref={(ref) => { this.canvas = ref; }}
+                    onMouseEnter={this.handleMouseEnter}
+                    onMouseLeave={this.handleMouseLeave}
+                />
+              </Col>
+            </Row>
+          </Grid>
+        </div>
     );
   }
 }
