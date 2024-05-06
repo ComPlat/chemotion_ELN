@@ -201,17 +201,18 @@ export default class ManagingModalSharing extends React.Component {
       wellplateDetailLevel, screenDetailLevel, elementDetailLevel
     } = this.state;
 
+    const current_collection = {
+      permission_level: permissionLevel,
+      sample_detail_level: sampleDetailLevel,
+      reaction_detail_level: reactionDetailLevel,
+      wellplate_detail_level: wellplateDetailLevel,
+      screen_detail_level: screenDetailLevel,
+      element_detail_level: elementDetailLevel,
+    }
+
     const params = {
       id: this.props.collectionId,
-      current_collection: {
-        permission_level: permissionLevel,
-        sample_detail_level: sampleDetailLevel,
-        reaction_detail_level: reactionDetailLevel,
-        wellplate_detail_level: wellplateDetailLevel,
-        screen_detail_level: screenDetailLevel,
-        element_detail_level: elementDetailLevel,
-        label: label
-      }
+      current_collection: {...current_collection, label: label}
     };
 
     if (this.props.collAction === "Create") {
@@ -225,7 +226,7 @@ export default class ManagingModalSharing extends React.Component {
       filterParams = {...filterParams, currentCollection };
 
       const fullParams = {
-        ui_state: {...filterParams, permission_level: permissionLevel},
+        ui_state: {...filterParams, levels: current_collection},
         user_ids: userIds,
         new_label: label
       };
@@ -338,6 +339,8 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   render() {
+    console.log("--this.state--", this.state);
+
     const displayWarning = (this.state.permissionLevel || '') === '5' ? 'inline-block' : 'none';
     return (
       <div>
@@ -423,7 +426,7 @@ export default class ManagingModalSharing extends React.Component {
           </FormControl>
         </FormGroup>
         <FormGroup controlId="label">
-          <ControlLabel>Label</ControlLabel>
+          <ControlLabel>Labelz</ControlLabel>
           <FormControl required id="label" type="text" placeholder="Label" name="label"
              value={this.state.label}
              onChange={(e) => { this.handleLabelChange(e); }}
