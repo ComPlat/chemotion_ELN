@@ -117,13 +117,13 @@ module CollectionHelpers
       collection_id: collection_id
     )
     label = label.nil? ? root_col_label : label
-    c_acl.update(
+    c_acl.update!(
       label: label,
-      permission_level: params['ui_state']['permission_level'],
-      sample_detail_level: currentCollection['sample_detail_level'],
-      reaction_detail_level: currentCollection['reaction_detail_level'],
-      wellplate_detail_level: currentCollection['wellplate_detail_level'],
-      screen_detail_level: currentCollection['screen_detail_level'],
+      permission_level: params['ui_state']['levels']['permission_level'],
+      sample_detail_level: params['ui_state']['levels']['sample_detail_level'],
+      reaction_detail_level: params['ui_state']['levels']['reaction_detail_level'],
+      wellplate_detail_level: params['ui_state']['levels']['wellplate_detail_level'],
+      screen_detail_level: params['ui_state']['levels']['screen_detail_level'],
     )
   end
 
