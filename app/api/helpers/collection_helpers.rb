@@ -119,7 +119,7 @@ module CollectionHelpers
     label = label.nil? ? root_col_label : label
     c_acl.update(
       label: label,
-      permission_level: currentCollection['permission_level'],
+      permission_level: params['ui_state']['permission_level'],
       sample_detail_level: currentCollection['sample_detail_level'],
       reaction_detail_level: currentCollection['reaction_detail_level'],
       wellplate_detail_level: currentCollection['wellplate_detail_level'],
