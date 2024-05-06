@@ -225,7 +225,7 @@ export default class ManagingModalSharing extends React.Component {
       filterParams = {...filterParams, currentCollection };
 
       const fullParams = {
-        ui_state: filterParams,
+        ui_state: {...filterParams, permission_level: permissionLevel},
         user_ids: userIds,
         new_label: label
       };
