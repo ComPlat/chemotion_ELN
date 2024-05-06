@@ -8,18 +8,13 @@ import { permitOn } from 'src/components/common/uis';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponent.js';
 
-
-function createSample(component) {
-  return new Sample(component)
-}
-
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
     headIndex, dropSample,dropMaterial, lockAmountColumn, switchAmount
   }) => {
     const contents = [];
     let sampleComponents = sample.components;
-    if (sampleComponents && sampleComponents.length > 0) {    
+    if (sampleComponents && sampleComponents.length > 0) {
       let index = headIndex;
       sampleComponents.forEach((sampleComponent) => {
         index += 1;
@@ -43,6 +38,8 @@ const SampleComponentsGroup = ({
     const headers = {
       group: 'Component',
       amount: 'Amount',
+      mass: 'Mass',
+      volume: 'Volume',
       stockConc: 'Stock conc.',
       concn: 'Target conc',
       eq: 'Ratio'
@@ -97,9 +94,9 @@ const SampleComponentsGroup = ({
             <tr>
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
-            <th style={{ padding: '3px 3px' }}>{headers.amount} {SwitchAmountButton(lockAmountColumn, switchAmount)}</th>
-            <th />
-            <th />
+            <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumn, switchAmount)} {headers.mass}</th>
+            <th>{headers.volume}</th>
+            <th>{headers.amount}</th>
             <th>{headers.stockConc}</th>
             <th>{headers.concn}</th>
             <th>{headers.eq}</th>

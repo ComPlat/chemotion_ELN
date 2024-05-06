@@ -133,13 +133,6 @@ class SampleComponent extends Component {
     };
 
     moleculeIupacName = material.molecule_iupac_name;
-      const materialDisplayName = material.title() === ''
-        ? <SampleName sample={material} />
-        : material.title();
-
-    materialName = (<a><span>{materialDisplayName}</span></a>);
-  
-    if (material.isNew) { materialName = materialDisplayName; }
 
     let br = <br />;
     if (moleculeIupacName === '') {
@@ -148,9 +141,6 @@ class SampleComponent extends Component {
     }
     return (
         <div style={{ display: 'inline-block', maxWidth: '100%' }}>
-          <div className="inline-inside">
-            {materialName}
-          </div>
           <span style={iupacStyle}>
             {moleculeIupacName}
           </span>
@@ -256,7 +246,7 @@ class SampleComponent extends Component {
           metricPrefix={metricMolConc}
           metricPrefixes={metricPrefixesMolConc}
           precision={4}
-          disabled={!permitOn(this.props.sample) || !this.props.lockAmountColumn}
+          disabled={!permitOn(this.props.sample)}
           onChange={e => this.handleAmountChange(e, material.stockConc, 'stockConc')}
           onMetricsChange={this.handleMetricsChange}
         />
@@ -297,8 +287,8 @@ class SampleComponent extends Component {
           {this.componentMol(material, metricMol, metricPrefixesMol)}
         </td>
 
-        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}
         {this.componentStockConc(material, metricMolConc, metricPrefixesMolConc)}
+        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
 
         <td>
           <NumeralInputWithUnitsCompo

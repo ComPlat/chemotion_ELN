@@ -5,6 +5,7 @@ import Molecule from 'src/models/Molecule';
 import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
+import SampleComponent from 'src/models/SampleComponent';
 
 function createSample(component) {
   return new Sample(component)
@@ -31,15 +32,8 @@ export default class SampleDetailsComponents extends React.Component {
   onChangeComponent(changeEvent) {
     const { sample } = this.state;
 
-    sample.components = sample.components.map((component) => {
-      if (!(component instanceof Sample)) {
-        return createSample(component)
-      }
-      return component;
-    });
-
     switch (changeEvent.type) {
-      case 'amountUnitChanged':
+      case 'amountChanged':
         this.updatedSampleForAmountUnitChange(changeEvent);
         break;
       case 'MetricsChanged':
@@ -61,8 +55,13 @@ export default class SampleDetailsComponents extends React.Component {
       (component) => component.id === sampleID
     );
 
-    sample.updateMixtureComponent(componentIndex, amount, concType)
+    const totalVolume = sample.amount_l;
 
+    if (amount.unit === 'g' || amount.unit === 'l') {
+      sample.components[componentIndex].setAmount(amount, totalVolume)
+    } else if (amount.unit === 'mol/l' ) {
+      sample.components[componentIndex].setMolarity(amount, totalVolume, concType)
+    }
     // update components ratio
     sample.updateMixtureComponentEquivalent()
   }
@@ -83,8 +82,10 @@ export default class SampleDetailsComponents extends React.Component {
 
     if (srcSample instanceof Molecule || isNewSample) {
       splitSample = Sample.buildNew(srcSample, currentCollection.id);
+      splitSample = new SampleComponent(splitSample)
     } else if (srcSample instanceof Sample) {
       splitSample = srcSample.buildChildWithoutCounter();
+      splitSample = new SampleComponent(splitSample)
     }
 
     if (splitSample.sample_type === 'Mixture') {
@@ -96,7 +97,7 @@ export default class SampleDetailsComponents extends React.Component {
             ...rest,
             ...component_properties
           };
-          let sampleComponent = new Sample(sampleData);
+          let sampleComponent = new SampleComponent(sampleData);
           sampleComponent.parent_id = splitSample.parent_id
           sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
           await sample.addMixtureComponent(sampleComponent);

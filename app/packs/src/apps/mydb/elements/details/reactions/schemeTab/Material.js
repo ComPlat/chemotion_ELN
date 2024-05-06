@@ -344,7 +344,7 @@ class Material extends Component {
     }
   }
 
-  handleAmountUnitChange(e, value, concType) {
+  handleAmountUnitChange(e, value) {
     if (e.value === value) return;
     if (this.props.onChange && e) {
       const event = {
@@ -352,7 +352,6 @@ class Material extends Component {
         type: 'amountUnitChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        concType: concType,
 
       };
       this.props.onChange(event);
@@ -522,7 +521,7 @@ class Material extends Component {
             </div>
           </OverlayTrigger>
         </td>
-        
+  
         <td>
           <OverlayTrigger
             delay="100"
@@ -570,7 +569,7 @@ class Material extends Component {
         <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.concn} 
+            value={material.concn}
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
@@ -599,7 +598,7 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isProduct = reaction.products.includes(sample);
+    const isProduct = reaction.products.includes(sample)
     const molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
     let theoreticalMassPart = "";

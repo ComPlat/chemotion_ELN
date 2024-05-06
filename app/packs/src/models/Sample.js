@@ -10,7 +10,6 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import SampleSvgFetcher from '../fetchers/SampleSvgFetcher';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -389,14 +388,10 @@ export default class Sample extends Element {
     const { profile } = UserStore.getState();
     const show_external_name = profile ? profile.show_external_name : false;
     const show_sample_name = profile ? profile.show_sample_name : false;
-    const { external_label, ancestors } = this;
+    const { external_label } = this;
     const extLabelClass = 'label--bold';
     const { name } = this;
-    let { short_label } = this;
-
-    if (ancestors && ancestors.length > 0){
-      short_label = ancestors[0].short_label;
-    }
+    const { short_label } = this;
 
     if (show_external_name) {
       return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
@@ -985,24 +980,6 @@ export default class Sample extends Element {
     return params;
   }
 
-  serializeComponent() {
-    return {
-      id: this.id,
-      name: this.name,
-      position: this.position,
-      component_properties: {
-        target_amount_value: this.target_amount_value,
-        target_amount_unit: this.target_amount_unit,
-        molarity_unit: this.molarity_unit,
-        molarity_value: this.molarity_value,
-        stock_molarity_value: this.stock_molarity_value,
-        stock_molarity_unit: this.stock_molarity_unit,
-        molecule_id: this.molecule.id,
-        equivalent: this.equivalent,
-        parent_id: this.parent_id,
-      }
-     }
-  }
 
   // Container & Analyses routines
   addAnalysis(analysis) {
@@ -1111,23 +1088,11 @@ export default class Sample extends Element {
   }
 
   initialComponents(components) {
-    this.components = components.map(component => {
-        const { component_properties, ...rest } = component;
-        const sampleData = {
-          ...rest,
-          ...component_properties
-        };
-        return new Sample(sampleData);
-      })
-      .sort((a, b) => a.position - b.position);
+    this.components = components;
+    this.setComponentPositions();
   }
 
-  async addMixtureComponent(newComponent) {
-    if (!newComponent.collection_id) {
-      const currentCollection = UIStore.getState().currentCollection;
-      newComponent.collection_id = currentCollection.id
-    }
- 
+  async addMixtureComponent(newComponent) { 
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey);
@@ -1170,46 +1135,19 @@ export default class Sample extends Element {
     this.setComponentPositions()
   } 
 
-  updateMixtureComponent(componentIndex, amount, concType) {
-    const componentToUpdate = this.components[componentIndex];
-    if  (!amount.unit || isNaN(amount.value)) { return }
-    const totalVolume = this.amount_l
-
-    if (amount.unit === 'l') { 
-      componentToUpdate.amount_value = amount.value;
-      componentToUpdate.amount_unit = amount.unit;
-      if (componentToUpdate.stock_molarity_value > 0 && totalVolume) {
-        componentToUpdate.concn = componentToUpdate.amount_value * componentToUpdate.stock_molarity_value / totalVolume
-        componentToUpdate.molarity_value = componentToUpdate.concn 
-      }
-    } else if (amount.unit === 'mol/l' && concType !== 'stockConc') {
-      componentToUpdate.concn = amount.value;
-      componentToUpdate.molarity_value = amount.value;
-      if (componentToUpdate.stock_molarity_value > 0 && totalVolume) { 
-        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stock_molarity_value
-        componentToUpdate.amount_unit = 'l'
-      }
-    } else if (amount.unit === 'mol/l' && concType === 'stockConc') {
-      componentToUpdate.stock_molarity_value = amount.value;
-      componentToUpdate.stock_molarity_unit = amount.unit;
-      if (totalVolume && componentToUpdate.concn) { 
-        componentToUpdate.amount_value = componentToUpdate.concn * totalVolume / componentToUpdate.stock_molarity_value
-        componentToUpdate.amount_unit = 'l' 
-      }
-    } else {
-      componentToUpdate.amount_value = amount.value;
-      componentToUpdate.amount_unit = amount.unit;
-    }
-  }
 
   updateMixtureComponentVolume() {
     if (this.components.length < 1) {return}
     const totalVolume = this.amount_l
 
     this.components.forEach((component) => {
-      if (component.concn > 0 && component.stock_molarity_value > 0)
-      component.amount_value = component.concn * totalVolume / component.stock_molarity_value
-      component.amount_unit = 'l' 
+      if (component.concn > 0 && component.stock_molarity_value > 0) {
+        component.amount_value = component.concn * totalVolume / component.stock_molarity_value
+        component.amount_unit = 'l' 
+      } else if (component.stock_molarity_value === 0) {
+        component.amount_value = totalVolume;
+        component.amount_unit = 'l' 
+      } 
     })
   }
 

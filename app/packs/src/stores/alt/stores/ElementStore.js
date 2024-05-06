@@ -41,6 +41,7 @@ import GenericEl from 'src/models/GenericEl';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
+import SampleComponent from 'src/models/SampleComponent';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -668,8 +669,16 @@ class ElementStore {
      if (result.sample_type && result.sample_type === 'Mixture') {
        ComponentsFetcher.fetchComponentsBySampleId(result.id)
          .then(components => {
-           result.initialComponents(components)
-         })
+            const sampleComponents = components.map(component => {
+              const { component_properties, ...rest } = component;
+              const sampleData = {
+                  ...rest,
+                  ...component_properties
+              };
+              return new SampleComponent(sampleData);
+          });
+          result.initialComponents(sampleComponents);
+        })
          .catch((errorMessage) => {
           console.log(errorMessage);
          });
