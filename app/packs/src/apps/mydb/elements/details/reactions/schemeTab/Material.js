@@ -228,7 +228,10 @@ class Material extends Component {
         calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
       } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
         calculateYield = 'n.a.';
-      } else {
+      } else if (material.purity < 1 && material.equivalent > 1) {
+        calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
+      }
+      else {
         calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
       }
       return (
@@ -523,7 +526,7 @@ class Material extends Component {
             delay="100"
             placement="top"
             overlay={
-              <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material,reaction)}</Tooltip>
+              <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
             }>
             <div>
               <NumeralInputWithUnitsCompo
@@ -594,12 +597,12 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isProduct = reaction.products.includes(sample)
+    const isProduct = reaction.products.includes(sample);
     const molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
     let theoreticalMassPart = "";
     if (isProduct && sample.maxAmount) {
-      theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`
+      theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
     }
     return `molar mass: ${molecularWeight} g/mol` + theoreticalMassPart;
   }
@@ -614,7 +617,7 @@ class Material extends Component {
     const { material, deleteMaterial, connectDragSource,
       connectDropTarget, reaction } = props;
     const isTarget = material.amountType === 'target';
-    const mw = material.molecule && material.molecule.molecular_weight
+    const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
     return (
       <tr className="solvent-material">
