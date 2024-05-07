@@ -9,8 +9,8 @@ export default class ThirdPartyAppFetcher {
     const url = id ? `${TPA_ENDPOINT}/${id}` : TPA_ENDPOINT;
     return fetch(url, {
       credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => json)
+    }).then((response) => response.json())
+      .then((json) => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -24,8 +24,8 @@ export default class ThirdPartyAppFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ name, url })
-    }).then(response => response.json())
-      .then(json => json)
+    }).then((response) => response.json())
+      .then((json) => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -33,20 +33,28 @@ export default class ThirdPartyAppFetcher {
     return fetch(`${TPA_ENDPOINT_ADMIN}/${id}`, {
       credentials: 'same-origin',
       method: 'DELETE',
-    }).then(response => response.json())
-      .then(json => json)
+    }).then((response) => response.json())
+      .then((json) => json)
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchAttachmentToken(attID, appID) {
-    console.log(attID, appID)
     const queryParams = new URLSearchParams({ attID, appID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
     return fetch(url, {
       credentials: 'same-origin'
-    }).then(response => response.json())
-  
-      .then(json => json)
+    }).then((response) => response.json())
+
+      .then((json) => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static getHandlerUrl(attID, type) {
+    const queryParams = new URLSearchParams({ attID, type }).toString();
+    const url = `${TPA_ENDPOINT}/url?${queryParams}`;
+    return fetch(url, {
+      credentials: 'same-origin'
+    }).then((response) => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 }
