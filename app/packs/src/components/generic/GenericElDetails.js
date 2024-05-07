@@ -14,7 +14,7 @@ import {
   OverlayTrigger,
   Tooltip,
 } from 'react-bootstrap';
-import _, { findIndex } from 'lodash';
+import { findIndex, merge, set as lowdashset } from 'lodash';
 import Aviator from 'aviator';
 import Immutable from 'immutable';
 import { GenInterface, GenButtonReload, GenButtonExport } from 'chem-generic-ui';
@@ -31,14 +31,13 @@ import Attachment from 'src/models/Attachment';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { notification, FlowViewerBtn, renderFlowModal } from 'src/apps/generic/Utils';
 import GenericAttachments from 'src/components/generic/GenericAttachments';
-import { SegmentTabs } from './SegmentDetails';
+import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import ElementDetailSortTab from "src/apps/mydb/elements/details/ElementDetailSortTab";
-import Immutable from "immutable";
+import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from "src/stores/alt/actions/UserActions";
-import CollectionActions from "src/stores/alt/actions/CollectionActions";
+import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -93,12 +92,12 @@ export default class GenericElDetails extends Component {
       };
       const currentCollection = UIStore.getState().currentCollection;
       let tabSegment = currentCollection?.tabs_segment;
-      _.set(tabSegment, `${this.type}`, defaultLayout);
+      lowdashset(tabSegment, `${this.type}`, defaultLayout);
       tabSegment = { ...tabSegment, [`${this.type}`]: defaultLayout };
       if (currentCollection && !currentCollection.is_sync_to_me) {
         CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
       }
-      _.set(userProfile, layoutName, defaultLayout);
+      lowdashset(userProfile, layoutName, defaultLayout);
 
       UserActions.updateUserProfile(userProfile);
     }
@@ -479,7 +478,7 @@ export default class GenericElDetails extends Component {
   };
 
     const segTabs = SegmentTabs(genericEl, this.handleSegmentsChange);
-    tabContents = _.merge(tabContents, segTabs);
+    tabContents = merge(tabContents, segTabs);
 
     const tabContentList = [];
     const tabKeyContentList = [];
