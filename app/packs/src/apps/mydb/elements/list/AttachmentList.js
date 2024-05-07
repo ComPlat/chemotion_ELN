@@ -97,6 +97,21 @@ const handleDownloadOriginal = (attachment) => {
   });
 };
 
+const handleOpenLocally = (attachment, option = 0) => {
+  ThirdPartyAppFetcher.getHandlerUrl(attachment.id, option).then((url) => {
+    const link = document.createElement('a');
+    link.download = attachment.filename;
+    console.log('url', url);
+    link.href = url;
+    const event = new window.MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true
+    });
+    link.dispatchEvent(event);
+  });
+};
+
 export const downloadButton = (attachment) => (
   <Dropdown id={`dropdown-download-${attachment.id}`}>
     <Dropdown.Toggle style={{ height: '30px' }} bsSize="xs" bsStyle="primary">
@@ -112,6 +127,13 @@ export const downloadButton = (attachment) => (
         disabled={!isImageFile(attachment.filename) || attachment.isNew}
       >
         Download Annotated
+      </MenuItem>
+      <MenuItem
+        eventKey="3"
+        onClick={() => handleOpenLocally(attachment, 1)}
+        disabled={attachment.isNew}
+      >
+        Open locally
       </MenuItem>
     </Dropdown.Menu>
   </Dropdown>

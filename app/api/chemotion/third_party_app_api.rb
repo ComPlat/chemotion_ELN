@@ -106,6 +106,31 @@ module Chemotion
         "#{@app.url}?url=#{url}"
       end
 
+      desc 'get chemotion handler url'
+      params do
+        requires :attID, type: Integer, desc: 'Attachment ID'
+        optional :type, type: Integer, default: 0, desc: 'Format of the link'
+      end
+
+      get 'url' do
+        params[:appID] = 0
+        prepare_payload
+        parse_payload
+        encode_and_cache_token
+        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
+        case params[:type]
+        when 1
+          url = URI.parse Rails.application.config.root_url
+          url.path = "/api/v1/public/third_party_apps/#{@token}"
+          url.scheme = 'chemotion'
+          url.to_s
+        when 2
+          "chemotion://#{@attachment.filename}?url=#{url}"
+        else
+          "chemotion://?url=#{url}"
+        end
+      end
+
       route_param :id, type: Integer, desc: '3rd party app id' do
         desc 'get a thirdPartyApps by id'
         get do
