@@ -4,12 +4,13 @@ import {
   Button,
   OverlayTrigger,
   Tooltip,
+  FormGroup,
+  FormControl
 } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
-import SampleName from 'src/components/common/SampleName';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 
@@ -146,7 +147,33 @@ class SampleComponent extends Component {
           </span>
         </div>
     );
+  }
 
+  nameInput(material) {
+    return (
+      <FormGroup bsSize="small">
+        <FormControl
+          type="text"
+          value={material.name || ''}
+          onChange={(e) => { this.handleNameChange(e, material.name); }}
+          disabled={!permitOn(this.props.sample)}
+        />
+      </FormGroup>
+    );
+  }
+
+  handleNameChange(e, value) {
+    if (e.value === value) return;
+      
+    if (this.props.onChange && e) {
+      const event = {
+        newName: e.target.value,
+        type: 'nameChanged',
+        sampleID: this.componentId(),
+
+      };
+      this.props.onChange(event);
+    }
   }
 
   materialVolume(material) {
@@ -155,7 +182,7 @@ class SampleComponent extends Component {
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
 
     return (
-      <td style={{ verticalAlign: 'bottom' }}>
+      <td>
         <div>
           <NumeralInputWithUnitsCompo
             key={material.id}
@@ -220,7 +247,7 @@ class SampleComponent extends Component {
 
   componentConc(material, metricMolConc, metricPrefixesMolConc) {
     return (
-      <td>
+      <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.concn}
@@ -238,7 +265,7 @@ class SampleComponent extends Component {
 
   componentStockConc(material, metricMolConc, metricPrefixesMolConc) {
     return (
-      <td>
+      <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.stock_molarity_value}
@@ -273,24 +300,28 @@ class SampleComponent extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td style={{ width: '22%', maxWidth: '50px' }}>
+        <td style={{ width: '10%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
+
+        <td>
+          {this.nameInput(material)}
+        </td>
         
-        <td style={{ verticalAlign: 'bottom' }}>
+        <td>
           {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
         </td>
 
         {this.materialVolume(material)}
 
-        <td style={{ verticalAlign: 'bottom' }}>
+        <td>
           {this.componentMol(material, metricMol, metricPrefixesMol)}
         </td>
 
         {this.componentStockConc(material, metricMolConc, metricPrefixesMolConc)}
         {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
 
-        <td>
+        <td style={{ verticalAlign: 'top' }}>
           <NumeralInputWithUnitsCompo
             precision={4}
             value={material.equivalent}
@@ -298,7 +329,7 @@ class SampleComponent extends Component {
           />
         </td>
 
-        <td>
+        <td style={{ verticalAlign: 'top' }}>
           <Button
             disabled={!permitOn(sample)}
             bsStyle="danger"

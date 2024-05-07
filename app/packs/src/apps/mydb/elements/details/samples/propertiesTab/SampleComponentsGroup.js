@@ -43,6 +43,7 @@ const SampleComponentsGroup = ({
   
     const headers = {
       group: 'Component',
+      name: 'Label',
       amount: 'Amount',
       mass: 'Mass',
       volume: 'Volume',
@@ -88,7 +89,8 @@ const SampleComponentsGroup = ({
         <table width="100%" className="sample-scheme">
           <colgroup>
           <col style={{ width: '4%' }} />
-          <col style={{ width: '15%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
@@ -100,6 +102,7 @@ const SampleComponentsGroup = ({
             <tr>
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
+            <th>{headers.name}</th>
             <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumn, switchAmount)} {headers.mass}</th>
             <th>{headers.volume}</th>
             <th>{headers.amount}</th>

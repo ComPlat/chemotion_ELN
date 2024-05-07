@@ -1088,8 +1088,7 @@ export default class Sample extends Element {
   }
 
   initialComponents(components) {
-    this.components = components;
-    this.setComponentPositions();
+    this.components = components.sort((a, b) => a.position - b.position);
   }
 
   async addMixtureComponent(newComponent) { 

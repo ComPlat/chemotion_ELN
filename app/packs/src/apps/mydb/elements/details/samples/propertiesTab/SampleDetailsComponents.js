@@ -23,6 +23,7 @@ export default class SampleDetailsComponents extends React.Component {
     this.updatedSampleForAmountUnitChange = this.updatedSampleForAmountUnitChange.bind(this);
     this.updatedSampleForMetricsChange = this.updatedSampleForMetricsChange.bind(this);
     this.switchAmount = this.switchAmount.bind(this);
+    this.updateComponentName = this.updateComponentName.bind(this);
   }
 
   onChangeComponent(changeEvent) {
@@ -35,6 +36,9 @@ export default class SampleDetailsComponents extends React.Component {
       case 'MetricsChanged':
         this.updatedSampleForMetricsChange(changeEvent);
         break;
+      case 'nameChanged':
+        this.updateComponentName(changeEvent);
+      break;
       default:
         break;
     }
@@ -107,6 +111,18 @@ export default class SampleDetailsComponents extends React.Component {
       sample.addMixtureComponent(splitSample);
       this.props.onChange(sample);
     }
+  }
+
+  updateComponentName(changeEvent) {
+    const { sample } = this.props;
+    const sampleID = changeEvent.sampleID;
+    const newName = changeEvent.newName;
+    const componentIndex = this.props.sample.components.findIndex(
+      (component) => component.id === sampleID
+    );
+    sample.components[componentIndex].name = newName;
+
+    this.props.onChange(sample);
   }
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
