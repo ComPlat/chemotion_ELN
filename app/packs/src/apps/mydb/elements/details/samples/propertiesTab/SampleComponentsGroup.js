@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Glyphicon, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
-import Material from '../../reactions/schemeTab/Material';
+import Component from 'src/models/Component';
 import { permitOn } from 'src/components/common/uis';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponent.js';
@@ -15,6 +15,12 @@ const SampleComponentsGroup = ({
     const contents = [];
     let sampleComponents = sample.components;
     if (sampleComponents && sampleComponents.length > 0) {
+      sample.components = sampleComponents =  sampleComponents.map((component) => {
+        if (!(component instanceof Component)) {
+          return new Component(component)
+        }
+        return component;
+      });
       let index = headIndex;
       sampleComponents.forEach((sampleComponent) => {
         index += 1;

@@ -5,11 +5,7 @@ import Molecule from 'src/models/Molecule';
 import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
-import SampleComponent from 'src/models/SampleComponent';
-
-function createSample(component) {
-  return new Sample(component)
-}
+import Component from 'src/models/Component';
 
 export default class SampleDetailsComponents extends React.Component {
   constructor(props) {
@@ -82,10 +78,10 @@ export default class SampleDetailsComponents extends React.Component {
 
     if (srcSample instanceof Molecule || isNewSample) {
       splitSample = Sample.buildNew(srcSample, currentCollection.id);
-      splitSample = new SampleComponent(splitSample)
+      splitSample = new Component(splitSample)
     } else if (srcSample instanceof Sample) {
       splitSample = srcSample.buildChildWithoutCounter();
-      splitSample = new SampleComponent(splitSample)
+      splitSample = new Component(splitSample)
     }
 
     if (splitSample.sample_type === 'Mixture') {
@@ -97,7 +93,7 @@ export default class SampleDetailsComponents extends React.Component {
             ...rest,
             ...component_properties
           };
-          let sampleComponent = new SampleComponent(sampleData);
+          let sampleComponent = new Component(sampleData);
           sampleComponent.parent_id = splitSample.parent_id
           sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
           await sample.addMixtureComponent(sampleComponent);

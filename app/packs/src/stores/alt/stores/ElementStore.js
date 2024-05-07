@@ -41,7 +41,7 @@ import GenericEl from 'src/models/GenericEl';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
-import SampleComponent from 'src/models/SampleComponent';
+import Component from 'src/models/Component';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -675,7 +675,7 @@ class ElementStore {
                   ...rest,
                   ...component_properties
               };
-              return new SampleComponent(sampleData);
+              return new Component(sampleData);
           });
           result.initialComponents(sampleComponents);
         })

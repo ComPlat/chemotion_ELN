@@ -5,7 +5,7 @@ import _ from 'lodash';
 import Sample from 'src/models/Sample';
 
 
-export default class SampleComponent extends Sample {
+export default class Component extends Sample {
     constructor(props) {
         super(props);
     }
