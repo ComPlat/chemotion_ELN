@@ -25,7 +25,7 @@ module Chemotion
         layout = {}
         layout = Rails.configuration.profile_default&.layout if Rails.configuration.respond_to?(:profile_default)
 
-        layout&.keys&.each do |ll|
+        layout&.each_key do |ll|
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
         end
 
@@ -48,20 +48,20 @@ module Chemotion
           data[:layout] = sorted_layout
         end
 
-        data.keys&.each do |dt|
+        data.each_keys do |dt|
           sorted_layout = {}
           next if dt[0..6] != 'layout_'
 
-          if data[dt].present?
-            old_layout = data[dt]
-            old_layout&.select do |_k, v|
-              v.positive?
-            end&.sort_by { |_k, v| v }&.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
-            old_layout&.select do |_k, v|
-              v.negative?
-            end&.sort_by { |_k, v| -v }&.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
-            data[dt] = sorted_layout
-          end
+          next if data[dt].blank?
+
+          old_layout = data[dt]
+          old_layout&.select { |_k, v| v.positive? }
+                    &.sort_by { |_k, v| v }
+                    &.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
+          old_layout&.select { |_k, v| v.negative? }
+                    &.sort_by { |_k, v| -v }
+                    &.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
+          data[dt] = sorted_layout
         end
 
         {
@@ -104,7 +104,7 @@ module Chemotion
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
         # Find not declared generic layout details
         generic_layouts = params[:data].select do |key, _|
-          (key.to_s.match(/^layout_detail_.+/) && !declared_params[:data].key?(key))
+          key.to_s.match(/^layout_detail_.+/) && !declared_params[:data].key?(key)
         end
         generic_layouts = generic_layouts.select do |key, _|
           available_ements.include? key.delete_prefix('layout_detail_')
