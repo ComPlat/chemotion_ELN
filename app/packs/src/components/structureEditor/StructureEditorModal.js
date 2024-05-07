@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -19,11 +20,133 @@ import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 
-const EditorList = (props) => {
+const notifyError = (message) => {
+  NotificationActions.add({
+    title: 'Structure Editor error',
+    message,
+    level: 'error',
+    position: 'tc',
+    dismissible: 'button',
+    autoDismiss: 10,
+  });
+};
+
+const loadEditor = (editor, scripts) => {
+  if (scripts?.length > 0) {
+    loadScripts({
+      es: scripts,
+      id: editor,
+      cbError: () => notifyError(
+        `The ${editor} failed to initialize! Please contact your system administrator!`
+      ),
+      cbLoaded: () => {},
+    });
+  }
+};
+
+const createEditorInstance = (editor, available, configs) => ({
+  [editor]: new StructureEditor({
+    ...EditorAttrs[editor],
+    ...available,
+    ...configs,
+    id: editor,
+  }),
+});
+
+const createEditor = (configs, availableEditors) => {
+  if (!availableEditors) return null;
+  const available = availableEditors[configs.editor];
+  if (available) {
+    loadEditor(configs.editor, available.extJs);
+    return createEditorInstance(configs.editor, available, configs);
+  }
+  return null;
+};
+
+const createEditors = (_state = {}) => {
+  const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
+  const availableEditors = UIStore.getState().structureEditors || {};
+
+  const grantEditors = matriceConfigs
+    .map(({ configs }) => createEditor(configs, availableEditors.editors))
+    .filter(Boolean);
+
+  const editors = [
+    {
+      ketcher: new StructureEditor({
+        ...EditorAttrs.ketcher,
+        id: 'ketcher',
+      }),
+    },
+    ...grantEditors,
+  ].reduce((acc, args) => ({ ...acc, ...args }), {});
+
+  return editors;
+};
+
+function Editor({
+  type, editor, molfile, iframeHeight, iframeStyle, fnCb
+}) {
+  switch (type) {
+    case 'ketcher2':
+      return (
+        <KetcherEditor
+          editor={editor}
+          molfile={molfile}
+          iH={iframeHeight}
+          iS={iframeStyle}
+        />
+      );
+    case 'chemdraw':
+      return (
+        <ChemDrawEditor
+          editor={editor}
+          molfile={molfile}
+          iH={iframeHeight}
+          fnCb={fnCb}
+        />
+      );
+    case 'marvinjs':
+      return (
+        <MarvinjsEditor
+          editor={editor}
+          molfile={molfile}
+          iH={iframeHeight}
+          fnCb={fnCb}
+        />
+      );
+    default:
+      return (
+        <div>
+          <iframe
+            id={editor.id}
+            src={editor.src}
+            title={`${editor.label}`}
+            height={iframeHeight}
+            width="100%"
+            style={iframeStyle}
+          />
+        </div>
+      );
+  }
+}
+
+Editor.propTypes = {
+  type: PropTypes.string.isRequired,
+  editor: PropTypes.object.isRequired,
+  molfile: PropTypes.string.isRequired,
+  iframeHeight: PropTypes.string.isRequired,
+  iframeStyle: PropTypes.object.isRequired,
+  fnCb: PropTypes.func.isRequired,
+};
+
+function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
     <FormGroup>
-      <div className="col-lg-2 col-md-2"><ControlLabel>Structure Editor</ControlLabel></div>
+      <div className="col-lg-2 col-md-2">
+        <ControlLabel>Structure Editor</ControlLabel>
+      </div>
       <div className="col-lg-6 col-md-8">
         <Select
           className="status-select"
@@ -34,15 +157,15 @@ const EditorList = (props) => {
           value={value}
         />
       </div>
-      <div className="col-lg-4 col-md-2">{' '}</div>
+      <div className="col-lg-4 col-md-2"> </div>
     </FormGroup>
   );
-};
+}
 
 EditorList.propTypes = {
   value: PropTypes.string.isRequired,
   fnChange: PropTypes.func.isRequired,
-  options: PropTypes.arrayOf(PropTypes.object).isRequired
+  options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
@@ -86,78 +209,36 @@ export default class StructureEditorModal extends React.Component {
     super(props);
     this.state = {
       showModal: props.showModal,
-      showWarning: props.hasChildren || props.hasParent,
+      showWarning: props.hasChildren || props.hasParent || false,
       molfile: props.molfile,
       matriceConfigs: [],
-      editor: initEditor()
+      editor: initEditor(),
     };
-    this.editors = { ketcher: this.state.editor };
+    this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
-    this.onChangeUser = this.onChangeUser.bind(this);
+    this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
   }
 
   componentDidMount() {
-    UserStore.listen(this.onChangeUser);
+    this.resetEditor(this.editors);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({
-      showModal: nextProps.showModal,
-      molfile: nextProps.molfile
-    });
-  }
-
-  onChangeUser(state) {
-    let grantEditors = (state.matriceConfigs || []).map(u => u.configs) || [];
-    const availableEditors = UIStore.getState().structureEditors || {};
-    if (Object.keys(availableEditors.editors || {}).length > 0) {
-      grantEditors = grantEditors.map((g) => {
-        const available = availableEditors.editors[g.editor];
-        if (available) {
-          if (available.extJs && available.extJs.length > 0) {
-            loadScripts({
-              es: available.extJs,
-              id: g.editor,
-              cbError: () => alert(`${g.editor} failed to load!`),
-              cbLoaded: () => {}
-            });
-          }
-          return Object.assign({}, {
-            [g.editor]: new StructureEditor({
-              ...EditorAttrs[g.editor], ...available, ...g, id: g.editor
-            })
-          });
-        }
-        return null;
-      });
-      this.editors = [{ ketcher: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) }].concat(grantEditors).reduce((acc, args) => {
-        return Object.assign({}, acc, args);
-      }, {});
-      this.updateEditor(this.editors);
+  componentDidUpdate(prevProps) {
+    const { showModal, molfile } = this.props;
+    if (prevProps.showModal !== showModal || prevProps.molfile !== molfile) {
+      this.setState({ showModal, molfile });
     }
-  }
-
-  updateEditor(_editors) {
-    const kks = Object.keys(_editors);
-    const { editor } = this.state;
-    if (!kks.find(e => e === editor.id)) {
-      this.setState({ editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }) });
-    }
-  }
-
-  initializeEditor() {
-    const { editor, molfile } = this.state;
-    if (editor) { editor.structureDef.molfile = molfile; }
   }
 
   handleEditorSelection(e) {
-    this.setState(prevState => ({ ...prevState, editor: this.editors[e.value] }));
+    this.setState((prevState) => ({ ...prevState, editor: this.editors[e.value] }));
   }
 
   handleCancelBtn() {
+    const { onCancel } = this.props;
     this.hideModal();
-    if (this.props.onCancel) { this.props.onCancel(); }
+    if (onCancel) { onCancel(); }
   }
 
   handleSaveBtn() {
@@ -189,17 +270,35 @@ export default class StructureEditorModal extends React.Component {
           }, () => { if (this.props.onSave) { this.props.onSave(molfile, svg, info, editor.id); } });
         });
       } catch (e) {
-        NotificationActions.add({
-          title: 'Editor error', message: `The drawing is not supported! ${e}`, level: 'error', position: 'tc'
-        });
+        notifyError(`The drawing is not supported! ${e}`);
       }
     }
   }
 
+  initializeEditor() {
+    const { editor, molfile } = this.state;
+    if (editor) { editor.structureDef.molfile = molfile; }
+  }
+
+  resetEditor(_editors) {
+    const kks = Object.keys(_editors);
+    const { editor } = this.state;
+    if (!kks.find((e) => e === editor.id)) {
+      this.setState({
+        editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }),
+      });
+    }
+  }
+
+  updateEditor(_editor) {
+    this.setState({ editor: _editor });
+  }
+
   hideModal() {
+    const { hasChildren, hasParent } = this.props;
     this.setState({
       showModal: false,
-      showWarning: this.props.hasChildren || this.props.hasParent
+      showWarning: hasChildren || hasParent
     });
   }
 
@@ -221,33 +320,28 @@ export default class StructureEditorModal extends React.Component {
         <iframe
           id={editor.id}
           src={editor.src}
-          title={`${editor.title}`}
+          title={`${editor.label}`}
           height={iframeHeight}
           width="100%"
           style={iframeStyle}
-          ref={(f) => { this.ifr = f; }}
         />
       </div>
     );
-    if (!showWarning && editor.id === 'ketcher2' && this.editors[editor.id]) {
-      useEditor =
-        <KetcherEditor editor={this.editors.ketcher2} fh={iframeHeight} fs={iframeStyle} molfile={molfile} />;
-    }
-    if (!showWarning && editor.id === 'chemdraw' && this.editors[editor.id]) {
-      useEditor =
-        <ChemDrawEditor editor={this.editors.chemdraw} molfile={molfile} parent={this} iH={iframeHeight} />;
-    }
-    let citeMarvin = null;
-    if (!showWarning && editor.id === 'marvinjs' && this.editors[editor.id]) {
-      useEditor =
-        <MarvinjsEditor editor={this.editors.marvinjs} molfile={molfile} parent={this} iH={iframeHeight} />;
-      citeMarvin = (
-        <a href="https://chemaxon.com/" target="_blank" rel="noreferrer">
-          <img alt="Marvin JS" src="/editors/marvinjs/powered_by_chemaxon.png" style={{ width: '256px', cursor: 'pointer' }} />
-        </a>
-      );
-    }
-    const editorOptions = Object.keys(this.editors).map(e => ({ value: e, name: this.editors[e].label, label: this.editors[e].label }));
+    useEditor = !showWarning && this.editors[editor.id] && (
+      <Editor
+        type={editor.id}
+        editor={this.editors[editor.id]}
+        molfile={molfile}
+        iframeHeight={iframeHeight}
+        iframeStyle={iframeStyle}
+        fnCb={this.updateEditor}
+      />
+    );
+    const editorOptions = Object.keys(this.editors).map((e) => ({
+      value: e,
+      name: this.editors[e].label,
+      label: this.editors[e].label,
+    }));
     return (
       <div>
         <Modal
@@ -264,10 +358,9 @@ export default class StructureEditorModal extends React.Component {
                 fnChange={this.handleEditorSelection}
                 options={editorOptions}
               />
-              {citeMarvin}
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body >
+          <Modal.Body>
             <WarningBox
               handleCancelBtn={this.handleCancelBtn.bind(this)}
               hideWarning={this.hideWarning.bind(this)}
@@ -280,7 +373,7 @@ export default class StructureEditorModal extends React.Component {
                   {cancelBtnText}
                 </Button>
                 {!handleSaveBtn ? null : (
-                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }} >
+                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
                     {submitBtnText}
                   </Button>
                 )}
