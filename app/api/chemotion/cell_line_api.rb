@@ -109,12 +109,12 @@ module Chemotion
       end
       namespace :copy do
         post do
-          cell_line_to_copy = @current_user.cellline_samples.find(params[:id])
-          use_case = Usecases::CellLines::Copy.new(cell_line_to_copy, @current_user, params[:collection_id])
+          cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, CelllineSample).update?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update?
 
           begin
+            use_case = Usecases::CellLines::Copy.new(cell_line_to_copy.first, @current_user, params[:collection_id])
             copied_cell_line_sample = use_case.execute!
             copied_cell_line_sample.container = update_datamodel(params[:container])
           rescue StandardError => e

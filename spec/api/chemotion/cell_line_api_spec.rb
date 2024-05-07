@@ -293,8 +293,8 @@ describe Chemotion::CellLineAPI do
     context 'when cell line not accessable' do
       let(:params) { { id: '-1', collection_id: collection.id, container: container_param } }
 
-      it 'returns correct response code 401' do
-        expect(response).to have_http_status :unauthorized
+      it 'returns correct response code 400' do
+        expect(response).to have_http_status :bad_request
       end
     end
 

@@ -35,6 +35,8 @@ class CelllineSample < ApplicationRecord
   belongs_to :cellline_material
   belongs_to :creator, class_name: 'User', foreign_key: 'user_id'
 
+  has_many :sync_collections_users, through: :collections
+
   scope :by_sample_name, lambda { |query, collection_id|
                            joins(:collections).where(collections: { id: collection_id })
                                               .where('name ILIKE ?', "%#{sanitize_sql_like(query)}%")
