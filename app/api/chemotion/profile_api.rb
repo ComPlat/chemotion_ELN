@@ -1,44 +1,50 @@
 # frozen_string_literal: true
+
 # rubocop: disable Style/MultilineIfModifier
 
 module Chemotion
   class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
-      fail Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-         message: "has too many entries" if  params[attr_name].keys.size > 100
+      raise Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+                                           message: 'has too many entries' if params[attr_name].keys.size > 100
       params[attr_name].each do |key, val|
-        fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-          message: "has wrong structure") unless key.to_s =~ /\A[\w \(\)\-]+\Z/
-        fail(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-          message: "has wrong structure") unless val.to_s =~ /\d+/
+        raise(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+                                             message: 'has wrong structure') unless /\A[\w ()\-]+\Z/.match?(key.to_s)
+        raise(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+                                             message: 'has wrong structure') unless /\d+/.match?(val.to_s)
       end
     end
   end
 
   class ProfileAPI < Grape::API
     resource :profiles do
-      desc "Return the profile of the current_user"
+      desc 'Return the profile of the current_user'
       get do
         profile = current_user.profile
         data = profile.data || {}
-        layout = Rails.configuration.respond_to?(:profile_default) ? (Rails.configuration.profile_default&.layout || {}) : {}
+        layout = {}
+        layout = Rails.configuration.profile_default&.layout if Rails.configuration.respond_to?(:profile_default)
 
-        layout.keys&.each do |ll|
+        layout&.keys&.each do |ll|
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
         end
 
         if current_user.matrix_check_by_name('genericElement')
-          available_elments = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+          available_elements = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
           new_layout = data['layout'] || {}
           Labimotion::ElementKlass.where(is_active: true).find_each do |el|
-            if data['layout'] && data['layout']["#{el.name}"].nil?
-              new_layout["#{el.name}"] = new_layout&.values&.min < 0 ? new_layout&.values.min-1 : -1;
+            if data['layout'] && data['layout'][el.name.to_s].nil?
+              new_layout[el.name.to_s] = new_layout&.values&.min&.negative? ? new_layout.values.min - 1 : -1
             end
           end
-          new_layout = new_layout.select { |e| available_elments.include?(e) }
+          new_layout = new_layout.select { |e| available_elements.include?(e) }
           sorted_layout = {}
-          new_layout.select { |_k, v| v > 0 }.sort_by { |_k, v| v }.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
-          new_layout.select { |_k, v| v < 0 }.sort_by { |_k, v| -v }.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
+          new_layout.select { |_k, v| v.positive? }
+                    .sort_by { |_k, v| v }
+                    .each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
+          new_layout.select { |_k, v| v.negative? }
+                    .sort_by { |_k, v| -v }
+                    .each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
           data[:layout] = sorted_layout
         end
 
@@ -46,10 +52,14 @@ module Chemotion
           sorted_layout = {}
           next if dt[0..6] != 'layout_'
 
-          unless data[dt].blank?
+          if data[dt].present?
             old_layout = data[dt]
-            old_layout&.select { |_k, v| v > 0 }&.sort_by { |_k, v| v }&.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
-            old_layout&.select { |_k, v| v < 0 }&.sort_by { |_k, v| -v }&.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
+            old_layout&.select do |_k, v|
+              v.positive?
+            end&.sort_by { |_k, v| v }&.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
+            old_layout&.select do |_k, v|
+              v.negative?
+            end&.sort_by { |_k, v| -v }&.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
             data[dt] = sorted_layout
           end
         end
@@ -93,12 +103,12 @@ module Chemotion
         declared_params = declared(params, include_missing: false)
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
         # Find not declared generic layout details
-        generic_layouts = params[:data].select { |key, _|
+        generic_layouts = params[:data].select do |key, _|
           (key.to_s.match(/^layout_detail_.+/) && !declared_params[:data].key?(key))
-        }
-        generic_layouts = generic_layouts.select {
-          |key, _| available_ements.include? key.delete_prefix('layout_detail_')
-        }
+        end
+        generic_layouts = generic_layouts.select do |key, _|
+          available_ements.include? key.delete_prefix('layout_detail_')
+        end
         # Set not declared generic layout details as declared
         declared_params[:data] = declared_params[:data].merge(generic_layouts)
 
@@ -123,8 +133,8 @@ module Chemotion
           show_sample_short_label: declared_params[:show_sample_short_label],
         }
 
-        current_user.profile.update!(**new_profile) &&
-          new_profile || error!('profile update failed', 500)
+        (current_user.profile.update!(**new_profile) &&
+          new_profile) || error!('profile update failed', 500)
       end
     end
   end
