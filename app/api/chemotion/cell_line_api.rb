@@ -111,7 +111,8 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.find(params[:id])
           use_case = Usecases::CellLines::Copy.new(cell_line_to_copy, @current_user, params[:collection_id])
-          # error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, CelllineSample).update?
+
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, CelllineSample).update?
 
           begin
             copied_cell_line_sample = use_case.execute!
