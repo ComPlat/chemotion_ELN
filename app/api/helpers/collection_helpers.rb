@@ -135,5 +135,16 @@ module CollectionHelpers
     @dl_e = @dl[:element_detail_level]
     @dl_cl = @dl[:celllinesample_detail_level]
   end
+
+  def element_class_ids(element, join_table, from_collection_id, ui_state)
+    element_class = API::ELEMENT_CLASS[element]
+    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
+    element_class.by_collection_id(from_collection_id).by_ui_state(ui_state).pluck(:id)
+  end
+
+  def join_element_class(element, join_table)
+    element_class = API::ELEMENT_CLASS[element]
+    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
+  end
 end
 # rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
