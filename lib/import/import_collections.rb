@@ -346,6 +346,7 @@ module Import
           'duration',
           'created_at',
           'updated_at',
+          'gaseous',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
