@@ -163,6 +163,7 @@ module Chemotion
         optional :rxno, type: String
         optional :segments, type: Array
         optional :variations, type: [Hash]
+        optional :gaseous, type: Boolean
       end
       route_param :id do
         after_validation do
@@ -229,6 +230,7 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :variations, type: [Hash]
+        optional :gaseous, type: Boolean
       end
 
       post do
