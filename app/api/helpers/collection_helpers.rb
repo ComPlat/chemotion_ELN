@@ -59,21 +59,21 @@ module CollectionHelpers
     c_id = prms[:collection_id]
     if !prms[:newCollection].blank?
       c = Collection.create(
-        user_id: current_user.id, label: prms[:newCollection]
+        user_id: current_user.id, label: prms[:newCollection],
       )
     elsif prms[:is_sync_to_me]
       c = Collection.joins(:sync_collections_users).where(
         'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and (sync_collections_users.permission_level = 1 or sync_collections_users.permission_level >= ?)',
         c_id,
         user_ids,
-        pl
+        pl,
       ).first
     elsif
       c = Collection.where(id: c_id).where(
         'shared_by_id = ? OR (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?))',
         current_user.id,
         user_ids,
-        pl
+        pl,
       ).first
     end
     c&.id
@@ -136,15 +136,15 @@ module CollectionHelpers
     @dl_cl = @dl[:celllinesample_detail_level]
   end
 
-  def create_classes_of_element(element)
-    if element == 'cell_line'
-      element_klass = CelllineSample
-      collections_element_klass = CollectionsCellline
-    else
-      collections_element_klass = "collections_#{element}".classify.constantize
-      element_klass = element.classify.constantize
-    end
-    [element_klass, collections_element_klass]
+  def element_class_ids(element, join_table, from_collection_id, ui_state)
+    element_class = API::ELEMENT_CLASS[element]
+    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
+    element_class.by_collection_id(from_collection_id).by_ui_state(ui_state).pluck(:id)
+  end
+
+  def join_element_class(element, join_table)
+    element_class = API::ELEMENT_CLASS[element]
+    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
   end
 end
 # rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength

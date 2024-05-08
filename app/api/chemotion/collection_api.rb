@@ -325,10 +325,10 @@ module Chemotion
 
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            classes = create_classes_of_element(element)
-            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            classes[1].move_to_collection(ids, from_collection.id, to_collection_id)
-            classes[1].remove_in_collection(
+            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+            collections_element_class = join_element_class(element, 'collections')
+            collections_element_class.move_to_collection(ids, from_collection.id, to_collection_id)
+            collections_element_class.remove_in_collection(
               ids,
               Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
@@ -376,9 +376,8 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            classes = create_classes_of_element(element)
-            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            classes[1].create_in_collection(ids, to_collection_id)
+            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+            join_element_class(element, 'collections').create_in_collection(ids, to_collection_id)
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
@@ -422,9 +421,8 @@ module Chemotion
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            classes = create_classes_of_element(element)
-            ids = classes[0].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            classes[1].remove_in_collection(ids, from_collection.id)
+            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+            join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
           end
 
           klasses = Labimotion::ElementKlass.find_each do |klass|
