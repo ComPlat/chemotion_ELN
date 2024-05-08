@@ -61,6 +61,9 @@ const onNaviClick = (type, id) => {
 export default class GenericElDetails extends Component {
   constructor(props) {
     super(props);
+    // generic type
+    this.type = props.genericEl.type;
+
     this.state = {
       genericEl: props.genericEl,
       activeTab: 0,
@@ -80,6 +83,33 @@ export default class GenericElDetails extends Component {
     this.handleElChanged = this.handleElChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleExport = this.handleExport.bind(this);
+  }
+
+  /**
+   * This method retrieves values for the detailed
+   * layout. If the user profile lacks these values,
+   * they are automatically added.
+   */
+  setupDetailLayoutProfile() {
+
+    const userProfile = UserStore.getState().profile;
+    const layout = userProfile && userProfile.data && userProfile.data[`layout_detail_${this.type}`];
+    if(!layout) {
+      const layoutName = `data.layout_detail_${this.type}`;
+      const defaultLayout = {
+        properties: 1, analyses: 2, attachments: 3
+      };
+      const currentCollection = UIStore.getState().currentCollection;
+      let tabSegment = currentCollection?.tabs_segment;
+      lowdashset(tabSegment, `${this.type}`, defaultLayout);
+      tabSegment = { ...tabSegment, [`${this.type}`]: defaultLayout };
+      if (currentCollection && !currentCollection.is_sync_to_me) {
+        CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+      }
+      lowdashset(userProfile, layoutName, defaultLayout);
+
+      UserActions.updateUserProfile(userProfile);
+    }
   }
 
   componentDidMount() {
