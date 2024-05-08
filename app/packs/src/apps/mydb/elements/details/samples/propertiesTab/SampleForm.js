@@ -525,6 +525,10 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
+        case 'molecular_mass': {
+          metric = 'n';
+          break;
+        }
         default:
           console.warn(`Unknown field: ${field}`);
           metric = 'm';
@@ -832,7 +836,7 @@ export default class SampleForm extends React.Component {
             && (
             <tr>
               {
-                this.numInput(sample, 'molecular_mass', 'g/mol', ['n'], 5, 'Molecular mass', '', isDisabled)
+                this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)
               }
               <td colSpan="3">
                 <div style={{ display: 'flex' }}
