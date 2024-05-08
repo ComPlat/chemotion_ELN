@@ -48,7 +48,7 @@ module Chemotion
           data[:layout] = sorted_layout
         end
 
-        data.each_keys do |dt|
+        data.each_key do |dt|
           sorted_layout = {}
           next if dt[0..6] != 'layout_'
 
@@ -75,7 +75,7 @@ module Chemotion
 
       desc 'update user profile'
       params do
-        optional :data, type: Hash do
+        optional :data, type: Hash, default: {} do
           optional :layout, type: Hash, profile_layout_hash: true
           optional :layout_detail_research_plan, type: Hash, profile_layout_hash: true
           optional :layout_detail_reaction, type: Hash, profile_layout_hash: true
