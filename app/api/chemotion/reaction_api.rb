@@ -164,6 +164,7 @@ module Chemotion
         optional :segments, type: Array
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
+        optional :gaseous, type: Boolean
       end
       route_param :id do
         after_validation do
@@ -231,6 +232,7 @@ module Chemotion
         optional :rxno, type: String
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
+        optional :gaseous, type: Boolean
       end
 
       post do
