@@ -23,7 +23,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       GenericEl
     );
   }
-  
+
   static export(element, klass, exportFormat) {
     let fileName;
     const promise = fetch(`/api/v1/generic_elements/export.json?id=${element.id}&klass=${klass}&export_format=${exportFormat}`, {
@@ -226,7 +226,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   static updateElementKlass(params) {
     return this.execData(params, 'update_element_klass');
   }
-  
+
   static updateElementTemplate(params) {
     return super.updateTemplate(
       { ...params, klass: 'ElementKlass' },

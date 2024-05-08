@@ -116,6 +116,7 @@ export default class Reaction extends Element {
       reactants: [],
       rf_value: 0.00,
       role: '',
+      user_labels: [],
       solvent: '',
       solvents: [],
       status: '',
@@ -186,6 +187,7 @@ export default class Reaction extends Element {
       tlc_description: this.tlc_description,
       reaction_svg_file: this.reaction_svg_file,
       role: this.role,
+      user_labels: this.user_labels || [],
       rf_value: this.rf_value,
       rxno: this.rxno,
       short_label: this.short_label,
@@ -625,6 +627,14 @@ export default class Reaction extends Element {
     this[group] = this[group].map((m, idx) => (
       Object.assign({}, m, { position: idx })
     ));
+  }
+
+  userLabels() {
+    return this.user_labels;
+  }
+
+  setUserLabels(userLabels) {
+    this.user_labels = userLabels;
   }
 
   // We will process all reaction policy here

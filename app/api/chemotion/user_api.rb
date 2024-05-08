@@ -26,8 +26,7 @@ module Chemotion
 
       desc 'list user labels'
       get 'list_labels' do
-        labels = UserLabel.where('user_id = ? or access_level >= 1', current_user.id)
-                          .order('access_level desc, position, title')
+        labels = UserLabel.my_labels(current_user)
         present labels || [], with: Entities::UserLabelEntity, root: 'labels'
       end
 
@@ -191,7 +190,7 @@ module Chemotion
 
         put ':id' do
           if @rm_current_user_id
-            @group.users.delete(User.where(id: rm_user_id))
+            @group.users.delete(User.where(id: @rm_current_user_id))
             User.gen_matrix([@rm_current_user_id])
             present @group, with: Entities::GroupEntity, root: 'group'
           elsif params[:destroy_group]

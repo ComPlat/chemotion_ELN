@@ -19,6 +19,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
@@ -397,7 +398,7 @@ export default class ElementsTableEntries extends Component {
                     {reactionStatus(element)}
                     {' '}
                     {reactionRole(element)}
-                    {' '}
+                    <ShowUserLabels element={element} />
                     {reactionVariations(element)}
                     <br />
                     {sampleMoleculeName}
