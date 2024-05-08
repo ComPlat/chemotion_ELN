@@ -88,7 +88,7 @@
     "react-markdown": "^6.0.2",
     "react-notification-system": "^0.2.7",
     "react-papaparse": "^3.17.2",
-    "react-pdf": "^5.3.0-beta",
+    "react-pdf": "^7.7.3",
     "react-qr-reader": "^2.1.0",
     "react-redux": "^7.2.4",
     "react-select": "npm:react-select@1.1.0",
