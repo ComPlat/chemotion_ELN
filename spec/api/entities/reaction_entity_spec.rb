@@ -217,6 +217,7 @@ describe Entities::ReactionEntity do
           tlc_description: reaction.tlc_description,
           tlc_solvents: reaction.tlc_solvents,
           vessel_size: reaction.vessel_size,
+          gaseous: reaction.gaseous,
         )
       end
 
@@ -303,6 +304,7 @@ describe Entities::ReactionEntity do
           tlc_solvents: '***',
           variations: [],
           vessel_size: '***',
+          gaseous: '***',
         )
       end
 
