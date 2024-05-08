@@ -943,7 +943,9 @@ export default class Sample extends Element {
       reference: this.reference || false,
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
-      coefficient: this.coefficient,
+      feedstock_gas_reference: this.feedstock_gas_reference,
+      gas: this.gas,
+      gas_phase_data: this.gas_phase_data,
     };
     _.merge(params, extra_params);
     return params;
