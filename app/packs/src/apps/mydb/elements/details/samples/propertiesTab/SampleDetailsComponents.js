@@ -6,6 +6,9 @@ import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/p
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
+import {
+  ListGroup, ListGroupItem
+} from 'react-bootstrap';
 
 export default class SampleDetailsComponents extends React.Component {
   constructor(props) {
@@ -28,6 +31,13 @@ export default class SampleDetailsComponents extends React.Component {
 
   onChangeComponent(changeEvent) {
     const { sample } = this.state;
+
+    sample.components = sample.components.map((component) => {
+      if (!(component instanceof Component)) {
+        return new Component(component)
+      }
+      return component;
+    });
 
     switch (changeEvent.type) {
       case 'amountChanged':
@@ -88,6 +98,8 @@ export default class SampleDetailsComponents extends React.Component {
       splitSample = new Component(splitSample)
     }
 
+    splitSample.material_group = tagGroup;
+
     if (splitSample.sample_type === 'Mixture') {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
       .then(async components => {
@@ -99,6 +111,13 @@ export default class SampleDetailsComponents extends React.Component {
           };
           let sampleComponent = new Component(sampleData);
           sampleComponent.parent_id = splitSample.parent_id
+          sampleComponent.material_group = tagGroup;
+          if (tagGroup === 'dissolving_compound') {
+            sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'stockConc');
+            sampleComponent.setAmount({ value: sampleComponent.amount_g, unit: 'g' }, sample.amount_l);
+          } else if (tagGroup === 'solution') {
+            sampleComponent.setAmount({ value: sampleComponent.amount_l, unit: 'l' }, sample.amount_l);
+          }
           sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
           await sample.addMixtureComponent(sampleComponent);
         }
@@ -127,7 +146,7 @@ export default class SampleDetailsComponents extends React.Component {
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { sample } = this.state;
-    sample.moveMaterial(srcMat, tagMat);
+    sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
     this.props.onChange(sample);
   }
 
@@ -138,9 +157,13 @@ export default class SampleDetailsComponents extends React.Component {
     this.props.onChange(sample);
   }
 
-  switchAmount() {
-    const { lockAmountColumn } = this.state;
-    this.setState({ lockAmountColumn: !lockAmountColumn });
+  switchAmount(materialGroup) {
+    const { lockAmountColumn, lockAmountColumnDissolvingCompounds } = this.state;
+    if (materialGroup === 'solution') {
+      this.setState({ lockAmountColumn: !lockAmountColumn });
+    } else if (materialGroup === 'dissolving_compound') {
+      this.setState({ lockAmountColumnDissolvingCompounds: !lockAmountColumnDissolvingCompounds });
+    }
   }
 
   render() {
@@ -156,16 +179,43 @@ export default class SampleDetailsComponents extends React.Component {
     } else if (canDrop) {
       style.borderStyle = 'dashed';
     }
+    const minPadding = { padding: '1px 2px 2px 0px' };
+
+    const solutions = sample.components ? sample.components.filter(component => component.material_group === 'solution').map(component => component instanceof Component ? component : new Component(component)) : [];
+    const dissolvingCompounds = sample.components ? sample.components.filter(component => component.material_group === 'dissolving_compound').map(component => component instanceof Component ? component : new Component(component)) : [];
+
     return (
-      <SampleDetailsComponentsDnd
-        sample={sample}
-        dropSample={this.dropSample}
-        dropMaterial={this.dropMaterial}
-        deleteMixtureComponent={this.deleteMixtureComponent}
-        onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
-        switchAmount={this.switchAmount}
-        lockAmountColumn={this.state.lockAmountColumn}
-      />
+      <ListGroup fill="true">
+        <ListGroupItem style={minPadding}>
+          <SampleDetailsComponentsDnd
+          sample={sample}
+          sampleComponents={solutions}
+          dropSample={this.dropSample}
+          dropMaterial={this.dropMaterial}
+          deleteMixtureComponent={this.deleteMixtureComponent}
+          onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
+          switchAmount={this.switchAmount}
+          lockAmountColumn={this.state.lockAmountColumn}
+          lockAmountColumnDissolvingCompounds={this.state.lockAmountColumnDissolvingCompounds}
+          materialGroup="solution"
+          />
+        </ListGroupItem>
+        <ListGroupItem style={minPadding}>
+          <SampleDetailsComponentsDnd
+          sample={sample}
+          sampleComponents={dissolvingCompounds}
+          dropSample={this.dropSample}
+          dropMaterial={this.dropMaterial}
+          deleteMixtureComponent={this.deleteMixtureComponent}
+          onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
+          switchAmount={this.switchAmount}
+          lockAmountColumn={this.state.lockAmountColumn}
+          lockAmountColumnDissolvingCompounds={this.state.lockAmountColumnDissolvingCompounds}
+          materialGroup="dissolving_compound"
+          />
+        </ListGroupItem>
+      </ListGroup>
+      
     );
   }
 }

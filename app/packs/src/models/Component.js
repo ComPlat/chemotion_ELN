@@ -45,6 +45,10 @@ export default class Component extends Sample {
         } else if (!this.concn && this.amount_l > 0 && this.stock_molarity_value) {
             this.concn = this.amount_l * this.stock_molarity_value / totalVolume;
             this.molarity_value = this.concn;
+        } else if (this.material_group === 'dissolving_compound' && this.concn && totalVolume) {
+            const mols = this.concn * totalVolume
+            this.amount_value = this.molecule_molecular_weight * mols;
+            this.amount_unit =  'g'
         } else if (this.concn === 0) {
             this.amount_value = 0;
         }
@@ -65,6 +69,7 @@ export default class Component extends Sample {
             molecule_id: this.molecule.id,
             equivalent: this.equivalent,
             parent_id: this.parent_id,
+            material_group: this.material_group,
           }
          }
       }

@@ -38,6 +38,7 @@ module Chemotion
             requires :molecule_id, type: Integer, desc: 'Molecule ID'
             optional :equivalent, types: [Float, String], desc: 'Equivalent'
             optional :parent_id, type: Integer, desc: 'Parent ID'
+            optional :material_group, type: String, desc: 'type of component e.g. solution'
           end
         end
       end

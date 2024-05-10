@@ -173,6 +173,7 @@ export default class Sample extends Element {
   static buildEmpty(collection_id) {
     const sample = new Sample({
       collection_id,
+      name: '',
       type: 'sample',
       external_label: '',
       target_amount_value: 0,
@@ -1095,6 +1096,10 @@ export default class Sample extends Element {
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey);
+
+    if (!newComponent.material_group){
+      newComponent.material_group = 'solution';
+    }
     if (isNew){
       tmpComponents.push(newComponent);
       this.components = tmpComponents;
@@ -1146,7 +1151,10 @@ export default class Sample extends Element {
       } else if (component.stock_molarity_value === 0) {
         component.amount_value = totalVolume;
         component.amount_unit = 'l' 
-      } 
+      } else if (component.concn > 0 && component.amount_unit === 'g' ) {
+        const mols = component.concn * totalVolume
+        component.amount_value = component.molecule_molecular_weight * mols;
+      }
     })
   }
 
@@ -1162,7 +1170,7 @@ export default class Sample extends Element {
     });
   }
 
-  moveMaterial(srcMat, tagMat) {
+  moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const srcIndex = this.components.findIndex(mat => mat === srcMat);
     const tagIndex = this.components.findIndex(mat => mat === tagMat);
   
@@ -1171,6 +1179,7 @@ export default class Sample extends Element {
     }
   
     const movedMat = this.components.splice(srcIndex, 1)[0];
+    movedMat.material_group = tagGroup;
     this.components.splice(tagIndex, 0, movedMat);
     this.setComponentPositions()
   }

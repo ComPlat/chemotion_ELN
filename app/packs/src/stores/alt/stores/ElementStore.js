@@ -705,11 +705,12 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForMixture({ newSample, mixtureSample, closeView }) {
+  handleCreateSampleForMixture({ newSample, mixtureSample }) {
     UserActions.fetchCurrentUser();
     this.handleRefreshElements('sample');
     this.changeCurrentElement(mixtureSample);
     let splitSample = newSample.buildChildWithoutCounter();
+    splitSample = new Component(splitSample)
     mixtureSample.addMixtureComponent(splitSample);
   }
 

@@ -11,10 +11,16 @@ const target = {
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
     if (srcType === DragDropItemTypes.SAMPLE) {
-      dropSample(srcItem.element);
+      dropSample(
+        srcItem.element,
+        tagProps.material,
+        tagProps.materialGroup,
+        );
     } else if (srcType === DragDropItemTypes.MOLECULE) {
       dropSample(
         srcItem.element,
+        tagProps.material,
+        tagProps.materialGroup,
         null,
         true,
       );
@@ -45,6 +51,7 @@ class SampleDetailsComponentsDnd extends React.Component {
   render() {
     const {
       sample,
+      sampleComponents,
       headIndex,
       onChangeComponent,
       dropSample,
@@ -54,7 +61,9 @@ class SampleDetailsComponentsDnd extends React.Component {
       canDrop,
       connectDropTarget,
       lockAmountColumn,
+      lockAmountColumnDissolvingCompounds,
       switchAmount,
+      materialGroup,
     } = this.props;
     const style = {
       padding: '0px 0px',
@@ -69,6 +78,7 @@ class SampleDetailsComponentsDnd extends React.Component {
       <div style={style}>
         <SampleComponentsGroup
           sample={sample}
+          sampleComponents={sampleComponents}
           headIndex={headIndex ?? 0}
           onChange={onChangeComponent}
           dropSample={dropSample}
@@ -76,8 +86,9 @@ class SampleDetailsComponentsDnd extends React.Component {
           deleteMixtureComponent={deleteMixtureComponent}
           isOver={isOver}
           canDrop={canDrop}
-          materialGroup={'components'}
+          materialGroup={materialGroup}
           lockAmountColumn={lockAmountColumn}
+          lockAmountColumnDissolvingCompounds={lockAmountColumnDissolvingCompounds}
           switchAmount={switchAmount}
         />
       </div>
@@ -86,7 +97,7 @@ class SampleDetailsComponentsDnd extends React.Component {
 }
 
 export default DropTarget(
-  [DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE],
+  [DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE, DragDropItemTypes.MATERIAL],
   target,
   collect,
 )(SampleDetailsComponentsDnd);

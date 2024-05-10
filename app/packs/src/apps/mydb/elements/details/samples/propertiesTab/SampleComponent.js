@@ -217,7 +217,7 @@ class SampleComponent extends Component {
           metricPrefix={metric}
           metricPrefixes={metricPrefixes}
           precision={4}
-          disabled={!permitOn(this.props.sample) || this.props.lockAmountColumn }
+          disabled={!permitOn(this.props.sample) || this.props.lockAmountColumnDissolvingCompounds }
           onChange={e => this.handleAmountChange(e, material.amount_g)}
           onMetricsChange={this.handleMetricsChange}
           bsStyle={material.error_mass ? 'error' : massBsStyle}
@@ -229,6 +229,7 @@ class SampleComponent extends Component {
   }
 
   componentMol(material, metricMol, metricPrefixesMol) {
+    const lockColumn = this.props.materialGroup === 'solution' ? this.props.lockAmountColumn : this.props.lockAmountColumnDissolvingCompounds
     return (
       <NumeralInputWithUnitsCompo
             key={material.id}
@@ -237,7 +238,7 @@ class SampleComponent extends Component {
             metricPrefix={metricMol}
             metricPrefixes={metricPrefixesMol}
             precision={4}
-            disabled={!permitOn(this.props.sample) || this.props.lockAmountColumn }
+            disabled={!permitOn(this.props.sample) || lockColumn  }
             onChange={e => this.handleAmountChange(e, material.amount_mol)}
             onMetricsChange={this.handleMetricsChange}
             bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
@@ -246,6 +247,7 @@ class SampleComponent extends Component {
   }
 
   componentConc(material, metricMolConc, metricPrefixesMolConc) {
+    const lockColumn = this.props.materialGroup === 'solution' ? this.props.lockAmountColumn : this.props.lockAmountColumnDissolvingCompounds
     return (
       <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
@@ -255,7 +257,7 @@ class SampleComponent extends Component {
           metricPrefix={metricMolConc}
           metricPrefixes={metricPrefixesMolConc}
           precision={4}
-          disabled={!permitOn(this.props.sample) || !this.props.lockAmountColumn}
+          disabled={!permitOn(this.props.sample) || !lockColumn}
           onChange={e => this.handleAmountChange(e, material.concn)}
           onMetricsChange={this.handleMetricsChange}
         />
@@ -284,12 +286,10 @@ class SampleComponent extends Component {
   mixtureComponent(props, style) {
     const { sample, material, deleteMaterial, connectDragSource, connectDropTarget } = props;
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
     const metricPrefixesMol = ['m', 'n'];
     const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
     const metricPrefixesMolConc = ['m', 'n'];
     const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
-    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
 
     return (
       <tr className="general-material">
@@ -306,10 +306,6 @@ class SampleComponent extends Component {
 
         <td>
           {this.nameInput(material)}
-        </td>
-        
-        <td>
-          {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
         </td>
 
         {this.materialVolume(material)}
@@ -341,12 +337,70 @@ class SampleComponent extends Component {
         </td>
       </tr>
     );
-  
+  }
+
+  dissolvingCompound(props, style) {
+    const { sample, material, deleteMaterial, connectDragSource, connectDropTarget } = props;
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+    const metricPrefixesMol = ['m', 'n'];
+    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
+    const metricPrefixesMolConc = ['m', 'n'];
+    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+
+    return (
+      <tr className="general-material">
+        {compose(connectDragSource, connectDropTarget)(
+          <td className={`drag-source ${permitCls(sample)}`} style={style}>
+            <span className="text-info fa fa-arrows" />
+          </td>,
+          { dropEffect: 'copy' }
+        )}
+
+        <td style={{ width: '10%', maxWidth: '50px' }}>
+          {this.materialNameWithIupac(material)}
+        </td>
+
+        <td>
+          {this.nameInput(material)}
+        </td>
+        
+        <td>
+          {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
+        </td>
+
+        <td>
+          {this.componentMol(material, metricMol, metricPrefixesMol)}
+        </td>
+
+        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
+
+        <td style={{ verticalAlign: 'top' }}>
+          <NumeralInputWithUnitsCompo
+            precision={4}
+            value={material.equivalent}
+            disabled={true}
+          />
+        </td>
+
+        <td style={{ verticalAlign: 'top' }}>
+          <Button
+            disabled={!permitOn(sample)}
+            bsStyle="danger"
+            bsSize="small"
+            onClick={() => deleteMaterial(material)}
+          >
+            <i className="fa fa-trash-o" />
+          </Button>
+        </td>
+      </tr>
+    );
   }
 
   render() {
     const {
-      isDragging, canDrop, isOver,
+      isDragging, canDrop, isOver, material
     } = this.props;
     const style = { padding: '0' };
     if (isDragging) { style.opacity = 0.3; }
@@ -360,7 +414,11 @@ class SampleComponent extends Component {
       style.backgroundColor = '#337ab7';
     }
 
-    return this.mixtureComponent(this.props, style);
+    if (material.material_group === 'solution') {
+      return this.mixtureComponent(this.props, style);
+    } else {
+      return this.dissolvingCompound(this.props, style);
+    }
   }
 }
 

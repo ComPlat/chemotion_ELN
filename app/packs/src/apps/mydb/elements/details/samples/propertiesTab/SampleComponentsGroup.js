@@ -10,12 +10,11 @@ import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTa
 
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
-    headIndex, dropSample,dropMaterial, lockAmountColumn, switchAmount
+    headIndex, dropSample,dropMaterial, lockAmountColumn, lockAmountColumnDissolvingCompounds, switchAmount, sampleComponents
   }) => {
     const contents = [];
-    let sampleComponents = sample.components;
     if (sampleComponents && sampleComponents.length > 0) {
-      sample.components = sampleComponents =  sampleComponents.map((component) => {
+      sampleComponents =  sampleComponents.map((component) => {
         if (!(component instanceof Component)) {
           return new Component(component)
         }
@@ -23,34 +22,42 @@ const SampleComponentsGroup = ({
       });
       let index = headIndex;
       sampleComponents.forEach((sampleComponent) => {
-        index += 1;
-        contents.push((
-          <SampleComponent
-            sample={sample}
-            onChange={onChange}
-            key={sampleComponent.id}
-            material={sampleComponent}
-            materialGroup={materialGroup}
-            deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
-            index={index}
-            dropMaterial={dropMaterial}
-            dropSample={dropSample}
-            lockAmountColumn={lockAmountColumn}
-           />
-        ));
+        if (materialGroup){
+          index += 1;
+          contents.push((
+            <SampleComponent
+              sample={sample}
+              onChange={onChange}
+              key={sampleComponent.id}
+              material={sampleComponent}
+              materialGroup={materialGroup}
+              deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
+              index={index}
+              dropMaterial={dropMaterial}
+              dropSample={dropSample}
+              lockAmountColumn={lockAmountColumn}
+              lockAmountColumnDissolvingCompounds={lockAmountColumnDissolvingCompounds}
+             />
+          ));} else {}
+        
       });
     }
   
     const headers = {
-      group: 'Component',
       name: 'Label',
       amount: 'Amount',
       mass: 'Mass',
       volume: 'Volume',
       stockConc: 'Stock conc.',
-      concn: 'Target conc',
+      concn: 'Conc.',
       eq: 'Ratio'
     };
+
+    if (materialGroup === 'dissolving_compound') {
+      headers.group = 'Dissolving compounds';
+    } else {
+      headers.group = 'Solutions';
+    }
   
     const { currentCollection } = UIStore.getState()
 
@@ -69,14 +76,14 @@ const SampleComponentsGroup = ({
       <Tooltip id="assign_button">Lock/unlock amounts <br /> (mass/volume/mol) </Tooltip>
     );
     
-    const SwitchAmountButton = (lockAmountColumn, switchAmount) => {
+    const SwitchAmountButton = (lockAmountColumn, switchAmount, materialGroup) => {
       return (
         <OverlayTrigger placement="top" overlay={switchAmountTooltip()} >
           <Button
             id="lock_amount_column_btn"
             bsSize="xsmall"
             bsStyle={lockAmountColumn ? 'warning' : 'default'}
-            onClick={switchAmount}
+            onClick={() => switchAmount(materialGroup)}
           >
             <i className={lockAmountColumn ? 'fa fa-lock' : 'fa fa-unlock'} />
           </Button>
@@ -103,13 +110,13 @@ const SampleComponentsGroup = ({
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
             <th>{headers.name}</th>
-            <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumn, switchAmount)} {headers.mass}</th>
-            <th>{headers.volume}</th>
+            {materialGroup === 'dissolving_compound' && <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumnDissolvingCompounds, switchAmount, materialGroup)} {headers.mass}</th>}
+            {materialGroup === 'solution' && <th>{SwitchAmountButton(lockAmountColumn, switchAmount, materialGroup)} {headers.volume}</th>}
             <th>{headers.amount}</th>
-            <th>{headers.stockConc}</th>
+            {materialGroup === 'solution' && <th>{headers.stockConc}</th>}
             <th>{headers.concn}</th>
             <th>{headers.eq}</th>
-            </tr>
+          </tr>
           </thead>
           <tbody>
             {contents.map(item => item)}
@@ -128,7 +135,8 @@ const SampleComponentsGroup = ({
     dropSample: PropTypes.func.isRequired,
     dropMaterial: PropTypes.func.isRequired,
     switchAmount: PropTypes.func.isRequired,
-    lockAmountColumn: PropTypes.bool
+    lockAmountColumn: PropTypes.bool,
+    lockAmountColumnDissolvingCompounds: PropTypes.bool,
   };
   
   export default SampleComponentsGroup;
