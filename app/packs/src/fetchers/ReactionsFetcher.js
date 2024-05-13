@@ -94,6 +94,7 @@ export default class ReactionsFetcher {
 
   static updateAnnotationsInReaction(reaction) {
     const tasks = [];
+    tasks.push(BaseFetcher.updateAnnotationsInContainer(reaction));
     reaction.products.forEach((e) => tasks.push(BaseFetcher.updateAnnotationsInContainer(e)));
     return Promise.all(tasks);
   }
