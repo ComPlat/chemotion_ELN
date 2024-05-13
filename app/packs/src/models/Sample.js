@@ -1173,13 +1173,18 @@ export default class Sample extends Element {
   moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const srcIndex = this.components.findIndex(mat => mat === srcMat);
     const tagIndex = this.components.findIndex(mat => mat === tagMat);
-  
-    if (srcIndex === -1 || tagIndex === -1 || srcIndex === tagIndex) {
+
+    if (srcIndex === tagIndex) {
       return;
     }
-  
+
+    this.components[srcIndex].material_group = tagGroup;
+
+    if (!tagMat && srcMat !== tagGroup) {
+      return this.setComponentPositions()
+    }
+
     const movedMat = this.components.splice(srcIndex, 1)[0];
-    movedMat.material_group = tagGroup;
     this.components.splice(tagIndex, 0, movedMat);
     this.setComponentPositions()
   }

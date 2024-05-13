@@ -146,6 +146,12 @@ export default class SampleDetailsComponents extends React.Component {
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { sample } = this.state;
+    sample.components = sample.components.map((component) => {
+      if (!(component instanceof Component)) {
+        return new Component(component)
+      }
+      return component;
+    });
     sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
     this.props.onChange(sample);
   }

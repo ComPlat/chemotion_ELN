@@ -35,7 +35,8 @@ const target = {
   },
   canDrop(tagProps, monitor) {
     const srcType = monitor.getItemType();
-    const isCorrectType = srcType === DragDropItemTypes.SAMPLE
+    const isCorrectType = srcType === DragDropItemTypes.MATERIAL
+      || srcType === DragDropItemTypes.SAMPLE
       || srcType === DragDropItemTypes.MOLECULE;
     return isCorrectType;
   },

@@ -22,24 +22,22 @@ const SampleComponentsGroup = ({
       });
       let index = headIndex;
       sampleComponents.forEach((sampleComponent) => {
-        if (materialGroup){
-          index += 1;
-          contents.push((
-            <SampleComponent
-              sample={sample}
-              onChange={onChange}
-              key={sampleComponent.id}
-              material={sampleComponent}
-              materialGroup={materialGroup}
-              deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
-              index={index}
-              dropMaterial={dropMaterial}
-              dropSample={dropSample}
-              lockAmountColumn={lockAmountColumn}
-              lockAmountColumnDissolvingCompounds={lockAmountColumnDissolvingCompounds}
-             />
-          ));} else {}
-        
+        index += 1;
+        contents.push((
+          <SampleComponent
+            sample={sample}
+            onChange={onChange}
+            key={sampleComponent.id}
+            material={sampleComponent}
+            materialGroup={materialGroup}
+            deleteMaterial={sc => deleteMixtureComponent(sc, materialGroup)}
+            index={index}
+            dropMaterial={dropMaterial}
+            dropSample={dropSample}
+            lockAmountColumn={lockAmountColumn}
+            lockAmountColumnDissolvingCompounds={lockAmountColumnDissolvingCompounds}
+            />
+        ));
       });
     }
   
