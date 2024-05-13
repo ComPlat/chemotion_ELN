@@ -11,7 +11,7 @@ import {
 } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import _ from 'lodash';
+import { debounce } from 'lodash';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
@@ -119,7 +119,7 @@ class Material extends Component {
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
-    this.debounceHandleAmountUnitChange = _.debounce(this.handleAmountUnitChange, 500);
+    this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
   }
 
   handleMaterialClick(sample) {
