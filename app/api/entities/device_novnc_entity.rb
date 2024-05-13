@@ -1,20 +1,27 @@
+# frozen_string_literal: true
+
 module Entities
   class DeviceNovncEntity < Grape::Entity
-    expose :id, documentation: { type: "Integer", desc: "device id"}
-    expose :name, documentation: { type: "String", desc: "device name" }
-    expose :novnc, documentation: { type: "Hash", desc: "device Novnc" }
+    expose :id, documentation: { type: 'Integer', desc: 'device id' }
+    expose :name, documentation: { type: 'String', desc: 'device name' }
+    expose :target, documentation: { type: 'String', desc: 'device Novnc target' }
+    expose :password, documentation: { type: 'String', desc: 'device Novnc password' }
 
-    def novnc
-      result = object.profile.data['novnc'] || {}
-      if (token = result.delete('token'))
+    def target
+      target = object.novnc_target
+      if (token = object.novnc_token)
         if ENV['NOVNC_SECRET'].present?
           token = JWT.encode(
-            { 'token': token, exp: (Time.now + 2.seconds).to_i }, ENV['NOVNC_SECRET'], 'HS256'
+            { token: token, exp: 2.seconds.from_now.to_i }, ENV['NOVNC_SECRET'], 'HS256'
           )
         end
-        result['target'] = "#{result['target']}?token=#{token}"
+        target = "#{target}?token=#{token}"
       end
-      result
+      target
+    end
+
+    def password
+      object.decrypted_novnc_password
     end
   end
 end

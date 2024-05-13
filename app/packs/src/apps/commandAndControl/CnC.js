@@ -122,16 +122,16 @@ class CnC extends React.Component {
 
   connect() {
     this.disconnect();
-    const { id, novnc } = this.state.selected;
-    if (!this.canvas || !id || !novnc) { return; }
+    const { id, target, password } = this.state.selected;
+    if (!this.canvas || !id || !target) { return; }
 
     const rfb = new RFB(
       this.canvas,
-      novnc.target,
+      target,
       {
         repeaterID: '',
         shared: true,
-        credentials: { password: novnc.password },
+        credentials: { password: password },
       }
     );
     rfb.viewOnly = true;
