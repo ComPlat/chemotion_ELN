@@ -6,7 +6,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 export default class ImageModal extends Component {
   constructor(props) {
@@ -35,7 +35,7 @@ export default class ImageModal extends Component {
     }
   }
 
-  shouldComponentUpdate(nextState) {
+  shouldComponentUpdate(nextProps, nextState) {
     if (
       this.state.numOfPages === nextState.numOfPages
       && this.state.numOfPages !== 0
