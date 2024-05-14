@@ -4,7 +4,6 @@ import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import Aviator from 'aviator';
@@ -14,15 +13,11 @@ import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import KeyboardStore from 'src/stores/alt/stores/KeyboardStore';
 
 const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
   const showAllGroups = deviceDescriptionsStore.show_all_groups;
-  let keyboardElementIndex = null;
   const overlayToggle = <Tooltip id="toggle_molecule">Toggle Group</Tooltip>;
 
   const isElementSelected = (element) => {
@@ -33,51 +28,6 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
     const { checkedIds, uncheckedIds, checkedAll } = ui;
     return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
       || ArrayUtils.isValInArray(checkedIds || [], element.id);
-  }
-
-  // componentDidMount() {
-  //   KeyboardStore.listen(this.entriesOnKeyDown);
-  // }
-
-  // componentWillUnmount() {
-  //   KeyboardStore.unlisten(this.entriesOnKeyDown);
-  // }
-
-  const entriesOnKeyDown = (state) => {
-    //const { context } = state;
-    //const { elements } = this.props;
-    //
-    //if (elements[0] == null || context !== elements[0].type) return false;
-    //
-    //const { documentKeyDownCode } = state;
-    //let { keyboardElementIndex } = this.state;
-    //
-    //switch (documentKeyDownCode) {
-    //  case 13: // Enter
-    //  case 39: // Right
-    //    if (keyboardElementIndex && elements[keyboardElementIndex]) {
-    //      showDetails(elements[keyboardElementIndex]);
-    //    }
-    //    break;
-    //  case 38: // Up
-    //    if (keyboardElementIndex > 0) {
-    //      keyboardElementIndex -= 1;
-    //    } else {
-    //      keyboardElementIndex = 0;
-    //    }
-    //    break;
-    //  case 40: // Down
-    //    if (keyboardElementIndex == null) {
-    //      keyboardElementIndex = 0;
-    //    } else if (keyboardElementIndex < elements.length - 1) {
-    //      keyboardElementIndex += 1;
-    //    }
-    //    break;
-    //  default:
-    //}
-    //this.setState({ keyboardElementIndex });
-    //
-    //return null;
   }
 
   const showDetails = (element) => {
@@ -107,7 +57,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
 
   const dragColumn = (element) => {
     return (
-      <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
+      <td className="list-drag-handle">
         {dragHandle(element)}
       </td>
     );
@@ -162,47 +112,40 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
   const ListItemHeader = (key, group, shownGroup) => {
     const icon = shownGroup === undefined && showAllGroups ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
     const groupKey = groupedByValue == 'short_label' ? group[0].short_label : key;
-    const groupValue = groupedByValue == 'vendor_id' ? group[0].vendor_company_name : group[0].name;
-    const groupName = groupKey === '[empty]' ? groupKey : `${groupKey} ${groupValue}`;
+    const groupType = group[0].device_type ? `- ${group[0].device_type}` : '';
+    const groupDeviceName = group[0].vendor_device_name ? group[0].vendor_device_name : group[0].name;
+    const groupName = groupKey === '[empty]' ? groupKey : `${groupDeviceName} - ${groupKey} ${groupType}`;
 
     return (
       <tr
-        style={{ backgroundColor: '#F5F5F5', cursor: 'pointer' }}
         onClick={() => toggleShownGroup(key, shownGroup)}
+        key={`list-item-header-${key}`}
       >
-        <td colSpan="2" style={{ position: 'relative' }}>
-          <div style={{ float: 'left' }}>
+        <td colSpan="3" className="grouped-list-header">
+          <div className="grouped-list-header-name">
             <div className="preview-table">
               {groupName}
             </div>
           </div>
-          <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
+          <div className="grouped-list-header-toggle-icon">
             <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-              <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-                <i className={`glyphicon ${icon}`} />
-              </span>
+              <span><i className={`glyphicon ${icon}`} /></span>
             </OverlayTrigger>
           </div>
         </td>
-        {dragColumn(key)}
       </tr>
     );
   }
 
   const ListItem = (element, index) => {
-    let style = {};
-    if (isElementSelected(element)
-      || (keyboardElementIndex != null && keyboardElementIndex === index)) {
-      style = {
-        color: '#000',
-        background: '#ddd',
-        border: '4px solid #337ab7'
-      };
+    let className = '';
+    if (isElementSelected(element)) {
+      className = 'selected';
     }
 
     return (
-      <tr key={element.id} style={style}>
-        <td width="30px">
+      <tr key={element.id} className={`grouped-list-item ${className}`}>
+        <td>
           <ElementCheckbox
             element={element}
             key={element.id}
@@ -213,15 +156,13 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
         <td
           role="gridcell"
           onClick={() => showDetails(element)}
-          style={{ cursor: 'pointer' }}
-          width='unset'
         >
-          <div>
-            {element.title()}
-            <br />
-            <br />
-            <CommentIcon commentCount={element.comment_count} />
-            <ElementCollectionLabels element={element} key={element.id} />
+          <div className="grouped-list-item-title-and-icons">
+            <div>{element.title()}</div>
+            <div>
+              <CommentIcon commentCount={element.comment_count} />
+              <ElementCollectionLabels element={element} key={element.id} />
+            </div>
           </div>
         </td>
         {dragColumn(element)}
@@ -230,7 +171,7 @@ const DeviceDescriptionList = ({ elements, currentElement, ui }) => {
   }
 
   return (
-    <Table className="device-description-list" bordered hover style={{ borderTop: 0 }}>
+    <Table className="device-description-list" key="device-description-grouped-list">
       <tbody>
         {listItems()}
       </tbody>

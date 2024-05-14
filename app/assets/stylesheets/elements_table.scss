@@ -1,0 +1,278 @@
+// https://github.com/Hacker0x01/react-datepicker/issues/624#issuecomment-261696513
+
+.react-datepicker {
+  font-size: 1.3rem !important;
+}
+
+.react-datepicker__current-month {
+  font-size: 1.5rem !important;
+}
+
+.react-datepicker__header {
+  padding-top: 6px !important;
+}
+
+.react-datepicker__navigation {
+  top: 13px !important;
+}
+
+.react-datepicker__day-name, .react-datepicker__day {
+  margin: 0.5rem !important;
+}
+// ===================================================================
+
+.pagination {
+  margin-top: 0 !important;
+}
+
+th.check {
+  width: 30px !important;
+}
+
+th.drag {
+  width: 40px !important;
+}
+
+.managing-actions-add-btn {
+  margin-top: 11px;
+}
+
+.decoupled-icon span {
+  border: 1px solid grey;
+  background-color: white;
+  color: black;
+  cursor: auto;
+}
+
+.collection-label {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.collection-label span {
+  border: 1px solid grey;
+  background-color: white;
+  color: black;
+}
+
+.collection-label span:hover {
+  background-color: #19B5FE;
+}
+
+.collection-overlay > .popover-content {
+  overflow-y: scroll;
+  padding: 0px !important;
+}
+
+.fa-user-secret {
+  float:right;
+  margin-top:2px;
+}
+
+.top-secret-icon {
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.pubchem-logo {
+  max-height: 22px;
+}
+
+.sample-list-from-date, .sample-list-to-date {
+  input {
+    font-size: 13px;
+    border-radius: 4px;
+    box-shadow: inset 0 2px 2px #e9e9e9;
+    border: 1px solid #aeaeae;
+    line-height: 16px;
+    padding: 6px 10px 5px;
+    width: 95px;
+  }
+}
+
+.list-container-bottom {
+  width: 100%;
+}
+
+.list-elements {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  max-height: calc(100vh - 300px);
+  margin-bottom: 15px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.list-pagination {
+  margin: 5px 0 0 0;
+}
+
+.list-show-count {
+  float: right;
+  margin: 3px 15px 0px 0px;
+  width: 80px;
+}
+
+.table-header {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  background-color: #ddd;
+  padding: 5px;
+}
+
+@media (max-width: 600px) {
+  .table-header {
+    height: auto;
+    flex-wrap: wrap;
+    overflow: auto;
+  }
+}
+
+#tabList .active a {
+  border-bottom-color: #ddd;
+}
+
+.sample-entries > tbody > tr > td {
+  border-top: 0;
+}
+
+table > tbody > tr > td.grouped-list-header {
+  position: relative;
+  padding: 13px 8px;
+  font-weight: bold;
+  font-size: 16px;
+  background-color: #F5F5F5;
+  cursor: pointer;
+}
+
+.grouped-list-header-name {
+  float: left;
+}
+
+.grouped-list-header-toggle-icon {
+  position: absolute;
+  right: 21px;
+  top: 14px;
+}
+
+.grouped-list-header-toggle-icon span {
+  fontSize: 15px;
+  color: #337ab7;
+  lineHeight: 10px;
+}
+
+.list-drag-handle {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.grouped-list-item td:first-child {
+  width: 30px;
+  vertical-align: middle;
+}
+
+.grouped-list-item td:nth-child(2) {
+  cursor: pointer;
+  vertical-align: middle;
+  width: unset;
+}
+
+.grouped-list-item.selected {
+  color: #000;
+  background: #ddd;
+  border: 4px solid #337ab7;
+}
+
+.grouped-list-item-title-and-icons {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.grouped-list-item-title-and-icons span {
+  height: 20px;
+}
+
+@media only screen and (max-width: 1500px) {
+  .list-elements {
+    height: calc(100vh - 350px);
+  }
+}
+
+@-webkit-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@-moz-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@-moz-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@-webkit-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+@keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+
+.running-1 {
+  -webkit-animation: blink-1 4s infinite ; /* Safari 4+ */
+  -moz-animation:    blink-1 4s infinite ; /* Fx 5+ */
+  animation:         blink-1 4s infinite ; /* IE 10+, Fx 29+ */
+}
+
+.running-2 {
+  -webkit-animation: blink-2 4s infinite; /* Safari 4+ */
+  -moz-animation:    blink-2 4s infinite; /* Fx 5+ */
+  animation:         blink-2 4s infinite; /* IE 10+, Fx 29+ */;
+}
+
+.running-3 {
+  -webkit-animation: blink-3 4s infinite  ; /* Safari 4+ */
+  -moz-animation:    blink-3 4s infinite  ; /* Fx 5+ */
+  animation:         blink-3 4s infinite  ; /* IE 10+, Fx 29+ */
+}
+
