@@ -10,8 +10,8 @@ const DeviceDescriptionListHeader = () => {
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
 
   const options = [
+    { value: 'serial_number', label: 'Grouped by Serial no' },
     { value: 'short_label', label: 'Grouped by short label' },
-    { value: 'vendor_id', label: 'Grouped by Vendor ID' },
   ];
 
   const selectedValue = options.find(o => o.value === groupedByValue);

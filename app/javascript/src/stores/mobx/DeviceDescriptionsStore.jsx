@@ -43,7 +43,7 @@ export const DeviceDescriptionsStore = types
     show_ontology_modal: types.optional(types.boolean, false),
     ontology_mode: types.optional(types.string, 'edit'),
     selected_segment_id: types.optional(types.number, 0),
-    list_grouped_by: types.optional(types.string, 'short_label'),
+    list_grouped_by: types.optional(types.string, 'serial_number'),
     show_all_groups: types.optional(types.boolean, true),
     shown_groups: types.optional(types.array(types.string), []),
   })
