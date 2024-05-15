@@ -923,15 +923,16 @@ export default class SampleForm extends React.Component {
           </tr>
           {this.state.selectedSampleType === 'Mixture' ? this.mixtureComponentsList(sample) : null}
           <tr>
-            {this.additionalProperties(sample)}
-          </tr>
-          <tr>
             <td colSpan="4">
               <SampleDetailsSolvents
                 sample={sample}
                 onChange={this.handleSolventChanged}
               />
             </td>
+          </tr>
+
+          <tr>
+            {this.additionalProperties(sample)}
           </tr>
 
           <tr style={{ paddingTop: '15px' }}>

@@ -10,7 +10,7 @@ import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTa
 
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
-    headIndex, dropSample,dropMaterial, lockAmountColumn, lockAmountColumnDissolvingCompounds, switchAmount, sampleComponents
+    headIndex, dropSample,dropMaterial, lockAmountColumn, lockAmountColumnSolids, switchAmount, sampleComponents
   }) => {
     const contents = [];
     if (sampleComponents && sampleComponents.length > 0) {
@@ -35,7 +35,7 @@ const SampleComponentsGroup = ({
             dropMaterial={dropMaterial}
             dropSample={dropSample}
             lockAmountColumn={lockAmountColumn}
-            lockAmountColumnDissolvingCompounds={lockAmountColumnDissolvingCompounds}
+            lockAmountColumnSolids={lockAmountColumnSolids}
             />
         ));
       });
@@ -46,15 +46,15 @@ const SampleComponentsGroup = ({
       amount: 'Amount',
       mass: 'Mass',
       volume: 'Volume',
-      stockConc: 'Stock conc.',
+      startingConc: 'Starting conc.',
       concn: 'Conc.',
       eq: 'Ratio'
     };
 
-    if (materialGroup === 'dissolving_compound') {
-      headers.group = 'Dissolving compounds';
+    if (materialGroup === 'solid') {
+      headers.group = 'Solids';
     } else {
-      headers.group = 'Solutions';
+      headers.group = 'Liquids';
     }
   
     const { currentCollection } = UIStore.getState()
@@ -108,10 +108,11 @@ const SampleComponentsGroup = ({
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
             <th>{headers.name}</th>
-            {materialGroup === 'dissolving_compound' && <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumnDissolvingCompounds, switchAmount, materialGroup)} {headers.mass}</th>}
-            {materialGroup === 'solution' && <th>{SwitchAmountButton(lockAmountColumn, switchAmount, materialGroup)} {headers.volume}</th>}
+            {materialGroup === 'solid' && <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumnSolids, switchAmount, materialGroup)} {headers.mass}</th>}
+            {materialGroup === 'liquid' && <th>{SwitchAmountButton(lockAmountColumn, switchAmount, materialGroup)} {headers.volume}</th>}
             <th>{headers.amount}</th>
-            {materialGroup === 'solution' && <th>{headers.stockConc}</th>}
+            {materialGroup === 'liquid' && <th>{headers.startingConc}</th>}
+            {materialGroup === 'solid' && <th></th>}
             <th>{headers.concn}</th>
             <th>{headers.eq}</th>
           </tr>
@@ -134,7 +135,7 @@ const SampleComponentsGroup = ({
     dropMaterial: PropTypes.func.isRequired,
     switchAmount: PropTypes.func.isRequired,
     lockAmountColumn: PropTypes.bool,
-    lockAmountColumnDissolvingCompounds: PropTypes.bool,
+    lockAmountColumnSolids: PropTypes.bool,
   };
   
   export default SampleComponentsGroup;

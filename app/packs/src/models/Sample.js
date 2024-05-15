@@ -510,20 +510,20 @@ export default class Sample extends Element {
     this._molarity_unit = molarity_unit;
   }
 
-  get stock_molarity_value() {
-    return this._stock_molarity_value;
+  get starting_molarity_value() {
+    return this._starting_molarity_value;
   }
 
-  set stock_molarity_value(stock_molarity_value) {
-    this._stock_molarity_value = stock_molarity_value;
+  set starting_molarity_value(starting_molarity_value) {
+    this._starting_molarity_value = starting_molarity_value;
   }
 
-  get stock_molarity_unit() {
-    return this._stock_molarity_unit;
+  get starting_molarity_unit() {
+    return this._starting_molarity_unit;
   }
 
-  set stock_molarity_unit(stock_molarity_unit) {
-    this._stock_molarity_unit = stock_molarity_unit;
+  set starting_molarity_unit(starting_molarity_unit) {
+    this._starting_molarity_unit = starting_molarity_unit;
   }
 
   get imported_readout() {
@@ -1098,7 +1098,7 @@ export default class Sample extends Element {
                                 || component.molecule.inchikey === newComponent.molecule.inchikey);
 
     if (!newComponent.material_group){
-      newComponent.material_group = 'solution';
+      newComponent.material_group = 'liquid';
     }
     if (isNew){
       tmpComponents.push(newComponent);
@@ -1145,10 +1145,10 @@ export default class Sample extends Element {
     const totalVolume = this.amount_l
 
     this.components.forEach((component) => {
-      if (component.concn > 0 && component.stock_molarity_value > 0) {
-        component.amount_value = component.concn * totalVolume / component.stock_molarity_value
+      if (component.concn > 0 && component.starting_molarity_value > 0) {
+        component.amount_value = component.concn * totalVolume / component.starting_molarity_value
         component.amount_unit = 'l' 
-      } else if (component.stock_molarity_value === 0) {
+      } else if (component.starting_molarity_value === 0) {
         component.amount_value = totalVolume;
         component.amount_unit = 'l' 
       } else if (component.concn > 0 && component.amount_unit === 'g' ) {

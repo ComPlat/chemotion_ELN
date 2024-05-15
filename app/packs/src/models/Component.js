@@ -16,7 +16,7 @@ export default class Component extends Sample {
         if (amount.unit === 'l') {
             this.amount_value = amount.value;
             this.amount_unit = amount.unit;
-            this.concn = this.amount_value * this.stock_molarity_value / totalVolume;
+            this.concn = this.amount_value * this.starting_molarity_value / totalVolume;
             this.molarity_value = this.concn;
         } else if (amount.unit === 'g') {
             this.amount_value = amount.value;
@@ -31,21 +31,21 @@ export default class Component extends Sample {
     setMolarity(amount, totalVolume, concType) {
         if (!amount.unit || isNaN(amount.value) || amount.unit !== 'mol/l') { return }
 
-        if (concType !== 'stockConc') {
+        if (concType !== 'startingConc') {
             this.concn = amount.value;
             this.molarity_value = amount.value;
             this.molarity_unit = amount.unit
         } else {
-            this.stock_molarity_value = amount.value;
-            this.stock_molarity_unit = amount.unit;
+            this.starting_molarity_value = amount.value;
+            this.starting_molarity_unit = amount.unit;
         }
-        if (totalVolume && this.concn && this.stock_molarity_value) {
-            this.amount_value = this.concn * totalVolume / this.stock_molarity_value;
+        if (totalVolume && this.concn && this.starting_molarity_value) {
+            this.amount_value = this.concn * totalVolume / this.starting_molarity_value;
             this.amount_unit = 'l';
-        } else if (!this.concn && this.amount_l > 0 && this.stock_molarity_value) {
-            this.concn = this.amount_l * this.stock_molarity_value / totalVolume;
+        } else if (!this.concn && this.amount_l > 0 && this.starting_molarity_value) {
+            this.concn = this.amount_l * this.starting_molarity_value / totalVolume;
             this.molarity_value = this.concn;
-        } else if (this.material_group === 'dissolving_compound' && this.concn && totalVolume) {
+        } else if (this.material_group === 'solid' && this.concn && totalVolume) {
             const mols = this.concn * totalVolume
             this.amount_value = this.molecule_molecular_weight * mols;
             this.amount_unit =  'g'
@@ -64,8 +64,8 @@ export default class Component extends Sample {
             target_amount_unit: this.target_amount_unit,
             molarity_unit: this.molarity_unit,
             molarity_value: this.molarity_value,
-            stock_molarity_value: this.stock_molarity_value,
-            stock_molarity_unit: this.stock_molarity_unit,
+            starting_molarity_value: this.starting_molarity_value,
+            starting_molarity_unit: this.starting_molarity_unit,
             molecule_id: this.molecule.id,
             equivalent: this.equivalent,
             parent_id: this.parent_id,

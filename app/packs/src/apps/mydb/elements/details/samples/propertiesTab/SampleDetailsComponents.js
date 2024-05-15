@@ -112,10 +112,10 @@ export default class SampleDetailsComponents extends React.Component {
           let sampleComponent = new Component(sampleData);
           sampleComponent.parent_id = splitSample.parent_id
           sampleComponent.material_group = tagGroup;
-          if (tagGroup === 'dissolving_compound') {
-            sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'stockConc');
+          if (tagGroup === 'solid') {
+            sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'startingConc');
             sampleComponent.setAmount({ value: sampleComponent.amount_g, unit: 'g' }, sample.amount_l);
-          } else if (tagGroup === 'solution') {
+          } else if (tagGroup === 'liquid') {
             sampleComponent.setAmount({ value: sampleComponent.amount_l, unit: 'l' }, sample.amount_l);
           }
           sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
@@ -164,11 +164,11 @@ export default class SampleDetailsComponents extends React.Component {
   }
 
   switchAmount(materialGroup) {
-    const { lockAmountColumn, lockAmountColumnDissolvingCompounds } = this.state;
-    if (materialGroup === 'solution') {
+    const { lockAmountColumn, lockAmountColumnSolids } = this.state;
+    if (materialGroup === 'liquid') {
       this.setState({ lockAmountColumn: !lockAmountColumn });
-    } else if (materialGroup === 'dissolving_compound') {
-      this.setState({ lockAmountColumnDissolvingCompounds: !lockAmountColumnDissolvingCompounds });
+    } else if (materialGroup === 'solid') {
+      this.setState({ lockAmountColumnSolids: !lockAmountColumnSolids });
     }
   }
 
@@ -187,37 +187,37 @@ export default class SampleDetailsComponents extends React.Component {
     }
     const minPadding = { padding: '1px 2px 2px 0px' };
 
-    const solutions = sample.components ? sample.components.filter(component => component.material_group === 'solution').map(component => component instanceof Component ? component : new Component(component)) : [];
-    const dissolvingCompounds = sample.components ? sample.components.filter(component => component.material_group === 'dissolving_compound').map(component => component instanceof Component ? component : new Component(component)) : [];
+    const liquids = sample.components ? sample.components.filter(component => component.material_group === 'liquid').map(component => component instanceof Component ? component : new Component(component)) : [];
+    const solids = sample.components ? sample.components.filter(component => component.material_group === 'solid').map(component => component instanceof Component ? component : new Component(component)) : [];
 
     return (
       <ListGroup fill="true">
         <ListGroupItem style={minPadding}>
           <SampleDetailsComponentsDnd
           sample={sample}
-          sampleComponents={solutions}
+          sampleComponents={liquids}
           dropSample={this.dropSample}
           dropMaterial={this.dropMaterial}
           deleteMixtureComponent={this.deleteMixtureComponent}
           onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
           switchAmount={this.switchAmount}
           lockAmountColumn={this.state.lockAmountColumn}
-          lockAmountColumnDissolvingCompounds={this.state.lockAmountColumnDissolvingCompounds}
-          materialGroup="solution"
+          lockAmountColumnSolids={this.state.lockAmountColumnSolids}
+          materialGroup="liquid"
           />
         </ListGroupItem>
         <ListGroupItem style={minPadding}>
           <SampleDetailsComponentsDnd
           sample={sample}
-          sampleComponents={dissolvingCompounds}
+          sampleComponents={solids}
           dropSample={this.dropSample}
           dropMaterial={this.dropMaterial}
           deleteMixtureComponent={this.deleteMixtureComponent}
           onChangeComponent={(changeEvent) => this.onChangeComponent(changeEvent)}
           switchAmount={this.switchAmount}
           lockAmountColumn={this.state.lockAmountColumn}
-          lockAmountColumnDissolvingCompounds={this.state.lockAmountColumnDissolvingCompounds}
-          materialGroup="dissolving_compound"
+          lockAmountColumnSolids={this.state.lockAmountColumnSolids}
+          materialGroup="solid"
           />
         </ListGroupItem>
       </ListGroup>

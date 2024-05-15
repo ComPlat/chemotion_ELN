@@ -33,12 +33,12 @@ module Chemotion
             optional :target_amount_unit, type: String, desc: 'Target amount unit'
             optional :molarity_unit, type: String, desc: 'Molarity unit'
             optional :molarity_value, type: Float, desc: 'Molarity value'
-            optional :stock_molarity_value, type: Float, desc: 'Stock molarity value'
-            optional :stock_molarity_unit, type: String, desc: 'Stock molarity unit'
+            optional :starting_molarity_value, type: Float, desc: 'Starting molarity value'
+            optional :starting_molarity_unit, type: String, desc: 'Starting molarity unit'
             requires :molecule_id, type: Integer, desc: 'Molecule ID'
             optional :equivalent, types: [Float, String], desc: 'Equivalent'
             optional :parent_id, type: Integer, desc: 'Parent ID'
-            optional :material_group, type: String, desc: 'type of component e.g. solution'
+            optional :material_group, type: String, desc: 'type of component e.g. liquid'
           end
         end
       end

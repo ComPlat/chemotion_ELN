@@ -62,7 +62,7 @@ class SampleDetailsComponentsDnd extends React.Component {
       canDrop,
       connectDropTarget,
       lockAmountColumn,
-      lockAmountColumnDissolvingCompounds,
+      lockAmountColumnSolids,
       switchAmount,
       materialGroup,
     } = this.props;
@@ -89,7 +89,7 @@ class SampleDetailsComponentsDnd extends React.Component {
           canDrop={canDrop}
           materialGroup={materialGroup}
           lockAmountColumn={lockAmountColumn}
-          lockAmountColumnDissolvingCompounds={lockAmountColumnDissolvingCompounds}
+          lockAmountColumnSolids={lockAmountColumnSolids}
           switchAmount={switchAmount}
         />
       </div>

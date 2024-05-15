@@ -217,7 +217,7 @@ class SampleComponent extends Component {
           metricPrefix={metric}
           metricPrefixes={metricPrefixes}
           precision={4}
-          disabled={!permitOn(this.props.sample) || this.props.lockAmountColumnDissolvingCompounds }
+          disabled={!permitOn(this.props.sample) || this.props.lockAmountColumnSolids }
           onChange={e => this.handleAmountChange(e, material.amount_g)}
           onMetricsChange={this.handleMetricsChange}
           bsStyle={material.error_mass ? 'error' : massBsStyle}
@@ -229,7 +229,7 @@ class SampleComponent extends Component {
   }
 
   componentMol(material, metricMol, metricPrefixesMol) {
-    const lockColumn = this.props.materialGroup === 'solution' ? this.props.lockAmountColumn : this.props.lockAmountColumnDissolvingCompounds
+    const lockColumn = this.props.materialGroup === 'liquid' ? this.props.lockAmountColumn : this.props.lockAmountColumnSolids
     return (
       <NumeralInputWithUnitsCompo
             key={material.id}
@@ -247,7 +247,7 @@ class SampleComponent extends Component {
   }
 
   componentConc(material, metricMolConc, metricPrefixesMolConc) {
-    const lockColumn = this.props.materialGroup === 'solution' ? this.props.lockAmountColumn : this.props.lockAmountColumnDissolvingCompounds
+    const lockColumn = this.props.materialGroup === 'liquid' ? this.props.lockAmountColumn : this.props.lockAmountColumnSolids
     return (
       <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
@@ -265,18 +265,18 @@ class SampleComponent extends Component {
     )
   }
 
-  componentStockConc(material, metricMolConc, metricPrefixesMolConc) {
+  componentStartingConc(material, metricMolConc, metricPrefixesMolConc) {
     return (
       <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
           key={material.id}
-          value={material.stock_molarity_value}
+          value={material.starting_molarity_value}
           unit="mol/l"
           metricPrefix={metricMolConc}
           metricPrefixes={metricPrefixesMolConc}
           precision={4}
           disabled={!permitOn(this.props.sample)}
-          onChange={e => this.handleAmountChange(e, material.stockConc, 'stockConc')}
+          onChange={e => this.handleAmountChange(e, material.startingConc, 'startingConc')}
           onMetricsChange={this.handleMetricsChange}
         />
       </td>
@@ -314,7 +314,7 @@ class SampleComponent extends Component {
           {this.componentMol(material, metricMol, metricPrefixesMol)}
         </td>
 
-        {this.componentStockConc(material, metricMolConc, metricPrefixesMolConc)}
+        {this.componentStartingConc(material, metricMolConc, metricPrefixesMolConc)}
         {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
 
         <td style={{ verticalAlign: 'top' }}>
@@ -339,7 +339,7 @@ class SampleComponent extends Component {
     );
   }
 
-  dissolvingCompound(props, style) {
+  solidComponent(props, style) {
     const { sample, material, deleteMaterial, connectDragSource, connectDropTarget } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
@@ -373,7 +373,7 @@ class SampleComponent extends Component {
         <td>
           {this.componentMol(material, metricMol, metricPrefixesMol)}
         </td>
-
+        <th></th>
         {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
 
         <td style={{ verticalAlign: 'top' }}>
@@ -414,10 +414,10 @@ class SampleComponent extends Component {
       style.backgroundColor = '#337ab7';
     }
 
-    if (material.material_group === 'solution') {
+    if (material.material_group === 'liquid') {
       return this.mixtureComponent(this.props, style);
     } else {
-      return this.dissolvingCompound(this.props, style);
+      return this.solidComponent(this.props, style);
     }
   }
 }
