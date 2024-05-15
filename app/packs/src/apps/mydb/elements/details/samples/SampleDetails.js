@@ -1470,6 +1470,7 @@ export default class SampleDetails extends React.Component {
     sample.decoupled = e.target.checked;
     if (!sample.decoupled) {
       sample.sum_formula = '';
+      sample.molecular_mass = null;
     } else {
       if (sample.sum_formula?.trim() === '') sample.sum_formula = 'undefined structure';
       if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
