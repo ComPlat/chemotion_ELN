@@ -30,10 +30,11 @@ module Chemotion
         optional :vendor_company_name, type: String
         optional :vendor_id, type: String
         optional :description, type: String
-        optional :general_tags, type: String
+        optional :general_tags, type: Array
         optional :version_number, type: String
         optional :version_installation_start_date, type: DateTime, allow_blank: true
         optional :version_installation_end_date, type: DateTime, allow_blank: true
+        optional :version_identifier_type, type: String
         optional :version_doi, type: String
         optional :version_doi_url, type: String
         optional :version_characterization, type: String
@@ -56,6 +57,7 @@ module Chemotion
         optional :application_name, type: String
         optional :application_version, type: String
         optional :vendor_url, type: String
+        optional :helpers_uploaded, type: Boolean
         optional :policies_and_user_information, type: String
         optional :description_for_methods_part, type: String
         optional :container, type: Hash
@@ -66,6 +68,7 @@ module Chemotion
           optional :index, type: Integer
         end
         optional :segments, type: Array
+        optional :setup_descriptions, type: Hash
       end
 
       def device_description_with_entity(device_description)

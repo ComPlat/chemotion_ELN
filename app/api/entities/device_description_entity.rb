@@ -19,6 +19,7 @@ module Entities
     expose :version_number
     expose :version_installation_start_date
     expose :version_installation_end_date
+    expose :version_identifier_type
     expose :version_doi
     expose :version_doi_url
     expose :version_characterization
@@ -35,6 +36,7 @@ module Entities
     expose :application_name
     expose :application_version
     expose :vendor_url
+    expose :helpers_uploaded
     expose :policies_and_user_information
     expose :description_for_methods_part
     expose :type
@@ -48,6 +50,7 @@ module Entities
     expose :tag, using: 'Entities::ElementTagEntity'
     expose! :can_copy, unless: :displayed_in_list
     expose! :ancestor_ids
+    expose :setup_descriptions
 
     def type
       'device_description'
