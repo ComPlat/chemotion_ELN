@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import { Collapse } from 'react-bootstrap';
 import {
-  selectInput, textInput, multipleInputGroups,
+  selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, ontologiesList,
+  operatorInput, ontologiesList, checkboxInput
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -109,7 +109,18 @@ const PropertiesForm = () => {
   ];
   const vendorCompanyNameLabel = 'Details describing the vendor of the device';
 
+  const versionIdentifierTypes = [
+    { value: 'DOI', label: 'DOI', description: '- Digital Object Identifier' },
+    { value: 'Handle', label: 'Handle', description: '- CNRI Handle' },
+    { value: 'ARK', label: 'ARK', description: '- Archival Resource Key' },
+    { value: 'EISSN', label: 'EISSN', description: '- Electronic International Standard Serial Number' },
+    { value: 'IGSN', label: 'IGSN', description: '- physical samples and specimens' },
+    { value: 'PURL', label: 'PURL', description: '- Persistent Uniform Resource Locator' },
+    { value: 'RRID', label: 'RRID', description: '- Research Resource Identifiers' },
+  ];
+
   const versionDoi = [
+    { value: 'version_identifier_type', label: 'Type', type: 'select', options: versionIdentifierTypes },
     { value: 'version_doi', label: 'DOI', type: 'text' },
     { value: 'version_doi_url', label: 'DOI-Link', type: 'text' },
   ];
@@ -152,7 +163,7 @@ const PropertiesForm = () => {
           {multipleInputGroups(deviceDescription, vendorDeviceLabel, vendorDevice, deviceDescriptionsStore)}
           {multipleInputGroups(deviceDescription, vendorCompanyNameLabel, vendorCompanyName, deviceDescriptionsStore)}
           {textareaInput(deviceDescription, deviceDescriptionsStore, 'description', 'Description', 3)}
-          {selectInput(deviceDescription, deviceDescriptionsStore, 'general_tags', 'Tags', deviceTags)}
+          {multiSelectInput(deviceDescription, deviceDescriptionsStore, 'general_tags', 'Tags', deviceTags)}
         </div>
       </Collapse>
 
@@ -206,14 +217,6 @@ const PropertiesForm = () => {
         </div>
       </Collapse>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'physical_data', 'Physical data, media and hardware requirements')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.physical_data} className="grouped-fields-row cols-2">
-        <div>
-          {textInput(deviceDescription, deviceDescriptionsStore, 'size', 'Size')}
-          {textInput(deviceDescription, deviceDescriptionsStore, 'weight', 'Weight [kg]', 'Weight in kilogram')}
-        </div>
-      </Collapse>
-
       {headlineWithToggle(deviceDescriptionsStore, 'software_interfaces', 'Software and interfaces')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.software_interfaces} className="grouped-fields-row cols-3">
         <div>
@@ -226,6 +229,12 @@ const PropertiesForm = () => {
       {headlineWithToggle(deviceDescriptionsStore, 'manuals', 'Manuals, documentation and helpers')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.manuals} className="grouped-fields-row cols-1">
         <div>
+          {
+            checkboxInput(
+              deviceDescription, 'Additional Helpers uploaded to attachments',
+              'helpers_uploaded', deviceDescriptionsStore
+            )
+          }
           {
             textareaInput(
               deviceDescription, deviceDescriptionsStore, 'policies_and_user_information',
@@ -247,12 +256,20 @@ const PropertiesForm = () => {
         </div>
       </Collapse>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'settings', 'Setting components')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.settings} className="grouped-fields-row cols-1">
+      {headlineWithToggle(deviceDescriptionsStore, 'setup', 'Setup description')}
+      <Collapse in={deviceDescriptionsStore.toggable_contents.setup} className="grouped-fields-row cols-1">
         <div>
           <div className="form-group">
             Subset / Description
           </div>
+        </div>
+      </Collapse>
+
+      {headlineWithToggle(deviceDescriptionsStore, 'physical_data', 'Physical data, media and hardware requirements')}
+      <Collapse in={deviceDescriptionsStore.toggable_contents.physical_data} className="grouped-fields-row cols-2">
+        <div>
+          {textInput(deviceDescription, deviceDescriptionsStore, 'size', 'Size')}
+          {textInput(deviceDescription, deviceDescriptionsStore, 'weight', 'Weight [kg]', 'Weight in kilogram')}
         </div>
       </Collapse>
     </div>

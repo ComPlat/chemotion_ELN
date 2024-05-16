@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   FormGroup, ControlLabel, FormControl, InputGroup,
-  OverlayTrigger, Tooltip, Button,
+  OverlayTrigger, Tooltip, Button, Checkbox,
 } from 'react-bootstrap';
 import Select from 'react-select3';
 import DatePicker from 'react-datepicker';
@@ -9,6 +9,7 @@ import moment from 'moment';
 import { v4 as uuid } from 'uuid';
 
 const valueByType = (type, event) => {
+  let value = [];
   switch (type) {
     case 'text':
     case 'textarea':
@@ -22,6 +23,11 @@ const valueByType = (type, event) => {
       return event.target.checked;
     case 'select':
       return event.value ? event.value : event.label;
+    case 'multiselect':
+      event.forEach((element) => {
+        element?.value ? value.push(element.value) : value.push(element)
+      });
+      return value;
     case 'datetime':
       return moment(event, 'YYYY-MM-DD HH:mm:ss').toISOString()
     default:
@@ -210,6 +216,18 @@ const dateTimePickerInput = (element, store, field, label, info) => {
   );
 }
 
+const checkboxInput = (element, label, field, store) => {
+  return (
+    <Checkbox
+      key={`${store.key_prefix}-${field}`}
+      checked={element[field]}
+      onChange={handleFieldChanged(store, field, 'checkbox', element.type)}
+    >
+      {label}
+    </Checkbox>
+  );
+}
+
 const multipleInputGroups = (element, label, fields, store, info) => {
   let inputGroupForms = [];
   let formGroupKey = '';
@@ -218,15 +236,21 @@ const multipleInputGroups = (element, label, fields, store, info) => {
   fields.forEach((field, i) => {
     formGroupKey += `-${field.value}`;
     inputGroupForms.push(<InputGroup.Addon key={`${field.label}-${i}`}>{field.label}</InputGroup.Addon>);
-    inputGroupForms.push(
-      <FormControl
-        name={field.value}
-        type="text"
-        key={`${store.key_prefix}${field.value}`}
-        value={element[field.value]}
-        onChange={handleFieldChanged(store, field.value, field.type, element.type)}
-      />
-    );
+    if (field.type === 'select') {
+      inputGroupForms.push(
+        basicSelectInputWithSpecialLabel(element, store, field.value, field.label, field.options)
+      );
+    } else {
+      inputGroupForms.push(
+        <FormControl
+          name={field.value}
+          type="text"
+          key={`${store.key_prefix}${field.value}`}
+          value={element[field.value]}
+          onChange={handleFieldChanged(store, field.value, field.type, element.type)}
+        />
+      );
+    }
   });
 
   return (
@@ -241,7 +265,6 @@ const multipleInputGroups = (element, label, fields, store, info) => {
 
 const selectInput = (element, store, field, label, options, info) => {
   const elementValue = elementFieldValue(element, field);
-
   let value = options.find((o) => { return o.value == elementValue });
   value = value === undefined ? { value: '', label: '' } : value;
 
@@ -255,6 +278,63 @@ const selectInput = (element, store, field, label, options, info) => {
         value={value}
         isClearable={true}
         onChange={handleFieldChanged(store, field, 'select', element.type)}
+      />
+    </FormGroup>
+  );
+}
+
+const changeMenuStatus = (store, field, value) => {
+  store.setSelectIsOpen(field, value);
+}
+
+const menuLabel = (option, field, store) => {
+  const index = store.selectIsOpen.findIndex((object) => { return object[field] !== undefined });
+  let label = option.label;
+
+  if (index !== -1 && store.selectIsOpen[index][field] && option?.description) {
+    label = `${option.label} ${option.description}`;
+  }
+  return label;
+}
+
+const basicSelectInputWithSpecialLabel = (element, store, field, label, options) => {
+  const elementValue = elementFieldValue(element, field);
+  let value = options.find((o) => { return o.value == elementValue });
+  value = value === undefined ? { value: '', label: '', description: '' } : value;
+
+  return (
+    <Select
+      name={field.value}
+      key={`${store.key_prefix}-${field}`}
+      options={options}
+      value={value}
+      isClearable={true}
+      getOptionLabel={(option) => menuLabel(option, field, store)}
+      onMenuOpen={() => changeMenuStatus(store, field, true)}
+      onMenuClose={() => changeMenuStatus(store, field, false)}
+      onChange={handleFieldChanged(store, field, 'select', element.type)}
+    />
+  );
+}
+
+const multiSelectInput = (element, store, field, label, options, info) => {
+  const elementValue = elementFieldValue(element, field);
+  let value = [];
+  if (elementValue.length >= 1) {
+    elementValue.forEach((element) => value.push({ value: element, label: element }));
+  }
+
+  return (
+    <FormGroup key={`${store.key_prefix}-${label}`}>
+      {labelWithInfo(label, info)}
+      <Select
+        name={field}
+        isMulti={true}
+        key={`${store.key_prefix}-${field}`}
+        options={options}
+        value={value}
+        isClearable={true}
+        onChange={handleFieldChanged(store, field, 'multiselect', element.type)}
       />
     </FormGroup>
   );
@@ -294,7 +374,7 @@ const textInput = (element, store, field, label, info) => {
 }
 
 export {
-  selectInput, textInput, multipleInputGroups,
+  selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, annotationButton,
+  operatorInput, annotationButton, checkboxInput,
 }

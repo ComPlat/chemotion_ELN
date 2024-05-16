@@ -1,6 +1,5 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
-import Segment from 'src/models/Segment';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class DeviceDescription extends Element {
@@ -20,10 +19,12 @@ export default class DeviceDescription extends Element {
       vendor_id: '',
       ontologies: [],
       description: '',
+      general_tags: '',
       tags: '',
       version_number: '',
       version_installation_start_date: '',
       version_installation_end_date: '',
+      version_identifier_type: '',
       version_doi: '',
       version_doi_url: '',
       version_characterization: '',
@@ -34,14 +35,16 @@ export default class DeviceDescription extends Element {
       room: '',
       infrastructure_assignment: '',
       access_options: '',
-      comments: '',
+      access_comments: '',
       size: '',
       weight: '',
       application_name: '',
       application_version: '',
       vendor_url: '',
+      helpers_uploaded: false,
       policies_and_user_information: '',
       description_for_methods_part: '',
+      setup_descriptions: [],
       isNew: true,
       changed: false,
       updated: false,
