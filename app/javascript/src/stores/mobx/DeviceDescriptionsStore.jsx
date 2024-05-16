@@ -14,7 +14,7 @@ const toggableContents = {
   'software_interfaces': true,
   'manuals': true,
   'publications': true,
-  'settings': true,
+  'setup': true,
   'ontology': true,
   'ontology_segments': true,
 };
@@ -46,6 +46,7 @@ export const DeviceDescriptionsStore = types
     list_grouped_by: types.optional(types.string, 'serial_number'),
     show_all_groups: types.optional(types.boolean, true),
     shown_groups: types.optional(types.array(types.string), []),
+    select_is_open: types.optional(types.array(types.frozen({})), []),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -203,9 +204,21 @@ export const DeviceDescriptionsStore = types
       const shownGroups = self.shown_groups.filter((g) => { return g !== value });
       self.shown_groups = shownGroups;
     },
+    setSelectIsOpen(field, value) {
+      const index = self.select_is_open.findIndex((x) => { return x[field] !== undefined });
+      const newValue = { [field]: value }
+      if (index >= 0) {
+        let fieldObject = { ...self.select_is_open[index] };
+        fieldObject = newValue;
+        self.select_is_open[index] = fieldObject;
+      } else {
+        self.select_is_open.push(newValue);
+      }
+    }
   }))
   .views(self => ({
     get deviceDescriptionsValues() { return values(self.devices_descriptions) },
     get filteredAttachments() { return values(self.filtered_attachments) },
     get shownGroups() { return values(self.shown_groups) },
+    get selectIsOpen() { return values(self.select_is_open) },
   }));

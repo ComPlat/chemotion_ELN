@@ -467,7 +467,7 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.string "vendor_device_name"
     t.string "vendor_device_id"
     t.string "vendor_company_name"
-    t.string "general_tags"
+    t.string "general_tags", default: [], array: true
     t.text "policies_and_user_information"
     t.string "version_number"
     t.text "version_characterization"
@@ -475,6 +475,9 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.integer "created_by"
     t.jsonb "ontologies"
     t.string "ancestry"
+    t.string "version_identifier_type"
+    t.boolean "helpers_uploaded", default: false
+    t.jsonb "setup_descriptions"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
