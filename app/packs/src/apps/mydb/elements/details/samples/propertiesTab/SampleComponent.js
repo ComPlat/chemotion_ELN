@@ -5,7 +5,8 @@ import {
   OverlayTrigger,
   Tooltip,
   FormGroup,
-  FormControl
+  FormControl,
+  Radio
 } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
@@ -176,6 +177,37 @@ class SampleComponent extends Component {
     }
   }
 
+  handleRatioChange(e, value) {
+    if (e.value === value) return;
+
+    const adjustAmount = this.props.materialGroup === 'liquid' ? this.props.lockAmountColumn : this.props.lockAmountColumnSolids;
+
+    if (this.props.onChange && e) {
+      const event = {
+        newRatio: e.value,
+        type: 'ratioChanged',
+        sampleID: this.componentId(),
+        materialGroup: this.props.materialGroup,
+        adjustAmount: adjustAmount,
+
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleReferenceChange(e) {
+    const value = e.target.value;
+    if (this.props.onChange) {
+      const event = {
+        type: 'referenceChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.componentId(),
+        value
+      };
+      this.props.onChange(event);
+    }
+  }
+
   materialVolume(material) {
     if (material.contains_residues) { return notApplicableInput(); }
     const metricPrefixes = ['m', 'n', 'u'];
@@ -283,6 +315,21 @@ class SampleComponent extends Component {
     )
   }
 
+  materialRef(material) {
+    return (
+      <td> 
+          <Radio
+            disabled={!permitOn(this.props.sample)}
+            name="reference"
+            checked={material.reference}
+            onChange={e => this.handleReferenceChange(e)}
+            bsSize="xsmall"
+            style={{ margin: 0 }}
+          />
+      </td>
+    );
+  }
+
   mixtureComponent(props, style) {
     const { sample, material, deleteMaterial, connectDragSource, connectDropTarget } = props;
     const metricPrefixes = ['m', 'n', 'u'];
@@ -308,6 +355,8 @@ class SampleComponent extends Component {
           {this.nameInput(material)}
         </td>
 
+        {this.materialRef(material)}
+
         {this.materialVolume(material)}
 
         <td>
@@ -321,7 +370,8 @@ class SampleComponent extends Component {
           <NumeralInputWithUnitsCompo
             precision={4}
             value={material.equivalent}
-            disabled={true}
+            disabled={!permitOn(this.props.sample) || material.reference}
+            onChange={e => this.handleRatioChange(e, material.equivalent)}
           />
         </td>
 
@@ -365,6 +415,8 @@ class SampleComponent extends Component {
         <td>
           {this.nameInput(material)}
         </td>
+
+        {this.materialRef(material)}
         
         <td>
           {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
@@ -380,7 +432,8 @@ class SampleComponent extends Component {
           <NumeralInputWithUnitsCompo
             precision={4}
             value={material.equivalent}
-            disabled={true}
+            disabled={!permitOn(this.props.sample) || material.reference}
+            onChange={e => this.handleRatioChange(e, material.equivalent)}
           />
         </td>
 

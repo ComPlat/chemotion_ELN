@@ -39,6 +39,7 @@ module Chemotion
             optional :equivalent, types: [Float, String], desc: 'Equivalent'
             optional :parent_id, type: Integer, desc: 'Parent ID'
             optional :material_group, type: String, desc: 'type of component e.g. liquid'
+            optional :reference, type: Boolean, desc: 'reference comp. for ratio calculations'
           end
         end
       end

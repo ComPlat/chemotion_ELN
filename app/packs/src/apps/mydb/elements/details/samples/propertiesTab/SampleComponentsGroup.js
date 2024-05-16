@@ -48,7 +48,8 @@ const SampleComponentsGroup = ({
       volume: 'Volume',
       startingConc: 'Starting conc.',
       concn: 'Conc.',
-      eq: 'Ratio'
+      eq: 'Ratio',
+      ref: 'Ref'
     };
 
     if (materialGroup === 'solid') {
@@ -96,6 +97,7 @@ const SampleComponentsGroup = ({
           <col style={{ width: '4%' }} />
           <col style={{ width: '7%' }} />
           <col style={{ width: '7%' }} />
+          <col style={{ width: '3%' }} />
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
@@ -108,6 +110,7 @@ const SampleComponentsGroup = ({
             <th>{addSampleButton}</th>
             <th>{headers.group}</th>
             <th>{headers.name}</th>
+            <th>{headers.ref}</th>
             {materialGroup === 'solid' && <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumnSolids, switchAmount, materialGroup)} {headers.mass}</th>}
             {materialGroup === 'liquid' && <th>{SwitchAmountButton(lockAmountColumn, switchAmount, materialGroup)} {headers.volume}</th>}
             <th>{headers.amount}</th>
@@ -137,5 +140,11 @@ const SampleComponentsGroup = ({
     lockAmountColumn: PropTypes.bool,
     lockAmountColumnSolids: PropTypes.bool,
   };
+
+  SampleComponentsGroup.defaultProps = {
+    lockAmountColumn: false,
+    lockAmountColumnSolids: false
+  };
+  
   
   export default SampleComponentsGroup;

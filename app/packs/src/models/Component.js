@@ -25,6 +25,10 @@ export default class Component extends Sample {
                 this.concn = this.amount_mol / totalVolume;
                 this.molarity_value = this.concn;
             }
+
+            if (this.amount_value === 0) {
+                this.molarity_value = this.concn = 0
+            }
         }
     }
 
@@ -54,6 +58,35 @@ export default class Component extends Sample {
         }
     }
 
+    updateRatio(newRatio, materialGroup, adjustAmount, totalVolume) {
+        if (this.equivalent === newRatio) { return }
+
+        const newMols = (newRatio / this.equivalent) * this.amount_mol;
+        
+        this.equivalent = newRatio;
+
+        if (materialGroup === 'liquid') {
+            if (adjustAmount) {
+                const concentration = this.molarity_value;
+                const updatedVolume = newMols / concentration;
+                this.amount_value = updatedVolume;
+                this.amount_unit = 'l'
+            } else {
+                const concentration = newMols / this.amount_l;
+                this.concn = concentration;
+                this.molarity_value = concentration;
+                this.molarity_unit = 'M'
+            }
+        } else if (materialGroup === 'solid') {
+                const mass = newMols * this.molecule_molecular_weight;
+                this.amount_value = mass;
+                this.amount_unit = 'g';
+
+                this.concn = newMols / totalVolume;
+                this.molarity_value = this.concn;
+        }
+    }
+
     serializeComponent() {
         return {
           id: this.id,
@@ -70,6 +103,7 @@ export default class Component extends Sample {
             equivalent: this.equivalent,
             parent_id: this.parent_id,
             material_group: this.material_group,
+            reference: this.reference,
           }
          }
       }

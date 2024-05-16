@@ -27,6 +27,8 @@ export default class SampleDetailsComponents extends React.Component {
     this.updatedSampleForMetricsChange = this.updatedSampleForMetricsChange.bind(this);
     this.switchAmount = this.switchAmount.bind(this);
     this.updateComponentName = this.updateComponentName.bind(this);
+    this.updateRatio = this.updateRatio.bind(this);
+    this.updateSampleForReferenceChanged = this.updateSampleForReferenceChanged.bind(this);
   }
 
   onChangeComponent(changeEvent) {
@@ -48,7 +50,13 @@ export default class SampleDetailsComponents extends React.Component {
         break;
       case 'nameChanged':
         this.updateComponentName(changeEvent);
-      break;
+        break;
+      case 'ratioChanged':
+        this.updateRatio(changeEvent);
+        break;
+      case 'referenceChanged':
+        this.updateSampleForReferenceChanged(changeEvent);
+        break;
       default:
         break;
     }
@@ -170,6 +178,30 @@ export default class SampleDetailsComponents extends React.Component {
     } else if (materialGroup === 'solid') {
       this.setState({ lockAmountColumnSolids: !lockAmountColumnSolids });
     }
+  }
+
+  updateRatio(changeEvent) {
+    const { sample } = this.props;
+    const { sampleID, newRatio, materialGroup, adjustAmount } = changeEvent;
+    const componentIndex = this.props.sample.components.findIndex(
+      (component) => component.id === sampleID
+    );
+    const totalVolume = sample.amount_l;
+
+    sample.components[componentIndex].updateRatio(newRatio, materialGroup, adjustAmount, totalVolume)
+
+    this.props.onChange(sample);
+  }
+
+  updateSampleForReferenceChanged(changeEvent) {
+    const { sample } = this.props;
+    const { sampleID } = changeEvent;
+    const componentIndex = this.props.sample.components.findIndex(
+      (component) => component.id === sampleID
+    );
+
+    
+    sample.setReferenceComponent(componentIndex);
   }
 
   render() {

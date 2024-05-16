@@ -1158,16 +1158,30 @@ export default class Sample extends Element {
     })
   }
 
-  updateMixtureComponentEquivalent() {
-    const totalAmountMol = this.components.reduce((total, component) => {
-        return total + component.amount_mol;
-    }, 0);
+  setReferenceComponent(componentIndex) {
+    this.components[componentIndex].equivalent = 1
+    this.components[componentIndex].reference = true
 
-    const minRatio = Math.min(...this.components.map(component => component.amount_mol / totalAmountMol));
-
-    this.components.forEach((component) => {
-        component.equivalent = Number((component.amount_mol / totalAmountMol) / minRatio).toFixed(1);
+    this.components.forEach((component, index) => {
+      if (index !== componentIndex) {
+          component.reference = false;
+      }
     });
+
+    this.updateMixtureComponentEquivalent()
+  }
+
+  updateMixtureComponentEquivalent() {
+    const referenceIndex = this.components.findIndex(component => component.reference);
+
+    if (referenceIndex === -1) return;
+
+    const referenceMol = this.components[referenceIndex].amount_mol;
+
+    for (let i = 0; i < this.components.length; i++) {
+        if (i === referenceIndex) continue;
+        this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
+    }
   }
 
   moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
