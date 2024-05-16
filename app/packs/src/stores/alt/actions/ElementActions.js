@@ -385,11 +385,11 @@ class ElementActions {
     };
   }
 
-  createSampleForMixture(sample, mixtureSample, closeView = false){
+  createSampleForMixture(sample, mixtureSample, closeView = false, materialGroup){
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, mixtureSample, closeView })
+          dispatch({ newSample, mixtureSample, closeView, materialGroup})
         });
     };
   }

@@ -262,7 +262,7 @@ export default class StructureEditorModal extends React.Component {
         });
       });
     } else if (editor.id === 'ketcher2' && isMixture) {
-      structure.editor.getKet().then((molfile) => {
+      structure.editor.getMolfile().then((molfile) => {
         Promise.all([
           structure.editor.generateImage(molfile, { outputFormat: 'svg' }),
           structure.editor.getSmiles() 

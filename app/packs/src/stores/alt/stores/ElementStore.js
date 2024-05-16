@@ -705,12 +705,13 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForMixture({ newSample, mixtureSample }) {
+  handleCreateSampleForMixture({ newSample, mixtureSample, materialGroup }) {
     UserActions.fetchCurrentUser();
     this.handleRefreshElements('sample');
     this.changeCurrentElement(mixtureSample);
     let splitSample = newSample.buildChildWithoutCounter();
     splitSample = new Component(splitSample)
+    splitSample.material_group = materialGroup;
     mixtureSample.addMixtureComponent(splitSample);
   }
 
@@ -840,7 +841,6 @@ class ElementStore {
       newSample = Sample.buildEmpty(currentCollection.id)
       newSample.belongTo = sample;
       sample.changed = true;
-      newSample.sample_type_name = 'ComponentStock'
       const shortLabel = newSample.short_label
 
       if (shortLabel === sample.short_label) {
