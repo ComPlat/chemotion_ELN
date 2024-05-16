@@ -6,13 +6,12 @@ import AdminDashboard from 'src/apps/admin/AdminDashboard';
 import UserManagement from 'src/apps/admin/UserManagement';
 import GroupsDevices from 'src/apps/admin/GroupsDevices';
 import MessagePublish from 'src/apps/admin/MessagePublish';
-import DataCollector from 'src/apps/admin/DataCollector';
 import OlsTerms from 'src/apps/admin/OlsTerms';
-import NovncSettings from 'src/apps/admin/NovncSettings';
 import MatrixManagement from 'src/apps/admin/MatrixManagement';
 import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
+import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
@@ -50,18 +49,16 @@ class AdminHome extends React.Component {
       return this.renderUserManagement();
     } else if (pageIndex === 2) {
       return this.renderMessagePublish();
-    } else if (pageIndex === 3) {
-      return this.renderDataCollector();
     } else if (pageIndex === 4) {
       return this.renderGroupMgnt();
     } else if (pageIndex === 5) {
       return this.renderOlsTerms();
-    } else if (pageIndex === 6) {
-      return this.renderNovncSettings();
     } else if (pageIndex === 7) {
       return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
       return this.renderTextTemplates();
+    } else if (pageIndex === 9) {
+      return this.renderDevices();
     } else if (pageIndex === 12) {
       return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
@@ -84,14 +81,13 @@ class AdminHome extends React.Component {
           <Nav bsStyle="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
             <NavItem eventKey={0}>Dashboard</NavItem>
             <NavItem eventKey={1}>User Management</NavItem>
-            <NavItem eventKey={4}>Groups &amp; Devices</NavItem>
-            <NavItem eventKey={3}>Data Collector</NavItem>
-            <NavItem eventKey={6}>NoVNC Settings</NavItem>
+            <NavItem eventKey={9}>Devices</NavItem>
+            <NavItem eventKey={4}>Groups</NavItem>
             <NavItem eventKey={7}>UI features</NavItem>
             <NavItem eventKey={8}>Text Templates</NavItem>
             <NavItem eventKey={2}>Message Publish</NavItem>
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
-	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
+            {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
             <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
           </Nav>
@@ -127,15 +123,6 @@ class AdminHome extends React.Component {
     );
   }
 
-  renderDataCollector() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <DataCollector />
-      </Col>
-    );
-  }
-
   renderGroupMgnt() {
     const { contentClassName } = this.state;
     return (
@@ -150,15 +137,6 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <OlsTerms />
-      </Col>
-    );
-  }
-
-  renderNovncSettings() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <NovncSettings />
       </Col>
     );
   }
@@ -204,6 +182,15 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName}>
         <ChemSpectraLayouts />
+      </Col>
+    );
+  }
+
+  renderDevices() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <DevicesList />
       </Col>
     );
   }

@@ -15,3 +15,15 @@ iframe#ifKetcher {
   overflow-x: hidden;
   overflow-y: hidden;
 }
+
+.structure-editor-loading {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: large;
+  font-weight: bold;
+  text-align: center;
+}

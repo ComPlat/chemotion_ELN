@@ -1,7 +1,44 @@
 # Chemotion_ELN Changelog
 
 ## Latest
+
+
+
+## [v1.9.3]
+> (2024-05-13)
+
+* Features and enhancements
+  * structure editor compatibility  ([#1894](https://github.com/ComPlat/chemotion_ELN/pull/1894))
+  * enable spectra report for samples  ([#1902](https://github.com/ComPlat/chemotion_ELN/pull/1902))
+  * activate segment visibility field in generic elements  ([#1702](https://github.com/ComPlat/chemotion_ELN/pull/1702))
+
 * Bug fixes
+  * advanced search  ([#1888](https://github.com/ComPlat/chemotion_ELN/pull/1888))
+  * converter inbox issue for NMR  ([#1903](https://github.com/ComPlat/chemotion_ELN/pull/1903))
+  * add updating of annotations also in reaction container  ([#1913](https://github.com/ComPlat/chemotion_ELN/pull/1913))
+  * Yield calculation with purity  ([#1904](https://github.com/ComPlat/chemotion_ELN/pull/1904))
+  * ensure wait_until is set when initializing cron delayed jobs ([#1892](https://github.com/ComPlat/chemotion_ELN/pull/1892))
+
+* Chores
+  * Bump react-pdf from 5.7.0 to 7.7.3  ([#1909](https://github.com/ComPlat/chemotion_ELN/pull/1909))
+
+## [v1.9.2]
+> (2024-04-26)
+
+* Features and enhancements
+  * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))([#1881](https://github.com/ComPlat/chemotion_ELN/pull/1881))
+  * datacollector device config sftp port  ([#1885](https://github.com/ComPlat/chemotion_ELN/pull/1885))
+  * admin can restore deleted user account  ([#1845](https://github.com/ComPlat/chemotion_ELN/pull/1845))
+  * admin can delete single user account  ([#1883](https://github.com/ComPlat/chemotion_ELN/pull/1883)) 
+  
+
+* Bug fixes
+  * lock screen spinner on select close and save function in chemspectra  ([#1879](https://github.com/ComPlat/chemotion_ELN/pull/1879))
+  * instrument suggestion dropdown position in analyses metadata  ([#1887](https://github.com/ComPlat/chemotion_ELN/pull/1887))
+  * LabIMotion 1.3.0 ([docs](https://github.com/LabIMotion/labimotion/blob/v1.3.0/CHANGELOG.md))([#1881](https://github.com/ComPlat/chemotion_ELN/pull/1881))
+
+* Refactor
+  *  gate transfer - streaming data transfer to Chemotion Rep…  ([#1882](https://github.com/ComPlat/chemotion_ELN/pull/1882))
 
 
 ## [v1.9.2]

@@ -35,6 +35,7 @@ gem 'faraday'
 gem 'faraday-follow_redirects'
 gem 'faraday-multipart'
 gem 'font-awesome-rails'
+gem 'fugit'
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 gem 'fx'
 
@@ -61,7 +62,7 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
-gem 'labimotion', '1.3.0.1'
+gem 'labimotion', '1.3.1.1'
 
 gem 'mimemagic', '0.3.10'
 gem 'mime-types'

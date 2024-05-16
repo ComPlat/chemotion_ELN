@@ -202,6 +202,8 @@ class API < Grape::API
   mount Labimotion::SegmentAPI
   mount Labimotion::LabimotionHubAPI
   mount Chemotion::InventoryAPI
+  mount Chemotion::AdminDeviceAPI
+  mount Chemotion::AdminDeviceMetadataAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {

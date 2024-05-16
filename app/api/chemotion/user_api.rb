@@ -37,7 +37,8 @@ module Chemotion
         %w[chemdrawEditor marvinjsEditor ketcher2Editor].each do |str|
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
-        present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices'
+        present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices',
+                                                            unexpose_include_ids: true, unexpose_exclude_ids: true
       end
 
       namespace :omniauth_providers do
@@ -224,9 +225,9 @@ module Chemotion
 
       get :novnc do
         devices = if params[:id] == '0'
-                    Device.by_user_ids(user_ids).novnc.includes(:profile)
+                    Device.by_user_ids(user_ids).where.not(novnc_target: nil).group('devices.id').order('devices.name')
                   else
-                    Device.by_user_ids(user_ids).novnc.where(id: params[:id]).includes(:profile)
+                    Device.by_user_ids(user_ids).where(id: params[:id]).group('devices.id')
                   end
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end

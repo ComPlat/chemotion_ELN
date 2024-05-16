@@ -530,7 +530,7 @@ export default class ReactionDetailsScheme extends Component {
 
     if (equivalent < 0.0 || equivalent > 1.0) {
       updatedS.adjusted_equivalent = equivalent > 1.0 ? 1.0 : 0.0;
-      updatedS.adjusted_amount_mol = referenceM.amount_mol
+      updatedS.adjusted_amount_mol = referenceM.amount_mol;
       updatedS.adjusted_loading = fconv_loading;
       updatedS.adjusted_amount_g = updatedS.amount_g;
       newAmountMol = referenceM.amount_mol;
@@ -546,7 +546,7 @@ export default class ReactionDetailsScheme extends Component {
   triggerNotification(isDecoupled) {
     if (!isDecoupled) {
       const errorMsg = 'Experimental mass value is larger than possible\n'
-      + 'by 100% conversion! Please check your data.';
+        + 'by 100% conversion! Please check your data.';
       NotificationActions.add({
         message: errorMsg,
         level: 'error',
@@ -565,12 +565,12 @@ export default class ReactionDetailsScheme extends Component {
         if (sample.id === updatedSample.id) {
           if (!updatedSample.reference && referenceMaterial.amount_value) {
             if (materialGroup === 'products') {
-              const massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
               if (updatedSample.contains_residues) {
+                const massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
                 this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
                 return sample;
               }
-              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
+              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
               // yield taking into account stoichiometry:
               sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
             } else {
@@ -601,7 +601,7 @@ export default class ReactionDetailsScheme extends Component {
         } else {
           if (!lockEquivColumn || materialGroup === 'products') {
             // calculate equivalent, don't touch real amount
-            sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
+            sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
             // yield taking into account stoichiometry:
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
           } else {
@@ -634,7 +634,7 @@ export default class ReactionDetailsScheme extends Component {
 
       if (materialGroup === 'products') {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
+          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);;
         }
       }
       return sample;
@@ -643,7 +643,9 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedSamplesForEquivalentChange(samples, updatedSample, materialGroup) {
     const { referenceMaterial } = this.props.reaction;
+    let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
+      stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
         sample.equivalent = updatedSample.equivalent;
         if (referenceMaterial && referenceMaterial.amount_value) {
@@ -661,7 +663,7 @@ export default class ReactionDetailsScheme extends Component {
       if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
         /* eslint-disable no-param-reassign, no-unused-expressions */
         if (materialGroup === 'products') {
-          sample.maxAmount = referenceMaterial.amount_mol * (sample.coefficient || 1.0) / (referenceMaterial.coefficient || 1.0) * sample.molecule_molecular_weight;
+          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
           sample.equivalent = sample.maxAmount !== 0 ? (sample.amount_g / sample.maxAmount) : 0;
           if (sample.amount_g > sample.maxAmount) {
             sample.equivalent = 1;

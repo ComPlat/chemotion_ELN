@@ -2,9 +2,14 @@ import { getElementSegments } from './ElementUtils';
 import Immutable from 'immutable';
 
 const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
+  if (typeof layout === 'undefined') {
+    // eslint-disable-next-line no-param-reassign
+    layout = { properties: 1, analyses: 2, attachments: 3 };
+  }
   const layoutKeys = Object.keys(layout);
 
-  if (addInventoryTab) {
+  if (addInventoryTab && layout) {
+    // eslint-disable-next-line no-param-reassign
     layout.inventory = layoutKeys.length + 1;
   }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
@@ -38,7 +43,11 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
 };
 
 const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = null ) => {
-  let layoutKeys = Object.keys(layout);
+  if (typeof layout === 'undefined') {
+    // eslint-disable-next-line no-param-reassign
+    layout = { properties: 1, analyses: 2, attachments: 3 };
+  }
+  const layoutKeys = Object.keys(layout);
   let segmentAvailableTabs = availableTabs ? [] : getElementSegments(element, layoutKeys);
   availableTabs = [...availableTabs, ...segmentAvailableTabs];
   return getVisibilityList(layout, availableTabs, addInventoryTab);

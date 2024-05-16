@@ -132,6 +132,10 @@
   background-color: #fff;
 }
 
+.search-result-tab-content-list-name:hover, .search-result-tab-content-list-white div:hover {
+  cursor: pointer;
+}
+
 .search-result-pagination {
   margin-top: 20px;
   margin-bottom: -6px;
