@@ -26,14 +26,14 @@ module Chemotion
         error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
         if !params[:user_ids].blank?
           params[:user_ids].each do |user|
-            create_elements(params, from_collection, to_collection_id)
-            create_generic_elements(params, from_collection, to_collection_id)
+            create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
+            # create_generic_elements(params, from_collection, to_collection_id)
             to_collection_id = to_collection_id ? to_collection_id : from_collection&.id
             create_acl_collection(user[:value], to_collection_id, params, from_collection&.label)
           end
         else
-          create_elements(params, from_collection, to_collection_id)
-          create_generic_elements(params, from_collection, to_collection_id)
+          create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
+          # create_generic_elements(params, from_collection, to_collection_id)
         end
 
         status 204

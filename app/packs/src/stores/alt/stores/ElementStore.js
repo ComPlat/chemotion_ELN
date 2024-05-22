@@ -155,7 +155,7 @@ class ElementStore {
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
-      handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+      handleFetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,

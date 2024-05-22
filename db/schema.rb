@@ -72,6 +72,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
+    t.jsonb "log_data"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -177,15 +178,17 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.integer "collection_id", null: false
     t.string "label"
     t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 0
-    t.integer "reaction_detail_level", default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level", default: 0
+    t.integer "sample_detail_level", default: 10
+    t.integer "reaction_detail_level", default: 10
+    t.integer "wellplate_detail_level", default: 10
+    t.integer "screen_detail_level", default: 10
     t.integer "researchplan_detail_level", default: 10
     t.integer "element_detail_level", default: 10
+    t.integer "celllinesample_detail_level", default: 10
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["user_id", "collection_id"], name: "index_collection_acls_on_user_id_and_collection_id", unique: true
+    t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
+    t.index ["user_id"], name: "index_collection_acls_on_user_id"
   end
 
   create_table "collections", id: :serial, force: :cascade do |t|
@@ -298,13 +301,13 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.string "content"
     t.integer "created_by", null: false
     t.string "section"
+    t.string "status", default: "Pending"
+    t.string "submitter"
+    t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "status", default: "Pending"
-    t.string "submitter"
-    t.string "resolver_name"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
@@ -352,6 +355,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
+    t.jsonb "log_data"
     t.text "plain_text_content"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
@@ -550,6 +554,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.float "loading"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.jsonb "log_data"
     t.index ["sample_id"], name: "index_elemental_compositions_on_sample_id"
   end
 
@@ -969,9 +974,10 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
+    t.jsonb "variations", default: []
+    t.jsonb "log_data"
     t.text "plain_text_description"
     t.text "plain_text_observation"
-    t.jsonb "variations", default: []
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -990,6 +996,9 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.datetime "created_at", default: "2021-10-01 00:00:00", null: false
+    t.datetime "updated_at", default: "2021-10-01 00:00:00", null: false
+    t.jsonb "log_data"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1120,6 +1129,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.hstore "custom_info"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "log_data"
     t.index ["sample_id"], name: "index_residues_on_sample_id"
   end
 
@@ -1177,6 +1187,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.string "sum_formula"
     t.jsonb "solvent"
     t.boolean "inventory_sample", default: false
+    t.jsonb "log_data"
     t.boolean "dry_solvent", default: false
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -1609,25 +1620,25 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
         a_userids int4[];
         u int4;
       begin
-        select channel_type into i_channel_type
-        from channels where id = in_channel_id;
+      	select channel_type into i_channel_type
+      	from channels where id = in_channel_id;
 
         case i_channel_type
-        when 9 then
-          insert into notifications (message_id, user_id, created_at,updated_at)
-          (select in_message_id, id, now(),now() from users where deleted_at is null and type='Person');
-        when 5,8 then
-          if (in_user_ids is not null) then
-          a_userids = in_user_ids;
-          end if;
-          FOREACH u IN ARRAY a_userids
-          loop
-            insert into notifications (message_id, user_id, created_at,updated_at)
-            (select distinct in_message_id, id, now(),now() from users where type='Person' and id in (select group_user_ids(u))
-             and not exists (select id from notifications where message_id = in_message_id and user_id = users.id));
-          end loop;
-        end case;
-        return in_message_id;
+      	when 9 then
+      	  insert into notifications (message_id, user_id, created_at,updated_at)
+      	  (select in_message_id, id, now(),now() from users where deleted_at is null and type='Person');
+      	when 5,8 then
+      	  if (in_user_ids is not null) then
+      	  a_userids = in_user_ids;
+      	  end if;
+      	  FOREACH u IN ARRAY a_userids
+      	  loop
+      		  insert into notifications (message_id, user_id, created_at,updated_at)
+      		  (select distinct in_message_id, id, now(),now() from users where type='Person' and id in (select group_user_ids(u))
+      		   and not exists (select id from notifications where message_id = in_message_id and user_id = users.id));
+       	  end loop;
+      	end case;
+      	return in_message_id;
       end;$function$
   SQL
   create_function :labels_by_user_sample, sql_definition: <<-'SQL'
@@ -1651,31 +1662,31 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
        LANGUAGE plpgsql
       AS $function$
       begin
-        if in_user_ids is null then
+      	if in_user_ids is null then
           update users u set matrix = (
-            select coalesce(sum(2^mx.id),0) from (
-              select distinct m1.* from matrices m1, users u1
-              left join users_groups ug1 on ug1.user_id = u1.id
-                where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
-              except
-              select distinct m2.* from matrices m2, users u2
-              left join users_groups ug2 on ug2.user_id = u2.id
-                where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
-            ) mx
+      	    select coalesce(sum(2^mx.id),0) from (
+      		    select distinct m1.* from matrices m1, users u1
+      				left join users_groups ug1 on ug1.user_id = u1.id
+      		      where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
+      	      except
+      		    select distinct m2.* from matrices m2, users u2
+      				left join users_groups ug2 on ug2.user_id = u2.id
+      		      where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
+      	    ) mx
           );
-        else
-            update users u set matrix = (
-              select coalesce(sum(2^mx.id),0) from (
-               select distinct m1.* from matrices m1, users u1
-               left join users_groups ug1 on ug1.user_id = u1.id
-                 where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
-               except
-               select distinct m2.* from matrices m2, users u2
-               left join users_groups ug2 on ug2.user_id = u2.id
-                 where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
-              ) mx
-            ) where ((in_user_ids) @> array[u.id]) or (u.id in (select ug3.user_id from users_groups ug3 where (in_user_ids) @> array[ug3.group_id]));
-        end if;
+      	else
+      		  update users u set matrix = (
+      		  	select coalesce(sum(2^mx.id),0) from (
+      			   select distinct m1.* from matrices m1, users u1
+      				 left join users_groups ug1 on ug1.user_id = u1.id
+      			     where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
+      			   except
+      			   select distinct m2.* from matrices m2, users u2
+      				 left join users_groups ug2 on ug2.user_id = u2.id
+      			     where u.id = u2.id and ((u2.id = any(m2.exclude_ids)) or (u2.id = ug2.user_id and ug2.group_id = any(m2.exclude_ids)))
+      			  ) mx
+      		  ) where ((in_user_ids) @> array[u.id]) or (u.id in (select ug3.user_id from users_groups ug3 where (in_user_ids) @> array[ug3.group_id]));
+      	end if;
         return true;
       end
       $function$
@@ -1686,42 +1697,19 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
        LANGUAGE plpgsql
       AS $function$
       begin
-        if (TG_OP='INSERT') then
+      	if (TG_OP='INSERT') then
           PERFORM generate_users_matrix(null);
-        end if;
+      	end if;
 
-        if (TG_OP='UPDATE') then
-          if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
+      	if (TG_OP='UPDATE') then
+      	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
             PERFORM generate_users_matrix(null);
-          elsif new.include_ids <> old.include_ids then
+      	  elsif new.include_ids <> old.include_ids then
             PERFORM generate_users_matrix(new.include_ids || old.include_ids);
           elsif new.exclude_ids <> old.exclude_ids then
             PERFORM generate_users_matrix(new.exclude_ids || old.exclude_ids);
-          end if;
-        end if;
-        return new;
-      end
-      $function$
-  SQL
-  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
-       RETURNS TABLE(reaction_ids integer)
-       LANGUAGE sql
-      AS $function$
-          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
-           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
-           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
-           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
-           and s.molecule_id = m.id and m.id=$2)
-        $function$
-  SQL
-  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-        update segment_klasses set identifier = gen_random_uuid() where identifier is null;
+      	  end if;
+      	end if;
         return new;
       end
       $function$
@@ -1736,8 +1724,398 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
+  create_function :logidze_snapshot, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_snapshot(item jsonb, ts_column text DEFAULT NULL::text, columns text[] DEFAULT NULL::text[], include_columns boolean DEFAULT false)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 3
+        DECLARE
+          ts timestamp with time zone;
+          k text;
+        BEGIN
+          item = item - 'log_data';
+          IF ts_column IS NULL THEN
+            ts := statement_timestamp();
+          ELSE
+            ts := coalesce((item->>ts_column)::timestamp with time zone, statement_timestamp());
+          END IF;
+
+          IF columns IS NOT NULL THEN
+            item := logidze_filter_keys(item, columns, include_columns);
+          END IF;
+
+          FOR k IN (SELECT key FROM jsonb_each(item))
+          LOOP
+            IF jsonb_typeof(item->k) = 'object' THEN
+               item := jsonb_set(item, ARRAY[k], to_jsonb(item->>k));
+            END IF;
+          END LOOP;
+
+          return json_build_object(
+            'v', 1,
+            'h', jsonb_build_array(
+                    logidze_version(1, item, ts)
+                  )
+            );
+        END;
+      $function$
+  SQL
+  create_function :logidze_logger, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_logger()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 2
+        DECLARE
+          changes jsonb;
+          version jsonb;
+          snapshot jsonb;
+          new_v integer;
+          size integer;
+          history_limit integer;
+          debounce_time integer;
+          current_version integer;
+          k text;
+          iterator integer;
+          item record;
+          columns text[];
+          include_columns boolean;
+          ts timestamp with time zone;
+          ts_column text;
+          err_sqlstate text;
+          err_message text;
+          err_detail text;
+          err_hint text;
+          err_context text;
+          err_table_name text;
+          err_schema_name text;
+          err_jsonb jsonb;
+          err_captured boolean;
+        BEGIN
+          ts_column := NULLIF(TG_ARGV[1], 'null');
+          columns := NULLIF(TG_ARGV[2], 'null');
+          include_columns := NULLIF(TG_ARGV[3], 'null');
+
+          IF TG_OP = 'INSERT' THEN
+            IF columns IS NOT NULL THEN
+              snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column, columns, include_columns);
+            ELSE
+              snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column);
+            END IF;
+
+            IF snapshot#>>'{h, -1, c}' != '{}' THEN
+              NEW.log_data := snapshot;
+            END IF;
+
+          ELSIF TG_OP = 'UPDATE' THEN
+
+            IF OLD.log_data is NULL OR OLD.log_data = '{}'::jsonb THEN
+              IF columns IS NOT NULL THEN
+                snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column, columns, include_columns);
+              ELSE
+                snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column);
+              END IF;
+
+              IF snapshot#>>'{h, -1, c}' != '{}' THEN
+                NEW.log_data := snapshot;
+              END IF;
+              RETURN NEW;
+            END IF;
+
+            history_limit := NULLIF(TG_ARGV[0], 'null');
+            debounce_time := NULLIF(TG_ARGV[4], 'null');
+
+            current_version := (NEW.log_data->>'v')::int;
+
+            IF ts_column IS NULL THEN
+              ts := statement_timestamp();
+            ELSE
+              ts := (to_jsonb(NEW.*)->>ts_column)::timestamp with time zone;
+              IF ts IS NULL OR ts = (to_jsonb(OLD.*)->>ts_column)::timestamp with time zone THEN
+                ts := statement_timestamp();
+              END IF;
+            END IF;
+
+            IF NEW = OLD THEN
+              RETURN NEW;
+            END IF;
+
+            IF current_version < (NEW.log_data#>>'{h,-1,v}')::int THEN
+              iterator := 0;
+              FOR item in SELECT * FROM jsonb_array_elements(NEW.log_data->'h')
+              LOOP
+                IF (item.value->>'v')::int > current_version THEN
+                  NEW.log_data := jsonb_set(
+                    NEW.log_data,
+                    '{h}',
+                    (NEW.log_data->'h') - iterator
+                  );
+                END IF;
+                iterator := iterator + 1;
+              END LOOP;
+            END IF;
+
+            changes := '{}';
+
+            IF (coalesce(current_setting('logidze.full_snapshot', true), '') = 'on') THEN
+              BEGIN
+                changes = hstore_to_jsonb_loose(hstore(NEW.*));
+              EXCEPTION
+                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
+                  changes = row_to_json(NEW.*)::jsonb;
+                  FOR k IN (SELECT key FROM jsonb_each(changes))
+                  LOOP
+                    IF jsonb_typeof(changes->k) = 'object' THEN
+                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
+                    END IF;
+                  END LOOP;
+              END;
+            ELSE
+              BEGIN
+                changes = hstore_to_jsonb_loose(
+                      hstore(NEW.*) - hstore(OLD.*)
+                  );
+              EXCEPTION
+                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
+                  changes = (SELECT
+                    COALESCE(json_object_agg(key, value), '{}')::jsonb
+                    FROM
+                    jsonb_each(row_to_json(NEW.*)::jsonb)
+                    WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD.*)::jsonb);
+                  FOR k IN (SELECT key FROM jsonb_each(changes))
+                  LOOP
+                    IF jsonb_typeof(changes->k) = 'object' THEN
+                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
+                    END IF;
+                  END LOOP;
+              END;
+            END IF;
+
+            changes = changes - 'log_data';
+
+            IF columns IS NOT NULL THEN
+              changes = logidze_filter_keys(changes, columns, include_columns);
+            END IF;
+
+            IF changes = '{}' THEN
+              RETURN NEW;
+            END IF;
+
+            new_v := (NEW.log_data#>>'{h,-1,v}')::int + 1;
+
+            size := jsonb_array_length(NEW.log_data->'h');
+            version := logidze_version(new_v, changes, ts);
+
+            IF (
+              debounce_time IS NOT NULL AND
+              (version->>'ts')::bigint - (NEW.log_data#>'{h,-1,ts}')::text::bigint <= debounce_time
+            ) THEN
+              -- merge new version with the previous one
+              new_v := (NEW.log_data#>>'{h,-1,v}')::int;
+              version := logidze_version(new_v, (NEW.log_data#>'{h,-1,c}')::jsonb || changes, ts);
+              -- remove the previous version from log
+              NEW.log_data := jsonb_set(
+                NEW.log_data,
+                '{h}',
+                (NEW.log_data->'h') - (size - 1)
+              );
+            END IF;
+
+            NEW.log_data := jsonb_set(
+              NEW.log_data,
+              ARRAY['h', size::text],
+              version,
+              true
+            );
+
+            NEW.log_data := jsonb_set(
+              NEW.log_data,
+              '{v}',
+              to_jsonb(new_v)
+            );
+
+            IF history_limit IS NOT NULL AND history_limit <= size THEN
+              NEW.log_data := logidze_compact_history(NEW.log_data, size - history_limit + 1);
+            END IF;
+          END IF;
+
+          return NEW;
+        EXCEPTION
+          WHEN OTHERS THEN
+            GET STACKED DIAGNOSTICS err_sqlstate = RETURNED_SQLSTATE,
+                                    err_message = MESSAGE_TEXT,
+                                    err_detail = PG_EXCEPTION_DETAIL,
+                                    err_hint = PG_EXCEPTION_HINT,
+                                    err_context = PG_EXCEPTION_CONTEXT,
+                                    err_schema_name = SCHEMA_NAME,
+                                    err_table_name = TABLE_NAME;
+            err_jsonb := jsonb_build_object(
+              'returned_sqlstate', err_sqlstate,
+              'message_text', err_message,
+              'pg_exception_detail', err_detail,
+              'pg_exception_hint', err_hint,
+              'pg_exception_context', err_context,
+              'schema_name', err_schema_name,
+              'table_name', err_table_name
+            );
+            err_captured = logidze_capture_exception(err_jsonb);
+            IF err_captured THEN
+              return NEW;
+            ELSE
+              RAISE;
+            END IF;
+        END;
+      $function$
+  SQL
+  create_function :logidze_version, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_version(v bigint, data jsonb, ts timestamp with time zone)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 2
+        DECLARE
+          buf jsonb;
+        BEGIN
+          data = data - 'log_data';
+          buf := jsonb_build_object(
+                    'ts',
+                    (extract(epoch from ts) * 1000)::bigint,
+                    'v',
+                    v,
+                    'c',
+                    data
+                    );
+          IF coalesce(current_setting('logidze.meta', true), '') <> '' THEN
+            buf := jsonb_insert(buf, '{m}', current_setting('logidze.meta')::jsonb);
+          END IF;
+          RETURN buf;
+        END;
+      $function$
+  SQL
+  create_function :logidze_compact_history, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_compact_history(log_data jsonb, cutoff integer DEFAULT 1)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 1
+        DECLARE
+          merged jsonb;
+        BEGIN
+          LOOP
+            merged := jsonb_build_object(
+              'ts',
+              log_data#>'{h,1,ts}',
+              'v',
+              log_data#>'{h,1,v}',
+              'c',
+              (log_data#>'{h,0,c}') || (log_data#>'{h,1,c}')
+            );
+
+            IF (log_data#>'{h,1}' ? 'm') THEN
+              merged := jsonb_set(merged, ARRAY['m'], log_data#>'{h,1,m}');
+            END IF;
+
+            log_data := jsonb_set(
+              log_data,
+              '{h}',
+              jsonb_set(
+                log_data->'h',
+                '{1}',
+                merged
+              ) - 0
+            );
+
+            cutoff := cutoff - 1;
+
+            EXIT WHEN cutoff <= 0;
+          END LOOP;
+
+          return log_data;
+        END;
+      $function$
+  SQL
+  create_function :logidze_capture_exception, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_capture_exception(error_data jsonb)
+       RETURNS boolean
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 1
+      BEGIN
+        -- Feel free to change this function to change Logidze behavior on exception.
+        --
+        -- Return `false` to raise exception or `true` to commit record changes.
+        --
+        -- `error_data` contains:
+        --   - returned_sqlstate
+        --   - message_text
+        --   - pg_exception_detail
+        --   - pg_exception_hint
+        --   - pg_exception_context
+        --   - schema_name
+        --   - table_name
+        -- Learn more about available keys:
+        -- https://www.postgresql.org/docs/9.6/plpgsql-control-structures.html#PLPGSQL-EXCEPTION-DIAGNOSTICS-VALUES
+        --
+
+        return false;
+      END;
+      $function$
+  SQL
+  create_function :logidze_filter_keys, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.logidze_filter_keys(obj jsonb, keys text[], include_columns boolean DEFAULT false)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+        -- version: 1
+        DECLARE
+          res jsonb;
+          key text;
+        BEGIN
+          res := '{}';
+
+          IF include_columns THEN
+            FOREACH key IN ARRAY keys
+            LOOP
+              IF obj ? key THEN
+                res = jsonb_insert(res, ARRAY[key], obj->key);
+              END IF;
+            END LOOP;
+          ELSE
+            res = obj;
+            FOREACH key IN ARRAY keys
+            LOOP
+              res = res - key;
+            END LOOP;
+          END IF;
+
+          RETURN res;
+        END;
+      $function$
+  SQL
 
 
+  create_trigger :logidze_on_reactions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_residues, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_containers, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
       CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
