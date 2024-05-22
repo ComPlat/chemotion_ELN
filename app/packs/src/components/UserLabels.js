@@ -7,13 +7,11 @@ import {
   Table,
   Col,
   Badge,
-  Panel,
   ButtonGroup,
   Button,
   Form,
   FormGroup,
   FormControl,
-  ControlLabel,
   InputGroup,
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
@@ -22,6 +20,8 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 class UserLabelModal extends Component {
   constructor(props) {

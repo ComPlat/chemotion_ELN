@@ -3,7 +3,8 @@ import ReactFlow, {
   ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
   Panel as ReactFlowPanel, useUpdateNodeInternals
 } from 'reactflow'
-import { Modal, Button, ButtonGroup, InputGroup, Panel } from 'react-bootstrap'
+import { Modal, Button, ButtonGroup, InputGroup } from 'react-bootstrap'
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const buildUnassignedNodes = (nodes, researchplans) => {
   return researchplans.reduce((newNodes, plan) => {

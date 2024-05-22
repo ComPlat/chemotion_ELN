@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  Well, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
+  ListGroup, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
@@ -38,6 +38,8 @@ import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import Well from 'src/components/legacyBootstrap/Well'
 
 export default class WellplateDetails extends Component {
   constructor(props) {

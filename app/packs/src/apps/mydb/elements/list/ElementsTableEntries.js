@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
 import {
-  Tooltip, OverlayTrigger, Table, Label
+  Tooltip, OverlayTrigger, Table
 } from 'react-bootstrap';
 import classnames from 'classnames';
 
@@ -23,6 +23,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
+import Label from 'src/components/legacyBootstrap/Label'
 
 export function reactionRole(element) {
   let tooltip = null;

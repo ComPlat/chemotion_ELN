@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Button, OverlayTrigger, Tooltip, Dropdown, MenuItem, Glyphicon, Overlay, ButtonGroup
+  Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import { values } from 'lodash';
@@ -12,6 +12,8 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">

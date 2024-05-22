@@ -3,8 +3,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, MenuItem, ButtonGroup
+  ListGroup, ListGroupItem, ButtonToolbar, Button,
+  Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -43,6 +43,8 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ResearchPlanDetails extends Component {
   static contextType = StoreContext;

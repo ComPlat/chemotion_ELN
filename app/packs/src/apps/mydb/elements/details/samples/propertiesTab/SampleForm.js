@@ -3,8 +3,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem
+  Button, FormGroup, FormControl, InputGroup,
+  Table, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -16,6 +16,9 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class SampleForm extends React.Component {
   constructor(props) {

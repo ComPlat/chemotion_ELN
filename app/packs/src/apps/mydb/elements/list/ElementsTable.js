@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger
+  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -24,6 +24,7 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class ElementsTable extends React.Component {
   constructor(props) {

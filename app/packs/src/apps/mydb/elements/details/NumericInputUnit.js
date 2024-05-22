@@ -2,13 +2,14 @@
 /* eslint-disable no-shadow */
 import React, { useState, useEffect } from 'react';
 import {
-  FormControl, ControlLabel, InputGroup, Button
+  FormControl, InputGroup, Button
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
   convertTemperature,
   handleFloatNumbers,
 } from 'src/utilities/UnitsConversion';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default function NumericInputUnit(props) {
   const {

@@ -1,11 +1,12 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, Form, FormControl, Radio, Grid, Row, Col, Panel } from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
 import SearchResult from './SearchResult';
 import PublicationSearchRow from './PublicationSearchRow';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const PublicationSearch = () => {
   const searchStore = useContext(StoreContext).search;

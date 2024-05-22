@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import { Button, FormControl, FormGroup, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
@@ -12,6 +12,8 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;

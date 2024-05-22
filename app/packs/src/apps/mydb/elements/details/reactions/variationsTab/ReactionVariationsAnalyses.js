@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import {
-  Label, FormGroup, Checkbox, Button, Modal
+  FormGroup, Button, Modal
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import Label from 'src/components/legacyBootstrap/Label'
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);

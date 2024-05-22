@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, FormGroup, ControlLabel, FormControl,
-  Row, Col, Collapse, Button, ButtonGroup, InputGroup, Grid,
+  ListGroup, ListGroupItem, FormGroup, FormControl,
+  Row, Col, Collapse, Button, ButtonGroup, InputGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
 import Delta from 'quill-delta';
@@ -34,6 +34,7 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import { parseNumericString } from 'src/utilities/MathUtils';
 
 export default class ReactionDetailsScheme extends Component {

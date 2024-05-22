@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
 import {
-  FormGroup, FormControl, ControlLabel, ListGroup,
+  FormGroup, FormControl, ListGroup,
   ListGroupItem, Button, Overlay
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
@@ -40,6 +40,7 @@ import { formatDate } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export class ContainerDatasetModalContent extends Component {
   static contextType = StoreContext;

@@ -2,8 +2,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ControlLabel, FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button
+  FormControl, FormGroup, Row, Col, OverlayTrigger, Tooltip, Button
 } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ResearchPlanDetailsName extends Component {
   renderCopyToMetadataButton() {

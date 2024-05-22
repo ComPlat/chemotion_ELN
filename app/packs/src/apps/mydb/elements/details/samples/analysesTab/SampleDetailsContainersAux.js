@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
@@ -17,6 +17,7 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>

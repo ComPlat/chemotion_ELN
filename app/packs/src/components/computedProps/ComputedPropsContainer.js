@@ -1,12 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
+import { ButtonGroup, Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ComputedPropsGraphContainer from 'src/components/computedProps/ComputedPropsGraphContainer';
 import SampleComputedProps from 'src/components/computedProps/SampleComputedProps';
 import { ConfirmModal } from 'src/components/common/ConfirmModal';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ComputedPropsContainer extends React.Component {
   constructor(props) {

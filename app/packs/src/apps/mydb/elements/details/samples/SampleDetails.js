@@ -7,9 +7,9 @@ import PropTypes from 'prop-types';
 import {
   Button, ButtonToolbar,
   InputGroup, FormGroup, FormControl,
-  Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel, Modal, Alert, Checkbox
+  ListGroup, ListGroupItem, Tabs, Tab, Row, Col,
+  Tooltip, OverlayTrigger, DropdownButton,
+  Modal, Alert
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -76,6 +76,11 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';

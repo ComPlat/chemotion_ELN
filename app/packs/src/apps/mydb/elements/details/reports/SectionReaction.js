@@ -1,8 +1,9 @@
 import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
-import {Alert, Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Alert, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import { map } from 'lodash';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const SectionReaction = ({reaction, settings, configs}) => {
   const {description, literatures, starting_materials, reactants,

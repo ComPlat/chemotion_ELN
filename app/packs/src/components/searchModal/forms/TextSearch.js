@@ -1,5 +1,5 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -8,6 +8,7 @@ import DetailSearch from './DetailSearch';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const TextSearch = () => {
   const elnElements = ['cell_line', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];

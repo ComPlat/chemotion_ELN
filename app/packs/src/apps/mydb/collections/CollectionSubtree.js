@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Aviator from 'aviator';
-import { Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -9,6 +9,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {

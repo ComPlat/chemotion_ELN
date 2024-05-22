@@ -1,13 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Radio,
   FormControl,
   Button,
   InputGroup,
   OverlayTrigger,
   Tooltip,
-  Checkbox,
 } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
@@ -23,6 +21,8 @@ import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import Radio from 'src/components/legacyBootstrap/Radio'
 
 const matSource = {
   beginDrag(props) {
