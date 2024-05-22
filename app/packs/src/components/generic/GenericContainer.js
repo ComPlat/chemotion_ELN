@@ -3,7 +3,7 @@
 /* eslint-disable no-restricted-globals */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
@@ -15,6 +15,7 @@ import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import EditorAnalysisBtn from 'src/components/generic/EditorAnalysisBtn';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const headerBtnGroup = (props) => {
   const {

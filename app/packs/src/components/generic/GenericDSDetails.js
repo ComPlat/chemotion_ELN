@@ -2,7 +2,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, ButtonToolbar } from 'react-bootstrap';
+import { ButtonToolbar } from 'react-bootstrap';
 import {
   GenInterface,
   GenButtonReload,
@@ -10,6 +10,7 @@ import {
 } from 'chem-generic-ui';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 class GenericDSDetails extends Component {
   constructor(props) {

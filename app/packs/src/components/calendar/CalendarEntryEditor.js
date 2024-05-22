@@ -2,7 +2,6 @@ import React from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
 import {
   Form,
-  ControlLabel,
   FormControl,
   FormGroup,
   Button,
@@ -13,6 +12,7 @@ import Select from 'react-select';
 import CalendarStore, { CalendarTypes } from 'src/stores/alt/stores/CalendarStore';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import PropTypes from 'prop-types';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function capitalize(s) {
   return s && s[0].toUpperCase() + s.slice(1);

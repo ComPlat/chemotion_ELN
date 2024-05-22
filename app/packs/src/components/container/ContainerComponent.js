@@ -5,8 +5,7 @@ import PropTypes from 'prop-types';
 import {
   Col,
   FormControl,
-  FormGroup,
-  ControlLabel
+  FormGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
 
@@ -20,6 +19,7 @@ import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
 import AnalysisEditor from 'src/components/container/AnalysisEditor';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ContainerComponent extends Component {
   constructor(props) {

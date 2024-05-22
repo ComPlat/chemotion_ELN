@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Button, Popover, Overlay, ControlLabel, FormGroup, FormControl, Col, InputGroup, ButtonGroup
+  Button, Popover, Overlay, FormGroup, FormControl, Col, InputGroup, ButtonGroup
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
@@ -8,6 +8,7 @@ import Select from 'react-select';
 import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const handleSampleClick = (sample) => {
   const { params, uri } = Aviator.getCurrentRequest();

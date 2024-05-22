@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, Button, DropdownButton, MenuItem } from 'react-bootstrap';
+import { ButtonGroup, Button, DropdownButton } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
@@ -10,6 +10,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class Search extends React.Component {
   static contextType = StoreContext;

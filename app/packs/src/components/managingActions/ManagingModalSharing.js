@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { Button, FormGroup, FormControl } from 'react-bootstrap';
 import Select from 'react-select';
 
 import SharingShortcuts from 'src/components/managingActions/SharingShortcuts';
@@ -13,6 +13,7 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { elementNames } from 'src/apps/generic/Utils';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ManagingModalSharing extends React.Component {
 

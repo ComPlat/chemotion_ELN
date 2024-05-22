@@ -3,9 +3,7 @@ import Clipboard from 'clipboard';
 import PropTypes from 'prop-types';
 import {
   Table,
-  PanelGroup,
   Button,
-  Panel,
   ListGroup,
   ListGroupItem,
   Row,
@@ -34,6 +32,8 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PanelHeader from 'src/components/common/PanelHeader';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const Cite = require('citation-js');
 

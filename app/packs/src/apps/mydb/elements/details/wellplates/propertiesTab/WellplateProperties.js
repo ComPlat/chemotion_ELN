@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  FormGroup, InputGroup, FormControl, ControlLabel, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip
+  FormGroup, InputGroup, FormControl, Button, ButtonGroup, Overlay, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
@@ -8,6 +8,7 @@ import QuillEditor from 'src/components/QuillEditor';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 import Wellplate from 'src/models/Wellplate';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class WellplateProperties extends Component {
   constructor(props) {

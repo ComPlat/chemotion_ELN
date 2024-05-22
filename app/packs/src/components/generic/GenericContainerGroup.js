@@ -2,8 +2,8 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { PanelGroup } from 'react-bootstrap';
 import { AiHeader, AiHeaderDeleted } from 'src/components/generic/GenericContainer';
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const GenericContainerGroup = (props) => {
   const {

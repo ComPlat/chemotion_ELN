@@ -4,9 +4,9 @@ import Numeral from 'numeral';
 import {
   FormGroup,
   FormControl,
-  ControlLabel,
   InputGroup,
 } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class NumeralInput extends Component {
   constructor(props) {

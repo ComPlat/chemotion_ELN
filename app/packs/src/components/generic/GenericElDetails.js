@@ -4,7 +4,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel,
   Button,
   ButtonToolbar,
   ListGroupItem,
@@ -38,6 +37,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
