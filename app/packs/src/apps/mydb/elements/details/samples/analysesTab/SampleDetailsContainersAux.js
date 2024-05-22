@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
@@ -14,6 +14,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>

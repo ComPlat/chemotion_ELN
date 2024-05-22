@@ -1,6 +1,6 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
-import { Panel } from 'react-bootstrap';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const styles = {
   svgContainer: {

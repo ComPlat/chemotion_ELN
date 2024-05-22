@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table
+  Button, ButtonToolbar, FormControl, Modal, Table
 } from 'react-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
@@ -19,6 +19,7 @@ import {
   selectCurrentUser,
 } from 'src/utilities/CommentHelper';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class CommentModal extends Component {
   constructor(props) {

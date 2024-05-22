@@ -1,5 +1,6 @@
 import React from 'react';
-import { Label, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const iconTp = margin => (
   <Tooltip id="ans-tp">

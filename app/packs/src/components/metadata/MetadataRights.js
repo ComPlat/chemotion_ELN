@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
+import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
 
 import { controlledRightsList } from 'src/components/staticDropdownOptions/radar/controlledRightsList'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const MetadataRights = ({ rights, index, onChange, onRemove }) => {
   const controlledRights = controlledRightsList.find(el => el.value == rights.controlledRights)

@@ -1,11 +1,12 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
-import { DropdownButton, MenuItem } from 'react-bootstrap';
+import { DropdownButton } from 'react-bootstrap';
 import { filter } from 'lodash';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class SplitElementBtn extends React.Component {
   constructor(props) {

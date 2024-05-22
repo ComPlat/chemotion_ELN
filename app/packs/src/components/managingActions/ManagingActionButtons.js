@@ -1,6 +1,7 @@
 import React from 'react';
-import { DropdownButton, MenuItem, Button } from 'react-bootstrap';
+import { DropdownButton, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const MoveOrAssignButton = ({ assignDisabled, moveDisabled, onClick, customClass }) => (
   <DropdownButton

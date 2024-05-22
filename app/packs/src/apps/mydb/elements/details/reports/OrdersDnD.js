@@ -2,10 +2,11 @@ import React from 'react';
 import SVG from 'react-inlinesvg';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import { Panel, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const orderSource = {
   beginDrag(props) {

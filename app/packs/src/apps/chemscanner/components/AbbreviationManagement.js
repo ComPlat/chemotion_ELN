@@ -3,9 +3,11 @@ import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
 import {
-  ControlLabel, Button, Radio,
+  Button,
   Form, FormGroup, FormControl,
 } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Radio from 'src/components/legacyBootstrap/Radio'
 
 function ManagementTable({
   columnDefs, defaultColDef, data, style, onGridReady

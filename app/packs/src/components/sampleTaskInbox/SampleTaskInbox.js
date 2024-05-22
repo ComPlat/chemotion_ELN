@@ -3,11 +3,12 @@ import Draggable from 'react-draggable';
 import React, { useContext } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
 import SampleTaskReloadButton from 'src/components/sampleTaskInbox/SampleTaskReloadButton';
-import { Button, Panel } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const SampleTaskInbox = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;

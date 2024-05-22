@@ -1,9 +1,11 @@
 import React from 'react';
-import { FormGroup, ControlLabel, FormControl, Radio, Row, Col } from 'react-bootstrap';
+import { FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import Select from 'react-select'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Radio from 'src/components/legacyBootstrap/Radio'
 
 export default class PolymerSection extends React.Component {
 

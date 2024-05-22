@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, ButtonToolbar, Checkbox, OverlayTrigger, Tooltip, Label } from 'react-bootstrap';
+import { Button, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ManagingModalDelete extends React.Component {
   constructor(props) {

@@ -5,16 +5,12 @@ import {
   Nav,
   NavDropdown,
   NavItem,
-  MenuItem,
-  Glyphicon,
   Modal,
   Button,
   Table,
-  Panel,
   Form,
   FormControl,
   FormGroup,
-  ControlLabel,
   Col,
   Row,
 } from 'react-bootstrap';
@@ -22,7 +18,6 @@ import _ from 'lodash';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -30,6 +25,10 @@ import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class UserAuth extends Component {
   constructor(props) {

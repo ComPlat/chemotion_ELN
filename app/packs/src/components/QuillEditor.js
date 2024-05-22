@@ -6,7 +6,8 @@ import Quill from 'quill';
 import Delta from 'quill-delta';
 
 import _ from 'lodash';
-import { ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+import { ButtonToolbar, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],

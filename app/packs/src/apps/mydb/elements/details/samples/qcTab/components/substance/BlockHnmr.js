@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Alert } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
 import QcMolView from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/QcMolView';
@@ -9,6 +9,7 @@ import {
   tableNmr,
   formatQV,
 } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/nmr';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const emptyBlock = () => (
   <div className="card-qc">
