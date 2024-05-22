@@ -6,6 +6,9 @@ import StructureEditor from 'src/models/StructureEditor';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import Grid from 'src/components/legacyBootstrap/Grid'
+import Radio from 'src/components/legacyBootstrap/Radio'
 
 const KetcherRailsform = () => {
   const ketcherStructure = {

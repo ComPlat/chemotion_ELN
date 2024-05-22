@@ -5,6 +5,7 @@ import { Dropdown, ButtonGroup } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const showReportContainer = () => {
   ElementActions.showReportContainer();

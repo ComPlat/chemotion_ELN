@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import ReactMarkdown from 'react-markdown';
+import Jumbotron from 'src/components/legacyBootstrap/Jumbotron'
 
 class WelcomeMessage extends Component {
   constructor(props) {
