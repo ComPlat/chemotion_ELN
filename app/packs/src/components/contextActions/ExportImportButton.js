@@ -12,6 +12,8 @@ import ModalExportCollection from 'src/components/contextActions/ModalExportColl
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
   const showRadar = UIStore.getState().hasRadar ? (
