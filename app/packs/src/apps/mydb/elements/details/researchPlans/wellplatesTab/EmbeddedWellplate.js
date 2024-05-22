@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table, Glyphicon
+  Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Table
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -11,6 +11,8 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ResearchPlan from 'src/models/ResearchPlan';
 import Wellplate from 'src/models/Wellplate';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class EmbeddedWellplate extends Component {
   constructor(props) {

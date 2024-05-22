@@ -1,9 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { FormGroup, ControlLabel, FormControl, Button, Panel } from 'react-bootstrap';
+import { FormGroup, FormControl, Button } from 'react-bootstrap';
 import Select from 'react-select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class MessagePublish extends React.Component {
   constructor(props) {

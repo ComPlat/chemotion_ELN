@@ -1,5 +1,6 @@
 import React from 'react';
-import { NavDropdown, Navbar, MenuItem } from 'react-bootstrap';
+import { NavDropdown, Navbar } from 'react-bootstrap';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 function NavHead() {
   const isOnMydb = window.location.href.match(/\/mydb/);

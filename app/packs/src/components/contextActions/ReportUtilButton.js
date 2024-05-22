@@ -1,11 +1,12 @@
 import React from 'react';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
-import { Dropdown, MenuItem } from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const showReportContainer = () => {
   ElementActions.showReportContainer();

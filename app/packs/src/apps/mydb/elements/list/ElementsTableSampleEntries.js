@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Table, Button, Tooltip, OverlayTrigger, Label
+  Table, Button, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
@@ -25,6 +25,7 @@ import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;

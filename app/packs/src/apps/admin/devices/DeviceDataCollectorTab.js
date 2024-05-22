@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  FormControl, FormGroup, ControlLabel, Form, InputGroup, Tooltip, OverlayTrigger, Button, Checkbox
+  FormControl, FormGroup, Form, InputGroup, Tooltip, OverlayTrigger, Button
 } from 'react-bootstrap';
 import Select from 'react-select3';
 import Clipboard from 'clipboard';
@@ -9,6 +9,8 @@ import { startsWith, endsWith } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DeviceDataCollectorTab = () => {
   const devicesStore = useContext(StoreContext).devices;

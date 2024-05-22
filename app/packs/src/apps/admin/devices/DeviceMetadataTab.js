@@ -1,10 +1,11 @@
 import React, { useEffect, useContext } from 'react';
-import { FormControl, FormGroup, ControlLabel, Form, Button } from 'react-bootstrap';
+import { FormControl, FormGroup, Form, Button } from 'react-bootstrap';
 import Select from 'react-select3';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceMetadataTab = () => {
   const devicesStore = useContext(StoreContext).devices;

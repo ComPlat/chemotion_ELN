@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown, MenuItem, Glyphicon } from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -12,6 +12,8 @@ import ModalExportCollection from 'src/components/contextActions/ModalExportColl
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
   const showRadar = UIStore.getState().hasRadar ? (

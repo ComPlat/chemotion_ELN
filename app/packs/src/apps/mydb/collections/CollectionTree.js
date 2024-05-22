@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import update from 'immutability-helper';
 import Aviator from 'aviator';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';

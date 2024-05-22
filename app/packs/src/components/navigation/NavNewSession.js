@@ -6,13 +6,13 @@ import {
   Button,
   FormGroup,
   FormControl,
-  Glyphicon,
   Navbar,
   NavItem,
   Nav,
   OverlayTrigger,
   Tooltip
 } from 'react-bootstrap';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 
 function omniauthLabel(icon, name) {
