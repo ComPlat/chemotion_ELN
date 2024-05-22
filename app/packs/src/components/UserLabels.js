@@ -3,8 +3,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Checkbox, Table, Col, Badge, Panel, ButtonGroup, Button,
-  Form, FormGroup, FormControl, ControlLabel, InputGroup,
+  Modal, Table, Col, Badge, ButtonGroup, Button,
+  Form, FormGroup, FormControl, InputGroup,
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
@@ -13,6 +13,9 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const UL_FUNC_NAME = 'userLabel';
 

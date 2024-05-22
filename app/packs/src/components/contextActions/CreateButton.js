@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   SplitButton, Button, ButtonToolbar, FormControl,
-  FormGroup, ControlLabel, Modal, MenuItem
+  FormGroup, Modal
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import { filter } from 'lodash';
@@ -13,6 +13,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const elementList = () => {
   const elements = [

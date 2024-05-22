@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
+import { Button, FormGroup, FormControl } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import Select from 'react-select'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {

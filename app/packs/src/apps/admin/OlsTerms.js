@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, DropdownButton, MenuItem } from 'react-bootstrap';
+import { Row, Col, DropdownButton } from 'react-bootstrap';
 import Tree from 'antd/lib/tree';
 import { ButtonToolbar, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
@@ -7,6 +7,7 @@ import Dropzone from 'react-dropzone';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { difference } from 'lodash';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {
   if (enable === true) {

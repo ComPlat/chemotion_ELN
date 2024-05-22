@@ -1,6 +1,6 @@
 import React from 'react';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
-import { Panel } from 'react-bootstrap';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const styles = {
   container: {

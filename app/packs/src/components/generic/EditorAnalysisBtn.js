@@ -3,7 +3,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
-import { Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
+import { Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup } from 'react-bootstrap';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const EditorAnalysisBtn = ({
   element, spcInfos, hasJcamp, hasChemSpectra,

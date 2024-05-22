@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { AgGridReact } from 'ag-grid-react';
-import { Checkbox } from 'react-bootstrap';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 import Sample from 'src/models/Sample';
 import SampleName from 'src/components/common/SampleName';

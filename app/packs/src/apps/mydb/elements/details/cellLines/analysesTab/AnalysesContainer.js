@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
-import { PanelGroup, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 class AnalysesContainer extends Component {
   // eslint-disable-next-line react/static-property-placement

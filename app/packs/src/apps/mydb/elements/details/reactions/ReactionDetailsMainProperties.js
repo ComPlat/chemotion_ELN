@@ -4,12 +4,10 @@ import {
   Col,
   FormGroup,
   FormControl,
-  ControlLabel,
   OverlayTrigger,
   Button,
   Tooltip,
   InputGroup,
-  Grid,
   Row
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -19,6 +17,8 @@ import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
 import { permitOn } from 'src/components/common/uis';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Grid from 'src/components/legacyBootstrap/Grid'
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {

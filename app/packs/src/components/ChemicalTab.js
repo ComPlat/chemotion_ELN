@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
+  FormGroup, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup, Collapse, Modal
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -12,6 +12,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import CollapseButton from 'src/components/common/CollapseButton';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {

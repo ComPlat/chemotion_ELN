@@ -1,10 +1,11 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState, useEffect } from 'react';
-import { Button, Panel, Row, Col } from 'react-bootstrap';
+import { Button, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const ScifinderCredential = () => {
   const [credential, setCredential] = useState({});

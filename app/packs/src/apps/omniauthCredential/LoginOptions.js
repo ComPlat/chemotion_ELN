@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom';
 import {
   Row,
   Col,
-  Grid,
   Button
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import Grid from 'src/components/legacyBootstrap/Grid'
 
 export default class LoginOptions extends Component {
   constructor(props) {

@@ -1,12 +1,15 @@
 import React, { Component } from 'react'
 import connectToStores from 'alt-utils/lib/connectToStores'
 import {
-  PanelGroup, Panel, ButtonGroup, Button, ControlLabel, FormControl
+  ButtonGroup, Button, FormControl
 } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions'
 import UIActions from 'src/stores/alt/actions/UIActions'
 import ElementStore from 'src/stores/alt/stores/ElementStore'
 import UIStore from 'src/stores/alt/stores/UIStore'
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const DeviceManagement = ({ devices, activeAccordionDevice }) => {
   const handleCloseDeviceManagement = () => {

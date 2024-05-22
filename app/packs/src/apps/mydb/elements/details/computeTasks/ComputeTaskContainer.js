@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, Table } from 'react-bootstrap';
+import { Button, Table } from 'react-bootstrap';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 import ComputeTaskActions from 'src/stores/alt/actions/ComputeTaskActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';

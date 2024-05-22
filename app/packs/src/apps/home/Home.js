@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import { Grid, Row } from 'react-bootstrap';
+import { Row } from 'react-bootstrap';
 
 import Navigation from 'src/components/navigation/Navigation'
 import WelcomeMessage from 'src/apps/home/WelcomeMessage';
+import Grid from 'src/components/legacyBootstrap/Grid'
 
 class Home extends Component {
   constructor(props) {

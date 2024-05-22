@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 import Delta from 'quill-delta';
 import React from 'react';
 import {
-  Button, ControlLabel,
-  Form, FormControl, FormGroup,
-  Panel
+  Button,
+  Form, FormControl, FormGroup
 } from 'react-bootstrap';
 
 import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function RemoveRowBtn({ removeRow, node }) {
   const { data } = node;

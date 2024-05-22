@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import {
-  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab,
+  Table, Button, Modal, FormGroup, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab,
   Nav, NavItem, Alert
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -11,6 +11,8 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function MessageAlert({ message, onHide }) {
   return (

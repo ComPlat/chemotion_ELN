@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Metadata from 'src/models/Metadata';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,6 +16,7 @@ import MetadataAlternateIdentifiers from './MetadataAlternateIdentifiers'
 import MetadataRelatedIdentifiers from './MetadataRelatedIdentifiers'
 import MetadataRightsList from './MetadataRightsList'
 import MetadataFundingReferences from './MetadataFundingReferences'
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class MetadataContainer extends Component {
   constructor(props) {

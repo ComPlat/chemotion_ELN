@@ -1,8 +1,10 @@
 import React from 'react';
-import { Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, ButtonGroup, Tooltip, OverlayTrigger, Popover, FormControl } from 'react-bootstrap';
+import { Table, Button, Modal, FormGroup, Form, Col, ButtonGroup, Tooltip, OverlayTrigger, Popover, FormControl } from 'react-bootstrap';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
 import Select from 'react-select';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const editTooltip = <Tooltip id="inchi_tooltip">Edit this template</Tooltip>;
 

@@ -20,8 +20,9 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import {
-  Tabs, Tab, Label, Button
+  Tabs, Tab, Button
 } from 'react-bootstrap';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const tabInfoHash = {
   metadata: {
