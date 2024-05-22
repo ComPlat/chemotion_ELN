@@ -168,7 +168,7 @@ export default class CollectionTree extends React.Component {
     sharedLabelledRoots = sharedCollectionTree.map(e => {
       const acl = e.collection_acls.find((acl) => (acl.collection_id === e.id) && (currentUser.id === acl.user_id));
       return update(e, {
-        label: { $set: <span>{acl.label || e.label}</span> }
+        label: { $set: <span>{acl?.label || e?.label}</span> }
       })
     })
 

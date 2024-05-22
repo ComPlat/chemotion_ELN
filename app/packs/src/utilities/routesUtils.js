@@ -18,28 +18,8 @@ const collectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const { currentSearchSelection } = uiState;
-  const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  if (collectionId === 'all') {
-    collectionPromise = CollectionStore.findAllCollection();
-  } else {
-    collectionPromise = CollectionStore.findById(collectionId);
-  }
-  collectionPromise.then((result) => {
-    const collection = result.collection;
+  const id = e.params?.collectionID;
 
-    if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating({ collectionId });
-      ElementActions.fetchBasedOnSearchSelectionAndCollection({
-        selection: currentSearchSelection,
-        collectionId});
-    } else {
-      const collection = CollectionStore.findCollectionById(id);
-      if (currentSearchByID) {
-        UIActions.clearSearchById();
-      }
-      UIActions.selectCollection({ collection });
-    }
   if (currentSearchSelection) {
     UIActions.selectCollectionWithoutUpdating({ id });
     ElementActions.fetchBasedOnSearchSelectionAndCollection({
@@ -51,12 +31,16 @@ const collectionShow = (e) => {
     UIActions.selectCollection(collection);
   }
 
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
+  [
+    'sample',
+    'reaction',
+    'wellplate',
+    'screen',
+    'research_plan'
+  ].forEach((type) => {
+    UIActions.uncheckAllElements.defer({ type, range: 'all' });
   });
+  elementNames(false).forEach((klass) => { UIActions.uncheckAllElements({ type: klass, range: 'all' }); });
 };
 
 const collectionShowCollectionManagement = () => {
@@ -224,7 +208,6 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
-
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };

@@ -14,6 +14,8 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { elementNames } from 'src/apps/generic/Utils';
 
+const elements = ['sample', 'reaction', 'wellplate', 'screen', 'element'];
+
 export default class ManagingModalSharing extends React.Component {
 
   constructor(props) {
@@ -272,12 +274,23 @@ export default class ManagingModalSharing extends React.Component {
     this.setState({ ...permAndDetLevs, role: val });
   }
 
+  setHighestDetailLevel(element, state) {
+    state[element + 'DetailLevel'] = 10;
+  }
+
+  handleDetailLevels() {
+    let state = {};
+    elements.map(el => this.setHighestDetailLevel(el, state));
+    this.setState(state);
+  }
+
   handlePLChange(e) {
     let val = e.target.value
     this.setState({
       role: 'Pick a sharing role',
       permissionLevel: val
     });
+    if (val == 5) { this.handleDetailLevels(); }
   }
 
   handleLabelChange(e) {
@@ -426,7 +439,7 @@ export default class ManagingModalSharing extends React.Component {
           </FormControl>
         </FormGroup>
         <FormGroup controlId="label">
-          <ControlLabel>Labelz</ControlLabel>
+          <ControlLabel>Label</ControlLabel>
           <FormControl required id="label" type="text" placeholder="Label" name="label"
              value={this.state.label}
              onChange={(e) => { this.handleLabelChange(e); }}
