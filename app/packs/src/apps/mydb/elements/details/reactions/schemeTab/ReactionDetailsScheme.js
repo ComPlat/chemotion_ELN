@@ -948,11 +948,7 @@ export default class ReactionDetailsScheme extends Component {
                 <FormGroup>
                 <div class="parent">
                   <div class="child inline-block-child"><ControlLabel>Description</ControlLabel></div> 
-                  <div class="child inline-block-child"><CurationModal 
-                    description= {reaction.description.ops} 
-                    reaction={reaction} 
-                    onDescChange = {this.handleDescChange}/>
-                  </div>   
+                   
                 </div>
                 <div className="quill-resize">
                     {
@@ -967,6 +963,11 @@ export default class ReactionDetailsScheme extends Component {
                         /> : <QuillViewer value={reaction.description} />
                     }
                   </div>
+                  <div class="child inline-block-child"><CurationModal 
+                    description= {reaction.description.ops} 
+                    reaction={reaction} 
+                    onDescChange = {this.handleDescChange}/>
+                  </div>  
                 </FormGroup>
               </Col>
             </Row>

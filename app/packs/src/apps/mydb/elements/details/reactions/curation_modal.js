@@ -3,6 +3,7 @@ import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,To
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { forEach } from 'lodash';
 
 
 export default class CurationModal extends Component {
@@ -12,13 +13,14 @@ export default class CurationModal extends Component {
       const { reaction } = props;
       this.handleShow = this.handleShow.bind(this);
       this.handleClose = this.handleClose.bind(this);
-      this.handleDesc = this.handleDesc.bind(this);
+      // this.handleDesc = this.handleDesc.bind(this);
       this.handleSubmit = this.handleSubmit.bind(this);
       this.handleSuggest = this.handleSuggest.bind(this);
       this.handleSuggest = this.handleSuggest.bind(this);
       this.change_corect_word = this.change_corect_word.bind(this)
       this.handleChange = this.handleChange.bind(this)
       this.handleSuggestChange = this.handleSuggestChange.bind(this)
+      this.handleDictionaryLang = this.handleDictionaryLang.bind(this)
       this.state = {
         desc : this.clean_data(this.props.description),
         show : false, 
@@ -27,10 +29,31 @@ export default class CurationModal extends Component {
         suggestion : [],
         suggestion_index : 0,
         correct_word : "",
-        subscript_list : []
+        subscript_list : [],
+        dictionary_language: "US"
+        
       }
       
     }
+
+    downloadFile(file) {
+      const { contents } = file;
+      const link = document.createElement('a');
+      link.href = contents;
+      const event = new window.MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true
+      });
+      link.dispatchEvent(event);
+    }
+
+    handleDictionaryLang(){
+      (this.state.dictionary_language === "US")
+      ? this.setState({dictionary_language: "UK"})
+      : this.setState({dictionary_language: "US"})
+    }
+
 
     handleSuggestChange(e){
       const new_word = e.target.value
@@ -56,6 +79,7 @@ export default class CurationModal extends Component {
       }
     }
 
+
     advance_suggestion(input,miss_spelled_words){
       if (input < miss_spelled_words.length-1){
       input = input +1 }
@@ -65,6 +89,7 @@ export default class CurationModal extends Component {
       this.handleSuggest(miss_spelled_words, input)
       this.setState( {suggestion_index : input} ) 
     }
+
 
     reverse_suggestion(input,miss_spelled_words){
       if (input < miss_spelled_words.length-1){
@@ -78,10 +103,11 @@ export default class CurationModal extends Component {
 
 
     handleDesc(){
-      const old_desc = this.clean_data(this.props.description);
-      const new_desc = old_desc.replaceAll("  ", " ");
-      this.setState({ desc: new_desc});
+      // const old_desc = this.clean_data(this.props.description);
+      // const new_desc = old_desc.replaceAll("  ", " ");
+      // this.setState({ desc: new_desc});
     }
+
 
     handleChange(){
       this.props.onDescChange(this.state.desc)
@@ -99,21 +125,16 @@ export default class CurationModal extends Component {
       var Typo = require("typo-js");
       var dictionary = new Typo( "en_US", false, false, { dictionaryPath: "/typojs" });
       var mispelled_word = miss_spelled_words[index]
-      // console.log("sug 1")
       if (typeof mispelled_word === "string" )
       {
-        // console.log("sug 1.5" + mispelled_word)
         // the slow down is here, removing chemical names speeds it up, i believe this is an issue because no suggestions come up for the word
         var ms_suggestion = dictionary.suggest(mispelled_word)
-        // console.log("sug 2" + ms_suggestion.toString())
         this.setState({ suggestion : ms_suggestion}) 
-        // console.log("sug 3")
       }   
         
       else {
         console.log("run spell check")
       }
-      // console.log("sug 4")
     }
 
     use_all_dicitonary(en_dictionary,custom_dictionary, word){
@@ -145,12 +166,22 @@ export default class CurationModal extends Component {
 
     spell_check(description){
       var Typo = require("typo-js");
-      var en_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
+      var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
       var cus_dictionary = new Typo("custom", false, false, { dictionaryPath: "/typojs" });
       var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
       var ms_words = [];
       var ss_list = []
       var word_array = description.split(' ')
+
+      if (this.state.dictionary_language === "UK"){
+        var en_dictionary = uk_dictionary
+        console.log("uk used")
+      }
+      else {
+        var en_dictionary = us_dictionary
+        console.log("us used")
+      }
+
       for (let i = 0; i < word_array.length; i++){
         var punctuation = /[\.\,\?\!\(\) \"]/g;
         var double_space_regex= /\s\s/g
@@ -169,20 +200,28 @@ export default class CurationModal extends Component {
           {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
             {
               ss_list.push(word_array[i])
-              console.log("sub found: "+ word_array[i])
+              // console.log("sub found: "+ word_array[i])
             }
           else{
-            var spell_checked_word = true; console.log("num found: "+ word_array[i])
+            // var spell_checked_word = true; console.log("num found: "+ word_array[i])
               }
           } 
         if (spell_checked_word == false){
           ms_words.push(word_array[i]);
         } 
       }
-      // ms_words = this.uniq(ms_words)
       this.setState({mispelled_words: ms_words, subscript_list:ss_list})
       this.handleSuggest(ms_words, 0)
     }
+
+    clean_misspelled_array(input_array){
+      const counts = {};
+      input_array.forEach(function (x) { counts[x] = (counts[x] || 0) + 1; });
+      console.log(counts.values)
+      return counts
+    }
+
+  
 
     change_misspelling(description,selected_choice,ms_words,index){
       if (selected_choice !== ""){
@@ -200,6 +239,7 @@ export default class CurationModal extends Component {
     }
     
     getHighlightedText(text, mispelled_words,ms_index,subscript_list) {
+      // this.clean_misspelled_array(mispelled_words)
       var combined_array = mispelled_words.concat(subscript_list)
       var highlight = combined_array.join("|")
       var parts = text.split(new RegExp(`(${highlight})`, "gi"));
@@ -216,7 +256,7 @@ export default class CurationModal extends Component {
               {output_div = (<b style={{backgroundColor:"#32a852"}}>{part}</b>) 
               }
             else if(miss_spelled_words_wo_current_word.includes(part)) 
-              {output_div =  (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
+              {output_div = (<b style={{backgroundColor:"#e8bb49"}}>{part}</b>)
               }
             })()
           }
@@ -296,28 +336,32 @@ export default class CurationModal extends Component {
               <Modal.Title>Spell Check</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-            <div>{this.state.mispelled_words[this.state.suggestion_index]}</div>
+            {/* <div>{this.state.mispelled_words[this.state.suggestion_index]}</div> */}
               <div style={{border: "ridge",
                 padding: "10px",
                 fontFamily: "Arial",
                 borderRadius: "10px",}}>
                 <Compo text={this.state.desc} mispelled_words={this.state.mispelled_words} index={this.state.suggestion_index} subscript_list={this.state.subscript_list} /> 
               </div>         
-              <div>
-                <SubscriptBox text= {this.state.desc}></SubscriptBox>
-              </div>
               <div className="row"> 
-             
+              {/* <Button
+            onClick={(4>5) ?
+              console.log("change to US")
+              : console.log("change to Uk")}
+            >{this.state.dictionary_language}</Button> */}
                 <Button onClick={()=>this.spell_check(this.state.desc) }>spell check</Button>
                 <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
                 <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
                 <Button onClick={()=>this.reverse_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Go Back</Button>
                 <Button onClick={()=>this.handleChange()}> save </Button>
                 <Button onClick={()=> this.check_sub_script(this.state.desc)}> check subscript</Button>
+                <Button onClick={()=> this.handleDictionaryLang()}>change dictionary language to {this.state.dictionary_language}</Button>
+                {/* <Button onClick={()=> this.clean_misspelled_array(this.state.mispelled_words)}>clean mistakes</Button> */}
               </div>
               <h4>
-                  Suggestions
+                  Suggestions for {this.state.mispelled_words[this.state.suggestion_index]}
               </h4>
+              <div>selected language: {this.state.dictionary_language}</div>
               <form>
                 <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
                 <legend>Or enter a new word</legend>
@@ -326,7 +370,10 @@ export default class CurationModal extends Component {
                 />
               </form>
               <a class="btn btn-success" href={"http://localhost:3000/api/v1/dictionary.json?new_word=".concat(this.state.correct_word)} target="_blank">add to dictionairy</a>
-
+              <a class="btn btn-success" onClick={() => this.downloadFile({
+                contents: "api/v1/dictionary.json?new_word=" + this.state.correct_word,
+                })}>
+              add to dictionairy</a>
             </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
