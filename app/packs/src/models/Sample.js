@@ -994,6 +994,30 @@ export default class Sample extends Element {
     this._solvent = solvent;
   }
 
+  set feedstock_gas_reference(feedstock_gas_reference) {
+    this._feedstock_gas_reference = feedstock_gas_reference;
+  }
+
+  get feedstock_gas_reference() {
+    return this._feedstock_gas_reference;
+  }
+
+  set gas(gas) {
+    this._gas = gas;
+  }
+
+  get gas() {
+    return this._gas;
+  }
+
+  set gas_phase_data(gas_phase_data) {
+    this._gas_phase_data = gas_phase_data;
+  }
+
+  get gas_phase_data() {
+    return this._gas_phase_data;
+  }
+
   addSolvent(newSolvent) {
     const { molecule } = newSolvent;
     if (molecule) {
