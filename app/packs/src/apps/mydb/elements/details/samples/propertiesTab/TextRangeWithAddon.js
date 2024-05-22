@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { ControlLabel, FormGroup, InputGroup, FormControl } from 'react-bootstrap';
+import { FormGroup, InputGroup, FormControl } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class TextRangeWithAddon extends Component {
   handleInputChange(e) {

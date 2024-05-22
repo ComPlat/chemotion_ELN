@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
+  FormGroup, FormControl, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
@@ -34,6 +34,8 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ScreenDetails extends Component {
   constructor(props) {

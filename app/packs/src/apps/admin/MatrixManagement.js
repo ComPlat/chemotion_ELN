@@ -1,11 +1,13 @@
 import React from 'react';
-import { Panel, Table, FormGroup, Checkbox, FormControl, Button, Modal, Col, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
+import { Table, FormGroup, FormControl, Button, Modal, Col, Form, Tooltip, OverlayTrigger, InputGroup } from 'react-bootstrap';
 import uuid from 'uuid';
 import Select from 'react-select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import Panel from 'src/components/legacyBootstrap/Panel';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;

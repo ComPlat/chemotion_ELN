@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
-import { Modal, Well, Button } from 'react-bootstrap';
+import { Modal, Button } from 'react-bootstrap';
 import Select from 'react-select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
@@ -11,6 +11,7 @@ import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
+import Well from 'src/components/legacyBootstrap/Well'
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;

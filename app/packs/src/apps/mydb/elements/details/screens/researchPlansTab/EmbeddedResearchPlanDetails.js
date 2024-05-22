@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, Label, ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown, MenuItem
+  ListGroup, ListGroupItem, Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -15,6 +15,8 @@ import ResearchPlanDetailsBody from
 import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import Label from 'src/components/legacyBootstrap/Label'
 
 function InfoLabel({
   iconClass, text, style, tooltip

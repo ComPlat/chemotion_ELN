@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Popover, Button, FormGroup, Checkbox, Overlay } from 'react-bootstrap';
+import { Popover, Button, FormGroup, Overlay } from 'react-bootstrap';
 import _ from 'lodash';
 
 import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
@@ -10,6 +10,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {

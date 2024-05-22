@@ -2,7 +2,7 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import {
-  Badge, Button, Panel, Pagination, OverlayTrigger, Tooltip, DropdownButton, MenuItem
+  Badge, Button, Pagination, OverlayTrigger, Tooltip, DropdownButton
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
@@ -15,6 +15,8 @@ import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class InboxModal extends React.Component {
   constructor(props) {

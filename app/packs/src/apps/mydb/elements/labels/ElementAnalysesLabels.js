@@ -1,5 +1,6 @@
 import React from 'react';
-import { Label, OverlayTrigger, Popover } from 'react-bootstrap';
+import { OverlayTrigger, Popover } from 'react-bootstrap';
+import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ElementAnalysesLabels extends React.Component {
   constructor(props) {

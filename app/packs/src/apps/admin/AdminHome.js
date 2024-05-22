@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap';
+import { Row, Col, Nav, NavItem } from 'react-bootstrap';
 import AdminNavigation from 'src/apps/admin/AdminNavigation';
 import Notifications from 'src/components/Notifications';
 import AdminDashboard from 'src/apps/admin/AdminDashboard';

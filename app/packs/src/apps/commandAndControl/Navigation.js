@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, MenuItem, NavDropdown } from 'react-bootstrap';
+import { Nav, Navbar } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -58,20 +58,17 @@ export default class Navigation extends React.Component {
     const { modalProps } = this.state;
 
     return this.state.currentUser ? (
-      <Navbar fluid className="navbar-custom">
+      <div>
         {this.navHeader()}
-        <Nav navbar className="navbar-form">
-        </Nav>
         <UserAuth />
         <div style={{ clear: 'both' }} />
-      </Navbar>
+      </div>
     ) : (
-      <Navbar fluid className="navbar-custom" >
+      <div className="navbar-custom" >
         {this.navHeader()}
-        <Nav navbar className="navbar-form" />
         <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
         <div style={{ clear: 'both' }} />
-      </Navbar>
+      </div>
     );
   }
 }

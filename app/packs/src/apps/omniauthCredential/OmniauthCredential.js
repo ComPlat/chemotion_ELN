@@ -1,9 +1,10 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState } from 'react';
-import { Panel, Row, Col } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 function OmniauthCredential() {
   const notify = (_params) => {

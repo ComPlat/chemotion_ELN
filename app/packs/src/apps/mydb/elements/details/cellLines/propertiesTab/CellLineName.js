@@ -3,9 +3,10 @@ import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Col, Row, ControlLabel, FormControl
+  Col, Row, FormControl
 } from 'react-bootstrap';
 import Creatable from 'react-select3/creatable';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class CellLineName extends React.Component {
   // eslint-disable-next-line react/static-property-placement

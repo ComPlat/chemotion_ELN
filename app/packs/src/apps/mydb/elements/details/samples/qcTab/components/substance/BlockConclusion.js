@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label } from 'react-bootstrap';
 
 import { iconByBool } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/icon';
+import Label from 'src/components/legacyBootstrap/Label'
 
 const iconNmr = (ansNmr) => {
   const { conclusion, conclusionOwn } = ansNmr;

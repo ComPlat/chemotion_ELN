@@ -2,7 +2,7 @@ import { pascalize } from 'humps';
 import Immutable from 'immutable';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Label } from 'react-bootstrap';
+import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ReactionDetails extends React.Component {
   constructor() {

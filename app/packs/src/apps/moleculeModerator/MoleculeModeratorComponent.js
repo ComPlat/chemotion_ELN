@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
-import { Col, Panel, Button, Row, FormControl, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, FormGroup, InputGroup } from 'react-bootstrap';
+import { Col, Button, Row, FormControl, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, FormGroup, InputGroup } from 'react-bootstrap';
 import { findIndex } from 'lodash';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';

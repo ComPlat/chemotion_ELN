@@ -3,8 +3,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem
+  Button, FormGroup, FormControl, InputGroup,
+  Table, Tabs, Tab, OverlayTrigger, Tooltip, ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -15,6 +15,9 @@ import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class SampleForm extends React.Component {
   constructor(props) {

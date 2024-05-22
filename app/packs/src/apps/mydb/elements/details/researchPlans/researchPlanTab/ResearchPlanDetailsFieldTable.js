@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import uniqueId from 'react-html-id';
 import { AgGridReact } from 'ag-grid-react';
-import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
+import { ContextMenu, ContextMenuTrigger } from "react-contextmenu";
 import { Row, Col, Button } from 'react-bootstrap';
 
 import CustomHeader from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/CustomHeader';
@@ -14,6 +14,7 @@ import ResearchPlanDetailsFieldTableSchemasModal from 'src/apps/mydb/elements/de
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 
 // regexp to parse tap separated paste from the clipboard

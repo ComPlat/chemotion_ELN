@@ -1,7 +1,8 @@
 import Immutable from 'immutable';
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import Label from 'src/components/legacyBootstrap/Label'
 
 class ResinLabel extends React.Component {
   constructor() {

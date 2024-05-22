@@ -1,9 +1,9 @@
 import Immutable from 'immutable';
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label } from 'react-bootstrap';
 
 import MoleculeDescription from 'src/apps/chemscanner/components/MoleculeDescription';
+import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ReactionDescription extends React.Component {
   constructor(props) {
