@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Alert, Button, Modal, SplitButton,
-  FormGroup, FormControl, MenuItem
+  FormGroup, FormControl
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import Quagga from 'quagga';
@@ -10,6 +10,7 @@ import QrReader from 'react-qr-reader';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {

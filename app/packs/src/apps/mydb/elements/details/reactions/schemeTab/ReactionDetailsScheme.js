@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroup, ListGroupItem, FormGroup, ControlLabel, FormControl,
+  ListGroup, ListGroupItem, FormGroup, FormControl,
   Row, Col, Collapse, Button, ButtonGroup
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -26,6 +26,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {

@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import {
   Button,
   ButtonToolbar,
-  FormGroup,
-  Checkbox
+  FormGroup
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 
 const MyCell = ({col,data,rowIndex, ...props})=>{

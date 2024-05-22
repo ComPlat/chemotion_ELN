@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, FormGroup, ControlLabel, FormControl, HelpBlock } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, FormGroup, FormControl } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import HelpBlock from 'src/components/legacyBootstrap/HelpBlock'
 
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {

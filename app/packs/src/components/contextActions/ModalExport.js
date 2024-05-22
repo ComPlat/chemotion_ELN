@@ -1,11 +1,12 @@
 import React from 'react';
 import {
-  Button, ButtonToolbar, DropdownButton, MenuItem
+  Button, ButtonToolbar, DropdownButton
 } from 'react-bootstrap';
 import CheckBoxs from 'src/components/common/CheckBoxs';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const filterUIState = (uiState) => {
   const {

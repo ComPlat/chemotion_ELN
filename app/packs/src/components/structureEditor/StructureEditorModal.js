@@ -5,9 +5,7 @@ import {
   Button,
   ButtonToolbar,
   Modal,
-  Panel,
   FormGroup,
-  ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -19,6 +17,8 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const notifyError = (message) => {
   NotificationActions.add({

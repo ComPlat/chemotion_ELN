@@ -120,7 +120,7 @@ export default class Navigation extends React.Component {
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (this.state.currentUser
-      ? <Navbar fluid className='navbar-custom'>
+      /* ? <Navbar fluid className='navbar-custom'>
         {this.navHeader()}
         <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
           <Search />
@@ -139,7 +139,9 @@ export default class Navigation extends React.Component {
         </Nav>
         <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
         <div style={{ clear: "both" }} />
-      </Navbar>
+      </Navbar> */
+      ? <div>logged in</div>
+      : <div>logged out</div>
     )
   }
 }

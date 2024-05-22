@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import {
-  PanelGroup, Panel, Button, FormGroup, FormControl, OverlayTrigger, Tooltip
+  Button, FormGroup, FormControl, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
@@ -10,6 +10,8 @@ import {
   HeaderNormal,
   AnalysisModeBtn,
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 function RndNotAvailable() {
   return (

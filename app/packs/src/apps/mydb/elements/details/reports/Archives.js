@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   Button,
-  Label,
-  PanelGroup,
-  Panel,
   OverlayTrigger,
   Tooltip
 } from 'react-bootstrap';
@@ -11,6 +8,9 @@ import ReportActions from 'src/stores/alt/actions/ReportActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { stopBubble } from 'src/utilities/DomHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
+import Label from 'src/components/legacyBootstrap/Label'
 
 const fileDescription = archive => (
   archive.file_description

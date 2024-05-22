@@ -2,7 +2,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, Accordion } from 'react-bootstrap';
+import { Button, Accordion } from 'react-bootstrap';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';

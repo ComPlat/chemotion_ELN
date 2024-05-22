@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
 import PredictionActions from 'src/stores/alt/actions/PredictionActions';
 import PredictionStore from 'src/stores/alt/stores/PredictionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -8,6 +8,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import Content from 'src/apps/mydb/elements/details/predictions/Content';
 import PanelHeader from 'src/components/common/PanelHeader';
 import { CloseBtn, ResetBtn, PredictBtn } from 'src/apps/mydb/elements/details/predictions/PredictionComponent';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 class PredictionContainer extends Component {
   constructor(props) {

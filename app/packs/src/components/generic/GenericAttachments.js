@@ -8,7 +8,6 @@ import {
   Row,
   Col,
   Tooltip,
-  ControlLabel,
   ListGroup,
   ListGroupItem,
   OverlayTrigger,
@@ -20,6 +19,7 @@ import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import Utils from 'src/utilities/Functions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const editorTooltip = (exts) => (
   <Tooltip id="editor_tooltip">

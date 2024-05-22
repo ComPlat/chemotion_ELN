@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Clipboard from 'clipboard';
-import { DropdownButton, MenuItem } from 'react-bootstrap';
+import { DropdownButton } from 'react-bootstrap';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class CopyClipboardBtn extends React.Component {
   constructor(props) {
