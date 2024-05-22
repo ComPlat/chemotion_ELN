@@ -56,11 +56,7 @@ export default class BaseFetcher {
     const toDate = queryParams.toDate ? `&to_date=${queryParams.toDate.unix()}` : '';
     const productOnly = queryParams.productOnly === true ? '&product_only=true' : '&product_only=false';
     const api = `/api/v1/${type}.json?collection_id=${id}&page=${page}&per_page=${perPage}&`
-<<<<<<< HEAD
-      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}&is_shared=${isShared}`;
-=======
-              + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
->>>>>>> WIP deprecate is_shared
+      + `${fromDate}${toDate}${filterCreatedAt}${productOnly}`;
     let addQuery = '';
     let userState;
     let group;

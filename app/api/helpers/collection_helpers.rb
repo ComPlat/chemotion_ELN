@@ -96,8 +96,8 @@ module CollectionHelpers
     cu_id = current_user&.id
     @is_owned = cu_id && (@c.user_id == cu_id)
 
-    @dl = CollectionAcl.PERMISSION_LEVELS_MAX
-    @dl = CollectionAcl.max_permissions_levels_from_collections(c_id, user_ids) unless @is_owned
+    @dl = CollectionAcl::PERMISSION_LEVELS_MAX
+    @dl = CollectionAcl.permission_levels_from_collections(c_id, user_ids) unless @is_owned
     @pl = @dl[:permission_level]
     @dl_s = @dl[:sample_detail_level]
     @dl_r = @dl[:reaction_detail_level]
@@ -119,23 +119,56 @@ module CollectionHelpers
     label = label.nil? ? root_col_label : label
     c_acl.update!(
       label: label,
-      permission_level: params['ui_state']['levels']['permission_level'],
-      sample_detail_level: params['ui_state']['levels']['sample_detail_level'],
-      reaction_detail_level: params['ui_state']['levels']['reaction_detail_level'],
-      wellplate_detail_level: params['ui_state']['levels']['wellplate_detail_level'],
-      screen_detail_level: params['ui_state']['levels']['screen_detail_level'],
+      permission_level: params['ui_state']['currentCollection']['permission_level'],
+      sample_detail_level: params['ui_state']['currentCollection']['sample_detail_level'],
+      reaction_detail_level: params['ui_state']['currentCollection']['reaction_detail_level'],
+      wellplate_detail_level: params['ui_state']['currentCollection']['wellplate_detail_level'],
+      screen_detail_level: params['ui_state']['currentCollection']['screen_detail_level'],
     )
   end
 
-  def create_classes_of_element(element)
-    if element == 'cell_line'
-      element_klass = CelllineSample
-      collections_element_klass = CollectionsCellline
-    else
-      collections_element_klass = "collections_#{element}".classify.constantize
-      element_klass = element.classify.constantize
+  def join_element_class(element, join_table)
+    element_class = API::ELEMENT_CLASS[element]
+    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
+  end
+
+  def create_or_move_collection(action, from_collection, to_collection_id, ui_state)
+    API::ELEMENTS.each do |element|
+      ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+      case action
+      when 'move'
+        join_element_class(element, 'collections').move_to_collection(ids, from_collection.id, to_collection_id)
+      else
+        join_element_class(element, 'collections').create_in_collection(ids, to_collection_id)
+      end
     end
-    [element_klass, collections_element_klass]
+  end
+
+  def check_ui_state (ui_state)
+    ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
+    ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
+    ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+    ui_state
+  end
+
+  def create_elements(params, from_collection, to_collection_id)
+    API::ELEMENTS.each do |element|
+      ui_state = params[:ui_state][element]
+      next unless ui_state
+      ui_state = check_ui_state(ui_state)
+      next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
+      collections_element_klass = ('collections_' + element).classify.constantize #CollectionsSample
+      element_klass = element.classify.constantize #Sample
+      elements = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state)
+      ids = elements.pluck(:id)
+      case params[:action]
+      when 'move'
+        collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
+      else
+        collections_element_klass.create_in_collection(ids, to_collection_id)
+      end
+    end
   end
 
   def element_class_ids(element, join_table, from_collection_id, ui_state)

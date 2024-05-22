@@ -72,7 +72,7 @@ export default class ElementCollectionLabels extends React.Component {
 
     let collection_ids = element.tag.taggable_data?.collection_ids;
     let collections = [];
-    collection_ids.forEach(id => collections.push(CollectionStore.findCollectionById(id)));
+    collection_ids?.forEach(id => collections.push(CollectionStore.findCollectionById(id)));
 
     let shared_labels = [];
     let labels = [];

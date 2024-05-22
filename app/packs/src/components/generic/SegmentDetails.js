@@ -24,7 +24,7 @@ const addSegmentTabs = (element, onChange, contentMap) => {
   if (!uiCtrl) return;
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
   segmentKlasses = segmentKlasses.filter(
-    (s) => s.element_klass && s.element_klass.name === element.type
+    (s) => s.element_klass && s.element_klass.name === element?.type
   );
   segmentKlasses.forEach((klass) => {
     const ttl = <Tooltip id="tooltip">{klass.desc}</Tooltip>;
@@ -50,13 +50,13 @@ const addSegmentTabs = (element, onChange, contentMap) => {
         key={`${element.type}_${element.id}_${klass.id}`}
         title={title}
       >
-        <GenericSGDetails
-          uiCtrl
-          segment={segment}
-          klass={klass}
-          onChange={onChange}
-          fnNavi={onNaviClick}
-        />
+        {/*<GenericSGDetails*/}
+        {/*  uiCtrl*/}
+        {/*  segment={segment}*/}
+        {/*  klass={klass}*/}
+        {/*  onChange={onChange}*/}
+        {/*  fnNavi={onNaviClick}*/}
+        {/*/>*/}
       </Tab>
     );
   });
@@ -92,13 +92,13 @@ const SegmentTabs = (element, onChange) => {
     const tabKey = klass.label;
     result[tabKey] = () => (
       <Tab eventKey={tabKey} key={tabKey} title={title}>
-        <GenericSGDetails
-          uiCtrl={uiCtrl}
-          segment={segment}
-          klass={klass}
-          onChange={onChange}
-          fnNavi={onNaviClick}
-        />
+        {/*<GenericSGDetails*/}
+        {/*  uiCtrl={uiCtrl}*/}
+        {/*  segment={segment}*/}
+        {/*  klass={klass}*/}
+        {/*  onChange={onChange}*/}
+        {/*  fnNavi={onNaviClick}*/}
+        {/*/>*/}
       </Tab>
     );
   });
