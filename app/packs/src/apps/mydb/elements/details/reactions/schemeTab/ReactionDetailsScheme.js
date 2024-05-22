@@ -27,6 +27,7 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { parseNumericString } from 'src/utilities/MathUtils';
+import { convertTemperature, convertTime, convertTurnoverFrequency } from 'src/utilities/UnitsConversion';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -321,6 +322,22 @@ export default class ReactionDetailsScheme extends Component {
         this.addSampleTo(changeEvent, 'description');
         this.addSampleTo(changeEvent, 'observation');
         break;
+      case 'FS':
+      case 'gas':
+        this.onReactionChange(
+          this.updatedReactionForFeedstockChange(changeEvent)
+        );
+        break;
+      case 'gasFieldsChanged':
+        this.onReactionChange(
+          this.updatedReactionForGasProductFieldsChange(changeEvent)
+        );
+        break;
+      case 'gasFieldsUnitsChanged':
+        this.onReactionChange(
+          this.updatedReactionForGasFieldsUnitsChange(changeEvent)
+        );
+        break;
       default:
         break;
     }
@@ -450,6 +467,83 @@ export default class ReactionDetailsScheme extends Component {
     updatedSample.equivalent = equivalent;
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForFeedstockChange(changeEvent) {
+    const {
+      sampleID,
+      value,
+      materialGroup,
+      type
+    } = changeEvent;
+    const { reaction } = this.props;
+    const updatedSample = reaction.sampleById(sampleID);
+    if (materialGroup === 'products') {
+      updatedSample.gas = value;
+    } else {
+      updatedSample.feedstock_gas_reference = value;
+    }
+    return this.updatedReactionWithSample(this.updatedSamplesForFeedstockChange.bind(this), updatedSample, type);
+  }
+
+  updatedReactionForGasProductFieldsChange(changeEvent) {
+    const {
+      sampleID,
+      value,
+      materialGroup,
+      field
+    } = changeEvent;
+    const { reaction } = this.props;
+    const updatedSample = reaction.sampleById(sampleID);
+    if (materialGroup === 'products') {
+      switch (field) {
+        case 'temperature':
+        case 'time':
+        case 'turnover_frequency':
+          updatedSample.gas_phase_data[field].value = value;
+          break;
+        case 'turnover_number':
+          updatedSample.gas_phase_data.turnover_number = value;
+          break;
+        case 'part_per_million':
+          updatedSample.gas_phase_data.part_per_million = value;
+          break;
+        default:
+          break;
+      }
+    }
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForGasProductFieldsChange.bind(this),
+      updatedSample,
+      field
+    );
+  }
+
+  updatedReactionForGasFieldsUnitsChange(changeEvent) {
+    const {
+      sampleID,
+      unit,
+      field,
+    } = changeEvent;
+    const { reaction } = this.props;
+    const updatedSample = reaction.sampleById(sampleID);
+    const valueToFormat = updatedSample.gas_phase_data[field].value;
+    let convertedValues;
+    if (field === 'temperature') {
+      convertedValues = convertTemperature(valueToFormat, unit);
+    } else if (field === 'time') {
+      convertedValues = convertTime(valueToFormat, unit);
+    } else if (field === 'turnover_frequency') {
+      convertedValues = convertTurnoverFrequency(valueToFormat, unit);
+    }
+    updatedSample.gas_phase_data[field].value = convertedValues[0];
+    updatedSample.gas_phase_data[field].unit = convertedValues[1];
+
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForGasProductFieldsChange.bind(this),
+      updatedSample,
+      field
+    );
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -767,12 +861,53 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  updatedReactionWithSample(updateFunction, updatedSample) {
+  updatedSamplesForFeedstockChange(samples, updatedSample, MaterialGroup, type) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        if (MaterialGroup === 'products') {
+          sample.gas = updatedSample.gas;
+        } else {
+          sample.feedstock_gas_reference = updatedSample.feedstock_gas_reference;
+        }
+      } else if (sample.id !== updatedSample.id && MaterialGroup !== 'products' && type === 'FS') {
+        sample.feedstock_gas_reference = false;
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForGasProductFieldsChange(samples, updatedSample, MaterialGroup, field) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        if (MaterialGroup === 'products') {
+          switch (field) {
+            case 'temperature':
+            case 'time':
+            case 'turnover_frequency':
+              sample.gas_phase_data[field].value = updatedSample.gas_phase_data[field].value;
+              sample.gas_phase_data[field].unit = updatedSample.gas_phase_data[field].unit;
+              break;
+            case 'turnover_number':
+              sample.gas_phase_data.turnover_number = updatedSample.gas_phase_data[field];
+              break;
+            case 'part_per_million':
+              sample.gas_phase_data.part_per_million = updatedSample.gas_phase_data[field];
+              break;
+            default:
+              break;
+          }
+        }
+      }
+      return sample;
+    });
+  }
+
+  updatedReactionWithSample(updateFunction, updatedSample, type) {
     const { reaction } = this.state;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials');
-    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants');
-    reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents');
-    reaction.products = updateFunction(reaction.products, updatedSample, 'products');
+    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
+    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
+    reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
+    reaction.products = updateFunction(reaction.products, updatedSample, 'products', type);
     return reaction;
   }
 

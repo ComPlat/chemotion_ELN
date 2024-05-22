@@ -204,9 +204,7 @@ const GeneralMaterialGroup = ({
             {!isReactants && permitOn(reaction) && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
-        <tbody>
-          {contents.map(item => item)}
-        </tbody>
+        {contents.map(item => item)}
       </table>
     </div>
   );

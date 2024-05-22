@@ -130,6 +130,7 @@ export default class Reaction extends Element {
       can_copy: false,
       variations: [],
       vessel_size: { amount: null, unit: 'ml' },
+      gaseous: false
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -197,6 +198,7 @@ export default class Reaction extends Element {
       segments: this.segments.map(s => s.serialize()),
       variations: this.variations,
       vessel_size: this.vessel_size,
+      gaseous: this.gaseous
     });
   }
 

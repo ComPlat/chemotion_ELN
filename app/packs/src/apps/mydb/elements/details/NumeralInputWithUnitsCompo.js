@@ -109,19 +109,31 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
   }
 
-  togglePrefix() {
-    const { metricPrefixes } = this.props;
-    let ind = metricPrefixes.indexOf(this.state.metricPrefix);
-    if (ind < metricPrefixes.length - 1) {
-      ind += 1;
+  togglePrefix(currentUnit) {
+    const units = ['TON/h', 'TON/m', 'TON/s', '°C', '°F', 'K', 'h', 'm', 's'];
+    const excludedUnits = ['ppm', 'TON'];
+    const { onMetricsChange, unit } = this.props;
+    if (units.includes(currentUnit)) {
+      // eslint-disable-next-line no-unused-expressions
+      onMetricsChange && onMetricsChange(
+        { ...this.state, metricUnit: unit }
+      );
+    } else if (excludedUnits.includes(currentUnit)) {
+      return null;
     } else {
-      ind = 0;
-    }
-    this.setState({
-      metricPrefix: metricPrefixes[ind]
-    });
+      const { metricPrefixes } = this.props;
+      let ind = metricPrefixes.indexOf(this.state.metricPrefix);
+      if (ind < metricPrefixes.length - 1) {
+        ind += 1;
+      } else {
+        ind = 0;
+      }
+      this.setState({
+        metricPrefix: metricPrefixes[ind]
+      });
 
-    this.props.onMetricsChange && this.props.onMetricsChange({ ...this.state, metricUnit: this.props.unit, metricPrefix: metricPrefixes[ind] });
+      onMetricsChange && onMetricsChange({ ...this.state, metricUnit: unit, metricPrefix: metricPrefixes[ind] });
+    }
   }
 
   render() {
@@ -152,7 +164,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           <Button
             disabled={inputDisabled}
             active
-            onClick={() => { this.togglePrefix(); }}
+            onClick={() => { this.togglePrefix(unit); }}
             bsStyle={bsStyleBtnAfter}
             bsSize={bsSize}
           >
