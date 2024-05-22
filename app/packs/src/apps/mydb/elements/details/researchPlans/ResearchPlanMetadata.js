@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel,
-  ControlLabel,
   Form,
   FormControl,
   FormGroup,
@@ -11,6 +9,8 @@ import {
   Col
 } from 'react-bootstrap';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 require('@citation-js/plugin-isbn');
 

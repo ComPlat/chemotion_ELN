@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Panel } from 'react-bootstrap';
 import OrderModeHeader from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeHeader';
 import { DragSource, DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -7,6 +6,7 @@ import { compose } from 'redux';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import PropTypes from 'prop-types';
 import Container from 'src/models/Container';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const dragHooks = {
 

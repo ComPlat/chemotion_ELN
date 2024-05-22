@@ -1,10 +1,11 @@
 import React from 'react';
 import {
-  Panel, ButtonGroup, Button, OverlayTrigger, Tooltip, Popover
+  ButtonGroup, Button, OverlayTrigger, Tooltip, Popover
 } from 'react-bootstrap';
 import { uniq } from 'lodash';
 import { Citation, literatureContent } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/apps/mydb/elements/details/literature/CitationType';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const changeTypeBtn = (litype, updId, fn, typeMap, readOnly = false) => {
   const cands = Object.keys(typeMap).filter((e) => (e !== litype) && e !== 'uncategorized');

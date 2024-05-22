@@ -3,10 +3,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Label, OverlayTrigger, Popover, Button
+  OverlayTrigger, Popover, Button
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, MenuItem, NavDropdown } from 'react-bootstrap';
+import { Nav, Navbar } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';

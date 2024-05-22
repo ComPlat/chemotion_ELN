@@ -2,12 +2,13 @@ import Aviator from 'aviator';
 import equal from 'deep-equal';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton, MenuItem } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 class MeasurementCandidate extends Component {
   static propTypes = {
