@@ -33,7 +33,6 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import { parseNumericString } from 'src/utilities/MathUtils';
 
 

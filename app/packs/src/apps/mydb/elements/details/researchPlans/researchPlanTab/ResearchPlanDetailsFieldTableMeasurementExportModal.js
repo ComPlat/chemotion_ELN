@@ -9,6 +9,7 @@ import { observer } from 'mobx-react';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 class MeasurementCandidate extends Component {
   static propTypes = {

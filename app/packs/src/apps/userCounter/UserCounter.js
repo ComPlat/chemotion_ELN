@@ -8,6 +8,7 @@ import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 class UserCounter extends Component {
   constructor(props) {

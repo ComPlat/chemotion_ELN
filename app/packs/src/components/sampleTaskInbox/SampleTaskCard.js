@@ -5,6 +5,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { ConfirmModal } from 'src/components/common/ConfirmModal';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;

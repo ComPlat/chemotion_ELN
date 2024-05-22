@@ -10,6 +10,7 @@ import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import Notifications from 'src/components/Notifications';
 
+
 const pageNotify = (title, level, message) => {
   const notification = {
     title,

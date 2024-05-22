@@ -6,6 +6,7 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class GroupsDevices extends React.Component {
   constructor(props) {

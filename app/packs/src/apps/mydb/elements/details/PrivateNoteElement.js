@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import PrivateNote from 'src/models/PrivateNote';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class PrivateNoteElement extends React.Component {
   constructor(props) {

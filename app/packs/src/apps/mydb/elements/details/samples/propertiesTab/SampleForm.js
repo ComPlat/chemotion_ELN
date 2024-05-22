@@ -17,8 +17,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class SampleForm extends React.Component {
   constructor(props) {

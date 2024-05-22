@@ -3,6 +3,7 @@ import { Form } from 'react-bootstrap';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceNovncTab = () => {
   const devicesStore = useContext(StoreContext).devices;

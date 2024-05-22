@@ -4,6 +4,7 @@ import {
   Button, Col, Form, Row
 } from 'react-bootstrap';
 import Select from 'react-select3';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes';
 

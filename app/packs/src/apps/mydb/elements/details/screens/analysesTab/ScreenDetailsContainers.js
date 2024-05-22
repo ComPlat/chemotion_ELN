@@ -8,6 +8,7 @@ import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import AccordionHeaderWithButtons from 'src/apps/mydb/elements/details/AccordionHeaderWithButtons';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 export default class ScreenDetailsContainers extends Component {
   constructor(props) {

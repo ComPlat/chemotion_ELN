@@ -8,6 +8,8 @@ import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import Label from 'src/components/legacyBootstrap/Label'
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);

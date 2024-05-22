@@ -4,6 +4,7 @@ import DeviceModal from './DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 const DevicesList = () => {
   const devicesStore = useContext(StoreContext).devices;

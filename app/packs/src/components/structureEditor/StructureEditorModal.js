@@ -19,6 +19,8 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const notifyError = (message) => {
   NotificationActions.add({

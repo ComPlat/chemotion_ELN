@@ -43,6 +43,8 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ResearchPlanDetails extends Component {
   static contextType = StoreContext;

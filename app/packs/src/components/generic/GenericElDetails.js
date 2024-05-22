@@ -37,7 +37,7 @@ import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import Panel from 'src/components/legacyBootstrap/Panel'
+import Panel from 'src/components/legacyBootstrap/Panel';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
 const onNaviClick = (type, id) => {

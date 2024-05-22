@@ -7,6 +7,8 @@ import { startsWith, endsWith } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DeviceDataCollectorTab = () => {
   const devicesStore = useContext(StoreContext).devices;

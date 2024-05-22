@@ -19,6 +19,7 @@ import {
   selectCurrentUser,
 } from 'src/utilities/CommentHelper';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class CommentModal extends Component {
   constructor(props) {
