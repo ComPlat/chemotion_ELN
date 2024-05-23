@@ -211,6 +211,9 @@ GEM
       debug_inspector (>= 1.2.0)
     bootsnap (1.18.4)
       msgpack (~> 1.2)
+    bootstrap (5.3.3)
+      autoprefixer-rails (>= 9.1.0)
+      popper_js (>= 2.11.8, < 3)
     bootstrap-kaminari-views (0.0.5)
       kaminari (>= 0.13)
       rails (>= 3.1)
@@ -863,7 +866,7 @@ DEPENDENCIES
   bibtex-ruby
   binding_of_caller
   bootsnap
-  bootstrap-sass
+  bootstrap (~> 5.3)
   bullet
   byebug
   capybara
