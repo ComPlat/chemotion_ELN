@@ -7,9 +7,10 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/rinchi-gem.git
-  revision: 214f7db7947c8098685d0617909de229b3dbb7ef
+  revision: 3eb9cccd5d1fac11450444365c653727bdc8c38f
+  branch: main
   specs:
-    rinchi-gem (1.0.1)
+    rinchi-gem (1.0.2)
 
 GIT
   remote: https://github.com/ComPlat/sablon
@@ -957,7 +958,7 @@ DEPENDENCIES
   rack-cors
   rails (~> 6.1.7.7)
   rdkit_chem!
-  rinchi-gem (= 1.0.1)!
+  rinchi-gem (= 1.0.2)!
   rmagick
   roo
   rqrcode
