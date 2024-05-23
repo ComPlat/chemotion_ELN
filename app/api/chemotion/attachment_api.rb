@@ -104,7 +104,7 @@ module Chemotion
             end
           elsif @attachment
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
-            if !can_dwnld && (element = @attachment.container&.root&.containable)
+            if !can_dwnld && (element = @attachment.attachable)
               can_dwnld = (element.is_a?(User) && (element == current_user)) ||
                           (ElementPolicy.new(current_user, element).read? &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?)
@@ -214,6 +214,7 @@ module Chemotion
         content_type 'application/octet-stream'
 
         env['api.format'] = :binary
+
         store = @attachment.attachment.storage.directory
         file_location = store.join(
           @attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] || 'not available',
