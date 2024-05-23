@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Nav, Navbar, Tooltip, OverlayTrigger, Container } from 'react-bootstrap';
 import UserAuth from 'src/components/navigation/UserAuth';
 import Search from 'src/components/navigation/search/Search';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
@@ -99,7 +99,16 @@ export default class Navigation extends React.Component {
 
   navHeader() {
     return (
-      <Navbar.Header className="collec-tree">
+      <Navbar.Text style={{ cursor: "pointer" }}>
+        <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+          <i
+            className="fa fa-list"
+            style={{ fontStyle: "normal", visibility: this.props.isHidden ? 'hidden' : 'visible' }}
+            onClick={this.toggleCollectionTree}
+          />
+        </OverlayTrigger>
+      </Navbar.Text>
+      /* <Navbar.Header className="collec-tree">
         <Navbar.Text style={{ cursor: "pointer" }}>
           <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
             <i
@@ -111,7 +120,7 @@ export default class Navigation extends React.Component {
         </Navbar.Text>
         <Navbar.Text />
         <NavHead />
-      </Navbar.Header>
+      </Navbar.Header>*/
     )
   }
 
@@ -119,19 +128,20 @@ export default class Navigation extends React.Component {
     const { modalProps, genericEls, omniauthProviders, extraRules } = this.state;
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
-    return (this.state.currentUser
-      /* ? <Navbar fluid className='navbar-custom'>
-        {this.navHeader()}
-        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-          <Search />
-          <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-          <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
-          <NavigationModal {...modalProps} />
-        </Nav>
-        <UserAuth />
-        <OpenCalendarButton />
-        <div style={{ clear: "both" }} />
-      </Navbar>
+    return (
+      /* this.state.currentUser
+        ? <Navbar fluid className='navbar-custom'>
+          {this.navHeader()}
+          <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
+            <Search />
+            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
+            <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+            <NavigationModal {...modalProps} />
+          </Nav>
+          <UserAuth />
+          <OpenCalendarButton />
+          <div style={{ clear: "both" }} />
+        </Navbar>
       : <Navbar fluid className='navbar-custom'>
         {this.navHeader()}
         <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
@@ -140,8 +150,19 @@ export default class Navigation extends React.Component {
         <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
         <div style={{ clear: "both" }} />
       </Navbar> */
-      ? <div>logged in</div>
-      : <div>logged out</div>
+      <Navbar className='navbar-custom justify-content-between'>
+        {this.state.currentUser ?
+          <>
+            <Navbar.Text>logged in</Navbar.Text>
+            <UserAuth />
+          </>:
+          <>
+            {this.navHeader()}
+            <Navbar.Text>logged out</Navbar.Text>
+            <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
+          </>
+        }
+      </Navbar>
     )
   }
 }
