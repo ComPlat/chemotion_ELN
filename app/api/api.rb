@@ -204,6 +204,7 @@ class API < Grape::API
   mount Labimotion::SegmentAPI
   mount Labimotion::LabimotionHubAPI
   mount Chemotion::InventoryAPI
+  mount Chemotion::AffiliationAPI
   mount Chemotion::AdminDeviceAPI
   mount Chemotion::AdminDeviceMetadataAPI
   mount Chemotion::ChemicalAPI
