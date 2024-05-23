@@ -1,41 +1,23 @@
 #!/bin/bash
-export ASDF_BRANCH=v0.13.1
 
-# if asdf is not installed -> install
-if command -v asdf ; then
-    echo '>>> asdf is already installed -> continue'
-else
-    echo '>>> Missing asdf. Installing...'
-    git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch $ASDF_BRANCH
-fi
+# Prepare and update the application environment for Ruby/Nodejs development
 
-# if asdf plugins are not installed -> install
-if asdf plugin list | grep -Fxq 'ruby'; then
-    echo '>>> Ruby plugin for asdf is installed -> continue'
-else
-    echo '>>> Missing ruby plugin for asdf. Installing...'
-    asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
-fi
+# asdf-vm installation with ruby and nodejs plugins
+export ASDF_BRANCH=v0.14.0
+echo '>>> checking asdf installation'
+./prepare-asdf.sh
 
-if asdf plugin list | grep -Fxq 'nodejs'; then
-    echo '>>> Nodejs plugin for asdf is installed -> continue'
-else
-    echo '>>> Missing nodejs plugin for asdf. Installing...'
-    asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
-fi
+# check nodejs version as set in package.json: install if mismatch, and correct .tool-versions'
+echo '>>> check nodejs version as set in package.json: install if mismatch, and correct .tool-versions'
+./prepare-nodejs.sh
 
-# install all tools as defined by .tool-versions
-echo '>>> Installing tool versions'
-asdf install
+# ruby gems installation
+./prepare-rubygems.sh
 
-# install bundler if not present and then install all gems as defined by GEMFILE
-echo '>>> checking bundler installation'
-BUNDLER_VERSION=$(sed -n '/BUNDLED WITH/{n;p;}' "Gemfile.lock" | tr -d '[:space:]')
-gem install bundler -v $BUNDLER_VERSION
+# node packages installation
+./prepare-nodejspkg.sh
 
-echo '>>> Installing gems'
-bundle install
-
+# prepare rails server
 rm -f tmp/pids/server.pid
 
 if [ "$( psql -h postgres -U postgres -XtAc "SELECT 1 FROM pg_database WHERE datname='chemotion_dev'" )" = '1' ]
@@ -49,3 +31,5 @@ else
     echo "================================================"
     bundle exec rake db:setup
 fi
+
+
