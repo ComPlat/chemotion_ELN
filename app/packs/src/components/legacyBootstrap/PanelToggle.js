@@ -14,7 +14,7 @@ const propTypes = {
   /**
    * You can use a custom element for this component
    */
-  componentClass: elementType
+  componentClass: PropTypes.string
 };
 
 const defaultProps = {
