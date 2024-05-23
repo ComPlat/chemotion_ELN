@@ -712,7 +712,7 @@ export default class UserAuth extends Component {
             className=""
             title="Log out"
           >
-            <Glyphicon glyph="log-out" />
+            <i className="fa fa-sign-out" />
           </NavItem>
         </Nav>
         {this.renderModal()}
