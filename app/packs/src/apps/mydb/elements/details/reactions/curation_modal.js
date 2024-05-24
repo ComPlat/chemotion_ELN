@@ -13,8 +13,7 @@ export default class CurationModal extends Component {
       const { reaction } = props;
       this.handleShow = this.handleShow.bind(this);
       this.handleClose = this.handleClose.bind(this);
-      // this.handleDesc = this.handleDesc.bind(this);
-      this.handleSubmit = this.handleSubmit.bind(this);
+
       this.handleSuggest = this.handleSuggest.bind(this);
       this.handleSuggest = this.handleSuggest.bind(this);
       this.change_corect_word = this.change_corect_word.bind(this)
@@ -60,26 +59,6 @@ export default class CurationModal extends Component {
       this.setState({correct_word:new_word})
     }
 
-    handleSubmit(closeView = false,description) {
-      LoadingActions.start();
-      const { reaction } = this.props;
-      if (reaction && reaction.isNew) {
-        ElementActions.createReaction(reaction);
-        console.log("create")
-      } else {
-        var new_reaction  = reaction
-        new_reaction.description = description
-        console.log(new_reaction)
-        this.setState({reaction:new_reaction} )
-        ElementActions.updateReaction(reaction, closeView);
-        // console.log(reaction)
-      }
-      if (reaction.is_new || closeView) {
-        DetailActions.close(reaction, true);
-      }
-    }
-
-
     advance_suggestion(input,miss_spelled_words){
       if (input < miss_spelled_words.length-1){
       input = input +1 }
@@ -102,15 +81,8 @@ export default class CurationModal extends Component {
     }
 
 
-    handleDesc(){
-      // const old_desc = this.clean_data(this.props.description);
-      // const new_desc = old_desc.replaceAll("  ", " ");
-      // this.setState({ desc: new_desc});
-    }
-
-
     handleChange(){
-      this.props.onDescChange(this.state.desc)
+      this.props.acOnChange(this.state.desc)
     }
 
     handleClose() {
@@ -183,7 +155,7 @@ export default class CurationModal extends Component {
       }
 
       for (let i = 0; i < word_array.length; i++){
-        var punctuation = /[\.\,\?\!\(\) \"]/g;
+        var punctuation = /[\.\,\?\!\(\) \"\-]/g;
         var double_space_regex= /\s\s/g
         word_array[i] = word_array[i].replace(punctuation, "");
         word_array[i] = word_array[i].replace(double_space_regex, " ")
@@ -194,16 +166,18 @@ export default class CurationModal extends Component {
           }
           else
             {var spell_checked_word = this.use_all_dicitonary(en_dictionary,cus_dictionary,word_array[i]);
+            console.log(word_array[i])
+
           }
         }
         else
           {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
             {
               ss_list.push(word_array[i])
-              // console.log("sub found: "+ word_array[i])
+              console.log("sub found: "+ word_array[i])
             }
           else{
-            // var spell_checked_word = true; console.log("num found: "+ word_array[i])
+            var spell_checked_word = true; console.log("num found: "+ word_array[i])
               }
           } 
         if (spell_checked_word == false){
@@ -327,7 +301,7 @@ export default class CurationModal extends Component {
 
       return (
         <div>
-          <Button bsStyle="primary" bsSize="small" onClick={this.handleShow}>
+          <Button  onClick={this.handleShow}>
             Check Spelling
           </Button>
   

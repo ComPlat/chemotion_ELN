@@ -960,14 +960,15 @@ export default class ReactionDetailsScheme extends Component {
                           value={reaction.description}
                           updateTextTemplates={this.updateTextTemplates}
                           onChange={event => this.props.onInputChange('description', event)}
+                          acOnChange = {this.handleDescChange}
                         /> : <QuillViewer value={reaction.description} />
                     }
                   </div>
-                  <div class="child inline-block-child"><CurationModal 
+                  {/* <div class="child inline-block-child"><CurationModal 
                     description= {reaction.description.ops} 
                     reaction={reaction} 
                     onDescChange = {this.handleDescChange}/>
-                  </div>  
+                  </div>   */}
                 </FormGroup>
               </Col>
             </Row>
