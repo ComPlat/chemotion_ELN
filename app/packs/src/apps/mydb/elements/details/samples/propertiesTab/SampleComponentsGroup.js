@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Glyphicon, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
@@ -10,7 +10,8 @@ import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTa
 
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
-    headIndex, dropSample,dropMaterial, lockAmountColumn, lockAmountColumnSolids, switchAmount, sampleComponents
+    headIndex, dropSample,dropMaterial, lockAmountColumn, lockAmountColumnSolids, switchAmount, sampleComponents,
+    showModalWithMaterial
   }) => {
     const contents = [];
     if (sampleComponents && sampleComponents.length > 0) {
@@ -36,6 +37,7 @@ const SampleComponentsGroup = ({
             dropSample={dropSample}
             lockAmountColumn={lockAmountColumn}
             lockAmountColumnSolids={lockAmountColumnSolids}
+            showModalWithMaterial={showModalWithMaterial}
             />
         ));
       });

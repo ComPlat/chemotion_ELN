@@ -7,7 +7,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import {
-  ListGroup, ListGroupItem
+  ListGroup, ListGroupItem, Button, Modal
 } from 'react-bootstrap';
 
 export default class SampleDetailsComponents extends React.Component {
@@ -16,7 +16,9 @@ export default class SampleDetailsComponents extends React.Component {
 
     const { sample } = props;
     this.state = {
-      sample
+      sample,
+      showModal: false,
+      droppedMaterial: null,
     };
 
     this.dropSample = this.dropSample.bind(this);
@@ -29,6 +31,9 @@ export default class SampleDetailsComponents extends React.Component {
     this.updateComponentName = this.updateComponentName.bind(this);
     this.updateRatio = this.updateRatio.bind(this);
     this.updateSampleForReferenceChanged = this.updateSampleForReferenceChanged.bind(this);
+    this.showModalWithMaterial = this.showModalWithMaterial.bind(this);
+    this.handleModalClose = this.handleModalClose.bind(this);
+    this.handleModalAction = this.handleModalAction.bind(this);
   }
 
   onChangeComponent(changeEvent) {
@@ -120,6 +125,7 @@ export default class SampleDetailsComponents extends React.Component {
           let sampleComponent = new Component(sampleData);
           sampleComponent.parent_id = splitSample.parent_id
           sampleComponent.material_group = tagGroup;
+          sampleComponent.reference = false;
           if (tagGroup === 'solid') {
             sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'startingConc');
             sampleComponent.setAmount({ value: sampleComponent.amount_g, unit: 'g' }, sample.amount_l);
@@ -128,6 +134,7 @@ export default class SampleDetailsComponents extends React.Component {
           }
           sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`
           await sample.addMixtureComponent(sampleComponent);
+          sample.updateMixtureComponentEquivalent()
         }
         this.props.onChange(sample);
       })
@@ -136,6 +143,7 @@ export default class SampleDetailsComponents extends React.Component {
         });
     } else {
       sample.addMixtureComponent(splitSample);
+      sample.updateMixtureComponentEquivalent()
       this.props.onChange(sample);
     }
   }
@@ -152,7 +160,7 @@ export default class SampleDetailsComponents extends React.Component {
     this.props.onChange(sample);
   }
 
-  dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
+  dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action) {
     const { sample } = this.state;
     sample.components = sample.components.map((component) => {
       if (!(component instanceof Component)) {
@@ -160,8 +168,19 @@ export default class SampleDetailsComponents extends React.Component {
       }
       return component;
     });
-    sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
-    this.props.onChange(sample);
+
+    if (action === 'move') {
+      sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
+      this.props.onChange(sample);
+    } else if (action === 'merge') {
+      sample.mergeComponents(srcMat, srcGroup, tagMat, tagGroup)
+      .then(() => {
+        this.props.onChange(sample);
+      })
+      .catch((error) => {
+        console.error('Error merging components:', error);
+      });
+    }
   }
 
 
@@ -204,6 +223,52 @@ export default class SampleDetailsComponents extends React.Component {
     sample.setReferenceComponent(componentIndex);
   }
 
+  showModalWithMaterial(srcMat, srcGroup, tagMat, tagGroup) {
+    if (!tagMat && srcGroup !== tagGroup) {
+      this.setState({
+        showModal: false,
+        droppedMaterial: null,
+      });
+      return this.dropMaterial(srcMat, srcGroup, tagMat, tagGroup, 'move');
+    }
+    this.setState({
+      showModal: true,
+      droppedMaterial: { srcMat, srcGroup, tagMat, tagGroup },
+    });
+  }
+
+  handleModalClose() {
+    this.setState({ showModal: false, droppedMaterial: null });
+  }
+
+  handleModalAction(action) {
+    const { droppedMaterial, sample } = this.state;
+
+    if (droppedMaterial) {
+      const { srcMat, srcGroup, tagMat, tagGroup } = droppedMaterial;
+      this.dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action);
+    }
+    this.handleModalClose();
+    this.props.onChange(sample);
+  }
+
+  renderModal() {
+    return (
+      <Modal show={this.state.showModal} onHide={this.handleModalClose}>
+        <Modal.Header closeButton>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Do you want to merge or move this component?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button bsStyle="success" onClick={() => this.handleModalAction('merge')}>Merge</Button>
+          <Button bsStyle="primary" onClick={() => this.handleModalAction('move')}>Move</Button>
+          <Button bsStyle="light" onClick={this.handleModalClose}>Close</Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  }
+
   render() {
     const {
       sample, isOver, canDrop
@@ -219,11 +284,22 @@ export default class SampleDetailsComponents extends React.Component {
     }
     const minPadding = { padding: '1px 2px 2px 0px' };
 
-    const liquids = sample.components ? sample.components.filter(component => component.material_group === 'liquid').map(component => component instanceof Component ? component : new Component(component)) : [];
-    const solids = sample.components ? sample.components.filter(component => component.material_group === 'solid').map(component => component instanceof Component ? component : new Component(component)) : [];
+    if (sample && sample.components) {
+      sample.components = sample.components.map(component =>
+        component instanceof Component ? component : new Component(component)
+      );
+    }
+
+    const liquids = sample.components
+      ? sample.components.filter(component => component.material_group === 'liquid')
+      : [];
+    const solids = sample.components
+      ? sample.components.filter(component => component.material_group === 'solid')
+      : [];
 
     return (
       <ListGroup fill="true">
+        {this.renderModal()}
         <ListGroupItem style={minPadding}>
           <SampleDetailsComponentsDnd
           sample={sample}
@@ -236,6 +312,7 @@ export default class SampleDetailsComponents extends React.Component {
           lockAmountColumn={this.state.lockAmountColumn}
           lockAmountColumnSolids={this.state.lockAmountColumnSolids}
           materialGroup="liquid"
+          showModalWithMaterial={this.showModalWithMaterial}
           />
         </ListGroupItem>
         <ListGroupItem style={minPadding}>
@@ -250,10 +327,10 @@ export default class SampleDetailsComponents extends React.Component {
           lockAmountColumn={this.state.lockAmountColumn}
           lockAmountColumnSolids={this.state.lockAmountColumnSolids}
           materialGroup="solid"
+          showModalWithMaterial={this.showModalWithMaterial}
           />
         </ListGroupItem>
       </ListGroup>
-      
     );
   }
 }

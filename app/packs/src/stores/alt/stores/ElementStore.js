@@ -668,7 +668,7 @@ class ElementStore {
    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
      if (result.sample_type && result.sample_type === 'Mixture') {
        ComponentsFetcher.fetchComponentsBySampleId(result.id)
-         .then(components => {
+         .then(async components => {
             const sampleComponents = components.map(component => {
               const { component_properties, ...rest } = component;
               const sampleData = {
@@ -677,7 +677,7 @@ class ElementStore {
               };
               return new Component(sampleData);
           });
-          result.initialComponents(sampleComponents);
+          await result.initialComponents(sampleComponents);
         })
          .catch((errorMessage) => {
           console.log(errorMessage);
@@ -690,8 +690,8 @@ class ElementStore {
   handleCreateSample({ element, closeView, components }) {
     if (element.sample_type && element.sample_type === 'Mixture') {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-         .then(() => {
-           element.initialComponents(components)
+         .then(async () => {
+           await element.initialComponents(components)
          })
          .catch((errorMessage) => {
           console.log(errorMessage);

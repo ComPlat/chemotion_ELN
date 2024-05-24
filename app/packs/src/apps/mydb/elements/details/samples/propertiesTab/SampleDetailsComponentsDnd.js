@@ -30,6 +30,7 @@ const target = {
         srcItem.materialGroup,
         tagProps.material,
         tagProps.materialGroup,
+        'move',
       );
     }
   },
@@ -65,6 +66,7 @@ class SampleDetailsComponentsDnd extends React.Component {
       lockAmountColumnSolids,
       switchAmount,
       materialGroup,
+      showModalWithMaterial,
     } = this.props;
     const style = {
       padding: '0px 0px',
@@ -91,6 +93,7 @@ class SampleDetailsComponentsDnd extends React.Component {
           lockAmountColumn={lockAmountColumn}
           lockAmountColumnSolids={lockAmountColumnSolids}
           switchAmount={switchAmount}
+          showModalWithMaterial={showModalWithMaterial}
         />
       </div>
     );
@@ -109,6 +112,7 @@ SampleDetailsComponentsDnd.propTypes = {
   onChangeComponent: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
   dropMaterial: PropTypes.func.isRequired,
+  showModalWithMaterial: PropTypes.func.isRequired,
   deleteMixtureComponent: PropTypes.func.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,

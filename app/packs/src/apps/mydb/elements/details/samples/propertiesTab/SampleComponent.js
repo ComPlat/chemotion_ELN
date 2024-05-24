@@ -23,7 +23,7 @@ const matSource = {
 
 const matTarget = {
   drop(tagProps, monitor) {
-    const { dropSample, dropMaterial } = tagProps;
+    const { dropSample, dropMaterial, showModalWithMaterial } = tagProps;
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
 
@@ -42,7 +42,7 @@ const matTarget = {
         true,
     );
   } else if (srcType === DragDropItemTypes.MATERIAL) {
-    dropMaterial(
+    showModalWithMaterial(
         srcItem.material,
         srcItem.materialGroup,
         tagProps.material,
@@ -73,7 +73,7 @@ const matTagCollect = (connect, monitor) => ({
 class SampleComponent extends Component {
   constructor(props) {
     super(props);
-  
+
     this.handleAmountChange = this.handleAmountChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
   }
@@ -136,11 +136,10 @@ class SampleComponent extends Component {
 
     moleculeIupacName = material.molecule_iupac_name;
 
-    let br = <br />;
-    if (moleculeIupacName === '') {
-      iupacStyle.display = 'none';
-      br = '';
+    if (moleculeIupacName === '' || !moleculeIupacName ) {
+      moleculeIupacName = material.molecule.sum_formular;
     }
+
     return (
         <div style={{ display: 'inline-block', maxWidth: '100%' }}>
           <span style={iupacStyle}>

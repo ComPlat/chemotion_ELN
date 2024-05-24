@@ -9,7 +9,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import SampleSvgFetcher from '../fetchers/SampleSvgFetcher';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -1095,7 +1094,8 @@ export default class Sample extends Element {
   async addMixtureComponent(newComponent) { 
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
-                                || component.molecule.inchikey === newComponent.molecule.inchikey);
+                                || component.molecule.inchikey === newComponent.molecule.inchikey
+                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound) 
 
     if (!newComponent.material_group){
       newComponent.material_group = 'liquid';
@@ -1116,25 +1116,29 @@ export default class Sample extends Element {
     }
   }
  
-  deleteMixtureComponent(componentToDelete) {
+  async deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
       (comp) => comp !== componentToDelete
     );
     this.components = filteredComponents;
 
+    if (!this.molecule_cano_smiles || this.molecule_cano_smiles === '') {
+      this.molecule = null;
+      this.molfile = '';
+      return;
+    }
+
     const smilesToRemove = componentToDelete.molecule_cano_smiles;
     const newSmiles = this.molecule_cano_smiles
     .split('.')
-    .filter(smiles => smiles !== smilesToRemove)
+    .filter(smiles => smiles !== smilesToRemove && !smilesToRemove.split('.').includes(smiles))
     .join('.');
 
     if (newSmiles !== this.molecule_cano_smiles ){
-      MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
-      .then(result => {
-        this.molecule = result;
-        this.molfile = result.molfile
-      }); 
+      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
+      this.molecule = result;
+      this.molfile = result.molfile; 
     }
     this.setComponentPositions()
   } 
@@ -1174,7 +1178,12 @@ export default class Sample extends Element {
   updateMixtureComponentEquivalent() {
     const referenceIndex = this.components.findIndex(component => component.reference);
 
-    if (referenceIndex === -1) return;
+    if (referenceIndex === -1) {
+      referenceIndex = this.components.findIndex(component => component.position === 0);
+      if (referenceIndex !== -1) {
+        this.setReferenceComponent(referenceIndex);
+      }
+    }
 
     const referenceMol = this.components[referenceIndex].amount_mol;
 
@@ -1201,6 +1210,30 @@ export default class Sample extends Element {
     const movedMat = this.components.splice(srcIndex, 1)[0];
     this.components.splice(tagIndex, 0, movedMat);
     this.setComponentPositions()
+  }
+
+  async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
+    const srcIndex = this.components.findIndex(mat => mat === srcMat);
+    const tagIndex = this.components.findIndex(mat => mat === tagMat);
+  
+    if (srcIndex === -1 || tagIndex === -1) {
+      console.error('Source or target material not found in components.');
+      return;
+    }
+    const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
+  
+    try {
+      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+      const newComponent = Sample.buildNew(newMolecule, this.collection_id);
+      newComponent.material_group = tagGroup;
+
+      await this.deleteMixtureComponent(tagMat)
+      await this.deleteMixtureComponent(srcMat)
+      await this.addMixtureComponent(newComponent);
+  
+    } catch (error) {
+      console.error('Error merging components:', error);
+    }
   }
   
   setComponentPositions() {
