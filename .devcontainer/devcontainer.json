@@ -10,7 +10,7 @@
     "vscode": {
       "extensions": [
         "castwide.solargraph",
-        "rebornix.ruby",
+        "Shopify.ruby-lsp",
         "dbaeumer.vscode-eslint",
         "misogi.ruby-rubocop",
         "mtxr.sqltools",
