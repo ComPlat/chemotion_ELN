@@ -13,7 +13,7 @@ export default class Wellplate extends Element {
   static buildEmpty(collectionId, width = 12, height = 8) {
     return new Wellplate(
       {
-        collectionId,
+        collection_id: collectionId,
         type: 'wellplate',
         name: 'New Wellplate',
         width,
