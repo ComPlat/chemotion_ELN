@@ -67,7 +67,7 @@ export const DeviceDescriptionsStore = types
     clearDeviceDescription() {
       self.device_description = {};
     },
-    changeDeviceDescription(field, value) {
+    changeDeviceDescription(field, value, type) {
       let device_description = { ...self.device_description };
       let operators = [...self.device_description['operators']];
 
@@ -75,12 +75,30 @@ export const DeviceDescriptionsStore = types
         const fieldElements = field.split('_');
         operators[fieldElements[2]][fieldElements[1]] = value;
         device_description['operators'] = operators;
+      } else if (field.includes('setup_descriptions')) {
+        device_description = self.changeSetupDescriptions(field, value, type, device_description);
       } else {
         device_description[field] = value;
       }
 
       device_description.updated = false;
       self.setDeviceDescription(device_description);
+    },
+    changeSetupDescriptions(field, value, type, device_description) {
+      const fieldElements = field.split('-');
+      const elementField = fieldElements.length > 1 ? fieldElements[0] : field;
+      const elementType = type !== undefined ? type : fieldElements[1];
+      let device_description_field = { ...device_description[elementField] };
+
+      if (device_description_field === null) {
+        device_description_field = { [elementType]: value };
+      } else if (fieldElements.length > 1) {
+        device_description_field[elementType][fieldElements[3]][fieldElements[2]] = value;
+      } else {
+        device_description_field[elementType] = value;
+      }
+      device_description[elementField] = device_description_field;
+      return device_description;
     },
     setActiveTabKey(key) {
       self.active_tab_key = key;

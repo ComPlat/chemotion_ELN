@@ -3,7 +3,7 @@ import { Collapse } from 'react-bootstrap';
 import {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, ontologiesList, checkboxInput
+  operatorInput, ontologiesList, checkboxInput, componentInput,
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -141,6 +141,45 @@ const PropertiesForm = () => {
   ];
   const accessOptionsLabel = 'Access options';
 
+  const setupFields = [
+    { key: 'vendor_device_id', label: 'No' },
+    { key: 'short_label', label: 'Device SL' },
+    { key: 'vendor_device_name', label: 'Name' },
+    { key: 'url', label: 'ELN Link' },
+    { key: 'details', label: 'Details' },
+    { key: 'version_doi', label: 'DOI' },
+  ];
+
+  const componentFields = [
+    { key: 'vendor_device_name', label: 'Component of - setup name' },
+    { key: 'vendor_device_id', label: 'Setup ID' },
+    { key: 'version_doi', label: 'Setup DOI' },
+    { key: 'version_doi_url', label: 'Setup DOI link' },
+  ];
+
+  const setupDescription = () => {
+    const type = deviceDescription.device_type;
+    if (!['setup', 'component'].includes(type)) { return ''; }
+    const rowFields = type == 'setup' ? setupFields : componentFields;
+    const label = type == 'setup' ? 'Setup' : 'Component';
+
+    return (
+      <>
+        {headlineWithToggle(deviceDescriptionsStore, 'setup', 'Setup description')}
+        <Collapse in={deviceDescriptionsStore.toggable_contents.setup} className="grouped-fields-row cols-1" >
+          <div>
+            {
+              componentInput(
+                deviceDescription, deviceDescriptionsStore, label,
+                'setup_descriptions', type, rowFields, ''
+              )
+            }
+          </div>
+        </Collapse>
+      </>
+    );
+  }
+
   return (
     <div className="form-fields">
       <div className="grouped-fields-row cols-3">
@@ -256,14 +295,7 @@ const PropertiesForm = () => {
         </div>
       </Collapse>
 
-      {headlineWithToggle(deviceDescriptionsStore, 'setup', 'Setup description')}
-      <Collapse in={deviceDescriptionsStore.toggable_contents.setup} className="grouped-fields-row cols-1">
-        <div>
-          <div className="form-group">
-            Subset / Description
-          </div>
-        </div>
-      </Collapse>
+      {setupDescription()}
 
       {headlineWithToggle(deviceDescriptionsStore, 'physical_data', 'Physical data, media and hardware requirements')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.physical_data} className="grouped-fields-row cols-2">
