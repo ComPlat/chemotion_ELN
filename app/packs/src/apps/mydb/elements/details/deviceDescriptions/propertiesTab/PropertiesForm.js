@@ -3,7 +3,7 @@ import { Collapse } from 'react-bootstrap';
 import {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, ontologiesList, checkboxInput, componentInput,
+  operatorInput, checkboxInput, componentInput,
 } from '../FormFields';
 
 import { observer } from 'mobx-react';

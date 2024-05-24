@@ -253,7 +253,6 @@ const componentInput = (element, store, label, field, type, rowFields, info) => 
     element[field][type].forEach((row, i) => {
       let fields = [];
       rowFields.map((entry, j) => {
-        console.log(j, entry.key, row[entry.key]);
         if (row['device_description_id'] === '') {
           fields = [
             <DropAreaForComponent
@@ -262,12 +261,13 @@ const componentInput = (element, store, label, field, type, rowFields, info) => 
               store={store}
               field={field}
               type={type}
+              key={`droparea-for-component-${i}-${j}`}
             />
           ];
         } else {
           if (entry.key === 'url') {
             fields.push(
-              <LinkedComponent element={element[field][type][i]} entry={entry} />
+              <LinkedComponent element={element[field][type][i]} key={`linked-component-${i}-${j}`} entry={entry} />
             )
           } else {
             fields.push(
