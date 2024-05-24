@@ -9,10 +9,21 @@ class WelcomeMailer < ApplicationMailer
   end
 
   def mail_welcome_message(user_id)
-    @user = User.find(user_id)
-    @message = File.read("#{Rails.root}/public/welcome-message.md")
-    @output = markdown(@message);
+    content_path = Rails.public_path.join('welcome-message.md')
+    unless File.file?(content_path)
+      Rails.logger.info('Not sending Welcome message as file not found')
+      return
+    end
 
-    mail(to: @user.email, subject: "[ELN] Welcome to Chemotion.")
+    @user = User.find(user_id)
+    @message = content_path.read
+    @output = markdown(@message)
+
+    mail(to: @user.email, subject: '[ELN] Welcome to Chemotion.')
+  end
+
+  # set Job max attempts
+  def self.max_attempts
+    1
   end
 end
