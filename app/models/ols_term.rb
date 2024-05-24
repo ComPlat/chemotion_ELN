@@ -25,8 +25,14 @@
 class OlsTerm < ApplicationRecord
   has_ancestry
 
+  NODE_RECENTLY_SELECTED = {
+    title: '-- Recently selected --', selectable: false, children: [], value: 'recently selected'
+  }.freeze
+
   class << self
-    COLUMNS  = %w[
+    # rubocop:disable Lint/PercentStringArray
+    # NB: quoted "desc" to avoid conflict reserved word in SQL
+    COLUMNS = %w[
       owl_name
       term_id
       ancestry_term_id
@@ -37,7 +43,8 @@ class OlsTerm < ApplicationRecord
       metadata
       created_at
       updated_at
-    ]
+    ].freeze
+    # rubocop:enable Lint/PercentStringArray
 
     SQL_BULK_INSERT = <<~SQL
       INSERT  INTO ols_terms (#{COLUMNS.join(',')}) VALUES

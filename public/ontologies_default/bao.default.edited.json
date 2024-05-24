@@ -1,7 +1,7 @@
 {
     "ols_terms": [{
-            "key": null,
             "title": "-- Recently selected --",
+            "value": "-- Recently selected --",
             "selectable": false,
             "children": []
         }, {
