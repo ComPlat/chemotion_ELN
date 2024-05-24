@@ -10,7 +10,7 @@ module Usecases
       end
 
       def execute!
-        @current_user.increment_counter('celllines')  # rubocop: disable Rails/SkipsModelValidations
+        @current_user.increment_counter('celllines') # rubocop: disable Rails/SkipsModelValidations
         copied_cell_line_sample = copy_cellline_sample
         create_collection_links(copied_cell_line_sample.id)
         copied_cell_line_sample
