@@ -103,15 +103,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
-  handleInputDoubleClick() {
-    if (this.state.block) {
-      this.setState({
-        block: false,
-        value: 0,
-      });
-    }
-  }
-
   _onChangeCallback() {
     if (this.props.onChange) {
       this.props.onChange({ ...this.state, unit: this.props.unit });
