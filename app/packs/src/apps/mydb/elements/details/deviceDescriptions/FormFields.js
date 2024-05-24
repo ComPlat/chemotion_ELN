@@ -5,8 +5,13 @@ import {
 } from 'react-bootstrap';
 import Select from 'react-select3';
 import DatePicker from 'react-datepicker';
+import { useDrop } from 'react-dnd';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
+
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const valueByType = (type, event) => {
   let value = [];
@@ -118,8 +123,176 @@ const elementFieldValue = (element, field) => {
   if (field.includes('operators_')) {
     const fieldValues = field.split('_');
     value = element['operators'][fieldValues[2]][fieldValues[1]];
+  } else if (field.includes('setup_descriptions')) {
+    const fieldValues = field.split('-');
+    value = element['setup_descriptions'][fieldValues[1]][fieldValues[3]][fieldValues[2]];
   }
   return value;
+}
+
+const handleDropDeviceDescription = (item, element, store, field, type, index) => {
+  let elementField = { ...element[field] };
+  Object.entries(element[field][type][index]).map(([key, value]) => {
+    if (key === 'device_description_id') { 
+      elementField[type][index][key] = item.element.id;
+    } else if (key === 'url') {
+      elementField[type][index][key] = item.element.short_label;
+    } else if (item.element[key] !== undefined) {
+      elementField[type][index][key] = item.element[key];
+    }
+  });
+  store.changeDeviceDescription(field, elementField[type], type);
+}
+
+const DropAreaForComponent = ({ index, element, store, field, type }) => {
+  const [{ isOver, canDrop }, drop] = useDrop({
+    accept: DragDropItemTypes.DEVICE_DESCRIPTION,
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    }),
+    drop: (item) => {
+      handleDropDeviceDescription(item, element, store, field, type, index);
+    },
+  });
+
+  return (
+    <div
+      key={`component-dropzone-${type}-${index}`}
+      ref={(node) => drop(node)}
+      className="element-dropzone"
+      style={{ width: '96%', border: isOver && canDrop ? '2px dashed #337ab7' : '2px dashed #bbb' }}
+    >
+      Drop device description here
+    </div>
+  );
+};
+
+const LinkedComponent = ({ element, entry }) => {
+  return (
+    <div className="form-group">
+      <label>{entry.label}</label>
+      <div>
+        <a
+          role="link"
+          tabIndex={0}
+          onClick={() => handleClickOnUrl('device_description', element.device_description_id)}
+          style={{ cursor: 'pointer' }}
+        >
+          <span className="reaction-material-link">{element.url}</span>
+        </a>  
+      </div>
+    </div>
+  );
+}
+
+const addComponent = (element, store, field, type, rowFields) => {
+  let newRow = {};
+  rowFields.map((f) => {
+    newRow[f.key] = '';
+  });
+  newRow['device_description_id'] = '';
+
+  let elementField = { ...element[field] };
+  if (elementField === null || elementField[type] === undefined) {
+    elementField = { [type]: [] };
+  }
+  const value = elementField[type].concat(newRow);
+  store.changeDeviceDescription(field, value, type);
+}
+
+const deleteComponent = (element, store, field, type, i) => {
+  element[field][type].splice(i, (i >= 0 ? 1 : 0));
+
+  store.changeDeviceDescription(field, element[field][type], type);
+}
+
+const addComponentButton = (element, store, field, type, rowFields) => {
+  return (
+    <Button
+      bsSize="xsmall"
+      bsStyle="primary"
+      onClick={() => addComponent(element, store, field, type, rowFields)}
+      className="add-row"
+    >
+      <i className="fa fa-plus" />
+    </Button>
+  );
+}
+
+const deleteComponentButton = (element, store, field, type, i) => {
+  return (
+    <Button
+      bsSize="xsmall"
+      bsStyle="danger"
+      onClick={() => deleteComponent(element, store, field, type, i)}
+      className="delete-in-row"
+    >
+      <i className="fa fa-trash-o" />
+    </Button>
+  );
+}
+
+const handleClickOnUrl = (type, id) => {
+  const { currentCollection, isSync } = UIStore.getState();
+  const uri = isSync
+    ? `/scollection/${currentCollection.id}/${type}/${id}`
+    : `/collection/${currentCollection.id}/${type}/${id}`;
+  Aviator.navigate(uri, { silent: true });
+  const e = { type, params: { collectionID: currentCollection.id } };
+  e.params[`${type}ID`] = id;
+  elementShowOrNew(e);
+
+  return null;
+}
+
+const componentInput = (element, store, label, field, type, rowFields, info) => {
+  let components = [];
+
+  if (element[field] !== null && Object.keys(element[field]).length > 0 && element[field][type]) {
+    element[field][type].forEach((row, i) => {
+      let fields = [];
+      rowFields.map((entry, j) => {
+        console.log(j, entry.key, row[entry.key]);
+        if (row['device_description_id'] === '') {
+          fields = [
+            <DropAreaForComponent
+              index={i}
+              element={element}
+              store={store}
+              field={field}
+              type={type}
+            />
+          ];
+        } else {
+          if (entry.key === 'url') {
+            fields.push(
+              <LinkedComponent element={element[field][type][i]} entry={entry} />
+            )
+          } else {
+            fields.push(
+              textInput(element, store, `${field}-${type}-${entry.key}-${i}`, entry.label, '')
+            );
+          }
+        }
+      });
+
+      components.push(
+        <div className={`grouped-fields-row cols-${rowFields.length}`} key={`${row}-${i}`}>
+          {fields}
+          {deleteComponentButton(element, store, field, type, i)}
+        </div>
+      );
+    });
+  }
+
+  return (
+    <FormGroup key={`${store.key_prefix}-${label}`} className="no-margin-bottom">
+      {addComponentButton(element, store, field, type, rowFields)}
+      {labelWithInfo(label, info)}
+      {components}
+    </FormGroup>
+  );
 }
 
 const operatorOptions = [
@@ -320,7 +493,7 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options)
 const multiSelectInput = (element, store, field, label, options, info) => {
   const elementValue = elementFieldValue(element, field);
   let value = [];
-  if (elementValue.length >= 1) {
+  if (elementValue !== null && elementValue.length >= 1) {
     elementValue.forEach((element) => value.push({ value: element, label: element }));
   }
 
@@ -359,6 +532,7 @@ const textareaInput = (element, store, field, label, rows, info) => {
 const textInput = (element, store, field, label, info) => {
   let value = elementFieldValue(element, field);
 
+
   return (
     <FormGroup key={`${store.key_prefix}-${label}`}>
       {labelWithInfo(label, info)}
@@ -376,5 +550,5 @@ const textInput = (element, store, field, label, info) => {
 export {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, annotationButton, checkboxInput,
+  operatorInput, annotationButton, checkboxInput, componentInput,
 }
