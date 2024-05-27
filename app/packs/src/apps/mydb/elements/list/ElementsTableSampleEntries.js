@@ -392,7 +392,7 @@ export default class ElementsTableSampleEntries extends Component {
         <tr key={`${index}_showMore`}>
           <td colSpan="3" style={{ padding: 0 }}>
             <Button
-              bsStyle="info"
+              variant="info"
               onClick={() => this.showMoreSamples(index)}
               style={{
                 fontSize: '14px', width: '100%', float: 'left', borderRadius: '0px'

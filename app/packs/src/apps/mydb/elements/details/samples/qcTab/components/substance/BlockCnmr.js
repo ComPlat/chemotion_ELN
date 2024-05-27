@@ -17,7 +17,7 @@ const emptyBlock = () => (
       <span>2 Analysis of the provided digital NMR spectroscopy data: 13C NMR:</span>
     </h5>
     <div className="card-qc">
-      <Alert bsStyle="danger">
+      <Alert variant="danger">
         No Information. Please upload spectrum & make predictions in Spectra Editor.
       </Alert>
     </div>

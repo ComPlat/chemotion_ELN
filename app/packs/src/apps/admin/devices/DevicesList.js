@@ -87,7 +87,7 @@ const DevicesList = () => {
     const tipTestConnect = <Tooltip id="test_tooltip">test data collector connection</Tooltip>;
     return (
       <OverlayTrigger placement="top" overlay={tipTestConnect}>
-        <Button bsSize="xsmall" onClick={() => testSFTP(device)}>
+        <Button size="sm" onClick={() => testSFTP(device)}>
           {
             devicesStore.device_testing_id == device.id ? <i className="fa fa-spin fa-spinner" aria-hidden="true" /> : <i className="fa fa-plug" aria-hidden="true" />
           }
@@ -108,13 +108,13 @@ const DevicesList = () => {
           Remove data collector settings of {device.name}<br />
           <div className="btn-toolbar">
             <Button
-              bsSize="xsmall"
-              bsStyle="danger"
+              size="sm"
+              variant="danger"
               className="devices-button-group"
               onClick={() => clearDatacollector(device)}>
               Yes
             </Button>
-            <Button bsSize="xsmall" bsStyle="warning">
+            <Button size="sm" variant="warning">
               No
             </Button>
           </div>
@@ -124,7 +124,7 @@ const DevicesList = () => {
       return (
         <OverlayTrigger animation placement="right" root trigger="focus" overlay={clearPopover}>
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <Button bsSize="xsmall" className="devices-button-group-clear">
+            <Button size="sm" className="devices-button-group-clear">
               <i className="fa fa-database" />
             </Button>
           </OverlayTrigger>
@@ -145,13 +145,13 @@ const DevicesList = () => {
           Remove Novnc settings of {device.name}<br />
           <div className="btn-toolbar">
             <Button
-              bsSize="xsmall"
-              bsStyle="danger"
+              size="sm"
+              variant="danger"
               className="devices-button-group"
               onClick={() => clearNovncSettings(device)}>
               Yes
             </Button>
-            <Button bsSize="xsmall" bsStyle="warning">
+            <Button size="sm" variant="warning">
               No
             </Button>
           </div>
@@ -161,7 +161,7 @@ const DevicesList = () => {
       return (
         <OverlayTrigger animation placement="right" root trigger="focus" overlay={clearPopover}>
           <OverlayTrigger placement="top" overlay={tooltip}>
-            <Button bsSize="xsmall" className="devices-button-group-clear">
+            <Button size="sm" className="devices-button-group-clear">
               <i className="fa fa-cogs" />
             </Button>
           </OverlayTrigger>
@@ -184,13 +184,13 @@ const DevicesList = () => {
         Remove {type}: {object.name}<br />
         <div className="btn-toolbar">
           <Button
-            bsSize="xsmall"
-            bsStyle="danger"
+            size="sm"
+            variant="danger"
             className="devices-button-group"
             onClick={() => confirmDelete(object, type, user)}>
             Yes
           </Button>
-          <Button bsSize="xsmall" bsStyle="warning">
+          <Button size="sm" variant="warning">
             No
           </Button>
         </div>
@@ -205,7 +205,7 @@ const DevicesList = () => {
         trigger="focus"
         overlay={deletePopover}
       >
-        <Button bsSize="xsmall" bsStyle="danger" className="devices-button-group">
+        <Button size="sm" variant="danger" className="devices-button-group">
           <i className="fa fa-trash-o" />
         </Button>
       </OverlayTrigger>
@@ -217,9 +217,9 @@ const DevicesList = () => {
       <td>
         <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
           <Button
-            bsSize="xsmall"
+            size="sm"
             type="button"
-            bsStyle="warning"
+            variant="warning"
             className="devices-button-group"
             onClick={() => showEditDeviceModal(device)}>
             <i className="fa fa-pencil-square-o" />
@@ -227,9 +227,9 @@ const DevicesList = () => {
         </OverlayTrigger>
         <OverlayTrigger placement="top" overlay={<Tooltip id="UsersAndGroups">Show device users and groups</Tooltip>}>
           <Button
-            bsSize="xsmall"
+            size="sm"
             type="button"
-            bsStyle="info"
+            variant="info"
             className="devices-button-group"
             onClick={() => toggleDeviceUsersAndGroups(device.id)}>
             <i className="fa fa-users" />&nbsp;({device.users.length < 10 ? `0${device.users.length}` : device.users.length})
@@ -274,9 +274,9 @@ const DevicesList = () => {
 
   const showMessage = () => {
     if (devicesStore.error_message !== '') {
-      return <Alert bsStyle="danger" className="device-alert">{devicesStore.error_message}</Alert>;
+      return <Alert variant="danger" className="device-alert">{devicesStore.error_message}</Alert>;
     } else if (devicesStore.success_message !== '') {
-      return <Alert bsStyle="success" className="device-alert">{devicesStore.success_message}</Alert>;
+      return <Alert variant="success" className="device-alert">{devicesStore.success_message}</Alert>;
     }
   }
 
@@ -284,7 +284,7 @@ const DevicesList = () => {
     <Panel>
       <Panel.Heading className="devices-panel-header">
         <span>Devices</span>
-        <Button bsStyle="default" onClick={() => showCreateDeviceModal()}>Add new device</Button>
+        <Button variant="default" onClick={() => showCreateDeviceModal()}>Add new device</Button>
       </Panel.Heading>
       <Panel.Body>
         {showMessage()}

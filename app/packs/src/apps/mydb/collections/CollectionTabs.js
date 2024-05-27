@@ -164,7 +164,7 @@ export default class CollectionTabs extends React.Component {
                 <Button
                   className='collection-tab-edit-btn'
                   bsSize='xsmall'
-                  bsStyle='primary'
+                  variant='primary'
                   onClick={this.onClickCollection.bind(this, node)}
                   title='Click to edit collection tab sorting'
                 >
@@ -228,7 +228,7 @@ export default class CollectionTabs extends React.Component {
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
               </p>
             </div>
-            <Button bsStyle="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
+            <Button variant="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
           </Modal.Footer>
         </Modal>
       </div>

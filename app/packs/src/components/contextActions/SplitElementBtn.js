@@ -73,7 +73,7 @@ export default class SplitElementBtn extends React.Component {
     });
 
     return (
-      <DropdownButton bsStyle="primary" title={<i className="fa fa-code-fork" />}>
+      <DropdownButton variant="primary" title={<i className="fa fa-code-fork" />}>
         <MenuItem
           onSelect={() => this.splitSelectionAsSubsamples()}
           disabled={this.noSelected('sample') || this.isAllCollection()}

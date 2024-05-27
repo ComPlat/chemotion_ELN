@@ -19,8 +19,8 @@ const EditorAnalysisBtn = ({
       <SplitButton
         id="spectra-editor-split-button"
         pullRight
-        bsStyle="info"
-        bsSize="xsmall"
+        variant="info"
+        size="sm"
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
@@ -41,8 +41,8 @@ const EditorAnalysisBtn = ({
     </ButtonGroup>
   ) : (
     <Button
-      bsStyle="warning"
-      bsSize="xsmall"
+      variant="warning"
+      size="sm"
       className="button-right"
       onClick={confirmRegenerate}
       disabled={!hasJcamp || !element.can_update || !hasChemSpectra}

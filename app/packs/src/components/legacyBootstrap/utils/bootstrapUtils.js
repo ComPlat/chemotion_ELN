@@ -31,7 +31,7 @@ export const bsClass = curry((defaultClass, Component) => {
   return Component;
 });
 
-export const bsStyles = curry((styles, defaultStyle, Component) => {
+export const variants = curry((styles, defaultStyle, Component) => {
   if (typeof defaultStyle !== 'string') {
     Component = defaultStyle;
     defaultStyle = undefined;
@@ -54,12 +54,12 @@ export const bsStyles = curry((styles, defaultStyle, Component) => {
 
   Component.propTypes = {
     ...propTypes,
-    bsStyle: propType
+    variant: propType
   };
 
   if (defaultStyle !== undefined) {
     let defaultProps = Component.defaultProps || (Component.defaultProps = {});
-    defaultProps.bsStyle = defaultStyle;
+    defaultProps.variant = defaultStyle;
   }
 
   return Component;
@@ -121,8 +121,8 @@ export function getClassSet(props) {
     classes[prefix(props, bsSize)] = true;
   }
 
-  if (props.bsStyle) {
-    classes[prefix(props, props.bsStyle)] = true;
+  if (props.variant) {
+    classes[prefix(props, props.variant)] = true;
   }
 
   return classes;
@@ -132,7 +132,7 @@ function getBsProps(props) {
   return {
     bsClass: props.bsClass,
     bsSize: props.bsSize,
-    bsStyle: props.bsStyle,
+    variant: props.variant,
     bsRole: props.bsRole
   };
 }
@@ -141,7 +141,7 @@ function isBsProp(propName) {
   return (
     propName === 'bsClass' ||
     propName === 'bsSize' ||
-    propName === 'bsStyle' ||
+    propName === 'variant' ||
     propName === 'bsRole'
   );
 }
@@ -178,7 +178,7 @@ export function splitBsPropsAndOmit(props, omittedPropNames) {
  * in order to validate the new variant.
  */
 export function addStyle(Component, ...styleVariant) {
-  bsStyles(styleVariant)(Component);
+  variants(styleVariant)(Component);
 }
 
 export const _curry = curry;

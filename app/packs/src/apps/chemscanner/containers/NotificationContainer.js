@@ -36,7 +36,7 @@ class Notification extends React.Component {
 
     return (
       <Alert
-        bsStyle="danger"
+        variant="danger"
         className="chemscanner-alert-notification"
         onDismiss={this.handleDismiss}
       >

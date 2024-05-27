@@ -25,7 +25,7 @@ function InfoLabel({
   if (!(iconClass && text)) { return null; }
   const icon = (<i className={`fa ${iconClass}`} />);
   const label = (
-    <Label bsStyle={style} style={{ 'margin-right': '1em' }} tooltip={tooltip}>
+    <Label variant={style} style={{ 'margin-right': '1em' }} tooltip={tooltip}>
       {icon}
       {` ${text}`}
     </Label>
@@ -259,15 +259,15 @@ export default class EmbeddedResearchPlanDetails extends Component {
         <br />
         <ButtonGroup>
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="sm"
             onClick={() => deleteResearchPlan(researchPlan.id)}
           >
             Yes
           </Button>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             onClick={() => this.setState({ confirmRemove: false })}
           >
             No
@@ -297,8 +297,8 @@ export default class EmbeddedResearchPlanDetails extends Component {
         >
           <Button
             ref={(button) => { this.target = button; }}
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="sm"
             className="button-right"
             onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
           >
@@ -316,8 +316,8 @@ export default class EmbeddedResearchPlanDetails extends Component {
         </Overlay>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             className="button-right"
             onClick={() => saveResearchPlan(researchPlan)}
             style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
@@ -329,7 +329,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
           placement="bottom"
           overlay={<Tooltip id="open_research_plan">Open Research Plan in Tab</Tooltip>}
         >
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.openResearchPlan()}>
+          <Button variant="info" size="sm" className="button-right" onClick={() => this.openResearchPlan()}>
             <i className="fa fa-window-maximize" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -338,8 +338,8 @@ export default class EmbeddedResearchPlanDetails extends Component {
           overlay={<Tooltip id="expand_research_plan">Show/hide Research Plan details</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
+            variant="info"
+            size="sm"
             className="button-right"
             onClick={() => this.setState({ expanded: !this.state.expanded })}
           >
@@ -354,22 +354,22 @@ export default class EmbeddedResearchPlanDetails extends Component {
     const { researchPlan, update } = this.state;
     let btnMode = (
       <Button
-        bsSize="xs"
-        bsStyle="success"
+        size="sm"
+        variant="success"
         onClick={() => this.handleSwitchMode('edit')}
       >
         click to edit
       </Button>
     );
     if (researchPlan.mode !== 'view') {
-      btnMode = <Button bsSize="xs" bsStyle="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
+      btnMode = <Button size="sm" variant="info" onClick={() => this.handleSwitchMode('view')}>click to view</Button>;
     }
 
     return (
       <Panel
         expanded={this.state.expanded}
         onToggle={() => {}}
-        bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'}
+        variant={researchPlan.isPendingToSave ? 'info' : 'primary'}
         className="eln-panel-detail research-plan-details"
       >
         {this.renderPanelHeading(researchPlan)}

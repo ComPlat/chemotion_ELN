@@ -129,7 +129,7 @@ export default class PolymerSection extends React.Component {
             key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_loading"
             // TODO: enable again
-            //bsStyle={this.checkInputStatus(sample, 'loading')}
+            //variant={this.checkInputStatus(sample, 'loading')}
             onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
             disabled={disabled}
             readOnly={disabled}
@@ -189,7 +189,7 @@ export default class PolymerSection extends React.Component {
                 precision={3}
                 key={'polymer_loading_input' + sample.id.toString()}
                 name="polymer_loading"
-                bsStyle={this.checkInputStatus(sample, 'loading')}
+                variant={this.checkInputStatus(sample, 'loading')}
                 onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
                 disabled={residue.custom_info.loading_type != 'external'}
                 readOnly={residue.custom_info.loading_type != 'external'}

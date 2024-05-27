@@ -111,15 +111,15 @@ class DatasetContainer extends Component {
                   style={{ marginLeft: '5px' }}
                 >
                   <Button
-                    bsStyle="danger"
-                    bsSize="xsmall"
+                    variant="danger"
+                    size="sm"
                     onClick={() => this.confirmDeleteDataset()}
                   >
                     Yes
                   </Button>
                   <Button
-                    bsStyle="warning"
-                    bsSize="xsmall"
+                    variant="warning"
+                    size="sm"
                     onClick={() => this.toggleTooltip()}
                   >
                     No

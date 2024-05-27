@@ -96,7 +96,7 @@ function FastInput(props) {
         delayShow={500}
         overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
       >
-        <FormGroup bsSize="xsmall" className="fast-input">
+        <FormGroup size="sm" className="fast-input">
           <InputGroup className="mb-3">
             <FormControl
               id="_fast_create_btn_split"
@@ -110,7 +110,7 @@ function FastInput(props) {
               placeholder="fast create by CAS/Smiles ..."
             />
             <Button
-              bsSize="xsmall"
+              size="sm"
               style={buttonStyle}
               onClick={(e) => searchString(e)}
             >

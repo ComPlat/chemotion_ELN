@@ -21,7 +21,7 @@ const MetadataAlternateIdentifiers = ({ metadata, onAdd, onChange, onRemove }) =
           />
         ))
       }
-      <Button bsStyle="success" bsSize="small" onClick={event => onAdd('alternateIdentifiers')}>
+      <Button variant="success" size="sm" onClick={event => onAdd('alternateIdentifiers')}>
         Add new alternate identifier
       </Button>
     </div>

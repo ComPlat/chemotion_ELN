@@ -95,8 +95,8 @@ export default class MoveToAnalysisButton extends React.Component {
     return (
       <div align="left" key={`btn_${sample.id}`}>
         <Button
-          bsStyle="success"
-          bsSize="small"
+          variant="success"
+          size="sm"
           onClick={() => this.moveToAnalysis(sample.id, attachment.id)}
         >
           <i className="fa fa-arrow-circle-right" aria-hidden="true" />&nbsp;
@@ -113,8 +113,8 @@ export default class MoveToAnalysisButton extends React.Component {
     const abortButton = (
       <div align="right">
         <Button
-          bsStyle="warning"
-          bsSize="small"
+          variant="warning"
+          size="sm"
           onClick={() => this.toggleTooltip()}
         >
           <i className="fa fa-times-circle" aria-hidden="true" />&nbsp;

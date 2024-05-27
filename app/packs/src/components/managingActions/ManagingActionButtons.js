@@ -5,7 +5,7 @@ import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const MoveOrAssignButton = ({ assignDisabled, moveDisabled, onClick, customClass }) => (
   <DropdownButton
-    bsStyle={customClass ? null : 'success'}
+    variant={customClass ? null : 'success'}
     className={customClass}
     title={<i className="fa fa-arrow-right" />}
     id="move-or-assign-btn"
@@ -36,7 +36,7 @@ MoveOrAssignButton.defaultProps = {
 
 const RemoveOrDeleteButton = ({ removeDisabled, deleteDisabled, onClick, customClass }) => (
   <DropdownButton
-    bsStyle={customClass ? null : 'warning'}
+    variant={customClass ? null : 'warning'}
     className={customClass}
     title={<i className="fa fa-minus-square" />}
     id="remove-or-delete-btn"
@@ -67,7 +67,7 @@ RemoveOrDeleteButton.defaultProps = {
 
 const ShareButton = ({ isDisabled, customClass, onClick }) => (
   <Button
-    bsStyle={customClass ? null : 'info'}
+    variant={customClass ? null : 'info'}
     id="share-btn"
     disabled={isDisabled}
     onClick={() => onClick('share')}
