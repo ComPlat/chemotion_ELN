@@ -241,6 +241,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   bsSize: 'small',
-  variant: 'default',
+  variant: 'light',
   name: ''
 };

@@ -54,7 +54,7 @@ const ContentInputs = (template, els) => {
   const titleStr = titleFromTemplate(template) || 'TBD';
 
   return (
-    <Panel variant="default" defaultExpanded>
+    <Panel variant="light" defaultExpanded>
       <Panel.Heading>
         <Panel.Title toggle>
           { titleStr }

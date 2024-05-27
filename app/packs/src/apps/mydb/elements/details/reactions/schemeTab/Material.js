@@ -163,7 +163,7 @@ class Material extends Component {
                 || material.gas_type === 'gas'}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'l' ? 'success' : 'default'}
+              variant={material.amount_unit === 'l' ? 'success' : 'light'}
             />
           </div>
         </OverlayTrigger>
@@ -643,7 +643,7 @@ class Material extends Component {
     const { material, deleteMaterial, connectDragSource, connectDropTarget,
       showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target';
-    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
+    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'light';
     const mol = material.amount_mol;
     //const concn = mol / reaction.solventVolume;
     const mw = material.decoupled ?
@@ -768,7 +768,7 @@ class Material extends Component {
               disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'success' : 'default'}
+              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
             />
           </td>
 

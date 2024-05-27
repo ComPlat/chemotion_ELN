@@ -491,7 +491,7 @@ export default class UserAuth extends Component {
         <td width="10%" style={{ border: 'none' }}>
           <Button
             size="sm"
-            variant={g.user_id == null ? 'success' : 'default'}
+            variant={g.user_id == null ? 'success' : 'light'}
             onClick={() => this.subscribe(g)}
           >
             {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}

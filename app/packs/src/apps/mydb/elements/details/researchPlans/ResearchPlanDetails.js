@@ -366,7 +366,7 @@ export default class ResearchPlanDetails extends Component {
 
     const EditButton = (
       <Button
-        variant={researchPlan.mode === 'edit' ? 'warning' : 'default'}
+        variant={researchPlan.mode === 'edit' ? 'warning' : 'light'}
         style={{
           pointerEvents: 'none',
           backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
@@ -378,7 +378,7 @@ export default class ResearchPlanDetails extends Component {
 
     const ViewButton = (
       <Button
-        variant={researchPlan.mode === 'view' ? 'info' : 'default'}
+        variant={researchPlan.mode === 'view' ? 'info' : 'light'}
         style={{
           pointerEvents: 'none',
           backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,

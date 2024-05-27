@@ -190,7 +190,7 @@ const ResearchplanFlowEditor = (props) => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button className="pull-left" variant="default" onClick={onHide}>
+          <Button className="pull-left" variant="light" onClick={onHide}>
             Cancel
           </Button>
           <Button className="pull-right" variant="success" onClick={onClickSave}>

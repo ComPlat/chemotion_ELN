@@ -107,7 +107,7 @@ export default class ElementDetailSortTab extends Component {
   render() {
     const currentCollection = UIStore.getState().currentCollection;
     const tabs = currentCollection?.tabs_segment;
-    const buttonInfo = isEmpty(tabs) ? 'info' : 'default';
+    const buttonInfo = isEmpty(tabs) ? 'info' : 'light';
     const tabLayoutContainerElement = (
       <TabLayoutContainer
         visible={this.state.visible}
