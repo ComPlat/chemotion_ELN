@@ -103,7 +103,7 @@ export default class AdminGroupElement extends React.Component {
             <Button
               size="sm"
               type="button"
-              variant={isAdmin === true ? 'default' : 'info'}
+              variant={isAdmin === true ? 'light' : 'info'}
               onClick={() => this.setGroupAdmin(group, user, !isAdmin)}
             >
               <i className="fa fa-key" />

@@ -29,7 +29,7 @@ export default function CommentButton(props) {
     >
       <Button
         id="commentBtn"
-        variant={sectionComments.length > 0 ? 'success' : 'default'}
+        variant={sectionComments.length > 0 ? 'success' : 'light'}
         size="sm"
         onClick={() => {
           CommentActions.fetchComments(element);

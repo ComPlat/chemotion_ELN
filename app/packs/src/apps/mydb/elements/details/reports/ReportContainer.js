@@ -134,7 +134,7 @@ export default class ReportContainer extends Component {
     const tabStyle = {padding: "15px", border: "1px solid #ddd", borderRadius: "4px"}
     return (
       <Panel
-        variant="default"
+        variant="light"
       >
         {alertTemplateNotFound && (
           <Alert variant="warning">

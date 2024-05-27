@@ -75,7 +75,7 @@ const ObjRow = ({ element, template, connectDragSource, connectDropTarget,
     style.opacity = 0.2;
   }
 
-  let variant = 'default';
+  let variant = 'light';
   let icon = null;
   const isStdTemplate = template === 'standard';
   const { type, role } = element;
@@ -85,7 +85,7 @@ const ObjRow = ({ element, template, connectDragSource, connectDropTarget,
     variant = 'primary';
     icon = <i className="fa fa-home c-bs-info" />;
   } else if (!isStdTemplate && type === 'reaction' && role === 'single') {
-    variant = 'default';
+    variant = 'light';
     icon = <i className="fa fa-asterisk c-bs-danger" />;
   } else if (!isStdTemplate && type === 'reaction' && role === 'parts') {
     variant = 'info';
