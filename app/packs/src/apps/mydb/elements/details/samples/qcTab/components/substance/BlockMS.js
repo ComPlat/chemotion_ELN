@@ -10,7 +10,7 @@ const emptyBlock = () => (
       <span>3 Analysis of the provided digital mass spectrometry data:</span>
     </h5>
     <div className="card-qc">
-      <Alert bsStyle="danger">
+      <Alert variant="danger">
         No Information. Please upload spectra to Spectra Editor.
       </Alert>
     </div>

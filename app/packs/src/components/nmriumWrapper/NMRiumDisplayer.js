@@ -448,8 +448,8 @@ export default class NMRiumDisplayer extends React.Component {
     return (
       <Modal.Header>
         <Button
-          bsStyle="danger"
-          bsSize="small"
+          variant="danger"
+          size="sm"
           className="button-right"
           onClick={() => {
             SpectraActions.ToggleModalNMRDisplayer.defer();
@@ -465,8 +465,8 @@ export default class NMRiumDisplayer extends React.Component {
           hasSpectra && !readOnly ? 
           (
             <Button
-              bsStyle="success"
-              bsSize="small"
+              variant="success"
+              size="sm"
               className="button-right"
               onClick={() => {
                 this.requestDataToBeSaved();

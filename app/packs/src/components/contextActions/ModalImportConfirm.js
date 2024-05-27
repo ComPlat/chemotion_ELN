@@ -241,8 +241,8 @@ export default class ModalImportConfirm extends React.Component {
         &nbsp;
 
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+          <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
     )

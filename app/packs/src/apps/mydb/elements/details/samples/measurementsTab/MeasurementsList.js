@@ -53,8 +53,8 @@ class MeasurementsList extends Component {
   renderDeleteButton(measurement) {
     return (
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
+        variant="danger"
+        size="sm"
         key={`Measurement${measurement.id}-DeleteButton`}
         onClick={() => { this.setState({ measurementToDelete: measurement }) }}
       >

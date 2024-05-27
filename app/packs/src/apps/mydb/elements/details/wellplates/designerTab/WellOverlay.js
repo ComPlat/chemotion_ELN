@@ -50,7 +50,7 @@ const renderWellContent = (well, removeSampleFromWell) => {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
-      <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
+      <Button className="pull-right" size="sm" variant="danger" onClick={() => removeSampleFromWell(well)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -180,7 +180,7 @@ const title = (handleClose) => (
   <div>
     Well Details
     <span className="pull-right" style={{ marginRight: -8, marginTop: -3 }}>
-      <Button bsSize="xsmall" onClick={() => handleClose()}>
+      <Button size="sm" onClick={() => handleClose()}>
         <i className="fa fa-times" />
       </Button>
     </span>

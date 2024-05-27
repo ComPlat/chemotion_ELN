@@ -79,10 +79,10 @@ export default class SyncWithMeCollections extends React.Component {
       <Popover id="popover-positioned-scrolling-left">
         delete collection: <br /> {node.label} ?<br />
         <ButtonGroup>
-          <Button bsStyle="danger" bsSize="xsmall" onClick={() => CollectionActions.rejectSync({ id: node.id, is_syncd: true })}>
+          <Button variant="danger" size="sm" onClick={() => CollectionActions.rejectSync({ id: node.id, is_syncd: true })}>
           Yes
           </Button>
-          <Button bsStyle="warning" bsSize="xsmall" onClick={this.handleClick} >
+          <Button variant="warning" size="sm" onClick={this.handleClick} >
           No
           </Button>
         </ButtonGroup>
@@ -100,7 +100,7 @@ export default class SyncWithMeCollections extends React.Component {
               trigger="focus"
               overlay={popover}
             >
-              <Button bsSize="xsmall" bsStyle="danger" >
+              <Button size="sm" variant="danger" >
                 <i className="fa fa-trash-o" />
               </Button>
             </OverlayTrigger>

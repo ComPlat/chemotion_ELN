@@ -125,7 +125,7 @@ export default class MySharedCollections extends React.Component {
     if (node.label == "My Shared Collections") {
       return (
         <div className="root-actions">
-          <Button bsSize="xsmall" bsStyle="warning"
+          <Button size="sm" variant="warning"
             onClick={this.bulkUpdate.bind(this)}
             onMouseDown={(e)=>{e.stopPropagation();}}
             >
@@ -136,11 +136,11 @@ export default class MySharedCollections extends React.Component {
     } else if (!node.is_locked) {
       return (
         <ButtonGroup className="actions">
-          <Button bsSize="xsmall" bsStyle="primary"
+          <Button size="sm" variant="primary"
             onClick={() => this.editShare(node)}>
             <i className="fa fa-share-alt"></i>
           </Button>
-          <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
+          <Button size="sm" variant="danger" onClick={this.deleteCollection.bind(this, node)}>
             <i className="fa fa-trash-o"></i>
           </Button>
         </ButtonGroup>

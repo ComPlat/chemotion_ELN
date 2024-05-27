@@ -53,7 +53,7 @@ function NewSession({ authenticityToken, omniauthProviders, extraRules={} }) {
           </FormGroup>
         </Col>
         <Col xs="auto">
-          <Button type="submit" bsStyle="primary">
+          <Button type="submit" variant="primary">
             <i class="fa fa-sign-in"></i>
           </Button>
         </Col>

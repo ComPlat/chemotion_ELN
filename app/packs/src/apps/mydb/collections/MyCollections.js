@@ -119,8 +119,8 @@ export default class MyCollections extends React.Component {
         <div className="root-actions">
           {isChange && <Button 
           id="save-collections-button" 
-          bsSize="xsmall" 
-          bsStyle="warning" 
+          size="sm" 
+          variant="warning" 
           onMouseDown={(e)=>{e.stopPropagation();}}
           onClick={this.bulkUpdate.bind(this)}> Save </Button>}
           {this.addCollectionButton(node)}
@@ -131,8 +131,8 @@ export default class MyCollections extends React.Component {
         <ButtonGroup className="actions">
           <Button
             id="sync-users-btn"
-            bsSize="xsmall"
-            bsStyle="primary"
+            size="sm"
+            variant="primary"
             disabled={node.isNew === true}
             onClick={() => this.doSync(node, 'CreateSync')}
           >
@@ -142,8 +142,8 @@ export default class MyCollections extends React.Component {
           {this.addSubcollectionButton(node)}
 
           <Button
-            bsSize="xsmall"
-            bsStyle="danger"
+            size="sm"
+            variant="danger"
             id={`delete-collection-button_${node.id}`}
             onClick={this.deleteCollection.bind(this, node)}
           >
@@ -167,11 +167,11 @@ export default class MyCollections extends React.Component {
               &nbsp; <PermissionIcons pl={collection.permission_level} />
             </span>
             <ButtonGroup className="actions">
-              <Button bsSize="xsmall" bsStyle="primary"
+              <Button size="sm" variant="primary"
                 onClick={() => this.doSync(collection, 'EditSync')}>
                 <i className="fa fa-share-alt">edit</i>
               </Button>
-              <Button bsSize="xsmall" bsStyle="danger"
+              <Button size="sm" variant="danger"
                 onClick={() => CollectionActions.deleteSync({ id: collection.id, is_syncd: false })}
               >
                 <i className="fa fa-share-alt" /> <i className="fa fa-trash-o"></i>
@@ -207,8 +207,8 @@ export default class MyCollections extends React.Component {
     return (
       <Button
         id="add-new-collection-button"
-        bsSize="xsmall"
-        bsStyle="success"
+        size="sm"
+        variant="success"
         onClick={(e)=>{this.addSubcollection(node);}}
         onMouseDown={(e)=>{e.stopPropagation();}}
       >
@@ -221,8 +221,8 @@ export default class MyCollections extends React.Component {
     return (
       <Button
         id={`add-subcollection-to-collection_${node.id}`}
-        bsSize="xsmall"
-        bsStyle="success"
+        size="sm"
+        variant="success"
         onClick={this.addSubcollection.bind(this, node)}
       >
         <i className="fa fa-plus"></i>

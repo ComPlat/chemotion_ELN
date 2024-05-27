@@ -101,7 +101,7 @@ const DeviceMetadataTab = () => {
           </FormGroup>
           <FormGroup className="col-small">
             <ControlLabel>Action</ControlLabel>
-            <Button bsStyle="danger" bsSize="small"
+            <Button variant="danger" size="sm"
               className="pull-right"
               onClick={() => removeDeviceMetadataDate(index)}
             >
@@ -120,7 +120,7 @@ const DeviceMetadataTab = () => {
 
     return (
       <Button className="pull-right with-margin-bottom col-half"
-        bsStyle="danger"
+        variant="danger"
         onClick={() => syncDeviceMetadataFromDataCite()}
       >
         Sync from DataCite
@@ -223,7 +223,7 @@ const DeviceMetadataTab = () => {
       {deviceMetaDataDates()}
 
       <FormGroup className="col-full">
-        <Button bsStyle="success" bsSize="small" className="pull-right" onClick={() => addDeviceMetadataDate()}>
+        <Button variant="success" size="sm" className="pull-right" onClick={() => addDeviceMetadataDate()}>
           <i className="fa fa-plus" />
         </Button>
       </FormGroup>
@@ -235,7 +235,7 @@ const DeviceMetadataTab = () => {
         DataCiteUpdatedAt: {dataCiteUpdatedAt()}
       </FormGroup>
 
-      <Button className="pull-right col-half" bsStyle="danger" onClick={() => syncDeviceMetadataToDataCite()}>
+      <Button className="pull-right col-half" variant="danger" onClick={() => syncDeviceMetadataToDataCite()}>
         Sync to DataCite
       </Button>
     </Form>

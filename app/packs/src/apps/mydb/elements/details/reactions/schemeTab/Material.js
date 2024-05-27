@@ -81,7 +81,7 @@ const notApplicableInput = () => (
   <td>
     <FormControl
       bsClass="bs-form--compact form-control"
-      bsSize="small"
+      size="sm"
       style={{ textAlign: 'center' }}
       type="text"
       value="n/a"
@@ -157,7 +157,7 @@ class Material extends Component {
               disabled={!permitOn(this.props.reaction) || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
-              bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
+              variant={material.amount_unit === 'l' ? 'success' : 'default'}
             />
           </div>
         </OverlayTrigger>
@@ -181,7 +181,7 @@ class Material extends Component {
           unit="mmol/g"
           metricPrefix="n"
           metricPrefixes={['n']}
-          bsStyle={material.error_loading ? 'error' : 'success'}
+          variant={material.error_loading ? 'error' : 'success'}
           precision={3}
           disabled={!permitOn(this.props.reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
           onChange={loading => this.handleLoadingChange(loading)}
@@ -200,7 +200,7 @@ class Material extends Component {
             name="reference"
             checked={material.reference}
             onChange={e => this.handleReferenceChange(e)}
-            bsSize="xsmall"
+            size="sm"
             style={{ margin: 0 }}
           />
         </td>
@@ -213,8 +213,8 @@ class Material extends Component {
         active
         style={style}
         onClick={e => this.handleShowLabelChange(e)}
-        bsStyle={material.show_label ? 'success' : 'primary'}
-        bsSize="small"
+        variant={material.show_label ? 'success' : 'primary'}
+        size="sm"
         title={material.show_label ? 'Switch to structure' : 'Switch to label'}
       >{material.show_label ? 'l' : 's'}
       </Button>
@@ -242,7 +242,7 @@ class Material extends Component {
             name="yield"
             type="text"
             bsClass="bs-form--compact form-control"
-            bsSize="small"
+            size="sm"
             value={calculateYield}
             disabled
           />
@@ -541,7 +541,7 @@ class Material extends Component {
                 disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
                 onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
                 onMetricsChange={this.handleMetricsChange}
-                bsStyle={material.error_mass ? 'error' : massBsStyle}
+                variant={material.error_mass ? 'error' : massBsStyle}
                 name="molecular-weight"
               />
             </div>
@@ -561,7 +561,7 @@ class Material extends Component {
             disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
             onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
             onMetricsChange={this.handleMetricsChange}
-            bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
+            variant={material.amount_unit === 'mol' ? 'success' : 'default'}
           />
         </td>
 
@@ -587,8 +587,8 @@ class Material extends Component {
         <td>
           <Button
             disabled={!permitOn(reaction)}
-            bsStyle="danger"
-            bsSize="small"
+            variant="danger"
+            size="sm"
             onClick={() => deleteMaterial(material)}
           >
             <i className="fa fa-trash-o" />
@@ -656,7 +656,7 @@ class Material extends Component {
                   disabled={!permitOn(reaction)}
                   type="text"
                   bsClass="bs-form--compact form-control"
-                  bsSize="small"
+                  size="sm"
                   value={material.external_label}
                   placeholder={material.molecule.iupac_name}
                   onChange={event => this.handleExternalLabelChange(event)}
@@ -669,7 +669,7 @@ class Material extends Component {
                   disabled={!permitOn(reaction)}
                   active
                   onClick={e => this.handleExternalLabelCompleted(e)}
-                  bsSize="small"
+                  size="sm"
                 ><i className="fa fa-refresh" /></Button>
               </OverlayTrigger>
             </InputGroup.Button>
@@ -682,7 +682,7 @@ class Material extends Component {
           <FormControl
             type="text"
             bsClass="bs-form--compact form-control"
-            bsSize="small"
+            size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
           />
@@ -691,8 +691,8 @@ class Material extends Component {
         <td>
           <Button
             disabled={!permitOn(reaction)}
-            bsStyle="danger"
-            bsSize="small"
+            variant="danger"
+            size="sm"
             onClick={() => deleteMaterial(material)}
           ><i className="fa fa-trash-o" /></Button>
         </td>
@@ -707,8 +707,8 @@ class Material extends Component {
         active
         style={style}
         onClick={() => this.toggleTarget(isTarget)}
-        bsStyle={isTarget ? 'success' : 'primary'}
-        bsSize="small"
+        variant={isTarget ? 'success' : 'primary'}
+        size="sm"
       >{isTarget ? 't' : 'r'}</Button>
     );
   }
@@ -791,7 +791,7 @@ class Material extends Component {
         <div style={{ display: 'inline-block', maxWidth: '100%' }}>
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-              <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc} disabled={!permitOn(reaction)}>
+              <Button variant="primary" size="sm" onClick={addToDesc} disabled={!permitOn(reaction)}>
                 {serialCode}
               </Button>
             </OverlayTrigger>&nbsp;

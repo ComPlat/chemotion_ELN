@@ -259,8 +259,8 @@ export default class WellplateDetails extends Component {
         <ConfirmClose el={wellplate} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
@@ -269,7 +269,7 @@ export default class WellplateDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={() => this.props.toggleFullScreen()}>
+          <Button variant="info" size="sm" className="button-right" onClick={() => this.props.toggleFullScreen()}>
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>
@@ -391,7 +391,7 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
+      <Panel variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="eln-panel-detail">
         <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
         <Panel.Body>
           <ElementDetailSortTab
@@ -404,17 +404,17 @@ export default class WellplateDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+            <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
               wellplate.changed ? (
-                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                <Button variant="warning" onClick={() => this.handleSubmit()}>
                   {wellplate.isNew ? 'Create' : 'Save'}
                 </Button>
               ) : <div />
             }
             {exportButton}
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => this.handlePrint()}
               disabled={printButtonDisabled}
             >

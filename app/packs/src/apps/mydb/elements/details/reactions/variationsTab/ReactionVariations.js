@@ -76,8 +76,8 @@ function MenuHeader({
   const unitSelection = (
     <Button
       className="unitSelection"
-      bsStyle="success"
-      bsSize="xsmall"
+      variant="success"
+      size="sm"
       style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
       onClick={onUnitChanged}
     >
@@ -112,8 +112,8 @@ function MenuHeader({
   const entrySelection = (
     <Button
       className="entrySelection"
-      bsStyle="default"
-      bsSize="xsmall"
+      variant="default"
+      size="sm"
       style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
       disabled={Object.keys(entries).length === 1}
       onClick={onEntryChanged}
@@ -411,7 +411,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       >
         {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
         <span>
-          <Button bsSize="xsmall" bsStyle="success" onClick={addRow}>
+          <Button size="sm" variant="success" onClick={addRow}>
             <i className="fa fa-plus" />
           </Button>
         </span>

@@ -52,7 +52,7 @@ export default class ModalImport extends React.Component {
       return (
         <div>
           {file.name}
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
+          <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
             <i className="fa fa-trash-o"></i>
           </Button>
         </div>
@@ -83,8 +83,8 @@ export default class ModalImport extends React.Component {
         {this.dropzoneOrfilePreview()}
         &nbsp;
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+          <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
     );

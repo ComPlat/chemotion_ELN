@@ -34,7 +34,7 @@ const reportStatusBtn = (archive) => {
   );
   const downloadBtn = (
     <OverlayTrigger placement="top" overlay={downloadTP}>
-      <Button bsStyle="primary" bsSize="small" onClick={onClickDownloadReport}>
+      <Button variant="primary" size="sm" onClick={onClickDownloadReport}>
         <i className="fa fa-download" />
       </Button>
     </OverlayTrigger>
@@ -42,7 +42,7 @@ const reportStatusBtn = (archive) => {
 
   const processBtn = (
     <OverlayTrigger placement="top" overlay={processTP}>
-      <Button bsStyle="default" bsSize="small" onClick={stopBubble}>
+      <Button variant="default" size="sm" onClick={stopBubble}>
         <i className="fa fa-clock-o" />
       </Button>
     </OverlayTrigger>
@@ -68,7 +68,7 @@ const deleteBtn = (archive) => {
 
   const btn = (
     <OverlayTrigger placement="top" overlay={deleteTP}>
-      <Button bsStyle="danger" bsSize="small" onClick={onClickToDelete}>
+      <Button variant="danger" size="sm" onClick={onClickToDelete}>
         <i className="fa fa-times" />
       </Button>
     </OverlayTrigger>
@@ -94,7 +94,7 @@ const cloneBtn = (archive) => {
 
   const btn = (
     <OverlayTrigger placement="top" overlay={cloneTP}>
-      <Button bsStyle="warning" bsSize="small" onClick={onClickToClone}>
+      <Button variant="warning" size="sm" onClick={onClickToClone}>
         <i className="fa fa-pencil" />
       </Button>
     </OverlayTrigger>
@@ -109,7 +109,7 @@ const suiTooltip = () => (
 
 const suiLabel = () => (
   <OverlayTrigger placement="right" overlay={suiTooltip()}>
-    <Label bsStyle="info">SI</Label>
+    <Label variant="info">SI</Label>
   </OverlayTrigger>
 );
 
@@ -119,7 +119,7 @@ const suiStdRxnLabelTooltip = () => (
 
 const suiStdRxnLabel = () => (
   <OverlayTrigger placement="right" overlay={suiStdRxnLabelTooltip()}>
-    <Label bsStyle="info">SI STD-RXN</Label>
+    <Label variant="info">SI STD-RXN</Label>
   </OverlayTrigger>
 );
 
@@ -129,7 +129,7 @@ const spcTooltip = () => (
 
 const spcLabel = () => (
   <OverlayTrigger placement="right" overlay={spcTooltip()}>
-    <Label bsStyle="info">SI-SPC</Label>
+    <Label variant="info">SI-SPC</Label>
   </OverlayTrigger>
 );
 
@@ -139,19 +139,19 @@ const rxlTooltip = () => (
 
 const rxlXlsxLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
-    <Label bsStyle="info">SI-XLSX</Label>
+    <Label variant="info">SI-XLSX</Label>
   </OverlayTrigger>
 );
 
 const rxlCsvLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
-    <Label bsStyle="info">SI-CSV</Label>
+    <Label variant="info">SI-CSV</Label>
   </OverlayTrigger>
 );
 
 const rxlHtmlLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
-    <Label bsStyle="info">SI-HTML</Label>
+    <Label variant="info">SI-HTML</Label>
   </OverlayTrigger>
 );
 
@@ -178,7 +178,7 @@ const templateLable = (archive) => {
 
 const title = (archive) => {
   const newLabel = archive.unread
-    ? <Label bsStyle="warning">new</Label>
+    ? <Label variant="warning">new</Label>
     : null;
 
   return (

@@ -200,10 +200,10 @@ export default class SearchFilter extends React.Component {
           {this.renderDynamicRow()}
         </div>
         <div className="footer">
-          <Button bsStyle="primary" onClick={this.search}>
+          <Button variant="primary" onClick={this.search}>
             Search
           </Button>
-          <Button bsStyle="warning" onClick={() => this.showFilters(false)}>
+          <Button variant="warning" onClick={() => this.showFilters(false)}>
             Close
           </Button>
         </div>

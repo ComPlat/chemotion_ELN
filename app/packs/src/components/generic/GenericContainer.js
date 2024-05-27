@@ -39,8 +39,8 @@ const headerBtnGroup = (props) => {
   return (
     <div className="upper-btn">
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         className="button-right"
         disabled={readOnly}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); fnRemove(container); }}
@@ -144,7 +144,7 @@ const AiHeaderDeleted = (props) => {
           <strike>{header(container)}</strike>
           {
             noAct ? null : (
-              <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={(e) => { e.preventDefault(); e.stopPropagation(); fnUndo(container); }}>
+              <Button className="pull-right" size="sm" variant="danger" onClick={(e) => { e.preventDefault(); e.stopPropagation(); fnUndo(container); }}>
                 <i className="fa fa-undo" aria-hidden="true" />
               </Button>
             )

@@ -99,11 +99,11 @@ export default class ManagingModalCollectionActions extends React.Component {
     const { newLabel, selected } = this.state
     const l = newLabel && newLabel.length
     return l && l > 0 ? (
-      <Button bsStyle="warning" onClick={this.handleSubmit}>
+      <Button variant="warning" onClick={this.handleSubmit}>
         Create collection &lsquo;{newLabel}&rsquo; and Submit
       </Button>
     ) : (
-      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
+      <Button variant="warning" onClick={this.handleSubmit} disabled={!selected}>
         Submit
       </Button>
     );

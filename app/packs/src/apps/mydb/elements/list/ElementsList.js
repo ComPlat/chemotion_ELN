@@ -229,8 +229,8 @@ export default class ElementsList extends React.Component {
     let removeSearchResultAlert = '';
     if (UIStore.getState().currentSearchByID) {
       removeSearchResultAlert = (
-        <Alert bsStyle="info" style={{ padding: '4px' }}>
-          <Button bsStyle="link" style={{ fontSize: '15px' }} onClick={() => this.handleRemoveSearchResult(this.context.search)}>Remove search result</Button>
+        <Alert variant="info" style={{ padding: '4px' }}>
+          <Button variant="link" style={{ fontSize: '15px' }} onClick={() => this.handleRemoveSearchResult(this.context.search)}>Remove search result</Button>
         </Alert>
       );
     }
@@ -303,7 +303,7 @@ export default class ElementsList extends React.Component {
         <Row className="clearfix">
           <Col sm={12}>
             {removeSearchResultAlert}
-            <Nav bsStyle="tabs">
+            <Nav variant="tabs">
               {navItems}
               <ElementsTableSettings
                 visible={visible}

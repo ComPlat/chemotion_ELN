@@ -54,25 +54,25 @@ export default class ComputeTask extends React.Component {
     return (
       <tr>
         <td style={{ textAlign: 'center' }}>
-          <Button bsStyle="link" onClick={this.navigateSample}>
+          <Button variant="link" onClick={this.navigateSample}>
             Sample
           </Button>
         </td>
         <td style={{ textAlign: 'center' }}>
-          <Label bsStyle="primary">{displayStatus}</Label>
+          <Label variant="primary">{displayStatus}</Label>
         </td>
         <td style={{ textAlign: 'center' }}>{task.updatedAt}</td>
         <td style={{ textAlign: 'center' }}>
-          <Button bsStyle="info" onClick={this.checkState} bsSize="xs" style={{ width: '22px' }}>
+          <Button variant="info" onClick={this.checkState} size="sm" style={{ width: '22px' }}>
             <i className="fa fa-long-arrow-up" />
             <i className="fa fa-long-arrow-down" />
           </Button>
           &nbsp;&nbsp;
-          <Button bsStyle="warning" onClick={this.revokeTask} bsSize="xs">
+          <Button variant="warning" onClick={this.revokeTask} size="sm">
             <i className="fa fa-stop" />
           </Button>
           &nbsp;&nbsp;
-          <Button bsStyle="danger" onClick={this.deleteTask} bsSize="xs">
+          <Button variant="danger" onClick={this.deleteTask} size="sm">
             <i className="fa fa-trash" />
           </Button>
         </td>

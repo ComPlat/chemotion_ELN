@@ -181,7 +181,7 @@ export default class ImageModal extends Component {
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleModalClose} className="pull-left">
+            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">
               Close
             </Button>
           </Modal.Footer>

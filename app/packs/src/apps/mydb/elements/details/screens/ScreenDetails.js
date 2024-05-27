@@ -208,8 +208,8 @@ export default class ScreenDetails extends Component {
           overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
         >
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
@@ -222,8 +222,8 @@ export default class ScreenDetails extends Component {
           overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
+            variant="info"
+            size="sm"
             className="button-right"
             onClick={() => this.props.toggleFullScreen()}
           >
@@ -435,7 +435,7 @@ export default class ScreenDetails extends Component {
 
     return (
       <Panel
-        bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
+        variant={screen.isPendingToSave ? 'info' : 'primary'}
         className="eln-panel-detail"
       >
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
@@ -455,8 +455,8 @@ export default class ScreenDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+            <Button variant="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
+            <Button variant="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
           <CommentModal element={screen} />
         </Panel.Body>

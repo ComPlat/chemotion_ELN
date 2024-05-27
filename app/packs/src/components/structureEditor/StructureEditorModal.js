@@ -170,7 +170,7 @@ EditorList.propTypes = {
 
 const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
   (
-    <Panel bsStyle="info">
+    <Panel variant="info">
       <Panel.Heading>
         <Panel.Title>
           Parents/Descendants will not be changed!
@@ -180,10 +180,10 @@ const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
         <p>This sample has parents or descendants, and they will not be changed.</p>
         <p>Are you sure?</p>
         <br />
-        <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
+        <Button variant="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
           Cancel
         </Button>
-        <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
+        <Button variant="warning" onClick={hideWarning} className="g-marginLeft--10">
           Continue Editing
         </Button>
       </Panel.Body>
@@ -369,11 +369,11 @@ export default class StructureEditorModal extends React.Component {
             {useEditor}
             <div style={buttonToolStyle}>
               <ButtonToolbar>
-                <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
+                <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
                   {cancelBtnText}
                 </Button>
                 {!handleSaveBtn ? null : (
-                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
+                  <Button variant="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
                     {submitBtnText}
                   </Button>
                 )}

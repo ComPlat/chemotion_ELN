@@ -49,10 +49,10 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
               {schema.value.rows.length}
             </td>
             <td>
-              <Button bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(schema)}>
+              <Button variant="danger" size="sm" onClick={() => onDelete(schema)}>
                 Delete
               </Button>
-              <Button bsStyle="warning" bsSize="xsmall" onClick={() => onUse(schema)}>
+              <Button variant="warning" size="sm" onClick={() => onUse(schema)}>
                 Use
               </Button>
             </td>
@@ -79,7 +79,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
                   onChange={this.handleSchemaNameChange.bind(this)}
                 />
                 <InputGroup.Button>
-                  <Button bsStyle="success" onClick={this.handleSubmit.bind(this)}>
+                  <Button variant="success" onClick={this.handleSubmit.bind(this)}>
                     Save
                   </Button>
                 </InputGroup.Button>
@@ -104,7 +104,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
             </Table>
           </div>
           <div>
-            <Button bsStyle="default" onClick={onHide}>
+            <Button variant="default" onClick={onHide}>
               Close
             </Button>
           </div>

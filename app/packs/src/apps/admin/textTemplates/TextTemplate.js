@@ -24,8 +24,8 @@ function RemoveRowBtn({ removeRow, node }) {
     <Button
       active
       onClick={btnClick}
-      bsSize="xsmall"
-      bsStyle="danger"
+      size="sm"
+      variant="danger"
     >
       <i className="fa fa-trash" />
     </Button>
@@ -43,8 +43,8 @@ function AddRowBtn({ addRow }) {
     <Button
       active
       onClick={() => addRow()}
-      bsSize="xsmall"
-      bsStyle="primary"
+      size="sm"
+      variant="primary"
     >
       <i className="fa fa-plus" />
     </Button>
@@ -275,7 +275,7 @@ export default class TextTemplate extends React.Component {
               </div>
               &nbsp;&nbsp;
               <div style={{ marginTop: '30px' }}>
-                <Button bsStyle="primary" onClick={this.saveTemplate}>
+                <Button variant="primary" onClick={this.saveTemplate}>
                   Save
                 </Button>
               </div>

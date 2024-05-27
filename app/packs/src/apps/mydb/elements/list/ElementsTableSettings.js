@@ -230,7 +230,7 @@ export default class ElementsTableSettings extends React.Component {
     return (
       <div style={{position: 'relative'}}>
         <Button
-          bsSize="xsmall"
+          size="sm"
           style={{ margin: '10px 10px 10px 0', float: 'right' }}
           ref={button => { this.tabLayoutButton = button; }}
           onClick={this.toggleTabLayoutContainer}

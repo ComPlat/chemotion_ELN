@@ -82,11 +82,11 @@ const DeviceDataCollectorTab = () => {
           {
             localCollectorValues.map((c, i) => (
               <div key={`list-collector-${i}`}>
-                <FormGroup bsSize="small">
+                <FormGroup size="sm">
                   <InputGroup>
                     <InputGroup.Button>
                       <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                        <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>

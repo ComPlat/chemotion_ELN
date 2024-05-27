@@ -82,8 +82,8 @@ export default class GraphContainer extends React.Component {
           <Button
             key="closeBtn"
             onClick={this.onClose}
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="sm"
             className="button-right"
           >
             <i className="fa fa-times" />
@@ -94,7 +94,7 @@ export default class GraphContainer extends React.Component {
 
     return (
       <Panel
-        bsStyle="primary"
+        variant="primary"
       >
         <Panel.Heading>
           {header}

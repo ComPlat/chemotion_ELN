@@ -308,8 +308,8 @@ export default class InboxModal extends React.Component {
           title="Size"
           className="header-button"
           id="dropdown-size-button"
-          bsStyle="info"
-          bsSize="xs"
+          variant="info"
+          size="sm"
           style={{ marginLeft: '10px' }}
 
         >
@@ -330,7 +330,7 @@ export default class InboxModal extends React.Component {
       <CopyToClipboard text={collectorAddress}>
         <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
           <Button
-            bsSize="xsmall"
+            size="sm"
             className="header-button"
           >
             <i className="fa fa-info" />
@@ -352,8 +352,8 @@ export default class InboxModal extends React.Component {
     return (
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <Button
-          bsStyle="success"
-          bsSize="xs"
+          variant="success"
+          size="sm"
           className="header-button"
           onClick={this.changeSortColumn}
         >
@@ -384,7 +384,7 @@ export default class InboxModal extends React.Component {
               zIndex: 10, position: 'absolute', top: '70px', left: '10px'
             }}
           >
-            <Panel bsStyle="primary" className="eln-panel-detail research-plan-details cursor">
+            <Panel variant="primary" className="eln-panel-detail research-plan-details cursor">
               <Panel.Heading
                 className="cursor handle draggable"
                 id="draggableInbox"
@@ -418,16 +418,16 @@ export default class InboxModal extends React.Component {
                     {collectorAddress ? this.collectorAddressInfoButton() : null}
                     {this.renderSizingIcon()}
                     <Button
-                      bsStyle="success"
-                      bsSize="xs"
+                      variant="success"
+                      size="sm"
                       className="header-button"
                       onClick={() => this.refreshInbox()}
                     >
                       <i className="fa fa-refresh" />
                     </Button>
                     <Button
-                      bsStyle="danger"
-                      bsSize="xs"
+                      variant="danger"
+                      size="sm"
                       className="header-button"
                       onClick={InboxActions.toggleInboxModal}
                     >
