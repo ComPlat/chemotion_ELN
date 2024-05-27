@@ -30,7 +30,7 @@ const ScifinderCredential = () => {
           <Col sm={4}>
             {credential.expires_at ? `${moment(credential.expires_at).format('YYYY-MM-DD HH:mm:ss')} UTC` : ''}
           </Col>
-          <Col sm={4}><Button bsStyle="primary" href={`${window.location.origin}/users/auth/oauth2`}>Get token</Button></Col>
+          <Col sm={4}><Button variant="primary" href={`${window.location.origin}/users/auth/oauth2`}>Get token</Button></Col>
         </Row>
       </Panel.Body>
     </Panel>

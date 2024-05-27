@@ -24,9 +24,9 @@ class ResinLabel extends React.Component {
 
     return (
       <Button
-        bsSize="xsmall"
+        size="sm"
         onClick={this.onClickLabel}
-        bsStyle={resin ? 'info' : 'default'}
+        variant={resin ? 'info' : 'default'}
       >
         {label}
       </Button>

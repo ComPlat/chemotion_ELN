@@ -138,8 +138,8 @@ export default class ElementDetailSortTab extends Component {
     return (
       <div ref={thisDiv => div_ref = thisDiv }>
         <Button
-          bsStyle={buttonInfo}
-          bsSize="xsmall"
+          variant={buttonInfo}
+          size="sm"
           className="button-right"
           ref={button => { this.tabLayoutButton = button; }}
           onClick={this.toggleTabLayoutContainer}

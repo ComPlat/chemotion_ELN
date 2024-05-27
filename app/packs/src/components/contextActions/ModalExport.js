@@ -221,10 +221,10 @@ export default class ModalExport extends React.Component {
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
+            <Button variant="primary" onClick={onHide}>Cancel</Button>
             <DropdownButton
               dropup
-              bsStyle="warning"
+              variant="warning"
               id="md-export-dropdown"
               title="XLSX/SD Export"
               onSelect={this.handleClick}

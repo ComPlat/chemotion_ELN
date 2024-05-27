@@ -28,7 +28,6 @@ import { formatDate } from 'src/utilities/timezoneHelper';
 import Panel from 'src/components/legacyBootstrap/Panel'
 import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -249,9 +248,9 @@ export default class UserAuth extends Component {
     return (
       <td>
         <Button
-          bsSize="xsmall"
+          size="sm"
           type="button"
-          bsStyle="info"
+          variant="info"
           className="fa fa-laptop"
           onClick={() => this.handleDeviceMetadataModalShow(device)}
         />
@@ -411,8 +410,8 @@ export default class UserAuth extends Component {
                   </FormGroup>
                   &nbsp;&nbsp;
                   <Button
-                    bsSize="small"
-                    bsStyle="success"
+                    size="sm"
+                    variant="success"
                     onClick={() => this.createGroup()}
                     style={{
                       height: '32px',
@@ -472,8 +471,8 @@ export default class UserAuth extends Component {
       <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
         <td width="10%" style={{ border: 'none' }}>
           <Button
-            bsSize="xsmall"
-            bsStyle={g.user_id == null ? 'success' : 'default'}
+            size="sm"
+            variant={g.user_id == null ? 'success' : 'default'}
             onClick={() => this.subscribe(g)}
           >
             {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
@@ -689,8 +688,6 @@ export default class UserAuth extends Component {
             <Col xs="auto">
             <NavItem
               onClick={() => this.logout()}
-              style={{ marginRight: '5px' }}
-              className=""
               title="Log out"
             >
               <i className="fa fa-sign-out" />

@@ -45,8 +45,8 @@ const DeviceManagement = ({ devices, activeAccordionDevice }) => {
         Device-Management
       </h1>
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         style={{ margin: "10px" }}
         onClick={() => handleCloseDeviceManagement()}
       >
@@ -88,7 +88,7 @@ const Devices = ({ devices, activeAccordionDevice }) => {
               eventKey={key}
               key={key}
               onClick={() => ElementActions.changeActiveAccordionDevice(key)}
-              bsStyle={styleByDeviceState(device)}
+              variant={styleByDeviceState(device)}
             >
               <Panel.Heading>{<DeviceHeader device={device} />}</Panel.Heading>
               <Panel.Body>
@@ -156,25 +156,25 @@ const Device = ({ device }) => {
         style={bottomSpacer}
       >
         <Button
-          bsStyle={styleBySelectedType("NMR")}
+          variant={styleBySelectedType("NMR")}
           onClick={() => handleTypeClick("NMR")}
         >
           NMR
         </Button>
         <Button
-          bsStyle={styleBySelectedType("EA")}
+          variant={styleBySelectedType("EA")}
           onClick={() => handleTypeClick("EA")}
         >
           EA
         </Button>
         <Button
-          bsStyle={styleBySelectedType("MS")}
+          variant={styleBySelectedType("MS")}
           onClick={() => handleTypeClick("MS")}
         >
           MS
         </Button>
         <Button
-          bsStyle={styleBySelectedType("IR")}
+          variant={styleBySelectedType("IR")}
           onClick={() => handleTypeClick("IR")}
         >
           IR
@@ -206,8 +206,8 @@ const DeviceHeader = ({ device, state, onChangeState }) => {
     }}>
       {device.title}
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         className="button-right"
         onClick={(e) => handleRemoveDevice(e)}
       >
@@ -221,7 +221,7 @@ const AddDeviceButton = () => {
   return (
     <p>
       &nbsp;
-      <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => ElementActions.createDevice()}>
+      <Button className="button-right" size="sm" variant="success" onClick={() => ElementActions.createDevice()}>
         Add device
       </Button>
     </p>

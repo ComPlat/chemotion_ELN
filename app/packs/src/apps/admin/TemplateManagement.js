@@ -157,7 +157,7 @@ export default class TemplateManagement extends React.Component {
       return (
         <div className="control-label">
           {template.attachment.filename} &nbsp;
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
+          <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
             <i className="fa fa-trash-o"></i>
           </Button>
         </div>
@@ -166,7 +166,7 @@ export default class TemplateManagement extends React.Component {
       return (
         <div className="control-label">
           {attachment.name} &nbsp;
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
+          <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
             <i className="fa fa-trash-o"></i>
           </Button>
         </div>
@@ -234,12 +234,12 @@ export default class TemplateManagement extends React.Component {
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewTemplate()} >
+                  <Button variant="primary" onClick={() => this.handleCreateNewTemplate()} >
                     Create&nbsp;
                     <i className="fa fa-plus" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleNewTemplateClose()} >
+                  <Button variant="warning" onClick={() => this.handleNewTemplateClose()} >
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -296,12 +296,12 @@ export default class TemplateManagement extends React.Component {
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateTemplate(template.id)} >
+                  <Button variant="primary" onClick={() => this.handleUpdateTemplate(template.id)} >
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditTemplateClose()} >
+                  <Button variant="warning" onClick={() => this.handleEditTemplateClose()} >
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -318,10 +318,10 @@ export default class TemplateManagement extends React.Component {
       <Popover id="popover-positioned-scrolling-left">
         Delete this template? <br />
         <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleDeleteTemplate(template)}>
+          <Button size="sm" variant="danger" onClick={() => this.handleDeleteTemplate(template)}>
             Yes
           </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          <Button size="sm" variant="warning" onClick={this.handleClick} >
             No
           </Button>
         </div>
@@ -337,7 +337,7 @@ export default class TemplateManagement extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button size="sm" variant="danger" >
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
@@ -373,8 +373,8 @@ export default class TemplateManagement extends React.Component {
         <td width="12%">
           <OverlayTrigger placement="bottom" overlay={editTooltip} >
             <Button
-              bsSize="xsmall"
-              bsStyle="info"
+              size="sm"
+              variant="info"
               onClick={() => this.handleEditTemplateShow(g.id)}
             >
               <i className="fa fa-user" />
@@ -391,7 +391,7 @@ export default class TemplateManagement extends React.Component {
     return (
       <div>
         <Panel>
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewTemplateShow()}>
+          <Button variant="primary" size="sm" onClick={() => this.handleNewTemplateShow()}>
             Add new template&nbsp;<i className="fa fa-plus" />
           </Button>
           &nbsp;

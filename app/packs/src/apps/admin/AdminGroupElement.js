@@ -59,12 +59,12 @@ export default class AdminGroupElement extends React.Component {
       <td>
         <ButtonGroup aria-label="Group-Users">
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersShow">List Group-Users</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="info" onClick={this.toggleUsers} >
+            <Button size="sm" type="button" variant="info" onClick={this.toggleUsers} >
               <i className="fa fa-users" />&nbsp;({group.users.length < 10 ? `0${group.users.length}` : group.users.length})
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add user to group</Tooltip>}>
-            <Button bsSize="xsmall" type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Person')} >
+            <Button size="sm" type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Person')} >
               <i className="fa fa-user" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
@@ -72,12 +72,12 @@ export default class AdminGroupElement extends React.Component {
 
         <ButtonGroup>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupDevicesShow">List Group-Devices</Tooltip>}>
-            <Button bsSize="xsmall" type="button" bsStyle="success" onClick={this.toggleDevices} >
+            <Button size="sm" type="button" variant="success" onClick={this.toggleDevices} >
               <i className="fa fa-server" />&nbsp;({group.devices.length < 10 ? `0${group.devices.length}` : group.devices.length})
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add device to group</Tooltip>}>
-            <Button bsSize="xsmall" type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Device')} >
+            <Button size="sm" type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Device')} >
               <i className="fa fa-laptop" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
@@ -101,9 +101,9 @@ export default class AdminGroupElement extends React.Component {
         <ButtonGroup className="actions">
           <OverlayTrigger placement="top" overlay={<Tooltip id="userAdmin">{adminTooltip}</Tooltip>}>
             <Button
-              bsSize="xsmall"
+              size="sm"
               type="button"
-              bsStyle={isAdmin === true ? 'default' : 'info'}
+              variant={isAdmin === true ? 'default' : 'info'}
               onClick={() => this.setGroupAdmin(group, user, !isAdmin)}
             >
               <i className="fa fa-key" />

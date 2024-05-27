@@ -121,15 +121,15 @@ class AttachmentContainer extends Component {
             Delete this attachment?
             <ButtonGroup>
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 onClick={() => InboxActions.deleteAttachment(attachment, fromUnsorted)}
               >
                 Yes
               </Button>
               <Button
-                bsStyle="warning"
-                bsSize="xsmall"
+                variant="warning"
+                size="sm"
                 onClick={() => this.toggleTooltip()}
               >
                 No

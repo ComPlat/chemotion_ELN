@@ -42,12 +42,12 @@ class QcMain extends Component {
     };
     let iconClsName = 'fa fa-cog fa-1x';
     if (loading) iconClsName += ' fa-spin fa-fw';
-    const bsStyle = loading ? 'warning' : 'primary';
+    const variant = loading ? 'warning' : 'primary';
 
     return (
       <Button
-        bsStyle={bsStyle}
-        bsSize="small"
+        variant={variant}
+        size="sm"
         onClick={handleOnClick}
         disabled={loading}
       >

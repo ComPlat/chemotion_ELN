@@ -433,8 +433,8 @@ export default class GenericElDetails extends Component {
           overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
+            variant="info"
+            size="sm"
             className="button-right"
             onClick={() => this.props.toggleFullScreen()}
           >
@@ -446,8 +446,8 @@ export default class GenericElDetails extends Component {
           overlay={<Tooltip id="saveScreen">Save</Tooltip>}
         >
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
@@ -502,7 +502,7 @@ export default class GenericElDetails extends Component {
     return (
       <Panel
         className="panel-detail"
-        bsStyle={genericEl.isPendingToSave ? 'info' : 'primary'}
+        variant={genericEl.isPendingToSave ? 'info' : 'primary'}
       >
         <Panel.Heading>{this.header(genericEl)}</Panel.Heading>
         <Panel.Body>
@@ -526,13 +526,13 @@ export default class GenericElDetails extends Component {
           <hr />
           <ButtonToolbar>
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => DetailActions.close(genericEl, true)}
             >
               Close
             </Button>
             <Button
-              bsStyle="warning"
+              variant="warning"
               onClick={() => this.handleSubmit()}
               style={saveBtnDisplay}
             >

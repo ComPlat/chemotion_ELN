@@ -154,7 +154,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 <InputGroup.Button>
                   <Button
                     disabled={!permitOn(reaction)}
-                    bsStyle="success"
+                    variant="success"
                     onClick={() => this.changeUnit()}
                   >
                     {this.temperatureUnit}

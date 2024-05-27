@@ -28,7 +28,7 @@ const DeviceButtonSplit = ({ devices, selectedDeviceId }) => {
         overlay={<Tooltip id="open-device">Open Device</Tooltip>}
       >
         <Button
-          bsStyle="warning"
+          variant="warning"
           disabled={selectedDeviceId === -1 || selectedDeviceId === null}
           onClick={() => handleOpenDevice()}
         >
@@ -36,7 +36,7 @@ const DeviceButtonSplit = ({ devices, selectedDeviceId }) => {
         </Button>
       </OverlayTrigger>
       <DropdownButton
-        bsStyle="warning"
+        variant="warning"
         title={<div></div>}
         style={{ width: "26px", paddingLeft: "8px" }}
         id="device-selection"

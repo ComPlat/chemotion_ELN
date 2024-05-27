@@ -799,9 +799,9 @@ export default class Calendar extends React.Component {
                 { eventableType ? (
                   <OverlayTrigger placement="bottom" overlay={<Tooltip id="showMyEntries">Show my entries</Tooltip>}>
                     <Button
-                      bsSize="small"
+                      size="sm"
                       type="button"
-                      bsStyle={showOwnEntries ? 'success' : 'default'}
+                      variant={showOwnEntries ? 'success' : 'default'}
                       onKeyUp={() => { }}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
@@ -818,9 +818,9 @@ export default class Calendar extends React.Component {
                 ) : (
                   <OverlayTrigger placement="bottom" overlay={<Tooltip id="showSharedCollectionEntries">Show shared collection entries</Tooltip>}>
                     <Button
-                      bsSize="small"
+                      size="sm"
                       type="button"
-                      bsStyle={showSharedCollectionEntries ? 'success' : 'default'}
+                      variant={showSharedCollectionEntries ? 'success' : 'default'}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
                       onClick={(e) => {
@@ -837,9 +837,9 @@ export default class Calendar extends React.Component {
                 { smallScreen ? null : (
                   <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullscreenCalendar">FullScreen</Tooltip>}>
                     <Button
-                      bsSize="small"
+                      size="sm"
                       type="button"
-                      bsStyle={isFullScreen ? 'success' : 'default'}
+                      variant={isFullScreen ? 'success' : 'default'}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
                       onClick={(e) => {
@@ -856,9 +856,9 @@ export default class Calendar extends React.Component {
                 { smallScreen ? null : (
                   <OverlayTrigger placement="bottom" overlay={<Tooltip id="calendarBackgroundClickDescription">Click in background without closing Calendar</Tooltip>}>
                     <Button
-                      bsSize="small"
+                      size="sm"
                       type="button"
-                      bsStyle={backgroundClickToClose ? 'default' : 'info'}
+                      variant={backgroundClickToClose ? 'default' : 'info'}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
                       onClick={(e) => {
@@ -873,7 +873,7 @@ export default class Calendar extends React.Component {
                   </OverlayTrigger>
                 )}
                 <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeCalendarButtonDescription">Close Calendar</Tooltip>}>
-                  <Button bsSize="small" type="button" bsStyle="danger" onClick={this.closeCalendar}>
+                  <Button size="sm" type="button" variant="danger" onClick={this.closeCalendar}>
                     <i className="fa fa-close" />
                     &nbsp;
                   </Button>

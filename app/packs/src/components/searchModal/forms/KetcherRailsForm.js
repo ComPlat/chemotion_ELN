@@ -134,10 +134,10 @@ const KetcherRailsform = () => {
               <Row style={{ marginTop: '20px' }}>
                 <Col sm={4} md={3}>
                   <ButtonToolbar>
-                    <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
+                    <Button variant="warning" onClick={() => searchStore.handleCancel()}>
                       Cancel
                     </Button>
-                    <Button bsStyle="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
+                    <Button variant="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
                       Search
                     </Button>
                   </ButtonToolbar>

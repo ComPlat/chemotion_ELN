@@ -20,8 +20,8 @@ export default class ResearchPlanDetailsName extends Component {
           id="copyMetadataButton"
           title=""
           className="fa fa-laptop pull-right"
-          bsStyle="info"
-          bsSize="xsmall"
+          variant="info"
+          size="sm"
           style={{
             width: '20px',
             height: '20px',

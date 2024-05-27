@@ -294,7 +294,7 @@ export default class GroupsDevices extends React.Component {
           <Panel.Title>
             Group List &nbsp;
             ({groups.length}) &nbsp;
-            <Button bsStyle="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
+            <Button variant="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
           </Panel.Title>
         </Panel.Heading>
         <Table responsive condensed hover>
@@ -326,7 +326,7 @@ export default class GroupsDevices extends React.Component {
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
+          <Panel variant="success">
             <Panel.Heading>
               <Panel.Title>
                 {title}
@@ -365,7 +365,7 @@ export default class GroupsDevices extends React.Component {
                     placeholder="eg: abc@kit.edu"
                   />
                 </FormGroup>
-                <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
+                <Button size="sm" variant="success" onClick={() => this.createGroup()}>
                   Create new {rootType === 'Group' ? 'group' : 'device'}
                 </Button>
               </Form>
@@ -413,7 +413,7 @@ export default class GroupsDevices extends React.Component {
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
+          <Panel variant="success">
             <Panel.Heading>
               <Panel.Title>
                 {title}
@@ -433,7 +433,7 @@ export default class GroupsDevices extends React.Component {
                 loadOptions={this.loadUserByNameType}
                 onChange={this.handleSelectUser}
               />
-              <Button bsSize="small" type="button" bsStyle="warning" onClick={() => this.addToRoot(root)}>Add</Button>
+              <Button size="sm" type="button" variant="warning" onClick={() => this.addToRoot(root)}>Add</Button>
             </Panel.Body>
           </Panel>
         </Modal.Body>

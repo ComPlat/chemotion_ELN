@@ -60,13 +60,13 @@ const MetadataCreator = ({ creator, index, onAdd, onChange, onRemove }) => (
                   />
                 </Col>
                 <Col xs={4}>
-                  <Button bsStyle="danger" onClick={() => onRemove('creators', index, 'affiliations', affiliationIndex)}>
+                  <Button variant="danger" onClick={() => onRemove('creators', index, 'affiliations', affiliationIndex)}>
                     <i className="fa fa-trash-o" />
                   </Button>
                   {
                     (affiliationIndex === creator.affiliations.length - 1) &&
                     <Button
-                      className="metadata-add-affiliation" bsStyle="success"
+                      className="metadata-add-affiliation" variant="success"
                       onClick={() => onAdd('creators', index, 'affiliations')}>
                       <i className="fa fa-plus" />
                     </Button>
@@ -78,7 +78,7 @@ const MetadataCreator = ({ creator, index, onAdd, onChange, onRemove }) => (
         </FormGroup>
       </Col>
       <Col sm={12}>
-        <Button bsStyle="danger" bsSize="small" onClick={() => onRemove('creators', index)}>
+        <Button variant="danger" size="sm" onClick={() => onRemove('creators', index)}>
           Remove creator
         </Button>
       </Col>

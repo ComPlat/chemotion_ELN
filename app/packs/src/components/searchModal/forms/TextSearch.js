@@ -176,13 +176,13 @@ const TextSearch = () => {
               </div>
             </div>
             <ButtonToolbar>
-              <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
+              <Button variant="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
-              <Button bsStyle="info" onClick={() => handleClear(searchStore)}>
+              <Button variant="info" onClick={() => handleClear(searchStore)}>
                 Reset
               </Button>
-              <Button bsStyle="primary" id="advanced-search-button"
+              <Button variant="primary" id="advanced-search-button"
                 onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
                 Search
               </Button>

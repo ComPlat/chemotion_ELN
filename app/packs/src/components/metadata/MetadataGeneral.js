@@ -65,7 +65,7 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
               </FormGroup>
             </Col>
             <Col sm={1}>
-              <Button bsStyle="danger" onClick={() => onRemove('subjectAreas', index)}>
+              <Button variant="danger" onClick={() => onRemove('subjectAreas', index)}>
                 <i className="fa fa-trash-o" />
               </Button>
             </Col>
@@ -73,7 +73,7 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
         )
       })
     }
-    <Button bsStyle="success" bsSize="small" onClick={event => onAdd('subjectAreas')}>
+    <Button variant="success" size="sm" onClick={event => onAdd('subjectAreas')}>
       Add new subject area
     </Button>
     <h4>Keywords</h4>
@@ -90,14 +90,14 @@ const MetadataGeneral = ({ metadata, onAdd, onChange, onRemove }) => (
             </FormGroup>
           </Col>
           <Col sm={1}>
-            <Button bsStyle="danger" onClick={() => onRemove('keywords', index)}>
+            <Button variant="danger" onClick={() => onRemove('keywords', index)}>
               <i className="fa fa-trash-o" />
             </Button>
           </Col>
         </Row>
       ))
     }
-    <Button bsStyle="success" bsSize="small" onClick={event => onAdd('keywords')}>
+    <Button variant="success" size="sm" onClick={event => onAdd('keywords')}>
       Add new keyword
     </Button>
   </div>

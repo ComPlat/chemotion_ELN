@@ -37,7 +37,7 @@ export default class HyperLinksSection extends Component {
     const { readOnly, disabled } = this.props;
     if (!readOnly && !disabled) {
       return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemoveLink(link)}>
+        <Button size="sm" variant="danger" onClick={() => this.handleRemoveLink(link)}>
           <i className="fa fa-trash-o" />
         </Button>
       );
@@ -72,16 +72,16 @@ export default class HyperLinksSection extends Component {
           value={link || ''}
           onChange={(event) => this.handleLinkInputChange(event)}
           bsClass="form-control"
-          bsSize="small"
+          size="sm"
           disabled={disabled || readOnly}
           style={{ width: '90%' }}
         />
         <Button
           className="button-right"
-          bsStyle="success"
+          variant="success"
           onClick={this.handleAddLink}
           disabled={link == null || readOnly}
-          bsSize="small"
+          size="sm"
           style={{ width: '8%' }}
         >
           Add

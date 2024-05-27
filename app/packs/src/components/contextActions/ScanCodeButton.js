@@ -208,10 +208,10 @@ export default class ScanCodeButton extends React.Component {
       return (
         <div>
           {this.state.scanInfo
-            ? <Alert bsStyle="info">{this.state.scanInfo}</Alert>
+            ? <Alert variant="info">{this.state.scanInfo}</Alert>
             : null
           }
-          <Alert bsStyle="danger">
+          <Alert variant="danger">
             {this.state.scanError}
           </Alert>
         </div>
@@ -248,7 +248,7 @@ export default class ScanCodeButton extends React.Component {
       <div>
         <SplitButton
           id="search-code-split-button"
-          bsStyle={customClass ? null : 'default'}
+          variant={customClass ? null : 'default'}
           className={customClass}
           title={title}
           onClick={this.open}

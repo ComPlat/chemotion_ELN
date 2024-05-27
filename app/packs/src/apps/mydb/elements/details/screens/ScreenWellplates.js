@@ -79,7 +79,7 @@ class ScreenWellplates extends Component {
                 </td>
                 <td style={{ verticalAlign: 'middle' }}>
                   <Button
-                    bsStyle="danger"
+                    variant="danger"
                     style={{ marginLeft: '10px' }}
                     onClick={() => deleteWellplate(wellplate)}
                   >

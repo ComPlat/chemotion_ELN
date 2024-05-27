@@ -137,10 +137,10 @@ export default class MoleculeModeratorComponent extends Component {
       <Popover id="popover-positioned-scrolling-left">
         delete this molecule name <br />
         <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(nameObj)}>
+          <Button size="sm" variant="danger" onClick={() => this.confirmDelete(nameObj)}>
             Yes
           </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          <Button size="sm" variant="warning" onClick={this.handleClick} >
             No
           </Button>
         </div>
@@ -156,7 +156,7 @@ export default class MoleculeModeratorComponent extends Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button size="sm" variant="danger" >
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
@@ -168,7 +168,7 @@ export default class MoleculeModeratorComponent extends Component {
   renderEditButton(nameObj) {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Edit molecule name</Tooltip>}>
-        <Button bsSize="xsmall" bsStyle="primary" type="button" onClick={() => this.handleShowModal(nameObj)} >
+        <Button size="sm" variant="primary" type="button" onClick={() => this.handleShowModal(nameObj)} >
           <i className="fa fa-pencil-square-o" />
         </Button>
       </OverlayTrigger>
@@ -184,7 +184,7 @@ export default class MoleculeModeratorComponent extends Component {
           <Modal.Title>{isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Panel bsStyle="success">
+          <Panel variant="success">
             <Panel.Heading>
               <Panel.Title>
                 {isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}
@@ -205,7 +205,7 @@ export default class MoleculeModeratorComponent extends Component {
                   </InputGroup>
                 </FormGroup>
               </Form>
-              <Button bsSize="small" type="button" bsStyle="warning" onClick={() => this.onSaveName()}>Save</Button>
+              <Button size="sm" type="button" variant="warning" onClick={() => this.onSaveName()}>Save</Button>
             </Panel.Body>
           </Panel>
         </Modal.Body>
@@ -233,7 +233,7 @@ export default class MoleculeModeratorComponent extends Component {
           <td width="5%">#</td>
           <td width="15%">Action &nbsp;
             <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add new molecule name</Tooltip>}>
-              <Button bsSize="xsmall" bsStyle="success" onClick={() => this.onAddName()}>
+              <Button size="sm" variant="success" onClick={() => this.onAddName()}>
                 <i className="fa fa-plus" />
               </Button>
             </OverlayTrigger>
@@ -271,8 +271,8 @@ export default class MoleculeModeratorComponent extends Component {
             <Panel.Body>
               <Row>
                 <Col md={12}>
-                  <Button bsStyle="primary" bsSize="sm" onClick={() => this.props.handleEditor(true)}>Open Editor&nbsp;<i className="fa fa-pencil" aria-hidden="true" /></Button>&nbsp;
-                  <Button bsStyle="warning" bsSize="sm" onClick={() => this.handleSave()}>Update molfile and svg&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" /></Button>
+                  <Button variant="primary" size="sm" onClick={() => this.props.handleEditor(true)}>Open Editor&nbsp;<i className="fa fa-pencil" aria-hidden="true" /></Button>&nbsp;
+                  <Button variant="warning" size="sm" onClick={() => this.handleSave()}>Update molfile and svg&nbsp;<i className="fa fa-floppy-o" aria-hidden="true" /></Button>
                 </Col>
               </Row>
               <Row>

@@ -187,8 +187,8 @@ export default class CommentModal extends Component {
                   ? (
                     <Button
                       id="editCommentBtn"
-                      bsSize="xsmall"
-                      bsStyle="primary"
+                      size="sm"
+                      variant="primary"
                       onClick={() => this.editComment(comment)}
                       disabled={this.disableEditComment(comment)}
                     >
@@ -234,7 +234,7 @@ export default class CommentModal extends Component {
           dialogClassName="comment-modal"
           show={showCommentModal}
           onHide={() => CommentActions.toggleCommentModal(false)}
-          bsSize="large"
+          size="lg"
         >
           <Modal.Header closeButton>
             <Modal.Title>
@@ -310,7 +310,7 @@ export default class CommentModal extends Component {
                 Close
               </Button>
               <Button
-                bsStyle="primary"
+                variant="primary"
                 disabled={!commentBody}
                 onClick={() => {
                   if (isEditing) {
