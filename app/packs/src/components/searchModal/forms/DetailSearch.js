@@ -297,7 +297,7 @@ const DetailSearch = () => {
     if (units.length > 1) {
       return (
         <InputGroup.Button>
-          <Button key={units} bsStyle="success"
+          <Button key={units} variant="success"
             dangerouslySetInnerHTML={{ __html: value }}
             onClick={changeUnit(units, value, column, option, subFieldId)} />
         </InputGroup.Button>

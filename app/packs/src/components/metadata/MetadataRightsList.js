@@ -20,7 +20,7 @@ const MetadataRightsList = ({ metadata, onAdd, onChange, onRemove }) => {
           />
         ))
       }
-      <Button bsStyle="success" bsSize="small" onClick={event => onAdd('rightsHolders')}>
+      <Button variant="success" size="sm" onClick={event => onAdd('rightsHolders')}>
         Add new rights holder
       </Button>
       <h4>Rights</h4>
@@ -35,7 +35,7 @@ const MetadataRightsList = ({ metadata, onAdd, onChange, onRemove }) => {
           />
         ))
       }
-      <Button bsStyle="success" bsSize="small" onClick={event => onAdd('rights')}>
+      <Button variant="success" size="sm" onClick={event => onAdd('rights')}>
         Add new rights
       </Button>
     </div>

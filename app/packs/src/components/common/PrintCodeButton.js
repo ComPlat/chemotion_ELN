@@ -41,9 +41,9 @@ const PrintCodeButton = ({
         <SplitButton
           id={`print-code-split-button-${ident || 0}`}
           pullRight
-          bsStyle="default"
+          variant="default"
           disabled={element.isNew}
-          bsSize="xsmall"
+          size="sm"
           onToggle={(isOpen, event) => { if (event) { event.stopPropagation(); } }}
           title={<i className="fa fa-barcode fa-lg" />}
           onClick={(event) => {

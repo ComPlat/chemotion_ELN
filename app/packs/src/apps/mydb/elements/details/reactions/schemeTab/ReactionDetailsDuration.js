@@ -143,7 +143,7 @@ export default class ReactionDetailsDuration extends Component {
               />
               <InputGroup.Button>
                 <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
-                  <Button disabled={!permitOn(reaction)} bsStyle="success" onClick={() => this.changeDurationUnit()}>
+                  <Button disabled={!permitOn(reaction)} variant="success" onClick={() => this.changeDurationUnit()}>
                     {reaction.durationUnit}
                   </Button>
                 </OverlayTrigger>

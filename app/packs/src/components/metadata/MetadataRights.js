@@ -40,7 +40,7 @@ const MetadataRights = ({ rights, index, onChange, onRemove }) => {
           </FormGroup>
         </Col>
         <Col sm={12}>
-          <Button bsStyle="danger" bsSize="small" onClick={() => onRemove('rights', index)}>
+          <Button variant="danger" size="sm" onClick={() => onRemove('rights', index)}>
             Remove rights
           </Button>
         </Col>

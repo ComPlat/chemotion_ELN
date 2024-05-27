@@ -445,7 +445,7 @@ export default class SampleDetails extends React.Component {
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
     const downloadAnalysesBtn = (sample.isNew || !hasAnalyses) ? null : (
-      <Button bsStyle="info" disabled={!this.sampleIsValid()} onClick={() => this.handleExportAnalyses(sample)}>
+      <Button variant="info" disabled={!this.sampleIsValid()} onClick={() => this.handleExportAnalyses(sample)}>
         Download Analysis
         {' '}
         {startExport ? (
@@ -459,7 +459,7 @@ export default class SampleDetails extends React.Component {
     const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
       <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => DetailActions.close(sample)}>
+        <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
@@ -696,7 +696,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Button
         id="submit-sample-btn"
-        bsStyle="warning"
+        variant="warning"
         onClick={() => this.saveSampleOrInventory(closeView)}
         disabled={!this.sampleIsValid() || isDisabled}
       >
@@ -947,8 +947,8 @@ export default class SampleDetails extends React.Component {
   saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag, timesTag, boolean = false) {
     return (
       <Button
-        bsStyle="warning"
-        bsSize="xsmall"
+        variant="warning"
+        size="sm"
         className="button-right"
         onClick={() => this.saveSampleOrInventory(boolean)}
         style={{ display: saveBtnDisplay }}
@@ -1072,8 +1072,8 @@ export default class SampleDetails extends React.Component {
               overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
             >
               <Button
-                bsStyle="info"
-                bsSize="xsmall"
+                variant="info"
+                size="sm"
                 className="button-right"
                 onClick={() => this.props.toggleFullScreen()}
               >
@@ -1096,7 +1096,7 @@ export default class SampleDetails extends React.Component {
   transferToDeviceButton(sample) {
     return (
       <Button
-        bsSize="xsmall"
+        size="sm"
         onClick={() => {
           const { selectedDeviceId, devices } = ElementStore.getState().elements.devices;
           const device = devices.find((d) => d.id === selectedDeviceId);
@@ -1296,7 +1296,7 @@ export default class SampleDetails extends React.Component {
   initiateAnalysisButton(sample) {
     return (
       <div style={{ display: 'inline-block', marginLeft: '100px' }}>
-        <DropdownButton id="InitiateAnalysis" bsStyle="info" bsSize="xsmall" title="Initiate Analysis">
+        <DropdownButton id="InitiateAnalysis" variant="info" size="sm" title="Initiate Analysis">
           <MenuItem
             eventKey="1"
             onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_1h.termId)}
@@ -1523,7 +1523,7 @@ export default class SampleDetails extends React.Component {
               </FormGroup>
             </div>
             <div>
-              <Button bsStyle="warning" onClick={this.handleMolfileClose}>
+              <Button variant="warning" onClick={this.handleMolfileClose}>
                 Close
               </Button>
             </div>
@@ -1591,12 +1591,12 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
           <strong>Structure Alert</strong>
           &nbsp;
           <Button
-            bsSize="xsmall"
-            bsStyle="warning"
+            size="sm"
+            variant="warning"
             onClick={() => this.setState({ pageMessage: null })}
           >
             Close Alert
@@ -1621,7 +1621,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Panel
         className="eln-panel-detail"
-        bsStyle={sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary'}
+        variant={sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary'}
       >
         <Panel.Heading>
           {this.sampleHeader(sample)}

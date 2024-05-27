@@ -49,8 +49,8 @@ describe('ResearchPlanDetailsContainers', () => {
           There are currently no Analyses.
           <Button
             className="button-right"
-            bsSize="xsmall"
-            bsStyle="success"
+            size="sm"
+            variant="success"
           >
             Add analysis
           </Button>
@@ -67,8 +67,8 @@ describe('ResearchPlanDetailsContainers', () => {
       <div style={{ marginBottom: '10px' }}>
         &nbsp;<Button
           className="button-right"
-          bsSize="xsmall"
-          bsStyle="success"
+          size="sm"
+          variant="success"
         >
           Add analysis
         </Button>
@@ -108,7 +108,7 @@ describe('ResearchPlanDetailsContainers', () => {
                     {` - Type: ${analysis.extended_metadata.kind}`}
 
                   </strike>
-                  <Button className="pull-right" bsSize="xsmall" bsStyle="danger">
+                  <Button className="pull-right" size="sm" variant="danger">
                     <i className="fa fa-undo" />
                   </Button>
                 </div>

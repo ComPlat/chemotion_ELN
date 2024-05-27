@@ -67,15 +67,15 @@ export default class ComputeTaskContainer extends React.Component {
     const { tasks } = this.state;
 
     return (
-      <Panel className="eln-panel-detail" bsStyle="primary">
+      <Panel className="eln-panel-detail" variant="primary">
         <Panel.Heading>
           {'Task'}
           <div className="button-right">
             <Button
               key="closeBtn"
               onClick={this.onClose}
-              bsStyle="danger"
-              bsSize="xsmall"
+              variant="danger"
+              size="sm"
               className="button-right"
             >
               <i className="fa fa-times" />

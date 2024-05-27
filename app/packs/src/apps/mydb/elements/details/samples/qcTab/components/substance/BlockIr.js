@@ -13,7 +13,7 @@ const emptyBlock = () => (
       <span>4 Analysis of the provided digital IR data:</span>
     </h5>
     <div className="card-qc">
-      <Alert bsStyle="danger">
+      <Alert variant="danger">
         No Information. Please upload spectra to Spectra Editor.
       </Alert>
     </div>

@@ -213,15 +213,15 @@ export default class UnsortedBox extends React.Component {
               style={{ marginLeft: '5px' }}
             >
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 onClick={() => this.deleteCheckedAttachment(unsorted_box)}
               >
                 Yes
               </Button>
               <Button
-                bsStyle="warning"
-                bsSize="xsmall"
+                variant="warning"
+                size="sm"
                 onClick={() => this.toggleTooltip()}
               >
                 No
@@ -256,7 +256,7 @@ export default class UnsortedBox extends React.Component {
     const uploadButton = (
       <Button
         style={{ position: 'absolute', right: 0 }}
-        bsSize="xsmall"
+        size="sm"
         onClick={(e) => {
           e.stopPropagation();
           this.handleUploadButton();

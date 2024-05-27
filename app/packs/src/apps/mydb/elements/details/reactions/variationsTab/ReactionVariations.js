@@ -62,8 +62,8 @@ function MenuHeader({
   const unitSelection = (
     <Button
       className="unitSelection"
-      bsStyle="success"
-      bsSize="xsmall"
+      variant="success"
+      size="sm"
       style={{ display: entry === 'equivalent' ? 'none' : 'inline' }}
       onClick={onUnitChanged}
     >
@@ -80,8 +80,8 @@ function MenuHeader({
   const entrySelection = (
     <Button
       className="entrySelection"
-      bsStyle="default"
-      bsSize="xsmall"
+      variant="default"
+      size="sm"
       style={{ display: entry === null ? 'none' : 'inline' }}
       disabled={entries.length === 1}
       onClick={onEntryChanged}
@@ -147,10 +147,10 @@ function RowToolsCellRenderer({
       <Badge>{getVariationsRowName(reactionShortLabel, variationsRow.id)}</Badge>
       {' '}
       <ButtonGroup>
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => copyRow(variationsRow)}>
+        <Button size="sm" variant="success" onClick={() => copyRow(variationsRow)}>
           <i className="fa fa-clone" />
         </Button>
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeRow(variationsRow)}>
+        <Button size="sm" variant="danger" onClick={() => removeRow(variationsRow)}>
           <i className="fa fa-trash-o" />
         </Button>
       </ButtonGroup>
@@ -439,7 +439,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       >
         {/* Wrapping button in span necessary in order for OverlayTrigger to work */}
         <span>
-          <Button bsSize="xsmall" bsStyle="success" onClick={addRow}>
+          <Button size="sm" variant="success" onClick={addRow}>
             <i className="fa fa-plus" />
           </Button>
         </span>

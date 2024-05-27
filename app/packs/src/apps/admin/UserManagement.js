@@ -17,7 +17,7 @@ import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 function MessageAlert({ message, onHide }) {
   return (
     message?.length > 0 ? (
-      <Alert bsStyle="info" onDismiss={onHide}>
+      <Alert variant="info" onDismiss={onHide}>
         <p>
           {message}
         </p>
@@ -751,7 +751,7 @@ export default class UserManagement extends React.Component {
                 />
               </FormGroup>
               <Button
-                bsStyle="primary"
+                variant="primary"
                 onClick={() => this.messageSend()}
               >
                 Send&nbsp;
@@ -841,7 +841,7 @@ export default class UserManagement extends React.Component {
                 </FormGroup>
                 <FormGroup>
                   <Col smOffset={0} sm={10}>
-                    <Button bsStyle="primary" onClick={() => this.handleCreateNewUser()}>
+                    <Button variant="primary" onClick={() => this.handleCreateNewUser()}>
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -900,7 +900,7 @@ export default class UserManagement extends React.Component {
                   </CSVReader>
                 </FormGroup>
                 <FormGroup>
-                  <Button bsStyle="primary" onClick={() => this.handleCreateNewUsersFromFile()}>
+                  <Button variant="primary" onClick={() => this.handleCreateNewUsersFromFile()}>
                     Create users&nbsp;
                     <i className="fa fa-plus" />
                   </Button>
@@ -923,7 +923,7 @@ export default class UserManagement extends React.Component {
             <FormGroup controlId="formControlMessage">
               <FormControl type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
             </FormGroup>
-            <Button bsStyle="warning" onClick={() => this.handleNewUserClose()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.handleNewUserClose()}>Cancel</Button>
           </Modal.Footer>
         </Modal.Body>
       </Modal>
@@ -940,7 +940,7 @@ export default class UserManagement extends React.Component {
         >
           <Modal.Header closeButton>
             <Modal.Title>
-              <Nav bsStyle="tabs">
+              <Nav variant="tabs">
                 <NavItem eventKey="first">
                   Edit user account
                 </NavItem>
@@ -1036,7 +1036,7 @@ export default class UserManagement extends React.Component {
                         Cancel&nbsp;
                       </Button>
                       <Col sm={2}>&nbsp;</Col>
-                      <Button bsStyle="primary" className="col-sm-5" onClick={() => this.handleUpdateUser(user)}>
+                      <Button variant="primary" className="col-sm-5" onClick={() => this.handleUpdateUser(user)}>
                         Update&nbsp;
                         <i className="fa fa-save" />
                       </Button>
@@ -1128,7 +1128,7 @@ export default class UserManagement extends React.Component {
                         Cancel
                       </Button>
                       <Col sm={2}>&nbsp;</Col>
-                      <Button bsStyle="danger" className="col-sm-5" onClick={() => this.handleDeleteUser(user)}>
+                      <Button variant="danger" className="col-sm-5" onClick={() => this.handleDeleteUser(user)}>
                         Delete &nbsp;
                         <i className="fa fa-trash" />
                       </Button>
@@ -1203,12 +1203,12 @@ export default class UserManagement extends React.Component {
                 && renderDeletedUsersTable(this.state.deletedUsers)}
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleRestoreAccount()}>
+                  <Button variant="primary" onClick={() => this.handleRestoreAccount()}>
                     Restore&nbsp;
                     <i className="fa fa-save" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleRestoreAccountClose()}>
+                  <Button variant="warning" onClick={() => this.handleRestoreAccountClose()}>
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -1240,8 +1240,8 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmUserTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="info"
+              size="sm"
+              variant="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
             >
               <i className="fa fa-check-square" />
@@ -1257,8 +1257,8 @@ export default class UserManagement extends React.Component {
         return (
           <OverlayTrigger placement="bottom" overlay={confirmEmailChangeTooltip(unconfirmed_email)}>
             <Button
-              bsSize="xsmall"
-              bsStyle="warning"
+              size="sm"
+              variant="warning"
               onClick={() => this.handleReConfirmUserAccount(userId)}
             >
               <i className="fa fa-check-square" />
@@ -1359,8 +1359,8 @@ export default class UserManagement extends React.Component {
         <td width="17%">
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="info"
+              size="sm"
+              variant="info"
               onClick={() => this.handleEditUserShow(g)}
             >
               <i className="fa fa-user" />
@@ -1369,8 +1369,8 @@ export default class UserManagement extends React.Component {
           &nbsp;
           <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="success"
+              size="sm"
+              variant="success"
               onClick={() => handleResetPassword(g.id, true, this.handleShowAlert)}
             >
               <i className="fa fa-key" />
@@ -1379,8 +1379,8 @@ export default class UserManagement extends React.Component {
           &nbsp;
           <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle="primary"
+              size="sm"
+              variant="primary"
               onClick={() => handleResetPassword(g.id, false, this.handleShowAlert)}
             >
               <i className="fa fa-key" />
@@ -1389,8 +1389,8 @@ export default class UserManagement extends React.Component {
           &nbsp;
           <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
             <Button
-              bsSize="xsmall"
-              bsStyle={g.locked_at === null ? 'default' : 'warning'}
+              size="sm"
+              variant={g.locked_at === null ? 'default' : 'warning'}
               onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
             >
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -1403,8 +1403,8 @@ export default class UserManagement extends React.Component {
               ? converterEnableTooltip : converterDisableTooltip}
           >
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+              size="sm"
+              variant={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
               onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
             >
               <i className="fa fa-hourglass-half" aria-hidden="true" />
@@ -1417,8 +1417,8 @@ export default class UserManagement extends React.Component {
               === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
           >
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.is_templates_moderator === null
+              size="sm"
+              variant={(g.is_templates_moderator === null
                 || g.is_templates_moderator === false) ? 'default' : 'success'}
               onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
             >
@@ -1432,8 +1432,8 @@ export default class UserManagement extends React.Component {
               ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
           >
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
+              size="sm"
+              variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
               onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
             >
               <i className="icon-sample" aria-hidden="true" />
@@ -1445,8 +1445,8 @@ export default class UserManagement extends React.Component {
             overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}
           >
             <Button
-              bsSize="xsmall"
-              bsStyle={(g.generic_admin?.elements
+              size="sm"
+              variant={(g.generic_admin?.elements
                 || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
               onClick={() => this.handleGenericAdminModal(true, g)}
             >
@@ -1459,8 +1459,8 @@ export default class UserManagement extends React.Component {
             overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
           >
             <Button
-              bsSize="xsmall"
-              bsStyle={g.account_active === true ? 'default' : 'danger'}
+              size="sm"
+              variant={g.account_active === true ? 'default' : 'danger'}
               onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
             >
               <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
@@ -1507,19 +1507,19 @@ export default class UserManagement extends React.Component {
       <div>
         <MessageAlert message={this.state.alertMessage} onHide={this.handleDismissAlert} />
         <Panel>
-          <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
+          <Button variant="warning" size="sm" onClick={() => this.handleMsgShow()}>
             Send Message&nbsp;
             <i className="fa fa-commenting-o" />
           </Button>
           &nbsp;
-          <Button bsStyle="primary" bsSize="small" onClick={() => this.handleNewUserShow()} data-cy="create-user">
+          <Button variant="primary" size="sm" onClick={() => this.handleNewUserShow()} data-cy="create-user">
             New User&nbsp;
             <i className="fa fa-plus" />
           </Button>
           &nbsp;
           <Button
-            bsStyle="primary"
-            bsSize="small"
+            variant="primary"
+            size="sm"
             onClick={() => this.handleRestoreAccountShow()}
             data-cy="restore-user"
           >

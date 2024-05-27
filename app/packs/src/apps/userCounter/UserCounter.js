@@ -94,7 +94,7 @@ class UserCounter extends Component {
               <Col sm={2}>{nextNum}</Col>
               <Col sm={4}>
                 <Button
-                  bsStyle="primary"
+                  variant="primary"
                   onClick={() => this.handleUpdate(klass.name)}
                 >
                   Update counter

@@ -8,9 +8,9 @@ const ManagingModalRemove = ({ onHide, action }) => {
   const ui_state = UIStore.getState();
   return (
     <ButtonToolbar>
-      <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
+      <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
       <Button
-        bsStyle="warning"
+        variant="warning"
         onClick={() => { action({ ui_state }); onHide(); }}
       >
         Remove

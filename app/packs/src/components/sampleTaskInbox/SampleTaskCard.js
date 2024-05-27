@@ -103,7 +103,7 @@ const SampleTaskCard = ({ sampleTask }) => {
 
   const deleteButton = () => {
     return (
-      <Button bsStyle="danger" className="pull-right" bsSize="xsmall" onClick={() => setShowDeletionConfirmationDialog(true)}>
+      <Button variant="danger" className="pull-right" size="sm" onClick={() => setShowDeletionConfirmationDialog(true)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -162,7 +162,7 @@ const SampleTaskCard = ({ sampleTask }) => {
   }
 
   return (
-    <Panel bsStyle="info">
+    <Panel variant="info">
       <Panel.Heading>
         {panelHeading()}
         {deleteButton()}

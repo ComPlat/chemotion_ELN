@@ -82,7 +82,7 @@ export default class MessagePublish extends React.Component {
                   <FormControl componentClass="textarea" placeholder="message..." rows="20" inputRef={(ref) => { this.myMessage = ref; }} />
                 </FormGroup>
                 <Button
-                  bsStyle="primary"
+                  variant="primary"
                   onClick={() => this.messageSend()}
                 >
                   Publish&nbsp;

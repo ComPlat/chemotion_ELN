@@ -121,8 +121,8 @@ export default class ResearchPlanDetailsContainers extends Component {
     return (
       <div className="upper-btn">
         <Button
-          bsSize="xsmall"
-          bsStyle="danger"
+          size="sm"
+          variant="danger"
           className="button-right"
           disabled={readOnly}
           onClick={() => this.handleRemove(container)}
@@ -149,8 +149,8 @@ export default class ResearchPlanDetailsContainers extends Component {
       return (
         <Button
           className="button-right"
-          bsSize="xsmall"
-          bsStyle="success"
+          size="sm"
+          variant="success"
           onClick={this.handleAdd}
         >
           Add analysis
@@ -243,8 +243,8 @@ export default class ResearchPlanDetailsContainers extends Component {
           </strike>
           <Button
             className="pull-right"
-            bsSize="xsmall"
-            bsStyle="danger"
+            size="sm"
+            variant="danger"
             onClick={() => this.handleUndo(container)}
           >
             <i className="fa fa-undo" />
