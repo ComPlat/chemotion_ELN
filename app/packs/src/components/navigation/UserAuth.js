@@ -468,43 +468,40 @@ export default class UserAuth extends Component {
 
   // render modal
   renderSubscribeModal() {
-    if (this.state.showSubscription) {
-      const tbody = this.state.currentSubscriptions.map((g) => (
-        <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-          <td width="10%" style={{ border: 'none' }}>
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.user_id == null ? 'success' : 'default'}
-              onClick={() => this.subscribe(g)}
-            >
-              {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
-            </Button>
-          </td>
-          <td width="90%" style={{ border: 'none' }}>
-            <div>{g.subject}</div>
-          </td>
-        </tr>
-      ));
+    const tbody = this.state.currentSubscriptions.map((g) => (
+      <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
+        <td width="10%" style={{ border: 'none' }}>
+          <Button
+            bsSize="xsmall"
+            bsStyle={g.user_id == null ? 'success' : 'default'}
+            onClick={() => this.subscribe(g)}
+          >
+            {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
+          </Button>
+        </td>
+        <td width="90%" style={{ border: 'none' }}>
+          <div>{g.subject}</div>
+        </td>
+      </tr>
+    ));
 
-      return (
-        <Modal
-          show={this.state.showSubscription}
-          onHide={this.handleSubscriptionClose}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>My Subscription</Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto' }}>
-            <div>
-              <Table>
-                <tbody>{tbody}</tbody>
-              </Table>
-            </div>
-          </Modal.Body>
-        </Modal>
-      );
-    }
-    return <div />;
+    return (
+      <Modal
+        show={this.state.showSubscription}
+        onHide={this.handleSubscriptionClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>My Subscription</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ overflow: 'auto' }}>
+          <div>
+            <Table>
+              <tbody>{tbody}</tbody>
+            </Table>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   renderDeviceMetadataModal() {
@@ -656,54 +653,58 @@ export default class UserAuth extends Component {
     }
 
     return (
-      <div>
-        <Nav navbar pullRight>
-          <NavDropdown
-            title={`${this.state.currentUser.name}`}
-            id="bg-nested-dropdown"
-          >
-            <MenuItem eventKey="1" href="/pages/settings">
-              Account &amp; Profile
-            </MenuItem>
-            {this.state.currentUser.is_templates_moderator
-              ? templatesLink
-              : null}
-            <MenuItem eventKey="3" href="/users/edit">
-              Change Password
-            </MenuItem>
-            <MenuItem eventKey="5" href="/pages/affiliations">
-              My Affiliations
-            </MenuItem>
-            <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
-            {userLabel}
-            {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
-                Disable for now as there is no subsciption channel yet (Paggy) */}
-            <MenuItem eventKey="7" href="/command_n_control">
-              My Devices
-            </MenuItem>
-            {this.state.currentUser.molecule_editor ? moderatorLink : null}
-            <MenuItem eventKey="12" href="/converter_admin">
-              Converter Profile
-            </MenuItem>
-            <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
-          </NavDropdown>
-          <NavItem
-            onClick={() => this.logout()}
-            style={{ marginRight: '5px' }}
-            className=""
-            title="Log out"
-          >
-            <i className="fa fa-sign-out" />
-          </NavItem>
-        </Nav>
+      <>
+        <Row className='g-3 align-items-center'>
+          <Col xs="auto">
+            <NavDropdown
+              title={`${this.state.currentUser.name}`}
+              id="bg-nested-dropdown"
+            >
+              <MenuItem eventKey="1" href="/pages/settings">
+                Account &amp; Profile
+              </MenuItem>
+              {this.state.currentUser.is_templates_moderator
+                ? templatesLink
+                : null}
+              <MenuItem eventKey="3" href="/users/edit">
+                Change Password
+              </MenuItem>
+              <MenuItem eventKey="5" href="/pages/affiliations">
+                My Affiliations
+              </MenuItem>
+              <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
+              {userLabel}
+              {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
+                  Disable for now as there is no subsciption channel yet (Paggy) */}
+              <MenuItem eventKey="7" href="/command_n_control">
+                My Devices
+              </MenuItem>
+              {this.state.currentUser.molecule_editor ? moderatorLink : null}
+              <MenuItem eventKey="12" href="/converter_admin">
+                Converter Profile
+              </MenuItem>
+              <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
+            </NavDropdown>
+            </Col>
+            <Col xs="auto">
+            <NavItem
+              onClick={() => this.logout()}
+              style={{ marginRight: '5px' }}
+              className=""
+              title="Log out"
+            >
+              <i className="fa fa-sign-out" />
+            </NavItem>
+          </Col>
+        </Row>
         {this.renderModal()}
         <UserLabelModal
           showLabelModal={this.state.showLabelModal}
           onHide={() => this.handleLabelClose()}
         />
-        {this.renderSubscribeModal()}
+        {this.state.showSubscription && this.renderSubscribeModal()}
         {this.renderDeviceMetadataModal()}
-      </div>
+      </>
     );
   }
 }
