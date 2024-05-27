@@ -24,6 +24,7 @@ export default class SampleForm extends React.Component {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
       moleculeFormulaWas: props.sample.molecule_formula,
+      sumFormula: null,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -346,7 +347,9 @@ export default class SampleForm extends React.Component {
     } else { this.props.parent.setState({ sample }); }
   }
 
-  markUndefinedButton(sample) {
+  btnCalculateMolecularMass(sample) {
+    const { sumFormula } = this.state;
+
     return (
       <div>
         <ControlLabel> &nbsp; </ControlLabel>
@@ -354,7 +357,32 @@ export default class SampleForm extends React.Component {
           <OverlayTrigger
             placement="top"
             overlay={
-              <Tooltip id="markUndefined">'click to mark as undefined structure'</Tooltip>
+              <Tooltip id="molMass">calculate the molecular mass</Tooltip>
+            }
+          >
+            <Button
+              className="btn btn-sm"
+              onClick={() => this.handleMassCalculation(sumFormula)}
+            >
+              <Glyphicon glyph="cog" />
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
+    );
+  }
+
+  markUndefinedButton(sample) {
+    const resetTooltip = 'click to mark as undefined structure - it will reset the Molecular mass';
+
+    return (
+      <div>
+        <ControlLabel> &nbsp; </ControlLabel>
+        <div>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id="markUndefined">{resetTooltip}</Tooltip>
             }
           >
             <Button
@@ -371,13 +399,22 @@ export default class SampleForm extends React.Component {
 
   handleMassCalculation(sumFormula) {
     if (sumFormula === 'undefined structure') {
-      this.clearMolecularMass();
+      this.handleError();
     } else {
       this.calculateMolecularMass(sumFormula);
     }
   }
 
+  handleError() {
+    this.clearMolecularMass();
+    NotificationActions.add({
+      message: 'Could not calculate the molecular mass for this sum formula',
+      level: 'error'
+    });
+  }
+
   markSumFormulaUndefined() {
+    this.setState({ sumFormula: 'undefined structure' });
     this.handleFieldChanged('sum_formula', 'undefined structure');
     this.clearMolecularMass();
   }
@@ -419,8 +456,11 @@ export default class SampleForm extends React.Component {
           id={`txinput_${field}`}
           type="text"
           value={updateValue}
-          onChange={(e) => { this.handleFieldChanged(field, e.target.value); }}
-          onBlur={(e) => this.handleMassCalculation(e.target.value)}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            this.setState({ sumFormula: newValue });
+            this.handleFieldChanged(field, newValue);
+          }}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
@@ -842,6 +882,7 @@ export default class SampleForm extends React.Component {
                 <div style={{ display: 'flex' }}
                 >
                   {this.textInput(sample, 'sum_formula', 'Sum formula')}
+                  {this.btnCalculateMolecularMass(sample)}
                   {this.markUndefinedButton(sample)}
                 </div>
               </td>
