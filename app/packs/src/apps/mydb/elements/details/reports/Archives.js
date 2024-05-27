@@ -42,7 +42,7 @@ const reportStatusBtn = (archive) => {
 
   const processBtn = (
     <OverlayTrigger placement="top" overlay={processTP}>
-      <Button variant="default" size="sm" onClick={stopBubble}>
+      <Button variant="light" size="sm" onClick={stopBubble}>
         <i className="fa fa-clock-o" />
       </Button>
     </OverlayTrigger>

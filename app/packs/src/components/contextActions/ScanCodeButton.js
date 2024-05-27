@@ -248,7 +248,7 @@ export default class ScanCodeButton extends React.Component {
       <div>
         <SplitButton
           id="search-code-split-button"
-          variant={customClass ? null : 'default'}
+          variant={customClass ? null : 'light'}
           className={customClass}
           title={title}
           onClick={this.open}

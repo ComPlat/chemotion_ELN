@@ -435,7 +435,7 @@ export default class NoticeButton extends React.Component {
 
   render() {
     const noticeNum = Object.keys(this.state.dbNotices).length;
-    let btnStyle = 'default';
+    let btnStyle = 'light';
     let btnClass = 'fa fa-bell-o fa-lg';
 
     if (noticeNum > 0) {

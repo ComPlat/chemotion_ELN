@@ -22,7 +22,7 @@ const toggleRxnSettingsAll = () => {
 const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
   checkedAllRxnSettings }) => (
   <div>
-    <Panel variant="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Sample
@@ -37,7 +37,7 @@ const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
         />
       </Panel.Body>
     </Panel>
-    <Panel variant="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Reaction
@@ -65,7 +65,7 @@ const toggleSiRxnSettingsAll = () => {
 
 const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
   <div>
-    <Panel variant="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Synthesis Products Information
