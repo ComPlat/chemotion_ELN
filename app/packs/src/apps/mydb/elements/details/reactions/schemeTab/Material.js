@@ -83,7 +83,7 @@ const notApplicableInput = () => (
   <td>
     <FormControl
       bsClass="bs-form--compact form-control"
-      bsSize="small"
+      size="sm"
       style={{ textAlign: 'center' }}
       type="text"
       value="n/a"
@@ -163,7 +163,7 @@ class Material extends Component {
                 || material.gas_type === 'gas'}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
-              bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
+              variant={material.amount_unit === 'l' ? 'success' : 'default'}
             />
           </div>
         </OverlayTrigger>
@@ -187,7 +187,7 @@ class Material extends Component {
           unit="mmol/g"
           metricPrefix="n"
           metricPrefixes={['n']}
-          bsStyle={material.error_loading ? 'error' : 'success'}
+          variant={material.error_loading ? 'error' : 'success'}
           precision={3}
           disabled={!permitOn(this.props.reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
           onChange={loading => this.handleLoadingChange(loading)}
@@ -206,7 +206,7 @@ class Material extends Component {
             name="reference"
             checked={material.reference}
             onChange={e => this.handleReferenceChange(e)}
-            bsSize="xsmall"
+            size="sm"
             style={{ margin: 0 }}
           />
         </td>
@@ -219,8 +219,8 @@ class Material extends Component {
         active
         style={style}
         onClick={e => this.handleShowLabelChange(e)}
-        bsStyle={material.show_label ? 'success' : 'primary'}
-        bsSize="small"
+        variant={material.show_label ? 'success' : 'primary'}
+        size="sm"
         title={material.show_label ? 'Switch to structure' : 'Switch to label'}
       >{material.show_label ? 'l' : 's'}
       </Button>
@@ -262,7 +262,7 @@ class Material extends Component {
             name="yield"
             type="text"
             bsClass="bs-form--compact form-control"
-            bsSize="small"
+            size="sm"
             value={calculateYield || 'n.d.'}
             disabled
           />
@@ -718,7 +718,30 @@ class Material extends Component {
             />
           </td>
 
-          {this.materialLoading(material, showLoadingColumn)}
+          <td>
+            <OverlayTrigger
+              delay="100"
+              placement="top"
+              overlay={
+                <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
+              }>
+              <div>
+                <NumeralInputWithUnitsCompo
+                  key={material.id}
+                  value={material.amount_g}
+                  unit="g"
+                  metricPrefix={metric}
+                  metricPrefixes={metricPrefixes}
+                  precision={4}
+                  disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
+                  onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
+                  onMetricsChange={this.handleMetricsChange}
+                  variant={material.error_mass ? 'error' : massBsStyle}
+                  name="molecular-weight"
+                />
+              </div>
+            </OverlayTrigger>
+          </td>
 
           <td style={{ maxWidth: '4%' }}>
             <NumeralInputWithUnitsCompo
@@ -734,22 +757,52 @@ class Material extends Component {
             />
           </td>
 
-          <td style={{ minWidth: '35px' }}>
+          <td>
+            <NumeralInputWithUnitsCompo
+              key={material.id}
+              value={material.amount_mol}
+              unit="mol"
+              metricPrefix={metricMol}
+              metricPrefixes={metricPrefixesMol}
+              precision={4}
+              disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
+              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+              onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'mol' ? 'success' : 'default'}
+            />
+          </td>
+
+          {this.materialLoading(material, showLoadingColumn)}
+
+          <td>
+            <NumeralInputWithUnitsCompo
+              key={material.id}
+              value={material.concn}
+              unit="mol/l"
+              metricPrefix={metricMolConc}
+              metricPrefixes={metricPrefixesMolConc}
+              precision={4}
+              disabled
+              onChange={e => this.handleAmountUnitChange(e, material.concn)}
+              onMetricsChange={this.handleMetricsChange}
+            />
+          </td>
+
+          <td>
             {this.equivalentOrYield(material)}
           </td>
           <td>
             <Button
               disabled={!permitOn(reaction)}
-              bsStyle="danger"
-              bsSize="small"
+              variant="danger"
+              size="sm"
               onClick={() => deleteMaterial(material)}
             >
               <i className="fa fa-trash-o" />
             </Button>
           </td>
         </tr>
-        {material.gas_type === 'gas'
-        && reaction.gaseous ? this.gaseousProductRow(material) : null}
+        {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
       </tbody>
     );
   }
@@ -812,7 +865,7 @@ class Material extends Component {
                   disabled={!permitOn(reaction)}
                   type="text"
                   bsClass="bs-form--compact form-control"
-                  bsSize="small"
+                  size="sm"
                   value={material.external_label}
                   placeholder={material.molecule.iupac_name}
                   onChange={event => this.handleExternalLabelChange(event)}
@@ -825,7 +878,7 @@ class Material extends Component {
                   disabled={!permitOn(reaction)}
                   active
                   onClick={e => this.handleExternalLabelCompleted(e)}
-                  bsSize="small"
+                  size="sm"
                 ><i className="fa fa-refresh" /></Button>
               </OverlayTrigger>
             </InputGroup.Button>
@@ -838,7 +891,7 @@ class Material extends Component {
           <FormControl
             type="text"
             bsClass="bs-form--compact form-control"
-            bsSize="small"
+            size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
           />
@@ -847,8 +900,8 @@ class Material extends Component {
         <td>
           <Button
             disabled={!permitOn(reaction)}
-            bsStyle="danger"
-            bsSize="small"
+            variant="danger"
+            size="sm"
             onClick={() => deleteMaterial(material)}
           ><i className="fa fa-trash-o" /></Button>
         </td>
@@ -863,8 +916,8 @@ class Material extends Component {
         active
         style={style}
         onClick={() => this.toggleTarget(isTarget)}
-        bsStyle={isTarget ? 'success' : 'primary'}
-        bsSize="small"
+        variant={isTarget ? 'success' : 'primary'}
+        size="sm"
       >{isTarget ? 't' : 'r'}</Button>
     );
   }
@@ -998,7 +1051,7 @@ class Material extends Component {
           {reaction.gaseous && materialGroup !== 'solvents'
             ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-            <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc} disabled={!permitOn(reaction)}>
+            <Button variant="primary" size="sm" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}
             </Button>
           </OverlayTrigger>

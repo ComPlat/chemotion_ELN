@@ -60,8 +60,8 @@ const qCheckMsg = (sample, container) => {
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
-    bsSize="xsmall"
-    bsStyle="primary"
+    size="sm"
+    variant="primary"
     onClick={toggleMode}
     disabled={isDisabled}
   >
@@ -74,8 +74,8 @@ const editModeBtn = (toggleMode, isDisabled) => (
 
 const orderModeBtn = (toggleMode, isDisabled) => (
   <Button
-    bsSize="xsmall"
-    bsStyle="success"
+    size="sm"
+    variant="success"
     onClick={toggleMode}
     disabled={isDisabled}
   >
@@ -102,8 +102,8 @@ const undoBtn = (container, mode, handleUndo) => {
     return (
       <Button
         className="pull-right"
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         onClick={clickUndo}
       >
         <i className="fa fa-undo" />
@@ -199,8 +199,8 @@ const headerBtnGroup = (
   return (
     <div className="upper-btn">
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         className="button-right"
         disabled={readOnly || isDisabled}
         onClick={confirmDelete}

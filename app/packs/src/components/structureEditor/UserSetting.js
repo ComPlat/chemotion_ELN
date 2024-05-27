@@ -74,7 +74,7 @@ const UserSetting = () => {
             />
           </Col>
           <Col sm={4}>
-            <Button bsStyle="primary" onClick={() => updateProfile()}>
+            <Button variant="primary" onClick={() => updateProfile()}>
               {
                 editor.changing ? <i className="fa fa-spinner fa-pulse" aria-hidden="true" /> : null
               }

@@ -32,7 +32,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const hasChanged = nextProps.value !== this.props.value
       || nextProps.block !== this.props.block
       || nextProps.metricPrefix !== this.props.metricPrefix
-      || nextProps.bsStyle !== this.props.bsStyle
+      || nextProps.variant !== this.props.variant
       || nextProps.disabled !== this.props.disabled
       || nextState.value !== this.state.value
       || nextState.block !== this.state.block
@@ -139,7 +139,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, bsStyle, disabled, label, unit, name
+      bsSize, variant, disabled, label, unit, name
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -159,7 +159,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const alwaysAllowDisplayUnit = ['TON', 'TON/h', 'TON/m', 'TON/s', 'g', 'mg', 'μg', 'mol', 'mmol', 'l', 'ml', 'μl'];
     const unitDisplayMode = alwaysAllowDisplayUnit.includes(unit) ? false : inputDisabled;
     // BsStyle-s for Input and buttonAfter have differences
-    const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
+    const variantBtnAfter = variant === 'error' ? 'danger' : variant;
     const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
     if (unit !== 'n') {
       const prefixSwitch = (
@@ -168,7 +168,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             disabled={unitDisplayMode}
             active
             onClick={() => { this.togglePrefix(unit); }}
-            bsStyle={bsStyleBtnAfter}
+            variant={variantBtnAfter}
             bsSize={bsSize}
           >
             {mp + unit}
@@ -185,7 +185,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
               bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
               bsSize={bsSize}
-              bsStyle={bsStyle}
+              variant={variant}
               value={val() || ''}
               onChange={(event) => this._handleInputValueChange(event)}
               onFocus={(event) => this._handleInputValueFocus(event)}
@@ -206,7 +206,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
             bsSize={bsSize}
-            bsStyle={bsStyle}
+            variant={variant}
             value={val() || ''}
             onChange={(event) => this._handleInputValueChange(event)}
             onFocus={(event) => this._handleInputValueFocus(event)}
@@ -230,7 +230,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   disabled: PropTypes.bool,
   label: PropTypes.node,
   bsSize: PropTypes.string,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
   name: PropTypes.string
 };
 
@@ -241,6 +241,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   bsSize: 'small',
-  bsStyle: 'default',
+  variant: 'default',
   name: ''
 };

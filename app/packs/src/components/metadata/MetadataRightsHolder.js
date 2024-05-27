@@ -16,7 +16,7 @@ const MetadataRightsHolder = ({ rightsHolder, index, onChange, onRemove }) => (
         </FormGroup>
       </Col>
       <Col sm={1}>
-        <Button bsStyle="danger" onClick={() => onRemove('rightsHolders', index)}>
+        <Button variant="danger" onClick={() => onRemove('rightsHolders', index)}>
           <i className="fa fa-trash-o" />
         </Button>
       </Col>

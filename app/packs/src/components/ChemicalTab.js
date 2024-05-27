@@ -467,7 +467,7 @@ export default class ChemicalTab extends React.Component {
     }
     return (
       <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
-        <Button active bsSize="xs">
+        <Button active size="sm">
           <a href={value} target="_blank" rel="noreferrer">
             <i className="fa fa-external-link" />
           </a>
@@ -559,8 +559,8 @@ export default class ChemicalTab extends React.Component {
   removeButton(index, document) {
     return (
       <Button
-        bsSize="xs"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         onClick={() => this.handleRemove(index, document)}
       >
         <i className="fa fa-trash-o" />
@@ -669,8 +669,8 @@ export default class ChemicalTab extends React.Component {
     return (
       <Button
         id="saveSafetySheetButton"
-        bsSize="xs"
-        bsStyle="warning"
+        size="sm"
+        variant="warning"
         disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
       >
@@ -1147,7 +1147,7 @@ export default class ChemicalTab extends React.Component {
               </FormGroup>
             </div>
             <div>
-              <Button bsStyle="warning" onClick={() => this.closePropertiesModal()}>
+              <Button variant="warning" onClick={() => this.closePropertiesModal()}>
                 Close
               </Button>
             </div>

@@ -511,8 +511,8 @@ export class ContainerDatasetModalContent extends Component {
         <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           {attachment.is_deleted ? (
             <Button
-              bsSize="xs"
-              bsStyle="danger"
+              size="sm"
+              variant="danger"
               className="attachment-button-size"
               onClick={() => this.handleUndo(attachment)}
             >

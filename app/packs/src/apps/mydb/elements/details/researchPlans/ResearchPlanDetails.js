@@ -366,7 +366,7 @@ export default class ResearchPlanDetails extends Component {
 
     const EditButton = (
       <Button
-        bsStyle={researchPlan.mode === 'edit' ? 'warning' : 'default'}
+        variant={researchPlan.mode === 'edit' ? 'warning' : 'default'}
         style={{
           pointerEvents: 'none',
           backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
@@ -378,7 +378,7 @@ export default class ResearchPlanDetails extends Component {
 
     const ViewButton = (
       <Button
-        bsStyle={researchPlan.mode === 'view' ? 'info' : 'default'}
+        variant={researchPlan.mode === 'view' ? 'info' : 'default'}
         style={{
           pointerEvents: 'none',
           backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,
@@ -520,8 +520,8 @@ export default class ResearchPlanDetails extends Component {
         <ConfirmClose el={researchPlan} />
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
@@ -530,7 +530,7 @@ export default class ResearchPlanDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-          <Button bsStyle="info" bsSize="xsmall" className="button-right" onClick={this.toggleFullScreen}>
+          <Button variant="info" size="sm" className="button-right" onClick={this.toggleFullScreen}>
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -623,7 +623,7 @@ export default class ResearchPlanDetails extends Component {
 
     return (
       <Panel
-        bsStyle={researchPlan.isPendingToSave ? 'info' : 'primary'}
+        variant={researchPlan.isPendingToSave ? 'info' : 'primary'}
         className="eln-panel-detail research-plan-details"
       >
         {this.renderPanelHeading(researchPlan)}
@@ -638,10 +638,10 @@ export default class ResearchPlanDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+            <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
             {
               (researchPlan.changed || researchPlan.is_copy) ? (
-                <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+                <Button variant="warning" onClick={() => this.handleSubmit()}>
                   {researchPlan.isNew ? 'Create' : 'Save'}
                 </Button>
               ) : <div />

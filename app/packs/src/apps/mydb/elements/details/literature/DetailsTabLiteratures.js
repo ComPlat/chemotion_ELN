@@ -301,8 +301,8 @@ export default class DetailsTabLiteratures extends Component {
             </Col>
             <Col md={1} style={{ paddingRight: 0 }}>
               <Button
-                bsStyle="success"
-                bsSize="small"
+                variant="success"
+                size="sm"
                 style={{ marginTop: 2 }}
                 onClick={this.fetchMetadata}
                 title="fetch metadata for this doi or ISBN(open services) and add citation to selection"

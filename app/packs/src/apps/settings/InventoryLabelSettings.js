@@ -275,7 +275,7 @@ function InventoryLabelSettings() {
           </Col>
           <Col sm={4} className="update-inventory-user-button">
             <Button
-              bsStyle="primary"
+              variant="primary"
               className="text-center"
               onClick={() => { updateUserSettings(); }}
             >

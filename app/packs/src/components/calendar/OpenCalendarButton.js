@@ -46,7 +46,7 @@ export default class OpenCalendarButton extends Component {
     if (isPanelHeader) {
       return (
         <Button
-          bsSize="xsmall"
+          size="sm"
           className="button-right"
           onClick={this.onClick}
         >

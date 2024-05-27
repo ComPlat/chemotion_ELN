@@ -81,7 +81,7 @@ class AdminHome extends React.Component {
     return (
       <div>
         <Col className="small-col collec-tree">
-          <Nav bsStyle="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
+          <Nav variant="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
             <NavItem eventKey={0}>Dashboard</NavItem>
             <NavItem eventKey={1}>User Management</NavItem>
             <NavItem eventKey={9}>Devices</NavItem>

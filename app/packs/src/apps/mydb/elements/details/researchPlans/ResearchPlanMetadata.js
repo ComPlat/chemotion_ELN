@@ -219,7 +219,7 @@ export default class ResearchPlanMetadata extends Component {
                   </Col>
                   <Col smOffset={0} sm={2}>
                     <ControlLabel>Action</ControlLabel><br />
-                    <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('alternate_identifier', index)}>
+                    <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('alternate_identifier', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
                   </Col>
@@ -228,7 +228,7 @@ export default class ResearchPlanMetadata extends Component {
             ))}
             <Row>
               <Col smOffset={0} sm={12}>
-                <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addResearchPlanMetadataArrayItem('alternate_identifier')}>
+                <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('alternate_identifier')}>
                   <i className="fa fa-plus" />
                 </Button>
               </Col>
@@ -262,7 +262,7 @@ export default class ResearchPlanMetadata extends Component {
                   </Col>
                   <Col smOffset={0} sm={2}>
                     <ControlLabel>Action</ControlLabel><br />
-                    <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('related_identifier', index)}>
+                    <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('related_identifier', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
                   </Col>
@@ -271,7 +271,7 @@ export default class ResearchPlanMetadata extends Component {
             ))}
             <Row>
               <Col smOffset={0} sm={12}>
-                <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addResearchPlanMetadataArrayItem('related_identifier')}>
+                <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('related_identifier')}>
                   <i className="fa fa-plus" />
                 </Button>
               </Col>
@@ -305,7 +305,7 @@ export default class ResearchPlanMetadata extends Component {
                   </Col>
                   <Col smOffset={0} sm={2}>
                     <ControlLabel>Action</ControlLabel><br />
-                    <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('description', index)}>
+                    <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('description', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
                   </Col>
@@ -314,7 +314,7 @@ export default class ResearchPlanMetadata extends Component {
             ))}
             <Row>
               <Col smOffset={0} sm={12}>
-                <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addResearchPlanMetadataArrayItem('description')}>
+                <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('description')}>
                   <i className="fa fa-plus" />
                 </Button>
               </Col>
@@ -366,7 +366,7 @@ export default class ResearchPlanMetadata extends Component {
                   </Col>
                   <Col smOffset={0} sm={2}>
                     <ControlLabel>Action</ControlLabel><br />
-                    <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('geo_location', index)}>
+                    <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('geo_location', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
                   </Col>
@@ -375,7 +375,7 @@ export default class ResearchPlanMetadata extends Component {
             ))}
             <Row>
               <Col smOffset={0} sm={12}>
-                <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addResearchPlanMetadataArrayItem('geo_location')}>
+                <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('geo_location')}>
                   <i className="fa fa-plus" />
                 </Button>
               </Col>
@@ -409,7 +409,7 @@ export default class ResearchPlanMetadata extends Component {
                   </Col>
                   <Col smOffset={0} sm={2}>
                     <ControlLabel>Action</ControlLabel><br />
-                    <Button bsStyle="danger" className="pull-right" bsSize="small" onClick={() => this.removeResearchPlanMetadataArrayItem('funding_reference', index)}>
+                    <Button variant="danger" className="pull-right" size="sm" onClick={() => this.removeResearchPlanMetadataArrayItem('funding_reference', index)}>
                       <i className="fa fa-trash-o" />
                     </Button>
                   </Col>
@@ -418,7 +418,7 @@ export default class ResearchPlanMetadata extends Component {
             ))}
             <Row>
               <Col smOffset={0} sm={12}>
-                <Button className="pull-right" bsStyle="success" bsSize="small" onClick={() => this.addResearchPlanMetadataArrayItem('funding_reference')}>
+                <Button className="pull-right" variant="success" size="sm" onClick={() => this.addResearchPlanMetadataArrayItem('funding_reference')}>
                   <i className="fa fa-plus" />
                 </Button>
               </Col>
@@ -507,7 +507,7 @@ export default class ResearchPlanMetadata extends Component {
             ))}
 
             <FormGroup>
-              <Button className="pull-right" bsStyle="success" style={{ marginTop: 20 }} onClick={() => this.saveResearchPlanMetadata()}>
+              <Button className="pull-right" variant="success" style={{ marginTop: 20 }} onClick={() => this.saveResearchPlanMetadata()}>
                 Save Metadata
               </Button>
             </FormGroup>

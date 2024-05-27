@@ -179,8 +179,8 @@ export default class CreateButton extends React.Component {
           </FormGroup>
 
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
-            <Button bsStyle="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
+            <Button variant="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
           </ButtonToolbar>
         </Modal.Body>
       </Modal>
@@ -260,7 +260,7 @@ export default class CreateButton extends React.Component {
 
         <SplitButton
           id='create-split-button'
-          bsStyle={customClass ? null : 'primary'}
+          variant={customClass ? null : 'primary'}
           className={customClass}
           title={this.createBtn(type)}
           disabled={isDisabled}

@@ -261,13 +261,13 @@ export default class DeviceBox extends React.Component {
             Delete this item(s)?
             <ButtonGroup>
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 onClick={() => this.deleteCheckedDataset(device_box)}
               >
                 Yes
               </Button>
-              <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.toggleTooltip()}>
+              <Button variant="warning" size="sm" onClick={() => this.toggleTooltip()}>
                 No
               </Button>
             </ButtonGroup>

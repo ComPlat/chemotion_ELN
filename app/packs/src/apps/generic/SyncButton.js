@@ -27,8 +27,8 @@ const SyncBtn = props => {
       >
         <Button
           style={{ float: 'left' }}
-          bsStyle="info"
-          bsSize="sm"
+          variant="info"
+          size="sm"
           onClick={fnModalOpen}
         >
           <i className="fa fa-refresh" aria-hidden="true" />&nbsp;Fetch from LabIMotion Hub

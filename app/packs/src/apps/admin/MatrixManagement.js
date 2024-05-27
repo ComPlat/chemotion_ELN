@@ -169,8 +169,8 @@ export default class MatrixManagement extends React.Component {
           <td>
             <OverlayTrigger placement="bottom" overlay={editTooltip} >
               <Button
-                bsSize="xsmall"
-                bsStyle="info"
+                size="sm"
+                variant="info"
                 onClick={() => this.edit(e)}
               >
                 <i className="fa fa-pencil-square-o" />
@@ -179,8 +179,8 @@ export default class MatrixManagement extends React.Component {
             &nbsp;
             <OverlayTrigger placement="bottom" overlay={jsonTooltip} >
               <Button
-                bsSize="xsmall"
-                bsStyle="warning"
+                size="sm"
+                variant="warning"
                 onClick={() => this.editJson(e)}
               >
                 <i className="fa fa-cog" />
@@ -302,11 +302,11 @@ export default class MatrixManagement extends React.Component {
               </FormGroup>
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="warning" onClick={() => this.handleClose()} >
+                  <Button variant="warning" onClick={() => this.handleClose()} >
                     Cancel&nbsp;
                   </Button>
                   &nbsp;
-                  <Button bsStyle="primary" onClick={() => this.handleSave(matrice)} >
+                  <Button variant="primary" onClick={() => this.handleSave(matrice)} >
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>
@@ -351,11 +351,11 @@ export default class MatrixManagement extends React.Component {
 
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="warning" onClick={() => this.handleJsonClose()} >
+                  <Button variant="warning" onClick={() => this.handleJsonClose()} >
                     Cancel&nbsp;
                   </Button>
                   &nbsp;
-                  <Button bsStyle="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
+                  <Button variant="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
                     Update&nbsp;
                     <i className="fa fa-save" />
                   </Button>

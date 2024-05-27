@@ -81,7 +81,7 @@ export default class CopyElementModal extends React.Component {
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="CopyElement">Copy</Tooltip>}>
-          <Button id="copy-element-btn" style={{ marginLeft: '2px', display: `${canCopy}` }} bsSize="xsmall" className="button-right" bsStyle="success" onClick={this.handleModalShow}>
+          <Button id="copy-element-btn" style={{ marginLeft: '2px', display: `${canCopy}` }} size="sm" className="button-right" variant="success" onClick={this.handleModalShow}>
             <i className="fa fa-clone" />
           </Button>
         </OverlayTrigger>
@@ -101,8 +101,8 @@ export default class CopyElementModal extends React.Component {
             </span>
           </Modal.Body>
           <Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
-            <Button id="submit-copy-element-btn" bsStyle="success" onClick={this.copyElement} className="pull-left">Copy</Button>
+            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
+            <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement} className="pull-left">Copy</Button>
           </Modal.Footer>
         </Modal>
       </span>

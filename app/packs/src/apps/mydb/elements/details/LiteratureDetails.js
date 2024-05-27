@@ -41,8 +41,8 @@ const CloseBtn = ({ onClose }) => (
   <Button
     key="closeBtn"
     onClick={onClose}
-    bsStyle="danger"
-    bsSize="xsmall"
+    variant="danger"
+    size="sm"
     className="button-right"
   >
     <i className="fa fa-times" />
@@ -121,8 +121,8 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
             </td>
             <td>
               <Button
-                bsSize="small"
-                bsStyle="danger"
+                size="sm"
+                variant="danger"
                 onClick={() => removeCitation(citation)}
               >
                 <i className="fa fa-trash-o" />
@@ -363,7 +363,7 @@ export default class LiteratureDetails extends Component {
 
     return (
       <Panel
-        bsStyle="info"
+        variant="info"
         className="format-analysis-panel"
       >
         <Panel.Heading>
@@ -388,7 +388,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button bsSize="xsmall" active className="button-right clipboardBtn" data-clipboard-text={contentSamples} >
+                        <Button size="sm" active className="button-right clipboardBtn" data-clipboard-text={contentSamples} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -427,7 +427,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button bsSize="xsmall" active className="button-right clipboardBtn" data-clipboard-text={contentReactions} >
+                        <Button size="sm" active className="button-right clipboardBtn" data-clipboard-text={contentReactions} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -466,7 +466,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button bsSize="xsmall" active className="button-right clipboardBtn" data-clipboard-text={contentElements} >
+                        <Button size="sm" active className="button-right clipboardBtn" data-clipboard-text={contentElements} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -486,8 +486,8 @@ export default class LiteratureDetails extends Component {
                       </Col>
                       <Col md={1} style={{ paddingRight: 0 }}>
                         <Button
-                          bsStyle="success"
-                          bsSize="small"
+                          variant="success"
+                          size="sm"
                           style={{ marginTop: 2 }}
                           onClick={this.fetchDOIMetadata}
                           title="fetch metadata for this doi and add citation to selection"

@@ -41,8 +41,8 @@ function renderCommentButton(handleCommentButtonClick, disableMode = true) {
       )}
     >
       <Button
-        bsSize="xsmall"
-        bsStyle="primary"
+        size="sm"
+        variant="primary"
         style={{ float: 'right', marginRight: '10px' }}
         onClick={handleCommentButtonClick}
         disabled={disableMode}

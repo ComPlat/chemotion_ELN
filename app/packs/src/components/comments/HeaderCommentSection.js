@@ -56,8 +56,8 @@ class HeaderCommentSection extends Component {
               overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
             >
               <Button
-                bsSize="xsmall"
-                bsStyle={sectionComments.length > 0 ? 'success' : 'default'}
+                size="sm"
+                variant={sectionComments.length > 0 ? 'success' : 'default'}
                 onClick={() => {
                   CommentActions.setCommentSection(headerSection);
                   CommentActions.fetchComments(element);
@@ -72,7 +72,7 @@ class HeaderCommentSection extends Component {
               overlay={<Tooltip id="toggleComments">Show/Hide Section Comments</Tooltip>}
             >
               <Button
-                bsSize="xsmall"
+                size="sm"
                 onClick={CommentActions.toggleCommentSection}
                 style={{ marginLeft: 5 }}
               >

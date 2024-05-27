@@ -12,7 +12,7 @@ const stripBStyle = idx => (idx % 2 === 0 ? 'primary' : 'info');
 const contentBlock = els => (
   els.map((el, idx) => (
     <div key={`${idx}-${el.id}`}>
-      <Panel bsStyle={stripBStyle(idx)}>
+      <Panel variant={stripBStyle(idx)}>
         <Panel.Heading>
           <Panel.Title>
             Rank { el.rank }: { el.smiles.join('.') }
@@ -36,7 +36,7 @@ const ContentOutputs = (template, outputEls) => {
   const titleStr = titleFromTemplate(template) || 'TBD';
 
   return (
-    <Panel bsStyle="default" defaultExpanded>
+    <Panel variant="default" defaultExpanded>
       <Panel.Heading>
         <Panel.Title toggle>
           { titleStr }

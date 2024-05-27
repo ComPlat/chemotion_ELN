@@ -50,8 +50,8 @@ const headerTitle = (el, icon) => {
     <span>
       {el.title()} {icon}
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
+        variant="danger"
+        size="sm"
         className="button-right"
         onClick={clickToRm}
       >
@@ -75,30 +75,30 @@ const ObjRow = ({ element, template, connectDragSource, connectDropTarget,
     style.opacity = 0.2;
   }
 
-  let bsStyle = 'default';
+  let variant = 'default';
   let icon = null;
   const isStdTemplate = template === 'standard';
   const { type, role } = element;
   if (type === 'sample') {
-    bsStyle = 'success';
+    variant = 'success';
   } else if (!isStdTemplate && type === 'reaction' && role === 'gp') {
-    bsStyle = 'primary';
+    variant = 'primary';
     icon = <i className="fa fa-home c-bs-info" />;
   } else if (!isStdTemplate && type === 'reaction' && role === 'single') {
-    bsStyle = 'default';
+    variant = 'default';
     icon = <i className="fa fa-asterisk c-bs-danger" />;
   } else if (!isStdTemplate && type === 'reaction' && role === 'parts') {
-    bsStyle = 'info';
+    variant = 'info';
     icon = <i className="fa fa-bookmark c-bs-success" />;
   } else if (type === 'reaction') {
-    bsStyle = 'info';
+    variant = 'info';
   }
 
   return compose(connectDragSource, connectDropTarget)(
     <div>
       <Panel
         style={style}
-        bsStyle={bsStyle}
+        variant={variant}
       >
         <Panel.Heading>{headerTitle(element, icon)}</Panel.Heading>
         <div className="row">

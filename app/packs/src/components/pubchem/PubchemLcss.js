@@ -47,7 +47,7 @@ const PubchemLcss = ({
       </Row>
       <Row>
         <Col md={12}>
-          <Button style={{ border: 'none' }} bsSize="xsmall" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
+          <Button style={{ border: 'none' }} size="sm" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
             <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" />&nbsp;
             <i className="lcss-link">
               Source: European Chemicals Agency (ECHA)<br />

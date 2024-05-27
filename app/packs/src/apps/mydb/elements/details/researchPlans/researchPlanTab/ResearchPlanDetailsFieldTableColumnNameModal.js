@@ -82,10 +82,10 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
           </div>
           <div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={onHide}>
+              <Button variant="warning" onClick={onHide}>
                 Cancel
               </Button>
-              <Button bsStyle="primary" onClick={this.handleSubmit.bind(this)}>
+              <Button variant="primary" onClick={this.handleSubmit.bind(this)}>
                 {title}
               </Button>
             </ButtonToolbar>

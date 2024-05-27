@@ -252,7 +252,7 @@ export class WellplateDetailsAttachments extends Component {
       <div>
         <ButtonGroup style={{ marginBottom: '10px' }}>
           <Button
-            bsStyle="primary"
+            variant="primary"
             onClick={() => this.handleTemplateDownload()}
           >
             <i className="fa fa-download" aria-hidden="true" />
@@ -261,7 +261,7 @@ export class WellplateDetailsAttachments extends Component {
           </Button>
           <OverlayTrigger placement="bottom" overlay={templateInfo}>
             <Button
-              bsStyle="info"
+              variant="info"
             >
               <i className="fa fa-info" aria-hidden="true" />
             </Button>
@@ -333,8 +333,8 @@ export class WellplateDetailsAttachments extends Component {
               <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 {attachment.is_deleted ? (
                   <Button
-                    bsSize="xs"
-                    bsStyle="danger"
+                    size="sm"
+                    variant="danger"
                     className="attachment-button-size"
                     onClick={() => onUndoDelete(attachment)}
                   >

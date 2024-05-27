@@ -74,7 +74,7 @@ export default class OlsTerms extends React.Component {
     return file ? (
       <div>
         {file.name}
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
+        <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
           <i className="fa fa-trash-o" />
         </Button>
       </div>
@@ -167,7 +167,7 @@ export default class OlsTerms extends React.Component {
         <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
           {this.dropzoneOrfilePreview()}
           <ButtonToolbar>
-            <Button bsStyle="warning" onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
+            <Button variant="warning" onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
           </ButtonToolbar>
         </Row>
         <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
@@ -182,12 +182,12 @@ export default class OlsTerms extends React.Component {
             </DropdownButton>
             <div><h3>{this.state.selectName}</h3></div>
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => this.handleSaveBtn()}
             >Save
             </Button> &nbsp; &nbsp;
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => this.handleAssociateBtn()}
             >switch mode
             </Button>
