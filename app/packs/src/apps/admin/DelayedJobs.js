@@ -38,8 +38,8 @@ export default class DelayedJobs extends Component {
       return (
         <OverlayTrigger placement="top" overlay={tipRestartJob}>
           <Button
-            bsSize="xsmall"
-            bsStyle="success"
+            size="sm"
+            variant="success"
             onClick={() => this.handleRestartFetch(job.id)}
           >
             <i className="fa fa-play" aria-hidden="true" />

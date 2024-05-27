@@ -104,7 +104,7 @@ export default class ContainerDatasets extends Component {
     if (!readOnly && !disabled) {
       return (
         <div className="pull-right" style={{ marginTop: 5, marginBottom: 5 }}>
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus" />
           </Button>
         </div>

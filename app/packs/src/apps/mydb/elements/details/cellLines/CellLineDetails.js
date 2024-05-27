@@ -105,8 +105,8 @@ class CellLineDetails extends React.Component {
     const { toggleFullScreen } = this.props;
     return (
       <Button
-        bsStyle="info"
-        bsSize="xsmall"
+        variant="info"
+        size="sm"
         className="button-right"
         onClick={toggleFullScreen}
       >
@@ -142,7 +142,7 @@ class CellLineDetails extends React.Component {
         placement="bottom"
         overlay={<Tooltip>{toolTipMessage}</Tooltip>}
       >
-        <Button disabled={disabled} bsStyle="warning" bsSize="xsmall" className="button-right" onClick={action}>
+        <Button disabled={disabled} variant="warning" size="sm" className="button-right" onClick={action}>
           {icons}
         </Button>
       </OverlayTrigger>
@@ -154,8 +154,8 @@ class CellLineDetails extends React.Component {
 
     return (
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
+        variant="danger"
+        size="sm"
         className="button-right"
         onClick={() => { this.handleClose(cellLineItem); }}
       >
@@ -173,7 +173,7 @@ class CellLineDetails extends React.Component {
     const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
     const disabledButton = (
       <Button
-        bsStyle="warning"
+        variant="warning"
         disabled
         onClick={() => { this.handleSubmit(cellLineItem); }}
       >
@@ -182,7 +182,7 @@ class CellLineDetails extends React.Component {
     );
     const enabledButton = (
       <Button
-        bsStyle="warning"
+        variant="warning"
         onClick={() => { this.handleSubmit(cellLineItem); }}
       >
         {buttonText}
@@ -228,7 +228,7 @@ class CellLineDetails extends React.Component {
             </Tab>
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+            <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
               Close
             </Button>
             {this.renderSubmitButton()}

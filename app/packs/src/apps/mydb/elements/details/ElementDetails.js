@@ -237,7 +237,7 @@ export default class ElementDetails extends Component {
             <h1>{el.id.substring(el.id.indexOf('error:') + 6)}</h1>
             <h3><i className="fa fa-eye-slash fa-5x" /></h3>
             <Button
-              bsStyle="danger"
+              variant="danger"
               onClick={() => DetailActions.close(el, true)}
             >
               Close this window
@@ -248,7 +248,7 @@ export default class ElementDetails extends Component {
   }
 
   tabTitle(el, elKey) {
-    const bsStyle = el.isPendingToSave ? 'info' : 'primary';
+    const variant = el.isPendingToSave ? 'info' : 'primary';
     const focusing = elKey === this.state.activeKey;
 
     let iconElement = (<i className={`icon-${el.type}`} />);
@@ -257,7 +257,7 @@ export default class ElementDetails extends Component {
     const title = tab.title || el.title();
     if (tab.iconEl) { iconElement = tab.iconEl; }
     if (el.element_klass) { iconElement = (<i className={`${el.element_klass.icon_name}`} />); }
-    const icon = focusing ? (iconElement) : (<Label bsStyle={bsStyle || ''}>{iconElement}</Label>);
+    const icon = focusing ? (iconElement) : (<Label variant={variant || ''}>{iconElement}</Label>);
     return (
       <div>
         {icon}

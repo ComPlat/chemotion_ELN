@@ -163,9 +163,9 @@ class UserLabelModal extends Component {
           <td md={3}>{g.color}</td>
           <td md={3}>
             <Button
-              bsSize="xs"
+              size="sm"
               disabled={g.access_level === 2}
-              bsStyle={g.access_level === 2 ? 'default' : 'success'}
+              variant={g.access_level === 2 ? 'default' : 'success'}
               onClick={(e) => this.handleEditLabelClick(e, g)}
             >
               {g.access_level === 2 ? 'Global' : 'Edit'}
@@ -183,11 +183,11 @@ class UserLabelModal extends Component {
     }
     return (
       <div>
-        <Panel bsStyle="success">
+        <Panel variant="success">
           <Panel.Heading>
             <div>
               <ButtonGroup>
-                <Button bsStyle="primary" onClick={() => this.handelNewLabel()}>
+                <Button variant="primary" onClick={() => this.handelNewLabel()}>
                   Create&nbsp;
                   <i className="fa fa-plus" />
                 </Button>

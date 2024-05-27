@@ -88,7 +88,7 @@ const MetadataFundingReference = ({ fundingReference, index, onChange, onRemove 
           </FormGroup>
         </Col>
         <Col sm={12}>
-          <Button bsStyle="danger" bsSize="small" onClick={() => onRemove('fundingReferences', index)}>
+          <Button variant="danger" size="sm" onClick={() => onRemove('fundingReferences', index)}>
             Remove funding reference
           </Button>
         </Col>

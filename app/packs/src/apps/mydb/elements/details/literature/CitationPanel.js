@@ -16,7 +16,7 @@ const changeTypeBtn = (litype, updId, fn, typeMap, readOnly = false) => {
           <Button
             disabled={readOnly}
             key={`btn_lit_${updId}`}
-            bsSize="xsmall"
+            size="sm"
             onClick={() => fn(updId, e)}
           >
             {typeMap[e].short}
@@ -28,7 +28,7 @@ const changeTypeBtn = (litype, updId, fn, typeMap, readOnly = false) => {
 
   return (
     <OverlayTrigger animation placement="top" rootClose trigger="click" overlay={popover}>
-      <Button disabled={readOnly} bsSize="sm"><i className="fa fa-pencil" aria-hidden="true" /></Button>
+      <Button disabled={readOnly} size="sm"><i className="fa fa-pencil" aria-hidden="true" /></Button>
     </OverlayTrigger>
   );
 };
@@ -68,7 +68,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate, typeMap, readOnly 
           <Citation literature={citation} />
         </div>
         <div style={{ marginLeft: 'auto' }}>
-          <ButtonGroup bsSize="small">
+          <ButtonGroup size="sm">
             <OverlayTrigger placement="top" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
               <Button
                 active
@@ -80,7 +80,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate, typeMap, readOnly 
             </OverlayTrigger>
             {changeTypeBtn(litype, id, fnUpdate, typeMap, readOnly)}
             <Button
-              bsStyle="danger"
+              variant="danger"
               onClick={() => fnDelete(citation)}
               disabled={readOnly}
             >

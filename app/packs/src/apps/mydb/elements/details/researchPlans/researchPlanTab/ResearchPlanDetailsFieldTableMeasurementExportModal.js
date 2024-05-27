@@ -147,7 +147,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
     const { measurementCandidates } = this.state;
 
     return (
-      <Modal animation bsSize="large" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
+      <Modal animation size="lg" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
         <Modal.Header closeButton>
           <Modal.Title>
             Export measurements to samples
@@ -184,10 +184,10 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
           </table>
           <div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={this.props.onHide}>
+              <Button variant="warning" onClick={this.props.onHide}>
                 Close
               </Button>
-              <Button bsStyle="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
+              <Button variant="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
                 Link data to sample
               </Button>
             </ButtonToolbar>

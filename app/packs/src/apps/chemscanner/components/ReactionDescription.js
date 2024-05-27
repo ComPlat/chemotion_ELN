@@ -44,7 +44,7 @@ export default class ReactionDescription extends React.Component {
       default:
         statusClass = 'success';
     }
-    const statusLabel = <Label bsStyle={statusClass}>{status}</Label>;
+    const statusLabel = <Label variant={statusClass}>{status}</Label>;
 
     const steps = reaction.get('steps').toJS();
     const rId = reaction.get('id');
@@ -68,7 +68,7 @@ export default class ReactionDescription extends React.Component {
         </div>
         {steps.map(step => (
           <div key={`reaction-${rId}-${step.number}`}>
-            <Label bsStyle="info">step {step.number}</Label>
+            <Label variant="info">step {step.number}</Label>
             <ul>
               {
                 ['description', 'temperature', 'time'].map((prop) => {

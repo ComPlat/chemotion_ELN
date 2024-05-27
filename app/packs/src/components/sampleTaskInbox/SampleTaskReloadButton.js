@@ -8,7 +8,7 @@ const SampleTaskReloadButton = ({}) => {
 
   return (
     <Glyphicon
-      bsSize="small"
+      size="sm"
       style={{ cursor: 'Pointer' }}
       glyph="refresh"
       title="Reload sample tasks"

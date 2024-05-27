@@ -14,8 +14,8 @@ const CloseBtn = ({ report }) => {
 
   return (
     <Button
-      bsStyle="danger"
-      bsSize="xsmall"
+      variant="danger"
+      size="sm"
       className="button-right"
       onClick={onClickToClose}
     >
@@ -31,8 +31,8 @@ const clickToReset = () => {
 
 const ResetBtn = () => (
   <Button
-    bsStyle="info"
-    bsSize="xsmall"
+    variant="info"
+    size="sm"
     className="button-right"
     onClick={clickToReset}
   >
@@ -65,8 +65,8 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
   return (
     !processingReport
       ? <Button
-        bsStyle="primary"
-        bsSize="xsmall"
+        variant="primary"
+        size="sm"
         className="button-right"
         disabled={!(showGeneReportBtn && hasObj)}
         onClick={onClick}
@@ -74,8 +74,8 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
         <span><i className="fa fa-file-text-o" /> Generate</span>
       </Button>
       : <Button
-        bsStyle="danger"
-        bsSize="xsmall"
+        variant="danger"
+        size="sm"
         className="button-right"
       >
         <span><i className="fa fa-spinner fa-pulse fa-fw" /> Processing</span>

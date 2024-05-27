@@ -303,11 +303,11 @@ export default class ComputedPropsGraphContainer extends React.Component {
               </FormGroup>
               <FormGroup style={{ marginBottom: 0 }}>
                 <Col sm={12}>
-                  <Button bsStyle="info" onClick={this.saveTemplate}>
+                  <Button variant="info" onClick={this.saveTemplate}>
                     Save Template
                   </Button>
                   {' '}
-                  <Button bsStyle="danger" onClick={this.deleteTemplate}>
+                  <Button variant="danger" onClick={this.deleteTemplate}>
                     Delete Template
                   </Button>
                 </Col>

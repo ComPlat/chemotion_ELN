@@ -15,7 +15,7 @@ function RemoveRowBtn({ onClick, node }) {
     <Button
       active
       onClick={() => onClick(node.data, newAbb)}
-      bsSize="xsmall"
+      size="sm"
     >
       <i className="fa fa-minus" />
     </Button>
