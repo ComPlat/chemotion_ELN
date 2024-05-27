@@ -313,11 +313,11 @@ export default class UserAuth extends Component {
   };
 
   renderAffiliations() {
-    return (
+    return this.state.showAffiliations ? (
       <Affiliations
         show={this.state.showAffiliations}
         onHide={this.handleAffiliationsHide} />
-    );
+    ) : null;
 
   }
 

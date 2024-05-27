@@ -1,95 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
-import { Button, Modal, FormGroup, ControlLabel, Row, Table, Form } from 'react-bootstrap';
+import { Button, Modal, Table } from 'react-bootstrap';
+import DatePicker from 'react-datepicker';
 
 import UserSettingsFetcher from '../../fetchers/UserSettingsFetcher';
+import moment from 'moment';
 
 
 function Affiliations({ show, onHide }) {
 
   const [affiliations, setAffiliations] = useState([]);
-
   const [countryOptions, setCountryOptions] = useState([]);
   const [orgOptions, setOrgOptions] = useState([]);
   const [deptOptions, setDeptOptions] = useState([]);
   const [groupOptions, setGroupOptions] = useState([]);
 
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedOrg, setSelectedOrg] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState("");
-
-  const [isUpdate, setIsUpdate] = useState(false);
-  const [updateId, setUpdateId] = useState(0);
-
   const [showAlert, setShowAlert] = useState(false);
 
-
   useEffect(() => {
-    setIsUpdate(false);
-    handleAutoComplete();
-  }, []);
-
-  useEffect(() => { handleClear(); }, [show]);
-
-  const getAllAffiliations = () => {
-    UserSettingsFetcher.getAllAffiliations()
-      .then((data) => setAffiliations(data));
-  };
-
-  const handleDeleteAffiliation = (id) => {
-    UserSettingsFetcher.deleteAffiliation(id)
-      .then((result) => {
-        if (result.error) {
-          console.error(result.error);
-          return false;
-        }
-        setShowAlert(true);
-        getAllAffiliations();
-      }
-      );
-  };
-
-  const handleClear = () => {
-    setSelectedCountry('');
-    setSelectedOrg('');
-    setSelectedDepartment('');
-    setSelectedGroup('');
-    setIsUpdate(false);
-
-  };
-
-  const handleUpdateAffiliation = () => {
-
-    UserSettingsFetcher.updateAffiliation
-      ({
-        id: updateId,
-        country: selectedCountry,
-        organization: selectedOrg,
-        department: selectedDepartment,
-        group: selectedGroup
-      })
-      .then(() => getAllAffiliations())
-      .catch((error) => {
-        console.error(error);
-      });
-
-  };
-
-  const handleUpdateToggle = (affiliation) => {
-
-    setIsUpdate(true);
-    setUpdateId(affiliation.id);
-    setSelectedCountry(affiliation.country);
-    setSelectedOrg(affiliation.organization);
-    setSelectedDepartment(affiliation.department);
-    setSelectedGroup(affiliation.group);
-    setShowAlert(true);
-    getAllAffiliations();
-  };
-
-  const handleAutoComplete = () => {
-
     UserSettingsFetcher.getAutoCompleteSuggestions('countries')
       .then((data) => {
         data.map((item) => {
@@ -129,179 +57,231 @@ function Affiliations({ show, onHide }) {
 
       });
     getAllAffiliations();
+  }, []);
 
+  const getAllAffiliations = () => {
+    UserSettingsFetcher.getAllAffiliations()
+      .then((data) => {
+        setAffiliations(data.map(item => (
+          {
+            ...item,
+            disabled: true
+          }
+        )));
+      });
   };
 
-  const handleCreateAffiliations = () => {
-    UserSettingsFetcher.createAffiliation({
-      country: selectedCountry,
-      organization: selectedOrg,
-      department: selectedDepartment,
-      group: selectedGroup
-    }).then(() => {
-      getAllAffiliations();
-      setIsUpdate(false);
-    })
+  const handleCreateOrUpdateAffiliation = (index) => {
+    const params = affiliations[index];
+    const callFunction = params.id ? UserSettingsFetcher.updateAffiliation : UserSettingsFetcher.createAffiliation;
+
+    callFunction(params)
+      .then(() => getAllAffiliations())
       .catch((error) => {
         console.error(error);
       });
   };
 
-  const renderAffiliationsTable = (affiliations) => (
-    <Table striped bordered hover>
-      <thead>
-        <tr>
-          <th>Country</th>
-          <th>Organization</th>
-          <th>Department</th>
-          <th>Working Group</th>
-          <th>From</th>
-          <th>To</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {affiliations.map((item) => (
-          <tr key={item.id}>
-            <td>{item.country}</td>
-            <td>{item.organization}</td>
-            <td>{item.department}</td>
-            <td>{item.group}</td>
-            <td>{item.from}</td>
-            <td>{item.to}</td>
-            <td>
-              <Button
-                bsSize='small'
-                //bsStyle={`${isUpdate} ? "default" : "primary" `}
-                bsStyle='primary'
-                //className="pull-left"
-                onClick={() => handleUpdateToggle(item)}>
-                <i className="fa fa-edit" />
-              </Button>
-              <Button
-                bsSize='small'
-                bsStyle="danger"
-                className="pull-right"
-                onClick={() => handleDeleteAffiliation(item.id)}>
-                <i className="fa fa-trash-o" />
-              </Button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>);
+  const handleDeleteAffiliation = (id) => {
+    UserSettingsFetcher.deleteAffiliation(id)
+      .then((result) => {
+        if (result.error) {
+          console.error(result.error);
+          return false;
+        }
+        setShowAlert(true);
+        getAllAffiliations();
+      }
+      );
+  };
 
   return (
     <Modal
       bsSize='lg'
+      dialogClassName="importChemDrawModal"
       show={show}
       onHide={onHide}
-      backdrop="static"
-      keyboard={false} >
+      backdrop="static" >
       <Modal.Header closeButton onHide={onHide} >
         <Modal.Title>My past and current affiliations</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         <>
-          <Form>
-            <FormGroup as={Row} className="form-group mt-3 mb-3" >
-              <ControlLabel>
-                Country
-              </ControlLabel>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <Button
+              bsStyle='primary'
+              onClick={() => {
+                setAffiliations(prev => [...prev, {
+                  country: '',
+                  organization: '',
+                  department: '',
+                  group: '',
+                  from: '',
+                  to: '',
+                  disabled: false,
+                }]);
+              }} >
+              Add affiliation &nbsp; <i className="fa fa-plus" />
+            </Button>
+          </div>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>Organization</th>
+                <th>Department</th>
+                <th>Working Group</th>
+                <th>From</th>
+                <th>To</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {affiliations.map((item, index) => (
+                <tr key={item.id}>
+                  <td>
+                    {item.disabled ? item.country :
 
-              <CreatableSelect
-                isCreatable
-                placeholder='Select or enter a new option'
-                components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
-                options={countryOptions}
-                value={selectedCountry || ''}
-                isSearchable
-                isClearable
-                onChange={(choice) => (!choice) ? setSelectedCountry('') : setSelectedCountry(choice.value)}
-              />
-            </FormGroup>
+                      <CreatableSelect
+                        isCreatable
+                        disabled={item.disabled}
+                        placeholder='Select or enter a new option'
+                        components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
+                        options={countryOptions}
+                        value={item.country || ''}
+                        isSearchable
+                        isClearable
+                        onChange={(choice) => {
+                          const updatedAffiliations = [...affiliations];
+                          updatedAffiliations[index].country = !choice ? '' : choice.value;
+                          setAffiliations(updatedAffiliations);
+                        }} />}
+                  </td>
+                  <td>
+                    {item.disabled ? item.organization :
+                      <CreatableSelect
+                        components={{ DropdownIndicator: () => null }}
+                        disabled={item.disabled}
+                        placeholder='Select or enter a new option'
+                        isCreatable
+                        options={orgOptions}
+                        value={item.organization}
+                        isClearable
+                        onChange={(choice) => {
+                          const updatedAffiliations = [...affiliations];
+                          updatedAffiliations[index].organization = !choice ? '' : choice.value;
+                          setAffiliations(updatedAffiliations);
+                        }} />}
+                  </td>
+                  <td>
+                    {item.disabled ? item.department :
+                      <CreatableSelect
+                        isCreatable
+                        components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
+                        disabled={item.disabled}
+                        placeholder='Select or enter a new option'
+                        options={deptOptions}
+                        value={item.department}
+                        isSearchable
+                        clearable={true}
+                        onChange={(choice) => {
+                          const updatedAffiliations = [...affiliations];
+                          updatedAffiliations[index].department = !choice ? '' : choice.value;
+                          setAffiliations(updatedAffiliations);
+                        }} />}
+                  </td>
+                  <td>
+                    {item.disabled ? item.group :
+                      <CreatableSelect
+                        isCreatable
+                        placeholder='Select or enter a new option'
+                        components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
+                        disabled={item.disabled}
+                        allowCreate={true}
+                        options={groupOptions}
+                        value={item.group}
+                        isSearchable
+                        closeMenuOnSelect
+                        isClearable
+                        onChange={(choice) => {
+                          const updatedAffiliations = [...affiliations];
+                          updatedAffiliations[index].group = !choice ? '' : choice.value;
+                          setAffiliations(updatedAffiliations);
+                        }} />}
+                  </td>
+                  <td>
+                    <DatePicker
+                      disabled={item.disabled}
+                      clearIcon={null}
+                      value={item.from}
+                      format="YYYY-MM-DD"
+                      onChange={(date) => {
+                        const updatedAffiliations = [...affiliations];
+                        updatedAffiliations[index].from = moment(date).format('YYYY-MM-DD');
+                        setAffiliations(updatedAffiliations);
+                      }}
+                    />
+                  </td>
+                  <td>
+                    <DatePicker
+                      disabled={item.disabled}
+                      clearIcon={null}
+                      value={item.to}
+                      format="YYYY-MM-DD"
+                      onChange={(date) => {
+                        const updatedAffiliations = [...affiliations];
+                        updatedAffiliations[index].to = moment(date).format('YYYY-MM-DD');
+                        setAffiliations(updatedAffiliations);
+                      }}
+                    />
+                  </td>
+                  <td>
+                    {item.disabled ?
+                      <Button
+                        bsSize='small'
+                        bsStyle='primary'
+                        onClick={() => {
+                          const updatedAffiliations = [...affiliations];
+                          updatedAffiliations[index].disabled = false;
+                          setAffiliations(updatedAffiliations);
+                        }}
+                      >
+                        <i className="fa fa-edit" />
+                      </Button>
+                      :
+                      <Button
+                        bsSize='small'
+                        bsStyle='success'
+                        onClick={() => {
+                          const updatedAffiliations = [...affiliations];
+                          updatedAffiliations[index].disabled = true;
+                          setAffiliations(updatedAffiliations);
+                          handleCreateOrUpdateAffiliation(index);
 
-            <FormGroup as={Row} required className="form-group mb-3">
-              <ControlLabel className='org-label' required >
-                Organization
-              </ControlLabel>
-
-              <CreatableSelect
-                components={{ DropdownIndicator: () => null }}
-                placeholder='Select or enter a new option'
-                isCreatable
-                options={orgOptions}
-                value={selectedOrg}
-                isClearable
-                onChange={(choice) => (!choice) ? setSelectedOrg('') : setSelectedOrg(choice.value)}
-              />
-            </FormGroup>
-
-            <FormGroup as={Row} className="form-group mb-3">
-              <ControlLabel>
-                Department
-              </ControlLabel>
-
-              <CreatableSelect
-                isCreatable
-                components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
-                placeholder='Select or enter a new option'
-                options={deptOptions}
-                value={selectedDepartment}
-                //isSearchable
-                clearable={true}
-                onChange={(choice) => (!choice) ? setSelectedDepartment('') : setSelectedDepartment(choice.value)}
-              />
-            </FormGroup>
-
-            <FormGroup as={Row} className="form-group mb-3">
-              <ControlLabel>
-                Working group
-              </ControlLabel>
-
-              <CreatableSelect
-                isCreatable
-                placeholder='Select or enter a new option'
-                components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
-                allowCreate={true}
-                options={groupOptions}
-                value={selectedGroup}
-                isSearchable
-                closeMenuOnSelect
-                isClearable
-                onChange={(choice) => (!choice) ? setSelectedGroup('') : setSelectedGroup(choice.value)}
-              />
-            </FormGroup>
-            {
-              isUpdate
-                ? (<FormGroup as={Row} className="form-group mb-3">
-                  <Button className='btn btn-primary' size='sm' onClick={handleUpdateAffiliation} >
-                    Update affiliation
-                  </Button>
-                </FormGroup>)
-                : (
-                  <FormGroup as={Row} className="form-group mb-3">
-                    <Button className='btn btn-primary' size='sm' onClick={handleCreateAffiliations} >
-                      Add affiliation
+                        }}
+                      >
+                        <i className="fa fa-save" />
+                      </Button>
+                    }
+                    <Button
+                      style={{ marginLeft: '1rem' }}
+                      bsSize='small'
+                      bsStyle="danger"
+                      onClick={() => handleDeleteAffiliation(item.id)}>
+                      <i className="fa fa-trash-o" />
                     </Button>
-                  </FormGroup>)
-            }
-          </Form>
-
-          {renderAffiliationsTable(affiliations)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
 
         </>
       </Modal.Body>
-
-      {/* <Modal.Footer>
-        <Button className='btn btn-primary pull-left' size='sm' >
-          Update
-        </Button>
-      </Modal.Footer> */}
-
     </Modal >
   );
+
 };
 
 export default Affiliations;
