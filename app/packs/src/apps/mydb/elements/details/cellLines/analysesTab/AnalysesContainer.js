@@ -86,8 +86,8 @@ class AnalysesContainer extends Component {
     return (
       <div className="add-button">
         <Button
-          bsSize="xsmall"
-          bsStyle="success"
+          size="sm"
+          variant="success"
           onClick={() => this.handleAdd()}
           disabled={readOnly}
         >
@@ -107,9 +107,9 @@ class AnalysesContainer extends Component {
       <div className="order-mode-button">
         <Button
           disabled={readOnly}
-          bsSize="xsmall"
+          size="sm"
           className=""
-          bsStyle={styleClass}
+          variant={styleClass}
           onClick={() => this.handleModeToggle()}
         >
           <i className={buttonIcon} aria-hidden="true" />

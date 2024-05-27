@@ -480,7 +480,7 @@ export default class SampleForm extends React.Component {
           title={title}
           disabled={disabled}
           block={block}
-          bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
+          variant={unit && sample.amount_unit === unit ? 'success' : 'default'}
           onChange={(e) => this.handleFieldChanged(field, e)}
           onMetricsChange={(e) => this.handleMetricsChange(e)}
           id={`numInput_${field}`}
@@ -526,7 +526,7 @@ export default class SampleForm extends React.Component {
         title={title}
         disabled={disabled}
         block={block}
-        bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
+        variant={unit && sample.amount_unit === unit ? 'success' : 'default'}
         onChange={(e) => this.handleFieldChanged(field, e)}
       />
     );

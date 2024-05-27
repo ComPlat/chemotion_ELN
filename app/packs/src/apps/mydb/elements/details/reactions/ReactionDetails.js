@@ -313,8 +313,8 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             className="button-right"
             onClick={() => this.handleSubmit(true)}
             disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
@@ -326,7 +326,7 @@ export default class ReactionDetails extends Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+          <Button variant="warning" size="sm" className="button-right"
             onClick={() => this.handleSubmit()}
             disabled={!permitOn(reaction) || !this.reactionIsValid()}
             style={{ display: hasChanged }} >
@@ -339,8 +339,8 @@ export default class ReactionDetails extends Component {
           overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
+            variant="info"
+            size="sm"
             className="button-right"
             onClick={() => this.props.toggleFullScreen()}
           >
@@ -352,8 +352,8 @@ export default class ReactionDetails extends Component {
           overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
         >
           <Button
-            bsStyle="success"
-            bsSize="xsmall"
+            variant="success"
+            size="sm"
             className="button-right"
             disabled={reaction.changed || reaction.isNew}
             title={(reaction.changed || reaction.isNew) ?
@@ -522,7 +522,7 @@ export default class ReactionDetails extends Component {
 
     return (
       <Panel className="eln-panel-detail"
-        bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
+        variant={reaction.isPendingToSave ? 'info' : 'primary'}>
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>
           {this.reactionSVG(reaction)}
@@ -538,10 +538,10 @@ export default class ReactionDetails extends Component {
           </Tabs>
           <hr />
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
+            <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
               Close
             </Button>
-            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
+            <Button id="submit-reaction-btn" variant="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
               {submitLabel}
             </Button>
             {exportButton}

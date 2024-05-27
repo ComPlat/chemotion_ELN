@@ -138,7 +138,7 @@ export default class Navigation extends React.Component {
               </>
             }
           </Nav>
-        }
+          }
         {this.userSession(omniauthProviders, extraRules)}
       </Navbar>
     )

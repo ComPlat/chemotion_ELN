@@ -15,8 +15,8 @@ const CloseBtn = ({ el }) => {
 
   return (
     <Button
-      bsStyle="danger"
-      bsSize="xsmall"
+      variant="danger"
+      size="sm"
       className="button-right"
       onClick={onClickToClose}
     >
@@ -32,8 +32,8 @@ const clickToReset = () => {
 
 const ResetBtn = () => (
   <Button
-    bsStyle="info"
-    bsSize="xsmall"
+    variant="info"
+    size="sm"
     className="button-right"
     onClick={clickToReset}
   >
@@ -50,8 +50,8 @@ const PredictBtn = ({ inputEls, template }) => {
 
   return (
     <Button
-      bsStyle="primary"
-      bsSize="xsmall"
+      variant="primary"
+      size="sm"
       className="button-right"
       disabled={disableBtn}
       onClick={onClick}

@@ -170,8 +170,8 @@ export default class ReactionDetailsContainers extends Component {
     return (
       <div className="upper-btn">
         <Button
-          bsSize="xsmall"
-          bsStyle="danger"
+          size="sm"
+          variant="danger"
           className="button-right"
           disabled={readOnly}
           onClick={() => this.handleOnClickRemove(container)}
@@ -215,8 +215,8 @@ export default class ReactionDetailsContainers extends Component {
       return (
         <Button
           className="button-right"
-          bsSize="xsmall"
-          bsStyle="success"
+          size="sm"
+          variant="success"
           onClick={this.handleAdd}
         >
           Add analysis
@@ -306,7 +306,7 @@ export default class ReactionDetailsContainers extends Component {
             {titleKind}
             {titleStatus}
           </strike>
-          <Button className="pull-right" bsSize="xsmall" bsStyle="danger"
+          <Button className="pull-right" size="sm" variant="danger"
             onClick={() => this.handleUndo(container)}>
             <i className="fa fa-undo"></i>
           </Button>

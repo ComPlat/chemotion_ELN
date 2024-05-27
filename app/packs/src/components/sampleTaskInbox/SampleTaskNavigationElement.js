@@ -19,7 +19,7 @@ const SampleTaskNavigationElement = ({}) => {
       <Button
         id="inbox-button"
         title={title}
-        bsStyle="default"
+        variant="default"
         onClick={sampleTasksStore.showSampleTaskInbox}
         style={{
           height: '34px',

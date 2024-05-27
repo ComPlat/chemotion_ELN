@@ -131,8 +131,8 @@ export default class ResearchPlanDetailsField extends Component {
                 id="copyMetadataButton"
                 title=""
                 className="fa fa-laptop"
-                bsStyle="info"
-                bsSize="xsmall"
+                variant="info"
+                size="sm"
                 pullRight
                 disabled={isNew}
               >
@@ -158,7 +158,7 @@ export default class ResearchPlanDetailsField extends Component {
         <div className="research-plan-field-header">
           {/* TODO: make label editable */}
           <ControlLabel>{label}</ControlLabel>
-          <Button className="pull-right" bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id,this.props.attachments )} data-cy="researchplan-item-delete">
+          <Button className="pull-right" variant="danger" size="sm" onClick={() => onDelete(field.id,this.props.attachments )} data-cy="researchplan-item-delete">
             <i className="fa fa-times" />
           </Button>
           {copyToMetadataButton}

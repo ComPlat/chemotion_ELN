@@ -11,8 +11,8 @@ const ConfirmModal = ({ showModal, title, content, onClick, dialogClassName }) =
         {content}
 
         <ButtonToolbar className="pull-right">
-          <Button bsStyle="primary" onClick={() => onClick(false)} className="pull-right" >No</Button>
-          <Button bsStyle="danger" onClick={() => onClick(true)} >Yes</Button>
+          <Button variant="primary" onClick={() => onClick(false)} className="pull-right" >No</Button>
+          <Button variant="danger" onClick={() => onClick(true)} >Yes</Button>
         </ButtonToolbar>
         <br /><br />
       </Modal.Body>

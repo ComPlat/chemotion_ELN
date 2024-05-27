@@ -5,7 +5,7 @@ import { uncontrollable } from 'uncontrollable';
 import warning from 'warning';
 
 import {
-  bsStyles,
+  variants,
   bsClass,
   getClassSet,
   splitBsPropsAndOmit
@@ -142,7 +142,7 @@ Panel.childContextTypes = childContextTypes;
 const UncontrolledPanel = uncontrollable(
   bsClass(
     'panel',
-    bsStyles(
+    variants(
       [...Object.values(State), Style.DEFAULT, Style.PRIMARY],
       Style.DEFAULT,
       Panel

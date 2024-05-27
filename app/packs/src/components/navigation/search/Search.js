@@ -86,10 +86,10 @@ export default class Search extends React.Component {
 
     const buttonAfter = (
       <>
-        <Button bsStyle={customClass ? null : 'info'} className={customClass} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
+        <Button variant={customClass ? null : 'info'} className={customClass} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
-        <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
+        <Button variant={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times" />
         </Button>
       </>

@@ -60,7 +60,7 @@ const MetadataRelatedIdentifier = ({ relatedIdentifier, index, onChange, onRemov
           <ControlLabel>
             &nbsp;
           </ControlLabel>
-          <Button bsStyle="danger" onClick={() => onRemove('relatedIdentifiers', index)}>
+          <Button variant="danger" onClick={() => onRemove('relatedIdentifiers', index)}>
             <i className="fa fa-trash-o" />
           </Button>
         </Col>

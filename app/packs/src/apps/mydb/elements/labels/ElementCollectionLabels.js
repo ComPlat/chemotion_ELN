@@ -42,7 +42,7 @@ export default class ElementCollectionLabels extends React.Component {
       if (is_synchronized && label.isOwner) {
         return (
           <span className="collection-label" key={index}>
-            <Button disabled bsStyle="default" bsSize="xs">
+            <Button disabled variant="default" size="sm">
               {label.name}
             </Button>
             &nbsp;
@@ -51,7 +51,7 @@ export default class ElementCollectionLabels extends React.Component {
       }
       return (
         <span className="collection-label" key={index}>
-          <Button bsStyle="default" bsSize="xs" onClick={(e) => this.handleOnClick(label, e, is_synchronized)}>
+          <Button variant="default" size="sm" onClick={(e) => this.handleOnClick(label, e, is_synchronized)}>
             {label.name}
           </Button>
           &nbsp;

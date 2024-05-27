@@ -779,8 +779,8 @@ class ViewSpectra extends React.Component {
           />
         </div>
         <Button
-          bsStyle="danger"
-          bsSize="small"
+          variant="danger"
+          size="sm"
           className="button-right"
           onClick={this.closeOp}
         >

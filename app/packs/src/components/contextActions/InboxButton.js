@@ -46,7 +46,7 @@ export default class InboxButton extends React.Component {
       <div style={{ position: 'relative', display: 'inline-block' }}>
         <Button
           id="inbox-button"
-          bsStyle={btnStyle}
+          variant={btnStyle}
           onClick={InboxActions.toggleInboxModal}
           style={{
             height: '34px',

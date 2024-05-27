@@ -3,7 +3,7 @@ import React from 'react';
 
 import {
   bsClass,
-  bsStyles,
+  variants,
   getClassSet,
   splitBsProps
 } from './utils/bootstrapUtils';
@@ -47,7 +47,7 @@ class Label extends React.Component {
 
 export default bsClass(
   'label',
-  bsStyles(
+  variants(
     [...Object.values(State), Style.DEFAULT, Style.PRIMARY],
     Style.DEFAULT,
     Label

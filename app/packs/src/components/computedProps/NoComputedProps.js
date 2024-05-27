@@ -7,8 +7,8 @@ function NoComputedProps({ computeFunc }) {
     <span>
       No computed properties found.
       <Button
-        bsStyle="success"
-        bsSize="small"
+        variant="success"
+        size="sm"
         className="button-right"
         onClick={computeFunc}
       >

@@ -45,8 +45,8 @@ export default class EditModeHeader extends React.Component {
         </strike>
         <Button
           className="pull-right"
-          bsSize="xsmall"
-          bsStyle="danger"
+          size="sm"
+          variant="danger"
           onClick={(e) => this.handleUndoDeletionOfContainer(container, e)}
         >
           <i className="fa fa-undo" />
@@ -75,8 +75,8 @@ export default class EditModeHeader extends React.Component {
         <div className="abstract">
           <Button
             disabled={readOnly}
-            bsSize="xsmall"
-            bsStyle="danger"
+            size="sm"
+            variant="danger"
             className="button-right"
             onClick={(e) => { this.handleDeleteContainer(container, e); }}
           >

@@ -150,7 +150,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   renderRolesOptions(opt) {
-    const className = `fa ${opt.icon} ${opt.bsStyle}`;
+    const className = `fa ${opt.icon} ${opt.variant}`;
     return (
       <span>
         <i className={className} />
@@ -785,7 +785,7 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <ButtonGroup vertical block>
         <Button
-          bsSize="xsmall"
+          size="sm"
           style={{ backgroundColor: '#ddd' }}
           onClick={() => this.setState({ open: !open })}
         >{arrow} &nbsp; Solvents
@@ -802,7 +802,7 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <ButtonGroup vertical block>
         <Button
-          bsSize="xsmall"
+          size="sm"
           style={{ backgroundColor: '#ddd' }}
           onClick={() => this.setState({ cCon: !cCon })}
         >{arrow} &nbsp; Conditions
