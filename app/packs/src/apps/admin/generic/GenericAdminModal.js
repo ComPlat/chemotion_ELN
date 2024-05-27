@@ -18,7 +18,7 @@ export default class GenericAdminModal extends Component {
       <Button
         key={`_auth_designer_button_${ALL_TYPES[i]}`}
         size="sm"
-        variant={p ? 'warning' : 'default'}
+        variant={p ? 'warning' : 'light'}
         onClick={() =>
           this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)
         }

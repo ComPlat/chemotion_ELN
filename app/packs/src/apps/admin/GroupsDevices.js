@@ -294,7 +294,7 @@ export default class GroupsDevices extends React.Component {
           <Panel.Title>
             Group List &nbsp;
             ({groups.length}) &nbsp;
-            <Button variant="default" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
+            <Button variant="light" onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
           </Panel.Title>
         </Panel.Heading>
         <Table responsive condensed hover>

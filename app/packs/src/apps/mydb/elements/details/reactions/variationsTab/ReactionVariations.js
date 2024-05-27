@@ -112,7 +112,7 @@ function MenuHeader({
   const entrySelection = (
     <Button
       className="entrySelection"
-      variant="default"
+      variant="light"
       size="sm"
       style={{ display: ['temperature', 'duration'].includes(entry) ? 'none' : 'inline' }}
       disabled={Object.keys(entries).length === 1}

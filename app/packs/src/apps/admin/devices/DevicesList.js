@@ -284,7 +284,7 @@ const DevicesList = () => {
     <Panel>
       <Panel.Heading className="devices-panel-header">
         <span>Devices</span>
-        <Button variant="default" onClick={() => showCreateDeviceModal()}>Add new device</Button>
+        <Button variant="light" onClick={() => showCreateDeviceModal()}>Add new device</Button>
       </Panel.Heading>
       <Panel.Body>
         {showMessage()}
