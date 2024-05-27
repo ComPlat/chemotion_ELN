@@ -59,7 +59,7 @@ export function reactionRole(element) {
 function reactionVariations(element) {
   if (element.type === 'reaction' && element.variations && element.variations.length) {
     return (
-      <Label bsStyle="info">{`${element.variations.length} variation(s)`}</Label>
+      <Label variant="info">{`${element.variations.length} variation(s)`}</Label>
     );
   }
   return null;

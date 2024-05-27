@@ -107,7 +107,7 @@ const ResearchplanFlowEditor = (props) => {
     if (!currentEdge) { return (<div></div>); }
 
     return (
-      <Panel bsStyle="primary">
+      <Panel variant="primary">
         <Panel.Heading>
           <Panel.Title>Connection name</Panel.Title>
         </Panel.Heading>
@@ -141,7 +141,7 @@ const ResearchplanFlowEditor = (props) => {
     if (unassignedNodes.length == 0) { return (<div></div>) };
 
     return (
-      <Panel bsStyle="primary">
+      <Panel variant="primary">
         <Panel.Heading>
           <Panel.Title>Unused Research Plans</Panel.Title>
         </Panel.Heading>
@@ -190,10 +190,10 @@ const ResearchplanFlowEditor = (props) => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button className="pull-left" bsStyle="default" onClick={onHide}>
+          <Button className="pull-left" variant="default" onClick={onHide}>
             Cancel
           </Button>
-          <Button className="pull-right" bsStyle="success" onClick={onClickSave}>
+          <Button className="pull-right" variant="success" onClick={onClickSave}>
             Save
           </Button>
         </Modal.Footer>

@@ -217,16 +217,16 @@ export default class GroupElement extends React.Component {
         {msg}
         <div style={styles.popover}>
           <Button
-            bsSize="xsmall"
-            bsStyle="danger"
+            size="sm"
+            variant="danger"
             onClick={() => this.confirmDelete(type, groupRec, userRec)}
             style={styles.confirmButton}
           >
             Yes
           </Button>
           <Button
-            bsSize="xsmall"
-            bsStyle="warning"
+            size="sm"
+            variant="warning"
             onClick={this.handleClick}
             style={styles.confirmButton}
           >
@@ -246,10 +246,10 @@ export default class GroupElement extends React.Component {
           overlay={popover}
         >
           <Button
-            bsSize="xsmall"
+            size="sm"
             style={styles.button}
             type="button"
-            bsStyle="danger"
+            variant="danger"
             className="fa fa-trash-o"
             onClick={() => this.confirmDelete(groupRec, userRec)}
           />
@@ -271,20 +271,20 @@ export default class GroupElement extends React.Component {
             overlay={<Tooltip>View users</Tooltip>}
           >
             <Button
-              bsSize="xsmall"
+              size="sm"
               style={styles.button}
               type="button"
-              bsStyle="info"
+              variant="info"
               className="fa fa-list"
               onClick={this.toggleUsers}
             />
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip>Add user</Tooltip>}>
             <Button
-              bsSize="xsmall"
+              size="sm"
               style={styles.button}
               type="button"
-              bsStyle="success"
+              variant="success"
               className="fa fa-plus"
               onClick={this.toggleRowAdd}
             />
@@ -318,10 +318,10 @@ export default class GroupElement extends React.Component {
                 }}
               />
               <Button
-                bsSize="xsmall"
+                size="sm"
                 type="button"
                 style={styles.addUserButton}
-                bsStyle="success"
+                variant="success"
                 className="fa fa-user-plus"
                 onClick={() => this.addUser(group)}
                 disabled={!this.state.selectedUsers}
@@ -334,10 +334,10 @@ export default class GroupElement extends React.Component {
     return (
       <td>
         <Button
-          bsSize="xsmall"
+          size="sm"
           type="button"
           style={styles.button}
-          bsStyle="info"
+          variant="info"
           className="fa fa-list"
           onClick={this.toggleUsers}
         />
@@ -359,10 +359,10 @@ export default class GroupElement extends React.Component {
         {isCurrentUserAdmin && (
           <OverlayTrigger placement="top" overlay={<Tooltip>{adminTooltip}</Tooltip>}>
             <Button
-              bsSize="xsmall"
+              size="sm"
               style={styles.button}
               type="button"
-              bsStyle={adminButtonStyle}
+              variant={adminButtonStyle}
               className="fa fa-key"
               onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
             />
@@ -421,8 +421,8 @@ export default class GroupElement extends React.Component {
             At least one admin is required.
             <div style={styles.popover}>
               <Button
-                bsSize="xsmall"
-                bsStyle="primary"
+                size="sm"
+                variant="primary"
                 onClick={this.hideAdminAlert}
                 style={styles.gotItButton}
               >

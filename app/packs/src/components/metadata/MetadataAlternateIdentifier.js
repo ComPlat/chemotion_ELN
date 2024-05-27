@@ -43,7 +43,7 @@ const MetadataAlternateIdentifier = ({ alternateIdentifier, index, onChange, onR
           <ControlLabel>
             &nbsp;
           </ControlLabel>
-          <Button bsStyle="danger" onClick={() => onRemove('alternateIdentifiers', index)}>
+          <Button variant="danger" onClick={() => onRemove('alternateIdentifiers', index)}>
             <i className="fa fa-trash-o" />
           </Button>
         </Col>

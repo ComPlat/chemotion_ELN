@@ -49,8 +49,8 @@ export default class ManagingModalDelete extends React.Component {
           </OverlayTrigger>
         </Checkbox>
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={this.onHide}>Cancel</Button>
-          <Button bsStyle="warning" onClick={this.handleClick}>Delete</Button>
+          <Button variant="primary" onClick={this.onHide}>Cancel</Button>
+          <Button variant="warning" onClick={this.handleClick}>Delete</Button>
         </ButtonToolbar>
       </div>
     );

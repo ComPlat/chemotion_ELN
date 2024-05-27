@@ -268,8 +268,8 @@ export default class ChemSpectraLayouts extends Component {
                             <br />
                             <div className="btn-toolbar">
                               <Button
-                                bsSize="xsmall"
-                                bsStyle="danger"
+                                size="sm"
+                                variant="danger"
                                 onClick={() => {
                                   this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
                                 }}
@@ -279,8 +279,8 @@ export default class ChemSpectraLayouts extends Component {
                               </Button>
                               <span>&nbsp;&nbsp;</span>
                               <Button
-                                bsSize="xsmall"
-                                bsStyle="warning"
+                                size="sm"
+                                variant="warning"
                                 onClick={this.handleClick}
                               >
                                 {' '}
@@ -291,8 +291,8 @@ export default class ChemSpectraLayouts extends Component {
                     )}
                       >
                         <Button
-                          bsSize="xsmall"
-                          bsStyle="danger"
+                          size="sm"
+                          variant="danger"
                         >
                           <i className="fa fa-trash-o" />
                         </Button>

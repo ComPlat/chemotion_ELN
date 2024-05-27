@@ -95,7 +95,7 @@ const SampleTaskInbox = ({}) => {
       bounds="body"
     >
       <Panel
-        bsStyle="primary"
+        variant="primary"
         className="sampleTaskInbox small-col col-md-6"
         style={{
           zIndex: 10, position: 'absolute', top: '70px', left: '10px', display: display_value,
@@ -110,8 +110,8 @@ const SampleTaskInbox = ({}) => {
             <div className="col-md-10">{openSampleTaskCount()} open SampleTasks</div>
             <div className="col-md-1">
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
+                variant="danger"
+                size="sm"
                 className="button-right"
                 onClick={sampleTasksStore.hideSampleTaskInbox}
               >

@@ -9,7 +9,7 @@ const DeviceButton =() => {
   return (
     <OverlayTrigger placement="bottom" overlay={tooltip}>
       <ButtonGroup>
-        <Button bsStyle="default" onClick={ElementActions.showDeviceControl} >
+        <Button variant="default" onClick={ElementActions.showDeviceControl} >
           <i className="fa fa-bar-chart"/>
           <i className="fa fa-cogs"/>
         </Button>

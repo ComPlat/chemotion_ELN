@@ -59,8 +59,8 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="closeBtn"
       onClick={onClose}
-      bsStyle="danger"
-      bsSize="xsmall"
+      variant="danger"
+      size="sm"
       className="button-right"
     >
       <i className="fa fa-times" />
@@ -70,8 +70,8 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="saveBtn"
       onClick={onSave}
-      bsStyle="warning"
-      bsSize="xsmall"
+      variant="warning"
+      size="sm"
       className="button-right"
     >
       <i className="fa fa-floppy-o" />
@@ -81,8 +81,8 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
     <Button
       key="formatBtn"
       onClick={onFormat}
-      bsStyle="info"
-      bsSize="xsmall"
+      variant="info"
+      size="sm"
       className="button-right"
     >
       <i className="fa fa-magic" />
@@ -94,7 +94,7 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
 }
 
 function FormatComponent({
-  list, bsStyle, onSave, onFormat, onClose
+  list, variant, onSave, onFormat, onClose
 }) {
   const elements = list.map((el, idx) => (
     <ElementAnalyses key={el.id} element={el} idx={idx} />
@@ -109,7 +109,7 @@ function FormatComponent({
 
   return (
     <Panel
-      bsStyle={bsStyle}
+      variant={variant}
       className="format-analysis-panel"
     >
       <Panel.Heading>
@@ -145,14 +145,14 @@ FormatComponentHeader.propTypes = {
 
 FormatComponent.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object).isRequired,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   onFormat: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
 };
 
 FormatComponent.defaultProps = {
-  bsStyle: 'info'
+  variant: 'info'
 };
 
 export default FormatComponent;

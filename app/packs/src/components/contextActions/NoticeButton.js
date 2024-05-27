@@ -447,7 +447,7 @@ export default class NoticeButton extends React.Component {
       <div style={{ position: 'relative', marginLeft: '-10px' }}>
         <Button
           id="notice-button"
-          bsStyle={btnStyle}
+          variant={btnStyle}
           onClick={this.handleShow}
           style={{
             height: '34px',

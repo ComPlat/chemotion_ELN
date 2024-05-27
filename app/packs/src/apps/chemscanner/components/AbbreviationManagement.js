@@ -113,7 +113,7 @@ export default class AbbreviationManagement extends React.Component {
               </Radio>
             </FormGroup>
             <Button
-              bsSize="small"
+              size="sm"
               onClick={this.createAbbreviation}
               style={{ marginLeft: '20px' }}
             >

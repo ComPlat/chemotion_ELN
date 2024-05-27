@@ -116,7 +116,7 @@ class PanelGroup extends React.Component {
       <div {...elementProps} className={classNames(className, classes)}>
         {ValidComponentChildren.map(children, child =>
           cloneElement(child, {
-            bsStyle: child.props.bsStyle || bsProps.bsStyle
+            variant: child.props.variant || bsProps.variant
           })
         )}
       </div>

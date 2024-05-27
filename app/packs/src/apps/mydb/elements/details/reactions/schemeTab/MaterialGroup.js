@@ -88,8 +88,8 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
     <OverlayTrigger placement="top" overlay={switchEquivTooltip()} >
       <Button
         id="lock_equiv_column_btn"
-        bsSize="xsmall"
-        bsStyle={lockEquivColumn ? 'warning' : 'default'}
+        size="sm"
+        variant={lockEquivColumn ? 'warning' : 'default'}
         onClick={switchEquiv}
       >
         <i className={lockEquivColumn ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -165,8 +165,8 @@ const GeneralMaterialGroup = ({
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
-      bsStyle="success"
-      bsSize="xs"
+      variant="success"
+      size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
       <Glyphicon glyph="plus" />
@@ -220,8 +220,8 @@ const SolventsMaterialGroup = ({
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
-      bsStyle="success"
-      bsSize="xs"
+      variant="success"
+      size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
       <Glyphicon glyph="plus" />

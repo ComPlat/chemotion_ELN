@@ -66,8 +66,8 @@ export default class ComputedPropsContainer extends React.Component {
       <div>
         <SampleComputedProps cprops={cprops} />
         <Button
-          bsStyle="success"
-          bsSize="small"
+          variant="success"
+          size="sm"
           className="button-right"
           onClick={this.onClickComputeBtn}
           style={{ marginTop: '10px', marginBottom: '10px' }}
@@ -77,7 +77,7 @@ export default class ComputedPropsContainer extends React.Component {
         </Button>
         <ButtonGroup vertical block>
           <Button
-            bsSize="xsmall"
+            size="sm"
             style={{ marginBottom: '20px', backgroundColor: '#ddd' }}
             onClick={this.toggleGraph}
           >

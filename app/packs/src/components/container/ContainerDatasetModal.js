@@ -66,7 +66,7 @@ export default class ContainerDatasetModal extends Component {
 
     const AttachmentsButton = (
       <Button
-        bsStyle={mode === 'attachments' ? 'info' : 'default'}
+        variant={mode === 'attachments' ? 'info' : 'default'}
         style={{
           pointerEvents: 'none',
           backgroundColor: mode !== 'attachments' ? '#E8E8E8' : undefined,
@@ -81,7 +81,7 @@ export default class ContainerDatasetModal extends Component {
 
     const MetadataButton = (
       <Button
-        bsStyle={mode === 'metadata' ? 'info' : 'default'}
+        variant={mode === 'metadata' ? 'info' : 'default'}
         onClick={() => this.handleSwitchMode('metadata')}
         style={{
           pointerEvents: 'none',
@@ -122,7 +122,7 @@ export default class ContainerDatasetModal extends Component {
       return (
         <Modal
           show={show}
-          bsSize="large"
+          size="lg"
           dialogClassName="attachment-modal"
           onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
@@ -211,7 +211,7 @@ export default class ContainerDatasetModal extends Component {
                 Discard Changes
               </Button> */}
               <Button
-                bsStyle="primary"
+                variant="primary"
                 style={{ alignSelf: 'center', marginLeft: 'auto' }}
                 onClick={this.handleSave}
               >

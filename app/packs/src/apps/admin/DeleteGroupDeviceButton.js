@@ -74,10 +74,10 @@ export default class DeleteGroupDeviceButton extends React.Component {
       <Popover id="popover-positioned-scrolling-left">
         {msg} <br />
         <div className="btn-toolbar">
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
+          <Button size="sm" variant="danger" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
             Yes
           </Button><span>&nbsp;&nbsp;</span>
-          <Button bsSize="xsmall" bsStyle="warning" onClick={this.handleClick} >
+          <Button size="sm" variant="warning" onClick={this.handleClick} >
             No
           </Button>
         </div>
@@ -93,7 +93,7 @@ export default class DeleteGroupDeviceButton extends React.Component {
           trigger="focus"
           overlay={popover}
         >
-          <Button bsSize="xsmall" bsStyle="danger" >
+          <Button size="sm" variant="danger" >
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>

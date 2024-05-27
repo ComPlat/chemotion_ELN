@@ -58,7 +58,7 @@ export default class TextRangeWithAddon extends Component {
       addon, disabled, label, tipOnText, value
     } = this.props;
     return (
-      <FormGroup bsSize="small">
+      <FormGroup size="sm">
         <ControlLabel>{label}</ControlLabel>
         <InputGroup data-cy={"cy_"+label}>
           <FormControl
