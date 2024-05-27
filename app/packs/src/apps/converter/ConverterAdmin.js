@@ -392,7 +392,7 @@ class ConverterAdmin extends Component {
             <Modal.Title>Do you really want to delete this profile?</Modal.Title>
           </Modal.Header>
           <Modal.Footer>
-            <Button variant="default" onClick={this.hideDeleteModal}>Cancel</Button>
+            <Button variant="light" onClick={this.hideDeleteModal}>Cancel</Button>
             <Button variant="danger" onClick={this.deleteProfile}>Delete profile</Button>
           </Modal.Footer>
         </Modal>

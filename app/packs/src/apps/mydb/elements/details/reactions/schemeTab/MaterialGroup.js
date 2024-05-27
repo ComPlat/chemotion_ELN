@@ -89,7 +89,7 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
       <Button
         id="lock_equiv_column_btn"
         size="sm"
-        variant={lockEquivColumn ? 'warning' : 'default'}
+        variant={lockEquivColumn ? 'warning' : 'light'}
         onClick={switchEquiv}
       >
         <i className={lockEquivColumn ? 'fa fa-lock' : 'fa fa-unlock'} />

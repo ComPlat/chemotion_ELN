@@ -66,7 +66,7 @@ export default class ContainerDatasetModal extends Component {
 
     const AttachmentsButton = (
       <Button
-        variant={mode === 'attachments' ? 'info' : 'default'}
+        variant={mode === 'attachments' ? 'info' : 'light'}
         style={{
           pointerEvents: 'none',
           backgroundColor: mode !== 'attachments' ? '#E8E8E8' : undefined,
@@ -81,7 +81,7 @@ export default class ContainerDatasetModal extends Component {
 
     const MetadataButton = (
       <Button
-        variant={mode === 'metadata' ? 'info' : 'default'}
+        variant={mode === 'metadata' ? 'info' : 'light'}
         onClick={() => this.handleSwitchMode('metadata')}
         style={{
           pointerEvents: 'none',
