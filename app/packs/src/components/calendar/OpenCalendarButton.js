@@ -56,19 +56,13 @@ export default class OpenCalendarButton extends Component {
     }
 
     return (
-      <Nav navbar pullRight>
-        <NavItem eventKey={0} className="navItemCalendar">
-          <ButtonGroup className="navCalendarButton">
-            <Button
-              variant="primary"
-              onClick={this.onClick}
-              style={{ width: '60px' }}
-            >
-              <i className="fa fa-calendar indicator" />
-            </Button>
-          </ButtonGroup>
-        </NavItem>
-      </Nav>
+      <Button
+        variant="primary"
+        onClick={this.onClick}
+        style={{ width: '60px' }}
+      >
+        <i className="fa fa-calendar indicator" />
+      </Button>
     );
   }
 }

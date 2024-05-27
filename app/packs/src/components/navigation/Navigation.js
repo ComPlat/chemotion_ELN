@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, Tooltip, OverlayTrigger, Container } from 'react-bootstrap';
+import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import UserAuth from 'src/components/navigation/UserAuth';
 import Search from 'src/components/navigation/search/Search';
 import ManagingActions from 'src/components/managingActions/ManagingActions';
@@ -8,9 +8,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NavNewSession from 'src/components/navigation/NavNewSession'
-import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
 import PropTypes from 'prop-types';
@@ -108,19 +106,17 @@ export default class Navigation extends React.Component {
           />
         </OverlayTrigger>
       </Navbar.Text>
-      /* <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{ cursor: "pointer" }}>
-          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-            <i
-              className="fa fa-list"
-              style={{ fontStyle: "normal", visibility: this.props.isHidden ? 'hidden' : 'visible' }}
-              onClick={this.toggleCollectionTree}
-            />
-          </OverlayTrigger>
-        </Navbar.Text>
-        <Navbar.Text />
-        <NavHead />
-      </Navbar.Header>*/
+    )
+  }
+
+  userSession(omniauthProviders, extraRules) {
+    return (
+      this.state.currentUser ?
+      <div className='d-flex gap-2'>
+        <OpenCalendarButton />
+        <UserAuth />
+      </div>
+      : <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
     )
   }
 
@@ -129,39 +125,21 @@ export default class Navigation extends React.Component {
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
     return (
-      /* this.state.currentUser
-        ? <Navbar fluid className='navbar-custom'>
-          {this.navHeader()}
-          <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-            <Search />
-            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
-            <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
-            <NavigationModal {...modalProps} />
-          </Nav>
-          <UserAuth />
-          <OpenCalendarButton />
-          <div style={{ clear: "both" }} />
-        </Navbar>
-      : <Navbar fluid className='navbar-custom'>
+      <Navbar className='navbar-custom justify-content-between px-3'>
         {this.navHeader()}
-        <Nav navbar className='navbar-form' style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}>
-          <Search noSubmit={true} />
-        </Nav>
-        <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
-        <div style={{ clear: "both" }} />
-      </Navbar> */
-      <Navbar className='navbar-custom justify-content-between'>
-        {this.state.currentUser ?
-          <>
-            <Navbar.Text>logged in</Navbar.Text>
-            <UserAuth />
-          </>:
-          <>
-            {this.navHeader()}
-            <Navbar.Text>logged out</Navbar.Text>
-            <NavNewSession authenticityToken={this.token()} omniauthProviders={omniauthProviders} extraRules={extraRules} />
-          </>
+        {!this.props.isHidden &&
+          <Nav navbar className='navbar-form'>
+            <Search noSubmit={!!this.state.currentUser} />
+            {this.state.currentUser &&
+              <>
+                <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} genericEls={genericEls} />
+                <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
+                <NavigationModal {...modalProps} />
+              </>
+            }
+          </Nav>
         }
+        {this.userSession(omniauthProviders, extraRules)}
       </Navbar>
     )
   }
