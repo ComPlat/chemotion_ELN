@@ -84,7 +84,7 @@ export default class MetadataContainer extends Component {
     const saveBtnDisplay = metadata.isEdited ? true : false;
 
     return (
-      <Panel variant="default" className="eln-panel-detail">
+      <Panel variant="light" className="eln-panel-detail">
         <Panel.Heading>
           <MetadataHeader title={title} saveBtnDisplay={saveBtnDisplay} onSave={this.handleSave} onClose={this.handleClose} />
         </Panel.Heading>

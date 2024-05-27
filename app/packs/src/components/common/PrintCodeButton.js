@@ -41,7 +41,7 @@ const PrintCodeButton = ({
         <SplitButton
           id={`print-code-split-button-${ident || 0}`}
           pullRight
-          variant="default"
+          variant="light"
           disabled={element.isNew}
           size="sm"
           onToggle={(isOpen, event) => { if (event) { event.stopPropagation(); } }}

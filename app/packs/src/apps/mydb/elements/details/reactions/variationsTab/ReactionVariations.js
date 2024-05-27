@@ -80,7 +80,7 @@ function MenuHeader({
   const entrySelection = (
     <Button
       className="entrySelection"
-      variant="default"
+      variant="light"
       size="sm"
       style={{ display: entry === null ? 'none' : 'inline' }}
       disabled={entries.length === 1}

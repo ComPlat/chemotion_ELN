@@ -351,7 +351,7 @@ export default class GroupElement extends React.Component {
       && groupRec.admins.some((a) => a.id === this.state.currentUser.id);
     const canDelete = isCurrentUserAdmin || userRec.id === this.state.currentUser.id;
 
-    const adminButtonStyle = isAdmin ? 'warning' : 'default';
+    const adminButtonStyle = isAdmin ? 'warning' : 'light';
     const adminTooltip = isAdmin ? 'Demote from Admin' : 'Promote to Admin';
 
     return (

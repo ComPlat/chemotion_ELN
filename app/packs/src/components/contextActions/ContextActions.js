@@ -56,7 +56,7 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
+      <div className='d-flex gap-2'>
         <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}
@@ -65,22 +65,20 @@ export default class ContextActions extends React.Component {
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
-          <ButtonGroup>
-            <SplitElementBtn />
-            <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
-          </ButtonGroup>
-        </div>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
+        <ButtonGroup>
+          <SplitElementBtn />
+          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
+        </ButtonGroup>
+        <ButtonGroup>
           <ScanCodeButton customClass={customClass} />
         </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
+        <ButtonGroup>
           <InboxButton />
         </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '10px' }}>
+        <ButtonGroup>
           <SampleTaskNavigationElement />
         </ButtonGroup>
-        <ButtonGroup style={{ marginLeft: '20px' }}>
+        <ButtonGroup>
           <NoticeButton />
         </ButtonGroup>
       </div>

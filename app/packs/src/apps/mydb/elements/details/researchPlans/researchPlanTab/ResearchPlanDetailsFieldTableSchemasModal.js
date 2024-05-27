@@ -104,7 +104,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
             </Table>
           </div>
           <div>
-            <Button variant="default" onClick={onHide}>
+            <Button variant="light" onClick={onHide}>
               Close
             </Button>
           </div>

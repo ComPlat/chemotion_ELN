@@ -29,7 +29,7 @@ export default class ElementResearchPlanLabels extends React.Component {
     return labels.map((label, index) => {
       return (
         <span className="collection-label" key={index}>
-          <Button variant="default" size="sm" onClick={e => this.handleOnClick(label, e)}>
+          <Button variant="light" size="sm" onClick={e => this.handleOnClick(label, e)}>
             {label.name}
           </Button>
           &nbsp;
