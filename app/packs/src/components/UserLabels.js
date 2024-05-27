@@ -165,7 +165,7 @@ class UserLabelModal extends Component {
             <Button
               size="sm"
               disabled={g.access_level === 2}
-              variant={g.access_level === 2 ? 'default' : 'success'}
+              variant={g.access_level === 2 ? 'light' : 'success'}
               onClick={(e) => this.handleEditLabelClick(e, g)}
             >
               {g.access_level === 2 ? 'Global' : 'Edit'}

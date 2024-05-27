@@ -84,7 +84,7 @@ export default class ElementAnalysesLabels extends React.Component {
 
       return (
         <span className="collection-label" key={key}>
-          <Label variant='default' bsSize='xs'>
+          <Label variant='light' bsSize='xs'>
             {key_syn || "Analysis type Unkown"} - {labels[key]}
           </Label>
         </span>

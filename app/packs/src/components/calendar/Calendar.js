@@ -801,7 +801,7 @@ export default class Calendar extends React.Component {
                     <Button
                       size="sm"
                       type="button"
-                      variant={showOwnEntries ? 'success' : 'default'}
+                      variant={showOwnEntries ? 'success' : 'light'}
                       onKeyUp={() => { }}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
@@ -820,7 +820,7 @@ export default class Calendar extends React.Component {
                     <Button
                       size="sm"
                       type="button"
-                      variant={showSharedCollectionEntries ? 'success' : 'default'}
+                      variant={showSharedCollectionEntries ? 'success' : 'light'}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
                       onClick={(e) => {
@@ -839,7 +839,7 @@ export default class Calendar extends React.Component {
                     <Button
                       size="sm"
                       type="button"
-                      variant={isFullScreen ? 'success' : 'default'}
+                      variant={isFullScreen ? 'success' : 'light'}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
                       onClick={(e) => {
@@ -858,7 +858,7 @@ export default class Calendar extends React.Component {
                     <Button
                       size="sm"
                       type="button"
-                      variant={backgroundClickToClose ? 'default' : 'info'}
+                      variant={backgroundClickToClose ? 'light' : 'info'}
                       onMouseEnter={this.disableDrag}
                       onMouseLeave={this.enableDrag}
                       onClick={(e) => {
