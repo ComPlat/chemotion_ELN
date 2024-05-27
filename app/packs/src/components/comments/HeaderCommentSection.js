@@ -57,7 +57,7 @@ class HeaderCommentSection extends Component {
             >
               <Button
                 size="sm"
-                variant={sectionComments.length > 0 ? 'success' : 'default'}
+                variant={sectionComments.length > 0 ? 'success' : 'light'}
                 onClick={() => {
                   CommentActions.setCommentSection(headerSection);
                   CommentActions.fetchComments(element);

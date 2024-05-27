@@ -70,7 +70,7 @@ class PredictionContainer extends Component {
 
     return (
       <Panel
-        variant="default"
+        variant="light"
       >
         <Panel.Heading>{this.panelHeader()}</Panel.Heading>
         <Tabs

@@ -34,7 +34,7 @@ export default class InboxButton extends React.Component {
 
   render() {
     const { numberOfAttachments } = this.state;
-    let btnStyle = 'default';
+    let btnStyle = 'light';
     let btnClass = 'fa fa-inbox fa-lg';
 
     if (numberOfAttachments > 0) {

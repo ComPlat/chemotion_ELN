@@ -1390,7 +1390,7 @@ export default class UserManagement extends React.Component {
           <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip}>
             <Button
               size="sm"
-              variant={g.locked_at === null ? 'default' : 'warning'}
+              variant={g.locked_at === null ? 'light' : 'warning'}
               onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
             >
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -1404,7 +1404,7 @@ export default class UserManagement extends React.Component {
           >
             <Button
               size="sm"
-              variant={(g.converter_admin === null || g.converter_admin === false) ? 'default' : 'success'}
+              variant={(g.converter_admin === null || g.converter_admin === false) ? 'light' : 'success'}
               onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
             >
               <i className="fa fa-hourglass-half" aria-hidden="true" />
@@ -1419,7 +1419,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={(g.is_templates_moderator === null
-                || g.is_templates_moderator === false) ? 'default' : 'success'}
+                || g.is_templates_moderator === false) ? 'light' : 'success'}
               onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
             >
               <i className="fa fa-book" aria-hidden="true" />
@@ -1433,7 +1433,7 @@ export default class UserManagement extends React.Component {
           >
             <Button
               size="sm"
-              variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'default' : 'success'}
+              variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'light' : 'success'}
               onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
             >
               <i className="icon-sample" aria-hidden="true" />
@@ -1447,7 +1447,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={(g.generic_admin?.elements
-                || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
+                || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'light'}
               onClick={() => this.handleGenericAdminModal(true, g)}
             >
               <i className="fa fa-empire" aria-hidden="true" />
@@ -1460,7 +1460,7 @@ export default class UserManagement extends React.Component {
           >
             <Button
               size="sm"
-              variant={g.account_active === true ? 'default' : 'danger'}
+              variant={g.account_active === true ? 'light' : 'danger'}
               onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
             >
               <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
