@@ -3,18 +3,12 @@
 }
 
 .search-autocomplete {
-  float: right;
-
   .scroll {
     overflow: scroll;
   }
 }
 
 .chemotion-search {
-  padding-right: 30px;
-  float: left;
-  position: static;
-
   div > div > div:nth-child(2) {
     position: relative;
     z-index: 2;

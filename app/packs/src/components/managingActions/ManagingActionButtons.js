@@ -1,22 +1,22 @@
 import React from 'react';
-import { DropdownButton, Button } from 'react-bootstrap';
+import { Dropdown, DropdownButton, Button, ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const MoveOrAssignButton = ({ assignDisabled, moveDisabled, onClick, customClass }) => (
   <DropdownButton
+    as={ButtonGroup}
     variant={customClass ? null : 'success'}
     className={customClass}
     title={<i className="fa fa-arrow-right" />}
     id="move-or-assign-btn"
     disabled={assignDisabled && moveDisabled}
   >
-    <MenuItem onSelect={() => onClick('move')} disabled={moveDisabled}>
+    <Dropdown.Item onSelect={() => onClick('move')} disabled={moveDisabled}>
       Move to Collection
-    </MenuItem>
-    <MenuItem onSelect={() => onClick('assign')} disabled={assignDisabled}>
+    </Dropdown.Item>
+    <Dropdown.Item onSelect={() => onClick('assign')} disabled={assignDisabled}>
       Assign to Collection
-    </MenuItem>
+    </Dropdown.Item>
   </DropdownButton>
 );
 
@@ -36,18 +36,19 @@ MoveOrAssignButton.defaultProps = {
 
 const RemoveOrDeleteButton = ({ removeDisabled, deleteDisabled, onClick, customClass }) => (
   <DropdownButton
+    as={ButtonGroup}
     variant={customClass ? null : 'warning'}
     className={customClass}
     title={<i className="fa fa-minus-square" />}
     id="remove-or-delete-btn"
     disabled={removeDisabled && deleteDisabled}
   >
-    <MenuItem onSelect={() => onClick('remove')} disabled={removeDisabled}>
+    <Dropdown.Item onSelect={() => onClick('remove')} disabled={removeDisabled}>
       Remove from current Collection
-    </MenuItem>
-    <MenuItem onSelect={() => onClick('delete')} disabled={deleteDisabled}>
+    </Dropdown.Item>
+    <Dropdown.Item onSelect={() => onClick('delete')} disabled={deleteDisabled}>
       Remove from all Collections
-    </MenuItem>
+    </Dropdown.Item>
   </DropdownButton>
 );
 
