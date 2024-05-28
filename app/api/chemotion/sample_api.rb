@@ -262,6 +262,19 @@ module Chemotion
         }
       end
 
+      namespace :calculate_molecular_mass do
+        desc 'Calculate the molecular mass from the molecular_formula for decoupled sample'
+        params do
+          requires :molecular_formula, type: String, desc: 'Molecular formula of decoupled sample'
+        end
+        get do
+          formula = params[:molecular_formula]
+          total_mass = calculate_molecular_mass(formula)
+
+          total_mass
+        end
+      end
+
       desc 'Return serialized sample by id'
       params do
         requires :id, type: Integer, desc: 'Sample id'
