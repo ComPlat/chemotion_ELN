@@ -176,9 +176,8 @@ module Chemotion
               SQL
             ).arrange_serializable(order: :label),
             serializable: true,
-          ).unshift(
-            'key': params[:owl_name], 'title': '-- Recently selected --', selectable: false, 'children': []
-          )
+          ).unshift(**OlsTerm::NODE_RECENTLY_SELECTED)
+
           OlsTerm.write_public_file("#{params[:owl_name]}.edited", ols_terms: result)
           status 204
         end
@@ -212,11 +211,9 @@ module Chemotion
             result = Entities::OlsTermEntity.represent(
               OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(order: :label),
               serializable: true,
-            ).unshift(
-              'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []
-            )
-            OlsTerm.write_public_file("#{owl_name}.edited", ols_terms: result)
+            ).unshift(**OlsTerm::NODE_RECENTLY_SELECTED)
 
+            OlsTerm.write_public_file("#{owl_name}.edited", ols_terms: result)
             status 204
           end
         end
