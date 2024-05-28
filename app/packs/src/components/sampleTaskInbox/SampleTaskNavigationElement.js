@@ -15,37 +15,35 @@ const SampleTaskNavigationElement = ({}) => {
   const title = `${sampleTasksStore.openSampleTaskCount} open Sample Tasks`
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <Button
-        id="inbox-button"
-        title={title}
-        variant="light"
-        onClick={sampleTasksStore.showSampleTaskInbox}
-        style={{
-          height: '34px',
-          width: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <i className="fa fa-image fa-lg" />
-        {sampleTasksStore.openSampleTaskCount > 0 && (
-          <span
-            className="badge badge-pill"
-            style={{
-              top: '25px',
-              left: '25px',
-              fontSize: '8px',
-              position: 'absolute',
-              display: 'flex',
-            }}
-          >
-            {sampleTasksStore.openSampleTaskCount}
-          </span>
-        )}
-      </Button>
-    </div>
+    <Button
+      id="inbox-button"
+      title={title}
+      variant="light"
+      size="xs"
+      onClick={sampleTasksStore.showSampleTaskInbox}
+      style={{
+        width: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      <i className="fa fa-image" />
+      {sampleTasksStore.openSampleTaskCount > 0 && (
+        <span
+          className="badge badge-pill"
+          style={{
+            top: '25px',
+            left: '25px',
+            fontSize: '8px',
+            position: 'absolute',
+            display: 'flex',
+          }}
+        >
+          {sampleTasksStore.openSampleTaskCount}
+        </span>
+      )}
+    </Button>
   );
 }
 
