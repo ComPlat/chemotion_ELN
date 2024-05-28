@@ -62,6 +62,10 @@ export default class ContextActions extends React.Component {
           <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
         </ButtonGroup>
         <ButtonGroup>
+          <SplitElementBtn />
+          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
+        </ButtonGroup>
+        <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}
             updateModalProps={updateModalProps}
