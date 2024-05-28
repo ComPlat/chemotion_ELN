@@ -128,7 +128,7 @@ export default class Navigation extends React.Component {
       <Navbar className='navbar-custom justify-content-between px-3'>
         {this.navHeader()}
         {!this.props.isHidden &&
-          <Nav navbar className='navbar-form'>
+          <Nav navbar className='navbar-form gap-2'>
             <Search noSubmit={!!this.state.currentUser} />
             {this.state.currentUser &&
               <>
