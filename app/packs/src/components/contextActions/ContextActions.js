@@ -58,6 +58,10 @@ export default class ContextActions extends React.Component {
     return (
       <div className='d-flex gap-2'>
         <ButtonGroup>
+          <SplitElementBtn />
+          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
+        </ButtonGroup>
+        <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}
             updateModalProps={updateModalProps}
@@ -65,22 +69,10 @@ export default class ContextActions extends React.Component {
           />
           <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <ButtonGroup>
-          <SplitElementBtn />
-          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
-        </ButtonGroup>
-        <ButtonGroup>
-          <ScanCodeButton customClass={customClass} />
-        </ButtonGroup>
-        <ButtonGroup>
-          <InboxButton />
-        </ButtonGroup>
-        <ButtonGroup>
-          <SampleTaskNavigationElement />
-        </ButtonGroup>
-        <ButtonGroup>
-          <NoticeButton />
-        </ButtonGroup>
+        <ScanCodeButton customClass={customClass} />
+        <InboxButton />
+        <SampleTaskNavigationElement />
+        <NoticeButton />
       </div>
     );
   }
