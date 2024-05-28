@@ -1,12 +1,11 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
-import { DropdownButton } from 'react-bootstrap';
+import { Dropdown, DropdownButton, ButtonGroup } from 'react-bootstrap';
 import { filter } from 'lodash';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class SplitElementBtn extends React.Component {
   constructor(props) {
@@ -69,23 +68,27 @@ export default class SplitElementBtn extends React.Component {
     sortedLayout?.forEach(([k]) => {
       const el = genericEls.find((ael) => ael.name === k);
       // eslint-disable-next-line max-len
-      if (el) itemTables.push(<MenuItem id={`split-${el.name}-button`} key={el.name} onSelect={() => this.splitElements(`${el.name}`)} disabled={this.noSelected(`${el.name}`) || this.isAllCollection()}>Split {el.label}</MenuItem>);
+      if (el) itemTables.push(<Dropdown.Item id={`split-${el.name}-button`} key={el.name} onSelect={() => this.splitElements(`${el.name}`)} disabled={this.noSelected(`${el.name}`) || this.isAllCollection()}>Split {el.label}</Dropdown.Item>);
     });
 
     return (
-      <DropdownButton variant="primary" title={<i className="fa fa-code-fork" />}>
-        <MenuItem
+      <DropdownButton 
+        as={ButtonGroup}
+        variant="primary"
+        title={<i className="fa fa-code-fork" />
+      }>
+        <Dropdown.Item
           onSelect={() => this.splitSelectionAsSubsamples()}
           disabled={this.noSelected('sample') || this.isAllCollection()}
         >
           Split Sample
-        </MenuItem>
-        <MenuItem
+        </Dropdown.Item>
+        <Dropdown.Item
           onSelect={() => this.splitSelectionAsSubwellplates()}
           disabled={this.noSelected('wellplate') || this.isAllCollection()}
         >
           Split Wellplate
-        </MenuItem>
+        </Dropdown.Item>
         {itemTables}
       </DropdownButton>
     );

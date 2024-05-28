@@ -57,7 +57,7 @@ export default class OpenCalendarButton extends Component {
 
     return (
       <Button
-        variant="primary"
+        variant="light"
         onClick={this.onClick}
         style={{ width: '60px' }}
       >
