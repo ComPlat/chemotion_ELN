@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Alert, Button, Modal, SplitButton,
-  FormGroup, FormControl
+  FormGroup, FormControl, Dropdown
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import Quagga from 'quagga';
@@ -11,7 +11,6 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -264,9 +263,9 @@ export default class ScanCodeButton extends React.Component {
     const menuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     const title = (
-      <span className="fa-stack" style={{ top: -4 }} >
-        <i className="fa fa-barcode fa-stack-1x" />
-        <i className="fa fa-search fa-stack-1x" style={{ left: 7 }} />
+      <span className="fa-stack" style={{ height: 16 }}>
+        <i className="fa fa-barcode fa-stack-1x" style={{ marginTop: -8 }}/>
+        <i className="fa fa-search fa-stack-1x" style={{ left: 7, marginTop: -8 }} />
       </span>
     );
 
@@ -279,10 +278,9 @@ export default class ScanCodeButton extends React.Component {
           className={customClass}
           title={title}
           onClick={this.open}
-          style={{ height: '34px' }}
         >
-          {menuItems.map((e) => (
-            <MenuItem
+          {menuItems.map(e => (
+            <Dropdown.Item
               key={e.key}
               disabled={disabledPrint}
               onSelect={(eventKey, event) => {
@@ -291,7 +289,7 @@ export default class ScanCodeButton extends React.Component {
               }}
             >
               {e.name}
-            </MenuItem>
+            </Dropdown.Item>
           ))}
         </SplitButton>
 

@@ -225,27 +225,25 @@ export default class ManagingActions extends React.Component {
     const shareDisabled = noSel || !sharing_allowed;
 
     return (
-      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
-        <ButtonGroup>
-          <MoveOrAssignButton
-            assignDisabled={assignDisabled}
-            moveDisabled={moveDisabled}
-            onClick={this.handleButtonClick}
-            customClass={this.props.customClass}
-          />
-          <RemoveOrDeleteButton
-            removeDisabled={removeDisabled}
-            deleteDisabled={deleteDisabled}
-            onClick={this.handleButtonClick}
-            customClass={this.props.customClass}
-          />
-          <ShareButton
-            isDisabled={shareDisabled}
-            onClick={this.handleButtonClick}
-            customClass={this.props.customClass}
-          />
-        </ButtonGroup>
-      </div>
+      <ButtonGroup>
+        <MoveOrAssignButton
+          assignDisabled={assignDisabled}
+          moveDisabled={moveDisabled}
+          onClick={this.handleButtonClick}
+          customClass={this.props.customClass}
+        />
+        <RemoveOrDeleteButton
+          removeDisabled={removeDisabled}
+          deleteDisabled={deleteDisabled}
+          onClick={this.handleButtonClick}
+          customClass={this.props.customClass}
+        />
+        <ShareButton
+          isDisabled={shareDisabled}
+          onClick={this.handleButtonClick}
+          customClass={this.props.customClass}
+        />
+      </ButtonGroup>
     );
   }
 }
