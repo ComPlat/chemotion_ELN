@@ -266,7 +266,7 @@ export default class CollectionTree extends React.Component {
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
 
     return (
-      <div>
+      <div className='collection-tree'>
         <div className="tree-view">
           {this.collectionManagementButton()}
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
