@@ -68,7 +68,7 @@ module Chemotion
           next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
 
-          ids = element_class_ids(element, 'collections', @collection.id, params[element])
+          ids = element_class_ids(element, @collection.id, params[element])
           message = join_element_class(element, 'collections').remove_in_collection(ids, @collection.id)
         end
 

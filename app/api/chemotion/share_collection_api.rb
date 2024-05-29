@@ -38,6 +38,7 @@ module Chemotion
 
         status 204
       end
+
       desc 'Update Share collection'
       params do
         requires :id, type: Integer
