@@ -44,7 +44,9 @@ export default class MaterialCalculations extends Component {
             unit='l'
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
-            onChange={(amount) => this.handleAmountChange(amount)}
+            precision={5}
+            disabled
+            readOnly
           />
         </td>
       )
@@ -66,6 +68,8 @@ export default class MaterialCalculations extends Component {
     };
 
     return <tr>
+      <td style={inputsStyle}></td>
+      <td style={inputsStyle}></td>
       <td style={inputsStyle}></td>
       <td style={inputsStyle}></td>
       <td style={inputsStyle}></td>
