@@ -326,7 +326,6 @@ module Usecases
           @conditions[:field] = "(#{prop} ->> '#{filter['field']['column']}')::TEXT"
         end
       end
-      # rubocop:enable Metrics/AbcSize
 
       def analyses_tab_options(filter)
         prop = "prop_#{@field_table}"
@@ -339,6 +338,7 @@ module Usecases
           @conditions[:joins] << field_table_inner_join
           @conditions[:joins] << "INNER JOIN #{@field_table} AS analysis ON analysis.parent_id = #{prop}.id"
           @conditions[:joins] << "INNER JOIN #{@field_table} AS children ON children.parent_id = analysis.id"
+          @conditions[:joins] << "INNER JOIN #{@field_table} AS dataset ON dataset.parent_id = children.id"
         end
 
         @conditions[:field] =
@@ -347,7 +347,15 @@ module Usecases
           else
             "children.extended_metadata -> '#{filter['field']['column']}'"
           end
+
+        @conditions[:additional_condition] +=
+          if %w[name description plain_text_content].include?(filter['field']['column'])
+            "OR dataset.#{filter['field']['column']} ILIKE '%#{filter['value']}%'"
+          else
+            "OR dataset.extended_metadata -> '#{filter['field']['column']}' ILIKE '%#{filter['value']}%'"
+          end
       end
+      # rubocop:enable Metrics/AbcSize
 
       def measurements_tab_options(filter)
         @conditions[:condition_table] = ''
