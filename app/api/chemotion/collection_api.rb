@@ -199,7 +199,7 @@ module Chemotion
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
             ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
-            join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
+            message = join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
           end
 
           if message.is_a?(Array)

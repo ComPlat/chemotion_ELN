@@ -8,7 +8,6 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers LiteratureHelpers
-    helpers ReflectionHelpers
 
     namespace :ui_state do
       desc 'Delete elements by UI state'
@@ -64,12 +63,13 @@ module Chemotion
       desc "delete element from ui state selection."
       delete do
         deleted = { 'sample' => [] }
-        %w[sample reaction wellplate screen research_plan cell_line].each do |element|
+        message = ''
+        API::ELEMENTS.each do |element|
           next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
 
-          assoziation_name = get_assoziation_name_in_collections(element)
-          deleted[element] = @collection.send(assoziation_name).by_ui_state(params[element]).destroy_all.map(&:id)
+          ids = element_class_ids(element, 'collections', @collection.id, params[element])
+          message = join_element_class(element, 'collections').remove_in_collection(ids, @collection.id)
         end
 
         # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
@@ -80,7 +80,7 @@ module Chemotion
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
         if deleted['sample'].blank?
-          { error: "Sample cannot be deleted due to association." }
+          message
         else
            Labimotion::ElementKlass.find_each do |klass|
              next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
