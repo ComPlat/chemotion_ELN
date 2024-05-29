@@ -1176,7 +1176,7 @@ export default class Sample extends Element {
   }
 
   updateMixtureComponentEquivalent() {
-    const referenceIndex = this.components.findIndex(component => component.reference);
+    let referenceIndex = this.components.findIndex(component => component.reference);
 
     if (referenceIndex === -1) {
       referenceIndex = this.components.findIndex(component => component.position === 0);
