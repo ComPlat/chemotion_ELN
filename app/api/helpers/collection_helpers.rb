@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
+# rubocop:disable Metrics/ModuleLength, Naming/MethodParameterName, Layout/LineLength
 
 module CollectionHelpers
   extend Grape::API::Helpers
@@ -17,6 +17,7 @@ module CollectionHelpers
   end
   # return the collection if current_user is associated to it (owned) or if acl exists
   # return nil if no association
+
   def fetch_collections_w_current_user(collection_id, permission_level = nil)
     collections = Collection.owned_by(user_ids).where(id: collection_id)
     return collections if collections.present?
@@ -109,14 +110,14 @@ module CollectionHelpers
   end
 
   def create_acl_collection(user_id, collection_id, params, root_col_label)
-    currentCollection = params['ui_state']['currentCollection']
-    label = params[:newCollection] || currentCollection['label']
+    current_collection = params['ui_state']['currentCollection']
+    label = params[:newCollection] || current_collection['label']
 
     c_acl = CollectionAcl.find_or_create_by(
       user_id: user_id,
-      collection_id: collection_id
+      collection_id: collection_id,
     )
-    label = label.nil? ? root_col_label : label
+    label = root_col_label if label.nil?
     c_acl.update!(
       label: label,
       permission_level: params['ui_state']['currentCollection']['permission_level'],
@@ -129,7 +130,12 @@ module CollectionHelpers
 
   def create_or_move_collection(action, from_collection, to_collection_id, ui_state)
     API::ELEMENTS.each do |element|
-      ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+      next unless ui_state[element]
+
+      element_state = check_ui_state(ui_state[element])
+      next unless element_state[:checkedAll] || element_state[:checkedIds].present?
+
+      ids = element_class_ids(element, from_collection.id, element_state)
       case action
       when 'move'
         join_element_class(element, 'collections').move_to_collection(ids, from_collection.id, to_collection_id)
@@ -139,7 +145,7 @@ module CollectionHelpers
     end
   end
 
-  def check_ui_state (ui_state)
+  def check_ui_state(ui_state)
     ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
     ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
     ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
@@ -150,11 +156,12 @@ module CollectionHelpers
     API::ELEMENTS.each do |element|
       ui_state = params[:ui_state][element]
       next unless ui_state
+
       ui_state = check_ui_state(ui_state)
       next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-      collections_element_klass = ('collections_' + element).classify.constantize #CollectionsSample
-      element_klass = element.classify.constantize #Sample
+      collections_element_klass = ('collections_' + element).classify.constantize # CollectionsSample
+      element_klass = element.classify.constantize # Sample
       elements = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state)
       ids = elements.pluck(:id)
       case params[:action]
@@ -166,9 +173,8 @@ module CollectionHelpers
     end
   end
 
-  def element_class_ids(element, join_table, from_collection_id, ui_state)
+  def element_class_ids(element, from_collection_id, ui_state)
     element_class = API::ELEMENT_CLASS[element][:class]
-    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
     element_class.by_collection_id(from_collection_id).by_ui_state(ui_state).pluck(:id)
   end
 
@@ -177,4 +183,4 @@ module CollectionHelpers
     element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
   end
 end
-# rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength
+# rubocop:enable Metrics/ModuleLength, Layout/LineLength

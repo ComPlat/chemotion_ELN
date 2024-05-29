@@ -45,7 +45,8 @@ class CollectionsSample < ApplicationRecord
 
       sample_wellplate_ids = fetch_sample_ids('wellplate', 'wells', cid, sample_ids)
       associated_sample_ids = sample_ids - sample_wellplate_ids
-      message = generate_error_message(associated_sample_ids, 'wellplate') if sample_wellplate_ids.present?
+      message = generate_error_message(associated_sample_ids, 'wellplate') if associated_sample_ids.present?
+
       return message unless message.nil?
 
       ids = sample_wellplate_ids + sample_reaction_ids

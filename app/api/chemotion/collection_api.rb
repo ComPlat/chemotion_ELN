@@ -6,7 +6,7 @@ module Chemotion
     helpers ParamsHelpers
     resource :collections do
 
-      desc "Return the all collections for the current user"
+      desc "Return all collections for the current user"
       get do
         collections = Collection.owned_by(current_user.id).includes(collection_acls: :user)
         shared = Collection.shared_with(current_user.id).includes(:user)
