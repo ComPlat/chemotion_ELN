@@ -6,7 +6,7 @@ module Chemotion
     helpers ParamsHelpers
     resource :collections do
 
-      desc "Return the all collections for the current user"
+      desc "Return all collections for the current user"
       get do
         collections = Collection.owned_by(current_user.id).includes(collection_acls: :user)
         shared = Collection.shared_with(current_user.id).includes(:user)
@@ -102,7 +102,7 @@ module Chemotion
 
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+            ids = element_class_ids(element, from_collection.id, ui_state)
             collections_element_class = join_element_class(element, 'collections')
             collections_element_class.move_to_collection(ids, from_collection.id, to_collection_id)
             collections_element_class.remove_in_collection(
@@ -152,7 +152,7 @@ module Chemotion
             ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+            ids = element_class_ids(element, from_collection.id, ui_state)
             join_element_class(element, 'collections').create_in_collection(ids, to_collection_id)
           end
 
@@ -198,7 +198,7 @@ module Chemotion
             ui_state[:collection_ids] = from_collection.id
             next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
 
-            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
+            ids = element_class_ids(element, from_collection.id, ui_state)
             message = join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
           end
 

@@ -32,7 +32,7 @@ module Usecases
       end
 
       def delete_from_all_previous_owner_collections(previous_owner_id, collection)
-        %w[sample reaction wellplate screen research_plan].each do |element|
+        API::ELEMENTS.each do |element|
           elements = collection.send(element + 's')
           collection_ids = elements.map{|s| s.collections.where(user_id: previous_owner_id)}.flatten.pluck(:id).uniq
           collection_ids -= [collection.id]
