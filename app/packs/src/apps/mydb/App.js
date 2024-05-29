@@ -105,19 +105,6 @@ class App extends Component {
     });
   }
 
-  collectionTree() {
-    const { showCollectionTree } = this.state;
-    if (!showCollectionTree) {
-      return <div />;
-    }
-
-    return (
-      <Col className="small-col collec-tree">
-        <CollectionTree />
-      </Col>
-    );
-  }
-
   mainContent() {
     const { showCollectionManagement, mainContentClassName } = this.state;
     return (
@@ -136,7 +123,7 @@ class App extends Component {
           <SampleTaskInbox />
         </Row>
         <Row className="card-content container-fluid">
-          {this.collectionTree()}
+          {showCollectionTree && <CollectionTree />}
           {this.mainContent()}
         </Row>
         <Row>
