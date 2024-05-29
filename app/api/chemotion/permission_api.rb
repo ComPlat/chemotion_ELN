@@ -21,7 +21,8 @@ module Chemotion
         end
 
         post do
-          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id])
+          collection = fetch_collection_w_current_user(params[:currentCollection][:id])
+          cid = collection&.id
           sel = {}
           has_sel = {}
 

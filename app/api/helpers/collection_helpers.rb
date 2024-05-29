@@ -127,11 +127,6 @@ module CollectionHelpers
     )
   end
 
-  def join_element_class(element, join_table)
-    element_class = API::ELEMENT_CLASS[element]
-    element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
-  end
-
   def create_or_move_collection(action, from_collection, to_collection_id, ui_state)
     API::ELEMENTS.each do |element|
       ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
@@ -172,13 +167,13 @@ module CollectionHelpers
   end
 
   def element_class_ids(element, join_table, from_collection_id, ui_state)
-    element_class = API::ELEMENT_CLASS[element]
+    element_class = API::ELEMENT_CLASS[element][:class]
     element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
     element_class.by_collection_id(from_collection_id).by_ui_state(ui_state).pluck(:id)
   end
 
   def join_element_class(element, join_table)
-    element_class = API::ELEMENT_CLASS[element]
+    element_class = API::ELEMENT_CLASS[element][:class]
     element_class.reflections[join_table].options[:through]&.to_s&.classify&.constantize
   end
 end

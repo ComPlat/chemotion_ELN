@@ -184,7 +184,7 @@ module Chemotion
             next if ids.empty?
 
             collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
-            collections_element_class.remove_in_collection(ids, from_collection.id)
+            message = collections_element_class.remove_in_collection(ids, from_collection.id)
           end
 
           if message.is_a?(Array)

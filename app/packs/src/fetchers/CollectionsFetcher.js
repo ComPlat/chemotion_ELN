@@ -162,7 +162,7 @@ export default class CollectionsFetcher {
   }
 
   static removeElementsCollection(params) {
-    return fetch('/api/v1/collections/elements/', {
+    const promise = fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
@@ -172,17 +172,20 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
       })
-    }).then(response => response.json())
-      .then(response => {
-        if (response.error) {
+    })
+      .then(response => response.json())
+      .then(json => {
+        if (json.error) {
           notification({
             title: 'Delete Error',
             lvl: 'error',
-            msg: response.error,
+            msg: json.error,
           });
         }
       })
       .catch((errorMessage) => { console.log(errorMessage); });
+
+    return promise;
   }
 
   static createExportJob(params) {

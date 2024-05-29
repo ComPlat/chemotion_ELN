@@ -145,12 +145,12 @@ class API < Grape::API
                      ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate].freeze
 
   ELEMENT_CLASS = {
-    'research_plan' => ResearchPlan,
-    'screen' => Screen,
-    'wellplate' => Wellplate,
-    'reaction' => Reaction,
-    'sample' => Sample,
-    'cell_line' => CelllineSample,
+    'research_plan' => { association: 'research_plans', class: ResearchPlan },
+    'screen' => { association: 'screens', class: Screen },
+    'wellplate' => { association: 'wellplates', class: Wellplate },
+    'reaction' => { association: 'reactions', class: Reaction },
+    'sample' => { association: 'samples', class: Sample },
+    'cell_line' => { association: 'cellline_samples', class: CelllineSample },
   }.freeze
 
   mount Chemotion::LiteratureAPI
