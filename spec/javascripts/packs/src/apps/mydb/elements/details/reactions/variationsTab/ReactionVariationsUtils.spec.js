@@ -1,48 +1,10 @@
 import expect from 'expect';
 import {
-  removeObsoleteMaterialsFromVariations,
-  addMissingMaterialsToVariations,
-  updateYields,
-  updateEquivalents,
-  getReferenceMaterial,
-  getReactionMaterials,
-  getMaterialHeaderNames,
-  getSequentialId,
-  getGramFromMol,
-  getMolFromGram,
-  convertUnit,
+  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
+import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {
-  it('gets material names', async () => {
-    const material = await setUpMaterial();
-    material.id = 42;
-    expect(getMaterialHeaderNames(material)).toEqual(['ID: 42', 'NEW SAMPLE']);
-  });
-  it('gets sequential ID', () => {
-    const variations = [];
-    expect(getSequentialId(variations)).toBe(1);
-    variations.push({ id: 42 });
-    expect(getSequentialId(variations)).toBe(43);
-  });
-  it('converts gram to mol', () => {
-    const material = { aux: { loading: 2 } };
-    expect(getMolFromGram(1, material)).toBe((1 * 2) / 1e4);
-    material.aux.loading = null;
-    material.aux.molarity = 1;
-    material.aux.purity = 2;
-    material.aux.molecularWeight = 3;
-    expect(getMolFromGram(1, material)).toBe((1 * 2) / (1 * 3));
-  });
-  it('converts mol to gram', () => {
-    const material = { aux: { loading: 2 } };
-    expect(getGramFromMol(1, material)).toBe((1 / 2) * 1e4);
-    material.aux.loading = null;
-    material.aux.purity = 2;
-    material.aux.molecularWeight = 1;
-    expect(getGramFromMol(1, material)).toBe(1 / 2);
-  });
   it('converts units', () => {
     expect(convertUnit(1, 'g', 'mg')).toBe(1000);
     expect(convertUnit(1, 'mg', 'g')).toBe(0.001);
@@ -53,54 +15,51 @@ describe('ReactionVariationsUtils', () => {
     expect(convertUnit(1, 'Second(s)', 'Minute(s)')).toBeCloseTo(0.0167, 0.00001);
     expect(convertUnit(1, 'Minute(s)', 'Second(s)')).toBe(60);
   });
-  it('removes obsolete materials', async () => {
+  it('creates a row in the variations table', async () => {
     const reaction = await setUpReaction();
-    const productIDs = reaction.products.map((product) => product.id);
-    reaction.variations.forEach((variation) => {
-      expect(Object.keys(variation.products)).toEqual(productIDs);
+    const row = createVariationsRow(reaction, reaction.variations);
+    const nonReferenceStartingMaterial = Object.values(row.startingMaterials).find(
+      (material) => !material.aux.isReference
+    );
+    const reactant = Object.values(row.reactants)[0];
+    expect(row.id).toBe(4);
+    expect(row.analyses).toEqual([]);
+    expect(row.properties).toEqual({
+      temperature: { value: '', unit: '°C' },
+      duration: { value: NaN, unit: 'Second(s)' },
     });
-
-    reaction.products.pop();
-    const updatedProductIDs = reaction.products.map((product) => product.id);
-    const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = removeObsoleteMaterialsFromVariations(reaction.variations, currentMaterials);
-    updatedVariations
-      .forEach((variation) => {
-        expect(Object.keys(variation.products)).toEqual(updatedProductIDs);
-      });
+    expect(Object.values(row.products).map((product) => product.aux.yield)).toEqual([100, 100]);
+    expect(nonReferenceStartingMaterial.aux.equivalent).toBe(1);
+    expect(reactant.aux.equivalent).toBe(1);
   });
-  it('adds missing materials', async () => {
+  it('copies a row in the variations table', async () => {
     const reaction = await setUpReaction();
-    const material = await setUpMaterial();
-    const startingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
-    reaction.variations.forEach((variation) => {
-      expect(Object.keys(variation.startingMaterials)).toEqual(startingMaterialIDs);
-    });
-
-    reaction.starting_materials.push(material);
-    const updatedStartingMaterialIDs = reaction.starting_materials.map((startingMaterial) => startingMaterial.id);
-    const currentMaterials = getReactionMaterials(reaction);
-    const updatedVariations = addMissingMaterialsToVariations(reaction.variations, currentMaterials);
-    updatedVariations
-      .forEach((variation) => {
-        expect(Object.keys(variation.startingMaterials)).toEqual(updatedStartingMaterialIDs);
-      });
+    const row = reaction.variations[0];
+    row.analyses = [42];
+    const copiedRow = copyVariationsRow(row, reaction.variations);
+    expect(copiedRow.id).toBeGreaterThan(row.id);
+    expect(copiedRow.analyses).toEqual([]);
   });
-  it('updates yield when product amount changes', async () => {
+  it('updates a row in the variations table', async () => {
     const reaction = await setUpReaction();
-    const productID = reaction.products[0].id;
-    expect(reaction.variations[0].products[productID].aux.yield).toBe(100);
-    reaction.variations[0].products[productID].value = 2000;
-    const updatedVariationsRow = updateYields(reaction.variations[0], reaction.hasPolymers());
-    expect(updatedVariationsRow.products[productID].aux.yield).toBe(5);
-  });
-  it("updates non-reference materials' equivalents when reference material's amount changes ", async () => {
-    const reaction = await setUpReaction();
-    const reactantID = reaction.reactants[0].id;
-    expect(reaction.variations[0].reactants[reactantID].aux.equivalent).toBe(1);
-    const referenceMaterial = getReferenceMaterial(reaction.variations[0]);
-    referenceMaterial.value = 2000;
-    const updatedVariationsRow = updateEquivalents(reaction.variations[0]);
-    expect(updatedVariationsRow.reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
+    const row = reaction.variations[0];
+    const referenceMaterialID = Object.keys(row.startingMaterials).find(
+      (materialID) => row.startingMaterials[materialID].aux.isReference
+    );
+    const referenceMaterial = Object.values(row.startingMaterials).find(
+      (material) => material.aux.isReference
+    );
+    const updatedRow = updateVariationsRow(
+      row,
+      `startingMaterials.${referenceMaterialID}`,
+      { ...referenceMaterial, value: referenceMaterial.value * 10 },
+      reaction.hasPolymers()
+    );
+    expect(Object.values(row.reactants)[0].aux.equivalent).toBeGreaterThan(
+      Object.values(updatedRow.reactants)[0].aux.equivalent
+    );
+    expect(Object.values(row.products)[0].aux.yield).toBeGreaterThan(
+      Object.values(updatedRow.products)[0].aux.yield
+    );
   });
 });

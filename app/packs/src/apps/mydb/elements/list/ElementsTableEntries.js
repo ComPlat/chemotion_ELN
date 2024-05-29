@@ -397,6 +397,7 @@ export default class ElementsTableEntries extends Component {
                     {reactionStatus(element)}
                     {' '}
                     {reactionRole(element)}
+                    {' '}
                     {reactionVariations(element)}
                     <br />
                     {sampleMoleculeName}
