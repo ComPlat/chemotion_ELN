@@ -44,7 +44,7 @@ export default class DeviceDescription extends Element {
       helpers_uploaded: false,
       policies_and_user_information: '',
       description_for_methods_part: '',
-      setup_descriptions: [],
+      setup_descriptions: {},
       isNew: true,
       changed: false,
       updated: false,
