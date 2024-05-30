@@ -273,7 +273,7 @@ const ontologySegmentList = (store, element, handleSegmentsChange, handleRetriev
             defaultExpanded
           >
             <Panel.Heading>
-              <Panel.Title toggle>{`Ontology: ${ontology['data']['label']}`}</Panel.Title>
+              <Panel.Title toggle>{`${ontology['data']['label']}`}</Panel.Title>
             </Panel.Heading>
             <Panel.Collapse className={collapsedClass}>
               <Panel.Body>{rows}</Panel.Body>

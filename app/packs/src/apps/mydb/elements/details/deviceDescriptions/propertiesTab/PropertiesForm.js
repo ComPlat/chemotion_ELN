@@ -3,7 +3,7 @@ import { Collapse } from 'react-bootstrap';
 import {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, checkboxInput, componentInput,
+  operatorInput, checkboxInput, componentInput, identifierMultipleInputGroups,
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -147,30 +147,30 @@ const PropertiesForm = () => {
     { key: 'vendor_device_name', label: 'Name' },
     { key: 'url', label: 'ELN Link' },
     { key: 'details', label: 'Details' },
-    { key: 'version_doi', label: 'DOI' },
+    { key: 'version_doi', label: 'Identifier (DOI)' },
   ];
 
   const componentFields = [
     { key: 'vendor_device_name', label: 'Component of - setup name' },
     { key: 'vendor_device_id', label: 'Setup ID' },
-    { key: 'version_doi', label: 'Setup DOI' },
-    { key: 'version_doi_url', label: 'Setup DOI link' },
+    { key: 'url', label: 'ELN Link' },
+    { key: 'version_doi', label: 'Setup Identifier (DOI)' },
+    { key: 'version_doi_url', label: 'Setup Identifier (DOI) link' },
   ];
 
   const setupDescription = () => {
     const type = deviceDescription.device_type;
     if (!['setup', 'component'].includes(type)) { return ''; }
     const rowFields = type == 'setup' ? setupFields : componentFields;
-    const label = type == 'setup' ? 'Setup' : 'Component';
 
     return (
       <>
         {headlineWithToggle(deviceDescriptionsStore, 'setup', 'Setup description')}
-        <Collapse in={deviceDescriptionsStore.toggable_contents.setup} className="grouped-fields-row cols-1" >
+        <Collapse in={deviceDescriptionsStore.toggable_contents.setup} className="grouped-fields-row cols-1 component-inputs" >
           <div>
             {
               componentInput(
-                deviceDescription, deviceDescriptionsStore, label,
+                deviceDescription, deviceDescriptionsStore, 'Component',
                 'setup_descriptions', type, rowFields, ''
               )
             }
@@ -230,7 +230,7 @@ const PropertiesForm = () => {
             }
           </div>
           <div className="grouped-fields-row cols-1">
-            {multipleInputGroups(deviceDescription, versionDoiLabel, versionDoi, deviceDescriptionsStore)}
+            {identifierMultipleInputGroups(deviceDescription, versionDoiLabel, versionIdentifierTypes, deviceDescriptionsStore)}
             <div className="form-group">
               Previous versions of this device
             </div>
@@ -255,6 +255,8 @@ const PropertiesForm = () => {
           {multipleInputGroups(deviceDescription, accessOptionsLabel, accessOptions, deviceDescriptionsStore)}
         </div>
       </Collapse>
+
+      {setupDescription()}
 
       {headlineWithToggle(deviceDescriptionsStore, 'software_interfaces', 'Software and interfaces')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.software_interfaces} className="grouped-fields-row cols-3">
@@ -294,8 +296,6 @@ const PropertiesForm = () => {
           }
         </div>
       </Collapse>
-
-      {setupDescription()}
 
       {headlineWithToggle(deviceDescriptionsStore, 'physical_data', 'Physical data, media and hardware requirements')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.physical_data} className="grouped-fields-row cols-2">
