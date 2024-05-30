@@ -1,10 +1,15 @@
+# frozen_string_literal: true
+
 module Collectable
   extend ActiveSupport::Concern
-
   included do
-    scope :for_user, ->(user_id) { joins(:collections).where('collections.user_id = ?', user_id).references(:collections) }
-    scope :for_user_n_groups, ->(user_ids) { joins(:collections).where('collections.user_id IN (?)', user_ids).references(:collections) }
-    scope :by_collection_id, ->(id) { joins(:collections).where('collections.id = ?', id) }
+    scope :for_user, lambda { |user_id|
+                       joins(:collections).where(collections: { user_id: user_id }).references(:collections)
+                     }
+    scope :for_user_n_groups, lambda { |user_ids|
+                                joins(:collections).where(collections: { user_id: user_ids }).references(:collections)
+                              }
+    scope :by_collection_id, ->(id) { joins(:collections).where(collections: { id: id }) }
     scope :search_by, ->(search_by_method, arg) { public_send("search_by_#{search_by_method}", arg) }
 
     # TODO: Filters are not working properly
@@ -21,9 +26,29 @@ module Collectable
     scope :updated_time_to, ->(time) { where("#{table_name}.updated_at <= ?", time) }
     scope :updated_time_from, ->(time) { where("#{table_name}.updated_at >= ?", time) }
 
-    scope :join_collections_element, ->{
+    scope :join_collections_element, lambda {
       tb = name.underscore
       joins("inner join collections_#{tb}s on #{tb}s.id = collections_#{tb}s.sample_id")
     }
+  end
+
+  class_methods do
+    # Get the proper ActiveRecord model class of the join collection-element model
+    #   independent of the names of the models
+    # @example
+    #   - Sample => CollectionSample
+    #   - CelllineSample => CollectionsCellline
+    #   - Labimotion::Element => Labimotion::CollectionElement
+    #   - User => nil
+    #
+    # @todo define this as a constant but would need for the concern to be included
+    #  after the definition of the collections association in the models.
+    #
+    # @return [Class<ActiveRecord>, nil] that models the register collection-element join reflection
+    #   between the current AR model and the AR Collection model (or nil if none)
+    def collections_element_class
+      through_asso = reflect_on_association(:collections)&.options&.fetch(:through, nil)
+      through_asso && reflect_on_association(through_asso)&.klass
+    end
   end
 end

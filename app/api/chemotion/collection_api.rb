@@ -316,33 +316,26 @@ module Chemotion
             error!('401 Cannot remove elements from  \'All\' root collection', 401)
           end
           API::ELEMENTS.each do |element|
-            ui_state = params[:ui_state][element]
-            next unless ui_state
+            ui_state = params[:ui_state].delete(element)
+            next if ui_state.blank?
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+            ids = API::ELEMENT_CLASS[element].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            next if ids.empty?
 
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
-
-            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
-            collections_element_class = join_element_class(element, 'collections')
+            collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
             collections_element_class.move_to_collection(ids, from_collection.id, to_collection_id)
             collections_element_class.remove_in_collection(
               ids,
               Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
 
-          klasses = Labimotion::ElementKlass.find_each do |klass|
+          Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
             ui_state = params[:ui_state][klass.name]
-            next unless ui_state
+            next if ui_state.blank?
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+            ids = klass.elements.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            next if ids.empty?
 
-            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             Labimotion::CollectionsElement.move_to_collection(ids, from_collection.id, to_collection_id, klass.name)
             Labimotion::CollectionsElement.remove_in_collection(ids, Collection.get_all_collection_for_user(current_user.id)[:id]) if params[:is_sync_to_me]
           end
@@ -368,29 +361,24 @@ module Chemotion
           error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
 
           API::ELEMENTS.each do |element|
-            ui_state = params[:ui_state][element]
-            next unless ui_state
+            ui_state = params[:ui_state].delete(element)
+            next if ui_state.blank?
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+            ids = API::ELEMENT_CLASS[element].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            next if ids.empty?
 
-            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
-            join_element_class(element, 'collections').create_in_collection(ids, to_collection_id)
+            collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
+            collections_element_class.create_in_collection(ids, to_collection_id)
           end
 
-          klasses = Labimotion::ElementKlass.find_each do |klass|
+          Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
             ui_state = params[:ui_state][klass.name]
-            next unless ui_state
+            next if ui_state.blank?
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+            ids = klass.elements.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            next if ids.empty?
 
-            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
-            Labimotion::CollectionsElement.create_in_collection(ids, to_collection_id, klass.name)
+            Labimotion::CollectionsElement.create_in_collection(ids, to_collection_id)
           end
 
           status 204
@@ -412,30 +400,23 @@ module Chemotion
           end
 
           API::ELEMENTS.each do |element|
-            ui_state = params[:ui_state][element]
-            next unless ui_state
+            ui_state = params[:ui_state].delete(element)
+            next if ui_state.blank?
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
-            ui_state[:collection_ids] = from_collection.id
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+            ids = API::ELEMENT_CLASS[element].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            next if ids.empty?
 
-            ids = element_class_ids(element, 'collections', from_collection.id, ui_state)
-            join_element_class(element, 'collections').remove_in_collection(ids, from_collection.id)
+            collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
+            collections_element_class.remove_in_collection(ids, from_collection.id)
           end
 
-          klasses = Labimotion::ElementKlass.find_each do |klass|
+          Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
             ui_state = params[:ui_state][klass.name]
-            next unless ui_state
+            next if ui_state.blank?
 
-            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
-            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
-            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
-            ui_state[:collection_ids] = from_collection.id
-            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+            ids = klass.elements.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            next if ids.empty?
 
-            ids = Labimotion::Element.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             Labimotion::CollectionsElement.remove_in_collection(ids, from_collection.id)
           end
 
