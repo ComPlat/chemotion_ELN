@@ -170,9 +170,9 @@ const DropAreaForComponent = ({ index, element, store, field, type }) => {
 
 const LinkedComponent = ({ element, entry }) => {
   return (
-    <div className="form-group">
+    <div className="form-group url-entry">
       <label>{entry.label}</label>
-      <div>
+      <div className="form-control no-border">
         <a
           role="link"
           tabIndex={0}
@@ -401,6 +401,37 @@ const checkboxInput = (element, label, field, store) => {
   );
 }
 
+const identifierMultipleInputGroups = (element, label, options, store, info) => {
+  let formGroupKey = 'version_identifier_type_doi_url';
+  let idOrNew = element.id !== '' ? element.id : 'new';
+
+  return (
+    <FormGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
+      {labelWithInfo(label, info)}
+      <InputGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}-group`}>
+        <InputGroup.Addon key={`${element.type}-version_identifier_type`} className="with-select">
+          {basicSelectInputWithSpecialLabel(element, store, 'version_identifier_type', 'Type', options, 'Type')}
+        </InputGroup.Addon>
+        <FormControl
+          name="version_doi"
+          type="text"
+          key={`${store.key_prefix}-version_doi`}
+          value={element.version_doi}
+          onChange={handleFieldChanged(store, 'version_doi', 'text', element.type)}
+        />
+        <InputGroup.Addon key={`${element.type}-version_doi_url`}>Link</InputGroup.Addon>
+        <FormControl
+          name="version_doi_url"
+          type="text"
+          key={`${store.key_prefix}-version_doi_url`}
+          value={element.version_doi_url}
+          onChange={handleFieldChanged(store, 'version_doi_url', 'text', element.type)}
+        />
+      </InputGroup>
+    </FormGroup>
+  );
+}
+
 const multipleInputGroups = (element, label, fields, store, info) => {
   let inputGroupForms = [];
   let formGroupKey = '';
@@ -411,7 +442,7 @@ const multipleInputGroups = (element, label, fields, store, info) => {
     inputGroupForms.push(<InputGroup.Addon key={`${field.label}-${i}`}>{field.label}</InputGroup.Addon>);
     if (field.type === 'select') {
       inputGroupForms.push(
-        basicSelectInputWithSpecialLabel(element, store, field.value, field.label, field.options)
+        basicSelectInputWithSpecialLabel(element, store, field.value, field.label, field.options, '')
       );
     } else {
       inputGroupForms.push(
@@ -470,10 +501,10 @@ const menuLabel = (option, field, store) => {
   return label;
 }
 
-const basicSelectInputWithSpecialLabel = (element, store, field, label, options) => {
+const basicSelectInputWithSpecialLabel = (element, store, field, label, options, placeholder) => {
   const elementValue = elementFieldValue(element, field);
   let value = options.find((o) => { return o.value == elementValue });
-  value = value === undefined ? { value: '', label: '', description: '' } : value;
+  value = value === undefined ? (placeholder ? placeholder : { value: '', label: '', description: '' }) : value;
 
   return (
     <Select
@@ -482,6 +513,7 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options)
       options={options}
       value={value}
       isClearable={true}
+      placeholder={placeholder}
       getOptionLabel={(option) => menuLabel(option, field, store)}
       onMenuOpen={() => changeMenuStatus(store, field, true)}
       onMenuClose={() => changeMenuStatus(store, field, false)}
@@ -551,4 +583,5 @@ export {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
   textareaInput, dateTimePickerInput, headlineWithToggle,
   operatorInput, annotationButton, checkboxInput, componentInput,
+  identifierMultipleInputGroups,
 }

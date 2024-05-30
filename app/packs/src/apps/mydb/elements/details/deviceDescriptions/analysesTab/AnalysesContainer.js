@@ -205,7 +205,13 @@ const AnalysesContainer = ({ readonly }) => {
         </div>
       );
     }
-    return <div className="no-analyses-panel">There are currently no analyses</div>;
+    return (
+      <div className="device-description-analyses">
+        <div className="panel panel-default">
+          <div className="panel-heading">There are currently no analyses</div>
+        </div>
+      </div>
+    );
   }
 
   return (
