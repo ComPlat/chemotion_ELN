@@ -82,7 +82,7 @@ class CellLineDetails extends React.Component {
       <div>
 
         <ElementCollectionLabels
-          class="collection-label floating"
+          className="collection-label floating"
           element={cellLineItem}
           key={cellLineItem.id}
           placement="right"
