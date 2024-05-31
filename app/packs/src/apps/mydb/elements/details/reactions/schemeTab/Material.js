@@ -265,6 +265,7 @@ class Material extends Component {
     let gasPhaseData = material.gas_phase_data || {};
     const style = { maxWidth: '5px', paddingRight: '3px' };
     let colSpan = '1';
+    const readOnly = !!(field === 'turnover_frequency' || field === 'turnover_number');
     if (gasPhaseData[field] === null || gasPhaseData[field] === undefined) {
       gasPhaseData = {
         time: { unit: 'h', value: null },
@@ -291,6 +292,7 @@ class Material extends Component {
           precision={4}
           bsStyle="success"
           value={value}
+          disabled={readOnly}
           onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
           onChange={(e) => this.handleGasFieldsChange(field, e)}
           unit={unit}
@@ -487,7 +489,7 @@ class Material extends Component {
 
   handleGasFieldsChange(field, e) {
     const { materialGroup, onChange } = this.props;
-    if (onChange && e.value && e.unit) {
+    if (onChange && e.value !== undefined && e.unit !== undefined) {
       const event = {
         type: 'gasFieldsChanged',
         materialGroup,

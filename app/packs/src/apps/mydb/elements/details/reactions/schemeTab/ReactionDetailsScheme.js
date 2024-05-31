@@ -469,6 +469,48 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
   }
 
+  // eslint-disable-next-line class-methods-use-this
+/*   updateTONValueForUpdatedSample(updatedSample) {
+    updatedSample.calculateTONValue();
+  } */
+
+  updateMolValueForUpdatedSample(updatedSample, materialGroup) {
+    const molValue = this.calculateMolValueForUpdatedSample(updatedSample, materialGroup);
+    if (molValue) {
+      console.log('befonre');
+      updatedSample.convertGramToUnit(molValue, 'mol');
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  calculateMolValueForUpdatedSample(updatedSample, materialGroup) {
+    const pressure = 1;
+    let temperature;
+    const idealGasConstant = 0.0821;
+    const purity = updatedSample.purity || 1;
+    const volume = updatedSample.amount_l;
+    let molValue = 0;
+    if (materialGroup === 'products') {
+      const ppm = updatedSample.gas_phase_data?.part_per_million || null;
+      if (updatedSample.gas_phase_data.temperature.unit === 'K') {
+        temperature = updatedSample.gas_phase_data.temperature.value;
+      } else if (updatedSample.gas_phase_data.temperature.unit === '°C') {
+        const { value } = updatedSample.gas_phase_data.temperature;
+        temperature = value + 273.15;
+      } else if (updatedSample.gas_phase_data.temperature.unit === '°F') {
+        const { value } = updatedSample.gas_phase_data.temperature;
+        temperature = (((value - 32) * 5) / 9) + 273.15;
+      }
+      if (ppm !== null && temperature !== 0) {
+        molValue = (ppm * purity * volume) / (idealGasConstant * temperature * 1000000);
+      }
+    } else {
+      temperature = 294;
+      molValue = (pressure * purity * volume) / (idealGasConstant * temperature);
+    }
+    return molValue;
+  }
+
   updatedReactionForFeedstockChange(changeEvent) {
     const {
       sampleID,
@@ -483,6 +525,7 @@ export default class ReactionDetailsScheme extends Component {
     } else {
       updatedSample.feedstock_gas_reference = value;
     }
+    this.updateMolValueForUpdatedSample(updatedSample, materialGroup);
     return this.updatedReactionWithSample(this.updatedSamplesForFeedstockChange.bind(this), updatedSample, type);
   }
 
@@ -687,12 +730,12 @@ export default class ReactionDetailsScheme extends Component {
               if (!lockEquivColumn) {
                 sample.equivalent = sample.amount_g / sample.maxAmount;
               } else {
-                if (referenceMaterial && referenceMaterial.amount_value) {
+                if (referenceMaterial && referenceMaterial.amount_value && !updatedSample._feedstock_gas_reference) {
                   sample.setAmountAndNormalizeToGram({
                     value: sample.equivalent * referenceMaterial.amount_mol,
                     unit: 'mol',
                   });
-                } else if (sample.amount_value) {
+                } else if (sample.amount_value && !updatedSample._feedstock_gas_reference) {
                   sample.setAmountAndNormalizeToGram({
                     value: sample.equivalent * sample.amount_mol,
                     unit: 'mol'
@@ -709,14 +752,14 @@ export default class ReactionDetailsScheme extends Component {
             }
           }
         } else {
-          if (!lockEquivColumn || materialGroup === 'products') {
+          if ((!lockEquivColumn || materialGroup === 'products') && !updatedSample._feedstock_gas_reference) {
             // calculate equivalent, don't touch real amount
             sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
             // yield taking into account stoichiometry:
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value) {
+            if (referenceMaterial && referenceMaterial.amount_value && !updatedSample._feedstock_gas_reference) {
               sample.setAmountAndNormalizeToGram({
                 value: sample.equivalent * referenceMaterial.amount_mol,
                 unit: 'mol',
@@ -758,12 +801,12 @@ export default class ReactionDetailsScheme extends Component {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
         sample.equivalent = updatedSample.equivalent;
-        if (referenceMaterial && referenceMaterial.amount_value) {
+        if (referenceMaterial && referenceMaterial.amount_value && !updatedSample._feedstock_gas_reference) {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
           });
-        } else if (sample.amount_value) {
+        } else if (sample.amount_value && !updatedSample._feedstock_gas_reference) {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
             unit: 'mol'
@@ -861,15 +904,18 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  updatedSamplesForFeedstockChange(samples, updatedSample, MaterialGroup, type) {
+  updatedSamplesForFeedstockChange(samples, updatedSample, materialGroup, type) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
-        if (MaterialGroup === 'products') {
+        if (materialGroup === 'products') {
           sample.gas = updatedSample.gas;
+          sample.feedstock_gas_reference = updatedSample.gas
+            && sample.feedstock_gas_reference ? false : sample.feedstock_gas_reference;
         } else {
           sample.feedstock_gas_reference = updatedSample.feedstock_gas_reference;
+          sample.gas = updatedSample.feedstock_gas_reference && sample.gas ? false : sample.gas;
         }
-      } else if (sample.id !== updatedSample.id && MaterialGroup !== 'products' && type === 'FS') {
+      } else if (sample.id !== updatedSample.id && materialGroup !== 'products' && type === 'FS') {
         sample.feedstock_gas_reference = false;
       }
       return sample;
