@@ -302,6 +302,9 @@ export default class Reaction extends Element {
       };
       this._duration = `${dispValue} ${u}`;
     }
+    else {
+      this._durationDisplay = DurationDefault;
+    }
   }
 
   get duration() {

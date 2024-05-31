@@ -10,7 +10,8 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function getReactionAnalyses(reaction) {
-  const analysesContainer = reaction.container?.children?.find((child) => child.container_type === 'analyses');
+  const reactionCopy = cloneDeep(reaction);
+  const analysesContainer = reactionCopy.container?.children?.find((child) => child.container_type === 'analyses');
   const analyses = analysesContainer?.children?.filter((analysis) => !analysis.is_new);
 
   return analyses ?? [];

@@ -2,6 +2,9 @@ require 'faker'
 user_cnt = 6
 password = '@complat'
 
+# Do not send_welcome_email for seed dev users
+User.skip_callback(:create, :after, :send_welcome_email)
+
 user_cnt.times do |idx|
   uc = idx + 1
   !User.find_by(email: "complat.user#{uc}@eln.edu") && User.create!(
@@ -162,6 +165,7 @@ Person.find_each do |u|
     }
 
     reaction = Reaction.new(attributes)
+    reaction.container = Container.create_root_container
     reaction.collections = [collection, ca]
     reaction.save!
   end

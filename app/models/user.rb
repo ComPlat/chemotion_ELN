@@ -461,12 +461,7 @@ class User < ApplicationRecord
   end
 
   def send_welcome_email
-    file_path = Rails.public_path.join('welcome-message.md')
-    if File.exist?(file_path)
-      SendWelcomeEmailJob.perform_later(id)
-    else
-      # do nothing
-    end
+    WelcomeMailer.delay.mail_welcome_message(id)
   end
 
   def delete_data
