@@ -328,5 +328,29 @@ describe Chemotion::CellLineAPI do
       end
     end
   end
+
+  describe 'POST /api/v1/cell_lines/split' do
+    let(:collection) { create(:collection, label: 'other collection') }
+    let!(:user) { create(:user, collections: [collection]) }
+    let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
+    let(:allow_creation) { true }
+    let(:params) do
+      {
+        id: cell_line.id,
+        collection_id: collection.id,
+      }
+    end
+
+    context 'when user has write access' do
+      before do
+        allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
+        post '/api/v1/cell_lines/split', params: params
+      end
+
+      it 'returns correct response code' do
+        expect(response).to have_http_status :created
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance
