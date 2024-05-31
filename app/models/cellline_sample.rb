@@ -22,6 +22,7 @@
 # rubocop:disable Rails/InverseOf, Rails/HasManyOrHasOneDependent
 class CelllineSample < ApplicationRecord
   acts_as_paranoid
+  has_ancestry
 
   include ElementUIStateScopes
   include Taggable
