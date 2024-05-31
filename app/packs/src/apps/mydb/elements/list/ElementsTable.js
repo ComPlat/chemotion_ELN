@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Tooltip, OverlayTrigger
+  Pagination, Form, InputGroup, FormGroup, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -310,15 +310,12 @@ export default class ElementsTable extends React.Component {
   numberOfResultsInput() {
     const { ui } = this.state;
     return (
-      <Form horizontal className="list-show-count">
+      <Form horizontal className="list-show-count col-1">
         <FormGroup>
           <InputGroup>
-            <InputGroup.Addon>Show</InputGroup.Addon>
-            <FormControl
+            <InputGroup.Text>Show</InputGroup.Text>
+            <Form.Control
               type="text"
-              style={
-                { textAlign: 'center', zIndex: 0 }
-              }
               onChange={(event) => this.handleNumberOfResultsChange(event)}
               value={ui.number_of_results ? ui.number_of_results : 0}
             />
@@ -330,10 +327,6 @@ export default class ElementsTable extends React.Component {
 
   pagination() {
     const { page, pages } = this.state;
-    if (pages <= 1) {
-      return null;
-    }
-
     const items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
@@ -364,9 +357,11 @@ export default class ElementsTable extends React.Component {
 
     return (
       <div className="list-pagination">
-        <Pagination>
-          {items}
-        </Pagination>
+        {(pages > 1) &&
+          <Pagination>
+            {items}
+          </Pagination>
+        }
       </div>
     )
   }
@@ -712,13 +707,11 @@ export default class ElementsTable extends React.Component {
   render() {
     return (
       <div className="list-container">
-        {/* this.renderHeader() */}
-        {/* this.renderEntries() */}
-        <div className="list-container-bottom">
-          <Row>
-            <Col sm={6}>{/* this.pagination() */}</Col>
-            <Col sm={6}>{/* this.numberOfResultsInput() */}</Col>
-          </Row>
+        {this.renderHeader()}
+        {this.renderEntries()}
+        <div className="d-flex justify-content-between">
+          {this.pagination()}
+          {this.numberOfResultsInput()}
         </div>
       </div>
     );
