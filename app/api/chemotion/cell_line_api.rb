@@ -124,6 +124,29 @@ module Chemotion
         end
       end
 
+      desc 'Copy a cell line'
+      params do
+        requires :id, type: Integer, desc: 'id of cell line sample to copy'
+        requires :collection_id, type: Integer, desc: 'id of collection of copied cell line sample'
+        optional :container, type: Hash, desc: 'root container of element'
+      end
+      namespace :split do
+        post do
+          cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
+
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update?
+
+          begin
+            use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])
+            splitted_cell_line_sample = use_case.execute!
+            splitted_cell_line_sample.container = update_datamodel(params[:container]) if @params.has_key?("container")
+          rescue StandardError => e
+            error!(e, 400)
+          end
+          return present splitted_cell_line_sample, with: Entities::CellLineSampleEntity
+        end
+      end
+
       resource :names do
         desc 'Returns all accessable cell line material names and their id'
         get 'all' do

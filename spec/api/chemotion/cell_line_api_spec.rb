@@ -350,6 +350,17 @@ describe Chemotion::CellLineAPI do
       it 'returns correct response code' do
         expect(response).to have_http_status :created
       end
+
+      it 'splitted cell_line_sample was created' do
+        expect(parsed_json_response['id']).not_to be cell_line.id
+      end
+
+      it 'splitted cell_line short label is correct' do
+        parsed_json_response["short_label"]
+      
+        expect(parsed_json_response["short_label"]).to eq cell_line.short_label+"-1"
+      end
+
     end
   end
 end

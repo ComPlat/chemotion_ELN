@@ -12,6 +12,7 @@ FactoryBot.define do
     description { 'description' }
     contamination { 'contamination' }
     name { 'name' }
+    sequence(:short_label) { |i| "C#{i}" }
     container { FactoryBot.create(:container, :with_analysis) }
   end
 
