@@ -27,15 +27,16 @@ module Chemotion
         get do
           code = params[:code]
           s = code&.size || 0
-          code_log = if s >= 39
-                       CodeLog.find(CodeCreator.digit_to_uuid(code))
-                     elsif s >= 8
-                       # TODO: use where instead of find_by ?
-                       CodeLog.where('value ~ ?', "\\A0#{code}").first
-                     elsif s == 6
-                       # TODO: use where instead of find_by ?
-                       CodeLog.find_by(value_xs: code.to_i)
-                     end
+          code_log =
+            if s >= 39
+              CodeLog.find(CodeCreator.digit_to_uuid(code))
+            elsif s >= 8
+              # TODO: use where instead of find_by ?
+              CodeLog.where('value ~ ?', "\\A0#{code}").first
+            elsif s == 6
+              # TODO: use where instead of find_by ?
+              CodeLog.find_by(value_xs: code.to_i)
+            end
 
           if code_log.nil?
             error!("Element with #{code.size}-digit code #{params[:code]} not found", 404)
@@ -48,7 +49,7 @@ module Chemotion
       namespace :print_codes do
         desc 'Build PDF with element bar & qr code'
         params do
-          requires :element_type, type: String, values: %w[sample reaction wellplate screen]
+          requires :element_type, type: String, values: %w[sample reaction wellplate screen device_description]
           # TODO: check coerce with  type Array[Integer] not working with before do
           requires :ids, type: Array # , coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
           requires :width, type: Integer
@@ -97,7 +98,7 @@ module Chemotion
       namespace :print_analyses_codes do
         desc 'Build PDF with analyses codes of one analysis type'
         params do
-          requires :element_type, type: String, values: %w[sample reaction wellplate screen]
+          requires :element_type, type: String, values: %w[sample reaction wellplate screen device_description]
           requires :id, type: Integer, desc: 'Element id'
           requires :analyses_ids, type: Array[String]
           requires :size, type: String, values: %w[small big]
@@ -118,7 +119,7 @@ module Chemotion
           content_type('application/pdf')
           header 'Content-Disposition', "attachment; filename*=UTF-8''analysis_codes_#{params[:size]}.pdf"
           env['api.format'] = :binary
-          # TODO: check container type/info  instead
+          # TODO: check container type/info instead
           # case params[:type]
           # when "nmr_analysis"
           #   body AnalysisNmrPdf.new(elements).render
