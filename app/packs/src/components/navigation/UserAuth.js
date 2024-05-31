@@ -687,12 +687,12 @@ export default class UserAuth extends Component {
             <MenuItem eventKey="3" href="/users/edit">
               Change Password
             </MenuItem>
-            <MenuItem eventKey="5" href="/pages/affiliations">
+            {/* <MenuItem eventKey="5" href="/pages/affiliations">
               My Affiliations
-            </MenuItem>
+            </MenuItem> */}
             <MenuItem
               onClick={this.handleAffiliationsShow}>
-              New Affiliations
+              My Affiliations
             </MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
             <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>

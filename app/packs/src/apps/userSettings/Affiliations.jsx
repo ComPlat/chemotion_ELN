@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import CreatableSelect from 'react-select/lib/Creatable';
-import { Button, Modal, Table } from 'react-bootstrap';
+import { Button, Modal, Table, Container, Row, Col } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
+import moment from 'moment';
 
 import UserSettingsFetcher from '../../fetchers/UserSettingsFetcher';
-import moment from 'moment';
 
 
 function Affiliations({ show, onHide }) {
@@ -14,8 +14,10 @@ function Affiliations({ show, onHide }) {
   const [orgOptions, setOrgOptions] = useState([]);
   const [deptOptions, setDeptOptions] = useState([]);
   const [groupOptions, setGroupOptions] = useState([]);
+  const [inputError, setInputError] = useState({});
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const [showAlert, setShowAlert] = useState(false);
+  const currentEntries = affiliations.filter(entry => entry.current);
 
   useEffect(() => {
     UserSettingsFetcher.getAutoCompleteSuggestions('countries')
@@ -25,6 +27,7 @@ function Affiliations({ show, onHide }) {
             setCountryOptions(prevItems => [...prevItems, { value: item, label: item }]);
           }
         });
+        setInputError({});
       });
 
     UserSettingsFetcher.getAutoCompleteSuggestions('organizations')
@@ -65,10 +68,14 @@ function Affiliations({ show, onHide }) {
         setAffiliations(data.map(item => (
           {
             ...item,
-            disabled: true
+            disabled: true,
+            current: item.from !== null && item.to === null
+
           }
         )));
       });
+    setErrorMsg('');
+    setInputError({});
   };
 
   const handleCreateOrUpdateAffiliation = (index) => {
@@ -82,17 +89,63 @@ function Affiliations({ show, onHide }) {
       });
   };
 
-  const handleDeleteAffiliation = (id) => {
-    UserSettingsFetcher.deleteAffiliation(id)
-      .then((result) => {
-        if (result.error) {
-          console.error(result.error);
-          return false;
+  const handleDeleteAffiliation = (index) => {
+    const id = affiliations[index].id;
+    console.log(id);
+    if (id) {
+      UserSettingsFetcher.deleteAffiliation(id)
+        .then((result) => {
+          if (result.error) {
+            console.error(result.error);
+            return false;
+          }
+          getAllAffiliations();
         }
-        setShowAlert(true);
-        getAllAffiliations();
+        );
+    }
+  };
+
+  const onChangeHandler = (index, field, value) => {
+    const updatedAffiliations = [...affiliations];
+    updatedAffiliations[index][field] = value;
+    const newInputErrors = { ...inputError };
+    if (field === 'from' && (updatedAffiliations[index].from === null || updatedAffiliations[index].from === '')) {
+      newInputErrors[index] = { ...newInputErrors[index], from: true };
+      setErrorMsg('Required');
+    }
+
+    else if (field === 'to' && updatedAffiliations[index].from > value) {
+      newInputErrors[index] = { ...newInputErrors[index], to: true };
+      setErrorMsg('Invalid date');
+    } else {
+      if (newInputErrors[index]) {
+        delete newInputErrors[index][field];
+        if (Object.keys(newInputErrors[index]).length === 0) {
+          delete newInputErrors[index];
+        }
       }
-      );
+    }
+    setInputError(newInputErrors);
+    setAffiliations(updatedAffiliations);
+
+  };
+
+  const handleSaveButtonClick = (index) => {
+    const updatedAffiliations = [...affiliations];
+    const newInputErrors = { ...inputError };
+    if (!updatedAffiliations[index].from) {
+      newInputErrors[index] = { ...newInputErrors[index], from: true };
+      setInputError(newInputErrors);
+      setErrorMsg('Required');
+      return;
+    }
+
+    if (!newInputErrors[index] || !Object.keys(newInputErrors[index]).length) {
+      updatedAffiliations[index].disabled = true;
+      setAffiliations(updatedAffiliations);
+      handleCreateOrUpdateAffiliation(index);
+    }
+
   };
 
   return (
@@ -101,14 +154,32 @@ function Affiliations({ show, onHide }) {
       dialogClassName="importChemDrawModal"
       show={show}
       onHide={onHide}
-      backdrop="static" >
+      backdrop="static"
+    >
       <Modal.Header closeButton onHide={onHide} >
-        <Modal.Title>My past and current affiliations</Modal.Title>
+        <Modal.Title>
+          <h3>My affiliations </h3>
+        </Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <div className="current-container">
+            <h4 className="align-title"> Current affiliations</h4>
+            <div className="entry-container">
+              {currentEntries.map(entry => (
+                <div key={entry.id} className="entry-box">
+                  <p><strong>Country:</strong> {entry.country}</p>
+                  <p><strong>Organization:</strong> {entry.organization}</p>
+                  <p><strong>Department:</strong> {entry.department}</p>
+                  <p><strong>Group:</strong> {entry.group}</p>
+                  <p><strong>From:</strong> {entry.from}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', marginTop: '1rem' }}>
             <Button
               bsStyle='primary'
               onClick={() => {
@@ -122,7 +193,8 @@ function Affiliations({ show, onHide }) {
                   disabled: false,
                 }]);
               }} >
-              Add affiliation &nbsp; <i className="fa fa-plus" />
+              Add affiliation &nbsp;
+              <i className="fa fa-plus" />
             </Button>
           </div>
           <Table striped bordered hover>
@@ -138,11 +210,11 @@ function Affiliations({ show, onHide }) {
               </tr>
             </thead>
             <tbody>
+
               {affiliations.map((item, index) => (
                 <tr key={item.id}>
                   <td>
                     {item.disabled ? item.country :
-
                       <CreatableSelect
                         isCreatable
                         disabled={item.disabled}
@@ -152,11 +224,8 @@ function Affiliations({ show, onHide }) {
                         value={item.country || ''}
                         isSearchable
                         isClearable
-                        onChange={(choice) => {
-                          const updatedAffiliations = [...affiliations];
-                          updatedAffiliations[index].country = !choice ? '' : choice.value;
-                          setAffiliations(updatedAffiliations);
-                        }} />}
+                        onChange={(choice) => onChangeHandler(index, 'country', !choice ? '' : choice.value)} />
+                    }
                   </td>
                   <td>
                     {item.disabled ? item.organization :
@@ -168,11 +237,7 @@ function Affiliations({ show, onHide }) {
                         options={orgOptions}
                         value={item.organization}
                         isClearable
-                        onChange={(choice) => {
-                          const updatedAffiliations = [...affiliations];
-                          updatedAffiliations[index].organization = !choice ? '' : choice.value;
-                          setAffiliations(updatedAffiliations);
-                        }} />}
+                        onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)} />}
                   </td>
                   <td>
                     {item.disabled ? item.department :
@@ -185,11 +250,7 @@ function Affiliations({ show, onHide }) {
                         value={item.department}
                         isSearchable
                         clearable={true}
-                        onChange={(choice) => {
-                          const updatedAffiliations = [...affiliations];
-                          updatedAffiliations[index].department = !choice ? '' : choice.value;
-                          setAffiliations(updatedAffiliations);
-                        }} />}
+                        onChange={(choice) => onChangeHandler(index, 'department', !choice ? '' : choice.value)} />}
                   </td>
                   <td>
                     {item.disabled ? item.group :
@@ -204,84 +265,71 @@ function Affiliations({ show, onHide }) {
                         isSearchable
                         closeMenuOnSelect
                         isClearable
-                        onChange={(choice) => {
-                          const updatedAffiliations = [...affiliations];
-                          updatedAffiliations[index].group = !choice ? '' : choice.value;
-                          setAffiliations(updatedAffiliations);
-                        }} />}
+                        onChange={(choice) => onChangeHandler(index, 'group', !choice ? '' : choice.value)} />}
                   </td>
                   <td>
                     <DatePicker
+                      placeholderText={inputError[index] && inputError[index].from ? errorMsg : ''}
+                      required
+                      isClearable={true}
+                      clearButtonTitle="Clear"
+                      className={inputError[index] && inputError[index].from ? 'error-control' : ''}
+                      showPopperArrow={false}
                       disabled={item.disabled}
-                      clearIcon={null}
                       value={item.from}
-                      format="YYYY-MM-DD"
-                      onChange={(date) => {
-                        const updatedAffiliations = [...affiliations];
-                        updatedAffiliations[index].from = moment(date).format('YYYY-MM-DD');
-                        setAffiliations(updatedAffiliations);
-                      }}
-                    />
+                      onChange={(date) => onChangeHandler(index, 'from', moment(date).format('YYYY-MM-DD'))} />
                   </td>
                   <td>
                     <DatePicker
+                      placeholderText={inputError[index] && inputError[index].to ? errorMsg : ''}
+                      isClearable={true}
+                      clearButtonTitle="Clear"
+                      className={inputError[index] && inputError[index].to ? 'error-control' : ''}
+                      showPopperArrow={false}
                       disabled={item.disabled}
-                      clearIcon={null}
                       value={item.to}
-                      format="YYYY-MM-DD"
-                      onChange={(date) => {
-                        const updatedAffiliations = [...affiliations];
-                        updatedAffiliations[index].to = moment(date).format('YYYY-MM-DD');
-                        setAffiliations(updatedAffiliations);
-                      }}
-                    />
+                      onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM-DD') : date)} />
                   </td>
                   <td>
-                    {item.disabled ?
+                    <div className='pull-right'>
+                      {item.disabled ?
+                        <Button
+                          bsSize='small'
+                          bsStyle='primary'
+                          onClick={() => {
+                            const updatedAffiliations = [...affiliations];
+                            updatedAffiliations[index].disabled = false;
+                            setAffiliations(updatedAffiliations);
+                          }}
+                        >
+                          <i className="fa fa-edit" />
+                        </Button>
+                        :
+                        <Button
+                          bsSize='small'
+                          bsStyle='success'
+                          onClick={() => handleSaveButtonClick(index)}
+                        >
+                          <i className="fa fa-save" />
+                        </Button>
+                      }
                       <Button
+                        style={{ marginLeft: '1rem' }}
                         bsSize='small'
-                        bsStyle='primary'
-                        onClick={() => {
-                          const updatedAffiliations = [...affiliations];
-                          updatedAffiliations[index].disabled = false;
-                          setAffiliations(updatedAffiliations);
-                        }}
-                      >
-                        <i className="fa fa-edit" />
+                        bsStyle="danger"
+                        onClick={() => handleDeleteAffiliation(index)}>
+                        <i className="fa fa-trash-o" />
                       </Button>
-                      :
-                      <Button
-                        bsSize='small'
-                        bsStyle='success'
-                        onClick={() => {
-                          const updatedAffiliations = [...affiliations];
-                          updatedAffiliations[index].disabled = true;
-                          setAffiliations(updatedAffiliations);
-                          handleCreateOrUpdateAffiliation(index);
-
-                        }}
-                      >
-                        <i className="fa fa-save" />
-                      </Button>
-                    }
-                    <Button
-                      style={{ marginLeft: '1rem' }}
-                      bsSize='small'
-                      bsStyle="danger"
-                      onClick={() => handleDeleteAffiliation(item.id)}>
-                      <i className="fa fa-trash-o" />
-                    </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </Table>
-
         </>
       </Modal.Body>
-    </Modal >
+    </Modal>
   );
-
 };
 
 export default Affiliations;
