@@ -12,8 +12,9 @@ module Usecases
         def execute!
           @copied_cell_line_sample = Usecases::CellLines::Copy.new(@cell_line_sample_to_copy, @current_user, @collection_id).execute!
           decrease_cell_line_counter
-
           create_short_label
+          @copied_cell_line_sample.parent=@cell_line_sample_to_copy
+          @copied_cell_line_sample.save
           @copied_cell_line_sample
         end
   

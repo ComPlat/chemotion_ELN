@@ -356,11 +356,14 @@ describe Chemotion::CellLineAPI do
       end
 
       it 'splitted cell_line short label is correct' do
-        parsed_json_response["short_label"]
-      
-        expect(parsed_json_response["short_label"]).to eq cell_line.short_label+"-1"
+        expect(parsed_json_response['short_label']).to eq "#{cell_line.short_label}-1"
       end
 
+      it 'check if ancestry relationship is correct' do
+        splitted_cellline = CelllineSample.find(parsed_json_response['id'])
+        expect(splitted_cellline.parent.id).to be cell_line.id
+        expect(cell_line.reload.children.first.id).to be splitted_cellline.id
+      end
     end
   end
 end
