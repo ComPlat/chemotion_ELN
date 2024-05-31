@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: research_plans
@@ -22,7 +24,7 @@ class ResearchPlan < ApplicationRecord
   multisearchable against: %i[name parse_search_text]
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
-  validates :creator, :name, presence: true
+  validates :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :includes_for_list_display, -> { includes(:attachments) }
@@ -51,7 +53,7 @@ class ResearchPlan < ApplicationRecord
   after_create :create_root_container
 
   has_one :container, as: :containable
-  has_one :research_plan_metadata, dependent: :destroy, foreign_key: :research_plan_id
+  has_one :research_plan_metadata, dependent: :destroy
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
@@ -69,8 +71,7 @@ class ResearchPlan < ApplicationRecord
   before_destroy :delete_attachment
   accepts_nested_attributes_for :collections_research_plans
 
-
-  unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
+  unless Dir.exist?(path = "#{Rails.root}/public/images/research_plans")
     Dir.mkdir path
   end
 
@@ -82,13 +83,11 @@ class ResearchPlan < ApplicationRecord
   end
 
   def create_root_container
-    if self.container == nil
-      self.container = Container.create_root_container
-    end
+    self.container = Container.create_root_container if container.nil?
   end
 
   def analyses
-    self.container ? self.container.analyses : Container.none
+    container ? container.analyses : Container.none
   end
 
   def svg_files
@@ -102,11 +101,12 @@ class ResearchPlan < ApplicationRecord
   end
 
   private
+
   def delete_attachment
     if Rails.env.production?
-      attachments.each { |attachment|
+      attachments.each do |attachment|
         attachment.delay(run_at: 96.hours.from_now, queue: 'attachment_deletion').destroy!
-      }
+      end
     else
       attachments.each(&:destroy!)
     end
@@ -118,41 +118,38 @@ class ResearchPlan < ApplicationRecord
   # @return [nil]
   def parse_search_text
     search_text = []
-    self.body.each do |key|
-      puts "Key: #{key}"
+    body.each do |key|
+      Rails.logger.debug { "Key: #{key}" }
 
-      case  key["type"]
-      when "table"
-        search_text << parse_table_to_search_text(key["value"])
-      when "richtext"
-        search_text << parse_richtext_to_search_text(key["value"])
+      case key['type']
+      when 'table'
+        search_text << parse_table_to_search_text(key['value'])
+      when 'richtext'
+        search_text << parse_richtext_to_search_text(key['value'])
       else
         # type code here
       end
-
-
     end
-    search_text.join("  ").gsub("\n", " ")
+    search_text.join('  ').tr("\n", ' ')
   end
-
-
 
   # This method parses the content of a research-plan-richtext into a searchable string
   #
   # @param value [hash] Richtext content stored in a richtext body element
   # @return [str] Returns a string which contains the plain richtext content
   def parse_richtext_to_search_text(value)
-    value["ops"].select {|hash| hash["insert"].instance_of?(String) }.map { |hash| hash["insert"] }.join("  ")
+    value['ops'].select { |hash| hash['insert'].instance_of?(String) }.pluck('insert').join('  ')
   end
-
-
 
   # This method parses the content of a research-plan-table into a searchable string
   #
   # @param value [hash] Table content stored in a table body element
   # @return [str] Returns a string which contains the composed table content
   def parse_table_to_search_text(value)
-    value["rows"].map { |hash| hash.select { |_, col_text| col_text != '' }.map { |k, v| "#{k}=#{v}" }.join("  ") }.join("  ")
+    value['rows'].map do |hash|
+      hash.reject do |_, col_text|
+        col_text == ''
+      end.map { |k, v| "#{k}=#{v}" }.join('  ')
+    end.join('  ')
   end
-
 end
