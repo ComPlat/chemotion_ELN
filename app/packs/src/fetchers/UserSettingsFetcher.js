@@ -4,7 +4,7 @@ export default class UserSettingsFetcher {
 
     static async getAutoCompleteSuggestions(type) {
         return await fetch(
-            `/api/v1/public/affiliations/${type}`
+            `/api/v1/user_settings/affiliations/${type}`
         ).then((response) => response.json())
             .then((data) => data)
             .catch((error) => {
@@ -42,18 +42,7 @@ export default class UserSettingsFetcher {
 
     }
 
-    static deleteAffiliation(id) {
-        return fetch(`/api/v1/user_settings/affiliations/${id}`, {
-            credentials: 'same-origin',
-            method: 'DELETE',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-        });
-    }
     static updateAffiliation(params) {
-
 
         return fetch(`/api/v1/user_settings/affiliations/update`, {
             credentials: 'same-origin',
@@ -71,6 +60,15 @@ export default class UserSettingsFetcher {
             });
     }
 
-
+    static deleteAffiliation(id) {
+        return fetch(`/api/v1/user_settings/affiliations/${id}`, {
+            credentials: 'same-origin',
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
+    }
 
 }
