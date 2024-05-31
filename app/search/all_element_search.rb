@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class AllElementSearch
-  PG_ELEMENTS = %w[Sample Reaction Screen Wellplate ResearchPlan Element]
+  PG_ELEMENTS = %w[Sample Reaction Screen Wellplate ResearchPlan Element].freeze
 
   def initialize(term)
     @term = term
@@ -26,22 +28,21 @@ class AllElementSearch
 
     def by_collection_id(id, current_user)
       types = if (prof = current_user&.profile&.data)
-                (prof.fetch('layout', {}).keys.map(&:camelize)) & PG_ELEMENTS
+                prof.fetch('layout', {}).keys.map(&:camelize) & PG_ELEMENTS
               else
                 PG_ELEMENTS
               end
       types.push('Element')
       first_type = types.first
       query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
-                "SELECT #{first_type.underscore}_id FROM collections_#{first_type.underscore}s "\
-                "WHERE collection_id = #{id} AND deleted_at IS NULL))"
-      if (types.count > 1)
-        types[1..-1].each { |type|
-          query = query +
-                  " OR (searchable_type = '#{type}' AND searchable_id IN (" \
-                  "SELECT #{type.underscore}_id FROM collections_#{type.underscore}s "\
-                  "WHERE collection_id = #{id} AND deleted_at IS NULL))"
-        }
+              "SELECT #{first_type.underscore}_id FROM collections_#{first_type.underscore}s " \
+              "WHERE collection_id = #{id} AND deleted_at IS NULL))"
+      if types.count > 1
+        types[1..].each do |type|
+          query += " OR (searchable_type = '#{type}' AND searchable_id IN (" \
+                   "SELECT #{type.underscore}_id FROM collections_#{type.underscore}s " \
+                   "WHERE collection_id = #{id} AND deleted_at IS NULL))"
+        end
       end
 
       @results = @results.where(query)
