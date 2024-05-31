@@ -164,6 +164,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return valueString;
     };
     const inputDisabled = disabled ? true : block;
+    const alwaysAllowDisplayUnit = ['TON', 'TON/h', 'TON/m', 'TON/s'];
+    const unitDisplayMode = alwaysAllowDisplayUnit.includes(unit) ? false : inputDisabled;
     // BsStyle-s for Input and buttonAfter have differences
     const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
     const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
@@ -171,7 +173,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       const prefixSwitch = (
         <InputGroup.Button>
           <Button
-            disabled={inputDisabled}
+            disabled={unitDisplayMode}
             active
             onClick={() => { this.togglePrefix(unit); }}
             bsStyle={bsStyleBtnAfter}
