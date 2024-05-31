@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } from 'react-bootstrap';
+import { Tabs, Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -235,8 +235,7 @@ export default class ElementsList extends React.Component {
       );
     }
 
-    const navItems = [];
-    const tabContents = [];
+    const tabItems = [];
     for (let i = 0; i < visible.size; i += 1) {
       const value = visible.get(i);
 
@@ -264,61 +263,37 @@ export default class ElementsList extends React.Component {
         );
       }
 
-      const navItem = (
-        <NavItem eventKey={i} key={`${value}_navItem`} className={`elements-list-tab-${value}s`}>
-          <OverlayTrigger delayShow={500} placement="top" overlay={ttl}>
-            <i className={iconClass} />
-          </OverlayTrigger>
-          <span style={{ paddingLeft: 5 }}>
-            {elementState.totalElements && elementState.totalElements[`${value}s`]}
-            (
-            {totalCheckedElements[value] || 0}
-            )
-          </span>
-        </NavItem>
-      );
-
-      const tabContent = (
-        <Tab.Pane eventKey={i} key={`${value}_tabPanel`}>
+      const title = (
+        <>
+          <i className={iconClass} />
+          {elementState.totalElements && elementState.totalElements[`${value}s`]}
+          ( {totalCheckedElements[value] || 0} )
+        </>
+      )
+      const tabItem = (
+        <Tab eventKey={i} title={title} className={`elements-list-tab-${value}s`} key={title + '_' + i}>
           <ElementsTable
             overview={overview}
             showReport={showReport}
             type={value}
             genericEl={genericEl}
           />
-        </Tab.Pane>
+        </Tab>
       );
-
-      navItems.push(navItem);
-      tabContents.push(tabContent);
+      tabItems.push(tabItem);
     }
 
     return (
-      <Tab.Container
-        id="tabList"
-        defaultActiveKey={0}
-        activeKey={currentTab}
-        onSelect={this.handleTabSelect}
-      >
-        <Row className="clearfix">
-          <Col sm={12}>
-            {removeSearchResultAlert}
-            <Nav variant="tabs">
-              {navItems}
-              <ElementsTableSettings
-                visible={visible}
-                hidden={hidden}
-                ref={(m) => { this.elementsTableSettings = m; }}
-              />
-            </Nav>
-          </Col>
-          <Col sm={12}>
-            <Tab.Content animation>
-              {tabContents}
-            </Tab.Content>
-          </Col>
-        </Row>
-      </Tab.Container>
+      <div className='position-relative'>
+        <Tabs id="tabList" defaultActiveKey={0}>
+          {tabItems}
+        </Tabs>
+        <ElementsTableSettings
+          visible={visible}
+          hidden={hidden}
+          ref={(m) => { this.elementsTableSettings = m; }}
+        />
+      </div>
     );
   }
 }
