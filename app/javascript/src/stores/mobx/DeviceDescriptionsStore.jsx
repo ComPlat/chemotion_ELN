@@ -17,7 +17,17 @@ const toggableContents = {
   'setup': true,
   'ontology': true,
   'ontology_segments': true,
+  'general_aspects': true,
+  'planned_maintenance': true,
+  'unexpected_maintenance': true,
+  'unexpected_power_shutdown': true,
+  'planned_offline_period': true,
 };
+
+const multiRowFields = [
+  'operators', 'contact_for_maintenance', 'planned_maintenance',
+  'consumables_needed_for_maintenance', 'unexpected_maintenance',
+];
 
 export const DeviceDescriptionsStore = types
   .model({
@@ -47,6 +57,7 @@ export const DeviceDescriptionsStore = types
     show_all_groups: types.optional(types.boolean, true),
     shown_groups: types.optional(types.array(types.string), []),
     select_is_open: types.optional(types.array(types.frozen({})), []),
+    multi_row_fields: types.optional(types.array(types.string), multiRowFields),
   })
   .actions(self => ({
     setDeviceDescription(device_description, initial = false) {
@@ -69,12 +80,12 @@ export const DeviceDescriptionsStore = types
     },
     changeDeviceDescription(field, value, type) {
       let device_description = { ...self.device_description };
-      let operators = [...self.device_description['operators']];
+      const fieldElements = field.split('-');
 
-      if (field.includes('operators_')) {
-        const fieldElements = field.split('_');
-        operators[fieldElements[2]][fieldElements[1]] = value;
-        device_description['operators'] = operators;
+      if (values(self.multi_row_fields).includes(fieldElements[0]) && fieldElements.length > 1) {
+        let element = [...self.device_description[fieldElements[0]]];
+        element[fieldElements[2]][fieldElements[1]] = value;
+        device_description[fieldElements[0]] = element;
       } else if (field.includes('setup_descriptions')) {
         device_description = self.changeSetupDescriptions(field, value, type, device_description);
       } else {
@@ -239,4 +250,5 @@ export const DeviceDescriptionsStore = types
     get filteredAttachments() { return values(self.filtered_attachments) },
     get shownGroups() { return values(self.shown_groups) },
     get selectIsOpen() { return values(self.select_is_open) },
+    get multiRowFields() { return values(self.multi_row_fields) },
   }));

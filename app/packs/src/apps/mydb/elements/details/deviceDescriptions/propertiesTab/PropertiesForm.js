@@ -2,8 +2,8 @@ import React, { useContext } from 'react';
 import { Collapse } from 'react-bootstrap';
 import {
   selectInput, multiSelectInput, textInput, multipleInputGroups,
-  textareaInput, dateTimePickerInput, headlineWithToggle,
-  operatorInput, checkboxInput, componentInput, identifierMultipleInputGroups,
+  textareaInput, dateTimePickerInput, headlineWithToggle, mulipleRowInput,
+  checkboxInput, componentInput, identifierMultipleInputGroups,
 } from '../FormFields';
 
 import { observer } from 'mobx-react';
@@ -85,7 +85,7 @@ const PropertiesForm = () => {
     },
   ];
 
-  const operator_type = [
+  const operatorType = [
     {
       "value": "technical",
       "label": "technical"
@@ -94,6 +94,14 @@ const PropertiesForm = () => {
       "value": "administrative",
       "label": "administrative"
     }
+  ];
+
+  const operatorFields = [
+    { value: 'name', label: 'Name', type: 'text' },
+    { value: 'phone', label: 'Phone', type: 'text' },
+    { value: 'email', label: 'eMail', type: 'text' },
+    { value: 'type', label: 'Type', type: 'select', options: operatorType },
+    { value: 'comment', label: 'Comment', type: 'text' },
   ];
 
   const vendorDevice = [
@@ -250,7 +258,7 @@ const PropertiesForm = () => {
       {headlineWithToggle(deviceDescriptionsStore, 'operators_and_locations', 'Device operators and location')}
       <Collapse in={deviceDescriptionsStore.toggable_contents.operators_and_locations} className="grouped-fields-row cols-1">
         <div>
-          {operatorInput(deviceDescription, deviceDescriptionsStore, 'Operators')}
+          {mulipleRowInput(deviceDescription, deviceDescriptionsStore, 'Operators', 'operators', operatorFields, '')}
           {multipleInputGroups(deviceDescription, locationLabel, location, deviceDescriptionsStore)}
           {multipleInputGroups(deviceDescription, accessOptionsLabel, accessOptions, deviceDescriptionsStore)}
         </div>

@@ -51,6 +51,16 @@ module Entities
     expose! :can_copy, unless: :displayed_in_list
     expose! :ancestor_ids
     expose :setup_descriptions
+    expose :maintenance_contract_available
+    expose :maintenance_scheduling
+    expose :contact_for_maintenance
+    expose :planned_maintenance
+    expose :consumables_needed_for_maintenance
+    expose :unexpected_maintenance
+    expose :measures_after_full_shut_down
+    expose :measures_after_short_shut_down
+    expose :measures_to_plan_offline_period
+    expose :restart_after_planned_offline_period
 
     def type
       'device_description'
