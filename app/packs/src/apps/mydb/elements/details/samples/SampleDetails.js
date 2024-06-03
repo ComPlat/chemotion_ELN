@@ -363,10 +363,6 @@ export default class SampleDetails extends React.Component {
       } else {
         ElementActions.updateSampleForReaction(sample, reaction, closeView);
       }
-    } else if (sample.belongTo && sample.belongTo.type === 'sample') {
-      const mixtureSample = sample.belongTo
-      sample.belongTo = null
-      ElementActions.createSampleForMixture(sample, mixtureSample, closeView, sample.matGroup);
     } else if (sample.belongTo && sample.belongTo.type === 'wellplate') {
       const wellplate = sample.belongTo;
       ElementActions.updateSampleForWellplate(sample, wellplate);

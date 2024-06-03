@@ -163,7 +163,6 @@ class ElementStore {
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
-      handleCreateSampleForMixture: ElementActions.createSampleForMixture,
       handleEditReactionSample: ElementActions.editReactionSample,
       handleEditWellplateSample: ElementActions.editWellplateSample,
       handleUpdateSampleForReaction: ElementActions.updateSampleForReaction,
@@ -171,7 +170,6 @@ class ElementStore {
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
-      handleShowMixtureMaterial: ElementActions.showMixtureMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
 
@@ -705,16 +703,6 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForMixture({ newSample, mixtureSample, materialGroup }) {
-    UserActions.fetchCurrentUser();
-    this.handleRefreshElements('sample');
-    this.changeCurrentElement(mixtureSample);
-    let splitSample = newSample.buildChildWithoutCounter();
-    splitSample = new Component(splitSample)
-    splitSample.material_group = materialGroup;
-    mixtureSample.addMixtureComponent(splitSample);
-  }
-
   handleCreateSampleForReaction({ newSample, reaction, materialGroup }) {
     UserActions.fetchCurrentUser();
     reaction.addMaterial(newSample, materialGroup);
@@ -829,31 +817,16 @@ class ElementStore {
    */
   handleAddSampleToMaterialGroup(params) {
     const { materialGroup } = params
-    const { reaction, sample, currentCollection } = params
+    let { reaction } = params
 
-    let newSample = null;
-
-    if (!sample){
-      newSample = Sample.buildEmpty(reaction.collection_id)
-      newSample.belongTo = reaction;
-      reaction.changed = true;
-    } else {
-      newSample = Sample.buildEmpty(currentCollection.id)
-      newSample.belongTo = sample;
-      sample.changed = true;
-      const shortLabel = newSample.short_label
-
-      if (shortLabel === sample.short_label) {
-        // increment short label by 1
-        newSample.short_label = shortLabel.replace(/(\d+)$/, (match, number) => parseInt(number) + 1);
-      }
-    }
-    newSample.molfile = newSample.molfile || ''
-    newSample.molecule = newSample.molecule == undefined ? newSample : newSample.molecule
-    newSample.sample_svg_file = newSample.sample_svg_file
-    newSample.matGroup = materialGroup;
-
-    this.changeCurrentElement(newSample);
+    let sample = Sample.buildEmpty(reaction.collection_id)
+    sample.molfile = sample.molfile || ''
+    sample.molecule = sample.molecule == undefined ? sample : sample.molecule
+    sample.sample_svg_file = sample.sample_svg_file
+    sample.belongTo = reaction;
+    sample.matGroup = materialGroup;
+    reaction.changed = true;
+    this.changeCurrentElement(sample);
   }
 
   handleShowReactionMaterial(params) {
@@ -878,11 +851,6 @@ class ElementStore {
       }
       return { refreshCoefficient: updatedCoefficient };
     });
-    this.changeCurrentElement(sample);
-  }
-
-  handleShowMixtureMaterial(params) {
-    const { sample } = params;
     this.changeCurrentElement(sample);
   }
 
@@ -1285,29 +1253,9 @@ class ElementStore {
     const deleteEl = this.state.deletingElement
     if (confirm) {
       this.deleteCurrentElement(deleteEl)
-      this.deleteMixtureComponent(deleteEl)
     }
     this.setState({ deletingElement: null })
   }
-
-  deleteMixtureComponent(deleteEl) {
-    const { selecteds } = this.state;
-  
-    selecteds.forEach(selectedElement => {
-      if (selectedElement instanceof Sample && selectedElement.components) {
-        const mixtureComponents = selectedElement.components;
-        const componentIndex = mixtureComponents.findIndex(
-          component => component.id === deleteEl.id
-        );
-  
-        if (componentIndex !== -1) {
-          mixtureComponents.splice(componentIndex, 1);
-          return;
-        }
-      }
-    });
-  }
-  
 
   handleChangeCurrentElement({ oriEl, nextEl }) {
     const { selecteds } = this.state;

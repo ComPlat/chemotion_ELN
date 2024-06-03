@@ -21,7 +21,6 @@ class LoadingStore {
           ElementActions.createGenericEl,
           ElementActions.updateGenericEl,
           ElementActions.createSampleForReaction,
-          ElementActions.createSampleForMixture,
           ElementActions.updateSampleForReaction,
           ElementActions.updateSampleForWellplate,
           ElementActions.createSample,

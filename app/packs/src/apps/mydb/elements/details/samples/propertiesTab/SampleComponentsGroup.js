@@ -59,19 +59,6 @@ const SampleComponentsGroup = ({
     } else {
       headers.group = 'Liquids';
     }
-  
-    const { currentCollection } = UIStore.getState()
-
-    const addSampleButton = (
-      <Button
-        disabled={!permitOn(sample)}
-        bsStyle="success"
-        bsSize="xs"
-        onClick={() => ElementActions.addSampleToMaterialGroup({ sample, materialGroup, currentCollection })}
-      >
-        <Glyphicon glyph="plus" />
-      </Button>
-    );
 
     const switchAmountTooltip = () => (
       <Tooltip id="assign_button">Lock/unlock amounts <br /> (mass/volume/mol) </Tooltip>
@@ -109,7 +96,7 @@ const SampleComponentsGroup = ({
           </colgroup>
           <thead>
             <tr>
-            <th>{addSampleButton}</th>
+            <th></th>
             <th>{headers.group}</th>
             <th>{headers.name}</th>
             <th>{headers.ref}</th>
