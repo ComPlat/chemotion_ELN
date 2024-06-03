@@ -56,9 +56,42 @@ const formatBytes = (bytes, decimals = 2) => {
   return `${parseFloat((bytes / (k ** i)).toFixed(dm))} ${sizes[i]}`;
 };
 
+function parseNumericString(numberString) {
+  if (typeof numberString !== 'string') {
+    return NaN;
+  }
+
+  const numberIsNegative = numberString.startsWith('-');
+  let sanitizedNumberString = numberString;
+
+  // Remove all characters that aren't digits, commas, or periods.
+  sanitizedNumberString = sanitizedNumberString.replace(/[^0-9,.]/g, '');
+  if (sanitizedNumberString === '') {
+    return NaN;
+  }
+
+  // Decimal separator can be comma or period. Convert to period.
+  sanitizedNumberString = sanitizedNumberString.replaceAll(',', '.');
+  // Keep only final (non-terminal) period under the assumption that it's meant as the decimal separator.
+  // Assume that preceding periods were meant as thousands separators.
+  const finalPeriodIndex = sanitizedNumberString.lastIndexOf('.');
+  if (finalPeriodIndex !== -1) {
+    sanitizedNumberString = `${sanitizedNumberString.slice(0, finalPeriodIndex).replaceAll('.', '')
+    }.${
+      sanitizedNumberString.slice(finalPeriodIndex + 1)}`;
+  }
+
+  if (numberIsNegative) {
+    sanitizedNumberString = `-${sanitizedNumberString}`;
+  }
+
+  return Number(sanitizedNumberString);
+}
+
 export {
   fixDigit,
   validDigit,
   correctPrefix,
   formatBytes,
+  parseNumericString,
 };
