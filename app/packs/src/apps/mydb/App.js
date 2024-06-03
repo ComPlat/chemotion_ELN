@@ -122,7 +122,7 @@ class App extends Component {
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
-        <Row className="card-content container-fluid">
+        <Row className="card-content container-fluid pt-3">
           {showCollectionTree && <CollectionTree />}
           {this.mainContent()}
         </Row>
