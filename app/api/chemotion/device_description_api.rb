@@ -69,6 +69,45 @@ module Chemotion
         end
         optional :segments, type: Array
         optional :setup_descriptions, type: Hash
+        optional :maintenance_contract_available, type: String
+        optional :maintenance_scheduling, type: String
+        optional :contact_for_maintenance, type: Array do
+          optional :company, type: String
+          optional :contact, type: String
+          optional :email, type: String
+          optional :phone, type: String
+          optional :comment, type: String
+        end
+        optional :planned_maintenance, type: Array do
+          optional :date, type: Date
+          optional :type, type: String
+          optional :details, type: String
+          optional :status, type: String
+          optional :costs, type: Float
+          optional :time, type: String
+          optional :changes, type: String
+        end
+        optional :consumables_needed_for_maintenance, type: Array do
+          optional :name, type: String
+          optional :type, type: String
+          optional :number, type: Integer
+          optional :status, type: String
+          optional :costs, type: Float
+          optional :details, type: String
+        end
+        optional :unexpected_maintenance, type: Array do
+          optional :date, type: Date
+          optional :type, type: String
+          optional :details, type: String
+          optional :status, type: String
+          optional :costs, type: Float
+          optional :time, type: String
+          optional :changes, type: String
+        end
+        optional :measures_after_full_shut_down, type: String
+        optional :measures_after_short_shut_down, type: String
+        optional :measures_to_plan_offline_period, type: String
+        optional :restart_after_planned_offline_period, type: String
       end
 
       def device_description_with_entity(device_description)
