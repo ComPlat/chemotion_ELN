@@ -348,6 +348,7 @@ module Chemotion
         optional :sum_formula, type: String
         # use :root_container_params
         optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
 
       route_param :id do
@@ -462,6 +463,7 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?

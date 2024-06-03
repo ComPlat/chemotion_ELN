@@ -599,8 +599,12 @@ class Material extends Component {
 
   generateMolecularWeightTooltipText(sample, reaction) {
     const isProduct = reaction.products.includes(sample)
-    const molecularWeight = sample.decoupled ?
+    let molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
+    
+    if (sample.sample_type === 'Mixture' && sample.sample_details) {
+      molecularWeight = sample.total_molecular_weight.toFixed(4);
+    }
     let theoreticalMassPart = "";
     if (isProduct && sample.maxAmount) {
       theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;

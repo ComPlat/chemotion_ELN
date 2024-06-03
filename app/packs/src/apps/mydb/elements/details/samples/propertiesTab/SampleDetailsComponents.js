@@ -209,6 +209,8 @@ export default class SampleDetailsComponents extends React.Component {
 
     sample.components[componentIndex].updateRatio(newRatio, materialGroup, adjustAmount, totalVolume)
 
+    sample.updateMixtureMolecularWeight();
+
     this.props.onChange(sample);
   }
 

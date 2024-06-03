@@ -72,6 +72,7 @@ module Entities
       expose! :user_labels
       expose! :xref
       expose! :sample_type
+      expose! :sample_details
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 

@@ -1422,12 +1422,20 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleAverageMW(sample) {
-    const mw = sample.molecule_molecular_weight;
+    let mw;
+    
+    if (sample.sample_type === 'Mixture' && sample.sample_details) {
+      mw = sample.total_molecular_weight;
+    } else {
+      mw = sample.molecule_molecular_weight;
+    }
+  
     if (mw) return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
   }
 
   sampleExactMW(sample) {
+    if (sample.sample_type === 'Mixture' && sample.sample_details) { return }
     const mw = sample.molecule_exact_molecular_weight;
     if (mw) return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';

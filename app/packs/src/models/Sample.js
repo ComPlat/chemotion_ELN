@@ -337,6 +337,7 @@ export default class Sample extends Element {
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
+      sample_details: this.sample_details,
     });
 
     return serialized;
@@ -814,6 +815,9 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
+    if (this.sample_type === 'Mixture') {
+      return this.total_molecular_weight;
+    }
     if (this.decoupled) {
       return this.molecular_mass;
     }
@@ -964,6 +968,23 @@ export default class Sample extends Element {
 
   get maxAmount() {
     return this._maxAmount;
+  }
+
+  set sample_details(sample_details) {
+    this._sample_details = sample_details
+  }
+
+  get sample_details() {
+    return this._sample_details;
+  }
+
+  set total_molecular_weight(total_molecular_weight) {
+    this.sample_details.total_molecular_weight = total_molecular_weight;
+  }
+
+  get total_molecular_weight() {
+    if (!this.sample_details) { return null }
+    return this.sample_details.total_molecular_weight;
   }
 
   serializeMaterial() {
@@ -1191,6 +1212,31 @@ export default class Sample extends Element {
         if (i === referenceIndex) continue;
         this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
     }
+
+    this.updateMixtureMolecularWeight();
+  }
+
+  updateMixtureMolecularWeight() {
+    if (this.components && this.components.length <= 1) { return };
+
+    const totalAmount = this.components.reduce((acc, component) => acc + component.amount_mol, 0);
+    let totalMolecularWeight = 0;
+
+    if (!this.sample_details) {
+      this.sample_details = {};
+    }
+
+    if (totalAmount === 0) {
+      this.sample_details.total_molecular_weight = 0;
+      return;
+    }
+
+    for (let i = 0; i < this.components.length; i++) {
+      const moleFraction = this.components[i].amount_mol / totalAmount
+      totalMolecularWeight += this.components[i].molecule.molecular_weight * moleFraction;
+    }
+
+    this.sample_details.total_molecular_weight = totalMolecularWeight
   }
 
   moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
