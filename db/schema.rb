@@ -478,6 +478,16 @@ ActiveRecord::Schema.define(version: 2024_09_17_085816) do
     t.string "version_identifier_type"
     t.boolean "helpers_uploaded", default: false
     t.jsonb "setup_descriptions"
+    t.string "maintenance_contract_available"
+    t.string "maintenance_scheduling"
+    t.jsonb "contact_for_maintenance"
+    t.jsonb "planned_maintenance"
+    t.jsonb "consumables_needed_for_maintenance"
+    t.jsonb "unexpected_maintenance"
+    t.text "measures_after_full_shut_down"
+    t.text "measures_after_short_shut_down"
+    t.text "measures_to_plan_offline_period"
+    t.text "restart_after_planned_offline_period"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end

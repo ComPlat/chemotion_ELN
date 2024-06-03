@@ -153,6 +153,10 @@
   width: 15%;
 }
 
+.grouped-fields-row.cols-7 .form-group {
+  width: 13%;
+}
+
 .grouped-fields-row .form-control.no-border {
   border: none;
   border-radius: 0;
@@ -175,7 +179,7 @@ i.icon-margin-right {
 }
 
 button.delete-in-row {
-  margin-top: 25px;
+  margin-bottom: 15px;
   height: 34px;
 }
 
@@ -376,13 +380,5 @@ li.list-group-item.list-group-sortable:before {
 }
 
 .element-dropzone + button.delete-in-row {
-  margin-top: 12px;
-}
-
-.component-inputs .element-dropzone + button.delete-in-row {
   margin-bottom: 33px;
-}
-
-.component-inputs button.delete-in-row {
-  margin-bottom: 15px;
 }

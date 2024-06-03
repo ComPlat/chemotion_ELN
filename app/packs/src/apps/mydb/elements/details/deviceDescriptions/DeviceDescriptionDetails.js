@@ -7,7 +7,7 @@ import PropertiesForm from './propertiesTab/PropertiesForm';
 import DetailsForm from './detailsTab/DetailsForm';
 import AnalysesContainer from './analysesTab/AnalysesContainer';
 import AttachmentForm from './attachmentsTab/AttachmentForm';
-import MaintainanceForm from './maintainanceTab/MaintainanceForm';
+import MaintenanceForm from './maintenanceTab/MaintenanceForm';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
@@ -50,7 +50,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     detail: DetailsForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
-    maintainance: MaintainanceForm,
+    maintenance: MaintenanceForm,
   };
 
   const tabTitles = {
@@ -58,7 +58,7 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     detail: 'Details',
     analyses: 'Analyses',
     attachments: 'Attachment',
-    maintainance: 'Maintainance',
+    maintenance: 'Maintenance',
   };
 
   const isReadOnly = () => {
