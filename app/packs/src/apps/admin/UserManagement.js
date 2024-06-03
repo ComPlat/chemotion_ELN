@@ -63,7 +63,7 @@ const handleResetPassword = (id, random, handleShowAlert) => {
     });
 };
 
-const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(mail));
+const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,63})+$/.test(mail));
 const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
 const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
 const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
@@ -211,13 +211,15 @@ export default class UserManagement extends React.Component {
 
   handleNewUserShow() {
     this.setState({
-      showNewUserModal: true
+      showNewUserModal: true,
+      messageNewUserModal: ''
     });
   }
 
   handleNewUserClose() {
     this.setState({
-      showNewUserModal: false
+      showNewUserModal: false,
+      messageNewUserModal: ''
     });
   }
 
@@ -779,7 +781,9 @@ export default class UserManagement extends React.Component {
                     Email:
                   </Col>
                   <Col sm={9}>
-                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
+                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }}
+                      maxLength={120}
+                    />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlPassword">
