@@ -660,8 +660,6 @@ export const amountSearchOptions = [
 ];
 
 export const SampleTypesOptions = [
-  { label: 'Micromolecule', value: 'Micromolecule' },
-  { label: 'Mixture Component Stock Solution', value: 'ComponentStock' },
-  { label: 'Mixture Component', value: 'MixtureComponent' },
+  { label: 'Single molecule', value: 'Micromolecule' },
   { label: 'Mixture', value: 'Mixture' },
 ]

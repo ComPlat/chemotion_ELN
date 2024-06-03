@@ -805,7 +805,6 @@ export default class SampleDetails extends React.Component {
 
   chemicalIdentifiersItem(sample) {
     const show = this.state.showChemicalIdentifiers;
-    if (sample.sample_type === 'Mixture') return false;
     return (
       <div
         width="100%"
