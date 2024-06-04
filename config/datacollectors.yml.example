@@ -1,38 +1,58 @@
+shared:
+  # List of enabled data collection services
+  :services:
+  # - :name: 'mailcollector'
+  #   :cron: '5,20,35,50 * * * *' # every 15 minutes starting a xx:05
+  # - :name: 'folderwatchersftp'
+  #   :every: 5 # minutes
+  #   :watcher_sleep: 30 # seconds
+  # - :name: 'folderwatcherlocal'
+  #   :every: 5 # minutes
+  #   :watcher_sleep: 30 # seconds
+  # - :name: 'filewatchersftp'
+  #   :every: 2 # minutes
+  # - :name: 'filewatcherlocal'
+  #   :every: 2 # minutes
+
+  # Email service configuration
+  :mailcollector:
+  # :server: 'imap.server.de'
+  # :mail_address: "service@mail"
+  # :password: "password"
+  # :port: 993 default
+  # :ssl: true default
+  # :aliases:
+  #   - 'alias_one@kit.edu'
+  #   - 'alias_two@kit.edu'
+
+
+  # Dir of ssh keys for data collectiondd over sftp
+  :keydir: 'config/data_collector_keys'
+
+  # List of sftp credentials for pw authentication
+  :sftpusers:
+  # - :user: 'user1'
+  #   :password: 'pass'
+  # - :user: 'user2'
+  #   :password: 'pass'
+  # ......
+
+  # Allowlist of dir paths for local data collection
+  :localcollectors:
+  # - :path: '<%= Rails.root.join(*%w[tmp datacollector]).to_s %>'
+  # - :path: '/another/path'
+  # .....
+
+
+
 development: &development
   :services:
-    - :name: 'mailcollector'
-      :cron: '5,20,35,50 * * * *' # every 15 minutes starting a xx:05
-    - :name: 'folderwatchersftp'
-      :every: 5 # minutes
-      :watcher_sleep: 30 # seconds
     - :name: 'folderwatcherlocal'
       :every: 5 # minutes
       :watcher_sleep: 30 # seconds
-    - :name: 'filewatchersftp'
-      :every: 2 # minutes
     - :name: 'filewatcherlocal'
       :every: 2 # minutes
 
-  :mailcollector:
-    :server: 'imap.server.de'
-    :mail_address: "service@mail"
-    :password: "password"
-    # :port: 993 default
-    # :ssl: true default
-    :aliases:
-      - 'alias_one@kit.edu'
-      - 'alias_two@kit.edu'
-
-  :sftpusers:
-    - :user: 'user1'
-      :password: 'pass'
-    - :user: 'user2'
-      :password: 'pass'
-
-  # Dir of ssh keys for data collection over sftp
-  :keydir: 'config/data_collector_keys'
-
-  # Allowlist of dir paths for local data collection
   :localcollectors:
     - :path: '<%= Rails.root.join(*%w[tmp datacollector]).to_s %>'
 
@@ -40,34 +60,3 @@ test:
   <<: *development
 
 production:
-  :services:
-    - :name: 'mailcollector'
-      :every: 5 # minutes
-    - :name: 'folderwatchersftp'
-      :every: 5 # minutes
-    - :name: 'folderwatcherlocal'
-      :every: 5 # minutes
-    - :name: 'filewatchersftp'
-      :every: 2 # minutes
-    - :name: 'filewatcherlocal'
-      :every: 2 # minutes
-
-  :mailcollector:
-    :server: 'imap.server.de'
-    :mail_address: "service@mail"
-    :password: "password"
-    # :port: 993 default
-    # :ssl: true default
-    :aliases:
-      - 'alias_one@kit.edu'
-      - 'alias_two@kit.edu'
-
-  :sftpusers:
-    - :user: 'user1'
-      :password: 'pass'
-    - :user: 'user2'
-      :password: 'pass'
-
-  :localcollectors:
-    - :path: '/home/ftpuser'
-    - :path: '/home/eln/public'
