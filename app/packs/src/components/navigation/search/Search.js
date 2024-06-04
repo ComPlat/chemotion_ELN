@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, Button, Dropdown, DropdownButton } from 'react-bootstrap';
+import { Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
@@ -120,10 +120,10 @@ export default class Search extends React.Component {
 
     const innerDropdown = (
       <DropdownButton
+        variant="light"
         className={customClass}
         id="search-inner-dropdown"
         title={searchIcon(this.state.elementType)}
-        style={{ width: '50px' }}
       >
         {this.renderMenuItems()}
       </DropdownButton>
