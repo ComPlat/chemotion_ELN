@@ -594,13 +594,7 @@ export default class ElementsTable extends React.Component {
           />
         </div>
         <div
-          className="header-right"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            flexWrap: 'wrap'
-          }}
+          className="header-right d-flex gap-1"
         >
           {searchLabel}
           <OverlayTrigger placement="top" overlay={filterTooltip}>
