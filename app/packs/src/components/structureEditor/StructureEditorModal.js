@@ -243,9 +243,7 @@ export default class StructureEditorModal extends React.Component {
 
   handleSaveBtn() {
     const { editor } = this.state;
-    const { sample } = this.props
     const structure = editor.structureDef;
-    const isMixture = sample.sample_type === 'Mixture';
     if (editor.id === 'marvinjs') {
       structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
         const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
@@ -253,28 +251,11 @@ export default class StructureEditorModal extends React.Component {
           this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
-    } else if (editor.id === 'ketcher2' && !isMixture) {
+    } else if (editor.id === 'ketcher2') {
       structure.editor.getMolfile().then((molfile) => {
         structure.editor.generateImage(molfile, { outputFormat: 'svg' }).then((imgfile) => {
           imgfile.text().then((text) => {
             this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(molfile, text, { smiles: '' }, editor.id); } });
-          });
-        });
-      });
-    } else if (editor.id === 'ketcher2' && isMixture) {
-      structure.editor.getMolfile().then((molfile) => {
-        Promise.all([
-          structure.editor.generateImage(molfile, { outputFormat: 'svg' }),
-          structure.editor.getSmiles() 
-        ]).then(([imgfile, smiles]) => {
-          Promise.all([
-            imgfile.text(),
-          ]).then(([imgText]) => {
-            this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { 
-              if (this.props.onSave) { 
-                this.props.onSave(molfile, imgText, { smiles: smiles }, editor.id); 
-              } 
-            });
           });
         });
       });

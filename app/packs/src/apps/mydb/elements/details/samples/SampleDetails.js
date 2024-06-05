@@ -1465,7 +1465,7 @@ export default class SampleDetails extends React.Component {
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.')
     if (mixtureSmiles) {
-      sample.splitSmilesToMolecule(mixtureSmiles, editor, svgFile)
+      sample.splitSmilesToMolecule(mixtureSmiles, editor)
         .then(() => {
           this.setState({ sample });
         });

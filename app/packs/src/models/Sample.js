@@ -1337,12 +1337,10 @@ export default class Sample extends Element {
     });
   }  
 
-  splitSmilesToMolecule(mixtureSmiles, editor, svgFile) {
+  splitSmilesToMolecule(mixtureSmiles, editor) {
     const promises = mixtureSmiles.map(smiles => {
       return MoleculesFetcher.fetchBySmi(smiles, null, null, editor);
     });
-
-    this.sample_svg_file = svgFile;
     
     return Promise.all(promises)
       .then(mixtureMolecules => {
