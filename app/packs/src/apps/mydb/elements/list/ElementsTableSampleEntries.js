@@ -26,6 +26,7 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import Label from 'src/components/legacyBootstrap/Label'
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
@@ -147,8 +148,6 @@ const svgPreview = (showPreviews, sample) => (
 function MoleculeHeader({
   sample, show, showDragColumn, onClick, targetType
 }) {
-  const showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
-
   const { collId, showPreviews } = UIStore.getState();
   return (
     <tr
@@ -163,7 +162,7 @@ function MoleculeHeader({
             <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
               <OverlayTrigger placement="bottom" overlay={overlayToggle}>
                 <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-                  <i className={`glyphicon ${showIndicator}`} />
+                  <ChevronIcon direction={show ? 'down' : 'right'} />
                 </span>
               </OverlayTrigger>
             </div>
