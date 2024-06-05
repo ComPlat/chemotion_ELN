@@ -59,6 +59,7 @@ function createVariationsRow(reaction, variations) {
       }
     },
     analyses: [],
+    notes: '',
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
@@ -75,6 +76,7 @@ function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
   copiedRow.analyses = [];
+  copiedRow.notes = '';
 
   return copiedRow;
 }

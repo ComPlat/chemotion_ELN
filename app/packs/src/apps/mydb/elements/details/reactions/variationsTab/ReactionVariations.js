@@ -218,6 +218,17 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       headerComponent: null,
     },
     {
+      headerName: 'Notes',
+      field: 'notes',
+      sortable: false,
+      cellDataType: 'text',
+      cellEditor: 'agLargeTextCellEditor',
+      cellEditorPopup: true,
+      cellEditorParams: {
+        maxLength: 1000
+      }
+    },
+    {
       headerName: 'Analyses',
       field: 'analyses',
       tooltipValueGetter: getAnalysesOverlay,
@@ -456,6 +467,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           tooltipShowDelay={0}
           domLayout="autoHeight"
           reactiveCustomComponents
+          popupParent={document.getElementById('reaction-detail-tab') || null}
           context={{
             copyRow,
             removeRow,
