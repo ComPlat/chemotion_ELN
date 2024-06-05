@@ -82,7 +82,7 @@ const DetailSearch = () => {
               Object.assign(v, { key: value[1].key });
             }
             if (v.table === undefined) {
-              Object.assign(v, { table: 'datasets', column: `dataset_${v.field}` });
+              Object.assign(v, { table: 'datasets', column: `datasets_${v.field}` });
             }
             mappedValues.push(v);
           });
@@ -95,7 +95,7 @@ const DetailSearch = () => {
             fields.push(
               {
                 label: label, value: mappedValues, term_id: dataset.ols_term_id,
-                cond_fields: [{ field: 'dataset_type', value: dataset.ols_term_id }],
+                cond_fields: [{ field: 'datasets_type', value: dataset.ols_term_id }],
               }
             );
           }
@@ -134,8 +134,8 @@ const DetailSearch = () => {
         {
           label: 'Datasets',
           value: {
-            column: 'dataset_type',
-            label: 'Datasets',
+            column: 'datasets_type',
+            label: 'Dataset type',
             type: 'select',
             option_layers: 'datasets',
             table: 'datasets',
@@ -267,7 +267,7 @@ const DetailSearch = () => {
       } else {
         options = systemOptions.units;
       }
-    } else if ((genericOptions.length >= 1 || option.column === 'dataset_type')
+    } else if ((genericOptions.length >= 1 || option.column === 'datasets_type')
       && genericSelectOptions[option.option_layers]) {
       Object.values(genericSelectOptions[option.option_layers].options).forEach((option) => {
         option.value = option.value ? option.value : option.label;
@@ -623,9 +623,9 @@ const DetailSearch = () => {
     let value = valueByType(type, e);
     let smiles = column == 'solvent_smiles' ? e.value.smiles : '';
 
-    if (column === 'dataset_type') {
+    if (column === 'datasets_type') {
       let datasetValues = searchStore.detailSearchValues.filter((f) => {
-        return Object.keys(f)[0].startsWith('dataset_') && Object.keys(f)[0] !== 'dataset_type'
+        return Object.keys(f)[0].startsWith('datasets_') && Object.keys(f)[0] !== 'datasets_type'
       });
       datasetValues.map((d) => {
         searchStore.removeDetailSearchValue(Object.keys(d)[0]);
