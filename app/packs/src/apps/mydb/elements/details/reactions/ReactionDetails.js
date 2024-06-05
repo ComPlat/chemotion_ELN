@@ -215,7 +215,7 @@ export default class ReactionDetails extends Component {
         &nbsp;
         <span className="pseudo-link"
           onClick={() => this.handleProductClick(product)}
-          style={{ cursor: 'pointer' }}
+          role="button"
           title="Open sample window">
           <i className="icon-sample" />&nbsp;{product.title()}
         </span>

@@ -701,6 +701,7 @@ export default class UserAuth extends Component {
             onClick={() => this.logout()}
             title="Log out"
             className='ms-2'
+            role='button'
           >
             <i className="fa fa-sign-out" />
           </NavItem>
