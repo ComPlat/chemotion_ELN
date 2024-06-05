@@ -25,7 +25,6 @@ import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import Affiliations from '../../apps/userSettings/Affiliations';
 import Panel from 'src/components/legacyBootstrap/Panel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class UserAuth extends Component {
@@ -655,60 +654,57 @@ export default class UserAuth extends Component {
 
   render() {
     const templatesLink = (
-      <MenuItem eventKey="2" href="/ketcher/common_templates">
+      <NavDropdown.Item eventKey="2" href="/ketcher/common_templates">
         Template Management
-      </MenuItem>
+      </NavDropdown.Item>
     );
     const moderatorLink = (
-      <MenuItem eventKey="6" href="/molecule_moderator">
+      <NavDropdown.Item eventKey="6" href="/molecule_moderator">
         Molecule Moderator
-      </MenuItem>
+      </NavDropdown.Item>
     );
 
     return (
       <>
-        <Row className='g-3 align-items-center'>
-          <Col xs="auto">
-            <NavDropdown
-              title={`${this.state.currentUser.name}`}
-              id="bg-nested-dropdown"
-            >
-              <MenuItem eventKey="1" href="/pages/settings">
-                Account &amp; Profile
-              </MenuItem>
-              {this.state.currentUser.is_templates_moderator
-                ? templatesLink
-                : null}
-              <MenuItem eventKey="3" href="/users/edit">
-                Change Password
-              </MenuItem>
-              <MenuItem
-                onClick={this.handleAffiliationsShow}>
-                My Affiliations
-              </MenuItem>
-              <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
-              <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>
-              {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
-                  Disable for now as there is no subsciption channel yet (Paggy) */}
-              <MenuItem eventKey="7" href="/command_n_control">
-                My Devices
-              </MenuItem>
-              {this.state.currentUser.molecule_editor ? moderatorLink : null}
-              <MenuItem eventKey="12" href="/converter_admin">
-                Converter Profile
-              </MenuItem>
-              <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
-            </NavDropdown>
-          </Col>
-          <Col xs="auto">
-            <NavItem
-              onClick={() => this.logout()}
-              title="Log out"
-            >
-              <i className="fa fa-sign-out" />
-            </NavItem>
-          </Col>
-        </Row>
+        <Nav className='align-items-center'>
+          <NavDropdown
+            title={`${this.state.currentUser.name}`}
+            id="bg-nested-dropdown"
+          >
+            <NavDropdown.Item eventKey="1" href="/pages/settings">
+              Account &amp; Profile
+            </NavDropdown.Item>
+            {this.state.currentUser.is_templates_moderator
+              ? templatesLink
+              : null}
+            <NavDropdown.Item eventKey="3" href="/users/edit">
+              Change Password
+            </NavDropdown.Item>
+            <NavDropdown.Item
+              onClick={this.handleAffiliationsShow}>
+              My Affiliations
+            </NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleLabelShow}>My Labels</NavDropdown.Item>;
+            {/* <NavDropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</NavDropdown.Item>
+                Disable for now as there is no subsciption channel yet (Paggy) */}
+            <NavDropdown.Item eventKey="7" href="/command_n_control">
+              My Devices
+            </NavDropdown.Item>
+            {this.state.currentUser.molecule_editor ? moderatorLink : null}
+            <NavDropdown.Item eventKey="12" href="/converter_admin">
+              Converter Profile
+            </NavDropdown.Item>
+            <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
+          </NavDropdown>
+          <NavItem
+            onClick={() => this.logout()}
+            title="Log out"
+            className='ms-2'
+          >
+            <i className="fa fa-sign-out" />
+          </NavItem>
+        </Nav>
         {this.renderModal()}
         {this.renderAffiliations()}
         <UserLabelModal
