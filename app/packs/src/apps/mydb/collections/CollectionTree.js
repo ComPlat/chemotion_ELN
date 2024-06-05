@@ -89,49 +89,6 @@ export default class CollectionTree extends React.Component {
     );
   }
 
-  inboxSubtrees() {
-    const { inbox, itemsPerPage } = this.state;
-
-    let boxes = '';
-    if (inbox.children) {
-      inbox.children.sort((a, b) => {
-        if (a.name > b.name) { return 1; } if (a.name < b.name) { return -1; } return 0;
-      });
-      boxes = inbox.children.map((deviceBox) => (
-        <DeviceBox key={`box_${deviceBox.id}`} device_box={deviceBox} fromCollectionTree />
-      ));
-    }
-
-    return (
-      <div className="tree-view">
-        <div
-          role="button"
-          onClick={InboxActions.showInboxModal}
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              InboxActions.showInboxModal();
-            }
-          }}
-        >
-          {boxes}
-          {inbox.children && inbox.children.length >= itemsPerPage ? (
-            <div className="title" key="more" style={{ textAlign: 'center' }}>
-              <i className="fa fa-ellipsis-h" aria-hidden="true" />
-            </div>
-          ) : ''}
-        </div>
-        {inbox.unlinked_attachments ? (
-          <UnsortedBox
-            key="unsorted_box"
-            unsorted_box={inbox.unlinked_attachments}
-            fromCollectionTree
-          />
-        ) : ''}
-      </div>
-    );
-  }
-
   sharedByMeSubtrees() {
     const { myCollectionTree } = this.state;
 
