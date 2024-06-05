@@ -115,7 +115,7 @@ class AttachmentContainer extends Component {
 
     const trash = (
       <span>
-        <i className="fa fa-trash-o" onClick={() => this.toggleTooltip()} style={{ cursor: "pointer" }}>&nbsp;</i>
+        <i className="fa fa-trash-o" onClick={() => this.toggleTooltip()} role="button">&nbsp;</i>
         {this.state.deletingTooltip ? (
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             Delete this attachment?
@@ -164,7 +164,7 @@ class AttachmentContainer extends Component {
       <div style={textStyle}>
         {checkBox}
         &nbsp;&nbsp;{trash}&nbsp;
-        <i className="fa fa-download" onClick={() => handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }} />
+        <i className="fa fa-download" onClick={() => handleAttachmentDownload(attachment)} role="button" />
         &nbsp;&nbsp;
         {largerInbox ? (
           <MoveToAnalysisButton

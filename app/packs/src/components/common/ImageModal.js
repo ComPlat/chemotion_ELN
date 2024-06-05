@@ -129,7 +129,8 @@ export default class ImageModal extends Component {
           <img
             src={showPopImage ? popObject.src : previewObject.src}
             alt=""
-            style={{ cursor: 'pointer', ...imageStyle }}
+            style={{ ...imageStyle }}
+            role="button"
           />
         </div>
         <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
