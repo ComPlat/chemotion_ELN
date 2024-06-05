@@ -24,7 +24,10 @@ const sampleName = (sample) => { /* eslint-disable camelcase */
       return sampleNameLabel;
     }
     return (
-      <a onClick={() => handleSampleClick(sample)} style={{ cursor: 'pointer' }}>
+      <a
+        onClick={() => handleSampleClick(sample)} 
+        role="button"
+      >
         {sampleNameLabel}
       </a>
     );

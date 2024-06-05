@@ -252,7 +252,7 @@ export default class DeviceBox extends React.Component {
           className="fa fa-trash-o"
           aria-hidden="true"
           onClick={() => this.toggleTooltip()}
-          style={{ cursor: 'pointer' }}
+          role="button"
         >
           &nbsp;
         </i>
@@ -314,7 +314,7 @@ export default class DeviceBox extends React.Component {
                 <i
                   className="fa fa-trash-o"
                   onClick={() => this.deleteDeviceBox(device_box)}
-                  style={{ cursor: 'pointer' }}
+                  role="button"
                 >
                   &nbsp;&nbsp;
                 </i>

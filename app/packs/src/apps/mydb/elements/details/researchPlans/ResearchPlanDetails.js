@@ -389,7 +389,6 @@ export default class ResearchPlanDetails extends Component {
       <div
         role="button"
         tabIndex={0}
-        style={{ cursor: 'pointer' }}
         onClick={() => {
           if (researchPlan.mode === 'view') {
             this.handleSwitchMode('edit');
