@@ -583,6 +583,7 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options,
       value={value}
       isClearable={true}
       placeholder={placeholder}
+      classNamePrefix="select-in-addon"
       getOptionLabel={(option) => menuLabel(option, field, store)}
       onMenuOpen={() => changeMenuStatus(store, field, true)}
       onMenuClose={() => changeMenuStatus(store, field, false)}
