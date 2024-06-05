@@ -308,7 +308,7 @@ export default class ElementsTableEntries extends Component {
       if (element.thumb_svg !== 'not available') {
         return (
           <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
-            <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" style={{ cursor: 'pointer' }} />
+            <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
           </td>
         );
       }

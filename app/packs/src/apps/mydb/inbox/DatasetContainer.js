@@ -103,7 +103,7 @@ class DatasetContainer extends Component {
       const trash = this.props.cache.length === this.props.cache.length // Set it as always show
         ? (
           <span>
-            <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} style={{ cursor: "pointer" }}>&nbsp;</i>
+            <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} role="button">&nbsp;</i>
             {deletingTooltip ? (
               <Tooltip placement="bottom" className="in" id="tooltip-bottom">
                 {`Delete ${attCount} attachment${attCount > 1 ? 's' : ''}?`}
@@ -149,9 +149,9 @@ class DatasetContainer extends Component {
             >
               <i
                 className={`fa fa-folder${visible ? '-open' : ''}`}
-                style={{ cursor: 'pointer' }}
+                role="button"
               >
-                <span className="text-info fa fa-arrows" style={{ marginLeft: '5px', cursor: 'pointer' }} />
+                <span className="text-info fa fa-arrows ms-1" role="button" />
               </i>
               <span style={{ marginLeft: '8px' }}>{dataset.name}</span>
             </button>
