@@ -23,7 +23,7 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -253,12 +253,10 @@ export default class ElementsTable extends React.Component {
 
   collapseButton = () => {
     const { collapseAll } = this.state;
-    const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
 
     return (
-      <Glyphicon
-        glyph={collapseIcon}
-        title="Collapse/Uncollapse"
+      <ChevronIcon
+        direction={collapseAll ? 'right' : 'down'}
         onClick={() => this.changeCollapse(collapseAll)}
         style={{
           fontSize: '20px',
@@ -583,7 +581,7 @@ export default class ElementsTable extends React.Component {
           />
         </div>
         <div
-          className="header-right d-flex gap-1"
+          className="header-right d-flex gap-1 align-items-center"
         >
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
