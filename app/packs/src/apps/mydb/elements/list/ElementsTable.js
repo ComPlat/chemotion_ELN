@@ -634,13 +634,12 @@ export default class ElementsTable extends React.Component {
 
     const { overview, type, genericEl } = this.props;
     let elementsTableEntries;
-    const elementsEntries = elements.filter(element => !element.ancestor_ids || element.ancestor_ids.length === 0);
 
     if (type === 'sample') {
       elementsTableEntries = (
         <ElementsTableSampleEntries
           collapseAll={collapseAll}
-          elements={elementsEntries}
+          elements={elements}
           currentElement={currentElement}
           showDragColumn={!overview}
           ui={ui}

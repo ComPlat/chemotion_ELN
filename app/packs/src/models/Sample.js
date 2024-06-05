@@ -494,6 +494,9 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
+    if (this.sample_type === 'Mixture' && this.reference_component) {
+      return this.reference_molarity_value.toFixed(5);
+    }
     return this._molarity_value;
   }
 
@@ -503,6 +506,9 @@ export default class Sample extends Element {
   }
 
   get molarity_unit() {
+    if (this.sample_type === 'Mixture' && this.reference_component) {
+      return this.reference_molarity_unit;
+    }
     return this._molarity_unit;
   }
 
@@ -554,6 +560,9 @@ export default class Sample extends Element {
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
+    }
+    if (this.sample_type === 'Mixture' && this.components) {
+      this.updateMixtureComponentVolume();
     }
   }
 
@@ -816,7 +825,7 @@ export default class Sample extends Element {
 
   get molecule_molecular_weight() {
     if (this.sample_type === 'Mixture') {
-      return this.total_molecular_weight;
+      return this.reference_molecular_weight;
     }
     if (this.decoupled) {
       return this.molecular_mass;
@@ -987,6 +996,38 @@ export default class Sample extends Element {
     return this.sample_details.total_molecular_weight;
   }
 
+  get reference_component() {
+    if (!this.components || this.components.length < 1) { return null }
+    return this.components.find(
+      (component) => component.reference === true
+    );
+  }
+
+  get reference_molecular_weight() {
+    if (this.sample_details) {
+      return this.sample_details.reference_molecular_weight;
+    }
+
+    if (!this.reference_component) { return null}
+    return this.reference_component.molecule.molecular_weight
+  }
+
+  set reference_molecular_weight(reference_molecular_weight) {
+    this.sample_details.reference_molecular_weight = reference_molecular_weight;
+  }
+
+  get reference_molarity_value() {
+    if (!this.reference_component) { return null}
+
+    return this.reference_component.molarity_value
+  }
+
+  get reference_molarity_unit() {
+    if (!this.reference_component) { return null}
+
+    return this.reference_component.molarity_unit
+  }
+
   serializeMaterial() {
     const params = this.serialize();
     const extra_params = {
@@ -996,6 +1037,9 @@ export default class Sample extends Element {
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
+      components: this.components && this.components.length > 0 
+      ? this.components.map(s => s.serializeComponent()) 
+      : []
     };
     _.merge(params, extra_params);
     return params;
@@ -1192,6 +1236,11 @@ export default class Sample extends Element {
           component.reference = false;
       }
     });
+
+    if (!this.sample_details) {
+      this.sample_details = {};
+    }
+    this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
 
     this.updateMixtureComponentEquivalent()
   }

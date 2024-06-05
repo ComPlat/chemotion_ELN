@@ -380,7 +380,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup })
+          dispatch({ newSample, reaction, materialGroup, components: sample.components })
         });
     };
   }
@@ -429,7 +429,7 @@ class ElementActions {
         .then((newSample) => {
           reaction.updateMaterial(newSample);
           reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView })
+          dispatch({ reaction, sample: newSample, closeView, components: sample.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

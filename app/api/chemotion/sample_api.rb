@@ -502,6 +502,7 @@ module Chemotion
           sample_type: params[:sample_type],
           molfile: params[:molfile],
           stereo: params[:stereo],
+          sample_details: params[:sample_details],
         }
         micro_att = {
           name: params[:name],

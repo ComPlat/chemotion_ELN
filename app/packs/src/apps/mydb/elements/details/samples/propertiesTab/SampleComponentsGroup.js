@@ -1,11 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
 import { permitOn } from 'src/components/common/uis';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponent.js';
 
 const SampleComponentsGroup = ({

@@ -703,8 +703,17 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForReaction({ newSample, reaction, materialGroup }) {
+  handleCreateSampleForReaction({ newSample, reaction, materialGroup, components }) {
     UserActions.fetchCurrentUser();
+    if (newSample.sample_type && newSample.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(newSample, components)
+         .then(async () => {
+           await newSample.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
     ElementActions.handleSvgReactionChange(reaction);
@@ -723,9 +732,18 @@ class ElementStore {
     this.changeCurrentElement(sample);
   }
 
-  handleUpdateSampleForReaction({ reaction, sample, closeView }) {
+  handleUpdateSampleForReaction({ reaction, sample, closeView, components }) {
     // UserActions.fetchCurrentUser();
     ElementActions.handleSvgReactionChange(reaction);
+    if (sample.sample_type && sample.sample_type === 'Mixture') {
+      ComponentsFetcher.saveOrUpdateComponents(sample, components)
+         .then(async () => {
+           await sample.initialComponents(components)
+         })
+         .catch((errorMessage) => {
+          console.log(errorMessage);
+         });
+    }
     if (closeView) {
       this.changeCurrentElement(reaction);
     } else {
@@ -851,6 +869,24 @@ class ElementStore {
       }
       return { refreshCoefficient: updatedCoefficient };
     });
+
+    if (sample.sample_type && sample.sample_type === 'Mixture') {
+      ComponentsFetcher.fetchComponentsBySampleId(sample.id)
+        .then(async components => {
+           const sampleComponents = components.map(component => {
+             const { component_properties, ...rest } = component;
+             const sampleData = {
+                 ...rest,
+                 ...component_properties
+             };
+             return new Component(sampleData);
+         });
+         await sample.initialComponents(sampleComponents);
+       })
+        .catch((errorMessage) => {
+         console.log(errorMessage);
+        });
+    }
     this.changeCurrentElement(sample);
   }
 
