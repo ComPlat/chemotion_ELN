@@ -249,17 +249,16 @@ module ReportHelpers
         s.id as s_id
         , s.is_top_secret as ts
         , min(co.id) as co_id
-        , min(scu.id) as scu_id
-        , bool_and(co.is_shared) as shared_sync
-        , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-        , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+        , min(acl.id) as acl_id
+        , max(GREATEST(co.permission_level, acl.permission_level)) as pl
+        , max(GREATEST(co.sample_detail_level, acl.sample_detail_level)) dl_s
       from samples s
       inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
       left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
       left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-      left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
-      where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-        and (co.id is not null or scu.id is not null)
+      left join collection_acls acl on (sco.id = acl.collection_id and acl.user_id in (#{u_ids}))
+      where #{selection} s.deleted_at isnull and c_s.deleted_at is null
+        and (co.id is not null or acl.id is not null)
       group by s_id
     SQL
   end
