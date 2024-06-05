@@ -202,7 +202,7 @@ export default class UnsortedBox extends React.Component {
           className="fa fa-trash-o"
           aria-hidden="true"
           onClick={() => this.toggleTooltip()}
-          style={{ cursor: 'pointer' }}
+          role="button"
         >
           &nbsp;
         </i>

@@ -69,7 +69,7 @@ class ContainerDatasetField extends Component {
         {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
           ? <GenericDSMisType /> : null}
         {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(datasetContainer)}>
+        <a onClick={() => handleModalOpen(datasetContainer)} role="button">
           {datasetContainer.name || 'new'}
         </a>
         <ButtonToolbar className="pull-right">
