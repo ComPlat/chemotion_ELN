@@ -18,7 +18,9 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { reactionStatus, reactionRole } from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import { ShowUserLabels } from 'src/components/UserLabels';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 import Aviator from 'aviator';
+
 
 const dragHandle = (element) => {
   const { currentElement } = ElementStore.getState();
@@ -81,7 +83,6 @@ const svgPreview = (showPreviews, group, element) => {
 function ReactionsHeader({
   group, element, show, showDragColumn, onClick
 }) {
-  const showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
   const { showPreviews } = UIStore.getState();
 
   return (
@@ -94,7 +95,7 @@ function ReactionsHeader({
         <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
           <OverlayTrigger placement="bottom" overlay={overlayToggle}>
             <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-              <i className={`glyphicon ${showIndicator}`} />
+              <ChevronIcon direction={show ? 'down' : 'right'} />
             </span>
           </OverlayTrigger>
         </div>
@@ -115,7 +116,7 @@ ReactionsHeader.propTypes = {
 function GenericElementsHeader({
   group, element, show, showDragColumn, onClick
 }) {
-  const showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
+  const showIndicator = (show) ? 'fa-chevron-down' : 'fa-chevron-right';
 
   return (
     <tr
@@ -131,7 +132,7 @@ function GenericElementsHeader({
         <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
           <OverlayTrigger placement="bottom" overlay={overlayToggle}>
             <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-              <i className={`glyphicon ${showIndicator}`} />
+              <i className={`fa ${showIndicator}`} />
             </span>
           </OverlayTrigger>
         </div>
