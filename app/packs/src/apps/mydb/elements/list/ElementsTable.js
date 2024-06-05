@@ -262,10 +262,10 @@ export default class ElementsTable extends React.Component {
         onClick={() => this.changeCollapse(collapseAll)}
         style={{
           fontSize: '20px',
-          cursor: 'pointer',
           color: '#337ab7',
           top: 0
         }}
+        role="button"
       />
     );
   };
@@ -390,9 +390,10 @@ export default class ElementsTable extends React.Component {
             type="button"
             style={{ border: 'none' }}
             onClick={this.toggleProductOnly}
+            role="button"
           >
             <i
-              style={{ cursor: 'pointer', color }}
+              style={{ color }}
               className="fa fa-lg fa-product-hunt"
             />
           </button>

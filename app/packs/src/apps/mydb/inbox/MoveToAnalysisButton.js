@@ -125,7 +125,7 @@ export default class MoveToAnalysisButton extends React.Component {
 
     return (
       <span>
-        <i className="icon-sample" onClick={() => this.toggleTooltip()} style={{ cursor: "pointer" }}>&nbsp;</i>
+        <i className="icon-sample" onClick={() => this.toggleTooltip()} role="button">&nbsp;</i>
         {showTooltip ? (
           <Tooltip placement="bottom" className="in" id="tooltip-bottom">
             {this.renderAnalysesButtons()}

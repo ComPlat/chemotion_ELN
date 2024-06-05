@@ -101,7 +101,7 @@ export default class UnsortedDataset extends React.Component {
         <tbody>
           <tr>
             <td>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{ cursor: 'pointer' }}>{attachment.filename}</a>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} role="button">{attachment.filename}</a>
             </td>
           </tr>
           <tr>

@@ -97,12 +97,13 @@ export default class Navigation extends React.Component {
 
   navHeader() {
     return (
-      <Navbar.Text style={{ cursor: "pointer" }}>
+      <Navbar.Text>
         <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
           <i
             className="fa fa-list"
-            style={{ fontStyle: "normal", visibility: this.props.isHidden ? 'hidden' : 'visible' }}
+            style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}
             onClick={this.toggleCollectionTree}
+            role='button'
           />
         </OverlayTrigger>
       </Navbar.Text>
