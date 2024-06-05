@@ -51,7 +51,7 @@ export default class HyperLinksSection extends Component {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px'
       }}
       >
-        <a href={link} style={{ cursor: 'pointer' }} target="_blank" rel="noreferrer">{link}</a>
+        <a href={link} role="button" target="_blank" rel="noreferrer">{link}</a>
         {this.removeLinkButton(link)}
       </div>
     );

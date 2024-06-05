@@ -106,7 +106,7 @@ class MeasurementsTable extends Component {
         <a
           key={`MeasurementSourceLink${measurement.id}`}
           onClick={() => this.navigateToSource(measurement)}
-          style={{ cursor: 'pointer' }}
+          role="button"
         >
           {measurement.value} {measurement.unit}
         </a>

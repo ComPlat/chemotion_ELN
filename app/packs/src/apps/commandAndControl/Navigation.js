@@ -41,11 +41,11 @@ export default class Navigation extends React.Component {
   navHeader() {
     return (
       <Navbar.Header className="collec-tree">
-        <Navbar.Text style={{ cursor: "pointer" }}>
+        <Navbar.Text>
           <i
             className="fa fa-list"
-            style={{ fontStyle: "normal" }}
             onClick={this.toggleDeviceList}
+            role='button'
           />
         </Navbar.Text>
         <Navbar.Text />

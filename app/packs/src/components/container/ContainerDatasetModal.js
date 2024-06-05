@@ -99,7 +99,6 @@ export default class ContainerDatasetModal extends Component {
       <div
         role="button"
         tabIndex={0}
-        style={{ cursor: 'pointer' }}
         onClick={() => {
           if (mode === 'attachments') {
             this.handleSwitchMode('metadata');
@@ -156,7 +155,8 @@ export default class ContainerDatasetModal extends Component {
                       className="fa fa-pencil"
                       aria-hidden="true"
                       onClick={this.toggleNameEditing}
-                      style={{ cursor: 'pointer', fontSize: '.8em', color: '#0275d8' }}
+                      style={{ fontSize: '.8em', color: '#0275d8' }}
+                      role="button"
                     />
                     )}
                   </div>

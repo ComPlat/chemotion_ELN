@@ -200,10 +200,10 @@ const DeviceHeader = ({ device, state, onChangeState }) => {
   }
 
   return (
-    <div style={{
-      width: '100%',
-      cursor: "pointer"
-    }}>
+    <div
+      style={{width: '100%'}}
+      role="button"
+    >
       {device.title}
       <Button
         size="sm"
