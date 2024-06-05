@@ -120,29 +120,21 @@ const showDecoupledIcon = (sample) => (sample.decoupled ? (
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
 
-const svgPreview = (showPreviews, sample) => (
-  <div style={{ float: 'left' }}>
-    {
-      showPreviews
-        ? (
-          <SvgWithPopover
-            hasPop
-            previewObject={{
-              txtOnly: '',
-              isSVG: true,
-              src: sample.svgPath
-            }}
-            popObject={{
-              title: sample.molecule_iupac_name,
-              src: sample.svgPath,
-              height: '26vh',
-              width: '52vw',
-            }}
-          />
-        )
-        : null
-    }
-  </div>
+const svgPreview = (sample) => (
+  <SvgWithPopover
+    hasPop
+    previewObject={{
+      txtOnly: '',
+      isSVG: true,
+      src: sample.svgPath
+    }}
+    popObject={{
+      title: sample.molecule_iupac_name,
+      src: sample.svgPath,
+      height: '26vh',
+      width: '52vw',
+    }}
+  />
 );
 
 function MoleculeHeader({
@@ -157,30 +149,20 @@ function MoleculeHeader({
       {sample.molecule?.inchikey === 'DUMMY' && sample.molfile == null
         ? (<td colSpan="3" style={{ position: 'relative ' }}><div><h4>(No-structure sample)</h4></div></td>)
         : (
-          <td colSpan="2" style={{ position: 'relative ' }}>
-            {svgPreview(showPreviews, sample)}
-            <div style={{ position: 'absolute', right: '3px', top: '14px' }}>
-              <OverlayTrigger placement="bottom" overlay={overlayToggle}>
-                <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
-                  <ChevronIcon direction={show ? 'down' : 'right'} />
-                </span>
-              </OverlayTrigger>
-            </div>
-            <div style={{ paddingLeft: 5, wordWrap: 'break-word' }}>
-              <h4><SampleName sample={sample} /></h4>
-            </div>
-            <div style={{
-              position: 'absolute', top: '10px', right: '25px', float: 'right'
-            }}
-            >
-              <ChemrepoLabels chemrepoId={sample.molecule.chem_repo && sample.molecule.chem_repo.id} />
-              <PubchemLabels element={sample} />
-            </div>
-            <div style={{
-              position: 'absolute', bottom: '10px', right: '25px', float: 'right'
-            }}
-            >
-              <ComputedPropLabel cprops={sample.molecule_computed_props} />
+          <td colSpan="2">
+            <div className='d-flex align-items-start gap-1'>
+              {showPreviews && svgPreview(sample)}
+              <h4 className='flex-grow-1'><SampleName sample={sample} /></h4>
+              <div className='d-flex align-items-center gap-1'>
+                {sample.molecule.chem_repo && sample.molecule.chem_repo.id && <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />}
+                <PubchemLabels element={sample} />
+                <ComputedPropLabel cprops={sample.molecule_computed_props} />
+                <OverlayTrigger placement="bottom" overlay={overlayToggle}>
+                  <span style={{ fontSize: 15, color: '#337ab7', lineHeight: '10px' }}>
+                    <ChevronIcon direction={show ? 'down' : 'right'} />
+                  </span>
+                </OverlayTrigger>
+              </div>
             </div>
           </td>
         )}
