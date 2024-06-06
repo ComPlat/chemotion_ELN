@@ -61,15 +61,12 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   renderCollectionsLabels(collectionName, labels, is_synchronized = false) {
-    if (labels.length === 0) return <span />;
-
+    if (labels.length === 0) return null;
     return (
-      <div>
-        <h3 className="popover-title">{collectionName}</h3>
-        <div className="popover-content">
-          {this.formatLabels(labels, is_synchronized)}
-        </div>
-      </div>
+      <>
+        <Popover.Header>{collectionName}</Popover.Header>
+        <Popover.Body>{this.formatLabels(labels, is_synchronized)}</Popover.Body>
+      </>
     );
   }
 
