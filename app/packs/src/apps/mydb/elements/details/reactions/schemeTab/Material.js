@@ -641,7 +641,10 @@ class Material extends Component {
                   metricPrefix={metric}
                   metricPrefixes={metricPrefixes}
                   precision={4}
-                  disabled={!permitOn(reaction) || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)}
+                  disabled={
+                    !permitOn(reaction)
+                    || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)
+                    || material.feedstock_gas_reference || material.gas}
                   onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
                   onMetricsChange={this.handleMetricsChange}
                   bsStyle={material.error_mass ? 'error' : massBsStyle}

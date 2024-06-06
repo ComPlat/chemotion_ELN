@@ -10,6 +10,11 @@ class GaseousReactionActions {
   gaseousReaction(boolean) {
     return boolean;
   }
+
+  // eslint-disable-next-line class-methods-use-this
+  SetFeedStockReferenceMolValue(value) {
+    return value;
+  }
 }
 
 export default alt.createActions(GaseousReactionActions);
