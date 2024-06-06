@@ -5,11 +5,13 @@ class GasPhaseReactionStore {
   constructor() {
     this.state = {
       gaseousReactionStatus: false,
+      feedStockReferenceMolValue: null,
     };
 
     this.bindListeners({
       handleGasButtonStatusChange: this.handleGasButtonStatusChange,
       gaseousReaction: this.gaseousReaction,
+      SetFeedStockReferenceMolValue: this.SetFeedStockReferenceMolValue,
     });
     this.bindActions(GaseousReactionActions);
   }
@@ -23,6 +25,12 @@ class GasPhaseReactionStore {
   gaseousReaction(boolean) {
     this.setState({
       gaseousReactionStatus: boolean,
+    });
+  }
+
+  SetFeedStockReferenceMolValue(value) {
+    this.setState({
+      feedStockReferenceMolValue: value,
     });
   }
 }

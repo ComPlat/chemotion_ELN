@@ -74,7 +74,7 @@ const DurationDefault = {
 };
 
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
-  .as(MomentUnit[newUnit]);
+.as(MomentUnit[newUnit]);
 
 const durationDiff = (startAt, stopAt, precise = false) => {
   if (startAt && stopAt) {
@@ -132,33 +132,33 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       gaseous: false
     })
-
+    
     reaction.short_label = this.buildReactionShortLabel()
     reaction.rxno = '';
     return reaction
   }
-
+  
   static buildReactionShortLabel() {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return 'New Reaction'; }
-
+    
     const number = currentUser.reactions_count + 1;
     const prefix = currentUser.reaction_name_prefix;
     return `${currentUser.initials}-${prefix}${number}`;
   }
-
+  
   static get temperature_unit() {
     return TemperatureUnit;
   }
-
+  
   get name() {
     return this._name;
   }
-
+  
   set name(name) {
     this._name = name;
   }
-
+  
   serialize() {
     return super.serialize({
       collection_id: this.collection_id,
@@ -201,7 +201,7 @@ export default class Reaction extends Element {
       gaseous: this.gaseous
     });
   }
-
+  
   set variations(variations) {
     /*
     variations data structure (also see Entities::ReactionVariationEntity):
@@ -215,63 +215,23 @@ export default class Reaction extends Element {
         },
         "analyses": [<id>, <id>, ...],
         "startingMaterials": {
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
+          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
           ...
         },
         "reactants": {
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
+          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
           ...
         },
         "products": {
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
+          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
           ...
         },
         "solvents": {
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
-          <material_id>: {
-            "mass": {"value": <number>, "unit": <string>},
-            "amount": {"value": <number>, "unit": <string>},
-            "volume": {"value": <number>, "unit": <string>},
-            "aux": {...}
-          },
+          <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
+          <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
           ...
         },
       },
@@ -281,7 +241,7 @@ export default class Reaction extends Element {
       },
       ...
     ]
-
+    
     Units are to be treated as immutable. Units and corresponding values
     are changed (not mutated in the present data-structure!) only for display or export
     (i.e., at the boundaries of the application).
@@ -295,27 +255,27 @@ export default class Reaction extends Element {
     }
     this._variations = variations;
   }
-
+  
   get variations() {
     return this._variations;
   }
-
+  
   // Reaction Duration
-
+  
   durationCalc() {
     return durationDiff(this.timestamp_start, this.timestamp_stop, true);
   }
-
+  
   get durationDisplay() {
     return this._durationDisplay;
   }
-
+  
   set durationDisplay(newDuration) {
     const { fromStartStop, nextUnit, nextValue } = newDuration;
     const {
       dispUnit, memUnit, memValue
     } = this._durationDisplay || {};
-
+    
     if (fromStartStop) {
       const d = durationDiff(this.timestamp_start, this.timestamp_stop);
       if (d) {
@@ -354,19 +314,19 @@ export default class Reaction extends Element {
       this._durationDisplay = DurationDefault;
     }
   }
-
+  
   get duration() {
     return this._duration;
   }
-
+  
   set duration(duration) {
     this._duration = duration;
   }
-
+  
   get durationUnit() {
     return this._durationDisplay.dispUnit;
   }
-
+  
   convertDurationDisplay() {
     const duration = this._duration;
     if (this._durationDisplay && this._durationDisplay.memValue !== '') { return null; }
@@ -384,122 +344,122 @@ export default class Reaction extends Element {
     this._durationDisplay = { ...DurationDefault };
     return null;
   }
-
+  
   // Reaction Temperature
-
+  
   get temperature_display() {
     const userText = this._temperature.userText;
     if (userText !== '') { return userText; }
-
+    
     if (this._temperature.data.length === 0) { return ''; }
-
+    
     const arrayData = this._temperature.data;
     const maxTemp = Math.max(...arrayData.map(o => o.value));
     const minTemp = Math.min(...arrayData.map(o => o.value));
-
+    
     if (minTemp === maxTemp) { return minTemp; }
     return `${minTemp} ~ ${maxTemp}`;
   }
-
-
+  
+  
   get temperature() {
     return this._temperature
   }
-
+  
   set temperature(temperature) {
     this._temperature = temperature
   }
-
+  
   get description_contents() {
     return this.description.ops.map(s => s.insert).join()
   }
-
+  
   get observation_contents() {
     return this.observation.ops.map(s => s.insert).join()
   }
-
+  
   concat_text_observation(content) {
     const insertDelta = new Delta().insert(content);
     const observationDelta = new Delta(this.observation);
     const composedDelta = observationDelta.concat(insertDelta);
     this.observation = composedDelta;
   }
-
+  
   convertTemperature(newUnit) {
     const temperature = this._temperature
     const oldUnit = temperature.valueUnit;
     temperature.valueUnit = newUnit;
-
+    
     // If userText is number only, treat as normal temperature value
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
       temperature.userText = convertTemperature(temperature.userText, oldUnit, newUnit).toFixed(2);
-
+      
       return temperature;
     }
-
+    
     temperature.data.forEach((data, index, theArray) => {
       theArray[index].value = convertTemperature(data.value, oldUnit, newUnit).toFixed(2);
     });
-
+    
     return temperature;
   }
-
+  
   get short_label() {
     return this._short_label
   }
-
+  
   set short_label(short_label) {
     this._short_label = short_label
   }
-
+  
   get tlc_solvents() {
     return this._tlc_solvents
   }
-
+  
   set tlc_solvents(solvents) {
     this._tlc_solvents = solvents
   }
-
+  
   get starting_materials() {
     return this._starting_materials
   }
-
+  
   set starting_materials(samples) {
     this._starting_materials = this._coerceToSamples(samples);
   }
-
+  
   get solvents() {
     return this._solvents
   }
-
+  
   set solvents(samples) {
     this._solvents = this._coerceToSamples(samples);
   }
-
+  
   get purification_solvents() {
     return this._purification_solvents;
   }
-
+  
   set purification_solvents(samples) {
     this._purification_solvents = this._coerceToSamples(samples);
   }
-
+  
   get reactants() {
     return this._reactants
   }
-
+  
   set reactants(samples) {
     this._reactants = this._coerceToSamples(samples);
   }
-
+  
   get products() {
     return this._products
   }
-
+  
   set products(samples) {
     this._products = this._coerceToSamples(samples);
   }
-
+  
   get samples() {
     return [
       ...this.starting_materials || [],
@@ -509,7 +469,7 @@ export default class Reaction extends Element {
       ...this.products || [],
     ];
   }
-
+  
   buildCopy(params = {}) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
@@ -526,14 +486,14 @@ export default class Reaction extends Element {
     copy.products = this.products.map(
       sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
     );
-
+    
     copy.rebuildProductName();
     copy.container = Container.init();
     copy.can_update = true;
     copy.can_copy = false;
     return copy;
   }
-
+  
   static copyFromReactionAndCollectionId(reaction, collection_id) {
     const target = Segment.buildCopy(reaction.segments);
     const params = {
@@ -550,26 +510,26 @@ export default class Reaction extends Element {
     copy.name = copy.nameFromRole(copy.role);
     return copy;
   }
-
+  
   title() {
     const short_label = this.short_label ? this.short_label : ''
     return this.name ? `${short_label} ${this.name}` : short_label
   }
-
+  
   addMaterial(material, group) {
     const materials = this[group];
     const newMaterial = this.materialPolicy(material, null, group);
     this[group] = [...materials, newMaterial];
-
+    
     this.rebuildReference(newMaterial);
     this.setPositions(group);
   }
-
+  
   addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp) {
     const materials = this[tagGp];
     const idx = materials.indexOf(tagMaterial);
     const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
-
+    
     if (idx === -1) {
       this[tagGp] = [...materials, newSrcMaterial];
     } else {
@@ -579,11 +539,11 @@ export default class Reaction extends Element {
         ...materials.slice(idx),
       ];
     }
-
+    
     this.rebuildReference(newSrcMaterial);
     this.setPositions(tagGp);
   }
-
+  
   deleteMaterial(material, group) {
     const materials = this[group];
     const idx = materials.indexOf(material);
@@ -591,11 +551,11 @@ export default class Reaction extends Element {
       ...materials.slice(0, idx),
       ...materials.slice(idx + 1),
     ];
-
+    
     this.rebuildReference(material);
     this.setPositions(group);
   }
-
+  
   swapMaterial(srcMaterial, tagMaterial, group) {
     const srcIdx = this[group].indexOf(srcMaterial);
     const tagIdx = this[group].indexOf(tagMaterial);
@@ -609,11 +569,11 @@ export default class Reaction extends Element {
       ...groupWoSrc.slice(tagIdx),
     ];
     this[group] = newGroup.filter(o => o != null) || [];
-
+    
     this.rebuildReference(srcMaterial);
     this.setPositions(group);
   }
-
+  
   moveMaterial(srcMaterial, srcGp, tagMaterial, tagGp) {
     if (srcGp === tagGp) {
       this.swapMaterial(srcMaterial, tagMaterial, tagGp);
@@ -622,30 +582,30 @@ export default class Reaction extends Element {
       this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp);
     }
   }
-
+  
   setPositions(group) {
     this[group] = this[group].map((m, idx) => (
       Object.assign({}, m, { position: idx })
     ));
   }
-
+  
   // We will process all reaction policy here
   // If oldGroup = null -> drag new Sample into Reaction
   // Else -> moving between Material Group
   materialPolicy(material, oldGroup, newGroup) {
     if (newGroup == "products") {
       material.amountType = 'real';
-
+      
       // we don't want to copy loading from sample
       if (material.contains_residues) {
         material.loading = 0.0;
       }
-
+      
       material.isSplit = false;
       material.reaction_product = true;
       material.equivalent = 0;
       material.reference = false;
-
+      
       if (material.parent_id) {
         material.start_parent = material.parent_id
         material.parent_id = null
@@ -657,34 +617,34 @@ export default class Reaction extends Element {
       if (newGroup === "solvents") {
         material.reference = false;
       }
-
+      
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
     } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
-
+      
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent
       }
     }
-
+    
     this.shortLabelPolicy(material, oldGroup, newGroup);
     this.namePolicy(material, oldGroup, newGroup);
     if (!material.coefficient || material.coefficient < 0) {
       material.coefficient = 1.0;
     }
     material.waste = false;
-
+    
     return material;
   }
-
+  
   shortLabelPolicy(material, oldGroup, newGroup) {
     if (oldGroup) {
       // Save previous short_label
       material[`short_label_${oldGroup}`] = material.short_label;
-
+      
       // Reassign previous short_label if present
       if (material[`short_label_${newGroup}`]) {
         material.short_label = material[`short_label_${newGroup}`];
@@ -712,22 +672,22 @@ export default class Reaction extends Element {
       }
     }
   }
-
+  
   namePolicy(material, oldGroup, newGroup) {
     this.rebuildProductName();
-
+    
     if (oldGroup && oldGroup == "products") {
       // Blank name if FROM "products"
       material.name = "";
       return 0;
     }
-
+    
     if (newGroup == "products") {
       let productName = String.fromCharCode('A'.charCodeAt(0) + this.products.length);
       material.name = this.short_label + "-" + productName;
     }
   }
-
+  
   rebuildProductName() {
     let short_label = this.short_label
     this.products.forEach(function (product, index, arr) {
@@ -735,72 +695,72 @@ export default class Reaction extends Element {
       arr[index].name = short_label + "-" + productName;
     })
   }
-
+  
   rebuildReference(material) {
     if (this.referenceMaterial) {
       let referenceMaterial = this.referenceMaterial
       let reference = this.starting_materials.find(function (m) {
         return referenceMaterial.id === m.id;
       })
-
+      
       // if referenceMaterial exists,
       // referenceMaterialGroup must be either 'starting_materials' or 'reactants'
       if (!reference) reference = this.reactants.find(m => m.id === referenceMaterial.id);
-
+      
       if (!reference && this.starting_materials.length > 0) {
         this._setAsReferenceMaterial(this.starting_materials[0]);
       } else {
         this._updateEquivalentForMaterial(material);
       }
     }
-
+    
     this.products.forEach(function (product, index, arr) {
       arr[index].reference = false;
     })
   }
-
+  
   _coerceToSamples(samples) {
     return samples && samples.map(s => new Sample(s)) || []
   }
-
+  
   sampleById(sampleID) {
     return this.samples.find((sample) => {
       return sample.id == sampleID;
     })
   }
-
+  
   get referenceMaterial() {
     return this.samples.find((sample) => {
       return sample.reference;
     })
   }
-
+  
   get sampleCount() {
     return this.samples.length;
   }
-
+  
   markSampleAsReference(sampleID) {
     this.samples.forEach((sample) => {
       sample.reference = sample.id == sampleID;
     })
   }
-
+  
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
     sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
   }
-
+  
   _setAsReferenceMaterial(sample) {
     sample.equivalent = 1;
     sample.reference = true;
   }
-
+  
   _updateEquivalentForMaterial(sample) {
     if (this.referenceMaterial && this.referenceMaterial.amount_mol) {
       sample.equivalent = sample.amount_mol / this.referenceMaterial.amount_mol;
     }
   }
-
+  
   get svgPath() {
     if (this.reaction_svg_file && this.reaction_svg_file != '***') {
       if (this.reaction_svg_file.includes('<svg')) {
@@ -810,44 +770,44 @@ export default class Reaction extends Element {
       }
     }
     else
-      return `images/wild_card/no_image_180.svg`
+    return `images/wild_card/no_image_180.svg`
   }
-
+  
   SMGroupValid() {
     let result = true;
     this.starting_materials.map((sample) => {
       if (!sample.isValid)
         result = false;
     });
-
+    
     return result;
   }
-
+  
   hasMaterials() {
     return this.starting_materials.length > 0 || this.reactants.length > 0 || this.solvents.length > 0 || this.products.length > 0;
   }
-
+  
   hasSample(sampleId) {
     return this.samples.find((sample) => {
       return sample.id == sampleId
     });
   }
-
+  
   hasPolymers() {
     return this.samples.find((sample) => {
       return sample.contains_residues
     });
   }
-
+  
   getReferenceMaterial() {
     return this.referenceMaterial;
   }
-
+  
   updateMaterial(material, refreshCoefficient) {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
-
+    
     while (i < cats.length) {
       const groupName = `_${cats[i]}`;
       group = this[groupName];
@@ -856,17 +816,20 @@ export default class Reaction extends Element {
         if (index >= 0) {
           const mat = new Sample(material);
           mat.reference = group[index].reference;
+          mat.feedstock_gas_reference = group[index].feedstock_gas_reference;
+          mat.gas = group[index].gas;
+          mat.gas_phase_data = group[index].gas_phase_data;
           mat.updateChecksum();
           group[index] = mat;
           break;
         }
       }
-
+      
       i += 1;
     }
     this.refreshEquivalent(material, refreshCoefficient);
   }
-
+  
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
     const refMat = this.samples.find((sample) => sample.reference);
@@ -881,7 +844,7 @@ export default class Reaction extends Element {
                 m.coefficient = refreshCoefficient.coefficient;
               }
             }
-
+            
             if (g === '_products') {
               const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
               m.equivalent = m.amount_mol / refMat.amount_mol / stoichiometryCoeff;
@@ -894,97 +857,97 @@ export default class Reaction extends Element {
       });
     }
   }
-
+  
   // literatures
-
+  
   get literatures() {
     return this._literatures || {};
   }
-
+  
   get research_plans() {
-      return this._research_plans || {};
-    }
-
+    return this._research_plans || {};
+  }
+  
   set literatures(literatures) {
     this._literatures = literatures;
   }
-
+  
   set research_plans(research_plans) {
     this._research_plans = research_plans;
   }
-
+  
   get totalVolume() {
     let totalVolume = 0.0;
     const materials = [...this.starting_materials,
       ...this.reactants,
       ...this.products,
       ...this.solvents];
-    materials.map(m => totalVolume += m.amount_l);
-    return totalVolume;
-  }
-
-  get purificationSolventVolume() {
-    let purificationSolventVolume = 0.0;
-    const materials = [...this.purification_solvents];
-    materials.map(m => purificationSolventVolume += m.amount_l);
-    return purificationSolventVolume;
-  }
-
-  get solventVolume() {
-    let solventVolume = 0.0;
-    const materials = [...this.solvents];
-    materials.map(m => solventVolume += m.amount_l);
-    return solventVolume;
-  }
-
-  // overwrite isPendingToSave method in models/Element.js
-  get isPendingToSave() {
-    return !isEmpty(this) && (this.isNew || this.changed);
-  }
-
-  extractNameFromOri(origin) {
-    const ori = origin || this.origin;
-    const oriSLabel = ori && ori.short_label;
-    const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
-    const name = `According to General Procedure ${oriSLNum}`;
-    return name;
-  }
-
-  nameFromRole(role) {
-    let name = this.name;
-    const sLabel = this.short_label;
-    const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
-
-    switch (role) {
-      case 'gp':
+      materials.map(m => totalVolume += m.amount_l);
+      return totalVolume;
+    }
+    
+    get purificationSolventVolume() {
+      let purificationSolventVolume = 0.0;
+      const materials = [...this.purification_solvents];
+      materials.map(m => purificationSolventVolume += m.amount_l);
+      return purificationSolventVolume;
+    }
+    
+    get solventVolume() {
+      let solventVolume = 0.0;
+      const materials = [...this.solvents];
+      materials.map(m => solventVolume += m.amount_l);
+      return solventVolume;
+    }
+    
+    // overwrite isPendingToSave method in models/Element.js
+    get isPendingToSave() {
+      return !isEmpty(this) && (this.isNew || this.changed);
+    }
+    
+    extractNameFromOri(origin) {
+      const ori = origin || this.origin;
+      const oriSLabel = ori && ori.short_label;
+      const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
+      const name = `According to General Procedure ${oriSLNum}`;
+      return name;
+    }
+    
+    nameFromRole(role) {
+      let name = this.name;
+      const sLabel = this.short_label;
+      const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
+      
+      switch (role) {
+        case 'gp':
         name = `General Procedure ${sLNum}`;
         break;
-      case 'parts':
+        case 'parts':
         name = this.extractNameFromOri();
         break;
-      case 'single':
+        case 'single':
         name = `Single ${sLNum}`;
         break;
-      default:
+        default:
         break;
+      }
+      return name;
     }
-    return name;
-  }
-
-  set segments(segments) {
-    this._segments = (segments && segments.map(s => new Segment(s))) || [];
-  }
-
-  get segments() {
-    return this._segments || [];
-  }
-
-  updateMaxAmountOfProducts() {
-    const startingMaterialsList = this.starting_materials.filter(sample => sample.reference);
-    if (startingMaterialsList.length == 0) { return; }
-    const referenceSample = startingMaterialsList[0];
-
-    this.products.forEach(product => product.calculateMaxAmount(referenceSample));
-
-  }
+    
+    set segments(segments) {
+      this._segments = (segments && segments.map(s => new Segment(s))) || [];
+    }
+    
+    get segments() {
+      return this._segments || [];
+    }
+    
+    updateMaxAmountOfProducts() {
+      const startingMaterialsList = this.starting_materials.filter(sample => sample.reference);
+      if (startingMaterialsList.length == 0) { return; }
+      const referenceSample = startingMaterialsList[0];
+      
+      this.products.forEach(product => product.calculateMaxAmount(referenceSample));
+      
+    }
 }
