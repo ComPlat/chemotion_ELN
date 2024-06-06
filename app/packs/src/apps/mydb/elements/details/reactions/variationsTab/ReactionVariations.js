@@ -9,6 +9,7 @@ import {
 import { cloneDeep, isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
+import { parseNumericString } from 'src/utilities/MathUtils';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow,
   temperatureUnits, durationUnits, convertUnit, materialTypes, getVariationsRowName
@@ -176,7 +177,7 @@ function ValueUnitParser({
   const standardUnit = cellData.unit;
   const columnGroup = field.split('.')[0];
   const column = field.split('.').splice(1).join('.');
-  let value = Number(newValue);
+  let value = parseNumericString(newValue);
   if (column !== 'temperature' && value < 0) {
     value = 0;
   }
