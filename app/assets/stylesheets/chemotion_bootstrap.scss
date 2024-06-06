@@ -31,3 +31,8 @@ $table-bg: tranparent;
   line-height: 1;
   border-radius: 2.5px;
 }
+
+.popover-header:not(:first-child) {
+  border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
+  border-radius: 0;
+}
