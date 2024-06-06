@@ -220,7 +220,7 @@ export default class CollectionTree extends React.Component {
   collectionManagementButton() {
     return (
       <div className="take-ownership-btn">
-        <Button id="collection-management-button" size="sm" variant="danger"
+        <Button id="collection-management-button" size="xsm" variant="danger"
           title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
           onClick={() => this.handleCollectionManagementToggle()}>
           <i className="fa fa-cog"></i>
