@@ -265,9 +265,9 @@ export default class ElementsList extends React.Component {
 
       const title = (
         <>
-          <i className={iconClass} />
+          <i className={"me-1 " + iconClass} />
           {elementState.totalElements && elementState.totalElements[`${value}s`]}
-          ( {totalCheckedElements[value] || 0} )
+          ({totalCheckedElements[value] || 0})
         </>
       )
       const tabItem = (
