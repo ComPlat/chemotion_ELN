@@ -165,7 +165,7 @@ export default class ElementsTableSettings extends React.Component {
 
     const sampleSettings = (
       <>
-        <Form className="mt-3">
+        <Form>
           <Form.Check
             type="checkbox"
             onChange={this.handleToggleScheme}
@@ -209,14 +209,18 @@ export default class ElementsTableSettings extends React.Component {
       >
         <Popover.Header>
           Tab Layout
-          {showSettings &&
-            <> / Settings</>
-          }
         </Popover.Header>
         <Popover.Body>
           {tabLayoutContainerElement}
-          {showSettings && sampleSettings}
         </Popover.Body>
+        {(showSettings || true) &&
+          <>
+            <Popover.Header>Settings</Popover.Header>
+            <Popover.Body>
+              {sampleSettings}
+            </Popover.Body>
+          </>
+        }
       </Popover>
     )
 
