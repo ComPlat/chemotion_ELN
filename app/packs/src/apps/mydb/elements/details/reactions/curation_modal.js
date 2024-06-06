@@ -1,9 +1,7 @@
+import { BorderAllRounded } from '@material-ui/icons';
 import React, { Component , useState} from 'react';
-import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger} from 'react-bootstrap';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import DetailActions from 'src/stores/alt/actions/DetailActions';
-import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { forEach } from 'lodash';
+import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger, Panel, Alert} from 'react-bootstrap';
+
 
 
 export default class CurationModal extends Component {
@@ -20,6 +18,8 @@ export default class CurationModal extends Component {
       this.handleChange = this.handleChange.bind(this)
       this.handleSuggestChange = this.handleSuggestChange.bind(this)
       this.handleDictionaryLang = this.handleDictionaryLang.bind(this)
+      this.handleAlarmDismiss = this.handleAlarmDismiss.bind(this);
+      this.handleAlarmShow = this.handleAlarmShow.bind(this);
       this.state = {
         desc : this.clean_data(this.props.description),
         show : false, 
@@ -29,12 +29,20 @@ export default class CurationModal extends Component {
         suggestion_index : 0,
         correct_word : "",
         subscript_list : [],
-        dictionary_language: "US"
+        dictionary_language: "US",
+        show_alarm : false
         
       }
       
     }
 
+    handleAlarmDismiss() {
+      this.setState({ show_alarm: false });
+    }
+  
+    handleAlarmShow() {
+      this.setState({ show_alarm: true });
+    }
     downloadFile(file) {
       const { contents } = file;
       const link = document.createElement('a');
@@ -91,6 +99,7 @@ export default class CurationModal extends Component {
   
     handleShow() {
       this.setState({ show: true });
+      this.spell_check(this.state.desc)
     }
 
     handleSuggest(miss_spelled_words, index){
@@ -137,7 +146,8 @@ export default class CurationModal extends Component {
 
 
     spell_check(description){
-      var Typo = require("typo-js");
+      if(description !== undefined)
+{      var Typo = require("typo-js");
       var us_dictionary = new Typo("en_US", false, false, { dictionaryPath: "/typojs" });
       var cus_dictionary = new Typo("custom", false, false, { dictionaryPath: "/typojs" });
       var uk_dictionary = new Typo("en_UK", false, false, { dictionaryPath: "/typojs" })
@@ -155,7 +165,7 @@ export default class CurationModal extends Component {
       }
 
       for (let i = 0; i < word_array.length; i++){
-        var punctuation = /[\.\,\?\!\(\) \"\-]/g;
+        var punctuation = /[\.\,\?\!\(\) \"]/g;
         var double_space_regex= /\s\s/g
         word_array[i] = word_array[i].replace(punctuation, "");
         word_array[i] = word_array[i].replace(double_space_regex, " ")
@@ -187,6 +197,7 @@ export default class CurationModal extends Component {
       this.setState({mispelled_words: ms_words, subscript_list:ss_list})
       this.handleSuggest(ms_words, 0)
     }
+  else{}}
 
     clean_misspelled_array(input_array){
       const counts = {};
@@ -195,7 +206,6 @@ export default class CurationModal extends Component {
       return counts
     }
 
-  
 
     change_misspelling(description,selected_choice,ms_words,index){
       if (selected_choice !== ""){
@@ -214,6 +224,7 @@ export default class CurationModal extends Component {
     
     getHighlightedText(text, mispelled_words,ms_index,subscript_list) {
       // this.clean_misspelled_array(mispelled_words)
+      if(text !== undefined){
       var combined_array = mispelled_words.concat(subscript_list)
       var highlight = combined_array.join("|")
       var parts = text.split(new RegExp(`(${highlight})`, "gi"));
@@ -243,7 +254,7 @@ export default class CurationModal extends Component {
           <div>
             {list_items}
           </div>
-        );}
+        );}}
 
     uniq(a) {
       var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
@@ -261,23 +272,34 @@ export default class CurationModal extends Component {
     }
 
     clean_data(description){
+      if (description !== undefined){
         const array_input = Object.values(description);
         let array_output =[];
         array_input.forEach((element) => {
             array_output = array_output.concat(element.insert);
         });
         const str_out = (array_output.join(""));
-        return str_out;
+        return str_out;}
     }
 
     render() {
+      const AlertBox=({correct_word})=>{ 
+        if (this.state.show_alarm) {
+          return (
+            <Alert bsStyle="danger" onDismiss={this.handleAlarmDismiss}>
+              <h4>Added to dictionairy {correct_word}</h4>
+                <Button onClick={this.handleAlarmDismiss}>Hide Alert</Button>
+            </Alert>
+          );
+        }
+    
+        return null;
+      
+    }
+
       const Compo = ({ text, mispelled_words,index ,subscript_list}) => {
         
         return <p>{this.getHighlightedText(text, mispelled_words,index, subscript_list )}</p>;
-      };
-
-      const SubscriptBox =({text}) => {
-        return <p>{this.check_sub_script(text)}</p>
       };
 
       const SuggestBox = ({suggest_array}) =>{
@@ -302,53 +324,55 @@ export default class CurationModal extends Component {
       return (
         <div>
           <Button  onClick={this.handleShow}>
-            Check Spelling
-          </Button>
+            <span  title="Curate Data" className="glyphicon glyphicon-check"/>          </Button>
   
-          <Modal show={this.state.show} onHide={this.handleClose}>
+          <Modal show={this.state.show} onHide={this.handleClose} >
+          
             <Modal.Header closeButton>
-              <Modal.Title>Spell Check</Modal.Title>
+              <Modal.Title>Spell Check  selected language: {this.state.dictionary_language}  </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-            {/* <div>{this.state.mispelled_words[this.state.suggestion_index]}</div> */}
-              <div style={{border: "ridge",
-                padding: "10px",
-                fontFamily: "Arial",
-                borderRadius: "10px",}}>
-                <Compo text={this.state.desc} mispelled_words={this.state.mispelled_words} index={this.state.suggestion_index} subscript_list={this.state.subscript_list} /> 
-              </div>         
-              <div className="row"> 
-              {/* <Button
-            onClick={(4>5) ?
-              console.log("change to US")
-              : console.log("change to Uk")}
-            >{this.state.dictionary_language}</Button> */}
+            <Panel>
+           <Panel.Heading>
+      <ButtonToolbar>
                 <Button onClick={()=>this.spell_check(this.state.desc) }>spell check</Button>
                 <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
                 <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
                 <Button onClick={()=>this.reverse_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Go Back</Button>
-                <Button onClick={()=>this.handleChange()}> save </Button>
-                <Button onClick={()=> this.check_sub_script(this.state.desc)}> check subscript</Button>
-                <Button onClick={()=> this.handleDictionaryLang()}>change dictionary language to {this.state.dictionary_language}</Button>
-                {/* <Button onClick={()=> this.clean_misspelled_array(this.state.mispelled_words)}>clean mistakes</Button> */}
-              </div>
-              <h4>
+                <Button onClick={()=> {this.handleChange(); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button>
+                <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary?new_word=".concat(this.state.mispelled_words[this.state.suggestion_index]));this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}}>Add selected misspelled words</Button>
+                {/* <Button onClick={()=> this.check_sub_script(this.state.desc)}> check subscript</Button> */}
+                <Button onClick={()=> this.handleDictionaryLang()}><i class="fa fa-language" ></i></Button>
+      </ButtonToolbar>
+          </Panel.Heading>
+              <Panel.Body>
+                  <Compo text={this.state.desc} mispelled_words={this.state.mispelled_words} index={this.state.suggestion_index} subscript_list={this.state.subscript_list} /> 
+              </Panel.Body> 
+          <Panel>
+          <Panel.Heading>
+              <h5>
                   Suggestions for {this.state.mispelled_words[this.state.suggestion_index]}
-              </h4>
-              <div>selected language: {this.state.dictionary_language}</div>
+              </h5>
+          </Panel.Heading>
               <form>
-                <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
-                <legend>Or enter a new word</legend>
-                <input value={this.state.correct_word}
+                  <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
+                  <div>Or enter a new word</div>
+                  <input value={this.state.correct_word}
                   onChange={this.handleSuggestChange}
-                />
+                  />
               </form>
-              <a class="btn btn-success" href={"http://localhost:3000/api/v1/dictionary.json?new_word=".concat(this.state.correct_word)} target="_blank">add to dictionairy</a>
-              <a class="btn btn-success" onClick={() => this.downloadFile({
-                contents: "api/v1/dictionary.json?new_word=" + this.state.correct_word,
-                })}>
-              add to dictionairy</a>
-            </Modal.Body>
+              <Button bsStyle="success" 
+              onClick= {() => { 
+              fetch("http://localhost:3000/api/v1/dictionary?new_word=".concat(this.state.correct_word));   this.handleAlarmShow();
+              // this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index);
+           
+              }}>
+                  add to dictionary 
+              </Button>
+              <AlertBox correct_word={this.state.correct_word}></AlertBox>
+            </Panel>
+        </Panel>
+    </Modal.Body>
             <Modal.Footer>
               <Button onClick={this.handleClose}>Close</Button>
             </Modal.Footer>

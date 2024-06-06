@@ -122,9 +122,6 @@ export default class ReactionDescriptionEditor extends React.Component {
     if (this.reactQuillRef.current == null) {
       return;
     }
-  
-    console.log(this.props)
-   
     this.onChangeContent(editor);
   }
 

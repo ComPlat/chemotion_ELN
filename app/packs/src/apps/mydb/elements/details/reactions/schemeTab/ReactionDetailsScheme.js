@@ -244,6 +244,7 @@ export default class ReactionDetailsScheme extends Component {
 
   handleDescChange(description){
     const { reaction } = this.state
+    console.log(this.props)
     reaction.description = description
     this.setState({reaction :reaction})
   }
@@ -964,11 +965,6 @@ export default class ReactionDetailsScheme extends Component {
                         /> : <QuillViewer value={reaction.description} />
                     }
                   </div>
-                  {/* <div class="child inline-block-child"><CurationModal 
-                    description= {reaction.description.ops} 
-                    reaction={reaction} 
-                    onDescChange = {this.handleDescChange}/>
-                  </div>   */}
                 </FormGroup>
               </Col>
             </Row>
