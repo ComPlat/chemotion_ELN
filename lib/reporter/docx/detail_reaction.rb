@@ -59,6 +59,7 @@ module Reporter
             'reactants' => variation_materials(var, :reactants),
             'solvents' => variation_materials(var, :solvents),
             'products' => variation_products(var),
+            'notes' => var[:notes],
           }
         end
       end
