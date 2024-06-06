@@ -10,8 +10,10 @@
     float: left;
     width: 100%;
   }
-  .input-group .css-g1d714-ValueContainer, .input-group. .css-1hwfws3 {
+  .input-group .select-in-addon__value-container, .input-group .select-in-addon__control + div,
+  .input-group .css-1hwfws3, .input-group .css-1wa3eu0-placeholder {
     width: 86px;
+    text-align: left;
   }
 
   .css-yk16xz-control, .css-1pahdxg-control {
@@ -65,10 +67,16 @@
     flex-wrap: nowrap;
   }
 
-  .css-yt9ioa-option, .css-1n7v3ny-option, .css-4ljt47-MenuList, .css-11unzgr, .select-in-addon__menu-list {
+  .css-yt9ioa-option, .css-1n7v3ny-option, .select-in-addon__option,
+  .css-4ljt47-MenuList, .css-11unzgr, .select-in-addon__menu-list {
     width: 160px;
     white-space: normal;
     text-align: left;
+    overflow-x: hidden;
+  }
+
+  .css-4ljt47-MenuList, .css-11unzgr, .select-in-addon__menu-list {
+    background-color: #fff;
   }
 
   .css-1uccc91-singleValue {
