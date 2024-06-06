@@ -224,7 +224,7 @@ export default class ElementsTableSettings extends React.Component {
       <div className="position-absolute top-0 end-0">
         <OverlayTrigger trigger="click" placement="bottom" overlay={popoverSettings}>
           <Button
-            size="sm"
+            size="xsm"
             variant="light"
             className='m-2'
           >
