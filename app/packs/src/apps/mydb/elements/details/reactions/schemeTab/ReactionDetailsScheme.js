@@ -27,6 +27,7 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { convertTemperature, convertTime, convertTurnoverFrequency } from 'src/utilities/UnitsConversion';
+import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -309,7 +310,7 @@ export default class ReactionDetailsScheme extends Component {
       case 'FS':
       case 'gas':
         this.onReactionChange(
-          this.updatedReactionForFeedstockChange(changeEvent)
+          this.updatedReactionForFeedstockGasChange(changeEvent)
         );
         break;
       case 'gasFieldsChanged':
@@ -403,6 +404,9 @@ export default class ReactionDetailsScheme extends Component {
     const updatedSample = this.props.reaction.sampleById(sampleID);
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
+    if (updatedSample.feedstock_gas_reference) {
+      GaseousReactionActions.SetFeedStockReferenceMolValue(updatedSample.amount_mol);
+    }
     updatedSample.setAmount(amount);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
@@ -460,9 +464,11 @@ export default class ReactionDetailsScheme extends Component {
 
   updateMolValueForUpdatedSample(updatedSample, materialGroup) {
     const molValue = this.calculateMolValueForUpdatedSample(updatedSample, materialGroup);
-    if (molValue) {
-      console.log('befonre');
-      updatedSample.convertGramToUnit(molValue, 'mol');
+    if (molValue || molValue === 0) {
+/*       updatedSample.convertGramToUnit(molValue, 'mol');
+ */      if (updatedSample.feedstock_gas_reference) {
+        GaseousReactionActions.SetFeedStockReferenceMolValue(molValue);
+      }
     }
   }
 
@@ -473,6 +479,8 @@ export default class ReactionDetailsScheme extends Component {
     const idealGasConstant = 0.0821;
     const purity = updatedSample.purity || 1;
     const volume = updatedSample.amount_l;
+    const amountGram = updatedSample.amount_g;
+    const { density } = updatedSample.density;
     let molValue = 0;
     if (materialGroup === 'products') {
       const ppm = updatedSample.gas_phase_data?.part_per_million || null;
@@ -486,16 +494,25 @@ export default class ReactionDetailsScheme extends Component {
         temperature = (((value - 32) * 5) / 9) + 273.15;
       }
       if (ppm !== null && temperature !== 0) {
-        molValue = (ppm * purity * volume) / (idealGasConstant * temperature * 1000000);
+        if (volume) {
+          molValue = (ppm * purity * pressure * volume) / (idealGasConstant * temperature * 1000000);
+        } else {
+          molValue = density ? (ppm * purity * pressure * amountGram)
+          / (idealGasConstant * temperature * 1000000 * density) : 0;
+        }
       }
     } else {
       temperature = 294;
-      molValue = (pressure * purity * volume) / (idealGasConstant * temperature);
+      if (volume) {
+        molValue = (purity * pressure * volume) / (idealGasConstant * temperature);
+      } else {
+        molValue = density ? (purity * pressure * amountGram) / (idealGasConstant * temperature * density) : 0;
+      }
     }
     return molValue;
   }
 
-  updatedReactionForFeedstockChange(changeEvent) {
+  updatedReactionForFeedstockGasChange(changeEvent) {
     const {
       sampleID,
       value,
@@ -506,6 +523,9 @@ export default class ReactionDetailsScheme extends Component {
     const updatedSample = reaction.sampleById(sampleID);
     if (materialGroup === 'products') {
       updatedSample.gas = value;
+      if (!updatedSample.gas_phase_data) {
+        updatedSample.gas_phase_data = null;
+      }
     } else {
       updatedSample.feedstock_gas_reference = value;
     }
@@ -714,12 +734,12 @@ export default class ReactionDetailsScheme extends Component {
               if (!lockEquivColumn) {
                 sample.equivalent = sample.amount_g / sample.maxAmount;
               } else {
-                if (referenceMaterial && referenceMaterial.amount_value && !updatedSample._feedstock_gas_reference) {
+                if (referenceMaterial && referenceMaterial.amount_value && !updatedSample.feedstock_gas_reference) {
                   sample.setAmountAndNormalizeToGram({
                     value: sample.equivalent * referenceMaterial.amount_mol,
                     unit: 'mol',
                   });
-                } else if (sample.amount_value && !updatedSample._feedstock_gas_reference) {
+                } else if (sample.amount_value && !updatedSample.feedstock_gas_reference) {
                   sample.setAmountAndNormalizeToGram({
                     value: sample.equivalent * sample.amount_mol,
                     unit: 'mol'
@@ -736,14 +756,14 @@ export default class ReactionDetailsScheme extends Component {
             }
           }
         } else {
-          if ((!lockEquivColumn || materialGroup === 'products') && !updatedSample._feedstock_gas_reference) {
+          if (!lockEquivColumn || materialGroup === 'products') {
             // calculate equivalent, don't touch real amount
             sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
             // yield taking into account stoichiometry:
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value && !updatedSample._feedstock_gas_reference) {
+            if (referenceMaterial && referenceMaterial.amount_value && !updatedSample.feedstock_gas_reference) {
               sample.setAmountAndNormalizeToGram({
                 value: sample.equivalent * referenceMaterial.amount_mol,
                 unit: 'mol',
@@ -785,12 +805,12 @@ export default class ReactionDetailsScheme extends Component {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
         sample.equivalent = updatedSample.equivalent;
-        if (referenceMaterial && referenceMaterial.amount_value && !updatedSample._feedstock_gas_reference) {
+        if (referenceMaterial && referenceMaterial.amount_value && !updatedSample.feedstock_gas_reference) {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
           });
-        } else if (sample.amount_value && !updatedSample._feedstock_gas_reference) {
+        } else if (sample.amount_value && !updatedSample.feedstock_gas_reference) {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
             unit: 'mol'
