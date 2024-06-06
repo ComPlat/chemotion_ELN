@@ -17,3 +17,17 @@ $table-bg: tranparent;
   --bs-btn-border-color: rgba(0,0,0,0.1);
   --bs-btn-disabled-border-color: rgba(0,0,0,0.1);
 }
+
+.btn-xsm, .btn-group-xsm > .btn {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+
+.btn-xxsm, .btn-group-xxsm > .btn {
+  padding: 3px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 2.5px;
+}
