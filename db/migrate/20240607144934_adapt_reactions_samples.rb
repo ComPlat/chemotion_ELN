@@ -7,7 +7,7 @@ class AdaptReactionsSamples < ActiveRecord::Migration[6.1]
       turnover_number: nil,
       turnover_frequency: { value: nil, unit: 'TON/h' },
       time: { value: nil, unit: 'h' },
-      temperature: { value: nil, unit: '°C' }
+      temperature: { value: nil, unit: 'K' }
     }, null: true
   end
 end

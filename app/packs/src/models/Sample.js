@@ -771,7 +771,6 @@ export default class Sample extends Element {
           moles = density ? (part_per_million * amount_g)
            / (0.0821 * temperatureInKelvin * 1000000 * density * 1000) : 0;
         } */
-        console.log('zpdates TON value');
         this.updateTONValue(moles);
         return moles;
       }
@@ -827,7 +826,6 @@ export default class Sample extends Element {
       } else if (molFeedstockReference === null || molFeedstockReference === undefined) {
         value = currentTONValue;
       } else {
-        console.log('ton', moles, molFeedstockReference);
         value = moles / molFeedstockReference;
       }
       this.gas_phase_data.turnover_number = value;
@@ -874,9 +872,6 @@ export default class Sample extends Element {
         }
         case 'mol': {
           if (this.feedstock_gas_reference || this.gas) {
-            if (this.id === 1837) {
-              console.log('mol feedstock', amount_g, unit);
-            }
             return this.calculateMolesForFeedstockOrGas();
           }
           if (this.has_molarity) {
@@ -916,21 +911,20 @@ export default class Sample extends Element {
         case 'mg':
           return amount_value / 1000.0;
         case 'l': {
+          // amount in  gram for feedstock gas material is calculated according to equation of molecular weight x moles
+          if (this.feedstock_gas_reference || this.gas) {
+            const molecularWeight = this.molecule_molecular_weight;
+            const moles = this.calculateMolesForFeedstockOrGas(amount_value);
+            return moles * molecularWeight;
+          }
+/*           if (this.feedstock_gas_reference || this.gas) {
+            const molecularWeight = this.molecule_molecular_weight;
+            return (amount_value / (this.purity || 1.0)) * molecularWeight;
+          } */
           if (this.has_molarity) {
-            // amount in  gram for feedstock gas material in case of molarity needs to be checked
-            if (this.feedstock_gas_reference || this.gas) {
-              const molecularWeight = this.molecule_molecular_weight;
-              return (amount_value / (this.purity || 1.0)) * molecularWeight;
-            }
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
           } if (this.has_density) {
-            // amount in  gram for feedstock gas material is calculated according to equation of molecular weight x moles
-            if (this.feedstock_gas_reference || this.gas) {
-              const molecularWeight = this.molecule_molecular_weight;
-              const moles = this.calculateMolesForFeedstockOrGas(amount_value);
-              return moles * molecularWeight;
-            }
             return amount_value * (this.density || 1.0) * 1000;
           }
           return 0;

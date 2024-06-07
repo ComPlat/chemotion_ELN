@@ -950,4 +950,20 @@ export default class Reaction extends Element {
       this.products.forEach(product => product.calculateMaxAmount(referenceSample));
       
     }
+
+  findFeedstockMaterialValue() {
+    const materials = [...this.starting_materials, ...this.reactants];
+    const feedstockMaterial = materials.find((material) => material.feedstock_gas_reference);
+    if (feedstockMaterial) {
+      let calculateMolValue = feedstockMaterial.target_amount_value;
+      if (feedstockMaterial.target_amount_unit === 'mol') {
+        return calculateMolValue;
+      } if (feedstockMaterial.target_amount_unit === 'l') {
+        const { purity } = feedstockMaterial;
+        calculateMolValue /= (0.0821 * 294 * purity);
+        return calculateMolValue;
+      }
+    }
+    return null;
+  }
 }
