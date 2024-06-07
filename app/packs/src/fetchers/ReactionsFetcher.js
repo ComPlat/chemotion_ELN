@@ -20,7 +20,6 @@ export default class ReactionsFetcher {
           if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
             const molValue = reaction.findFeedstockMaterialValue();
-            console.log(molValue);
             GaseousReactionActions.SetFeedStockReferenceMolValue(molValue);
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));
