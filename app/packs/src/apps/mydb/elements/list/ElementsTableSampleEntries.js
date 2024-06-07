@@ -25,7 +25,6 @@ import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { ShowUserLabels } from 'src/components/UserLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
-import Label from 'src/components/legacyBootstrap/Label'
 import ChevronIcon from 'src/components/common/ChevronIcon';
 
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
@@ -95,10 +94,7 @@ TopSecretIcon.propTypes = {
 
 function XvialIcon({ label }) {
   return (label || '').match(/^X\d+.*/) ? (
-    <i
-      className="icon-xvial"
-      style={{ marginRight: '5px', fontSize: '20px' }}
-    />
+    <i className="icon-xvial px-1 fs-5"/>
   ) : null;
 }
 
@@ -111,11 +107,9 @@ XvialIcon.defaultProps = {
 };
 
 const showDecoupledIcon = (sample) => (sample.decoupled ? (
-  <div className="decoupled-icon" onClick={(e) => e.stopPropagation()}>
-    <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
-      <Label><i className="fa fa-chain-broken" aria-hidden="true" /></Label>
-    </OverlayTrigger>
-  </div>
+  <OverlayTrigger placement="top" overlay={<Tooltip id="tip_decoupled_icon">is decoupled from molecule</Tooltip>}>
+    <Button size="xxsm" variant="light"><i className="fa fa-chain-broken" aria-hidden="true" /></Button>
+  </OverlayTrigger>
 ) : null);
 
 const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
@@ -345,22 +339,21 @@ export default class ElementsTableSampleEntries extends Component {
             style={{ cursor: 'pointer', verticalAlign: 'middle' }}
             onClick={showDetails.bind(this, sample.id)}
           >
-            {sample.title(selected)}
+            <div className='d-flex justify-content-between'>
+              {sample.title(selected)}
 
-            <div style={{
-              float: 'right', display: 'flex', alignItems: 'center', gap: '5px'
-            }}
-            >
-              <div style={{ marginTop: '1px' }}><CommentIcon commentCount={sample.comment_count} /></div>
-              <div style={{ marginTop: '3px' }}><ShowUserLabels element={sample} /></div>
-              <div style={{ marginTop: '3px' }}><XvialIcon label={sample.external_label} /></div>
-              <div style={{ marginTop: '1px' }}><ElementReactionLabels element={sample} key={`${sample.id}_reactions`} /></div>
-              <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
-              <GenericElementLabels element={sample} key={`${sample.id}_element`} />
-              <ElementCollectionLabels element={sample} key={`${sample.id}`} />
-              <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-              {showDecoupledIcon(sample)}
-              <TopSecretIcon element={sample} />
+              <div className='d-flex align-items-center gap-1'>
+                <CommentIcon commentCount={sample.comment_count} />
+                <ShowUserLabels element={sample} />
+                <XvialIcon label={sample.external_label} />
+                <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+                <ElementWellplateLabels element={sample} key={`${sample.id}_wellplate`} />
+                <GenericElementLabels element={sample} key={`${sample.id}_element`} />
+                <ElementCollectionLabels element={sample} key={`${sample.id}`} />
+                <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+                {showDecoupledIcon(sample)}
+                <TopSecretIcon element={sample} />
+              </div>
             </div>
           </td>
           {dragColumn(sample, showDragColumn, DragDropItemTypes.SAMPLE, this.state.targetType)}

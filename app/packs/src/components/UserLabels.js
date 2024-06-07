@@ -158,7 +158,7 @@ class UserLabelModal extends Component {
       }
       return (
         <tr key={`row_${g.id}`}>
-          <td md={3}><Badge style={badgeStyle}>{g.title}</Badge></td>
+          <td md={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
           <td md={3}>{accessLabel}</td>
           <td md={3}>{g.description}</td>
           <td md={3}>{g.color}</td>
@@ -374,6 +374,7 @@ class EditUserLabels extends React.Component {
         value: ll.id,
         label: (
           <Badge
+            bg="custom"
             style={{
               backgroundColor: ll.color,
               borderRadius: ll.access_level === 2 ? '0.25em' : '10px',
@@ -388,22 +389,19 @@ class EditUserLabels extends React.Component {
       selectedLabels = defaultLabels;
     }
 
-    const labelOptions =
-      (this.state.labels || [])
-        .filter(r => r.access_level === 2 || r.user_id === currentUser.id)
-        .map(ll => ({
-          value: ll.id,
-          label: (
-            <Badge
-              style={{
-                backgroundColor: ll.color,
-                borderRadius: ll.access_level === 2 ? '0.25em' : '10px',
-              }}
-            >
-              {ll.title}
-            </Badge>
-          ),
-        })) || [];
+    const labelOptions = (this.state.labels || [])
+      .filter((r) => r.access_level === 2 || r.user_id === currentUser.id)
+      .map((ll) => ({
+        value: ll.id,
+        label: (
+          <Badge
+            bg="custom"
+            style={{ backgroundColor: ll.color }}
+          >
+            {ll.title}
+          </Badge>
+        ),
+      })) || [];
 
     return (
       <div>
@@ -474,6 +472,7 @@ class ShowUserLabels extends React.Component {
     const elementLabels = (showLabels || []).map((ll) => (
       <Badge
         key={`bg_${ll.id}`}
+        bg="custom"
         style={{
           backgroundColor: ll.color,
           color: 'white',
@@ -487,13 +486,7 @@ class ShowUserLabels extends React.Component {
       </Badge>
     ));
 
-    return (
-      <span>
-        &nbsp;
-        {elementLabels}
-        &nbsp;
-      </span>
-    );
+    return ({elementLabels});
   }
 }
 
