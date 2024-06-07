@@ -7,7 +7,6 @@ import {
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -17,7 +16,6 @@ export default class ElementCollectionLabels extends React.Component {
     };
 
     this.handleOnClick = this.handleOnClick.bind(this);
-    this.preventOnClick = this.preventOnClick.bind(this);
   }
 
   handleOnClick(label, e, is_synchronized) {
@@ -27,10 +25,6 @@ export default class ElementCollectionLabels extends React.Component {
     const url = `${collectionUrl}/${label.id}/${this.state.element.type}/${this.state.element.id}`;
 
     Aviator.navigate(url);
-  }
-
-  preventOnClick(e) {
-    e.stopPropagation();
   }
 
   labelStyle(label) {
@@ -115,24 +109,20 @@ export default class ElementCollectionLabels extends React.Component {
     );
 
     return (
-      <div style={{ display: 'inline-block' }} onClick={this.preventOnClick}>
-        <OverlayTrigger
-          trigger="click"
-          rootClose
-          placement={this.props.placement}
-          overlay={collectionOverlay}
-        >
-          <span className="collection-label" key={element.id}>
-            <Label>
-              <i className="fa fa-list" />
-              {` ${labels.length} `}
-              {' - '}
-              {`${total_shared_collections} `}
-              <i className="fa fa-share-alt" />
-            </Label>
-          </span>
-        </OverlayTrigger>
-      </div>
+      <OverlayTrigger
+        trigger="click"
+        rootClose
+        placement={this.props.placement}
+        overlay={collectionOverlay}
+      >
+        <Button size="xxsm" variant="light" key={element.id}> 
+          <i className="fa fa-list" />
+          {` ${labels.length} `}
+          {' - '}
+          {`${total_shared_collections} `}
+          <i className="fa fa-share-alt" /> 
+        </Button>
+      </OverlayTrigger>
     );
   }
 }
