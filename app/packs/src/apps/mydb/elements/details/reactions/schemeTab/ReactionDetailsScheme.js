@@ -458,22 +458,17 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-/*   updateTONValueForUpdatedSample(updatedSample) {
-    updatedSample.calculateTONValue();
-  } */
-
-  updateMolValueForUpdatedSample(updatedSample, materialGroup) {
-    const molValue = this.calculateMolValueForUpdatedSample(updatedSample, materialGroup);
+  updateMolValueForUpdatedSample(updatedSample) {
+    const molValue = updatedSample.amount_mol;
     if (molValue || molValue === 0) {
-/*       updatedSample.convertGramToUnit(molValue, 'mol');
- */      if (updatedSample.feedstock_gas_reference) {
-        GaseousReactionActions.SetFeedStockReferenceMolValue(molValue);
+      if (updatedSample.feedstock_gas_reference) {
+        GaseousReactionActions.SetFeedStockReferenceMolValue(updatedSample.amount_mol);
       }
     }
   }
 
   // eslint-disable-next-line class-methods-use-this
-  calculateMolValueForUpdatedSample(updatedSample, materialGroup) {
+  /* calculateMolValueForUpdatedSample(updatedSample, materialGroup) {
     const pressure = 1;
     let temperature;
     const idealGasConstant = 0.0821;
@@ -511,7 +506,7 @@ export default class ReactionDetailsScheme extends Component {
     }
     return molValue;
   }
-
+ */
   updatedReactionForFeedstockGasChange(changeEvent) {
     const {
       sampleID,
@@ -529,7 +524,7 @@ export default class ReactionDetailsScheme extends Component {
     } else {
       updatedSample.feedstock_gas_reference = value;
     }
-    this.updateMolValueForUpdatedSample(updatedSample, materialGroup);
+    this.updateMolValueForUpdatedSample(updatedSample);
     return this.updatedReactionWithSample(this.updatedSamplesForFeedstockChange.bind(this), updatedSample, type);
   }
 
@@ -570,18 +565,18 @@ export default class ReactionDetailsScheme extends Component {
     const {
       sampleID,
       unit,
+      value,
       field,
     } = changeEvent;
     const { reaction } = this.props;
     const updatedSample = reaction.sampleById(sampleID);
-    const valueToFormat = updatedSample.gas_phase_data[field].value;
     let convertedValues;
     if (field === 'temperature') {
-      convertedValues = convertTemperature(valueToFormat, unit);
+      convertedValues = convertTemperature(value, unit);
     } else if (field === 'time') {
-      convertedValues = convertTime(valueToFormat, unit);
+      convertedValues = convertTime(value, unit);
     } else if (field === 'turnover_frequency') {
-      convertedValues = convertTurnoverFrequency(valueToFormat, unit);
+      convertedValues = convertTurnoverFrequency(value, unit);
     }
     updatedSample.gas_phase_data[field].value = convertedValues[0];
     updatedSample.gas_phase_data[field].unit = convertedValues[1];

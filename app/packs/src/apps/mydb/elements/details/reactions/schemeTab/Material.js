@@ -940,7 +940,8 @@ class Material extends Component {
     return (
       <div style={{ display: 'inline-block', maxWidth: '100%' }}>
         <div className="inline-inside">
-          {gaseousReactionStore.gaseousReactionStatus ? this.feedstockGas(material) : null}
+          {gaseousReactionStore.gaseousReactionStatus && materialGroup !== 'solvents'
+            ? this.feedstockGas(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
             <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}
