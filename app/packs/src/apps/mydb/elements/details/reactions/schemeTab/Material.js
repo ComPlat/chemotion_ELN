@@ -515,7 +515,7 @@ class Material extends Component {
             <div>
               <NumeralInputWithUnitsCompo
                 key={material.id}
-                value={material.coefficient}
+                value={material.coefficient ?? 1}
                 onChange={this.handleCoefficientChange}
                 name="coefficient"
               />
