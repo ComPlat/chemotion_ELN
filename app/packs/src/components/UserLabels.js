@@ -157,7 +157,7 @@ class UserLabelModal extends Component {
       }
       return (
         <tr key={`row_${g.id}`}>
-          <td md={3}><Badge style={badgeStyle}>{g.title}</Badge></td>
+          <td md={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
           <td md={3}>{accessLabel}</td>
           <td md={3}>{g.description}</td>
           <td md={3}>{g.color}</td>
@@ -368,6 +368,7 @@ class EditUserLabels extends React.Component {
         value: ll.id,
         label: (
           <Badge
+            bg="custom"
             style={{
               backgroundColor: ll.color,
               borderRadius:
@@ -390,7 +391,12 @@ class EditUserLabels extends React.Component {
       .map((ll) => ({
         value: ll.id,
         label: (
-          <Badge style={{ backgroundColor: ll.color }}>{ll.title}</Badge>
+          <Badge 
+            bg="custom"
+            style={{ backgroundColor: ll.color }}
+          >
+            {ll.title}
+          </Badge>
         ),
       })) || [];
 
@@ -448,19 +454,16 @@ class ShowUserLabels extends React.Component {
       : [];
 
     if (!MatrixCheck(currentUser && currentUser.matrix, UL_FUNC_NAME)) {
-      return (<span />);
+      return null;
     }
     const elementLabels = (labels || []).filter((r) => (
       (curLableIds || []).includes(r.id) && (r.access_level > 0 || r.user_id === currentUser.id)
     )).map((ll) => (
       <Badge
         key={`bg_${ll.id}`}
+        bg="custom"
         style={{
           backgroundColor: ll.color,
-          color: 'white',
-          borderColor: 'white',
-          borderStyle: 'solid',
-          borderWidth: 'thin',
           borderRadius: (ll.access_level === 1 && ll.user_id !== currentUser.id) ? 'unset' : '10px'
         }}
       >
@@ -468,13 +471,7 @@ class ShowUserLabels extends React.Component {
       </Badge>
     ));
 
-    return (
-      <span>
-        &nbsp;
-        {elementLabels}
-        &nbsp;
-      </span>
-    );
+    return ({elementLabels});
   }
 }
 

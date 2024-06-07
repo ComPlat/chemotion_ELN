@@ -37,28 +37,6 @@ th.drag {
   margin-top: 11px;
 }
 
-.decoupled-icon span {
-  border: 1px solid grey;
-  background-color: white;
-  color: black;
-  cursor: auto;
-}
-
-.collection-label {
-  display: inline-block;
-  cursor: pointer;
-}
-
-.collection-label span {
-  border: 1px solid grey;
-  background-color: white;
-  color: black;
-}
-
-.collection-label span:hover {
-  background-color: #19B5FE;
-}
-
 .collection-overlay > .popover-content {
   overflow-y: scroll;
   padding: 0px !important;
