@@ -67,7 +67,6 @@ const createEditor = (configs, availableEditors) => {
 const createEditors = (_state = {}) => {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors || {};
-  console.log(availableEditors, "available Editors");
   const grantEditors = matriceConfigs
     .map(({ configs }) => createEditor(configs, availableEditors.editors))
     .filter(Boolean);
@@ -80,7 +79,7 @@ const createEditors = (_state = {}) => {
       }),
     },
     ...grantEditors,
-  ].reduce((acc, args) => ({ ...acc, ...args }), {}); 
+  ].reduce((acc, args) => ({ ...acc, ...args }), {});
   return editors;
 };
 
@@ -199,7 +198,7 @@ WarningBox.propTypes = {
 
 const initEditor = () => {
   const userProfile = UserStore.getState().profile;
-  const eId = DEFAULT_EDITOR_KETCHER2;//userProfile?.data?.default_structure_editor || 'ketcher';
+  const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
   return editor;
 };
@@ -228,14 +227,14 @@ export default class StructureEditorModal extends React.Component {
   componentDidUpdate(prevProps) {
     const { showModal, molfile } = this.props;
     if (prevProps.showModal !== showModal || prevProps.molfile !== molfile) {
-      this.setState( {showModal,molfile}); //
+      this.setState({ showModal, molfile });
     }
   }
 
   setDefaultEditorForce() {
-      if (this.editors[DEFAULT_EDITOR_KETCHER2]) {
-        this.setState({ editor: this.editors[DEFAULT_EDITOR_KETCHER2] });
-      }
+    if (this.editors[DEFAULT_EDITOR_KETCHER2]) {
+      this.setState({ editor: this.editors[DEFAULT_EDITOR_KETCHER2] });
+    }
   }
 
   handleEditorSelection(e) {
@@ -344,7 +343,8 @@ export default class StructureEditorModal extends React.Component {
         fnCb={this.updateEditor}
       />
     );
-    const editorOptions = Object.keys(this.editors).map((e) => ({
+    const editorOptions = Object.keys(this.editors).map((e) => (
+      {
       value: e,
       name: this.editors[e].label,
       label: this.editors[e].label,
@@ -410,8 +410,8 @@ StructureEditorModal.defaultProps = {
   showModal: false,
   hasChildren: false,
   hasParent: false,
-  onCancel: () => {},
-  onSave: () => {},
+  onCancel: () => { },
+  onSave: () => { },
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
 };

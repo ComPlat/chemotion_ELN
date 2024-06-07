@@ -1,17 +1,24 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 function KetcherEditor(props) {
   const {
     editor, iH, iS, molfile
   } = props;
+
   const initMol = molfile
     || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
-  if (editor && editor.structureDef && editor.structureDef.editor) {
-    editor.structureDef.editor.setMolecule(initMol);
-  }
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (editor && editor.structureDef && editor.structureDef.editor) {
+        editor.structureDef.editor.setMolecule(initMol);
+      }
+    }, 500);
+  }, [])
+
   return (
     <div>
       <iframe id={editor.id} src={editor.extSrc} title={editor.label} height={iH} width="100%" style={iS} />
