@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar } from 'react-bootstrap';
+import { Nav, Navbar, Container } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -41,39 +41,60 @@ export default class AdminNavigation extends React.Component {
 
   navHeader() {
     return (
-      <Navbar.Header className="collec-tree">
-        <Navbar.Text>
-          <i
-            className="fa fa-list"
-            onClick={this.toggleTree}
-            role='button'
-          />
-        </Navbar.Text>
-        <Navbar.Text />
-        <NavHead />
-      </Navbar.Header>
+      <>
+        <Navbar expand="lg" bg="grey">
+          <Container>
+            {/* className="collec-tree" */}
+
+            <Navbar.Toggle aria-controls="basic-navbar-nav">
+              <i
+                className="fa fa-list"
+                onClick={this.toggleTree}
+                role='button'
+              />
+            </Navbar.Toggle>
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="me-auto">
+                <Navbar.Brand>
+                  <NavHead />
+                </Navbar.Brand>
+
+              </Nav>
+            </Navbar.Collapse>
+          </Container>
+        </Navbar>
+      </>
+
     );
   }
 
   render() {
     return this.state.currentUser ? (
-      <Navbar fluid className="navbar-custom">
-        {this.navHeader()}
-        <Nav navbar className="navbar-form">
+      <Navbar bg="grey" expand="lg" className="navbar-custom">
+        <Container>
+          {this.navHeader()}
+
+          <Nav className="me-auto">
           <h1>ELN Administration</h1>
-        </Nav>
-        <UserAuth />
-        <div style={{ clear: 'both' }} />
+          </Nav>
+          <Nav className="ms-auto">
+            <UserAuth />
+          </Nav>
+          <div className="clearFix" />
+        </Container>
       </Navbar>
     ) : (
-      <Navbar fluid className="navbar-custom" >
-        {this.navHeader()}
-        <Nav navbar className="navbar-form" />
-        <div>
-          <h1>ELN Administration</h1>
-        </div>
-        <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
-        <div style={{ clear: 'both' }} />
+        <Navbar bg="grey" expand="lg" className="navbar-custom">
+          <Container>
+            {this.navHeader()}
+            <Nav className="me-auto">
+              <h1>ELN Administration</h1>
+            </Nav>
+            <Nav className="ms-auto">
+              <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
+            </Nav>
+            <div className="clearFix" />
+          </Container>
       </Navbar>
     );
   }

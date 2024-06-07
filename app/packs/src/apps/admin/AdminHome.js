@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Nav, NavItem } from 'react-bootstrap';
+import { Row, Col, Nav, NavItem, Container } from 'react-bootstrap';
 import AdminNavigation from 'src/apps/admin/AdminNavigation';
 import Notifications from 'src/components/Notifications';
 import AdminDashboard from 'src/apps/admin/AdminDashboard';
@@ -76,23 +76,43 @@ class AdminHome extends React.Component {
     }
 
     return (
-      <div>
-        <Col className="small-col collec-tree">
-          <Nav variant="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
-            <NavItem eventKey={0}>Dashboard</NavItem>
-            <NavItem eventKey={1}>User Management</NavItem>
-            <NavItem eventKey={9}>Devices</NavItem>
-            <NavItem eventKey={4}>Groups</NavItem>
-            <NavItem eventKey={7}>UI features</NavItem>
-            <NavItem eventKey={8}>Text Templates</NavItem>
-            <NavItem eventKey={2}>Message Publish</NavItem>
-            <NavItem eventKey={5}>Load OLS Terms</NavItem>
+      <Row>
+        <Col>
+          <Nav className="flex-column" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
+            <NavItem>
+              <Nav.Link eventKey={0}>Dashboard</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={1}>User Management</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={9}>Devices</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={4}>Groups</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={7}>UI features</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={8}>Text Templates</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={2}>Message Publish</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={5}>Load OLS Terms</Nav.Link>
+            </NavItem>
             {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
-            <NavItem eventKey={13}>Delayed Jobs </NavItem>
-            <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={13}>Delayed Jobs</Nav.Link>
+            </NavItem>
+            <NavItem>
+              <Nav.Link eventKey={14}>ChemSpectra Layouts</Nav.Link>
+            </NavItem>
           </Nav>
         </Col>
-      </div>
+      </Row>
     );
   }
 
@@ -198,18 +218,26 @@ class AdminHome extends React.Component {
   render() {
     return (
       <div>
-        <Grid fluid>
-          <Row className="card-navigation">
-            <AdminNavigation toggleTree={this.toggleTree} />
+        <Container fluid>
+          <Row className="my-3">
+            <Col >
+              <AdminNavigation toggleTree={this.toggleTree} />
+            </Col> 
           </Row>
-          <Row className="card-content container-fluid" >
-            {this.tree()}
-            {this.mainContent()}
+          <Row className="mb-3">
+            <Col xs={2}>
+              {this.tree()}
+            </Col>
+            <Col>
+              {this.mainContent()}
+            </Col>
           </Row>
           <Row>
-            <Notifications />
+            <Col>
+              <Notifications />
+            </Col>
           </Row>
-        </Grid>
+        </Container>
       </div>
     );
   }
