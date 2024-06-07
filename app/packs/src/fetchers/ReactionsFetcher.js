@@ -7,6 +7,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -18,6 +19,9 @@ export default class ReactionsFetcher {
         .then((json) => {
           if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
+            const molValue = reaction.findFeedstockMaterialValue();
+            console.log(molValue);
+            GaseousReactionActions.SetFeedStockReferenceMolValue(molValue);
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));
               const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
