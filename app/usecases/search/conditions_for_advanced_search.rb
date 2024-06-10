@@ -379,8 +379,9 @@ module Usecases
           @conditions[:field] = "(#{prop} ->> 'value')::TEXT"
           @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = '#{field}'"
           if filter['unit'].present?
+            unit = filter['unit'].remove('°').remove(/ \(.*\)/).tr('/', '_')
             @conditions[:additional_condition] +=
-              " AND (#{prop} ->> 'value_system')::TEXT = '#{filter['unit'].delete('°')}'"
+              " AND LOWER((#{prop} ->> 'value_system')::TEXT) = LOWER('#{unit}')"
           end
         end
       end
