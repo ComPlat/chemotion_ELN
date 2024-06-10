@@ -1015,6 +1015,7 @@ class ElementStore {
   }
 
   handleCopyCellLine(result){
+    UserActions.fetchCurrentUser(); //Needed to update the cell line counter in frontend
     Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
   }
 
