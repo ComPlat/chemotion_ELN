@@ -124,7 +124,7 @@ module Chemotion
         end
       end
 
-      desc 'Copy a cell line'
+      desc 'Splits a cell line'
       params do
         requires :id, type: Integer, desc: 'id of cell line sample to copy'
         requires :collection_id, type: Integer, desc: 'id of collection of copied cell line sample'
