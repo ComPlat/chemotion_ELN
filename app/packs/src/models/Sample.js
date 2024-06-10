@@ -495,7 +495,7 @@ export default class Sample extends Element {
 
   get molarity_value() {
     if (this.sample_type === 'Mixture' && this.reference_component) {
-      return this.reference_molarity_value.toFixed(5);
+      return this.reference_molarity_value;
     }
     return this._molarity_value;
   }

@@ -18,12 +18,14 @@ export default class Component extends Sample {
             this.amount_unit = amount.unit;
             this.concn = this.amount_value * this.starting_molarity_value / totalVolume;
             this.molarity_value = this.concn;
+            this.molarity_unit = 'M'
         } else if (amount.unit === 'g') {
             this.amount_value = amount.value;
             this.amount_unit = amount.unit;
             if (totalVolume && this.amount_mol) {
                 this.concn = this.amount_mol / totalVolume;
                 this.molarity_value = this.concn;
+                this.molarity_unit = 'M'
             }
 
             if (this.amount_value === 0) {
