@@ -78,17 +78,14 @@ export default class GraphContainer extends React.Component {
     const header = (
       <div>
         {'Graph'}
-        <div className="button-right">
-          <Button
-            key="closeBtn"
-            onClick={this.onClose}
-            variant="danger"
-            size="sm"
-            className="button-right"
-          >
-            <i className="fa fa-times" />
-          </Button>
-        </div>
+        <Button
+          key="closeBtn"
+          onClick={this.onClose}
+          variant="danger"
+          size="sm"
+        >
+          <i className="fa fa-times" />
+        </Button>
       </div>
     );
 

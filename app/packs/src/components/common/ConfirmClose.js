@@ -55,12 +55,11 @@ export default class ConfirmClose extends Component {
     };
 
     return (
-      <span>
+      <>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeSample">Close {el.type}</Tooltip>}>
           <Button
             variant="danger"
-            size="sm"
-            className="button-right"
+            size="xxsm"
             onClick={() => this.onClickButton(el)}
             ref={(button) => { this.target = button; }}
           >
@@ -74,7 +73,7 @@ export default class ConfirmClose extends Component {
         >
           { popover }
         </Overlay>
-      </span>
+      </>
     );
   }
 }

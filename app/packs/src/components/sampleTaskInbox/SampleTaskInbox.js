@@ -112,7 +112,6 @@ const SampleTaskInbox = ({}) => {
               <Button
                 variant="danger"
                 size="sm"
-                className="button-right"
                 onClick={sampleTasksStore.hideSampleTaskInbox}
               >
                 <i className="fa fa-times" />

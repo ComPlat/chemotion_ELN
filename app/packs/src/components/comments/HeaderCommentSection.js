@@ -46,43 +46,39 @@ class HeaderCommentSection extends Component {
 
     const sectionComments = getSectionComments(comments, headerSection);
 
-    if (MatrixCheck(currentUser.matrix, commentActivation)) {
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !element?.isNew) {
       return (
-        element?.isNew ? <span /> : (
-          <span className="comments-header-btn">
-            <OverlayTrigger
-              key="ot_comments"
-              placement="top"
-              overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
+        <>
+          <OverlayTrigger
+            key="ot_comments"
+            placement="top"
+            overlay={<Tooltip id="showComments">Show/Add Comments</Tooltip>}
+          >
+            <Button
+              size="xsm"
+              variant={sectionComments.length > 0 ? 'success' : 'light'}
+              onClick={() => {
+                CommentActions.setCommentSection(headerSection);
+                CommentActions.fetchComments(element);
+                CommentActions.toggleCommentModal(true);
+              }}
             >
-              <Button
-                size="sm"
-                variant={sectionComments.length > 0 ? 'success' : 'light'}
-                onClick={() => {
-                  CommentActions.setCommentSection(headerSection);
-                  CommentActions.fetchComments(element);
-                  CommentActions.toggleCommentModal(true);
-                }}
-              >
-                <i className="fa fa-comments" />
-              </Button>
-            </OverlayTrigger>
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="toggleComments">Show/Hide Section Comments</Tooltip>}
+              <i className="fa fa-comments me-1" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="toggleComments">Show/Hide Section Comments</Tooltip>}
+          >
+            <Button
+              size="xsm"
+              variant="light"
+              onClick={CommentActions.toggleCommentSection}
             >
-              <Button
-                size="sm"
-                onClick={CommentActions.toggleCommentSection}
-                style={{ marginLeft: 5 }}
-              >
-                <span>
-                  <i className={showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
-                </span>
-              </Button>
-            </OverlayTrigger>
-          </span>
-        )
+              <i className={showCommentSection ? 'fa fa-angle-down' : 'fa fa-angle-up'} />
+            </Button>
+          </OverlayTrigger>
+        </>
       );
     }
 

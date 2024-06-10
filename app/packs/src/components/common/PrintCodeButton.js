@@ -78,7 +78,6 @@ export default function PrintCodeButton({ element, analyses }) {
       >
         <DropdownButton
           id="print-code"
-          className="button-right"
           variant="light"
           disabled={element.isNew}
           size="xxsm"

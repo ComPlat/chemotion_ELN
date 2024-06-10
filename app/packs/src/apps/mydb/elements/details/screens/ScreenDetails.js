@@ -210,7 +210,6 @@ export default class ScreenDetails extends Component {
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >
@@ -224,7 +223,6 @@ export default class ScreenDetails extends Component {
           <Button
             variant="info"
             size="sm"
-            className="button-right"
             onClick={() => this.props.toggleFullScreen()}
           >
             <i className="fa fa-expand" />

@@ -27,21 +27,21 @@ describe('SampleDetailsContainersAux', () => {
       it('Render without kind and status', () => {
         const wrapper = shallow(<HeaderDeleted container={container} />);
         expect(wrapper.html())
-          .toEqual(`<div class="analysis-header-delete"><strike>${container.name}</strike><div class="button-right undo-middle"></div></div>`);
+          .toEqual(`<div class="analysis-header-delete"><strike>${container.name}</strike><div class="undo-middle"></div></div>`);
       });
 
       it('Render with kind', () => {
         container.extended_metadata.kind = 'Just a kind string';
         const wrapper = shallow(<HeaderDeleted container={container} />);
         expect(wrapper.html())
-          .toEqual(`<div class="analysis-header-delete"><strike>${container.name} - Type: ${container.extended_metadata.kind}</strike><div class="button-right undo-middle"></div></div>`);
+          .toEqual(`<div class="analysis-header-delete"><strike>${container.name} - Type: ${container.extended_metadata.kind}</strike><div class="undo-middle"></div></div>`);
       });
 
       it('Render with status', () => {
         container.extended_metadata.status = 'Just a status string';
         const wrapper = shallow(<HeaderDeleted container={container} />);
         expect(wrapper.html())
-          .toEqual(`<div class="analysis-header-delete"><strike>${container.name} - Status: ${container.extended_metadata.status}</strike><div class="button-right undo-middle"></div></div>`);
+          .toEqual(`<div class="analysis-header-delete"><strike>${container.name} - Status: ${container.extended_metadata.status}</strike><div class="undo-middle"></div></div>`);
       });
 
       it('Render with kind and status', () => {
@@ -49,7 +49,7 @@ describe('SampleDetailsContainersAux', () => {
         container.extended_metadata.status = 'Just a status string';
         const wrapper = shallow(<HeaderDeleted container={container} />);
         expect(wrapper.html())
-          .toEqual(`<div class="analysis-header-delete"><strike>${container.name} - Type: ${container.extended_metadata.kind} - Status: ${container.extended_metadata.status}</strike><div class="button-right undo-middle"></div></div>`);
+          .toEqual(`<div class="analysis-header-delete"><strike>${container.name} - Type: ${container.extended_metadata.kind} - Status: ${container.extended_metadata.status}</strike><div class="undo-middle"></div></div>`);
       });
     });
 
@@ -60,7 +60,7 @@ describe('SampleDetailsContainersAux', () => {
       it('Render without kind and status', () => {
         const wrapper = shallow(<HeaderDeleted container={container} mode="edit" />);
         expect(wrapper.html())
-          .toEqual(`<div class="analysis-header-delete"><strike>${container.name}</strike><div class="button-right undo-middle"><button type="button" class="pull-right btn btn-xs btn-danger"><i class="fa fa-undo"></i></button></div></div>`);
+          .toEqual(`<div class="analysis-header-delete"><strike>${container.name}</strike><div class="undo-middle"><button type="button" class="pull-right btn btn-xs btn-danger"><i class="fa fa-undo"></i></button></div></div>`);
       });
 
       it('Check on click instance', () => {

@@ -424,7 +424,6 @@ export default class GenericElDetails extends Component {
           <Button
             variant="info"
             size="sm"
-            className="button-right"
             onClick={() => toggleFullScreen()}
           >
             <i className="fa fa-expand" aria-hidden="true" />
@@ -437,7 +436,6 @@ export default class GenericElDetails extends Component {
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >

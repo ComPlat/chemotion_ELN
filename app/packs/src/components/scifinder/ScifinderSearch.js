@@ -91,7 +91,7 @@ const ScifinderSearch = (props) => {
 
   return (
     <OverlayTrigger trigger="click" placement="left" overlay={popoverSettings} rootClose>
-      <Button className="button-right" style={{ padding: '0px' }}>
+      <Button style={{ padding: '0px' }}>
         <div style={{ fontSize: '1.2vmin', padding: '2px', color: '#337ab7' }}><i className="fa fa-search" aria-hidden="true" />&nbsp;Search CAS</div>
       </Button>
     </OverlayTrigger>

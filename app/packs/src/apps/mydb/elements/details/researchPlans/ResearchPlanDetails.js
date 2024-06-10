@@ -521,7 +521,6 @@ export default class ResearchPlanDetails extends Component {
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
           >
@@ -529,7 +528,7 @@ export default class ResearchPlanDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">Full Research Plan</Tooltip>}>
-          <Button variant="info" size="sm" className="button-right" onClick={this.toggleFullScreen}>
+          <Button variant="info" size="sm" onClick={this.toggleFullScreen}>
             <i className="fa fa-expand" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
