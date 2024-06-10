@@ -94,7 +94,6 @@ export default class GenericAttachments extends Component {
       <Button
         size="sm"
         variant="danger"
-        className="button-right"
         onClick={() => onDelete(attachment, true)}
         disabled={readOnly}
       >
@@ -142,7 +141,6 @@ export default class GenericAttachments extends Component {
               <Button
                 size="sm"
                 variant="danger"
-                className="button-right"
                 onClick={() => onDelete(attachment, false)}
               >
                 <i className="fa fa-undo" aria-hidden="true" />
@@ -184,7 +182,6 @@ export default class GenericAttachments extends Component {
             <OverlayTrigger placement="top" overlay={downloadTooltip}>
               <Button
                 size="sm"
-                className="button-right"
                 variant="primary"
                 onClick={() => Utils.downloadFile({
                   contents: `/api/v1/attachments/${attachment.id}`,
@@ -201,7 +198,6 @@ export default class GenericAttachments extends Component {
               <Button
                 style={{ display: styleEditor }}
                 size="sm"
-                className="button-right"
                 variant="success"
                 disabled={editDisable}
                 onClick={() => this.handleEdit(attachment)}

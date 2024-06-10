@@ -15,7 +15,7 @@ const EditorAnalysisBtn = ({
     delayShow={500}
     overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
   >{spcInfos.length > 0 ? (
-    <ButtonGroup className="button-right">
+    <ButtonGroup>
       <SplitButton
         id="spectra-editor-split-button"
         pullRight
@@ -43,7 +43,6 @@ const EditorAnalysisBtn = ({
     <Button
       variant="warning"
       size="sm"
-      className="button-right"
       onClick={confirmRegenerate}
       disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
     >

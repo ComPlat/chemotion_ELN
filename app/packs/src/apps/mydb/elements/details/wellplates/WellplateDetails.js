@@ -261,7 +261,6 @@ export default class WellplateDetails extends Component {
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >
@@ -269,7 +268,7 @@ export default class WellplateDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-          <Button variant="info" size="sm" className="button-right" onClick={() => this.props.toggleFullScreen()}>
+          <Button variant="info" size="sm" onClick={() => this.props.toggleFullScreen()}>
             <i className="fa fa-expand" />
           </Button>
         </OverlayTrigger>

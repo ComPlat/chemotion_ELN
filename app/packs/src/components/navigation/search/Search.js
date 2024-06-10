@@ -72,7 +72,7 @@ export default class Search extends React.Component {
     ];
 
     const menu = elements.map(element => (
-      <Dropdown.Item key={element} onSelect={() => this.handleElementSelection(element.toLowerCase())}>
+      <Dropdown.Item key={element} onClick={() => this.handleElementSelection(element.toLowerCase())}>
         {element}
       </Dropdown.Item>
     ));

@@ -52,7 +52,6 @@ const headerTitle = (el, icon) => {
       <Button
         variant="danger"
         size="sm"
-        className="button-right"
         onClick={clickToRm}
       >
         <i className="fa fa-times" />

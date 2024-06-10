@@ -208,7 +208,6 @@ const DeviceHeader = ({ device, state, onChangeState }) => {
       <Button
         size="sm"
         variant="danger"
-        className="button-right"
         onClick={(e) => handleRemoveDevice(e)}
       >
         <i className="fa fa-trash"></i>
@@ -221,7 +220,7 @@ const AddDeviceButton = () => {
   return (
     <p>
       &nbsp;
-      <Button className="button-right" size="sm" variant="success" onClick={() => ElementActions.createDevice()}>
+      <Button size="sm" variant="success" onClick={() => ElementActions.createDevice()}>
         Add device
       </Button>
     </p>
