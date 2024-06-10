@@ -19,6 +19,15 @@ const successfullyCreatedParameter = {
   position: 'tr'
 };
 
+const successfullyCopiedParameter = {
+  title: 'Element copied',
+  message: 'Cell line sample successfully copied',
+  level: 'info',
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr'
+};
+
 const successfullyUpdatedParameter = {
   title: 'Element updated',
   message: 'Cell line sample successfully updated',
@@ -38,7 +47,6 @@ const errorMessageParameter = {
 };
 
 export default class CellLinesFetcher {
-
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
   }
@@ -60,7 +68,7 @@ export default class CellLinesFetcher {
     return promise;
   }
 
-  static create(cellLine,user) {
+  static create(cellLine, user) {
     const params = extractApiParameter(cellLine);
 
     const promise = CellLinesFetcher.uploadAttachments(cellLine)
@@ -79,7 +87,7 @@ export default class CellLinesFetcher {
       .then((json) => CellLine.createFromRestResponse(params.collection_id, json))
       .then((cellLineItem) => {
         NotificationActions.add(successfullyCreatedParameter);
-        user.cell_lines_count = user.cell_lines_count +1;
+        user.cell_lines_count += 1;
         return cellLineItem;
       })
       .catch((errorMessage) => {
@@ -126,12 +134,12 @@ export default class CellLinesFetcher {
     }).then((response) => response.json());
   }
 
-  static copyCellLine(cellLineId, collectionId){
+  static copyCellLine(cellLineId, collectionId) {
     const params = {
       id: cellLineId,
       collection_id: collectionId,
       container: Container.init()
-    }
+    };
 
     return fetch('/api/v1/cell_lines/copy/', {
       credentials: 'same-origin',
@@ -142,8 +150,11 @@ export default class CellLinesFetcher {
       method: 'POST',
       body: JSON.stringify(params)
     }).then((response) => response.json())
-    .then((json) => CellLine.createFromRestResponse(collectionId, json))
 
+      .then((json) => {
+        NotificationActions.add(successfullyCopiedParameter);
+        return CellLine.createFromRestResponse(collectionId, json);
+      });
   }
 
   static update(cellLineItem) {
@@ -159,8 +170,8 @@ export default class CellLinesFetcher {
         body: JSON.stringify(params)
       }))
       .then((response) => response.json())
-      .then(() => {BaseFetcher.updateAnnotationsInContainer(cellLineItem)})
-      .then(()=> CellLinesFetcher.fetchById(cellLineItem.id))
+      .then(() => { BaseFetcher.updateAnnotationsInContainer(cellLineItem); })
+      .then(() => CellLinesFetcher.fetchById(cellLineItem.id))
       .then((loadedCellLineSample) => {
         NotificationActions.add(successfullyUpdatedParameter);
         return loadedCellLineSample;
@@ -172,12 +183,13 @@ export default class CellLinesFetcher {
       });
     return promise;
   }
-  //Here better as parameter list of ids
-  static splitAsSubCellLines(ids, collection_id){
-    const promises =[];
+
+  // Here better as parameter list of ids
+  static splitAsSubCellLines(ids, collectionId) {
+    const promises = [];
 
     ids.forEach((id) => {
-      const params = {"id":id,"collection_id": collection_id};
+      const params = { id, collection_id: collectionId };
       promises.push(fetch('/api/v1/cell_lines/split', {
         credentials: 'same-origin',
         headers: {
@@ -188,7 +200,7 @@ export default class CellLinesFetcher {
         body: JSON.stringify(params)
       }));
     });
-    
+
     return Promise.all(promises);
   }
 }
