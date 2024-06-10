@@ -7,17 +7,31 @@ import {
 
 const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
-const massUnits = ['mg', 'g', 'μg'];
-const volumeUnits = ['ml', 'l', 'μl'];
+const massUnits = ['g', 'mg', 'μg'];
+const volumeUnits = ['l', 'ml', 'μl'];
+const amountUnits = ['mol', 'mmol'];
 const materialTypes = {
-  startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials', units: massUnits },
-  reactants: { label: 'Reactants', reactionAttributeName: 'reactants', units: massUnits },
-  products: { label: 'Products', reactionAttributeName: 'products', units: massUnits },
-  solvents: { label: 'Solvents', reactionAttributeName: 'solvents', units: volumeUnits }
+  startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
+  reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
+  products: { label: 'Products', reactionAttributeName: 'products' },
+  solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
 };
 
-function getVariationsRowName(reactionLabel, variationsRowId) {
-  return `${reactionLabel}-${variationsRowId}`;
+function getStandardUnit(entry) {
+  switch (entry) {
+    case 'volume':
+      return volumeUnits[0];
+    case 'mass':
+      return massUnits[0];
+    case 'amount':
+      return amountUnits[0];
+    case 'temperature':
+      return temperatureUnits[0];
+    case 'duration':
+      return durationUnits[0];
+    default:
+      return null;
+  }
 }
 
 function convertUnit(value, fromUnit, toUnit) {
@@ -35,8 +49,29 @@ function convertUnit(value, fromUnit, toUnit) {
     const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
+  if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
+    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
+    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
+  }
 
   return value;
+}
+
+function getCellDataType(entry) {
+  if (['temperature', 'duration'].includes(entry)) {
+    return 'property';
+  }
+  if (entry === 'equivalent') {
+    return 'equivalent';
+  }
+  if (['mass', 'volume', 'amount'].includes(entry)) {
+    return 'material';
+  }
+  return null;
+}
+
+function getVariationsRowName(reactionLabel, variationsRowId) {
+  return `${reactionLabel}-${variationsRowId}`;
 }
 
 function getSequentialId(variations) {
@@ -52,18 +87,20 @@ function createVariationsRow(reaction, variations) {
     id: getSequentialId(variations),
     properties: {
       temperature: {
-        value: convertUnit(temperatureValue, temperatureUnit, temperatureUnits[0]), unit: temperatureUnits[0]
+        value: convertUnit(temperatureValue, temperatureUnit, getStandardUnit('temperature')),
+        unit: getStandardUnit('temperature')
       },
       duration: {
-        value: convertUnit(durationValue, durationUnit, durationUnits[0]), unit: durationUnits[0]
-      }
+        value: convertUnit(durationValue, durationUnit, getStandardUnit('duration')),
+        unit: getStandardUnit('duration'),
+      },
     },
     analyses: [],
     notes: '',
   };
   Object.entries(materialTypes).forEach(([materialType, { reactionAttributeName }]) => {
     row[materialType] = reactionCopy[reactionAttributeName].reduce((a, v) => (
-      { ...a, [v.id]: getMaterialData(v, materialType) }), {});
+      { ...a, [v.id]: getMaterialData(v) }), {});
   });
 
   row = updateYields(row, reactionCopy.has_polymers);
@@ -105,15 +142,39 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   return updatedRow;
 }
 
+function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
+
+  updatedColumnDefinitions.forEach((columnDefinition) => {
+    if (columnDefinition.groupId) {
+      // Column group.
+      columnDefinition.children.forEach((child) => {
+        if (child.field === field) {
+          child[property] = newValue;
+        }
+      });
+    } else if (columnDefinition.field === field) {
+      // Single column.
+      columnDefinition[property] = newValue;
+    }
+  });
+
+  return updatedColumnDefinitions;
+}
+
 export {
   massUnits,
   volumeUnits,
+  amountUnits,
   temperatureUnits,
   durationUnits,
-  materialTypes,
   convertUnit,
+  getStandardUnit,
+  materialTypes,
   getVariationsRowName,
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
+  updateColumnDefinitions,
+  getCellDataType
 };

@@ -241,6 +241,9 @@ export default class Reaction extends Element {
     Units are to be treated as immutable. Units and corresponding values
     are changed (not mutated in the present data-structure!) only for display or export
     (i.e., at the boundaries of the application).
+    This is why there's a `standard` unit and a `display` unit.
+    The `standard` (available as `unit` attribute of each entry) is immutable,
+    whereas the value that corresponds to `display` is computed ad hoc at the boundaries.
     See https://softwareengineering.stackexchange.com/a/391480.
     */
     if (!Array.isArray(variations)) {
