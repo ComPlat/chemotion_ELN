@@ -56,21 +56,21 @@ const Header = ({ device, toggleFullScreen }) => {
       {device.title}
       <OverlayTrigger placement="bottom"
         overlay={<Tooltip id="closeReaction">Close Device</Tooltip>}>
-        <Button variant="danger" size="sm" className="button-right"
+        <Button variant="danger" size="sm"
           onClick={() => DetailActions.close(device)}>
           <i className="fa fa-times"></i>
         </Button>
       </OverlayTrigger>
       <OverlayTrigger placement="bottom"
         overlay={<Tooltip id="saveReaction">Save Device</Tooltip>}>
-        <Button variant="warning" size="sm" className="button-right"
+        <Button variant="warning" size="sm"
           onClick={() => handleSubmit(device)}>
           <i className="fa fa-floppy-o "></i>
         </Button>
       </OverlayTrigger>
       <OverlayTrigger placement="bottom"
         overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button variant="info" size="sm" className="button-right"
+        <Button variant="info" size="sm"
           onClick={() => toggleFullScreen()}>
           <i className="fa fa-expand"></i>
         </Button>
