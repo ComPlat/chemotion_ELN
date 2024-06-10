@@ -12,8 +12,10 @@ module SampleHelpers
     total_mass = 0.0
 
     components.each do |component|
-      total_mass += calculate_mass_from_groups(component)
-      total_mass += calculate_mass_from_elements(component)
+      coefficient = extract_coefficient(component)
+
+      total_mass += calculate_mass_from_groups(component) * coefficient
+      total_mass += calculate_mass_from_elements(component) * coefficient
     end
 
     total_mass
@@ -49,5 +51,10 @@ module SampleHelpers
     end
 
     total_mass
+  end
+
+  def extract_coefficient(component)
+    match = component.match(/^\d+/)
+    match ? match[0].to_i : 1
   end
 end
