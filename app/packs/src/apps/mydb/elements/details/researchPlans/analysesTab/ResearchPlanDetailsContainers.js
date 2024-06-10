@@ -123,7 +123,6 @@ export default class ResearchPlanDetailsContainers extends Component {
         <Button
           size="sm"
           variant="danger"
-          className="button-right"
           disabled={readOnly}
           onClick={() => this.handleRemove(container)}
         >
@@ -148,7 +147,6 @@ export default class ResearchPlanDetailsContainers extends Component {
     if (!readOnly) {
       return (
         <Button
-          className="button-right"
           size="sm"
           variant="success"
           onClick={this.handleAdd}

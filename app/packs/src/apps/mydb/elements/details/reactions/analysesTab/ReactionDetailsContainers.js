@@ -172,7 +172,6 @@ export default class ReactionDetailsContainers extends Component {
         <Button
           size="sm"
           variant="danger"
-          className="button-right"
           disabled={readOnly}
           onClick={() => this.handleOnClickRemove(container)}
         >
@@ -214,7 +213,6 @@ export default class ReactionDetailsContainers extends Component {
     if (!readOnly) {
       return (
         <Button
-          className="button-right"
           size="sm"
           variant="success"
           onClick={this.handleAdd}

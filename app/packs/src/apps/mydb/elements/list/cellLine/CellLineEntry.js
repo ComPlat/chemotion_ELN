@@ -85,7 +85,7 @@ export default class CellLineEntry extends Component {
     return (
       <OverlayTrigger key="detailedInfoButton" placement="top" overlay={<Tooltip id="detailed-info-button">Show detailed information about the material</Tooltip>}>
         <Button
-          className={`button-right ${buttonActive}`}
+          className={buttonActive}
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
@@ -107,7 +107,7 @@ export default class CellLineEntry extends Component {
     return (
       <OverlayTrigger key="subSampleButton" placement="top" overlay={<Tooltip id="detailed-info-button">Create sample of cell line material</Tooltip>}>
         <Button
-          className="button-right quick-sample"
+          className="quick-sample"
           size="sm"
           onClick={(event) => {
             event.stopPropagation();

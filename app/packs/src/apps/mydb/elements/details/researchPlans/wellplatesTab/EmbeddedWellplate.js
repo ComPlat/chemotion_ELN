@@ -98,7 +98,6 @@ export default class EmbeddedWellplate extends Component {
         <Button
           size="sm"
           variant="success"
-          className="button-right"
           disabled={importDisabled}
           ref={(button) => { this.target = button; }}
           onClick={() => this.showImportConfirm()}
@@ -225,7 +224,6 @@ export default class EmbeddedWellplate extends Component {
             ref={(button) => { this.target = button; }}
             variant="danger"
             size="sm"
-            className="button-right"
             onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
           >
             <i className="fa fa-trash-o" aria-hidden="true" />
@@ -241,7 +239,7 @@ export default class EmbeddedWellplate extends Component {
           {popover}
         </Overlay>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="open_wellplate">Open Wellplate in Tab</Tooltip>}>
-          <Button variant="info" size="sm" className="button-right" onClick={() => this.openWellplate()}>
+          <Button variant="info" size="sm" onClick={() => this.openWellplate()}>
             <i className="fa fa-window-maximize" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -252,7 +250,6 @@ export default class EmbeddedWellplate extends Component {
           <Button
             variant="info"
             size="sm"
-            className="button-right"
             onClick={() => this.setState({ expanded: !this.state.expanded })}
           >
             <i className={expandIconClass} aria-hidden="true" />

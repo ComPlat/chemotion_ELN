@@ -68,7 +68,6 @@ export default class ComputedPropsContainer extends React.Component {
         <Button
           variant="success"
           size="sm"
-          className="button-right"
           onClick={this.onClickComputeBtn}
           style={{ marginTop: '10px', marginBottom: '10px' }}
         >
