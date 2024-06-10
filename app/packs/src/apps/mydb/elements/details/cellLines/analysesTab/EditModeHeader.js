@@ -77,7 +77,6 @@ export default class EditModeHeader extends React.Component {
             disabled={readOnly}
             size="sm"
             variant="danger"
-            className="button-right"
             onClick={(e) => { this.handleDeleteContainer(container, e); }}
           >
             <i className="fa fa-trash" />

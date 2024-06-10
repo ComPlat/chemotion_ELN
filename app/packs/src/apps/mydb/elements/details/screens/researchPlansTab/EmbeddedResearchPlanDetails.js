@@ -299,7 +299,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
             ref={(button) => { this.target = button; }}
             variant="danger"
             size="sm"
-            className="button-right"
             onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
           >
             <i className="fa fa-trash-o" aria-hidden="true" />
@@ -318,7 +317,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={() => saveResearchPlan(researchPlan)}
             style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
           >
@@ -329,7 +327,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
           placement="bottom"
           overlay={<Tooltip id="open_research_plan">Open Research Plan in Tab</Tooltip>}
         >
-          <Button variant="info" size="sm" className="button-right" onClick={() => this.openResearchPlan()}>
+          <Button variant="info" size="sm" onClick={() => this.openResearchPlan()}>
             <i className="fa fa-window-maximize" aria-hidden="true" />
           </Button>
         </OverlayTrigger>
@@ -340,7 +338,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
           <Button
             variant="info"
             size="sm"
-            className="button-right"
             onClick={() => this.setState({ expanded: !this.state.expanded })}
           >
             <i className={expandIconClass} aria-hidden="true" />

@@ -74,14 +74,13 @@ export default class CopyElementModal extends React.Component {
   render() {
     const { element } = this.props;
     const { showModal, selectedCol } = this.state;
-    const canCopy = element.can_copy ? '' : 'none';
 
-    return (
-      <span>
+    return (element.can_copy === false) ? null :
+      <>
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="CopyElement">Copy</Tooltip>}>
-          <Button id="copy-element-btn" style={{ marginLeft: '2px', display: `${canCopy}` }} size="sm" className="button-right" variant="success" onClick={this.handleModalShow}>
+          <Button id="copy-element-btn" size="xxsm" variant="success" onClick={this.handleModalShow}>
             <i className="fa fa-clone" />
           </Button>
         </OverlayTrigger>
@@ -105,8 +104,7 @@ export default class CopyElementModal extends React.Component {
             <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement} className="pull-left">Copy</Button>
           </Modal.Footer>
         </Modal>
-      </span>
-    );
+      </>
   }
 }
 

@@ -70,7 +70,7 @@ export default class WellplateDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button className="button-right" size="sm" variant="success" onClick={() => this.handleAdd()}>
+        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
           Add analysis
         </Button>
       )
@@ -90,7 +90,7 @@ export default class WellplateDetailsContainers extends Component {
         container.extended_metadata['status'] != '')
         ? (' - Status: ' + container.extended_metadata['status']) : ''}
       <Button size="sm" variant="danger"
-        className="button-right" disabled={readOnly}
+        disabled={readOnly}
         onClick={() => {
           if (confirm('Delete the container?')) {
             this.handleRemove(container)

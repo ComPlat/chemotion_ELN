@@ -48,7 +48,6 @@ describe('ResearchPlanDetailsContainers', () => {
         >
           There are currently no Analyses.
           <Button
-            className="button-right"
             size="sm"
             variant="success"
           >
@@ -66,7 +65,6 @@ describe('ResearchPlanDetailsContainers', () => {
     const btnAdd = (
       <div style={{ marginBottom: '10px' }}>
         &nbsp;<Button
-          className="button-right"
           size="sm"
           variant="success"
         >

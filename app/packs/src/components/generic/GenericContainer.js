@@ -41,7 +41,6 @@ const headerBtnGroup = (props) => {
       <Button
         size="sm"
         variant="danger"
-        className="button-right"
         disabled={readOnly}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); fnRemove(container); }}
       >

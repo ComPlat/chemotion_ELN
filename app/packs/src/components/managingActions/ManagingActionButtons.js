@@ -11,10 +11,10 @@ const MoveOrAssignButton = ({ assignDisabled, moveDisabled, onClick, customClass
     id="move-or-assign-btn"
     disabled={assignDisabled && moveDisabled}
   >
-    <Dropdown.Item onSelect={() => onClick('move')} disabled={moveDisabled}>
+    <Dropdown.Item onClick={() => onClick('move')} disabled={moveDisabled}>
       Move to Collection
     </Dropdown.Item>
-    <Dropdown.Item onSelect={() => onClick('assign')} disabled={assignDisabled}>
+    <Dropdown.Item onClick={() => onClick('assign')} disabled={assignDisabled}>
       Assign to Collection
     </Dropdown.Item>
   </DropdownButton>
@@ -43,10 +43,10 @@ const RemoveOrDeleteButton = ({ removeDisabled, deleteDisabled, onClick, customC
     id="remove-or-delete-btn"
     disabled={removeDisabled && deleteDisabled}
   >
-    <Dropdown.Item onSelect={() => onClick('remove')} disabled={removeDisabled}>
+    <Dropdown.Item onClick={() => onClick('remove')} disabled={removeDisabled}>
       Remove from current Collection
     </Dropdown.Item>
-    <Dropdown.Item onSelect={() => onClick('delete')} disabled={deleteDisabled}>
+    <Dropdown.Item onClick={() => onClick('delete')} disabled={deleteDisabled}>
       Remove from all Collections
     </Dropdown.Item>
   </DropdownButton>
