@@ -172,4 +172,23 @@ export default class CellLinesFetcher {
       });
     return promise;
   }
+  //Here better as parameter list of ids
+  static splitAsSubCellLines(ids, collection_id){
+    const promises =[];
+
+    ids.forEach((id) => {
+      const params = {"id":id,"collection_id": collection_id};
+      promises.push(fetch('/api/v1/cell_lines/split', {
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify(params)
+      }));
+    });
+    
+    return Promise.all(promises);
+  }
 }

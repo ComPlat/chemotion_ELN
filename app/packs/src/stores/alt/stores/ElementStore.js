@@ -246,6 +246,7 @@ class ElementStore {
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
+      handleSplitAsSubCellLines: ElementActions.splitAsSubCellLines,
       // formerly from DetailStore
       handleSelect: DetailActions.select,
       handleClose: DetailActions.close,
@@ -750,6 +751,10 @@ class ElementStore {
       ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort
     );
+  }
+
+  handleSplitAsSubCellLines(ui_state) {
+    ElementActions.fetchCellLinesByCollectionId(ui_state.currentCollection.id);
   }
 
   // Molecules
