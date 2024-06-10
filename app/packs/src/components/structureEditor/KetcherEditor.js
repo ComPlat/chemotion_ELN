@@ -11,13 +11,19 @@ function KetcherEditor(props) {
   const initMol = molfile
     || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
+  const loadContent = (event) => {
+    if (event.data.eventType === 'init') {
+      editor.structureDef.editor.setMolecule(initMol);
+    }
+  };
+
   useEffect(() => {
-    setTimeout(() => {
-      if (editor && editor.structureDef && editor.structureDef.editor) {
-        editor.structureDef.editor.setMolecule(initMol);
-      }
-    }, 500);
-  }, [])
+    window.addEventListener('message', loadContent);
+
+    return () => {
+      window.removeEventListener('message', loadContent);
+    };
+  }, []);
 
   return (
     <div>
