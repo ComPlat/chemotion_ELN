@@ -2,14 +2,6 @@
   padding-right: 10px;
 }
 
-.button-right {
-  float: right;
-  right: 0px;
-  z-index: 1;
-  margin-left: 2px;
-  text-align: center;
-}
-
 .no-margin {
   margin: 0 !important;
 }

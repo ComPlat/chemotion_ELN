@@ -70,7 +70,7 @@ export default class ScreenDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button className="button-right" size="sm" variant="success" onClick={() => this.handleAdd()}>
+        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
           Add analysis
         </Button>
       )
@@ -87,7 +87,7 @@ export default class ScreenDetailsContainers extends Component {
           (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
         {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) : ''}
         <Button size="sm" variant="danger"
-          className="button-right" disabled={readOnly}
+          disabled={readOnly}
           onClick={() => { if (confirm('Delete the container?')) { this.handleRemove(container) } }}>
           <i className="fa fa-trash"></i>
         </Button>

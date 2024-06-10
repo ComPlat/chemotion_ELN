@@ -36,12 +36,12 @@ const ReportUtilButton = ({ customClass }) => {
   let task = <span />;
   if (enableComputedProps) {
     graph = (
-      <Dropdown.Item onSelect={showComputedPropsGraph} title="Graph">
+      <Dropdown.Item onClick={showComputedPropsGraph} title="Graph">
         Computed Props Graph
       </Dropdown.Item>
     );
     task = (
-      <Dropdown.Item onSelect={showComputedPropsTasks} title="Graph">
+      <Dropdown.Item onClick={showComputedPropsTasks} title="Graph">
         Computed Props Tasks
       </Dropdown.Item>
     );
@@ -52,7 +52,7 @@ const ReportUtilButton = ({ customClass }) => {
   if (enableReactionPredict) {
     divider = <Dropdown.Divider />;
     predDiv = (
-      <Dropdown.Item onSelect={showPredictionContainer} title="Predict">
+      <Dropdown.Item onClick={showPredictionContainer} title="Predict">
         Synthesis Prediction
       </Dropdown.Item>
     );
@@ -66,14 +66,14 @@ const ReportUtilButton = ({ customClass }) => {
         <i className="fa fa-percent" />
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        <Dropdown.Item onSelect={showReportContainer} title="Report">
+        <Dropdown.Item onClick={showReportContainer} title="Report">
           Report
         </Dropdown.Item>
         <Dropdown.Divider />
-        <Dropdown.Item onSelect={showFormatContainer} title="Analyses Formatting">
+        <Dropdown.Item onClick={showFormatContainer} title="Analyses Formatting">
           Format Analyses
         </Dropdown.Item>
-        <Dropdown.Item onSelect={ElementActions.showLiteratureDetail} title="Reference Manager">
+        <Dropdown.Item onClick={ElementActions.showLiteratureDetail} title="Reference Manager">
           Reference Manager
         </Dropdown.Item>
         {graph}

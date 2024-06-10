@@ -9,7 +9,6 @@ function NoComputedProps({ computeFunc }) {
       <Button
         variant="success"
         size="sm"
-        className="button-right"
         onClick={computeFunc}
       >
         <i className="fa fa-paper-plane" />

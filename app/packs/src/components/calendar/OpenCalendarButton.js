@@ -1,10 +1,5 @@
 import React, { Component } from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Nav,
-  NavItem,
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import CalendarStore from 'src/stores/alt/stores/CalendarStore';
 import PropTypes from 'prop-types';
@@ -46,8 +41,8 @@ export default class OpenCalendarButton extends Component {
     if (isPanelHeader) {
       return (
         <Button
-          size="sm"
-          className="button-right"
+          size="xxsm"
+          variant="light"
           onClick={this.onClick}
         >
           <i className="fa fa-calendar" />

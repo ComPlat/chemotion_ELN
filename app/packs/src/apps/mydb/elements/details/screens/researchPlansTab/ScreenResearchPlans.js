@@ -101,7 +101,6 @@ class ScreenResearchPlans extends Component {
         <Button
           size="sm"
           variant="success"
-          className="button-right"
           onClick={this.handleAddResearchPlan.bind(this)}
           type="button"
         >

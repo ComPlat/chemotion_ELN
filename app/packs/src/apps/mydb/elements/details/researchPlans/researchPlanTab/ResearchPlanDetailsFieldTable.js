@@ -412,14 +412,14 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const collapseToggleIconClass = collapsed ? 'fa-expand' : 'fa-compress';
     const collapseToggleTitle = collapsed ? 'expand table' : 'collapse table';
     return (
-      <button
-        className="button-right btn btn-xs btn-info"
-        type="button"
+      <Button
+        variant="info"
+        size="sm"
         title={collapseToggleTitle}
         onClick={this.toggleTemporaryCollapse.bind(this)}
       >
         <i className={`fa ${collapseToggleIconClass}`}></i>
-      </button>
+      </Button>
     );
   }
 

@@ -184,11 +184,9 @@ const title = (archive) => {
   return (
     <div style={{ width: '100%', lineHeight: '30px' }}>
       {archive.file_name} {newLabel} {templateLable(archive)}
-      <div className="button-right">
+      <div className="d-flex">
         {cloneBtn(archive)}
-        <span>&nbsp;</span>
         {reportStatusBtn(archive)}
-        <span>&nbsp;</span>
         {deleteBtn(archive)}
       </div>
     </div>

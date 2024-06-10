@@ -61,7 +61,6 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
       onClick={onClose}
       variant="danger"
       size="sm"
-      className="button-right"
     >
       <i className="fa fa-times" />
     </Button>
@@ -72,7 +71,6 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
       onClick={onSave}
       variant="warning"
       size="sm"
-      className="button-right"
     >
       <i className="fa fa-floppy-o" />
     </Button>
@@ -83,7 +81,6 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
       onClick={onFormat}
       variant="info"
       size="sm"
-      className="button-right"
     >
       <i className="fa fa-magic" />
     </Button>
