@@ -31,6 +31,7 @@ module Usecases
       def create_short_label
         next_child_index = @cell_line_sample_to_copy.children.count.to_s
         @copied_cell_line_sample.short_label = "#{@cell_line_sample_to_copy.short_label}-#{next_child_index}"
+        @copied_cell_line_sample.save
       end
 
       def decrease_cell_line_counter
