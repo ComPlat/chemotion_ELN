@@ -162,7 +162,6 @@ export default class SampleDetailsContainers extends Component {
     }
     return (
       <Button
-        className="button-right"
         size="sm"
         variant="success"
         onClick={this.handleAdd}

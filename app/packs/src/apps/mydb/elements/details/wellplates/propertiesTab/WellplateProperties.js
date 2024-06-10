@@ -98,7 +98,6 @@ export default class WellplateProperties extends Component {
         >
           <Button
             variant="danger"
-            className="button-right"
             ref={(ref) => { this.deleteButtonRefs[index] = ref; }}
             onClick={() => this.showDeleteReadoutTitleConfirm(index)}
           >
@@ -201,7 +200,7 @@ export default class WellplateProperties extends Component {
                   placement="top"
                   overlay={<Tooltip id="add_readout_title_tooltip">Add Readout Title</Tooltip>}
                 >
-                  <Button className="button-right" variant="success" onClick={() => this.addReadoutTitle()}>
+                  <Button variant="success" onClick={() => this.addReadoutTitle()}>
                     Add Readouts
                   </Button>
                 </OverlayTrigger>

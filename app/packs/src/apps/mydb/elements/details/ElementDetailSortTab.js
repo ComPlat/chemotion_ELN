@@ -140,7 +140,6 @@ export default class ElementDetailSortTab extends Component {
         <Button
           variant={buttonInfo}
           size="sm"
-          className="button-right"
           ref={button => { this.tabLayoutButton = button; }}
           onClick={this.toggleTabLayoutContainer}
           title="Tabs layout for all collections can also be managed in Collection Tabs page"

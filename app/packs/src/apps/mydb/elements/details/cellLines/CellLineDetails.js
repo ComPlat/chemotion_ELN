@@ -107,7 +107,6 @@ class CellLineDetails extends React.Component {
       <Button
         variant="info"
         size="sm"
-        className="button-right"
         onClick={toggleFullScreen}
       >
         <i className="fa fa-expand" />
@@ -142,7 +141,7 @@ class CellLineDetails extends React.Component {
         placement="bottom"
         overlay={<Tooltip>{toolTipMessage}</Tooltip>}
       >
-        <Button disabled={disabled} variant="warning" size="sm" className="button-right" onClick={action}>
+        <Button disabled={disabled} variant="warning" size="sm" onClick={action}>
           {icons}
         </Button>
       </OverlayTrigger>
@@ -156,7 +155,6 @@ class CellLineDetails extends React.Component {
       <Button
         variant="danger"
         size="sm"
-        className="button-right"
         onClick={() => { this.handleClose(cellLineItem); }}
       >
         <i className="fa fa-times" />

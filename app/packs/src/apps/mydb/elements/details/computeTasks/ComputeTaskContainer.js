@@ -70,17 +70,14 @@ export default class ComputeTaskContainer extends React.Component {
       <Panel className="eln-panel-detail" variant="primary">
         <Panel.Heading>
           {'Task'}
-          <div className="button-right">
-            <Button
-              key="closeBtn"
-              onClick={this.onClose}
-              variant="danger"
-              size="sm"
-              className="button-right"
-            >
-              <i className="fa fa-times" />
-            </Button>
-          </div>
+          <Button
+            key="closeBtn"
+            onClick={this.onClose}
+            variant="danger"
+            size="sm"
+          >
+            <i className="fa fa-times" />
+          </Button>
         </Panel.Heading>
         <Panel.Body>
           <Table striped condensed hover>

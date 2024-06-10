@@ -18,14 +18,14 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
     <>
       <Dropdown.Divider />
       <Dropdown.Item
-        onSelect={() => editMetadataFunction()}
+        onClick={() => editMetadataFunction()}
         disabled={isDisabled}
         title="Edit metadata"
       >
         Edit collection metadata
       </Dropdown.Item>
       <Dropdown.Item
-        onSelect={() => exportCollectionToRadarFunction(updateModalProps)}
+        onClick={() => exportCollectionToRadarFunction(updateModalProps)}
         disabled={isDisabled}
         title="Export to RADAR"
       >
@@ -43,27 +43,27 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
       </Dropdown.Toggle>
       <Dropdown.Menu>
         <Dropdown.Item
-          onSelect={() => exportFunction(updateModalProps)}
+          onClick={() => exportFunction(updateModalProps)}
           title="Export to spreadsheet"
         >
           Export samples from selection
         </Dropdown.Item>
         <Dropdown.Item
-          onSelect={() => exportReactionFunction(updateModalProps)}
+          onClick={() => exportReactionFunction(updateModalProps)}
           title="Export reaction smiles to csv"
         >
           Export reactions from selection
         </Dropdown.Item>
         <Dropdown.Divider />
         <Dropdown.Item
-          onSelect={() => importSampleFunction(updateModalProps, false)}
+          onClick={() => importSampleFunction(updateModalProps, false)}
           disabled={isDisabled}
           title="Import from spreadsheet or sdf"
         >
           Import samples to collection
         </Dropdown.Item>
         <Dropdown.Item
-          onSelect={() => importSampleFunction(updateModalProps, true)}
+          onClick={() => importSampleFunction(updateModalProps, true)}
           disabled={isDisabled}
           title="Import chemicals from spreadsheet"
         >
@@ -71,13 +71,13 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
         </Dropdown.Item>
         <Dropdown.Divider />
         <Dropdown.Item
-          onSelect={() => exportCollectionFunction(updateModalProps)}
+          onClick={() => exportCollectionFunction(updateModalProps)}
           title="Export as ZIP archive"
         >
           Export collections
         </Dropdown.Item>
         <Dropdown.Item
-          onSelect={() => importCollectionFunction(updateModalProps)}
+          onClick={() => importCollectionFunction(updateModalProps)}
           title="Import collections from ZIP archive"
         >
           Import collections
