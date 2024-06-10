@@ -68,7 +68,7 @@ export default class SplitElementBtn extends React.Component {
     sortedLayout?.forEach(([k]) => {
       const el = genericEls.find((ael) => ael.name === k);
       // eslint-disable-next-line max-len
-      if (el) itemTables.push(<Dropdown.Item id={`split-${el.name}-button`} key={el.name} onSelect={() => this.splitElements(`${el.name}`)} disabled={this.noSelected(`${el.name}`) || this.isAllCollection()}>Split {el.label}</Dropdown.Item>);
+      if (el) itemTables.push(<Dropdown.Item id={`split-${el.name}-button`} key={el.name} onClick={() => this.splitElements(`${el.name}`)} disabled={this.noSelected(`${el.name}`) || this.isAllCollection()}>Split {el.label}</Dropdown.Item>);
     });
 
     return (
@@ -78,13 +78,13 @@ export default class SplitElementBtn extends React.Component {
         title={<i className="fa fa-code-fork" />
       }>
         <Dropdown.Item
-          onSelect={() => this.splitSelectionAsSubsamples()}
+          onClick={() => this.splitSelectionAsSubsamples()}
           disabled={this.noSelected('sample') || this.isAllCollection()}
         >
           Split Sample
         </Dropdown.Item>
         <Dropdown.Item
-          onSelect={() => this.splitSelectionAsSubwellplates()}
+          onClick={() => this.splitSelectionAsSubwellplates()}
           disabled={this.noSelected('wellplate') || this.isAllCollection()}
         >
           Split Wellplate

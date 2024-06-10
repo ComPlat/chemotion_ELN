@@ -123,7 +123,7 @@ const HeaderDeleted = ({ container, handleUndo, mode }) => {
         {kind}
         {status}
       </strike>
-      <div className="button-right undo-middle">
+      <div className="undo-middle">
         {undoBtn(container, mode, handleUndo)}
       </div>
     </div>
@@ -196,7 +196,6 @@ const headerBtnGroup = (
       <Button
         size="sm"
         variant="danger"
-        className="button-right"
         disabled={readOnly || isDisabled}
         onClick={confirmDelete}
       >
@@ -220,7 +219,7 @@ const headerBtnGroup = (
         hasNMRium={hasNMRium}
       />
       <span
-        className="button-right add-to-report"
+        className="add-to-report"
         onClick={stopBubble}
       >
         <Checkbox

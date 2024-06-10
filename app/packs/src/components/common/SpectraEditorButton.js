@@ -23,7 +23,7 @@ export default function SpectraEditorButton({
 )}
       >
         {spcInfos.length > 0 ? (
-          <ButtonGroup className="button-right">
+          <ButtonGroup>
             <SplitButton
               id="spectra-editor-split-button"
               pullRight
@@ -70,7 +70,6 @@ export default function SpectraEditorButton({
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={confirmRegenerate}
             disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
           >
@@ -87,7 +86,7 @@ export default function SpectraEditorButton({
               delayShow={500}
               overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
             >
-              <ButtonGroup className="button-right">
+              <ButtonGroup>
                 <Button
                   id="spectra-editor-split-button"
                   pullRight

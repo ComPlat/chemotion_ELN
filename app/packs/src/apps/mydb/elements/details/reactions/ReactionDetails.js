@@ -314,7 +314,6 @@ export default class ReactionDetails extends Component {
           <Button
             variant="warning"
             size="sm"
-            className="button-right"
             onClick={() => this.handleSubmit(true)}
             disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
             style={{ display: hasChanged }}
@@ -325,7 +324,7 @@ export default class ReactionDetails extends Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button variant="warning" size="sm" className="button-right"
+          <Button variant="warning" size="sm"
             onClick={() => this.handleSubmit()}
             disabled={!permitOn(reaction) || !this.reactionIsValid()}
             style={{ display: hasChanged }} >
@@ -340,7 +339,6 @@ export default class ReactionDetails extends Component {
           <Button
             variant="info"
             size="sm"
-            className="button-right"
             onClick={() => this.props.toggleFullScreen()}
           >
             <i className="fa fa-expand" />
@@ -353,7 +351,6 @@ export default class ReactionDetails extends Component {
           <Button
             variant="success"
             size="sm"
-            className="button-right"
             disabled={reaction.changed || reaction.isNew}
             title={(reaction.changed || reaction.isNew) ?
               "Report can be generated after reaction is saved."

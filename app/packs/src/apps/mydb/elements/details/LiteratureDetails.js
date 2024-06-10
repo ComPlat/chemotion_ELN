@@ -43,7 +43,6 @@ const CloseBtn = ({ onClose }) => (
     onClick={onClose}
     variant="danger"
     size="sm"
-    className="button-right"
   >
     <i className="fa fa-times" />
   </Button>
@@ -388,7 +387,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="button-right clipboardBtn" data-clipboard-text={contentSamples} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentSamples} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -427,7 +426,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="button-right clipboardBtn" data-clipboard-text={contentReactions} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentReactions} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
@@ -466,7 +465,7 @@ export default class LiteratureDetails extends Component {
                   <Col md={1}>
                     <Panel.Title>
                       <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
-                        <Button size="sm" active className="button-right clipboardBtn" data-clipboard-text={contentElements} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-text={contentElements} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>

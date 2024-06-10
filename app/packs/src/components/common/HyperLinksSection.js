@@ -77,7 +77,6 @@ export default class HyperLinksSection extends Component {
           style={{ width: '90%' }}
         />
         <Button
-          className="button-right"
           variant="success"
           onClick={this.handleAddLink}
           disabled={link == null || readOnly}

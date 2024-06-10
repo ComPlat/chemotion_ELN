@@ -9,7 +9,7 @@ import {
   InputGroup, FormGroup, FormControl,
   ListGroup, ListGroupItem, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton,
-  Modal, Alert
+  Modal, Alert, Card, Form
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -76,10 +76,8 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
-import Panel from 'src/components/legacyBootstrap/Panel'
 import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 const MWPrecision = 6;
@@ -944,14 +942,12 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag, timesTag, boolean = false) {
+  saveButton(sampleUpdateCondition, floppyTag, timesTag, boolean = false) {
     return (
       <Button
         variant="warning"
-        size="sm"
-        className="button-right"
+        size="xxsm"
         onClick={() => this.saveSampleOrInventory(boolean)}
-        style={{ display: saveBtnDisplay }}
         disabled={sampleUpdateCondition}
       >
         {floppyTag}
@@ -972,7 +968,7 @@ export default class SampleDetails extends React.Component {
     const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
-    const saveAndClose = (
+    const saveAndClose = (saveBtnDisplay &&
       <OverlayTrigger
         placement="bottom"
         overlay={(
@@ -981,10 +977,10 @@ export default class SampleDetails extends React.Component {
           </Tooltip>
         )}
       >
-        {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag, timesTag, true)}
+        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
       </OverlayTrigger>
     );
-    const save = (
+    const save = (saveBtnDisplay &&
       <OverlayTrigger
         placement="bottom"
         overlay={(
@@ -993,17 +989,17 @@ export default class SampleDetails extends React.Component {
           </Tooltip>
         )}
       >
-        {this.saveButton(sampleUpdateCondition, saveBtnDisplay, floppyTag)}
+        {this.saveButton(sampleUpdateCondition, floppyTag)}
       </OverlayTrigger>
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
-      <div>
-        <ConfirmClose el={sample} />
-        { isChemicalTab ? null : saveAndClose }
+      <>
         { isChemicalTab ? saveForChemical : save}
-      </div>
+        { isChemicalTab ? null : saveAndClose }
+        <ConfirmClose el={sample} />
+      </>
     );
   }
 
@@ -1011,7 +1007,7 @@ export default class SampleDetails extends React.Component {
     const { isChemicalEdited, activeTab } = this.state;
     const titleTooltip = formatTimeStampsOfElement(sample || {});
     const isChemicalTab = activeTab === 'inventory';
-    const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab) ? '' : 'none';
+    const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
 
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false
@@ -1024,69 +1020,61 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
-    const colLabel = sample.isNew ? null : (
-      <ElementCollectionLabels element={sample} key={sample.id} placement="right" />
-    );
     const inventorySample = (
-      <Checkbox
+      <Form.Check
+        type="checkbox"
         className="sample-inventory-header"
         checked={sample.inventory_sample}
         onChange={(e) => this.handleInventorySample(e)}
-      >
-        Inventory
-      </Checkbox>
+        label="Inventory"
+      />
     );
 
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
-      <Checkbox className="sample-header-decouple" checked={sample.decoupled} onChange={(e) => this.decoupleChanged(e)}>
-        Decoupled
-      </Checkbox>
+      <Form.Check
+        type="checkbox"
+        className="sample-header-decouple"
+        checked={sample.decoupled}
+        onChange={(e) => this.decoupleChanged(e)}
+        label="Decoupled"
+      />
     ) : null;
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div className='d-flex align-items-center justify-content-between'>
+        <div className='d-flex align-items-center gap-2'>
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span>
-              <i className="icon-sample" />
-            &nbsp;&nbsp;
+              <i className="icon-sample me-1" />
               {sample.title()}
-            &nbsp;&nbsp;
             </span>
           </OverlayTrigger>
           <ShowUserLabels element={sample} />
           <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          <div style={{ marginTop: '-5px' }}>{colLabel}</div>
+          {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           <PubchemLabels element={sample} />
           <HeaderCommentSection element={sample} />
-          {sample.isNew
-            ? <FastInput fnHandle={this.handleFastInput} />
-            : null}
+          {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            {copyBtn}
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+        <div className='d-flex align-items-center gap-1'>
+          {decoupleCb}
+          {inventorySample}
+          {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+          <PrintCodeButton element={sample} />
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+          >
+            <Button
+              variant="info"
+              size="xxsm"
+              onClick={() => this.props.toggleFullScreen()}
             >
-              <Button
-                variant="info"
-                size="sm"
-                className="button-right"
-                onClick={() => this.props.toggleFullScreen()}
-              >
-                <i className="fa fa-expand" />
-              </Button>
-            </OverlayTrigger>
-            <PrintCodeButton element={sample} />
-            {sample.isNew
-              ? null
-              : <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-            {inventorySample}
-            {decoupleCb}
-          </div>
+              <i className="fa fa-expand" />
+            </Button>
+          </OverlayTrigger>
+          {copyBtn}
           {this.saveAndCloseSample(sample, saveBtnDisplay)}
         </div>
       </div>
@@ -1619,35 +1607,37 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     return (
-      <Panel
+      <Card
         className="eln-panel-detail"
-        variant={sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary'}
       >
-        <Panel.Heading>
+        <Card.Header className={"text-bg-" + (sample.isPendingToSave || isChemicalEdited ? 'info' : 'primary')}>
           {this.sampleHeader(sample)}
           {messageBlock}
-        </Panel.Heading>
-        <Panel.Body>
-          {this.sampleInfo(sample)}
-          <ListGroup>
-            <ElementDetailSortTab
-              type="sample"
-              availableTabs={Object.keys(tabContentsMap)}
-              tabTitles={tabTitlesMap}
-              onTabPositionChanged={this.onTabPositionChanged}
-              addInventoryTab={sample.inventory_sample}
-            />
-            {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
-            <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-              {tabContents}
-            </Tabs>
-          </ListGroup>
-          {this.sampleFooter()}
-          {this.structureEditorModal(sample)}
-          {this.renderMolfileModal()}
-          <CommentModal element={sample} />
-        </Panel.Body>
-      </Panel>
+        </Card.Header>
+        <Card.Body>
+          <Card.Text>
+            Content
+            {/* {this.sampleInfo(sample)}
+            <ListGroup>
+              <ElementDetailSortTab
+                type="sample"
+                availableTabs={Object.keys(tabContentsMap)}
+                tabTitles={tabTitlesMap}
+                onTabPositionChanged={this.onTabPositionChanged}
+                addInventoryTab={sample.inventory_sample}
+              />
+              {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
+              <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+                {tabContents}
+              </Tabs>
+            </ListGroup>
+            {this.sampleFooter()}
+            {this.structureEditorModal(sample)}
+            {this.renderMolfileModal()}
+            <CommentModal element={sample} /> */}
+          </Card.Text>
+        </Card.Body>
+      </Card>
     );
   }
 }
