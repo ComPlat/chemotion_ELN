@@ -27,6 +27,46 @@ const extractApiParameter = (cellLine) => {
 };
 }
 
+const successfullyCreatedParameter = {
+    title: 'Element created',
+    message: 'Cell line sample successfully added',
+    level: 'info',
+    dismissible: 'button',
+    autoDismiss: 10,
+    position: 'tr'
+};
+
+const successfullyCopiedParameter = {
+    title: 'Element copied',
+    message: 'Cell line sample successfully copied',
+    level: 'info',
+    dismissible: 'button',
+    autoDismiss: 10,
+    position: 'tr'
+  };
+  
+  const successfullyUpdatedParameter = {
+    title: 'Element updated',
+    message: 'Cell line sample successfully updated',
+    level: 'info',
+    dismissible: 'button',
+    autoDismiss: 10,
+    position: 'tr'
+  };
+  
+  const errorMessageParameter = {
+    title: 'Error',
+    message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
+    level: 'error',
+    dismissible: 'button',
+    autoDismiss: 30,
+    position: 'tr'
+  };
+
 export {
-    extractApiParameter
+    extractApiParameter,
+    successfullyCreatedParameter,
+    successfullyCopiedParameter,
+    successfullyUpdatedParameter,
+    errorMessageParameter
 };
