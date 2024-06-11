@@ -111,3 +111,13 @@ Medium::Additive.find_or_create_by(sample_name: 'Molecular sieves', molecule_nam
   label: 'D2O',
   value: 'D2O',
 }].each { |solvent| Medium::DiverseSolvent.find_or_create_by(sample_name: solvent[:label]) }
+
+
+['Formic Acid (FA)',
+'Trifluoroacetic Acid (TFA)',
+'Potassium Dihydrogen Orthophosphate',
+'Potassium Hydrogen Phthalate',
+'Potassium Phosphate Dibasic',
+'Sodium Acetate',
+'Ammonium Dihydrogen Phosphate',
+'Ammonium Formate'].each { |name| Medium::Modifier.find_or_create_by(sample_name: name)}
