@@ -49,17 +49,16 @@ module Chemotion
         components_params = params[:components]
 
         components_params.each do |component_params|
-          component_id = begin
-            Integer(component_params[:id])
-          rescue ArgumentError
-            nil
-          end
-          component = Component.find_or_create_by(id: component_id, sample_id: sample_id)
-          component.update(
-            name: component_params[:name],
-            position: component_params[:position],
-            component_properties: component_params[:component_properties],
-          )
+            molecule_id = component_params[:component_properties][:molecule_id]
+  
+            component = Component.where("sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?", sample_id, molecule_id)
+                                 .first_or_initialize(sample_id: sample_id)
+  
+            component.update(
+              name: component_params[:name],
+              position: component_params[:position],
+              component_properties: component_params[:component_properties],
+            )
         end
         # Delete components
         molecule_ids_to_keep = components_params.map { |cp| cp[:component_properties][:molecule_id] }.compact
