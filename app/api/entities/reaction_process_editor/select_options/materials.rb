@@ -21,6 +21,8 @@ module Entities
             SOLVENT: samples_options(solvents, 'SOLVENT') + samples_options(diverse_solvents, 'DIVERSE_SOLVENT'),
             MEDIUM: samples_options(Medium::MediumSample.all, 'MEDIUM'),
             ADDITIVE: samples_options(Medium::Additive.all, 'ADDITIVE'),
+            MODIFIER: samples_options(Medium::Modifier.all, 'MODIFIER') +
+              samples_options(diverse_solvents, 'DIVERSE_SOLVENT'),
             DIVERSE_SOLVENT: samples_options(diverse_solvents, 'DIVERSE_SOLVENT'),
             INTERMEDIATE: samples_options(intermediates, 'SAMPLE'),
           }
