@@ -56,6 +56,17 @@ const formatBytes = (bytes, decimals = 2) => {
   return `${parseFloat((bytes / (k ** i)).toFixed(dm))} ${sizes[i]}`;
 };
 
+/**
+ * Parse a string into a number.
+ *
+ * All characters other than digits, commas, and periods are ignored,
+ * with the exception of an optional leading dash to indicate a negative number.
+ * The string may contain a decimal separator, which can be either a comma or a period.
+ * All other periods or commas (such as thousands separators) are ignored.
+ *
+ * @param {string} numberString - The string to parse.
+ * @returns {number|NaN} - The parsed number or NaN if parsing fails.
+ */
 function parseNumericString(numberString) {
   if (typeof numberString !== 'string') {
     return NaN;
