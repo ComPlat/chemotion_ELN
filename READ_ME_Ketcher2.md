@@ -25,7 +25,7 @@ This guide will help you integrate Ketcher2 into your project. Follow the steps 
     bundle exec rails db:seed
     ```
 
-    OR Execute
+    OR Execute a database query
 
         Matrice.create(
         name: 'ketcher2Editor',
