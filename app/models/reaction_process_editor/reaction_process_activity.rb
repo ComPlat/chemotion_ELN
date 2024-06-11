@@ -62,8 +62,8 @@ module ReactionProcessEditor
     end
 
     def acts_as_medium?
-      # These are the 3 subclasses stored in the STI table `media`
-      %w[ADDITIVE MEDIUM DIVERSE_SOLVENT].include?(workup['acts_as'])
+      # These are the 4 subclasses stored in the STI table `media`
+      %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as'])
     end
 
     private
