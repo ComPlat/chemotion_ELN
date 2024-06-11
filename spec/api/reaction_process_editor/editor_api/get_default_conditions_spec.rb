@@ -13,15 +13,12 @@ describe ReactionProcessEditor::EditorAPI, '.get /default_conditions' do
   let(:creator) { create(:person) }
 
   let(:expected_default_conditions) do
-    { default_conditions:
-    { global: ReactionProcessEditor::SelectOptions.instance.global_default_conditions,
+    { default_conditions: {
+      global: Entitites::ReactionProcessEditor::SelectOptions::Conditions::GLOBAL_DEFAULTS,
       user: anything,
-      select_options:
-
-    { activity_type_equipment:
-    ReactionProcessEditor::SelectOptions.instance.activity_type_equipment,
-      condition_additional_information:
-    ReactionProcessEditor::SelectOptions.instance.condition_additional_information } } }.deep_stringify_keys
+      select_options: { activity_type_equipment: select_options::Equipment.per_activity_type,
+                        condition_additional_information: select_options::Conditions.additional_information },
+    } }.deep_stringify_keys
   end
 
   let(:authorization_header) { authorized_header(creator) }

@@ -37,10 +37,9 @@ module ReactionProcessEditor
     end
 
     def initial_conditions
-      ReactionProcessEditor::SelectOptions.instance
-                                          .global_default_conditions
-                                          .merge(user_default_conditions)
-                                          .merge(reaction_default_conditions)
+      Entities::ReactionProcessEditor::SelectOptions::Conditions::GLOBAL_DEFAULTS
+        .merge(user_default_conditions)
+        .merge(reaction_default_conditions)
     end
 
     def saved_sample_ids

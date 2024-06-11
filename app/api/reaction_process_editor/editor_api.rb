@@ -2,7 +2,7 @@
 
 module ReactionProcessEditor
   class EditorAPI < Grape::API
-    SELECT_OPTIONS = ::ReactionProcessEditor::SelectOptions.instance
+    SELECT_OPTIONS = Entities::ReactionProcessEditor::SelectOptions
 
     helpers StrongParamsHelpers
 
@@ -17,11 +17,11 @@ module ReactionProcessEditor
     desc 'get default_conditions.'
     get :default_conditions do
       { default_conditions: {
-        global: SELECT_OPTIONS.global_default_conditions,
+        global: SELECT_OPTIONS::Conditions::GLOBAL_DEFAULTS,
         user: current_user.reaction_process_defaults&.default_conditions.to_h,
         select_options: {
-          activity_type_equipment: SELECT_OPTIONS.activity_type_equipment,
-          condition_additional_information: SELECT_OPTIONS.condition_additional_information,
+          activity_type_equipment: SELECT_OPTIONS::Equipment.per_activity_type,
+          condition_additional_information: SELECT_OPTIONS::Conditions.additional_information,
         },
       }.deep_stringify_keys }
     end
@@ -29,7 +29,7 @@ module ReactionProcessEditor
     namespace :user_default_conditions do
       desc 'Update the Default Conditions of the User.'
       params do
-        requires :default_conditions, type: Hash, desc: 'The Default Conditions of the User.'
+        requires :default_conditions, type: Hash, desc: 'The default Conditions set by the User.'
       end
 
       put do
