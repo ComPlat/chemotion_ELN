@@ -60,8 +60,6 @@ function parseNumericString(numberString) {
   if (typeof numberString !== 'string') {
     return NaN;
   }
-
-  const numberIsNegative = numberString.startsWith('-');
   let sanitizedNumberString = numberString;
 
   // Remove all characters that aren't digits, commas, or periods.
@@ -81,7 +79,7 @@ function parseNumericString(numberString) {
       sanitizedNumberString.slice(finalPeriodIndex + 1)}`;
   }
 
-  if (numberIsNegative) {
+  if (numberString.startsWith('-')) {
     sanitizedNumberString = `-${sanitizedNumberString}`;
   }
 
