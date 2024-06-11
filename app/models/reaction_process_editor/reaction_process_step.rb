@@ -81,6 +81,16 @@ module ReactionProcessEditor
       end
     end
 
+    def mounted_equipment
+      @mounted_equipment ||= reaction_process_activities.map do |action|
+        if action.activity_name == 'CONDITION'
+          action.workup && action.workup['EQUIPMENT'].try(:[], 'value')
+        else
+          action.workup && action.workup['equipment']
+        end
+      end.flatten.uniq.compact
+    end
+
     private
 
     def activities_adding_sample_acting_as(material_type)

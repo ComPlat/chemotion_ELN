@@ -247,7 +247,7 @@ message ReactionProcessAction {
   message ActionChromatography {
     message ChromatographyStep {
       enum Step {
-        UNSPECIFIED = 0;
+        STEP_UNSPECIFIED = 0;
         EQUILIBRIUM = 1;
         SEPARATION = 2;
         POST_RUN = 3;
@@ -258,6 +258,19 @@ message ReactionProcessAction {
         PROD = 2;
         NONE = 3;
       }
+      enum Detector {
+        DETECTOR_UNSPECIFIED = 0;
+        NO_DETECTOR = 1;
+        PHOTODIODE_ARRAY = 2;
+        VARIABLE_WAVELENGTH = 3;
+        REFRACTIVE_INDEX = 4;
+        FLUORESCENCE = 5;
+        EVAPORATIVE_LIGHT_SCATTERING = 6;
+        FLAME_IONIZATION = 7;
+        BARRIER_IONIZATION_DISCHARGE = 8;
+        THERMAL_CONDUCTIVIT = 9;
+      }
+
       Time duration = 1;
       repeated CompoundWithRatio solvents = 2;
       Amount amount = 3;
@@ -273,20 +286,18 @@ message ReactionProcessAction {
       Length filling_height = 4;
     }
 
-    message SemiAutomated {
+    message Automated {
       Equipment equipment = 1;
       string column_type = 2;
-      repeated Analysis.AnalysisType detectors = 3;
+      repeated ChromatographyStep.Detector detectors = 3;
       Wavelength wavelength = 4;
     }
 
-    message Automated { string method = 1; }
-
     repeated ChromatographyStep steps = 1;
     oneof automation {
-      Automated automated = 2;
-      Manual manual = 3;
-      SemiAutomated semi_automated = 4;
+      Manual manual = 2;
+      Automated automated = 3;
+      Automated semi_automated = 4;
     }
   }
 
@@ -1388,8 +1399,10 @@ message Analysis {
     XRD = 21;      // X-ray diffraction, including single-crystal XRD.
     RAMAN = 22;    // Raman spectroscopy.
     ED = 23;       // Electron diffraction, including MicroED.
-    HPLC = 24;
-    MPLC = 25;
+    PDA = 24;      // Photodiode Array (DAD or PDA)
+    VWD = 25;      // Variable Wavelength (VWD)
+    RID = 26;      // Refractive Index (RI)
+    FLD = 27;      // Fluorescence (FLD)
   }
   AnalysisType type = 1;
   // Any details about analysis (e.g., NMR type, columns, gradients).
