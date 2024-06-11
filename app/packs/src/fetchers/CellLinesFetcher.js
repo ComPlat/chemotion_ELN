@@ -10,8 +10,10 @@ import {
   successfullyCreatedParameter,
   successfullyCopiedParameter,
   successfullyUpdatedParameter,
+  successfullySplittedParameter,
   errorMessageParameter
 } from 'src/utilities/CellLineUtils';
+
 export default class CellLinesFetcher {
   static fetchByCollectionId(id, queryParams = {}, isSync = false) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
@@ -167,6 +169,7 @@ export default class CellLinesFetcher {
       }));
     });
 
-    return Promise.all(promises);
+    return Promise.all(promises)
+      .then(() => { NotificationActions.add(successfullySplittedParameter); });
   }
 }
