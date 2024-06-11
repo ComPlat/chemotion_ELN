@@ -19,4 +19,8 @@ module RequestSpecHelper
   def authorized_header(user)
     content_type_header.merge(jwt_authorization_header(user))
   end
+
+  def select_options
+    Entities::ReactionProcessEditor::SelectOptions
+  end
 end
