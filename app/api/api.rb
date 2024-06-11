@@ -191,7 +191,7 @@ class API < Grape::API
   mount Chemotion::MeasurementsAPI
   mount Chemotion::AttachableAPI
   mount Chemotion::SampleTaskAPI
-  mount Chemotion::ChemicalAPI
+  mount Chemotion::ThirdPartyAppAPI
   mount Chemotion::CalendarEntryAPI
   mount Chemotion::CommentAPI
   mount Chemotion::CellLineAPI
