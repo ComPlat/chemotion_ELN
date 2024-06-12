@@ -291,7 +291,7 @@ class Material extends Component {
         <NumeralInputWithUnitsCompo
           precision={4}
           bsStyle="success"
-          value={value}
+          value={value === 0 ? value : (value || 'n.d')}
           disabled={readOnly}
           onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
           onChange={(e) => this.handleGasFieldsChange(field, e)}
@@ -826,7 +826,6 @@ class Material extends Component {
 
   handleGasTypeChange(gasType, value) {
     const { materialGroup, onChange } = this.props;
-    console.log('handleGasTypeChange', gasType, value);
     if (onChange) {
       const event = {
         type: gasType,
