@@ -553,7 +553,6 @@ export default class Sample extends Element {
   }
   
   setAmountAndNormalizeToGram(amount) {
-    console.log('setAmountAndNormalizeToGram');
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
   }
@@ -799,7 +798,7 @@ export default class Sample extends Element {
     let timeInHours;
     let timeInMinutes;
     let timeInSeconds;
-    if (value !== null && value !== undefined) {
+    if (value) {
       if (timeUnit === 's') {
         timeInHours = timeValue / (60 * 60);
         timeInMinutes = timeValue / 60;
@@ -820,6 +819,10 @@ export default class Sample extends Element {
       } else if (this.gas_phase_data.turnover_frequency.unit === 'TON/h') {
         this.gas_phase_data.turnover_frequency.value = timeInHours ? value / timeInHours : timeValue;
       }
+    } else if (value === 0) {
+      this.gas_phase_data.turnover_frequency.value = 0;
+    } else {
+      this.gas_phase_data.turnover_frequency.value = 'n.d';
     }
   }
 
@@ -847,9 +850,6 @@ export default class Sample extends Element {
   // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
-/*     if (this.id === 1837) {
-      console.log('it triggers', amount_g, unit);
-    } */
     if (this.contains_residues) {
       const { loading } = this.residues[0].custom_info;
       switch (unit) {
