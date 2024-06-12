@@ -9,8 +9,7 @@ module Entities
     expose! :reference
     expose! :show_label
     expose! :waste
-    expose! :feedstock_gas_reference
-    expose! :gas
+    expose! :gas_type
     expose! :gas_phase_data
 
     expose! :sample, using: 'Entities::SampleEntity', merge: true

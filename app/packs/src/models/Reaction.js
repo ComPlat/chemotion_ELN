@@ -816,8 +816,7 @@ export default class Reaction extends Element {
         if (index >= 0) {
           const mat = new Sample(material);
           mat.reference = group[index].reference;
-          mat.feedstock_gas_reference = group[index].feedstock_gas_reference;
-          mat.gas = group[index].gas;
+          mat.gas_type = group[index].gas_type;
           mat.gas_phase_data = group[index].gas_phase_data;
           mat.updateChecksum();
           group[index] = mat;
@@ -951,19 +950,74 @@ export default class Reaction extends Element {
       
     }
 
-  findFeedstockMaterialValue() {
+  findFeedstockCatalystMaterialsValues() {
+    const { feedstock, catalyst } = this.findFeedstockCatalystMaterial();
+    console.log(feedstock, catalyst);
+    const result = {
+      catalystMoles: null,
+      feedstockVolume: null
+    };
+    result.catalystMoles = catalyst ? this.calculateCatalystMoles(catalyst) : null;
+    result.feedstockVolume = feedstock ? this.calculateFeedstockVolume(feedstock) : null;
+    return result;
+  }
+
+  findFeedstockCatalystMaterial() {
     const materials = [...this.starting_materials, ...this.reactants];
-    const feedstockMaterial = materials.find((material) => material.feedstock_gas_reference);
-    if (feedstockMaterial) {
-      let calculateMolValue = feedstockMaterial.target_amount_value;
-      if (feedstockMaterial.target_amount_unit === 'mol') {
-        return calculateMolValue;
-      } if (feedstockMaterial.target_amount_unit === 'l') {
-        const { purity } = feedstockMaterial;
-        calculateMolValue /= (0.0821 * 294 * purity);
-        return calculateMolValue;
-      }
+    const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
+    const catalystMaterial = materials.find((material) => (material.gas_type === 'catalyst'));
+    console.log('feedstockMaterial', feedstockMaterial);
+    const results = {
+      feedstock: feedstockMaterial,
+      catalyst: catalystMaterial,
+    };
+    return results;
+  }
+
+  calculateCatalystMoles(material) {
+    let moles;
+    const {
+      purity,
+      target_amount_unit,
+      target_amount_value,
+      density
+    } = material;
+    const molecularWeight = material.molecule.molecular_weight;
+    if (target_amount_unit === 'mol') {
+      moles = target_amount_value;
+    } else if (target_amount_unit === 'l') {
+      const amountInGram = target_amount_unit * density * 1000;
+      moles = (amountInGram * purity) / molecularWeight;
+    } else if (target_amount_unit === 'g') {
+      moles = (target_amount_value * purity) / molecularWeight;
     }
-    return null;
+    return moles;
+  }
+
+  calculateFeedstockVolume(material) {
+    let volume;
+    const { purity, target_amount_unit, target_amount_value } = material;
+    if (target_amount_unit === 'mol') {
+      volume = this.calculateVolume(target_amount_unit, purity);
+    } else if (target_amount_unit === 'l') {
+      volume = target_amount_value;
+    } else if (target_amount_unit === 'g') {
+      const molecularWeight = material.molecule.molecular_weight;
+      const moles = target_amount_value / molecularWeight;
+      volume = this.calculateVolume(moles, purity);
+    }
+    return volume;
+  }
+
+  calculateVolume(moles, purity) {
+    const gasConstant = 0.0821;
+    const temperature = 294;
+    return (moles * gasConstant * temperature) / purity;
+  }
+
+  calculateMoles(volume, purity) {
+    const gasConstant = 0.0821;
+    const temperature = 294;
+    return volume / (gasConstant * temperature * purity);
   }
 }

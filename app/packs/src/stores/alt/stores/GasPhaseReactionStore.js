@@ -5,13 +5,15 @@ class GasPhaseReactionStore {
   constructor() {
     this.state = {
       gaseousReactionStatus: false,
-      feedStockReferenceMolValue: null,
+      catalystReferenceMolValue: null,
+      feedStockReferenceVolumeValue: null,
     };
 
     this.bindListeners({
       handleGasButtonStatusChange: this.handleGasButtonStatusChange,
       gaseousReaction: this.gaseousReaction,
-      SetFeedStockReferenceMolValue: this.SetFeedStockReferenceMolValue,
+      setCatalystReferenceMole: this.setCatalystReferenceMole,
+      setFeedStockReferenceVolume: this.setFeedStockReferenceVolume,
     });
     this.bindActions(GaseousReactionActions);
   }
@@ -28,9 +30,15 @@ class GasPhaseReactionStore {
     });
   }
 
-  SetFeedStockReferenceMolValue(value) {
+  setCatalystReferenceMole(value) {
     this.setState({
-      feedStockReferenceMolValue: value,
+      catalystReferenceMolValue: value,
+    });
+  }
+
+  setFeedStockReferenceVolume(value) {
+    this.setState({
+      feedStockReferenceVolumeValue: value,
     });
   }
 }

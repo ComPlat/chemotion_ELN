@@ -449,6 +449,7 @@ class Material extends Component {
     if (onChange && e) {
       const event = {
         unit: e.metricUnit,
+        value: e.value === '' ? 0 : e.value,
         field,
         type: 'gasFieldsUnitsChanged',
         materialGroup,
@@ -644,7 +645,8 @@ class Material extends Component {
                   disabled={
                     !permitOn(reaction)
                     || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)
-                    || material.feedstock_gas_reference || material.gas}
+                    || material.gas_type === 'feedstock' || material.gas_type === 'gas'
+                  }
                   onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
                   onMetricsChange={this.handleMetricsChange}
                   bsStyle={material.error_mass ? 'error' : massBsStyle}
@@ -701,7 +703,8 @@ class Material extends Component {
             </Button>
           </td>
         </tr>
-        {material.gas && gaseousReactionStore.gaseousReactionStatus ? this.gaseousProductRow(material) : null}
+        {material.gas_type === 'gas'
+        && gaseousReactionStore.gaseousReactionStatus ? this.gaseousProductRow(material) : null}
       </tbody>
     );
   }
@@ -821,30 +824,38 @@ class Material extends Component {
     );
   }
 
-  handleFeedstockGasChange(feedstockGasStatus, type) {
+  handleGasTypeChange(gasType, value) {
     const { materialGroup, onChange } = this.props;
+    console.log('handleGasTypeChange', gasType, value);
     if (onChange) {
       const event = {
-        type,
+        type: gasType,
         materialGroup,
         sampleID: this.materialId(),
-        value: !feedstockGasStatus
+        value,
       };
       onChange(event);
     }
   }
 
-  feedstockGas(material) {
-    const { materialGroup } = this.props;
-    let feedstockOrGas = 'FS';
-    let tooltipText = 'Feedstock reference';
-    let feedstockGasStatus = material?.feedstock_gas_reference;
-    if (materialGroup === 'products') {
-      feedstockOrGas = 'gas';
-      tooltipText = 'gas';
-      feedstockGasStatus = material?.gas;
+  gasType(material) {
+    let gasTypeValue = material.gas_type || 'off';
+    let tooltipText = 'This material is currently marked as non gaseous type';
+    if (material.gas_type === 'off') {
+      gasTypeValue = 'off';
+    } else if (material.gas_type === 'gas') {
+      gasTypeValue = 'gas';
+      tooltipText = 'Gas';
+    } else if (material.gas_type === 'feedstock') {
+      gasTypeValue = 'FES';
+      tooltipText = 'Feedstock reference';
+    } else if (material.gas_type === 'catalyst') {
+      gasTypeValue = 'CAT';
+      tooltipText = 'Catalyst reference';
     }
-    const feedstockStatus = feedstockGasStatus ? '#009a4d' : 'grey';
+    const gasTypes = ['feedstock', 'catalyst', 'gas'];
+    const gasTypeStatus = gasTypes.includes(material?.gas_type);
+    const feedstockStatus = gasTypeStatus ? '#009a4d' : 'grey';
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
       <div style={{ paddingRight: '3px' }}>
@@ -852,11 +863,11 @@ class Material extends Component {
           <Button
             bsStyle="primary"
             bsSize="xsmall"
-            onClick={() => this.handleFeedstockGasChange(feedstockGasStatus, feedstockOrGas)}
+            onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
             disabled={false}
-            style={{ backgroundColor: feedstockStatus }}
+            style={{ backgroundColor: feedstockStatus, width: '35px' }}
           >
-            {feedstockOrGas}
+            {gasTypeValue}
           </Button>
         </OverlayTrigger>
       </div>
@@ -941,7 +952,7 @@ class Material extends Component {
       <div style={{ display: 'inline-block', maxWidth: '100%' }}>
         <div className="inline-inside">
           {gaseousReactionStore.gaseousReactionStatus && materialGroup !== 'solvents'
-            ? this.feedstockGas(material) : null}
+            ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
             <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}

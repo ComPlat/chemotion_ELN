@@ -47,24 +47,34 @@ end
 class ReactionsStartingMaterialSample < ReactionsSample
   include Tagging
   include Reactable
+
+  enum gas_type: { off: 0, feedstock: 1, catalyst: 2 }
 end
 
 class ReactionsReactantSample < ReactionsSample
   include Tagging
   include Reactable
+
+  enum gas_type: { off: 0, feedstock: 1, catalyst: 2 }
 end
 
 class ReactionsSolventSample < ReactionsSample
   include Reactable
+
+  enum gas_type: { off: 0 }
 end
 
 class ReactionsPurificationSolventSample < ReactionsSample
   include Reactable
+
+  enum gas_type: { off: 0 }
 end
 
 class ReactionsProductSample < ReactionsSample
   include Reactable
   include Tagging
+
+  enum gas_type: { off: 0, gas: 3 }
 
   def formatted_yield
     eq = self.equivalent
