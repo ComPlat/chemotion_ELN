@@ -19,8 +19,13 @@ export default class ReactionsFetcher {
         .then((json) => {
           if (json.hasOwnProperty('reaction')) {
             const reaction = new Reaction(json.reaction);
-            const molValue = reaction.findFeedstockMaterialValue();
-            GaseousReactionActions.SetFeedStockReferenceMolValue(molValue);
+            const { catalystMoles, feedstockVolume } = reaction.findFeedstockCatalystMaterialsValues();
+            if (feedstockVolume) {
+              GaseousReactionActions.setFeedStockReferenceVolume(feedstockVolume);
+            }
+            if (catalystMoles) {
+              GaseousReactionActions.setCatalystReferenceMole(catalystMoles);
+            }
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));
               const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());

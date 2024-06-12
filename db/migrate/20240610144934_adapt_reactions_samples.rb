@@ -1,7 +1,6 @@
 class AdaptReactionsSamples < ActiveRecord::Migration[6.1]
   def change
-    add_column :reactions_samples, :feedstock_gas_reference, :boolean, null: true, default: false
-    add_column :reactions_samples, :gas, :boolean, null: true, default: false
+    add_column :reactions_samples, :gas_type, :integer, default: 0, null: true
     add_column :reactions_samples, :gas_phase_data, :jsonb, default: {
       part_per_million: nil,
       turnover_number: nil,

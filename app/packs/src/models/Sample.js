@@ -685,7 +685,8 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
-    if (this.amount_unit === 'mol' && this.feedstock_gas_reference) return this.amount_value;
+    if (this.amount_unit === 'mol'
+    && (this.gas_type === 'gas' || this.gas_type === 'catalyst')) return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
@@ -694,17 +695,22 @@ export default class Sample extends Element {
     return (amount * 0.0821 * 294) / purity;
   }
 
-  calculateVolumeForGas(amount, ppm, temperatureInKelvin) {
-    return (amount * ppm * 1) / (0.0821 * temperatureInKelvin * 1000000);
+  calculateMolesFromMoleculeWeight(amountGram) {
+    return (amountGram / this.molecule_molecular_weight);
+  }
+
+  calculateVolumeForGas(amountGram, ppm, temperatureInKelvin) {
+    const amountMol = this.calculateMolesFromMoleculeWeight(amountGram);
+    const pressure = 1;
+    return (amountMol * 0.0821 * temperatureInKelvin * 1000000) / (ppm * pressure);
   }
 
   calculateVolumeForFeedstockOrGas(amountGram) {
     // number of moles for feedstock = Purity*1*Volume/(0.0821*294)
     // number of moles for gas = ppm*1*V/(0.0821*temp_in_K*1000000)
     let volume;
-    const molecularWeight = this.molecule_molecular_weight;
-    const molAmount = (amountGram / molecularWeight) || 0;
-    if (this.gas && !this.feedstock_gas_reference) {
+    const molAmount = this.calculateMolesFromMoleculeWeight(amountGram);
+    if (this.gas_type === 'gas') {
       const { part_per_million, temperature } = this.gas_phase_data;
       const temperatureInKelvin = this.convertTemperatureToKelvin(temperature);
       if (temperatureInKelvin !== null && temperatureInKelvin !== 0
@@ -753,9 +759,9 @@ export default class Sample extends Element {
     // number of moles for feedstock = Purity*1*Volume/(0.0821*294) & pressure = 1
     // number of moles for gas =  ppm*1*V/(0.0821*temp_in_K*1000000) & pressure = 1
     let moles = 0;
-    const volume = amountLiter || this.amount_l;
+    let volume;
     // calculate moles for gas material
-    if (this.gas && !this.feedstock_gas_reference) {
+    if (this.gas_type === 'gas') {
       const { part_per_million, temperature } = this.gas_phase_data;
       const temperatureInKelvin = this.convertTemperatureToKelvin(temperature);
       if (
@@ -763,6 +769,8 @@ export default class Sample extends Element {
         && temperatureInKelvin !== undefined
         && part_per_million !== undefined
         && part_per_million !== null) {
+        const gasPhaseStore = GasPhaseReactionStore.getState();
+        volume = gasPhaseStore.feedStockReferenceVolumeValue;
         if (volume) {
           moles = this.calculateMolesForGasMaterial(volume, part_per_million, temperatureInKelvin);
         }
@@ -778,6 +786,7 @@ export default class Sample extends Element {
       return 0;
     }
     // calculate moles for feedstock material
+    volume = amountLiter || this.amount_l;
     if (volume) {
       moles = this.calculateMolesForFeedstock(volume);
     }
@@ -818,15 +827,15 @@ export default class Sample extends Element {
     if (this.gas_phase_data) {
       // value of mol for FeedstockReference should be extracted from reference
       const gasPhaseStore = GasPhaseReactionStore.getState();
-      const molFeedstockReference = gasPhaseStore.feedStockReferenceMolValue;
+      const molCatalystReference = gasPhaseStore.catalystReferenceMolValue;
       const currentTONValue = this.gas_phase_data.turnover_number;
       let value;
-      if (molFeedstockReference === 0) {
+      if (molCatalystReference === 0) {
         value = 0;
-      } else if (molFeedstockReference === null || molFeedstockReference === undefined) {
+      } else if (molCatalystReference === null || molCatalystReference === undefined) {
         value = currentTONValue;
       } else {
-        value = moles / molFeedstockReference;
+        value = moles / molCatalystReference;
       }
       this.gas_phase_data.turnover_number = value;
       this.updateTONPerTimeValue(value);
@@ -856,7 +865,7 @@ export default class Sample extends Element {
         case 'g':
           return amount_g;
         case 'l': {
-          if (this.feedstock_gas_reference || this.gas) {
+          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
             return this.calculateVolumeForFeedstockOrGas(amount_g);
           }
           if (this.has_molarity) {
@@ -871,7 +880,7 @@ export default class Sample extends Element {
           return 0;
         }
         case 'mol': {
-          if (this.feedstock_gas_reference || this.gas) {
+          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
             return this.calculateMolesForFeedstockOrGas();
           }
           if (this.has_molarity) {
@@ -912,15 +921,11 @@ export default class Sample extends Element {
           return amount_value / 1000.0;
         case 'l': {
           // amount in  gram for feedstock gas material is calculated according to equation of molecular weight x moles
-          if (this.feedstock_gas_reference || this.gas) {
+          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
             const molecularWeight = this.molecule_molecular_weight;
             const moles = this.calculateMolesForFeedstockOrGas(amount_value);
             return moles * molecularWeight;
           }
-/*           if (this.feedstock_gas_reference || this.gas) {
-            const molecularWeight = this.molecule_molecular_weight;
-            return (amount_value / (this.purity || 1.0)) * molecularWeight;
-          } */
           if (this.has_molarity) {
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
@@ -1108,8 +1113,7 @@ export default class Sample extends Element {
       reference: this.reference || false,
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
-      feedstock_gas_reference: this.feedstock_gas_reference || false,
-      gas: this.gas,
+      gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
     };
     _.merge(params, extra_params);

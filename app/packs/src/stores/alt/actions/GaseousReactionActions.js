@@ -12,7 +12,12 @@ class GaseousReactionActions {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  SetFeedStockReferenceMolValue(value) {
+  setCatalystReferenceMole(value) {
+    return value;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  setFeedStockReferenceVolume(value) {
     return value;
   }
 }
