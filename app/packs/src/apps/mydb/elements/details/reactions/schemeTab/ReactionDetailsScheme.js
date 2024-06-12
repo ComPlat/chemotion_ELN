@@ -547,14 +547,19 @@ export default class ReactionDetailsScheme extends Component {
     } else if (materialGroup === 'starting_materials' || materialGroup === 'reactants') {
       if (value === 'FES') {
         updatedSample.gas_type = 'catalyst';
+        GaseousReactionActions.setFeedStockReferenceVolume('n.d');
       } else if (value === 'CAT') {
         updatedSample.gas_type = 'off';
+        GaseousReactionActions.setCatalystReferenceMole('n.d');
       } else if (value === 'off') {
         updatedSample.gas_type = 'feedstock';
       }
     }
     this.updateMolValueForUpdatedSample(updatedSample);
-    return this.updatedReactionWithSample(this.updatedSamplesForFeedstockChange.bind(this), updatedSample);
+    if (updatedSample.gas_type === 'catalyst') {
+      GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
+    }
+    return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample);
   }
 
   updatedReactionForGasProductFieldsChange(changeEvent) {
@@ -933,8 +938,9 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  updatedSamplesForFeedstockChange(samples, updatedSample, materialGroup) {
-    return samples.map((sample) => {
+  updatedSamplesForGasTypeChange(samples, updatedSample) {
+    return samples.map((sample, i) => {
+      console.log(i);
       if (sample.id === updatedSample.id) {
         sample.gas_type = updatedSample.gas_type;
       } else if (sample.id !== updatedSample.id) {
