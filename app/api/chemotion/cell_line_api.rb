@@ -139,7 +139,7 @@ module Chemotion
           begin
             use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])
             splitted_cell_line_sample = use_case.execute!
-            splitted_cell_line_sample.container = update_datamodel(params[:container]) if @params.has_key?("container")
+            splitted_cell_line_sample.container = update_datamodel(params[:container]) if @params.key?('container')
           rescue StandardError => e
             error!(e, 400)
           end
