@@ -757,7 +757,7 @@ export default class Sample extends Element {
   calculateMolesForFeedstockOrGas(amountLiter = null) {
     // number of moles for feedstock = Purity*1*Volume/(0.0821*294) & pressure = 1
     // number of moles for gas =  ppm*1*V/(0.0821*temp_in_K*1000000) & pressure = 1
-    let moles = 0;
+    let moles = null;
     let volume;
     // calculate moles for gas material
     if (this.gas_type === 'gas') {
@@ -770,19 +770,14 @@ export default class Sample extends Element {
         && part_per_million !== null) {
         const gasPhaseStore = GasPhaseReactionStore.getState();
         volume = gasPhaseStore.feedStockReferenceVolumeValue;
-        if (volume) {
+        if (volume || volume === 0) {
           moles = this.calculateMolesForGasMaterial(volume, part_per_million, temperatureInKelvin);
         }
-        /* density is not relevent in case of feedstock or gas material
-        else {
-          moles = density ? (part_per_million * amount_g)
-           / (0.0821 * temperatureInKelvin * 1000000 * density * 1000) : 0;
-        } */
         this.updateTONValue(moles);
         return moles;
       }
-      this.updateTONValue(0);
-      return 0;
+      this.updateTONValue(null);
+      return null;
     }
     // calculate moles for feedstock material
     volume = amountLiter || this.amount_l;
@@ -822,23 +817,19 @@ export default class Sample extends Element {
     } else if (value === 0) {
       this.gas_phase_data.turnover_frequency.value = 0;
     } else {
-      this.gas_phase_data.turnover_frequency.value = 'n.d';
+      this.gas_phase_data.turnover_frequency.value = null;
     }
   }
 
   updateTONValue(moles) {
     if (this.gas_phase_data) {
-      // value of mol for FeedstockReference should be extracted from reference
       const gasPhaseStore = GasPhaseReactionStore.getState();
       const molCatalystReference = gasPhaseStore.catalystReferenceMolValue;
-      const currentTONValue = this.gas_phase_data.turnover_number;
       let value;
-      if (molCatalystReference === 0) {
-        value = 0;
-      } else if (molCatalystReference === null || molCatalystReference === undefined) {
-        value = currentTONValue;
+      if (!molCatalystReference) {
+        value = molCatalystReference;
       } else {
-        value = moles / molCatalystReference;
+        value = moles || moles === 0 ? moles / molCatalystReference : null;
       }
       this.gas_phase_data.turnover_number = value;
       this.updateTONPerTimeValue(value);
