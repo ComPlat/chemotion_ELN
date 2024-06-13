@@ -535,6 +535,7 @@ export default class ReactionDetailsScheme extends Component {
     } = changeEvent;
     const { reaction } = this.props;
     const updatedSample = reaction.sampleById(sampleID);
+    const isFeedstockMaterialPresent = reaction.isFeedstockMaterialPresent();
     if (materialGroup === 'products') {
       if (value === 'gas') {
         updatedSample.gas_type = 'off';
@@ -545,14 +546,18 @@ export default class ReactionDetailsScheme extends Component {
         updatedSample.gas_phase_data = null;
       }
     } else if (materialGroup === 'starting_materials' || materialGroup === 'reactants') {
-      if (value === 'FES') {
+      if (isFeedstockMaterialPresent && value === 'off') {
         updatedSample.gas_type = 'catalyst';
+      } else if (value === 'FES') {
+        updatedSample.gas_type = 'off';
         GaseousReactionActions.setFeedStockReferenceVolume(null);
       } else if (value === 'CAT') {
         updatedSample.gas_type = 'off';
         GaseousReactionActions.setCatalystReferenceMole(null);
-      } else if (value === 'off') {
+      } else if (value === 'off' && !isFeedstockMaterialPresent) {
         updatedSample.gas_type = 'feedstock';
+      } else if (value === 'off') {
+        updatedSample.gas_type = 'catalyst';
       }
     }
     this.updateMolValueForUpdatedSample(updatedSample);
