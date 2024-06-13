@@ -20,7 +20,6 @@ class AdminHome extends React.Component {
     this.state = {
       showTree: true,
       pageIndex: 0,
-      contentClassName: 'small-col main-content',
     };
     this.toggleTree = this.toggleTree.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
@@ -30,7 +29,6 @@ class AdminHome extends React.Component {
     const { showTree } = this.state;
     this.setState({
       showTree: !showTree,
-      contentClassName: showTree ? 'small-col full-main' : 'small-col main-content'
     });
   }
 
@@ -68,14 +66,14 @@ class AdminHome extends React.Component {
     return (<div />);
   }
 
-  tree() {
+  renderTree() {
     const { showTree, pageIndex } = this.state;
     if (!showTree) {
       return <div />;
     }
 
     return (
-      <Nav className="flex-column" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
+      <Nav className="flex-column fs-4" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
             <NavItem>
               <Nav.Link eventKey={0}>Dashboard</Nav.Link>
             </NavItem>
@@ -113,9 +111,8 @@ class AdminHome extends React.Component {
   }
 
   renderContent(component) {
-    const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col >
         {component}
       </Col>
     );
@@ -125,14 +122,29 @@ class AdminHome extends React.Component {
     return (
       <div>
         <Container fluid>
-          <Row className="my-3">
+          <Row className="mb-3">
             <AdminNavigation toggleTree={this.toggleTree} />
           </Row>
-          <Row className="mb-3">
-            <Col xs={2}>
-              {this.tree()}
+          <Row className='flex-grow-1'>
+            <Col
+              xs={2}
+              className={`sidebar ${this.state.showTree ? '' : 'collapsed'}`}
+              style={{
+                overflow: 'hidden',
+                maxWidth: this.state.showTree ? '25rem' : '0',
+                transition: 'none'
+              }}
+            >
+              {this.state.showTree && this.renderTree()}
+            </Col >
+            <Col className="main-content flex-grow-1"
+              style={{
+                transition: 'none',
+                width: this.state.showTree ? 'calc(100% - 25rem)' : '100%',
+                maxWidth: this.state.showTree ? 'calc(100% - 25rem)' : '100%',
+              }}>
+              {this.mainContent()}
             </Col>
-            {this.mainContent()}
           </Row>
           <Row>
             <Col>

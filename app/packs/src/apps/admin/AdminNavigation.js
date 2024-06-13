@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, Container } from 'react-bootstrap';
+import { Nav, Navbar, Container, Button, } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -39,62 +39,23 @@ export default class AdminNavigation extends React.Component {
     this.props.toggleTree();
   }
 
-  navHeader() {
-    return (
-      <>
-        <Navbar expand="lg" bg="grey">
-          <Container>
-            {/* className="collec-tree" */}
-
-            <Navbar.Toggle aria-controls="basic-navbar-nav">
-              <i
-                className="fa fa-list"
-                onClick={this.toggleTree}
-                role='button'
-              />
-            </Navbar.Toggle>
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="me-auto">
-                <Navbar.Brand>
-                  <NavHead />
-                </Navbar.Brand>
-
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
-      </>
-
-    );
-  }
 
   render() {
-    return this.state.currentUser ? (
-      <Navbar bg="grey" expand="lg" className="navbar-custom">
-        <Container>
-          {this.navHeader()}
-
-          <Nav className="me-auto">
-          <h1>ELN Administration</h1>
+    const { currentUser } = this.state;
+    return (
+      <Navbar bg="grey" expand="lg" className="navbar-custom py-4" >
+        <Container fluid>
+          <Navbar.Brand className="d-flex align-items-center">
+            <Button variant="light" className="me-2 p-0 border-0 bg-transparent" onClick={this.toggleTree} aria-label="Toggle Tree">
+              <i className='fa fa-list' size="lg" />
+            </Button>
+            <NavHead />
+          </Navbar.Brand>
+          <div className="h1 mb-0 ms-5 ps-5">ELN Administration</div>
+          <Nav className="ms-auto fs-4">
+            {currentUser ? <UserAuth /> : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />}
           </Nav>
-          <Nav className="ms-auto">
-            <UserAuth />
-          </Nav>
-          <div className="clearFix" />
         </Container>
-      </Navbar>
-    ) : (
-        <Navbar bg="grey" expand="lg" className="navbar-custom">
-          <Container>
-            {this.navHeader()}
-            <Nav className="me-auto">
-              <h1>ELN Administration</h1>
-            </Nav>
-            <Nav className="ms-auto">
-              <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
-            </Nav>
-            <div className="clearFix" />
-          </Container>
       </Navbar>
     );
   }
