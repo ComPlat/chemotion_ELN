@@ -947,7 +947,6 @@ export default class Reaction extends Element {
 
   findFeedstockCatalystMaterialsValues() {
     const { feedstock, catalyst } = this.findFeedstockCatalystMaterial();
-    console.log(feedstock, catalyst);
     const result = {
       catalystMoles: null,
       feedstockVolume: null
@@ -961,7 +960,6 @@ export default class Reaction extends Element {
     const materials = [...this.starting_materials, ...this.reactants];
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     const catalystMaterial = materials.find((material) => (material.gas_type === 'catalyst'));
-    console.log('feedstockMaterial', feedstockMaterial);
     const results = {
       feedstock: feedstockMaterial,
       catalyst: catalystMaterial,
@@ -1014,5 +1012,10 @@ export default class Reaction extends Element {
     const gasConstant = 0.0821;
     const temperature = 294;
     return volume / (gasConstant * temperature * purity);
+  }
+
+  isFeedstockMaterialPresent() {
+    const materials = [...this.starting_materials, ...this.reactants];
+    return materials.some((material) => material.gas_type === 'feedstock');
   }
 }
