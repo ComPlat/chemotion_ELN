@@ -12,7 +12,7 @@ import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateCont
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
-// import TemplateManagement from 'src/apps/admin/TemplateManagement';
+import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -36,35 +36,34 @@ class AdminHome extends React.Component {
 
   handleSelect(pageIndex) {
     this.setState({
-      pageIndex
+      pageIndex: Number(pageIndex)
     });
   }
-
 
   mainContent() {
     const { pageIndex } = this.state;
     if (pageIndex === 0) {
-      return this.renderDashboard();
+      return this.renderContent(<AdminDashboard />);
     } else if (pageIndex === 1) {
-      return this.renderUserManagement();
+      return this.renderContent(<UserManagement />);
     } else if (pageIndex === 2) {
-      return this.renderMessagePublish();
+      return this.renderContent(<MessagePublish />);
     } else if (pageIndex === 4) {
-      return this.renderGroupMgnt();
+      return this.renderContent(<GroupsDevices />);
     } else if (pageIndex === 5) {
-      return this.renderOlsTerms();
+      return this.renderContent(<OlsTerms />);
     } else if (pageIndex === 7) {
       return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
-      return this.renderTextTemplates();
+      return this.renderContent(<TextTemplateContainer />);
     } else if (pageIndex === 9) {
-      return this.renderDevices();
+      return this.renderContent(<DevicesList />);
     } else if (pageIndex === 12) {
-      return this.renderTemplateManagement();
+      return this.renderContent(<TemplateManagement />);
     } else if (pageIndex === 13) {
-      return this.renderDelayedJobs();
+      return this.renderContent(<DelayedJobs />);
     } else if (pageIndex === 14) {
-      return this.renderChemSpectraLayouts();
+      return this.renderContent(<ChemSpectraLayouts />);
     }
     return (<div />);
   }
@@ -76,9 +75,7 @@ class AdminHome extends React.Component {
     }
 
     return (
-      <Row>
-        <Col>
-          <Nav className="flex-column" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
+      <Nav className="flex-column" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
             <NavItem>
               <Nav.Link eventKey={0}>Dashboard</Nav.Link>
             </NavItem>
@@ -110,63 +107,8 @@ class AdminHome extends React.Component {
             <NavItem>
               <Nav.Link eventKey={14}>ChemSpectra Layouts</Nav.Link>
             </NavItem>
-          </Nav>
-        </Col>
-      </Row>
-    );
-  }
+      </Nav>
 
-  renderDashboard() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <AdminDashboard />
-      </Col>
-    );
-  }
-
-  renderUserManagement() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <UserManagement />
-      </Col>
-    );
-  }
-
-  renderMessagePublish() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <MessagePublish />
-      </Col>
-    );
-  }
-
-  renderGroupMgnt() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <GroupsDevices />
-      </Col>
-    );
-  }
-
-  renderOlsTerms() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <OlsTerms />
-      </Col>
-    );
-  }
-
-  renderTextTemplates() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <TextTemplateContainer />
-      </Col>
     );
   }
 
@@ -179,58 +121,18 @@ class AdminHome extends React.Component {
     );
   }
 
-  renderDelayedJobs() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <DelayedJobs />
-      </Col>
-    );
-  }
-
-  renderTemplateManagement() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <TemplateManagement />
-      </Col>
-    );
-  }
-
-  renderChemSpectraLayouts() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName}>
-        <ChemSpectraLayouts />
-      </Col>
-    );
-  }
-
-  renderDevices() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <DevicesList />
-      </Col>
-    );
-  }
-
   render() {
     return (
       <div>
         <Container fluid>
           <Row className="my-3">
-            <Col >
-              <AdminNavigation toggleTree={this.toggleTree} />
-            </Col> 
+            <AdminNavigation toggleTree={this.toggleTree} />
           </Row>
           <Row className="mb-3">
             <Col xs={2}>
               {this.tree()}
             </Col>
-            <Col>
-              {this.mainContent()}
-            </Col>
+            {this.mainContent()}
           </Row>
           <Row>
             <Col>
