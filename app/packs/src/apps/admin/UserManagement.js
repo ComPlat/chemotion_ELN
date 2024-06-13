@@ -1295,7 +1295,7 @@ export default class UserManagement extends React.Component {
               <Col xs={5}>
                 <Form.Select
                   aria-label="Filter Active-Inactive"
-                  onChange={(e) => updateDropdownFilter('account_active', e.target.value)}
+                  onChange={(e) => this.updateDropdownFilter('account_active', e.target.value)}
                 >
                   <option value="">Active & Inactive</option>
                   <option value="true">Active</option>
@@ -1305,7 +1305,7 @@ export default class UserManagement extends React.Component {
               <Col xs={5}>
                 <Form.Select
                   aria-label="Filter Locked-Unlocked"
-                  onChange={(e) => updateDropdownFilter('locked_at', e.target.value)}
+                  onChange={(e) => this.updateDropdownFilter('locked_at', e.target.value)}
                 >
                   <option value="">Locked & Unlocked</option>
                   <option value="true">Locked</option>
@@ -1318,27 +1318,27 @@ export default class UserManagement extends React.Component {
             <Form.Control
               type="text"
               placeholder="Name"
-              onChange={(e) => updateFilter('name', e.target.value)}
+              onChange={(e) => this.updateFilter('name', e.target.value)}
             />
           </th>
           <th className='fs-5 py-3'>
             <Form.Control
               type="text"
               placeholder="Abbr."
-              onChange={(e) => updateFilter('initials', e.target.value)}
+              onChange={(e) => this.updateFilter('initials', e.target.value)}
             />
           </th>
           <th className='fs-5 py-3'>
             <Form.Control
               type="text"
               placeholder="Email"
-              onChange={(e) => updateFilter('email', e.target.value)}
+              onChange={(e) => this.updateFilter('email', e.target.value)}
             />
           </th>
           <th className='fs-5 py-3'>
             <Form.Select
               aria-label="Filter Person-Admin"
-              onChange={(e) => updateDropdownFilter('type', e.target.value)}
+              onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
             >
               <option value="">All</option>
               <option value="Person">Person</option>
@@ -1361,7 +1361,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant="info"
-              onClick={() => handleEditUserShow(g)}
+              onClick={() => this.handleEditUserShow(g)}
               className="me-1"
             >
               <i className="fa fa-user" />
@@ -1391,7 +1391,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={g.locked_at === null ? 'light' : 'warning'}
-              onClick={() => handleEnableDisableAccount(g.id, g.locked_at, false)}
+              onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
               className="me-1"
             >
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -1401,7 +1401,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={(g.converter_admin === null || g.converter_admin === false) ? 'light' : 'success'}
-              onClick={() => handleConverterAdmin(g.id, g.converter_admin, false)}
+              onClick={() => this.handleConverterAdmin(g.id, g.converter_admin, false)}
               className="me-1"
             >
               <i className="fa fa-hourglass-half" aria-hidden="true" />
@@ -1411,7 +1411,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? 'light' : 'success'}
-              onClick={() => handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
+              onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
               className="me-1"
             >
               <i className="fa fa-book" aria-hidden="true" />
@@ -1421,7 +1421,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'light' : 'success'}
-              onClick={() => handleMoleculesModerator(g.id, g.molecule_editor, false)}
+              onClick={() => this.handleMoleculesModerator(g.id, g.molecule_editor, false)}
               className="me-1"
             >
               <i className="icon-sample" aria-hidden="true" />
@@ -1431,7 +1431,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'light'}
-              onClick={() => handleGenericAdminModal(true, g)}
+              onClick={() => this.handleGenericAdminModal(true, g)}
               className="me-1"
             >
               <i className="fa fa-empire" aria-hidden="true" />
@@ -1441,7 +1441,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant={g.account_active === true ? 'light' : 'danger'}
-              onClick={() => handleActiveInActiveAccount(g.id, g.account_active)}
+              onClick={() => this.handleActiveInActiveAccount(g.id, g.account_active)}
             >
               <i className={g.account_active === true ? 'fa fa-user-circle' : 'fa fa-user-times'} aria-hidden="true" />
             </Button>
