@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ALL_TYPES } from 'src/apps/generic/Utils';
 
@@ -19,6 +19,7 @@ export default class GenericAdminModal extends Component {
         key={`_auth_designer_button_${ALL_TYPES[i]}`}
         size="sm"
         variant={p ? 'warning' : 'light'}
+        className='me-1'
         onClick={() =>
           this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)
         }
@@ -31,7 +32,7 @@ export default class GenericAdminModal extends Component {
   renderDescription(_params) {
     const params = _params || [];
     return params.map((p, i) => (
-      <li key={`_description_${ALL_TYPES[i]}`}>
+      <li key={`_description_${ALL_TYPES[i]}`} className='my-1'>
         Currently {p ? '' : 'NOT'} acting as the Designer of the Generic&nbsp;
         {ALL_TYPES[i]}
       </li>
@@ -57,9 +58,9 @@ export default class GenericAdminModal extends Component {
           <Modal.Title>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ButtonToolbar>
+          <div className="d-flex flex-wrap">
             {this.renderButton([elements, segments, datasets], user)}
-          </ButtonToolbar>
+          </div>
           <ul>{this.renderDescription([elements, segments, datasets])}</ul>
         </Modal.Body>
       </Modal>
