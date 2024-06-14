@@ -40,7 +40,7 @@ module Chemotion
         # TODO: implement attachment authorization
         @attachment = Attachment.find(payload['attID']&.to_i)
         @user = User.find(payload['userID']&.to_i)
-        @app = @no_app ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
+        @app = payload['appID'].to_i.zero? ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
@@ -192,7 +192,7 @@ module Chemotion
       end
 
       get 'url' do
-        @no_app = true
+        params[:appID] = 0
         prepare_payload
         parse_payload
         encode_and_cache_token
