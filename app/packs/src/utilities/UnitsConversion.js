@@ -116,11 +116,31 @@ const calculateGasVolume = (molAmount, gasPhaseData) => {
 
 const calculateMolesFromMoleculeWeight = (amountGram, molecularWeight) => (amountGram / molecularWeight);
 
+const calculateVolumeForFeedstockOrGas = (amountGram, molecularWeight, purity, gasType, gasPhaseData) => {
+  const molAmount = calculateMolesFromMoleculeWeight(amountGram, molecularWeight);
+
+  if (gasType) {
+    return calculateGasVolume(molAmount, gasPhaseData);
+  }
+
+  return calculateFeedstockVolume(molAmount, purity);
+};
+
 const calculateGasMoles = (volume, ppm, temperatureInKelvin) => (ppm * volume)
  / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
 
 const calculateFeedstockMoles = (volume, purity) => (volume) / (
   IDEAL_GAS_CONSTANT * DEFAULT_TEMPERATURE_IN_KELVIN * purity);
+
+const updateFeedstockMoles = (purity, amountLiter, currentAmountLiter) => {
+  const volume = amountLiter || currentAmountLiter;
+  if (!volume) {
+    return null;
+  }
+
+  const moles = calculateFeedstockMoles(volume, purity);
+  return moles;
+};
 
 const calculateTON = (moles, moleOfCatalystReference) => {
   let value;
@@ -201,8 +221,10 @@ export {
   calculateFeedstockVolume,
   calculateGasVolume,
   calculateMolesFromMoleculeWeight,
+  calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
   calculateFeedstockMoles,
+  updateFeedstockMoles,
   calculateTON,
   calculateTONPerTimeValue,
   determineTONFrequencyValue,
