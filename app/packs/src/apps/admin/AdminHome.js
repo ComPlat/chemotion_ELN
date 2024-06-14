@@ -74,37 +74,39 @@ class AdminHome extends React.Component {
 
     return (
       <Nav className="flex-column fs-4" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
-            <NavItem>
-              <Nav.Link eventKey={0}>Dashboard</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={1}>User Management</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={9}>Devices</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={4}>Groups</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={7}>UI features</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={8}>Text Templates</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={2}>Message Publish</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={5}>Load OLS Terms</Nav.Link>
-            </NavItem>
-            {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
-            <NavItem>
-              <Nav.Link eventKey={13}>Delayed Jobs</Nav.Link>
-            </NavItem>
-            <NavItem>
-              <Nav.Link eventKey={14}>ChemSpectra Layouts</Nav.Link>
-            </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={0}>Dashboard</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={1}>User Management</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={9}>Devices</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={4}>Groups</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={7}>UI features</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={8}>Text Templates</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={2}>Message Publish</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={5}>Load OLS Terms</Nav.Link>
+        </NavItem>
+        {/* <NavItem>
+          <Nav.Link eventKey={12}>Report-template Management</Nav.Link>
+        </NavItem> */}
+        <NavItem>
+          <Nav.Link eventKey={13}>Delayed Jobs</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={14}>ChemSpectra Layouts</Nav.Link>
+        </NavItem>
       </Nav>
 
     );
