@@ -242,8 +242,20 @@ export default class ReactionDetailsScheme extends Component {
     this.onReactionChange(reaction, { schemaChanged: true });
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup) {
+    const updatedSample = reaction.sampleById(srcMat.id);
+    const conditions = tagGroup === 'solvents'
+    || ((srcGroup === 'reactants' || srcGroup === 'starting_materials') && tagGroup === 'products')
+    || ((srcGroup === 'products') && (tagGroup === 'reactants' || tagGroup === 'starting_materials'));
+    if (conditions) {
+      updatedSample.gas_type = 'off';
+    }
+  }
+
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction } = this.state;
+    this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
     reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
     this.onReactionChange(reaction, { schemaChanged: true });
   }
