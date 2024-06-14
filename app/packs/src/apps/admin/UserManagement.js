@@ -1142,14 +1142,14 @@ export default class UserManagement extends React.Component {
     return (
       <Modal centered show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Restore Account</Modal.Title>
+          <Modal.Title className='fs-4'>Restore Account</Modal.Title>
         </Modal.Header>
         <Modal.Body className='d-flex justify-content-center align-items-center' >
           <Form className='w-75'>
             <Form.Group controlId="formControlAbbr">
               <Row className="mb-3">
                 <Col column sm={3}>
-                  <Form.Label column sm={3}>Abbr: </Form.Label>
+                  <Form.Label column sm={3} className='fw-bold fs-5'>Abbr: </Form.Label>
                 </Col >
                 <Col sm={9}>
                   <Form.Control
@@ -1166,7 +1166,7 @@ export default class UserManagement extends React.Component {
             <Form.Group controlId="formControlID">
               <Row className="mb-3">
                 <Col column sm={3}>
-                  <Form.Label>ID:</Form.Label>
+                  <Form.Label className='fw-bold fs-5'>ID:</Form.Label>
                 </Col>
                 <Col sm={9}>
                   <Form.Control
@@ -1187,9 +1187,9 @@ export default class UserManagement extends React.Component {
               <Col sm={12}>
                 <Form.Control
                   className='mt-3'
-                    type="text"
-                    readOnly
-                    name="messageRestoreAccountModal"
+                  type="text"
+                  readOnly
+                  name="messageRestoreAccountModal"
                   value={this.state.messageRestoreAccountModal}
                   isValid={this.state.showSuccess}
                   isInvalid={this.state.showError}
@@ -1278,15 +1278,15 @@ export default class UserManagement extends React.Component {
 
     const tcolumn = (
       <thead className="custom-light-grey-bg position-sticky top-0" style={{ zIndex: 1 }} >
-        <tr className="align-middle fs-5 py-3">
-          <th className="col-auto fs-5 py-3">#</th>
-          <th className="col-2 col-md-3 fs-5 py-3">Actions</th>
-          <th className="col-3 col-md-2 fs-5 py-3">Name</th>
-          <th className="col-2 fs-5 py-3">Abbr.</th>
-          <th className="col-3 col-md-2 fs-5 py-3">Email</th>
-          <th className="col-2 fs-5 py-3">Type</th>
-          <th className="col-3 col-md-2 fs-5 py-3">Login at</th>
-          <th className="col-1 fs-5 py-3">ID</th>
+        <tr className="align-middle fs-4 py-3">
+          <th className="col-auto fs-4 py-3">#</th>
+          <th className="col-2 col-md-3 fs-4 py-3">Actions</th>
+          <th className="col-3 col-md-2 fs-4 py-3">Name</th>
+          <th className="col-2 fs-4 py-3">Abbr.</th>
+          <th className="col-3 col-md-2 fs-4 py-3">Email</th>
+          <th className="col-2 fs-4 py-3">Type</th>
+          <th className="col-3 col-md-2 fs-4 py-3">Login at</th>
+          <th className="col-1 fs-4 py-3">ID</th>
         </tr>
         <tr>
           <th aria-label="Empty header for the '#' column" />
@@ -1353,10 +1353,10 @@ export default class UserManagement extends React.Component {
 
     const tbody = filteredUsers.map((g, idx) => (
       <tr key={`row_${g.id}`} className="align-middle fs-5 py-3" >
-        <td className="col-auto">
+        <td className="col-auto fs-4 py-3">
           {idx + 1}
         </td>
-        <td className="col-md-3 col-lg-2 fs-5 py-3">
+        <td className="col-md-3 col-lg-2 fs-4 py-3">
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               size="sm"
@@ -1449,22 +1449,22 @@ export default class UserManagement extends React.Component {
           {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
           {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
-        <td className="col-md-2 fs-5 py-3">
+        <td className="col-md-2 fs-4 py-3">
           {g.name}
         </td>
-        <td className="col-md-1 fs-5 py-3">
+        <td className="col-md-1 fs-4 py-3">
           {g.initials}
         </td>
-        <td className="col-md-2 fs-5 py-3">
+        <td className="col-md-2 fs-4 py-3">
           {g.email}
         </td>
-        <td className="col-md-1 fs-5 py-3">
+        <td className="col-md-1 fs-4 py-3">
           {g.type}
         </td>
-        <td className="col-md-2 fs-5 py-3">
+        <td className="col-md-2 fs-4 py-3">
           {g.current_sign_in_at}
         </td>
-        <td className="col-auto fs-5 py-3">
+        <td className="col-auto fs-4 py-3">
           {g.id}
         </td>
       </tr>
