@@ -103,11 +103,19 @@ module Chemotion
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif @attachment
+           
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
-            if !can_dwnld && (element = @attachment.attachable)
+
+            if !can_dwnld && (element = @attachment.container&.root&.containable || @attachment.attachable)
+              if(!element.is_a?(Container)) then
               can_dwnld = (element.is_a?(User) && (element == current_user)) ||
-                          (ElementPolicy.new(current_user, element).read? &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?)
+                          ( 
+                            ElementPolicy.new(current_user, element).read? &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        )
+                      else
+                        can_dwnld=false
+                      end 
             end
           end
           error!('401 Unauthorized', 401) unless can_dwnld
