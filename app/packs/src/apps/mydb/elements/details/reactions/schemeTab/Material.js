@@ -286,12 +286,20 @@ class Material extends Component {
     } else if (field === 'time') {
       colSpan = '2';
     }
+    let updateValue;
+    if (value === 0 || value === '') {
+      updateValue = 0;
+    } else if (!value && value !== 0 && value !== '') {
+      updateValue = 'n.d';
+    } else {
+      updateValue = value;
+    }
     return (
       <td colSpan={colSpan} style={style}>
         <NumeralInputWithUnitsCompo
           precision={4}
           bsStyle="success"
-          value={value === 0 ? value : (value || 'n.d')}
+          value={updateValue}
           disabled={readOnly}
           onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
           onChange={(e) => this.handleGasFieldsChange(field, e)}
