@@ -714,9 +714,8 @@ export default class UserManagement extends React.Component {
 
       } catch (error) {
         console.error('Error sending message:', error);
-        this.handleShowAlert('Failed to send message. Please try again.');
+        this.handleShowAlert('An error occured: Try again later or contact your system administrator if it persists.');
       }
-
     }
   }
 
