@@ -3,13 +3,39 @@
 module Chemotion
   class DictionaryAPI < Grape::API
     resource :dictionary do
+      desc "amend custom dictionary"
+      namespace :amend do
       params do
-        requires :new_word, type: String
+          requires :new_word, type: String
       end
       get do
         file_path =  "public/typojs/custom/custom.dic"
-        File.write(file_path, "#{params[:new_word]} \n", mode: 'a')
+        f = File.open(file_path, "a+")
+        submitted_words = []
+        f.each {|dictionary_word| submitted_words.append(dictionary_word)}
+        unless submitted_words.include?("#{params[:new_word]}\n")
+          f.write( "#{params[:new_word]}\n")
+        end
+        f.close
+      end
+    end
+  
+   
+    namespace :remove do
+      desc "remove last entry"
+      params do
+        requires :old_word, type: String
+      end
+      get do
+        file_path = "public/typojs/custom/custom.dic"
+        last_line = 0
+        f = File.open(file_path, "r+")
+        f.each {  last_line = f.pos unless f.eof? }
+        f.seek(last_line, IO::SEEK_SET)
+        f.truncate(f.pos)
+        f.close
       end
     end
   end
+end
 end
