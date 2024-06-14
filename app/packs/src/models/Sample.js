@@ -11,11 +11,9 @@ import Segment from 'src/models/Segment';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import {
   convertTemperatureToKelvin,
-  calculateFeedstockVolume,
-  calculateMolesFromMoleculeWeight,
-  calculateGasVolume,
+  calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
-  calculateFeedstockMoles,
+  updateFeedstockMoles,
   calculateTON,
   calculateTONPerTimeValue,
   determineTONFrequencyValue,
@@ -700,24 +698,14 @@ export default class Sample extends Element {
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
-  calculateVolumeForFeedstockOrGas(amountGram, molecularWeight, purity = 1) {
-    const molAmount = calculateMolesFromMoleculeWeight(amountGram, molecularWeight);
-
-    if (this.gas_type === 'gas') {
-      return calculateGasVolume(molAmount, this.gas_phase_data);
-    }
-
-    return calculateFeedstockVolume(molAmount, purity);
-  }
-
-  calculateFeedstockOrGasMoles(purity, amountLiter = null) {
+  calculateFeedstockOrGasMoles(purity, gasType, amountLiter = null) {
     // number of moles for feedstock = Purity*1*Volume/(0.0821*294) & pressure = 1
     // number of moles for gas =  ppm*1*V/(0.0821*temp_in_K*1000000) & pressure = 1
-    if (this.gas_type === 'gas') {
+    if (gasType === 'gas') {
       const volume = this.fetchGasVolumeFromStore();
       return this.updateGasMoles(volume);
     }
-    return this.updateFeedstockMoles(purity, amountLiter);
+    return updateFeedstockMoles(purity, amountLiter, this.amount_l);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -741,27 +729,17 @@ export default class Sample extends Element {
     return moles;
   }
 
-  updateFeedstockMoles(purity, amountLiter) {
-    const volume = amountLiter || this.amount_l;
-    if (!volume) {
-      return null;
-    }
-
-    const moles = calculateFeedstockMoles(volume, purity);
-    return moles;
-  }
-
   updateTONPerTimeValue(tonValue, gasPhaseTime) {
-    const { value: timeValue, unit: timeUnit } = gasPhaseTime;
+    const { value, unit } = gasPhaseTime;
     const tonFrequencyUnit = this.gas_phase_data.turnover_frequency.unit;
 
-    const timeValues = calculateTONPerTimeValue(timeValue, timeUnit);
+    const timeValues = calculateTONPerTimeValue(value, unit);
 
     this.gas_phase_data.turnover_frequency.value = determineTONFrequencyValue(
       tonValue,
       tonFrequencyUnit,
       timeValues,
-      timeValue
+      value
     );
   }
 
@@ -804,7 +782,13 @@ export default class Sample extends Element {
           return amount_g;
         case 'l': {
           if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
-            return this.calculateVolumeForFeedstockOrGas(amount_g, molecularWeight, purity);
+            return calculateVolumeForFeedstockOrGas(
+              amount_g,
+              molecularWeight,
+              purity,
+              this.gas_type,
+              this.gas_phase_data
+            );
           }
           if (this.has_molarity) {
             const molarity = this.molarity_value;
@@ -817,7 +801,7 @@ export default class Sample extends Element {
         }
         case 'mol': {
           if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
-            return this.calculateFeedstockOrGasMoles(purity);
+            return this.calculateFeedstockOrGasMoles(purity, this.gas_type);
           }
           if (this.has_molarity) {
             return this.amount_l * this.molarity_value;
@@ -858,7 +842,7 @@ export default class Sample extends Element {
           if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
             const molecularWeight = this.molecule_molecular_weight;
             const purity = this.purity || 1.0;
-            const moles = this.calculateFeedstockOrGasMoles(purity, amount_value);
+            const moles = this.calculateFeedstockOrGasMoles(purity, this.gas_type, amount_value);
             return moles * molecularWeight;
           }
           if (this.has_molarity) {
