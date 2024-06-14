@@ -1,9 +1,8 @@
 import React from 'react';
-import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table } from 'react-bootstrap';
+import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table, Accordion, Card } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { findIndex } from 'lodash';
 import DeleteGroupDeviceButton from 'src/apps/admin/DeleteGroupDeviceButton';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class AdminGroupElement extends React.Component {
   constructor(props) {
@@ -64,7 +63,7 @@ export default class AdminGroupElement extends React.Component {
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add user to group</Tooltip>}>
-            <Button size="sm" type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Person')} >
+            <Button size="sm" variant='light' type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Person')} >
               <i className="fa fa-user" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
@@ -77,7 +76,7 @@ export default class AdminGroupElement extends React.Component {
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add device to group</Tooltip>}>
-            <Button size="sm" type="button" onClick={() => this.props.onShowModal(group, 'Group', 'Device')} >
+            <Button size="sm" type="button" variant='light' onClick={() => this.props.onShowModal(group, 'Group', 'Device')} >
               <i className="fa fa-laptop" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
@@ -97,7 +96,7 @@ export default class AdminGroupElement extends React.Component {
     const isAdmin = group.admins && group.admins.filter(a => (a.id === user.id)).length > 0;
     const adminTooltip = isAdmin === true ? 'set to normal user' : 'set to Administrator';
     return (
-      <td width="30%">
+      <td className="w-30">
         <ButtonGroup className="actions">
           <OverlayTrigger placement="top" overlay={<Tooltip id="userAdmin">{adminTooltip}</Tooltip>}>
             <Button
@@ -129,7 +128,7 @@ export default class AdminGroupElement extends React.Component {
 
     return (
       <tbody key={`tbody_${groupElement.id}`}>
-        <tr key={`row_${groupElement.id}`} id={`row_${groupElement.id}`} style={{ fontWeight: 'bold' }}>
+        <tr key={`row_${groupElement.id}`} id={`row_${groupElement.id}`} className='fs-4 py-3'>
           <td>{idx + 1}</td>
           {this.renderGroupButtons(groupElement)}
           <td>{groupElement.name}</td>
@@ -141,58 +140,60 @@ export default class AdminGroupElement extends React.Component {
         </tr>
         <tr className={'collapse' + (showUsers ? 'in' : '')} id={`div_row_${groupElement.id}`}>
           <td colSpan="7">
-            <Panel>
-              <Panel.Heading>
-                <Panel.Title>
-                  Users in Group: {groupElement.name}
-                </Panel.Title>
-              </Panel.Heading>
-              <Table>
-                <tbody>
-                  {groupElement.users.map((u, i) => (
-                    <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                      <td width="5%">{i + 1}</td>
-                      <td width="20%">{u.name}</td>
-                      <td width="10%">{u.initials}</td>
-                      <td width="20%">{u.email}</td>
-                      <td width="15%">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
-                      {this.renderGroupUserButtons(groupElement, u)}
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Panel>
+            <Accordion defaultActiveKey='1' >
+              <Accordion.Item eventKey="1">
+                <Accordion.Header>Users in Group: {groupElement.name}</Accordion.Header>
+                <Accordion.Body>
+                  <Table>
+                    <tbody>
+                      {groupElement.users.map((u, i) => (
+                        <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
+                          <td className="w-5  py-3 fs-4 ">{i + 1}</td>
+                          <td className="w-20 py-3 fs-4 ">{u.name}</td>
+                          <td className="w-10 py-3 fs-4 ">{u.initials}</td>
+                          <td className="w-20 py-3 fs-4 ">{u.email}</td>
+                          <td className="w-15 py-3 fs-4 ">{groupElement.admins && groupElement.admins.filter(a => (a.id === u.id)).length > 0 ? adminIcon : ''}</td>
+                          {this.renderGroupUserButtons(groupElement, u)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
           </td>
         </tr>
         <tr className={'collapse' + (showDevices ? 'in' : '')} id={`div_row_d${groupElement.id}`}>
           <td colSpan="7">
-            <Panel>
-              <Panel.Heading>
-                <Panel.Title>
+            <Accordion defaultActiveKey="1">
+              <Accordion.Item eventKey="1">
+                <Accordion.Header eventKey="1">
                   Devices in Group: {groupElement.name}
-                </Panel.Title>
-              </Panel.Heading>
-              <Table>
-                <tbody>
-                  {groupElement.devices.map((u, i) => (
-                    <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
-                      <td width="5%">{i + 1}</td>
-                      <td width="20%">{u.name}</td>
-                      <td width="10%">{u.initials}</td>
-                      <td width="20%">{}</td>
-                      <td width="15%">{}</td>
-                      <td width="30%">
-                        <DeleteGroupDeviceButton rootType={'Group'}
-                          actionType={'Device'}
-                          groupRec={groupElement}
-                          userRec={u}
-                          currentState={this.state}
-                          onChangeGroupData={this.props.onChangeGroupData} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Panel>
+                </Accordion.Header>
+                <Accordion.Body>
+                  <Table>
+                    <tbody>
+                      {groupElement.devices.map((u, i) => (
+                        <tr key={`row_${groupElement.id}_${u.id}`} id={`row_${groupElement.id}_${u.id}`} style={{ backgroundColor: '#c4e3f3' }}>
+                          <td className="w-5  py-3 fs-4">{i + 1}</td>
+                          <td className="w-20 py-3 fs-4">{u.name}</td>
+                          <td className="w-10 py-3 fs-4">{u.initials}</td>
+                          <td className="w-20 py-3 fs-4">{ }</td>
+                          <td className="w-15 py-3 fs-4">{ }</td>
+                          <td className="w-30 py-3 fs-4">
+                            <DeleteGroupDeviceButton rootType={'Group'}
+                              actionType={'Device'}
+                              groupRec={groupElement}
+                              userRec={u}
+                              currentState={this.state}
+                              onChangeGroupData={this.props.onChangeGroupData} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
           </td>
         </tr>
       </tbody>
