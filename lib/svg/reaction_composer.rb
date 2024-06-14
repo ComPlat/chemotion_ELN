@@ -556,12 +556,20 @@ module SVG
     end
 
     def compose_yield_svg(amount, x = 0, y = @max_height_for_products)
-      yield_amount = amount && !amount.to_f.nan? && !amount.to_f.infinite? ? (amount * 100).try(:round, 0) : 0
+      yield_amount = calculate_yield(amount)
       <<~XML
         <svg font-family="sans-serif">
           <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f + YIELD_YOFFSET}" x="#{x}">#{yield_amount}%</text>
         </svg>
       XML
+    end
+
+    def calculate_yield(amount)
+      if amount && !amount.to_f.nan? && !amount.to_f.infinite?
+        ((amount <= 1 ? amount || 0 : 1) * 100).try(:round, 0)
+      else
+        0
+      end
     end
 
     def compose_arrow_and_reaction_labels(options = {})

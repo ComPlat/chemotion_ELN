@@ -38,7 +38,8 @@ const validDigit = (input, precision) => {
 };
 
 const correctPrefix = (input, precision) => {
-  if (input === 0.0) { return false; }
+  if (input === 0.0 || input === null || input === Infinity) { return false; }
+
   if (input >= 1.0) { return `${validDigit(input, precision)} `; }
   if (input >= 0.001) { return `${validDigit(input * 1000, precision)} m`; }
   return `${validDigit(input * 1000000, precision)} \u03BC`;
