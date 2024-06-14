@@ -40,7 +40,7 @@ module Chemotion
         # TODO: implement attachment authorization
         @attachment = Attachment.find(payload['attID']&.to_i)
         @user = User.find(payload['userID']&.to_i)
-        @app = ThirdPartyApp.find(payload['appID']&.to_i)
+        @app = payload['appID'].to_i.zero? ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
       rescue ActiveRecord::RecordNotFound
         error!('Record not found', 404)
       end
@@ -62,6 +62,7 @@ module Chemotion
         update_cache(:download)
         content_type 'application/octet-stream'
         header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
+        header['Content-Length'] = @attachment.filesize.to_s
         env['api.format'] = :binary
         @attachment.read_file
       end
@@ -182,6 +183,31 @@ module Chemotion
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
         "#{@app.url}?url=#{url}"
+      end
+
+      desc 'get chemotion handler url'
+      params do
+        requires :attID, type: Integer, desc: 'Attachment ID'
+        optional :type, type: Integer, default: 0, desc: 'Format of the link'
+      end
+
+      get 'url' do
+        params[:appID] = 0
+        prepare_payload
+        parse_payload
+        encode_and_cache_token
+        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
+        case params[:type]
+        when 1
+          url = URI.parse Rails.application.config.root_url
+          url.path = "/api/v1/public/third_party_apps/#{@token}"
+          url.scheme = 'chemotion'
+          url.to_s
+        when 2
+          "chemotion://#{@attachment.filename}?url=#{url}"
+        else
+          "chemotion://?url=#{url}"
+        end
       end
 
       route_param :id, type: Integer, desc: '3rd party app id' do

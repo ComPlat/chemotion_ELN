@@ -1321,6 +1321,14 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.index ["user_id"], name: "index_text_templates_on_user_id"
   end
 
+  create_table "third_party_apps", force: :cascade do |t|
+    t.string "url"
+    t.string "name", limit: 100, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["name"], name: "index_third_party_apps_on_name", unique: true
+  end
+
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
     t.integer "user_id"
     t.integer "affiliation_id"
