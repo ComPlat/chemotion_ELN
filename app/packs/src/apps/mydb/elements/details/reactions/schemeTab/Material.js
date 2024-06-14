@@ -262,38 +262,15 @@ class Material extends Component {
   }
 
   gaseousInputFields(field, material) {
-    let gasPhaseData = material.gas_phase_data || {};
+    const gasPhaseData = material.gas_phase_data || {};
+    const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
+
     const style = { maxWidth: '5px', paddingRight: '3px' };
-    let colSpan = '1';
-    const readOnly = !!(field === 'turnover_frequency' || field === 'turnover_number');
-    if (gasPhaseData[field] === null || gasPhaseData[field] === undefined) {
-      gasPhaseData = {
-        time: { unit: 'h', value: null },
-        temperature: { unit: '°C', value: null },
-        turnover_number: null,
-        part_per_million: null,
-        turnover_frequency: { unit: 'TON/h', value: null }
-      };
-    }
-    let value = gasPhaseData[field]?.value || '';
-    let unit = gasPhaseData[field]?.unit || '';
-    if (field === 'turnover_number') {
-      value = gasPhaseData.turnover_number;
-      unit = 'TON';
-    } else if (field === 'part_per_million') {
-      value = gasPhaseData.part_per_million;
-      unit = 'ppm';
-    } else if (field === 'time') {
-      colSpan = '2';
-    }
-    let updateValue;
-    if (value === 0 || value === '') {
-      updateValue = 0;
-    } else if (!value && value !== 0 && value !== '') {
-      updateValue = 'n.d';
-    } else {
-      updateValue = value;
-    }
+    const colSpan = isTimeField ? '2' : '1';
+    const readOnly = this.isFieldReadOnly(field);
+
+    const updateValue = this.getFormattedValue(value);
+
     return (
       <td colSpan={colSpan} style={style}>
         <NumeralInputWithUnitsCompo
@@ -307,6 +284,33 @@ class Material extends Component {
         />
       </td>
     );
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getFieldData(field, gasPhaseData) {
+    switch (field) {
+      case 'turnover_number':
+        return { value: gasPhaseData.turnover_number, unit: 'TON', isTimeField: false };
+      case 'part_per_million':
+        return { value: gasPhaseData.part_per_million, unit: 'ppm', isTimeField: false };
+      case 'time':
+        return { value: gasPhaseData.time?.value, unit: gasPhaseData.time?.unit, isTimeField: true };
+      default:
+        return { value: gasPhaseData[field]?.value, unit: gasPhaseData[field]?.unit, isTimeField: false };
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  isFieldReadOnly(field) {
+    return field === 'turnover_frequency' || field === 'turnover_number';
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getFormattedValue(value) {
+    if (!value && value !== 0) {
+      return 'n.d';
+    }
+    return value || 0;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -335,6 +339,7 @@ class Material extends Component {
         </tr>
       );
     }
+    return null;
   }
 
   handleExternalLabelChange(event) {
