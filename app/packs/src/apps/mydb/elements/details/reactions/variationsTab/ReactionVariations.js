@@ -12,7 +12,8 @@ import Reaction from 'src/models/Reaction';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsRowName, getCellDataType,
-  temperatureUnits, durationUnits, convertUnit, getStandardUnit, materialTypes, updateColumnDefinitions
+  temperatureUnits, durationUnits, convertUnit, getStandardUnit, materialTypes, updateColumnDefinitions,
+  updateVariationsRowOnReferenceMaterialChange
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
@@ -204,9 +205,17 @@ function EquivalentParser({ data: variationsRow, oldValue: cellData, newValue })
   // Adapt mass to updated equivalent.
   const referenceMaterial = getReferenceMaterial(variationsRow);
   const referenceMol = getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
-  const mass = Number(getGramFromMol(referenceMol * equivalent, cellData));
+  const mass = getGramFromMol(referenceMol * equivalent, cellData);
 
-  return { ...cellData, mass: { ...cellData.mass, value: mass }, aux: { ...cellData.aux, equivalent } };
+  // Adapt amount to updated equivalent.
+  const amount = getMolFromGram(mass, cellData);
+
+  return {
+    ...cellData,
+    mass: { ...cellData.mass, value: mass },
+    amount: { ...cellData.amount, value: amount },
+    aux: { ...cellData.aux, equivalent }
+  };
 }
 
 function PropertyFormatter({ value: cellData, colDef }) {
@@ -243,16 +252,26 @@ function MaterialParser({
   const { field } = colDef;
   const { entry, displayUnit } = colDef.currentEntryWithDisplayUnit;
   const columnGroup = field.split('.')[0];
-  const value = convertUnit(Number(newValue), displayUnit, cellData[entry].unit);
-  const updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
+  let value = convertUnit(Number(newValue), displayUnit, cellData[entry].unit);
+  if (value < 0) {
+    value = 0;
+  }
+  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
 
-  /*
-  Reference materials don't require adaptation of their own equivalent.
-  However, they require adaptations of other materials' equivalents, i.e., cells that aren't currently edited.
-  Those updates are handled in `ReactionVariations.updateRow()`.
-  Non-reference materials require adaptation of their own equivalent only.
-  Those are handled here.
-  */
+  if (entry === 'mass') {
+    // Adapt amount to updated mass.
+    const amount = getMolFromGram(value, updatedCellData);
+    updatedCellData = { ...updatedCellData, amount: { ...updatedCellData.amount, value: amount } };
+  }
+  if (entry === 'amount') {
+    // Adapt mass to updated amount.
+    const mass = getGramFromMol(value, updatedCellData);
+    updatedCellData = { ...updatedCellData, mass: { ...updatedCellData.mass, value: mass } };
+  }
+  // See comment in ReactionVariations.updateRow() regarding reactive updates.
+  if (updatedCellData.aux.isReference) {
+    return updatedCellData;
+  }
   return updateNonReferenceMaterialOnMassChange(
     variationsRow,
     updatedCellData,
@@ -468,8 +487,25 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }, [reactionVariations]);
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
+    /*
+    Some attributes of a material need to be updated in response to changes in other attributes:
+
+    attribute  | needs to be updated in response to
+    -----------|----------------------------------
+    equivalent | own mass changes^, own amount changes^, reference material's mass changes~, reference material's amount changes~
+    mass       | own amount changes^, own equivalent changes^
+    amount     | own mass changes^, own equivalent changes^
+    yield      | own mass changes^, own amount changes^x, reference material's mass changes~, reference material's amount changes~
+
+    ^: handled in corresponding cell parsers (changes within single material)
+    ~: handled here (row-wide changes across materials)
+    x: not permitted according to business logic
+    */
     const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reaction.hasPolymers());
+    let updatedRow = updateVariationsRow(oldRow, field, newValue);
+    if (newValue.aux?.isReference) {
+      updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reaction.hasPolymers());
+    }
     setReactionVariations(
       reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );

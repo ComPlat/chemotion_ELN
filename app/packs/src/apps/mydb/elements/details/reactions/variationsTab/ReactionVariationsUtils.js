@@ -118,24 +118,15 @@ function copyVariationsRow(row, variations) {
   return copiedRow;
 }
 
-function updateVariationsRow(row, field, value, reactionHasPolymers) {
-  let updatedRow = cloneDeep(row);
+function updateVariationsRow(row, field, value) {
+  const updatedRow = cloneDeep(row);
   set(updatedRow, field, value);
-  /*
-  Some properties of a material need to be updated in response to changes in other properties:
 
-  property   | needs to be updated in response to
-  -----------|----------------------------------
-  equivalent | own mass changes*, reference material's mass changes+
-  mass       | own equivalent changes*
-  yield      | own mass changes*, reference material's mass changes+
+  return updatedRow;
+}
 
-  *: handled in corresponding cell parsers (local, cell-internal changes)
-  +: handled here (non-local, row-wide changes)
-
-  TODO: Only run the following two updates if `value` pertains to the mass of the reference material.
-  It's not incorrect to run those updates for other changes as well, just wasteful.
-  */
+function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
+  let updatedRow = cloneDeep(row);
   updatedRow = updateEquivalents(updatedRow);
   updatedRow = updateYields(updatedRow, reactionHasPolymers);
 
@@ -175,6 +166,7 @@ export {
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
+  updateVariationsRowOnReferenceMaterialChange,
   updateColumnDefinitions,
   getCellDataType
 };
