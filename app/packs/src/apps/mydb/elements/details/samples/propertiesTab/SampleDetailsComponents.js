@@ -19,6 +19,7 @@ export default class SampleDetailsComponents extends React.Component {
       sample,
       showModal: false,
       droppedMaterial: null,
+      activeTab: 'concentration',
     };
 
     this.dropSample = this.dropSample.bind(this);
@@ -34,6 +35,8 @@ export default class SampleDetailsComponents extends React.Component {
     this.showModalWithMaterial = this.showModalWithMaterial.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleModalAction = this.handleModalAction.bind(this);
+    this.handleTabSelect = this.handleTabSelect.bind(this);
+    this.updatePurity = this.updatePurity.bind(this);
   }
 
   onChangeComponent(changeEvent) {
@@ -62,6 +65,12 @@ export default class SampleDetailsComponents extends React.Component {
       case 'referenceChanged':
         this.updateSampleForReferenceChanged(changeEvent);
         break;
+      case 'purityChanged':
+        this.updatePurity(changeEvent);
+      break;
+      case 'densityChanged':
+        this.updateDensity(changeEvent);
+        break;
       default:
         break;
     }
@@ -71,9 +80,7 @@ export default class SampleDetailsComponents extends React.Component {
   
   updatedSampleForAmountUnitChange(changeEvent) {
     const { sample } = this.props;
-    const sampleID = changeEvent.sampleID;
-    const amount = changeEvent.amount;
-    const concType = changeEvent.concType;
+    const { sampleID, amount, concType, updateVolume } = changeEvent;
     const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
@@ -83,10 +90,34 @@ export default class SampleDetailsComponents extends React.Component {
     if (amount.unit === 'g' || amount.unit === 'l') {
       sample.components[componentIndex].setAmount(amount, totalVolume)
     } else if (amount.unit === 'mol/l' ) {
-      sample.components[componentIndex].setMolarity(amount, totalVolume, concType)
-    }
+      sample.components[componentIndex].setConc(amount, totalVolume, concType, updateVolume)
+    } 
     // update components ratio
     sample.updateMixtureComponentEquivalent()
+  }
+
+  updateDensity(changeEvent) {
+    const { sample } = this.props;
+    const { sampleID, amount, updateVolume } = changeEvent;
+    const componentIndex = this.props.sample.components.findIndex(
+      (component) => component.id === sampleID
+    );
+
+    const totalVolume = sample.amount_l;
+
+    sample.components[componentIndex].setDensity(amount, updateVolume, totalVolume)
+    // update components ratio
+    sample.updateMixtureComponentEquivalent()
+  }
+
+  updatePurity(changeEvent) {
+    const { sample } = this.props;
+    const { sampleID, amount } = changeEvent;
+    const purity = amount.value;
+    const componentIndex = this.props.sample.components.findIndex(
+      (component) => component.id === sampleID
+    );
+    sample.components[componentIndex].setPurity(purity);
   }
   
   updatedSampleForMetricsChange(changeEvent) {
@@ -197,6 +228,10 @@ export default class SampleDetailsComponents extends React.Component {
     } else if (materialGroup === 'solid') {
       this.setState({ lockAmountColumnSolids: !lockAmountColumnSolids });
     }
+  }
+
+  handleTabSelect(tab) {
+    this.setState({ activeTab: tab });
   }
 
   updateRatio(changeEvent) {
@@ -315,6 +350,8 @@ export default class SampleDetailsComponents extends React.Component {
           lockAmountColumnSolids={this.state.lockAmountColumnSolids}
           materialGroup="liquid"
           showModalWithMaterial={this.showModalWithMaterial}
+          handleTabSelect={this.handleTabSelect}
+          activeTab={this.state.activeTab}
           />
         </ListGroupItem>
         <ListGroupItem style={minPadding}>
@@ -330,6 +367,8 @@ export default class SampleDetailsComponents extends React.Component {
           lockAmountColumnSolids={this.state.lockAmountColumnSolids}
           materialGroup="solid"
           showModalWithMaterial={this.showModalWithMaterial}
+          handleTabSelect={this.handleTabSelect}
+          activeTab={this.state.activeTab}
           />
         </ListGroupItem>
       </ListGroup>

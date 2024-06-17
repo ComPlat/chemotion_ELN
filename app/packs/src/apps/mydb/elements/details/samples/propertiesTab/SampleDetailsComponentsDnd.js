@@ -67,6 +67,8 @@ class SampleDetailsComponentsDnd extends React.Component {
       switchAmount,
       materialGroup,
       showModalWithMaterial,
+      activeTab,
+      handleTabSelect
     } = this.props;
     const style = {
       padding: '0px 0px',
@@ -94,6 +96,8 @@ class SampleDetailsComponentsDnd extends React.Component {
           lockAmountColumnSolids={lockAmountColumnSolids}
           switchAmount={switchAmount}
           showModalWithMaterial={showModalWithMaterial}
+          activeTab={activeTab}
+          handleTabSelect={handleTabSelect}
         />
       </div>
     );

@@ -51,9 +51,6 @@ export default class SampleForm extends React.Component {
 
   handleAmountChanged(amount) {
     this.props.sample.setAmount(amount);
-    if (amount.unit == 'l' && this.state.selectedSampleType === 'Mixture') {
-      this.props.sample.updateMixtureComponentVolume();
-    }
   }
 
   handleMolarityChanged(molarity) {

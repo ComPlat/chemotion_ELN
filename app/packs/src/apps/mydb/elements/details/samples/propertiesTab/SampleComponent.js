@@ -76,9 +76,14 @@ class SampleComponent extends Component {
 
     this.handleAmountChange = this.handleAmountChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
+    this.handleDensityChange = this.handleDensityChange.bind(this);
+    this.handlePurityChange = this.handlePurityChange.bind(this);
+    this.handleNameChange = this.handleNameChange.bind(this);
+    this.handleRatioChange = this.handleRatioChange.bind(this);
+    this.handleReferenceChange = this.handleReferenceChange.bind(this);
   }
 
-  handleAmountChange(e, value, concType) {
+  handleAmountChange(e, value, concType, lockColumn) {
     if (e.value === value) return;
       
     if (this.props.onChange && e) {
@@ -88,7 +93,38 @@ class SampleComponent extends Component {
         materialGroup: this.props.materialGroup,
         sampleID: this.componentId(),
         concType: concType,
+        updateVolume: lockColumn,
 
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleDensityChange(e, value, lockColumn) {
+    if (e.value === value) return;
+      
+    if (this.props.onChange && e) {
+      const event = {
+        amount: e,
+        type: 'densityChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.componentId(),
+        updateVolume: lockColumn,
+
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handlePurityChange(e, value) {
+    if (e.value === value) return;
+      
+    if (this.props.onChange && e) {
+      const event = {
+        amount: e,
+        type: 'purityChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.componentId(),
       };
       this.props.onChange(event);
     }
@@ -289,7 +325,7 @@ class SampleComponent extends Component {
           metricPrefixes={metricPrefixesMolConc}
           precision={4}
           disabled={!permitOn(this.props.sample) || !lockColumn}
-          onChange={e => this.handleAmountChange(e, material.concn)}
+          onChange={e => this.handleAmountChange(e, material.concn, 'targetConc', lockColumn)}
           onMetricsChange={this.handleMetricsChange}
         />
       </td>
@@ -297,6 +333,7 @@ class SampleComponent extends Component {
   }
 
   componentStartingConc(material, metricMolConc, metricPrefixesMolConc) {
+    const lockColumn = this.props.materialGroup === 'liquid' ? this.props.lockAmountColumn : this.props.lockAmountColumnSolids
     return (
       <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
@@ -307,7 +344,7 @@ class SampleComponent extends Component {
           metricPrefixes={metricPrefixesMolConc}
           precision={4}
           disabled={!permitOn(this.props.sample)}
-          onChange={e => this.handleAmountChange(e, material.startingConc, 'startingConc')}
+          onChange={e => this.handleAmountChange(e, material.startingConc, 'startingConc', lockColumn)}
           onMetricsChange={this.handleMetricsChange}
         />
       </td>
@@ -329,8 +366,26 @@ class SampleComponent extends Component {
     );
   }
 
+  componentDensity(material) {
+    const lockColumn = this.props.materialGroup === 'liquid' ? this.props.lockAmountColumn : this.props.lockAmountColumnSolids
+    return (
+      <td style={{ verticalAlign: 'top' }}>
+        <NumeralInputWithUnitsCompo
+          key={material.id}
+          value={material.density}
+          unit="g/ml"
+          metricPrefix={'n'}
+          metricPrefixes={['n']}
+          precision={4}
+          disabled={!permitOn(this.props.sample)}
+          onChange={e => this.handleDensityChange(e, material.density, lockColumn)}
+        />
+      </td>
+    )
+  }
+
   mixtureComponent(props, style) {
-    const { sample, material, deleteMaterial, connectDragSource, connectDropTarget } = props;
+    const { sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metricPrefixesMol = ['m', 'n'];
     const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
@@ -362,8 +417,20 @@ class SampleComponent extends Component {
           {this.componentMol(material, metricMol, metricPrefixesMol)}
         </td>
 
-        {this.componentStartingConc(material, metricMolConc, metricPrefixesMolConc)}
-        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
+        {activeTab === 'concentration' && this.componentStartingConc(material, metricMolConc, metricPrefixesMolConc)}
+        {activeTab === 'density' && this.componentDensity(material)}
+
+        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}
+
+
+        <td style={{ verticalAlign: 'top' }}>
+          <NumeralInputWithUnitsCompo
+            precision={4}
+            value={material.purity}
+            disabled={!permitOn(this.props.sample)}
+            onChange={e => this.handlePurityChange(e, material.purity)}
+          />
+        </td>
 
         <td style={{ verticalAlign: 'top' }}>
           <NumeralInputWithUnitsCompo
@@ -425,7 +492,16 @@ class SampleComponent extends Component {
           {this.componentMol(material, metricMol, metricPrefixesMol)}
         </td>
         <th></th>
-        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}   
+        {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}
+
+        <td style={{ verticalAlign: 'top' }}>
+          <NumeralInputWithUnitsCompo
+            precision={4}
+            value={material.purity}
+            disabled={!permitOn(this.props.sample)}
+            onChange={e => this.handlePurityChange(e, material.purity)}
+          />
+        </td>
 
         <td style={{ verticalAlign: 'top' }}>
           <NumeralInputWithUnitsCompo

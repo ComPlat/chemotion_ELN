@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip, Tab, Tabs } from 'react-bootstrap';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
 import { permitOn } from 'src/components/common/uis';
@@ -9,7 +9,7 @@ import SampleComponent from 'src/apps/mydb/elements/details/samples/propertiesTa
 const SampleComponentsGroup = ({
     materialGroup, deleteMixtureComponent, onChange, sample,
     headIndex, dropSample,dropMaterial, lockAmountColumn, lockAmountColumnSolids, switchAmount, sampleComponents,
-    showModalWithMaterial
+    showModalWithMaterial, activeTab, handleTabSelect
   }) => {
     const contents = [];
     if (sampleComponents && sampleComponents.length > 0) {
@@ -36,6 +36,8 @@ const SampleComponentsGroup = ({
             lockAmountColumn={lockAmountColumn}
             lockAmountColumnSolids={lockAmountColumnSolids}
             showModalWithMaterial={showModalWithMaterial}
+            activeTab={activeTab}
+            handleTabSelect={handleTabSelect}
             />
         ));
       });
@@ -49,7 +51,8 @@ const SampleComponentsGroup = ({
       startingConc: 'Starting conc.',
       concn: 'Conc.',
       eq: 'Ratio',
-      ref: 'Ref'
+      ref: 'Ref',
+      purity: 'Purity'
     };
 
     if (materialGroup === 'solid') {
@@ -89,7 +92,8 @@ const SampleComponentsGroup = ({
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
           <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
+          <col style={{ width: '7.5%' }} />
+          <col style={{ width: '7.5%' }} />
           <col style={{ width: '4%' }} />
           </colgroup>
           <thead>
@@ -101,9 +105,19 @@ const SampleComponentsGroup = ({
             {materialGroup === 'solid' && <th style={{ padding: '3px 3px' }}>{SwitchAmountButton(lockAmountColumnSolids, switchAmount, materialGroup)} {headers.mass}</th>}
             {materialGroup === 'liquid' && <th>{SwitchAmountButton(lockAmountColumn, switchAmount, materialGroup)} {headers.volume}</th>}
             <th>{headers.amount}</th>
-            {materialGroup === 'liquid' && <th>{headers.startingConc}</th>}
+            {materialGroup === 'liquid' && <th>
+              <Tabs
+              onSelect={handleTabSelect}
+              id="material-tabs"
+              >
+                <Tab eventKey="concentration" title="Starting Conc"></Tab>
+                <Tab eventKey="density" title="Density"></Tab>
+              </Tabs>
+              <th>
+            </th></th>}
             {materialGroup === 'solid' && <th></th>}
             <th>{headers.concn}</th>
+            <th>{headers.purity}</th>
             <th>{headers.eq}</th>
           </tr>
           </thead>

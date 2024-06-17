@@ -29,8 +29,10 @@ module Chemotion
           optional :name, type: String, desc: 'Component name'
           optional :position, type: Integer, desc: 'Component position in the table'
           requires :component_properties, type: Hash, desc: 'Component properties' do
-            optional :target_amount_value, type: Float, desc: 'Target amount value'
-            optional :target_amount_unit, type: String, desc: 'Target amount unit'
+            optional :amount_mol, type: Float, desc: 'Component moles'
+            optional :amount_l, type: Float, desc: 'Component volume'
+            optional :amount_g, type: Float, desc: 'Component mass'
+            optional :density, type: Float, desc: 'Density in g/ml' 
             optional :molarity_unit, type: String, desc: 'Molarity unit'
             optional :molarity_value, type: Float, desc: 'Molarity value'
             optional :starting_molarity_value, type: Float, desc: 'Starting molarity value'
