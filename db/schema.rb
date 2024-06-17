@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_04_24_120634) do
+ActiveRecord::Schema.define(version: 2024_06_17_110459) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -920,6 +920,7 @@ ActiveRecord::Schema.define(version: 2024_04_24_120634) do
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
     t.boolean "show_sample_short_label", default: false
+    t.string "user_templates", default: [], array: true
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end

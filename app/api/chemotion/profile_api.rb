@@ -70,6 +70,7 @@ module Chemotion
           show_sample_name: profile.show_sample_name,
           show_sample_short_label: profile.show_sample_short_label,
           curation: profile.curation,
+          user_templates: profile.user_templates,
         }
       end
 
@@ -97,8 +98,8 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
+        optional :user_templates, type: Array[String]
       end
-
       put do
         declared_params = declared(params, include_missing: false)
         available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
@@ -125,12 +126,12 @@ module Chemotion
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
         data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
-
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
+          user_templates: current_user.profile.user_templates + declared_params[:user_templates],
         }
 
         (current_user.profile.update!(**new_profile) &&
