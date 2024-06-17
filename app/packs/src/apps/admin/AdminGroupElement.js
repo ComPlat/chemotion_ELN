@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, OverlayTrigger, Tooltip, Button, Table, Accordion, Card } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip, Button, Table, Accordion } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { findIndex } from 'lodash';
 import DeleteGroupDeviceButton from 'src/apps/admin/DeleteGroupDeviceButton';
@@ -56,7 +56,7 @@ export default class AdminGroupElement extends React.Component {
   renderGroupButtons(group) {
     return (
       <td>
-        <ButtonGroup aria-label="Group-Users">
+        <div className="d-inline-block me-2">
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersShow">List Group-Users</Tooltip>}>
             <Button size="sm" type="button" variant="info" onClick={this.toggleUsers} >
               <i className="fa fa-users" />&nbsp;({group.users.length < 10 ? `0${group.users.length}` : group.users.length})
@@ -67,9 +67,9 @@ export default class AdminGroupElement extends React.Component {
               <i className="fa fa-user" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
-        </ButtonGroup>&nbsp;&nbsp;
+        </div>
 
-        <ButtonGroup>
+        <div className="d-inline-block">
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupDevicesShow">List Group-Devices</Tooltip>}>
             <Button size="sm" type="button" variant="success" onClick={this.toggleDevices} >
               <i className="fa fa-server" />&nbsp;({group.devices.length < 10 ? `0${group.devices.length}` : group.devices.length})
@@ -80,14 +80,14 @@ export default class AdminGroupElement extends React.Component {
               <i className="fa fa-laptop" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
-        </ButtonGroup>&nbsp;&nbsp;
-        <ButtonGroup>
+        </div>&nbsp;&nbsp;
+        <div className="d-inline-block">
           <DeleteGroupDeviceButton rootType={'Group'}
             groupRec={group}
             isRoot={true}
             currentState={this.state}
             onChangeGroupData={this.props.onChangeGroupData} />
-        </ButtonGroup>
+        </div>
       </td>
     );
   }
@@ -97,7 +97,7 @@ export default class AdminGroupElement extends React.Component {
     const adminTooltip = isAdmin === true ? 'set to normal user' : 'set to Administrator';
     return (
       <td className="w-30">
-        <ButtonGroup className="actions">
+        <div className="d-inline-block">
           <OverlayTrigger placement="top" overlay={<Tooltip id="userAdmin">{adminTooltip}</Tooltip>}>
             <Button
               size="sm"
@@ -114,8 +114,7 @@ export default class AdminGroupElement extends React.Component {
             userRec={user}
             currentState={this.state}
             onChangeGroupData={this.props.onChangeGroupData} />
-        </ButtonGroup>
-        &nbsp;&nbsp;
+        </div>
       </td>
     );
   }
