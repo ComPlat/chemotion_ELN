@@ -115,8 +115,10 @@ export default class EditModeHeader extends React.Component {
 
     return (
       <div className="preview">
+        
         <ImageModal
-          hasPop={false}
+          hasPop={true}
+          disableClick={false}
           previewObject={{
             src: previewImg
           }}
