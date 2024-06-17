@@ -42,7 +42,7 @@ function computeEquivalent(material, referenceMaterial) {
 function computePercentYield(material, referenceMaterial, reactionHasPolymers) {
   const stoichiometryCoefficient = (material.aux.coefficient ?? 1.0)
     / (referenceMaterial.aux.coefficient ?? 1.0);
-  const equivalent = computeEquivalent(material, referenceMaterial, 'products')
+  const equivalent = computeEquivalent(material, referenceMaterial)
     / stoichiometryCoefficient;
   return reactionHasPolymers ? (equivalent * 100)
     : ((equivalent <= 1 ? equivalent : 1) * 100);
