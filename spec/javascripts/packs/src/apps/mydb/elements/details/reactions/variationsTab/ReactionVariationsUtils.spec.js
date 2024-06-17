@@ -55,7 +55,7 @@ describe('ReactionVariationsUtils', () => {
     const updatedRow = updateVariationsRow(
       row,
       `startingMaterials.${referenceMaterialID}`,
-      { ...referenceMaterial, value: referenceMaterial.value * 10 },
+      { ...referenceMaterial, mass: { ...referenceMaterial.mass, value: referenceMaterial.mass.value * 10 } },
       reaction.hasPolymers()
     );
     expect(Object.values(row.reactants)[0].aux.equivalent).toBeGreaterThan(
