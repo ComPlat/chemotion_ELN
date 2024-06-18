@@ -29,11 +29,11 @@ module Chemotion
       get do
         file_path = "public/typojs/custom/custom.dic"
         last_line = 0
-        f = File.open(file_path, "r+")
-        f.each {  last_line = f.pos unless f.eof? }
-        f.seek(last_line, IO::SEEK_SET)
-        f.truncate(f.pos)
-        f.close
+        file = File.open(file_path, "r+")
+        file.each {last_line = file.pos unless file.eof?}
+        file.seek(last_line, IO::SEEK_SET)
+        file.truncate(file.pos)
+        file.close
       end
     end
   end

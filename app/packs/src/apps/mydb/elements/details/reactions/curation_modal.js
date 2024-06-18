@@ -1,5 +1,7 @@
+import { ButtonGroup } from '@material-ui/core';
 import React, { Component , useState} from 'react';
-import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert} from 'react-bootstrap';
+import { Button, ButtonToolbar, FormControl, Glyphicon, Modal, Table, Popover,Tooltip,OverlayTrigger,Overlay, Panel, Alert,Col, Row} from 'react-bootstrap';
+import { NIL } from 'uuid';
 
 
 
@@ -29,7 +31,7 @@ export default class CurationModal extends Component {
         correct_word : "",
         subscript_list : [],
         dictionary_language: "US",
-        show_prompt : false
+        show_prompt : false,
         
       }
       
@@ -41,17 +43,6 @@ export default class CurationModal extends Component {
   
     handlePromptShow() {
       this.setState({ show_prompt: true });
-    }
-    downloadFile(file) {
-      const { contents } = file;
-      const link = document.createElement('a');
-      link.href = contents;
-      const event = new window.MouseEvent('click', {
-        'view': window,
-        'bubbles': true,
-        'cancelable': true
-      });
-      link.dispatchEvent(event);
     }
 
     handleDictionaryLang(){
@@ -67,7 +58,7 @@ export default class CurationModal extends Component {
     }
 
     advance_suggestion(input,miss_spelled_words){
-      if (input < miss_spelled_words.length-1){
+      if (input < miss_spelled_words.length ){
       input = input +1 }
       else {
         input = 0
@@ -211,7 +202,7 @@ export default class CurationModal extends Component {
       var fixed_description = description.replace(ms_words[index], selected_choice);}
       else{
       var fixed_description = description}
-      if (index < ms_words.length-1){
+      if (index < ms_words.length){
         index= index +1 }
       else {
           index = 0
@@ -284,27 +275,27 @@ export default class CurationModal extends Component {
 
     render() {
 
-const CustomPopover = () => {
-  return (
-    <div 
-        style={{
-          backgroundColor: '#EEE',
-          boxShadow: '0 5px 10px rgba(0, 0, 0, 0.2)',
-          border: '1px solid #CCC',
-          borderRadius: 3,
-          marginTop: 45,
-          padding: 15
-          }}
-        >
-          <div className='float' style={{padding: 5}}>
-            {this.state.correct_word} added To dictionary </div>
-            <ButtonToolbar>
-              <Button>Remove</Button>
-              <Button onClick={()=>{this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index);this.handlePromptDismiss()}}>Next</Button>
-            </ButtonToolbar>
+      const CustomPopover = () => {
+        return (
+          <div 
+            style={{
+              backgroundColor: '#EEE',
+              boxShadow: '0 5px 10px rgba(0, 0, 0, 0.2)',
+              border: '1px solid #CCC',
+              borderRadius: 3,
+                // marginBottom: 185,
+              padding: 15
+            }}
+            >
+                <div className='float' style={{padding: 5}}>
+                  {this.state.correct_word} added To dictionary </div>
+                  <ButtonToolbar>
+                    <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary/remove?old_word=".concat(this.state.mispelled_words[this.state.suggestion_index])) ;this.handlePromptDismiss()}}>Remove last entry</Button>
+                    <Button onClick={()=>{this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index);this.handlePromptDismiss()}}>Next</Button>
+                  </ButtonToolbar>
           </div>
-      );
-    }
+          );
+        }
     
 
       const Compo = ({ text, mispelled_words,index ,subscript_list}) => {
@@ -312,16 +303,23 @@ const CustomPopover = () => {
         return <p>{this.getHighlightedText(text, mispelled_words,index, subscript_list )}</p>;
       };
 
-      const SuggestBox = ({suggest_array}) =>{
-        if (suggest_array.length != 0){
+      const SuggestBox = ({suggest_array, suggestion_index}) =>{
+        if (suggestion_index <  suggest_array.length ){
           return suggest_array.map((suggestion,id) =>  (
             <div key={id}>
               <label>
-                <input type="radio" value={suggestion} onChange={this.change_corect_word} checked={this.state.correct_word === suggestion}/>
+                <input type="radio" value= {suggestion} onChange={this.change_corect_word} checked={this.state.correct_word === suggestion}/>
                   {suggestion}
                 </label> 
-            </div>  
+        {/* {suggest_array.length} : {suggestion_index} */}
+             </div>  
         ));}
+        else if (suggestion_index >= suggest_array.length ){
+          // this.spell_check(this.state.desc)
+        return(
+        <div>
+          <h5>SpellCheck Finished</h5>
+        </div>)}
         else{
           return (
             <div>
@@ -344,7 +342,7 @@ const CustomPopover = () => {
          // this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index);
             }}>
                 add to dictionary {state}
-        </Button>
+            </Button>
           )
         }
       }
@@ -352,52 +350,59 @@ const CustomPopover = () => {
       return (
         <div>
           <Button  onClick={this.handleShow}>
-            <span  title="Curate Data" className="glyphicon glyphicon-check"/>          </Button>
-  
+            <span  title="Curate Data" className="glyphicon glyphicon-check" style={{color: "#369b1e"}}/>
+          </Button>
+    
           <Modal show={this.state.show} onHide={this.handleClose} >
-          
             <Modal.Header closeButton>
-              <Modal.Title>Spell Check  selected language: {this.state.dictionary_language}  </Modal.Title>
+              <Modal.Title>
+                <Col md={6}>Spell Check: English {this.state.dictionary_language}   <Button onClick={()=> this.handleDictionaryLang()}><i class="fa fa-language" ></i></Button></Col>
+                {/* <Col mdOffset={7}> Selected Language: {this.state.dictionary_language} </Col>  */}
+                </Modal.Title> 
             </Modal.Header>
             <Modal.Body>
-            <Panel>
-           <Panel.Heading>
-      <ButtonToolbar>
-                <Button onClick={()=>this.spell_check(this.state.desc) }>spell check</Button>
-                <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Change</Button>
-                <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Skip</Button>
-                <Button onClick={()=>this.reverse_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Go Back</Button>
-                <Button onClick={()=> {this.handleChange(); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button>
-                <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary/amend?new_word=".concat(this.state.mispelled_words[this.state.suggestion_index]));this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}}>Add selected misspelled words</Button>
-                <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary/remove?old_word=".concat(this.state.mispelled_words[this.state.suggestion_index])) }}>Remove last entry</Button>
-                <Button onClick={()=> this.handleDictionaryLang()}><i class="fa fa-language" ></i></Button>
-      </ButtonToolbar>
-          </Panel.Heading>
-              <Panel.Body>
+              <Panel>
+                <Panel.Heading>
+                  {/* <ButtonToolbar> */}
+                 
+                  <Row> <Button onClick={()=> {fetch("http://localhost:3000/api/v1/dictionary/amend?new_word=".concat(this.state.mispelled_words[this.state.suggestion_index]));this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}}>Add selected misspelled words</Button></Row>
+                <Row style={{padding: 5}}>
+                  {/* <Col md={4}> Or enter a new word:</Col> */}
+                  <Col md={3} > <input onChange={this.handleSuggestChange}/></Col>
+                  <Col md={3} >
+                    <DictionaryButton state={this.state.show_prompt}></DictionaryButton>
+                  </Col>
+                </Row>
+                </Panel.Heading>
+                <Panel.Body>
                   <Compo text={this.state.desc} mispelled_words={this.state.mispelled_words} index={this.state.suggestion_index} subscript_list={this.state.subscript_list} /> 
-              </Panel.Body> 
-          <Panel>
-          <Panel.Heading>
-              <h5>
-                  Suggestions for {this.state.mispelled_words[this.state.suggestion_index]}
-              </h5>
-          </Panel.Heading>
-              <form>
-                  <SuggestBox suggest_array={this.state.suggestion}></SuggestBox>
-                  <div>Or enter a new word</div>
-                  <input value={this.state.correct_word}
-                  onChange={this.handleSuggestChange}
-                  />
-              </form>
-              <DictionaryButton state={this.state.show_prompt}></DictionaryButton>
+                </Panel.Body> 
+                <Panel>
+                  <Panel.Heading>
+                    <h4> Suggestions for : {this.state.mispelled_words[this.state.suggestion_index]}
+                    </h4>
+                  </Panel.Heading>
+                  <Panel.Body>
+                    <Col md={6}>
+                      <SuggestBox suggest_array={this.state.suggestion} suggestion_index={this.state.suggestion_index}></SuggestBox>
+                    </Col>
+                    <Col md={6}>
+                      
+                    </Col>
+                  </Panel.Body>
+              <Panel.Footer><ButtonToolbar>
+                <Button onClick={()=>this.advance_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Ignore</Button>
+                <Button onClick={()=>this.reverse_suggestion(this.state.suggestion_index,this.state.mispelled_words)}>Go Back</Button>
+                <Button onClick={()=>this.change_misspelling(this.state.desc, this.state.correct_word, this.state.mispelled_words, this.state.suggestion_index)}>Correct</Button>
+                <div className='pull-right'><Button onClick={()=> {this.handleChange(); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button></div>
+              </ButtonToolbar> 
+             
+              </Panel.Footer>
             </Panel>
         </Panel>
     </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.handleClose}>Close</Button>
-            </Modal.Footer>
-          </Modal>
-        </div>
+  </Modal>
+</div>
       );
     }
   }
