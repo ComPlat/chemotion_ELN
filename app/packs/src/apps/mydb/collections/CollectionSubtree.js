@@ -46,7 +46,7 @@ export default class CollectionSubtree extends React.Component {
       const visible = this.isVisible(this.state.root, state)
       const { root } = this.state;
 
-      const selectedCol = state.currentCollection.id == root.id
+      const selectedCol = state.currentCollection.id === root.id
 
       if (selectedCol) {
         this.setState({
@@ -56,7 +56,6 @@ export default class CollectionSubtree extends React.Component {
       } else {
         this.setState({
           selected: false,
-          visible
         });
       }
     }
