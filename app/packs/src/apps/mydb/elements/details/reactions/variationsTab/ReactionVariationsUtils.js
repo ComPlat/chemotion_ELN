@@ -115,9 +115,26 @@ function copyVariationsRow(row, variations) {
   return copiedRow;
 }
 
-function updateVariationsRow(row, field, value) {
-  const updatedRow = cloneDeep(row);
+function updateVariationsRow(row, field, value, reactionHasPolymers) {
+  /*
+  Some attributes of a material need to be updated in response to changes in other attributes:
+
+  attribute  | needs to be updated in response to
+  -----------|----------------------------------
+  equivalent | own mass changes^, own amount changes^, reference material's mass changes~, reference material's amount changes~
+  mass       | own amount changes^, own equivalent changes^
+  amount     | own mass changes^, own equivalent changes^
+  yield      | own mass changes^, own amount changes^x, reference material's mass changes~, reference material's amount changes~
+
+  ^: handled in corresponding cell parsers (changes within single material)
+  ~: handled here (row-wide changes across materials)
+  x: not permitted according to business logic
+  */
+  let updatedRow = cloneDeep(row);
   set(updatedRow, field, value);
+  if (value.aux?.isReference) {
+    updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reactionHasPolymers);
+  }
 
   return updatedRow;
 }

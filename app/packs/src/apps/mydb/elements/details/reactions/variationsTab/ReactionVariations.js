@@ -20,7 +20,6 @@ import {
 import {
   getMaterialColumnGroupChild, updateColumnDefinitionsMaterials, getReactionMaterials,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  updateVariationsRowOnReferenceMaterialChange
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -377,25 +376,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }, [reactionVariations]);
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
-    /*
-    Some attributes of a material need to be updated in response to changes in other attributes:
-
-    attribute  | needs to be updated in response to
-    -----------|----------------------------------
-    equivalent | own mass changes^, own amount changes^, reference material's mass changes~, reference material's amount changes~
-    mass       | own amount changes^, own equivalent changes^
-    amount     | own mass changes^, own equivalent changes^
-    yield      | own mass changes^, own amount changes^x, reference material's mass changes~, reference material's amount changes~
-
-    ^: handled in corresponding cell parsers (changes within single material)
-    ~: handled here (row-wide changes across materials)
-    x: not permitted according to business logic
-    */
     const { field } = colDef;
-    let updatedRow = updateVariationsRow(oldRow, field, newValue);
-    if (newValue.aux?.isReference) {
-      updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reaction.hasPolymers());
-    }
+    const updatedRow = updateVariationsRow(oldRow, field, newValue, reaction.hasPolymers());
     setReactionVariations(
       reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );

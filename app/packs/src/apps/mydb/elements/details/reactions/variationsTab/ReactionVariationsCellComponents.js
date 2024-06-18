@@ -116,7 +116,7 @@ function MaterialParser({
     const mass = getGramFromMol(value, updatedCellData);
     updatedCellData = { ...updatedCellData, mass: { ...updatedCellData.mass, value: mass } };
   }
-  // See comment in ReactionVariations.updateRow() regarding reactive updates.
+  // See comment in ReactionVariationsUtils.updateVariationsRow() regarding reactive updates.
   if (updatedCellData.aux.isReference) {
     return updatedCellData;
   }
