@@ -2,7 +2,7 @@ import { set, cloneDeep } from 'lodash';
 import { convertTemperature, convertDuration } from 'src/models/Reaction';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
-  updateYields, updateEquivalents, getMaterialData
+  updateVariationsRowOnReferenceMaterialChange, getMaterialData
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 const temperatureUnits = ['°C', 'K', '°F'];
@@ -103,10 +103,7 @@ function createVariationsRow(reaction, variations) {
       { ...a, [v.id]: getMaterialData(v) }), {});
   });
 
-  row = updateYields(row, reactionCopy.has_polymers);
-  row = updateEquivalents(row);
-
-  return row;
+  return updateVariationsRowOnReferenceMaterialChange(row, reactionCopy.has_polymers);
 }
 
 function copyVariationsRow(row, variations) {
@@ -121,14 +118,6 @@ function copyVariationsRow(row, variations) {
 function updateVariationsRow(row, field, value) {
   const updatedRow = cloneDeep(row);
   set(updatedRow, field, value);
-
-  return updatedRow;
-}
-
-function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
-  let updatedRow = cloneDeep(row);
-  updatedRow = updateEquivalents(updatedRow);
-  updatedRow = updateYields(updatedRow, reactionHasPolymers);
 
   return updatedRow;
 }
@@ -166,7 +155,6 @@ export {
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
-  updateVariationsRowOnReferenceMaterialChange,
   updateColumnDefinitions,
   getCellDataType
 };

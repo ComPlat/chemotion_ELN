@@ -298,6 +298,14 @@ function updateNonReferenceMaterialOnMassChange(variationsRow, material, materia
   };
 }
 
+function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
+  let updatedRow = cloneDeep(row);
+  updatedRow = updateEquivalents(updatedRow);
+  updatedRow = updateYields(updatedRow, reactionHasPolymers);
+
+  return updatedRow;
+}
+
 export {
   MaterialOverlay,
   getMaterialColumnGroupChild,
@@ -305,8 +313,7 @@ export {
   getMaterialData,
   updateColumnDefinitionsMaterials,
   updateNonReferenceMaterialOnMassChange,
-  updateYields,
-  updateEquivalents,
+  updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations,
   addMissingMaterialsToVariations,
   getReferenceMaterial,

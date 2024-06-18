@@ -13,7 +13,6 @@ import { parseNumericString } from 'src/utilities/MathUtils';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getCellDataType,
   temperatureUnits, durationUnits, getStandardUnit, materialTypes, updateColumnDefinitions,
-  updateVariationsRowOnReferenceMaterialChange
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getReactionAnalyses, updateAnalyses, getAnalysesOverlay, AnalysisOverlay
@@ -21,6 +20,7 @@ import {
 import {
   getMaterialColumnGroupChild, updateColumnDefinitionsMaterials, getReactionMaterials,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
+  updateVariationsRowOnReferenceMaterialChange
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,

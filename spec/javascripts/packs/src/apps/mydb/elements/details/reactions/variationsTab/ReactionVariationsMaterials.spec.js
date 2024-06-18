@@ -1,6 +1,6 @@
 import expect from 'expect';
 import {
-  getReactionMaterials, updateYields, updateEquivalents,
+  getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
   updateNonReferenceMaterialOnMassChange, EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
@@ -44,8 +44,11 @@ describe('ReactionVariationsMaterials', () => {
     const reaction = await setUpReaction();
     const productID = reaction.products[0].id;
     expect(reaction.variations[0].products[productID].aux.yield).toBe(100);
-    reaction.variations[0].products[productID].value = 2000;
-    const updatedVariationsRow = updateYields(reaction.variations[0], reaction.hasPolymers());
+    reaction.variations[0].products[productID].mass.value = 2;
+    const updatedVariationsRow = updateVariationsRowOnReferenceMaterialChange(
+      reaction.variations[0],
+      reaction.hasPolymers()
+    );
     expect(updatedVariationsRow.products[productID].aux.yield).toBe(5);
   });
   it("updates non-reference materials' equivalents when reference material's amount changes", async () => {
@@ -57,7 +60,7 @@ describe('ReactionVariationsMaterials', () => {
         material.value = 2000;
       }
     });
-    const updatedVariationsRow = updateEquivalents(reaction.variations[0]);
+    const updatedVariationsRow = updateVariationsRowOnReferenceMaterialChange(reaction.variations[0]);
     expect(updatedVariationsRow.reactants[reactantID].aux.equivalent).toBeCloseTo(50, 0.01);
   });
   it("updates non-reference materials' equivalents when own amount changes", async () => {
