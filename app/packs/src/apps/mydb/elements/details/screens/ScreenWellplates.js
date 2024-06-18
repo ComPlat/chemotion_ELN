@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
 import Aviator from 'aviator';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import QuillViewer from 'src/components/QuillViewer';

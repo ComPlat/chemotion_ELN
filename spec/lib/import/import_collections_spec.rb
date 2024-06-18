@@ -19,9 +19,10 @@ RSpec.describe 'ImportCollection' do
 
     let(:importer) { Import::ImportCollections.new(attachment, user.id) }
 
-    describe 'import a collection with samples' do
+    describe 'import a collection with samples, with directories in the zip structure and missing schema.json' do
       let(:import_id) { 'collection_samples' }
-      let(:attachment) { create(:attachment, :with_sample_collection_zip) }
+      # let(:attachment) { create(:attachment, :with_sample_collection_zip) }
+      let(:attachment) { create(:attachment, :with_edited_collection_zip) }
 
       it 'successfully import 2 samples' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
@@ -203,6 +204,29 @@ RSpec.describe 'ImportCollection' do
 
       it 'Only one material exists' do
         expect(CelllineMaterial.count).to be 1
+      end
+    end
+
+    context 'with zip file including one empty wellplate with height and width parameter' do
+      let(:imported_collection) { Collection.find_by(label: 'Wellplate-Export-Example') }
+      let(:import_id) { '20240129_empty_wellplate' }
+      let(:attachment) do
+        create(:attachment, file_path: Rails.root.join('spec/fixtures/import/20240129_empty_wellplate.zip'))
+      end
+
+      before do
+        importer.execute
+      end
+
+      it 'Collection was created and contains one wellplate' do
+        expect(imported_collection).not_to be_nil
+        expect(imported_collection.wellplates.length).to be 1
+      end
+
+      it 'One wellplate was imported with height 8 and width 12' do
+        expect(Wellplate.count).to be 1
+        expect(Wellplate.first.width).to be 12
+        expect(Wellplate.first.height).to be 8
       end
     end
   end

@@ -6,8 +6,6 @@
 #     docker-compose -f docker-compose.dev.yml up postgres app webpacker
 # - Open a bash shell in the app container:
 #     docker exec -it NAME_OF_APP_CONTAINER_FROM_DOCKER_PS /bin/bash
-# - Setup the database environment inside the bash shell:
-#     bundle exec rake db:setup
 # - Run tests:
 #     bundle exec rspec
 #
@@ -29,6 +27,10 @@ services:
       dockerfile: 'Dockerfile.chemotion-dev'
     depends_on:
       - 'postgres'
+    healthcheck:
+      test: ["CMD", "bundle", "check"] # exit 0 if all gems from Gemfile are installed, otherwise exit 1
+      interval: 30s
+      timeout: 10s
     environment:
       - 'WEBPACKER_DEV_SERVER_HOST=webpacker'
       - 'WEBPACKER_DEV_SERVER_PORT=3035'
@@ -46,6 +48,9 @@ services:
     build:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
+    depends_on:
+      app:
+        condition: service_healthy
     environment:
       - 'WEBPACKER_DEV_SERVER_HOST=webpacker'
       - 'WEBPACKER_DEV_SERVER_PORT=3035'

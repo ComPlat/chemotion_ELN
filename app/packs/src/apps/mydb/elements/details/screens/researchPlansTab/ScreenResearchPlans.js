@@ -1,5 +1,5 @@
 import Aviator from 'aviator';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import EmbeddedResearchPlanDetails from 'src/apps/mydb/elements/details/screens/researchPlansTab/EmbeddedResearchPlanDetails';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';

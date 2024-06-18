@@ -35,6 +35,7 @@ gem 'faraday'
 gem 'faraday-follow_redirects'
 gem 'faraday-multipart'
 gem 'font-awesome-rails'
+gem 'fugit'
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 gem 'fx'
 
@@ -61,7 +62,7 @@ gem 'kaminari'
 gem 'kaminari-grape'
 gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
 
-gem 'labimotion', '1.1.3'
+gem 'labimotion', '1.3.1.1'
 
 gem 'mimemagic', '0.3.10'
 gem 'mime-types'
@@ -92,9 +93,9 @@ gem 'pundit'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 6.1.7.3'
+gem 'rails', '~> 6.1.7.7'
 gem 'rdkit_chem', git: 'https://github.com/ptrxyz/rdkit_chem.git', branch: 'pk01'
-gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
+gem 'rinchi-gem', '1.0.2', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
 gem 'roo'
 gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-

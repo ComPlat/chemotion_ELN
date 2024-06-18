@@ -1,14 +1,36 @@
 /* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import {
-  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab
+  Panel, Table, Button, Modal, FormGroup, ControlLabel, Form, Col, FormControl, Tooltip, OverlayTrigger, Tabs, Tab,
+  Nav, NavItem, Alert
 } from 'react-bootstrap';
 import Select from 'react-select';
 import { CSVReader } from 'react-papaparse';
+import propType from 'prop-types';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
+
+function MessageAlert({ message, onHide }) {
+  return (
+    message?.length > 0 ? (
+      <Alert bsStyle="info" onDismiss={onHide}>
+        <p>
+          {message}
+        </p>
+      </Alert>
+    ) : null
+  );
+}
+
+MessageAlert.propTypes = {
+  message: propType.string,
+  onHide: propType.func.isRequired,
+};
+MessageAlert.defaultProps = {
+  message: '',
+};
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -22,26 +44,26 @@ const loadUserByName = (input) => {
     });
 };
 
-const handleResetPassword = (id, random) => {
+const handleResetPassword = (id, random, handleShowAlert) => {
   AdminFetcher.resetUserPassword({ user_id: id, random })
     .then((result) => {
       if (result.rp) {
         let message = '';
         if (random) {
-          message = result.pwd ? `Password reset! New password: \n ${result.pwd}`
+          message = result.pwd ? `Password reset for user ${id}! New password: \n ${result.pwd}`
             : 'Password reset!';
         } else {
           message = result.email ? `Password reset! instructions sent to : \n ${result.email}`
             : 'Password instruction sent!';
         }
-        alert(message);
+        handleShowAlert(message);
       } else {
-        alert(`Password reset fail: \n ${result.pwd}`);
+        handleShowAlert(`Password reset fail: \n ${result.pwd}`);
       }
     });
 };
 
-const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(mail));
+const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,63})+$/.test(mail));
 const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
 const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
 const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
@@ -87,13 +109,33 @@ const moleculeModeratorDisableTooltip = (
 );
 const accountActiveTooltip = (
   <Tooltip id="assign_button">
-    This user account is deactivated, press button to [activate]
+    This user account is deactivated, click to [activate]
   </Tooltip>
 );
 const accountInActiveTooltip = (
   <Tooltip id="assign_button">
-    This user account is activated, press button to [deactivate]
+    This user account is activated, click to [deactivate]
   </Tooltip>
+);
+
+const renderDeletedUsersTable = (deletedUsers) => (
+  <Table striped bordered hover>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Deleted at</th>
+      </tr>
+    </thead>
+    <tbody>
+      {deletedUsers.map((item) => (
+        <tr key={item.id}>
+          <td>{item.id}</td>
+          <td>{item.deleted_at}</td>
+        </tr>
+      ))}
+
+    </tbody>
+  </Table>
 );
 
 export default class UserManagement extends React.Component {
@@ -102,14 +144,20 @@ export default class UserManagement extends React.Component {
     this.state = {
       users: [],
       user: {},
+      deletedUsers: [],
       selectedUsers: null,
       showMsgModal: false,
       showNewUserModal: false,
       showEditUserModal: false,
       showGenericAdminModal: false,
+      showRestoreAccountModal: false,
+      showError: false,
+      showSuccess: false,
       messageNewUserModal: '',
       messageEditUserModal: '',
+      messageRestoreAccountModal: '',
       processingSummaryUserFile: '',
+      alertMessage: null,
       filterCriteria: {}
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
@@ -123,12 +171,26 @@ export default class UserManagement extends React.Component {
     this.handleEditUserShow = this.handleEditUserShow.bind(this);
     this.handleEditUserClose = this.handleEditUserClose.bind(this);
     this.handleUpdateUser = this.handleUpdateUser.bind(this);
+    this.handleRestoreAccountShow = this.handleRestoreAccountShow.bind(this);
+    this.handleRestoreAccountClose = this.handleRestoreAccountClose.bind(this);
+    this.handleRestoreAccount = this.handleRestoreAccount.bind(this);
     this.handleGenericAdminModal = this.handleGenericAdminModal.bind(this);
     this.handleGenericAdminModalCb = this.handleGenericAdminModalCb.bind(this);
+    this.handleDismissAlert = this.handleDismissAlert.bind(this);
+    this.handleShowAlert = this.handleShowAlert.bind(this);
+    this.tableBodyRef = React.createRef();
   }
 
   componentDidMount() {
     this.handleFetchUsers();
+    // update maxHeight for user table body
+    if (this.tableBodyRef?.current) {
+      // Get the available space
+      const availableSpace = window.innerHeight - this.tableBodyRef.current.getBoundingClientRect().top;
+
+      // Set the max-height dynamically
+      this.tableBodyRef.current.style.maxHeight = `${availableSpace}px`;
+    }
     return true;
   }
 
@@ -149,13 +211,15 @@ export default class UserManagement extends React.Component {
 
   handleNewUserShow() {
     this.setState({
-      showNewUserModal: true
+      showNewUserModal: true,
+      messageNewUserModal: ''
     });
   }
 
   handleNewUserClose() {
     this.setState({
-      showNewUserModal: false
+      showNewUserModal: false,
+      messageNewUserModal: ''
     });
   }
 
@@ -175,15 +239,39 @@ export default class UserManagement extends React.Component {
     });
   }
 
+  handleRestoreAccountShow() {
+    this.setState({
+      showRestoreAccountModal: true,
+      messageRestoreAccountModal: '',
+      showSuccess: false,
+      showError: false,
+      deletedUsers: [],
+    });
+  }
+
+  handleRestoreAccountClose() {
+    this.setState({
+      showRestoreAccountModal: false,
+    });
+    this.handleFetchUsers();
+  }
+
+  handleDismissAlert() {
+    this.setState({ alertMessage: null });
+  }
+
+  handleShowAlert(message) {
+    this.setState({ alertMessage: message });
+  }
+
   handleGenericAdminModalCb(user) {
-    AdminFetcher.fetchUsers()
-      .then((result) => {
-        let updated = result.users.find(u => u.id === user.id);
-        updated = updated || user;
-        this.setState({
-          users: result.users, user: updated
-        });
-      });
+    const { users } = this.state;
+    const { id, error } = user;
+    if (error) { this.setState({ alertMessage: error }); }
+    this.setState({
+      users: users.map((u) => (u.id === id ? user : u)),
+      user,
+    });
   }
 
   handleGenericAdminModal(show, user = {}) {
@@ -200,52 +288,30 @@ export default class UserManagement extends React.Component {
   }
 
   handleEnableDisableAccount(id, lockedAt) {
-    AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
-      .then(() => {
-        this.handleFetchUsers();
-        const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked!'; //
-        alert(message);
-      });
+    const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked! User can unlock it under condition'; //
+    this.updateUser({ id, enable: lockedAt !== null }, message);
   }
 
   handleConverterAdmin(id, isConverterAdmin) {
-    AdminFetcher.updateAccount({ user_id: id, converter_admin: !isConverterAdmin })
-      .then(() => {
-        this.handleFetchUsers();
-        const message = isConverterAdmin === true
-          ? 'Disable Converter profiles editing for this user' : 'Enable Converter profiles editing for this user';
-        alert(message);
-      });
+    const message = `Converter-profiles editing has been ${isConverterAdmin === true ? 'dis' : 'en'}abled for user ${id}`;
+    this.updateProfile({ user_id: id, converter_admin: !isConverterAdmin }, message);
   }
 
   handleTemplatesModerator(id, isTemplatesModerator) {
-    AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
-      .then(() => {
-        this.handleFetchUsers();
-        const message = isTemplatesModerator === true
-          ? 'Disable Ketcher template editing for this user' : 'Enable Ketcher template editing for this user';
-        alert(message);
-      });
+    const message = `Ketcher-template editing has been ${isTemplatesModerator === true ? 'en' : 'dis'}abled for user ${id}`;
+    this.updateProfile({ user_id: id, is_templates_moderator: !isTemplatesModerator }, message);
   }
 
   handleMoleculesModerator(id, isMoleculesEditor) {
-    AdminFetcher.updateAccount({ user_id: id, molecule_editor: !isMoleculesEditor })
-      .then(() => {
-        this.handleFetchUsers();
-        const message = isMoleculesEditor === true
-          ? 'Disable editing the representation of the global molecules for this user'
-          : 'Enable editing the representation of the global molecules for this user';
-        alert(message);
-      });
+    const message = isMoleculesEditor === true
+      ? 'Disable editing the representation of the global molecules for this user'
+      : 'Enable editing the representation of the global molecules for this user';
+    this.updateProfile({ user_id: id, molecule_editor: !isMoleculesEditor }, message);
   }
 
   handleActiveInActiveAccount(id, isActive) {
-    AdminFetcher.updateAccount({ user_id: id, account_active: !isActive })
-      .then(() => {
-        this.handleFetchUsers();
-        const message = isActive === true ? 'User is In-Active!' : 'User is Active now!';
-        alert(message);
-      });
+    const message = `User ${id} account has been ${isActive === true ? 'de-' : ''}activated!`;
+    this.updateUser({ id, account_active: !isActive }, message);
   }
 
   handleSelectUser(val) {
@@ -255,23 +321,11 @@ export default class UserManagement extends React.Component {
   }
 
   handleConfirmUserAccount(id) {
-    AdminFetcher.updateAccount({ user_id: id, confirm_user: true })
-      .then((result) => {
-        if (result !== null) {
-          this.handleFetchUsers();
-          alert('User Account has been confirmed!');
-        }
-      });
+    this.updateUser({ id, confirm_user: true }, `User ${id} account has been confirmed!`);
   }
 
   handleReConfirmUserAccount(id) {
-    AdminFetcher.updateAccount({ user_id: id, reconfirm_user: true })
-      .then((result) => {
-        if (result !== null) {
-          this.handleFetchUsers();
-          alert('User New Email has been confirmed!');
-        }
-      });
+    this.updateUser({ id, reconfirm_user: true }, `User ${id} new Email has been confirmed!`);
   }
 
   handleCreateNewUser() {
@@ -368,16 +422,79 @@ export default class UserManagement extends React.Component {
           this.setState({ messageEditUserModal: result.error });
           return false;
         }
-        this.setState({ showEditUserModal: false, messageEditUserModal: '' });
+        // update this.state.users with result
+        const { users } = this.state;
+        const index = users.findIndex((u) => u.id === user.id);
+        users[index] = result;
+
+        this.setState({
+          users, showEditUserModal: false, messageEditUserModal: '', alertMessage: `User ${user.id} account has been updated.`
+        });
         this.u_email.value = '';
         this.u_firstname.value = '';
         this.u_lastname.value = '';
         this.u_abbr.value = '';
-        this.handleFetchUsers();
         return true;
       });
     return true;
   }
+
+  handleDeleteUser(user) {
+    AdminFetcher.deleteUser({ id: user.id }).then(
+      (result) => {
+        if (result.error) {
+          this.setState({ showEditUserModal: false, alertMessage: result.error });
+          return false;
+        }
+        // remove deleted user from this.state.users
+        const { users } = this.state;
+        const index = users.findIndex((u) => u.id === user.id);
+        if (index > -1) {
+          users.splice(index, 1);
+        }
+        this.setState({
+          showEditUserModal: false,
+          alertMessage: `User with name abbreviation ${user.initials} has been deleted!`,
+          users,
+        });
+        return true;
+      }
+    );
+  }
+
+  handleRestoreAccount = () => {
+    this.setState({ deletedUsers: [] });
+    // trim the params
+    this.id.value = this.id.value.trim();
+    this.nameAbbreviation.value = this.nameAbbreviation.value.trim();
+    if (this.nameAbbreviation.value.trim() === '' && this.id.value.trim() === '') {
+      this.setState({ messageRestoreAccountModal: 'Please enter the name abbreviation or an id!', showError: true });
+      return false;
+    }
+    AdminFetcher.restoreAccount({
+      name_abbreviation: this.nameAbbreviation.value === '' ? null : this.nameAbbreviation.value,
+      id: this.id.value === '' ? null : this.id.value,
+
+    }).then((result) => {
+      if (result?.users) {
+        this.setState({ messageRestoreAccountModal: result.message, showError: true, deletedUsers: result.users });
+        return false;
+      }
+
+      if (result.status === 'error' || result.status === 'warning') {
+        this.setState({ messageRestoreAccountModal: result.message, alertMessage: result.message, showError: true });
+        return false;
+      }
+      this.setState({ messageRestoreAccountModal: result.message, alertMessage: result.message, showSuccess: true });
+      setTimeout(() => {
+        this.nameAbbreviation.value = '';
+        this.id.value = '';
+        this.handleRestoreAccountClose();
+      }, 2000);
+      return true;
+    });
+    return true;
+  };
 
   updateFilter = (key, value) => {
     this.setState((prevState) => ({
@@ -387,6 +504,40 @@ export default class UserManagement extends React.Component {
       }
     }));
   };
+
+  updateUser(params, message = null) {
+    const { users } = this.state;
+    AdminFetcher.updateUser(params)
+      .then((result) => {
+        if (result.error) {
+          this.handleShowAlert(result.error);
+          return false;
+        }
+        this.setState({
+          users: users.map((user) => (user.id === params.id ? result : user)),
+          user: result,
+          alertMessage: message
+        });
+        return true;
+      });
+  }
+
+  updateProfile(params, message = null) {
+    const { users } = this.state;
+    AdminFetcher.updateAccount(params)
+      .then((result) => {
+        if (result.error) {
+          this.handleShowAlert(result.error);
+          return false;
+        }
+        this.setState({
+          users: users.map((user) => (user.id === result.id ? result : user)),
+          user: result,
+          alertMessage: message
+        });
+        return true;
+      });
+  }
 
   updateDropdownFilter(field, value) {
     this.setState((prevState) => ({
@@ -427,7 +578,7 @@ export default class UserManagement extends React.Component {
     if (nUsers > nUsersMax) {
       this.setState({
         processingSummaryUserFile: 'The file contains too many users. '
-        + `Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
+          + `Please make sure that the number of users you add from a single file doesn't exceed ${nUsersMax}.`
       });
       return false;
     }
@@ -438,7 +589,7 @@ export default class UserManagement extends React.Component {
       && fileHeader.every((val, index) => val === validHeader[index]))) {
       this.setState({
         processingSummaryUserFile: `The file contains an invalid header ${fileHeader}. `
-      + `Please make sure that your file's header is organized as follows: ${validHeader}.`
+          + `Please make sure that your file's header is organized as follows: ${validHeader}.`
       });
       return false;
     }
@@ -462,13 +613,13 @@ export default class UserManagement extends React.Component {
     // The backend doesn't validate user type because in the modal for adding a single users,
     // the user type cannot be invalid since it's selected from a dropdown.
     // However, when multiple users are created from a file, type can be any string.
-    const validTypes = ['Person', 'Device', 'Admin'];
+    const validTypes = ['Person', 'Admin'];
     let invalidTypeMessage = '';
     this.newUsers.forEach((user) => {
       const userType = user.data.type.trim();
       if (!validTypes.includes(userType)) {
         invalidTypeMessage += `Row ${user.data.row}: The user's type "${userType}" is invalid. `
-        + `Please select a valid type from ${validTypes}.\n\n`;
+          + `Please select a valid type from ${validTypes}.\n\n`;
       }
     });
     if (!(invalidTypeMessage === '')) {
@@ -486,7 +637,7 @@ export default class UserManagement extends React.Component {
     if (duplicateUserEmails.size) {
       this.setState({
         processingSummaryUserFile: 'The file contains duplicate user '
-      + `emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
+          + `emails: ${Array.from(duplicateUserEmails.values())}. Please make sure that each user has a unique email.`
       });
       return false;
     }
@@ -522,7 +673,7 @@ export default class UserManagement extends React.Component {
       this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
       return false;
     } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
-        || this.nameAbbr.value.trim() === '') { // also validated in backend
+      || this.nameAbbr.value.trim() === '') { // also validated in backend
       this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
@@ -532,9 +683,9 @@ export default class UserManagement extends React.Component {
   messageSend() {
     const { selectedUsers } = this.state;
     if (this.myMessage.value === '') {
-      alert('Please input the message!');
+      this.handleShowAlert('Please input the message!');
     } else if (!selectedUsers) {
-      alert('Please select user(s)!');
+      this.handleShowAlert('Please select user(s)!');
     } else {
       const userIds = [];
       selectedUsers.map((g) => {
@@ -630,7 +781,9 @@ export default class UserManagement extends React.Component {
                     Email:
                   </Col>
                   <Col sm={9}>
-                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }} />
+                    <FormControl type="email" name="email" inputRef={(ref) => { this.email = ref; }}
+                      maxLength={120}
+                    />
                   </Col>
                 </FormGroup>
                 <FormGroup controlId="formControlPassword">
@@ -681,7 +834,6 @@ export default class UserManagement extends React.Component {
                     <FormControl componentClass="select" inputRef={(ref) => { this.type = ref; }}>
                       <option value="Person">Person</option>
                       <option value="Admin">Admin</option>
-                      <option value="Device">Device</option>
                     </FormControl>
                   </Col>
                 </FormGroup>
@@ -779,103 +931,282 @@ export default class UserManagement extends React.Component {
   renderEditUserModal() {
     const { user } = this.state;
     return (
-      <Modal
-        show={this.state.showEditUserModal}
-        onHide={this.handleEditUserClose}
-      >
+      <Tab.Container id="tabs-with-dropdown" defaultActiveKey="first">
+        <Modal
+          show={this.state.showEditUserModal}
+          onHide={this.handleEditUserClose}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <Nav bsStyle="tabs">
+                <NavItem eventKey="first">
+                  Edit user account
+                </NavItem>
+                <NavItem eventKey="second">Delete User</NavItem>
+              </Nav>
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ overflow: 'auto' }}>
+            <Tab.Content animation>
+              <Tab.Pane eventKey="first">
+                <div className="col-md-10 col-md-offset-1">
+                  <Form horizontal>
+                    <FormGroup controlId="formControlEmail">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Email:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="email"
+                          name="u_email"
+                          defaultValue={user.email}
+                          inputRef={(ref) => { this.u_email = ref; }}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlFirstName">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        First name:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="text"
+                          name="u_firstname"
+                          defaultValue={user.first_name}
+                          inputRef={(ref) => { this.u_firstname = ref; }}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlLastName">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Last name:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="text"
+                          name="u_lastname"
+                          defaultValue={user.last_name}
+                          inputRef={(ref) => { this.u_lastname = ref; }}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlAbbr">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Abbr (3):
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="text"
+                          name="u_abbr"
+                          defaultValue={user.initials}
+                          inputRef={(ref) => { this.u_abbr = ref; }}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlsType">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Type:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          componentClass="select"
+                          defaultValue={user.type}
+                          inputRef={(ref) => { this.u_type = ref; }}
+                        >
+                          <option value="Person">Person</option>
+                          <option value="Group">Group</option>
+                          <option value="Admin">Admin</option>
+                        </FormControl>
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlMessage">
+                      <Col sm={12}>
+                        <FormControl
+                          type="text"
+                          readOnly
+                          name="messageEditUserModal"
+                          value={this.state.messageEditUserModal}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup>
+                      <Button className="col-sm-5" onClick={() => this.handleEditUserClose()}>
+                        Cancel&nbsp;
+                      </Button>
+                      <Col sm={2}>&nbsp;</Col>
+                      <Button bsStyle="primary" className="col-sm-5" onClick={() => this.handleUpdateUser(user)}>
+                        Update&nbsp;
+                        <i className="fa fa-save" />
+                      </Button>
+                    </FormGroup>
+                  </Form>
+                </div>
+              </Tab.Pane>
+              <Tab.Pane eventKey="second">
+                <div className="col-md-10 col-md-offset-1">
+
+                  <Form horizontal>
+                    <FormGroup controlId="formControlEmail">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Email:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="email"
+                          name="u_email"
+                          defaultValue={user.email}
+                          disabled
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlFirstName">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        First name:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="text"
+                          name="u_firstname"
+                          defaultValue={user.first_name}
+                          disabled
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlLastName">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Last name:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="text"
+                          name="u_lastname"
+                          defaultValue={user.last_name}
+                          disabled
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlAbbr">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Abbr (3):
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          type="text"
+                          name="u_abbr"
+                          defaultValue={user.initials}
+                          disabled
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlsType">
+                      <Col componentClass={ControlLabel} sm={3}>
+                        Type:
+                      </Col>
+                      <Col sm={9}>
+                        <FormControl
+                          disabled
+                          defaultValue={user.type}
+                        />
+                      </Col>
+                    </FormGroup>
+                    <FormGroup controlId="formControlMessage">
+                      <Col sm={12}>
+                        <FormControl
+                          type="text"
+                          readOnly
+                          name="messageEditUserModal"
+                          value="Delete User Account. Are you sure ?"
+                          bsClass="form-control alert-danger text-center"
+                        />
+                      </Col>
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Button className="col-sm-5" onClick={() => this.handleEditUserClose()}>
+                        Cancel
+                      </Button>
+                      <Col sm={2}>&nbsp;</Col>
+                      <Button bsStyle="danger" className="col-sm-5" onClick={() => this.handleDeleteUser(user)}>
+                        Delete &nbsp;
+                        <i className="fa fa-trash" />
+                      </Button>
+                    </FormGroup>
+                  </Form>
+                </div>
+              </Tab.Pane>
+            </Tab.Content>
+          </Modal.Body>
+        </Modal>
+      </Tab.Container>
+    );
+  }
+
+  renderRestoreAccountModal() {
+    return (
+      <Modal show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit User</Modal.Title>
+          <Modal.Title>Restore Account</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-9">
             <Form horizontal>
-              <FormGroup controlId="formControlEmail">
+              <FormGroup controlId="formControlAbbr">
                 <Col componentClass={ControlLabel} sm={3}>
-                  Email:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="email"
-                    name="u_email"
-                    defaultValue={user.email}
-                    inputRef={(ref) => { this.u_email = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlFirstName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  First name:
+                  Abbr:
                 </Col>
                 <Col sm={9}>
                   <FormControl
                     type="text"
-                    name="u_firstname"
-                    defaultValue={user.first_name}
-                    inputRef={(ref) => { this.u_firstname = ref; }}
-                  />
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlLastName">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Last name:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    type="text"
-                    name="u_lastname"
-                    defaultValue={user.last_name}
-                    inputRef={(ref) => { this.u_lastname = ref; }}
+                    name="nameAbbreviation"
+                    placeholder="Please enter the name abbreviation .."
+                    inputRef={(ref) => {
+                      this.nameAbbreviation = ref;
+                    }}
                   />
                 </Col>
               </FormGroup>
               <FormGroup controlId="formControlAbbr">
                 <Col componentClass={ControlLabel} sm={3}>
-                  Abbr (3):
+                  ID:
                 </Col>
                 <Col sm={9}>
                   <FormControl
                     type="text"
-                    name="u_abbr"
-                    defaultValue={user.initials}
-                    inputRef={(ref) => { this.u_abbr = ref; }}
+                    name="id"
+                    placeholder=".. or enter the user ID"
+                    defaultValue=""
+                    onFocus={() => this.setState({ showError: false, showSuccess: false })}
+                    inputRef={(ref) => {
+                      this.id = ref;
+                    }}
                   />
                 </Col>
               </FormGroup>
-              <FormGroup controlId="formControlsType">
-                <Col componentClass={ControlLabel} sm={3}>
-                  Type:
-                </Col>
-                <Col sm={9}>
-                  <FormControl
-                    componentClass="select"
-                    defaultValue={user.type}
-                    inputRef={(ref) => { this.u_type = ref; }}
-                  >
-                    <option value="Person">Person</option>
-                    <option value="Group">Group</option>
-                    <option value="Device">Device</option>
-                    <option value="Admin">Admin</option>
-                  </FormControl>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="formControlMessage">
+              <FormGroup
+                controlId="formControlMessage"
+                validationState={`${this.state.showError
+                  ? 'error'
+                  : this.state.showSuccess ? 'success' : null}`}
+              >
                 <Col sm={12}>
                   <FormControl
                     type="text"
                     readOnly
-                    name="messageEditUserModal"
-                    value={this.state.messageEditUserModal}
+                    name="messageRestoreAccountModal"
+                    value={this.state.messageRestoreAccountModal}
                   />
                 </Col>
               </FormGroup>
+              {this.state.deletedUsers.length > 0
+                && renderDeletedUsersTable(this.state.deletedUsers)}
               <FormGroup>
                 <Col smOffset={0} sm={10}>
-                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)}>
-                    Update&nbsp;
+                  <Button bsStyle="primary" onClick={() => this.handleRestoreAccount()}>
+                    Restore&nbsp;
                     <i className="fa fa-save" />
                   </Button>
                   &nbsp;
-                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()}>
+                  <Button bsStyle="warning" onClick={() => this.handleRestoreAccountClose()}>
                     Cancel&nbsp;
                   </Button>
                 </Col>
@@ -890,11 +1221,13 @@ export default class UserManagement extends React.Component {
   renderGenericAdminModal() {
     const { user, showGenericAdminModal } = this.state;
     if (showGenericAdminModal) {
-      return (<GenericAdminModal
-        user={user}
-        fnShowModal={this.handleGenericAdminModal}
-        fnCb={this.handleGenericAdminModalCb}
-      />);
+      return (
+        <GenericAdminModal
+          user={user}
+          fnShowModal={this.handleGenericAdminModal}
+          fnCb={this.handleGenericAdminModalCb}
+        />
+      );
     }
     return null;
   }
@@ -948,7 +1281,10 @@ export default class UserManagement extends React.Component {
     }));
 
     const tcolumn = (
-      <thead>
+      <thead style={{
+        position: 'sticky', top: '0px', zIndex: '1', backgroundColor: '#eee'
+      }}
+      >
         <tr style={{ height: '26px', verticalAlign: 'middle' }}>
           <th width="1%">#</th>
           <th width="17%">Actions</th>
@@ -999,12 +1335,11 @@ export default class UserManagement extends React.Component {
           <th>
             <FormControl
               componentClass="select"
-              placeholder="Person-Device-Admin"
+              placeholder="Person-Admin"
               onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
             >
               <option value="">All</option>
               <option value="Person">Person</option>
-              <option value="Device">Device</option>
               <option value="Admin">Admin</option>
             </FormControl>
           </th>
@@ -1034,7 +1369,7 @@ export default class UserManagement extends React.Component {
             <Button
               bsSize="xsmall"
               bsStyle="success"
-              onClick={() => handleResetPassword(g.id, true)}
+              onClick={() => handleResetPassword(g.id, true, this.handleShowAlert)}
             >
               <i className="fa fa-key" />
             </Button>
@@ -1044,7 +1379,7 @@ export default class UserManagement extends React.Component {
             <Button
               bsSize="xsmall"
               bsStyle="primary"
-              onClick={() => handleResetPassword(g.id, false)}
+              onClick={() => handleResetPassword(g.id, false, this.handleShowAlert)}
             >
               <i className="fa fa-key" />
             </Button>
@@ -1103,17 +1438,24 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>} >
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}
+          >
             <Button
               bsSize="xsmall"
-              bsStyle={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
+              bsStyle={(g.generic_admin?.elements
+                || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'default'}
               onClick={() => this.handleGenericAdminModal(true, g)}
             >
               <i className="fa fa-empire" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
+          >
             <Button
               bsSize="xsmall"
               bsStyle={g.account_active === true ? 'default' : 'danger'}
@@ -1161,6 +1503,7 @@ export default class UserManagement extends React.Component {
 
     return (
       <div>
+        <MessageAlert message={this.state.alertMessage} onHide={this.handleDismissAlert} />
         <Panel>
           <Button bsStyle="warning" bsSize="small" onClick={() => this.handleMsgShow()}>
             Send Message&nbsp;
@@ -1171,19 +1514,32 @@ export default class UserManagement extends React.Component {
             New User&nbsp;
             <i className="fa fa-plus" />
           </Button>
+          &nbsp;
+          <Button
+            bsStyle="primary"
+            bsSize="small"
+            onClick={() => this.handleRestoreAccountShow()}
+            data-cy="restore-user"
+          >
+            Restore Account&nbsp;
+            <i className="fa fa-undo" />
+          </Button>
         </Panel>
         <Panel>
-          <Table>
-            {tcolumn}
-            <tbody>
-              {tbody}
-            </tbody>
-          </Table>
+          <div style={{ maxHeight: '399px', overflowY: 'auto' }} ref={this.tableBodyRef}>
+            <Table>
+              {tcolumn}
+              <tbody>
+                {tbody}
+              </tbody>
+            </Table>
+          </div>
         </Panel>
         {this.renderMessageModal()}
         {this.renderNewUserModal()}
         {this.renderEditUserModal()}
-        { this.renderGenericAdminModal() }
+        {this.renderRestoreAccountModal()}
+        {this.renderGenericAdminModal()}
       </div>
     );
   }

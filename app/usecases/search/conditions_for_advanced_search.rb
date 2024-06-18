@@ -184,15 +184,23 @@ module Usecases
             AND private_notes.noteable_id = #{@table}.id"
           @conditions[:condition_table] = 'private_notes.'
         when 'temperature'
-          @conditions[:field] = "(#{@table}.temperature ->> 'userText')::FLOAT"
-          @conditions[:first_condition] = "(#{@table}.temperature ->> 'userText')::TEXT != ''"
-          @conditions[:first_condition] += " AND (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
+          regex_number = "'^-{0,1}\\d+(\\.\\d+){0,1}\\Z'"
+          is_data_valid = "(#{@table}.temperature ->> 'userText' ~ #{regex_number})"
+
+          @conditions[:field] =
+            "CASE WHEN #{is_data_valid} THEN (#{@table}.temperature ->> 'userText')::FLOAT ELSE -30000 END "
+
+          @conditions[:first_condition] += " (#{@table}.temperature ->> 'valueUnit')::TEXT != '' AND "
           @conditions[:additional_condition] = "AND (#{@table}.temperature ->> 'valueUnit')::TEXT = '#{filter['unit']}'"
           @conditions[:condition_table] = ''
         when 'duration'
+          time_divisor = duration_interval_by_unit(filter['unit'])
+          is_data_valid = "#{@table}.duration similar to ('\\d+%')"
+          time_from_duration_column = "EXTRACT(epoch FROM #{@table}.duration::interval)/#{time_divisor}::INT"
+
           @conditions[:field] =
-            "(EXTRACT(epoch FROM #{@table}.duration::interval)/#{duration_interval_by_unit(filter['unit'])})::INT"
-          @conditions[:first_condition] = "#{@table}.duration IS NOT NULL AND #{@table}.duration != '' AND "
+            "CASE WHEN #{is_data_valid} THEN #{time_from_duration_column} ELSE 0 END"
+
           @conditions[:condition_table] = ''
         when 'target_amount_value'
           @conditions[:additional_condition] = "AND #{@table}.target_amount_unit = '#{filter['unit']}'"

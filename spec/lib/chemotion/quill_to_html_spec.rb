@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'QuillToHtml' do
-  subject(:quill_to_html) { Chemotion::QuillToHtml.new }
+  subject(:quill_to_html) { Chemotion::QuillToHtml }
 
   describe 'convert' do
     let(:delta_ops) do

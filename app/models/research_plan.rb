@@ -22,7 +22,7 @@ class ResearchPlan < ApplicationRecord
   validates :creator, :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :includes_for_list_display, -> { includes(:attachments, :comments) }
+  scope :includes_for_list_display, -> { includes(:attachments) }
   scope :by_sample_ids, lambda { |ids|
     joins('CROSS JOIN jsonb_array_elements(body) AS element')
       .where("(element -> 'value'->> 'sample_id')::INT = ANY(array[?])", ids)
@@ -66,6 +66,7 @@ class ResearchPlan < ApplicationRecord
   before_destroy :delete_attachment
   accepts_nested_attributes_for :collections_research_plans
 
+  attr_accessor :can_copy
 
   unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path
@@ -98,15 +99,25 @@ class ResearchPlan < ApplicationRecord
     svg_files
   end
 
+  def update_body_attachments(original_identifier, copy_identifier)
+    attach = body&.detect { |x| x['value']['public_name'] == original_identifier }
+    if attach.present?
+      attach['id'] = SecureRandom.uuid
+      attach['value']['public_name'] = copy_identifier
+    end
+
+    save!
+  end
+
   private
+
   def delete_attachment
     if Rails.env.production?
-      attachments.each { |attachment|
+      attachments.each do |attachment|
         attachment.delay(run_at: 96.hours.from_now, queue: 'attachment_deletion').destroy!
-      }
+      end
     else
       attachments.each(&:destroy!)
     end
   end
-
 end

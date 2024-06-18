@@ -4,6 +4,9 @@
 # or operating system, you probably want to add a global ignore instead:
 #   git config --global core.excludesfile '~/.gitignore_global'
 
+# vscode settings
+.vscode/settings.json
+
 # Ignore bundler config.
 /.bundle
 
@@ -36,6 +39,7 @@
 /config/compute_props.yml
 /config/converter.yml
 /config/ketcher_service.yml
+/config/structure_editors.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
@@ -194,6 +198,8 @@ public/sprite.png
 
 #svgeditor
 /public/svgedit
+# pdf worker
+/public/pdf.worker.min.js
 
 !spec/fixtures/import/sample_import_template.xlsx
 

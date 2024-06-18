@@ -98,7 +98,7 @@ class Reaction < ApplicationRecord
   scope :by_status, ->(query) { where('reactions.status ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :search_by_reaction_status, ->(query) { where(status: query) }
   scope :search_by_reaction_rinchi_string, ->(query) { where(rinchi_string: query) }
-  scope :includes_for_list_display, -> { includes(:tag, :comments) }
+  scope :includes_for_list_display, -> { includes(:tag) }
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
@@ -148,8 +148,7 @@ class Reaction < ApplicationRecord
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
-  before_save :description_to_plain_text
-  before_save :observation_to_plain_text
+  around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
   after_create :update_counter
@@ -288,20 +287,30 @@ class Reaction < ApplicationRecord
   private
 
   def scrubber(value)
-    Loofah::HTML5::SafeList::ALLOWED_ATTRIBUTES.add('overflow')
-    Loofah.scrub_fragment(value, :strip).to_s
+    Chemotion::Sanitizer.scrub_xml(value)
   end
 
-  def description_to_plain_text
-    return unless description_changed?
-
-    self.plain_text_description = Chemotion::QuillToPlainText.new.convert(description)
+  def update_fields_to_plain_text
+    description_changed = description_changed?
+    observation_changed = observation_changed?
+    yield
+    update_to_plain_text(description_changed, observation_changed)
   end
 
-  def observation_to_plain_text
-    return unless observation_changed?
-
-    self.plain_text_observation = Chemotion::QuillToPlainText.new.convert(observation)
+  # rubocop:disable Rails/SkipsModelValidations
+  def update_to_plain_text(description_changed, observation_changed)
+    update_columns(
+      {
+        plain_text_observation: observation_changed.presence && Chemotion::QuillToPlainText.convert(observation),
+        plain_text_description: description_changed.presence && Chemotion::QuillToPlainText.convert(description),
+      }.compact,
+    )
+  # NB: we don't want to raise an error if the conversion fails
+  rescue StandardError => e
+    Rails.logger.error("Error converting quill to plain text: #{e}")
   end
+  # rubocop:enable Rails/SkipsModelValidations
+
+  handle_asynchronously :update_to_plain_text, queue: 'plain_text_reaction'
 end
 # rubocop:enable Metrics/ClassLength

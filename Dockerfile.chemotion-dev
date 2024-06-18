@@ -23,16 +23,6 @@ RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget a
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
       fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
       libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb
-RUN  wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
-    && apt-get update -yqqq && apt-get -y install google-chrome-stable \
-    && CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` \
-    && mkdir -p /opt/chromedriver-$CHROMEDRIVER_VERSION \
-    && curl -sS -o /tmp/chromedriver_linux64.zip http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip \
-    && unzip -qq /tmp/chromedriver_linux64.zip -d /opt/chromedriver-$CHROMEDRIVER_VERSION \
-    && rm /tmp/chromedriver_linux64.zip \
-    && chmod +x /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver \
-    && ln -fs /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver /usr/local/bin/chromedriver
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd -ms /bin/bash chemotion-dev \

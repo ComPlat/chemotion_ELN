@@ -218,6 +218,8 @@ const researchPlanShowOrNew = (e) => {
 
   if (research_planID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
+  } else if (research_planID === 'copy') {
+    //
   } else if (index < 0) {
     ElementActions.fetchResearchPlanById(research_planID);
   } else if (index !== activeKey) {

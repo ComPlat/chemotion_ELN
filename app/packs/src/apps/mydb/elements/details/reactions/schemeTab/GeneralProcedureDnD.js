@@ -1,7 +1,7 @@
 import React from 'react';
 import { DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions.js';
 import { UrlSilentNavigation } from 'src/utilities/ElementUtils';

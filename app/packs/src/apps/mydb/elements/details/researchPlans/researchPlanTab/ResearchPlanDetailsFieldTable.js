@@ -41,7 +41,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       },
       selection: {},
       gridApi: {},
-      columnApi: {},
       columnClicked: null,
       rowClicked: null,
       isDisable: true
@@ -110,27 +109,27 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   handleColumnInsert(columnName) {
     const { field, onChange } = this.props;
-    const { gridApi, columnApi } = this.state
+    const { gridApi } = this.state
 
     let columnDefs = gridApi.getColumnDefs();
     columnDefs.push(this.buildColumn(columnName));
     gridApi.setColumnDefs(columnDefs);
     field.value.columns = gridApi.getColumnDefs();
-    field.value.columnStates = columnApi.getColumnState();
+    field.value.columnStates = gridApi.getColumnState();
 
     onChange(field.value, field.id);
   }
 
   handleColumnRename(colId, columnName) {
     const { field, onChange } = this.props;
-    const { gridApi, columnApi } = this.state
+    const { gridApi } = this.state
 
     let columnDefs = gridApi.getColumnDefs();
     let columnChange = columnDefs.find(o => o.colId === colId);
     columnChange.headerName = columnName;
     gridApi.setColumnDefs(columnDefs);
     field.value.columns = gridApi.getColumnDefs();
-    field.value.columnStates = columnApi.getColumnState();
+    field.value.columnStates = gridApi.getColumnState();
 
     onChange(field.value, field.id);
   }
@@ -221,13 +220,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   cellValueChanged = () => {
     const { field, onChange } = this.props;
-    const { gridApi, columnApi } = this.state
+    const { gridApi } = this.state
 
     let rowData = [];
     gridApi.forEachNode(node => rowData.push(node.data));
     field.value.rows = rowData
     field.value.columns = gridApi.getColumnDefs();
-    field.value.columnStates = columnApi.getColumnState();
+    field.value.columnStates = gridApi.getColumnState();
 
     onChange(field.value, field.id);
   }
@@ -235,19 +234,19 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   onGridReady = (params) => {
     this.setState({
       gridApi: params.api,
-      columnApi: params.columnApi
     });
 
     const { field } = this.props;
-    params.columnApi.columnModel.setColumnDefs(field.value.columns);
+    if (!field.value.columnStates) return;
+    params.api.applyColumnState(field.value.columnStates);
   }
 
   onSaveGridColumnState(params) {
     const { field, onChange } = this.props;
-    const { gridApi, columnApi } = this.state
+    const { gridApi } = this.state
 
     field.value.columns = gridApi.getColumnDefs();
-    field.value.columnStates = columnApi.getColumnState();
+    field.value.columnStates = gridApi.getColumnState();
 
     let sortedRows = []
     gridApi.forEachNodeAfterFilterAndSort(row => sortedRows.push(row.data))
@@ -302,7 +301,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   removeThisColumn() {
     const { field, onChange } = this.props;
-    const { gridApi, columnApi, columnClicked } = this.state
+    const { gridApi, columnClicked } = this.state
     if (columnClicked) {
       let columnDefs = gridApi.getColumnDefs();
       columnDefs = columnDefs.filter(function (value, index, arr) {
@@ -311,7 +310,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
       gridApi.setColumnDefs(columnDefs);
       field.value.columns = gridApi.getColumnDefs();
-      field.value.columnStates = columnApi.getColumnState();
+      field.value.columnStates = gridApi.getColumnState();
 
       onChange(field.value, field.id);
     }
@@ -330,7 +329,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   handlePaste(event) {
     const { field, onChange } = this.props;
-    const { gridApi, columnApi, columnClicked, rowClicked } = this.state;
+    const { gridApi, columnClicked, rowClicked } = this.state;
     onChange(field.value, field.id);
 
     navigator.clipboard.readText()
@@ -342,7 +341,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         });
 
 
-        let columns = columnApi.getAllColumns();
+        let columns = gridApi.getAllGridColumns();
         let rowData = [];
         gridApi.forEachNodeAfterFilterAndSort(node => {
           rowData.push(node.data);
@@ -455,7 +454,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       sortable: true,
       editable: true,
       cellClass: 'cell-figure',
-      headerComponentFramework: CustomHeader,
+      headerComponent: CustomHeader,
       headerComponentParams: {
         handleColumnNameModalShow: this.handleColumnNameModalShow.bind(this)
       }
@@ -480,7 +479,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
                 columnDefs={columns}
                 defaultColDef={defaultColDef}
                 domLayout='autoHeight'
-                enableMultiRowDragging={true}
+                rowDragMultiRow={true}
                 onCellContextMenu={this.onCellContextMenu.bind(this)}
                 onCellEditingStopped={this.cellValueChanged}
                 onCellMouseOut={this.onCellMouseOut.bind(this)}
@@ -495,7 +494,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
                 rowHeight='37'
                 rowSelection='multiple'
                 singleClickEdit={true}
-                stopEditingWhenGridLosesFocus={true}
+                stopEditingWhenCellsLoseFocus={true}
                 suppressDragLeaveHidesColumns={true}
               />
             </ContextMenuTrigger>

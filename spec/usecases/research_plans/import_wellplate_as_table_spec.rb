@@ -34,7 +34,7 @@ RSpec.describe Usecases::ResearchPlans::ImportWellplateAsTable do
       last_row = table['rows'].last
       last_well = wellplate
                   .wells
-                  .find { |well| well.position_x ==  12 &&  well.position_y == 8 } # wellplate and wells are not persisted
+                  .find { |well| well.position_x == 12 && well.position_y == 8 } # wellplate and wells are not persisted
 
       expect(last_row['wellplate_position']).to eq 'H12'
       expect(last_row['readout_1_value']).to eq last_well.readouts.first['value']

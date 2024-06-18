@@ -7,6 +7,7 @@ module AttachmentJcampAasm
 
   extend ActiveSupport::Concern
 
+  # rubocop:disable Metrics/BlockLength
   included do
     include AASM
     before_create :init_aasm
@@ -59,7 +60,7 @@ module AttachmentJcampAasm
       end
 
       event :set_image do
-        transitions from: %i[idle peaked non_jcamp], to: :image
+        transitions from: %i[idle peaked non_jcamp image], to: :image
       end
 
       event :set_json do
@@ -79,6 +80,7 @@ module AttachmentJcampAasm
       end
     end
   end
+  # rubocop:enable Metrics/BlockLength
 
   def filename_parts
     @filename_parts = filename.to_s.split('.')
@@ -126,6 +128,9 @@ end
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
 
@@ -145,7 +150,10 @@ module AttachmentJcampProcess
     att.save!
     att.set_edited if ext != 'png' && to_edit
     att.set_image if ext == 'png'
-    att.set_json if ext == 'json'
+    if ext == 'json'
+      att.set_json
+      att.thumb = false
+    end
     att.set_csv if ext == 'csv'
     att.set_nmrium if ext == 'nmrium'
     att.update!(
@@ -153,6 +161,9 @@ module AttachmentJcampProcess
     )
     att
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/PerceivedComplexity
 
   def generate_img_att(img_tmp, addon, to_edit = false)
     ext = 'png'
@@ -232,7 +243,7 @@ module AttachmentJcampProcess
   end
 
   def update_prediction(params, spc_type, is_regen)
-    return auto_infer_n_clear_json(spc_type, is_regen) if spc_type == 'MS'
+    return auto_infer_n_clear_json(spc_type, is_regen) if ['MS', 'CYCLIC VOLTAMMETRY'].include?(spc_type)
 
     ori_infer = get_infer_json_content
     decision = params[:keep_pred] ? ori_infer : params['predict']
@@ -551,11 +562,9 @@ module AttachmentJcampProcess
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = filename_parts[0]
     atts.each do |att|
-      is_delete = (
-        att.nmrium? &&
-          att.id != nmrium_att.id &&
-          valid_name == fname_wo_ext(att)
-      )
+      is_delete = att.nmrium? &&
+                  att.id != nmrium_att.id &&
+                  (valid_name == fname_wo_ext(att) || fname_wo_ext(self) == fname_wo_ext(att))
       att.delete if is_delete
     end
   end

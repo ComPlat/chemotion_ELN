@@ -64,20 +64,5 @@ module Chemotion
         schmooze_klass.send(:method, method_name, script[var])
       end
     end
-
-    def parse_input(delta_ops)
-      return '[]' if delta_ops.blank? || delta_ops == "{\"ops\":[{\"insert\":\"\"}]}"
-
-      delta_ops = JSON.parse delta_ops if delta_ops.is_a?(String)
-      delta_ops = case delta_ops.class.name
-                  when 'Array'
-                    delta_ops.to_json
-                  when 'Hash', 'ActiveSupport::HashWithIndifferentAccess'
-                    delta_ops.fetch('ops', []).to_json
-                  else
-                    '[]'
-                  end
-      (delta_ops == "[{\"insert\":\"\"}]" && '[]') || delta_ops
-    end
   end
 end

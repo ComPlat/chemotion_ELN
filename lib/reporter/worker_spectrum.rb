@@ -28,23 +28,30 @@ module Reporter
     def extract_product_attrs(objects)
       product_attrs = []
       objects&.map do |obj|
-        product_attrs << extract_products_attrs(obj) if obj[:role] != 'gp'
+        product_attrs += extract_products_attrs(obj) if obj[:role] != 'gp'
       end
       product_attrs.compact_blank!
     end
 
     def extract_products_attrs(object)
-      target_object = {}
-      if object[:type] == 'reaction'
-        object[:products]&.map do |prod|
-          target_object[:prdId] = prod[:id]
-          target_object[:iupac_name] = prod.dig(:molecule, :iupac_name)
-          target_object[:sum_formular] = prod.dig(:molecule, :sum_formular)
-          target_object[:molId] = prod.dig(:molecule, :id)
-          target_object[:showedName] = prod[:showed_name]
-          target_object[:atts] = extract_attributes(prod)
-        end
+      products = []
+      case object[:type]
+      when 'reaction'
+        object[:products]&.each { |prod| products << extract_product_attr(prod) }
+      when 'sample'
+        products << extract_product_attr(object)
       end
+      products
+    end
+
+    def extract_product_attr(object)
+      target_object = {}
+      target_object[:prdId] = object[:id]
+      target_object[:iupac_name] = object.dig(:molecule, :iupac_name)
+      target_object[:sum_formular] = object.dig(:molecule, :sum_formular)
+      target_object[:molId] = object.dig(:molecule, :id)
+      target_object[:showedName] = object[:showed_name]
+      target_object[:atts] = extract_attributes(object)
       target_object
     end
 

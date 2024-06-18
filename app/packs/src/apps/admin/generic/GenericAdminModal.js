@@ -45,7 +45,7 @@ export default class GenericAdminModal extends Component {
       auth_generic_admin: {},
     };
     params.auth_generic_admin[type] = !value;
-    AdminFetcher.updateAccount(params).then(() => fnCb(user));
+    AdminFetcher.updateAccount(params).then((updatedUser) => fnCb(updatedUser));
   }
 
   render() {

@@ -1,4 +1,4 @@
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Draggable from 'react-draggable';
 import React, { useContext } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
@@ -55,7 +55,7 @@ const SampleTaskInbox = ({}) => {
 
   const openSampleTaskCount = () => {
     let count = sampleTasksStore.openSampleTaskCount;
-    if (count == 0) { return 'no'; }
+    if (count === 0) { return 'no'; }
     return count;
   }
 
@@ -128,7 +128,7 @@ const SampleTaskInbox = ({}) => {
               {sampleDropzone(doubleScanDropRef, 'Double Scan (weighing vessel and vessel+compound to calculate difference')}
             </div>
           </div>
-          <div class="openSampleTasks" style={{ maxHeight: '500px', overflow: 'scroll' }}>
+          <div className="openSampleTasks" style={{ maxHeight: '500px', overflow: 'scroll' }}>
             {openSampleTasks()}
           </div>
         </Panel.Body>

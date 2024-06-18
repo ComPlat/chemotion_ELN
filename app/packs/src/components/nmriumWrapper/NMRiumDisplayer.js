@@ -63,7 +63,10 @@ export default class NMRiumDisplayer extends React.Component {
   onChange(newState) {
     const origState = this.state;
     this.setState({ ...origState, ...newState });
-    this.sendJcampDataToNMRDisplayer();
+    const { showModalNMRDisplayer } = newState;
+    if (showModalNMRDisplayer) {
+      this.sendJcampDataToNMRDisplayer();
+    }
   }
 
   getSpcInfo() {

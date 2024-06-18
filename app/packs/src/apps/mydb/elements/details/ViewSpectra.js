@@ -249,9 +249,13 @@ class ViewSpectra extends React.Component {
       waveLength,
       temperature
     });
+    let solventDecimal = decimal
+    if (FN.is13CLayout(layout)){
+      solventDecimal = 2
+    }
 
     const { label, value, name } = selectedShift.ref;
-    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
+    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(solventDecimal)} ppm], ` : '';
     return [
       ...layoutOpsObj.head(freqStr, solvent),
       { insert: mBody },
@@ -427,6 +431,7 @@ class ViewSpectra extends React.Component {
   
     const isSaveCombined = FN.isCyclicVoltaLayout(layout);
     const { spcInfos } = this.state;
+    const previousSpcInfos = spcInfos.filter((spc) => spc.idDt === si.idDt);
     LoadingActions.start.defer();
     SpectraActions.SaveToFile.defer(
       si,
@@ -443,7 +448,7 @@ class ViewSpectra extends React.Component {
       cyclicvolta,
       curveIdx,
       simulatenmr,
-      spcInfos,
+      previousSpcInfos,
       isSaveCombined,
       axesUnitsStr,
       detector,

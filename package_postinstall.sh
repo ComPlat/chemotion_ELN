@@ -33,6 +33,11 @@ rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./pub
 
 yellow "Finished adding symbolic link to svg editor in public folder"
 
+# copy pdfjs worker to public folder
+node_modules_folder_pdfjs="$(node -e 'const p = require.resolve("pdfjs-dist/build/pdf.worker"); console.log(p.slice(0, p.indexOf("pdfjs-dist/build/pdf.worker")))')"
+rm -f ./public/pdf.worker.min.js && ln -s "$node_modules_folder_pdfjs"pdfjs-dist/build/pdf.worker.min.js ./public/pdf.worker.min.js
+yellow "Finished adding symbolic link to pdf worker in public folder"
+
 # d3js source files
 src_d3=(
   "@complat/react-spectra-editor/dist/components/common/draw.js"
@@ -43,6 +48,8 @@ src_d3=(
   "@complat/react-spectra-editor/dist/helpers/compass.js"
   "@complat/react-spectra-editor/dist/helpers/init.js"
   "@complat/react-spectra-editor/dist/helpers/zoom.js"
+  "@complat/react-svg-file-zoom-pan/dist/components/zoomable.js"
+  "@complat/react-svg-file-zoom-pan/dist/components/svg_wrapper.js"
 )
 
 # Rewrite import for d3.js

@@ -10,8 +10,8 @@
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-react": "7.10.4",
     "@citation-js/plugin-isbn": "0.3.0",
-    "@complat/chem-spectra-client": "1.1.1",
-    "@complat/react-spectra-editor": "1.1.1",
+    "@complat/chem-spectra-client": "1.2.2",
+    "@complat/react-spectra-editor": "1.2.2",
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.3",
     "@novnc/novnc": "^1.2.0",
@@ -20,14 +20,14 @@
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
     "acorn": "^5.7.0",
-    "ag-grid-community": "^29.0.0",
-    "ag-grid-react": "^29.0.0",
+    "ag-grid-community": "^31.0.0",
+    "ag-grid-react": "^31.0.0",
     "alt": "0.18.6",
     "alt-utils": "2.0.0",
-    "antd": "^3.19.3",
+    "antd": "^5.17.2",
     "aviator": "v0.6.1",
     "base-64": "^0.1.0",
-    "chem-generic-ui": "^1.1.1",
+    "chem-generic-ui": "^1.3.1",
     "chemotion-converter-client": "0.5.0",
     "citation-js": "0.6.8",
     "classnames": "^2.2.5",
@@ -88,7 +88,7 @@
     "react-markdown": "^6.0.2",
     "react-notification-system": "^0.2.7",
     "react-papaparse": "^3.17.2",
-    "react-pdf": "^5.3.0-beta",
+    "react-pdf": "^7.7.3",
     "react-qr-reader": "^2.1.0",
     "react-redux": "^7.2.4",
     "react-select": "npm:react-select@1.1.0",
@@ -100,7 +100,7 @@
     "react-treeview": "0.4.7",
     "react-ui-tree": "3.1.0",
     "react-virtualized-select": "3.0.1",
-    "react-vis": "1.9.3",
+    "react-vis": "1.12.1",
     "reactflow": "^11.7.2",
     "redux": "^4.1.0",
     "redux-immutable": "^4.0.0",
@@ -145,7 +145,7 @@
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
-    "test": "NODE_PATH=./app/packs:./spec/javascripts yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
+    "test": "NODE_PATH=./spec/javascripts:./app/packs yarn mocha --exit --require '@babel/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html"
   },
   "nyc": {
@@ -157,7 +157,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "18.18.2"
+    "node": "^18.19.1"
   },
   "browserslist": [
     "defaults"

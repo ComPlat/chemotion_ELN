@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from 'src/components/DragDropItemTypes';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 
 const spec = {
   drop(props) {

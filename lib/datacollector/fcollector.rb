@@ -18,12 +18,15 @@ class Fcollector
 
     devices(use_sftp).each do |device| # rubocop:disable Metrics/BlockLength
       @current_collector = nil
-      method_params = device.profile.data['method_params']
-      host = method_params['host']
-      case method_params['authen']
+      host = device.datacollector_host
+      uri = URI.parse("ssh://#{host}")
+      host = uri.host
+      port = uri.port
+
+      case device.datacollector_authentication
       when 'keyfile'
-        user = method_params['user']
-        kp = key_path(method_params['key_name'])
+        user = device.datacollector_user
+        kp = key_path(device.datacollector_key_name)
         unless kp.file? && kp.exist?
           log_info "No key file found <<< #{device.info}" unless kp.file? && kp.exist?
           next
@@ -38,10 +41,10 @@ class Fcollector
         }
       when 'password', nil
         credentials = Rails.configuration.datacollectors.sftpusers.find do |user_attr|
-          user_attr[:user] == method_params['user']
+          user_attr[:user] == device.datacollector_user
         end
         unless credentials
-          log_info("No match user credentials! user: #{method_params['user']} >>> #{device.info}")
+          log_info("No match user credentials! user: #{device.datacollector_user} >>> #{device.info}")
           next
         end
         user = credentials[:user]
@@ -56,6 +59,7 @@ class Fcollector
       end
       args[:timeout] = 10
       args[:number_of_password_prompts] = 0
+      args[:port] = port if port.present?
 
       begin
         Net::SFTP.start(host, user, **args) do |sftp|
@@ -77,10 +81,7 @@ class Fcollector
   private
 
   def devices(use_sftp)
-    sql = <<~SQL.squish
-      profiles."data"->>'method' = '#{self.class::FCOLL}watcher#{use_sftp ? 'sftp' : 'local'}'
-    SQL
-    Device.joins(:profile).where(sql).includes(:profile)
+    Device.where(datacollector_method: "#{self.class::FCOLL}watcher#{use_sftp ? 'sftp' : 'local'}")
   end
 
   def key_path(key_name)
@@ -102,5 +103,19 @@ class Fcollector
     DCLogger.log.error(self.class.name) do
       "#{@current_collector&.path} >>> #{message}"
     end
+  end
+
+  def new_folders(monitored_folder_p)
+    if @sftp
+      new_folders_p = @sftp.dir.glob(monitored_folder_p, '*').select(
+        &:directory?
+      )
+      new_folders_p.map! { |dir| File.join(monitored_folder_p, dir.name) }
+    else
+      new_folders_p = Dir.glob(File.join(monitored_folder_p, '*')).select do |e|
+        File.directory?(e)
+      end
+    end
+    new_folders_p
   end
 end

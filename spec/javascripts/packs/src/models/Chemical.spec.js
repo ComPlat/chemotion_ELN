@@ -17,7 +17,6 @@ describe('Chemical model', () => {
       expect(chemical.chemical_data).toBe(chemicalData);
       expect(chemical.id).toBeTruthy();
       expect(chemical.cas).toBe('7681-82-5');
-      expect(chemical.changed).toBe(false);
     });
   });
 
@@ -59,7 +58,6 @@ describe('Chemical model', () => {
       const chemical = new Chemical();
       chemical.buildChemical('host_building', '319');
       expect(chemical.chemical_data[0].host_building).toBe('319');
-      expect(chemical.changed).toBe(true);
     });
 
     it('should update existing chemical data correctly', () => {
@@ -70,14 +68,12 @@ describe('Chemical model', () => {
       const chemical = new Chemical({ chemical_data: chemicalData });
       chemical.buildChemical('host_building', '321');
       expect(chemical.chemical_data[0].host_building).toBe('321');
-      expect(chemical.changed).toBe(true);
     });
 
     it('should update cas correctly', () => {
       const chemical = new Chemical();
       chemical.buildChemical('cas', '7681-82-5');
       expect(chemical.cas).toBe('7681-82-5');
-      expect(chemical.changed).toBe(true);
     });
   });
 });

@@ -56,7 +56,7 @@ export default class OlsTreeSelect extends Component {
         showSearch
         style={{ width: '100%' }}
         value={this.props.selectedValue}
-        dropdownStyle={{ maxHeight: 300, maxWidth: '10vw', overflow: 'auto' }}
+        dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
         treeData={treeData}
         placeholder="Select..."
         allowClear

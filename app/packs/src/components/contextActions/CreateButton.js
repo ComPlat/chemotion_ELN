@@ -207,20 +207,6 @@ export default class CreateButton extends React.Component {
     }
   }
 
-  splitSelectionAsSubsamples() {
-    ElementActions.splitAsSubsamples(UIStore.getState())
-  }
-
-  noSampleSelected() {
-    const { sample } = UIStore.getState()
-    return sample.checkedIds.size == 0 && sample.checkedAll == false
-  }
-
-  isAllCollection() {
-    const { currentCollection } = UIStore.getState()
-    return currentCollection && currentCollection.label == 'All'
-  }
-
   createElementOfType(type) {
     const { currentCollection, isSync } = UIStore.getState();
     const uri = isSync
@@ -256,22 +242,20 @@ export default class CreateButton extends React.Component {
     return wellplate.checkedIds.size == 0 && wellplate.checkedAll == false;
   }
 
-  splitSelectionAsSubwellplates() {
-    ElementActions.splitAsSubwellplates(UIStore.getState());
-  }
-
   render() {
     const { isDisabled, customClass } = this.props;
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls, itemTables } = elementList();
-    
-    elements.concat(genericEls).forEach((el) => {
-      itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+
+    sortedLayout?.forEach(([sl]) => {
+      const el = elements.concat(genericEls).find((ael) => ael.name === sl);
+      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
     });
 
     return (
-      <div>
+
         <SplitButton
           id='create-split-button'
           bsStyle={customClass ? null : 'primary'}
@@ -288,18 +272,8 @@ export default class CreateButton extends React.Component {
           <MenuItem divider />
           <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
           <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
-          <MenuItem onSelect={() => this.splitSelectionAsSubsamples()}
-            disabled={this.noSampleSelected() || this.isAllCollection()}>
-            Split Sample
-          </MenuItem>
-          <MenuItem
-            onSelect={() => this.splitSelectionAsSubwellplates()}
-            disabled={this.noWellplateSelected() || this.isAllCollection()}
-          >
-            Split Wellplate
-          </MenuItem>
         </SplitButton>
-      </div>
+
     )
   }
 }
