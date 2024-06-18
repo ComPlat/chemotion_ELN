@@ -167,7 +167,7 @@ MenuHeader.propTypes = {
   context: PropTypes.instanceOf(AgGridReact.context).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
-  entries: PropTypes.arrayOf(PropTypes.string).isRequired,
+  entries: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
 };
 
 export default function ReactionVariations({ reaction, onReactionChange }) {
