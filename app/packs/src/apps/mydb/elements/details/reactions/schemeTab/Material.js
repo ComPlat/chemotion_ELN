@@ -156,7 +156,10 @@ class Material extends Component {
               metricPrefix={metric}
               metricPrefixes={metricPrefixes}
               precision={3}
-              disabled={!permitOn(this.props.reaction) || ((this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn)}
+              disabled={!permitOn(this.props.reaction)
+                || ((this.props.materialGroup !== 'products')
+                && !material.reference && this.props.lockEquivColumn)
+                || material.gas_type === 'gas'}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}

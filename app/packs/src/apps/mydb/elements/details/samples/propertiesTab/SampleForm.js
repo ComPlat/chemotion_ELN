@@ -429,6 +429,7 @@ export default class SampleForm extends React.Component {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
+    const gasProduct = sample.gas_type === 'gas';
     let metric;
     if (unit === 'l') {
       metric = prefixes[1];
@@ -475,7 +476,7 @@ export default class SampleForm extends React.Component {
           metricPrefixes={prefixes}
           precision={precision}
           title={title}
-          disabled={disabled}
+          disabled={disabled || (gasProduct && (field === 'amount_l' || field === 'amount_g'))}
           block={block}
           bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
           onChange={(e) => this.handleFieldChanged(field, e)}
