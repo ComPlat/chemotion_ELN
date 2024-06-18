@@ -567,12 +567,6 @@ export default class Sample extends Element {
     }
   }
 
-  setPurity(purity) {
-    if (!isNaN(purity) && purity >= 0 && purity <= 1) {
-      this.purity = purity;
-    }
-  }
-
   setUnitMetrics(unit, metricPrefix) {
     const mp = metricPrefix || 'm';
     if (unit === 'l') {
@@ -1220,6 +1214,7 @@ export default class Sample extends Element {
     const totalVolume = this.amount_l;
   
     this.components.forEach((component) => {
+      const purity = component.purity || 1.0;
       if (component.material_group === 'liquid') {
         if (component.concn > 0 && component.starting_molarity_value > 0) {
           component.amount_l = component.concn * totalVolume / component.starting_molarity_value;
@@ -1233,7 +1228,7 @@ export default class Sample extends Element {
         }
       }
 
-      component.amount_mol = totalVolume * component.molarity_value;
+      component.amount_mol = totalVolume * component.molarity_value * purity;
     });
   }
 

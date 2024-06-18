@@ -117,7 +117,7 @@ export default class SampleDetailsComponents extends React.Component {
     const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
-    sample.components[componentIndex].setPurity(purity);
+    sample.components[componentIndex].setPurity(purity, sample.amount_l);
   }
   
   updatedSampleForMetricsChange(changeEvent) {
