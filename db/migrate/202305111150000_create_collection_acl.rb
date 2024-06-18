@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateCollectionAcl < ActiveRecord::Migration[6.1]
   def change
     create_table :collection_acls do |t|
@@ -13,10 +15,10 @@ class CreateCollectionAcl < ActiveRecord::Migration[6.1]
       t.integer :element_detail_level,      default: 10
       t.integer :celllinesample_detail_level, default: 10
 
-      t.index ["collection_id"], name: "index_collection_acls_on_collection_id"
-      t.index ["user_id",], name: "index_collection_acls_on_user_id"
+      t.index ['collection_id'], name: 'index_collection_acls_on_collection_id'
+      t.index ['user_id'], name: 'index_collection_acls_on_user_id'
 
       t.timestamps null: false
-    end
+    end unless table_exists?(:collection_acls)
   end
 end
