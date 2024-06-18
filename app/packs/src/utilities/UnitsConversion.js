@@ -58,7 +58,7 @@ const convertTemperature = (valueToFormat, currentUnit) => {
 };
 
 const convertTemperatureToKelvin = (temperature) => {
-  const { unit, value } = temperature;
+  const { unit, value } = temperature || {};
   const temperatureValue = parseFloat(value);
 
   if (Number.isNaN(temperatureValue)) {
