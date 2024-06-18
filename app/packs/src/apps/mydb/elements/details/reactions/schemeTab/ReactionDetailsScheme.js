@@ -115,6 +115,11 @@ export default class ReactionDetailsScheme extends React.Component {
               return new Component(sampleData);
           });
           await splitSample.initialComponents(sampleComponents);
+          const comp = sampleComponents.find(component => component.amount_mol > 0 && component.molarity_value > 0);
+          if (comp) {
+              splitSample.target_amount_value = comp.amount_mol / comp.molarity_value;
+              splitSample.target_amount_unit = 'l';
+          }
           reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
           this.onReactionChange(reaction, { schemaChanged: true });
         })
