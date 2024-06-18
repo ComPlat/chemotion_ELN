@@ -12,6 +12,9 @@ import Container from 'src/models/Container';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
+import {
+  calculateFeedstockVolume,
+} from 'src/utilities/UnitsConversion';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -957,7 +960,7 @@ export default class Reaction extends Element {
       feedstockVolume: null
     };
     result.catalystMoles = catalyst ? this.calculateCatalystMoles(catalyst) : null;
-    result.feedstockVolume = feedstock ? this.calculateFeedstockVolume(feedstock) : null;
+    result.feedstockVolume = feedstock ? this.updateFeedstockVolume(feedstock) : null;
     return result;
   }
 
@@ -992,31 +995,19 @@ export default class Reaction extends Element {
     return moles;
   }
 
-  calculateFeedstockVolume(material) {
+  updateFeedstockVolume(material) {
     let volume;
     const { purity, target_amount_unit, target_amount_value } = material;
     if (target_amount_unit === 'mol') {
-      volume = this.calculateVolume(target_amount_unit, purity);
+      volume = calculateFeedstockVolume(target_amount_unit, purity);
     } else if (target_amount_unit === 'l') {
       volume = target_amount_value;
     } else if (target_amount_unit === 'g') {
       const molecularWeight = material.molecule.molecular_weight;
       const moles = target_amount_value / molecularWeight;
-      volume = this.calculateVolume(moles, purity);
+      volume = calculateFeedstockVolume(moles, purity);
     }
     return volume;
-  }
-
-  calculateVolume(moles, purity) {
-    const gasConstant = 0.0821;
-    const temperature = 294;
-    return (moles * gasConstant * temperature) / purity;
-  }
-
-  calculateMoles(volume, purity) {
-    const gasConstant = 0.0821;
-    const temperature = 294;
-    return volume / (gasConstant * temperature * purity);
   }
 
   isFeedstockMaterialPresent() {
