@@ -2,12 +2,13 @@ import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange,
   removeObsoleteMaterialsFromVariations, addMissingMaterialsToVariations,
-  updateNonReferenceMaterialOnMassChange
+  updateNonReferenceMaterialOnMassChange, updateColumnDefinitionsMaterials,
+  getMaterialColumnGroupChild
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsCellComponents';
-import { setUpMaterial, setUpReaction } from 'helper/reactionVariationsHelpers';
+import { setUpMaterial, setUpReaction, getColumnDefinitionsMaterialIDs } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsMaterials', () => {
   it('removes obsolete materials', async () => {
@@ -105,5 +106,24 @@ describe('ReactionVariationsMaterials', () => {
       oldValue: reactant,
       newValue: -42
     }).mass.value).toBe(0);
+  });
+  it('removes obsolete materials from column definitions', async () => {
+    const reaction = await setUpReaction();
+    const reactionMaterials = getReactionMaterials(reaction);
+    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
+      groupId: materialType,
+      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, null))
+    }));
+
+    const startingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
+    expect(getColumnDefinitionsMaterialIDs(columnDefinitions, 'startingMaterials')).toEqual(startingMaterialIDs);
+
+    reactionMaterials.startingMaterials.pop();
+    const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterials(columnDefinitions, reactionMaterials, null);
+    expect(getColumnDefinitionsMaterialIDs(
+      updatedColumnDefinitions,
+      'startingMaterials'
+    )).toEqual(updatedStartingMaterialIDs);
   });
 });
