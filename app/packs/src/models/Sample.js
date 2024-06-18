@@ -693,8 +693,8 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
-    if (this.amount_unit === 'mol'
-    && (this.gas_type === 'gas' || this.gas_type === 'catalyst')) return this.amount_value;
+    if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
+    || this.gas_type === 'feedstock')) return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 

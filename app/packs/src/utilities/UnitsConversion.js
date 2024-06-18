@@ -119,7 +119,7 @@ const calculateMolesFromMoleculeWeight = (amountGram, molecularWeight) => (amoun
 const calculateVolumeForFeedstockOrGas = (amountGram, molecularWeight, purity, gasType, gasPhaseData) => {
   const molAmount = calculateMolesFromMoleculeWeight(amountGram, molecularWeight);
 
-  if (gasType) {
+  if (gasType === 'gas') {
     return calculateGasVolume(molAmount, gasPhaseData);
   }
 
