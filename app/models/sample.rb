@@ -563,11 +563,6 @@ class Sample < ApplicationRecord
     tag&.taggable_data&.fetch('user_labels', nil)
   end
 
-  def match_inventory_label(inventory_label)
-    label_number_match = inventory_label.match(/(?<=-)?\d+/)
-    label_number_match[0].to_i if label_number_match
-  end
-
   def update_inventory_label(inventory_label, collection_id = nil)
     return if collection_id.blank? || skip_inventory_label_update
 
@@ -576,16 +571,15 @@ class Sample < ApplicationRecord
 
     next_inventory_counter = inventory.counter + 1
     # auto generate inventory_label on sample create if inventory exists for collection
-    inventory_label = "#{inventory.prefix}-#{next_inventory_counter}" if inventory_label.nil?
-    label_number = match_inventory_label(inventory_label)
+    inventory_label = inventory.construct_inventory_label(inventory.prefix, next_inventory_counter)
+      if inventory_label.nil?
 
-    condition = (label_number == next_inventory_counter)
+    condition = inventory.match_inventory_counter(inventory_label, next_inventory_counter)
 
     return nil unless condition && inventory_label
 
     inventory = inventory.increment_inventory_label_counter(collection_id.to_s)
-    self['xref']['inventory_label'] =
-      "#{inventory['prefix']}-#{inventory['counter']}"
+    self['xref']['inventory_label'] = inventory.construct_inventory_label(inventory['prefix'], inventory['counter'])
   end
 
   private

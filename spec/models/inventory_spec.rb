@@ -23,5 +23,17 @@ RSpec.describe 'Inventory' do
       expect(inventory['prefix']).to eq('BNC')
       expect(inventory['prefix']).to eq('BNC')
     end
+
+    it 'returns true when inventory label matches the next inventory counter' do
+      expect(inventory.match_inventory_counter('INV-123', 123)).to be true
+    end
+
+    it 'returns false when inventory label does not match the next inventory counter' do
+      expect(inventory.match_inventory_counter('INV-123', 124)).to be false
+    end
+
+    it 'assigns the correct inventory label' do
+      expect(inventory.construct_inventory_label('INV', 123)).to eq('INV-123')
+    end
   end
 end
