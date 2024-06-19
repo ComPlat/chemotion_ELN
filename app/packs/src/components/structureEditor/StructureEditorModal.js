@@ -251,17 +251,13 @@ export default class StructureEditorModal extends React.Component {
   }
 
   localStorageEventListener() {
-    // const copyOfLocalStorage = JSON.parse(localStorage.getItem(key)) || [];
-
     window.addEventListener(
       'storage',
       async (event) => {
         if (event.key === key) {
-          alert("CHANGED!")
           const { copyOfLocalStorage } = this.state;
           const localTemplates = JSON.parse(localStorage.getItem(key)) || [];
           if (copyOfLocalStorage?.length < localTemplates?.length) {
-            alert('IN LESS THAN');
             const item = localTemplates[localTemplates.length - 1];
             item.props.id = Math.random().toString(16).slice(2);
 
@@ -286,7 +282,6 @@ export default class StructureEditorModal extends React.Component {
           }
 
           if (copyOfLocalStorage.length > localTemplates.length) {
-            alert('IN GREATER THAN');
             const listOfLocalid = localTemplates.map((item) => item?.props?.id);
 
             for (let i = 0; i < copyOfLocalStorage.length; i++) {
@@ -295,9 +290,6 @@ export default class StructureEditorModal extends React.Component {
                 localItem.props.id
               );
               if (itemIndexShouldBeRemoved == -1) {
-                alert('Deleted');
-                // API: call to remove the ID with file attachment!!
-                console.log({ localItem });
                 await ProfilesFetcher.deleteUserTemplate({
                   path: localItem?.path,
                 });

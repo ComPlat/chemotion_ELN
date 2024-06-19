@@ -67,7 +67,8 @@ module Chemotion
 
         if profile && profile.user_templates 
             profile.user_templates.each do |x|
-              file_path = Rails.root.join('uploads', Rails.env, x) # TODO: path needs to be replaced by neutral-> development/production
+              file_path = Rails.root.join('uploads', Rails.env, x) 
+              # TODO:H path needs to be replaced by neutral-> development/production
 
               if File.exist?(file_path)
                 content = File.read(file_path)
@@ -145,7 +146,6 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
-          # user_templates: [],
           user_templates: current_user.profile.user_templates.push(declared_params[:user_templates]),
         }
 
@@ -153,11 +153,12 @@ module Chemotion
           new_profile) || error!('profile update failed', 500)
       end
 
-    desc 'post user template'
+    
+      desc 'post user template'
       params do
         requires :content, type: String, desc: 'ketcher file content'
       end
-
+      # TODO:H current_user validation??
       post do
       file_path = Rails.root.join('uploads', Rails.env, 'template.txt')
       begin
@@ -188,7 +189,6 @@ module Chemotion
             File.delete(file_path) if File.exist?(file_path)
           end
           {template_details: templateAttachment}
-        # --
       rescue Errno::EACCES
         error!('Save files error!', 500)
       end
@@ -199,22 +199,17 @@ module Chemotion
       requires :path, type: String, desc: 'file path of user template'
     end
     delete do
-      # remove path from profile.user_templates
       user_templates = current_user.profile.user_templates;
-      puts user_templates.length
       user_templates.delete(params[:path]);
-      puts user_templates.length
 
-      new_profile = {
-        user_templates: user_templates,
-      }
-      
-      
       # remove file from store
       file_path = Rails.root.join("uploads", Rails.env, params[:path]);
       File.delete(file_path) if File.exist?(file_path)
 
       # update profile
+      new_profile = {
+        user_templates: user_templates,
+      }
       (current_user.profile.update!(**new_profile) &&
       new_profile) || error!('profile update failed', 500)
 
