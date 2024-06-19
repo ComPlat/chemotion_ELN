@@ -569,10 +569,9 @@ class Sample < ApplicationRecord
   end
 
   def update_inventory_label(inventory_label, collection_id = nil)
-    return if collection_id.blank? || !should_update_inventory_label?
+    return if collection_id.blank? || skip_inventory_label_update
 
-    collection = Collection.find_by(id: collection_id)
-    inventory = collection.inventory
+    inventory = Inventory.by_collection_id(collection_id).first
     return if inventory.blank?
 
     next_inventory_counter = inventory.counter + 1
@@ -589,7 +588,7 @@ class Sample < ApplicationRecord
       "#{inventory['prefix']}-#{inventory['counter']}"
   end
 
-private
+  private
 
   def has_collections
     if self.collections_samples.blank?
@@ -681,9 +680,6 @@ private
     end
   end
 
-  def should_update_inventory_label?
-    skip_inventory_label_update != true
-  end
 
   # rubocop: enable Metrics/AbcSize
   # rubocop: enable Metrics/CyclomaticComplexity
