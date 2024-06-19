@@ -67,15 +67,17 @@ module Chemotion
 
         if profile && profile.user_templates 
             profile.user_templates.each do |x|
-              file_path = Rails.root.join('uploads', Rails.env, x) 
-              # TODO:H path needs to be replaced by neutral-> development/production
+              if(x)
+                file_path = Rails.root.join('uploads', Rails.env, x) 
+                # TODO:H path needs to be replaced by neutral-> development/production
 
-              if File.exist?(file_path)
-                content = File.read(file_path)
-                content = JSON(content)
-                content['path'] = x
-                templates_list.push(content);
-              end
+                if File.exist?(file_path)
+                  content = File.read(file_path)
+                  content = JSON(content)
+                  content['path'] = x
+                  templates_list.push(content);
+                end
+            end
             end
         end
 
