@@ -101,47 +101,46 @@ module Chemotion
       desc "Return all unlocked unshared serialized collection roots of current user"
       get :roots do
         collects = Collection.where(user_id: current_user.id).unlocked.unshared
-                             .joins('LEFT JOIN inventories ON collections.inventory_id = inventories.id')
+                             .includes(:inventories)
                              .order('id').select(
           <<~SQL
             collections.id, label, ancestry, is_synchronized, permission_level, tabs_segment, position, collection_shared_names(user_id, collections.id) as shared_names,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked, is_shared,
-            inventory_id, inventories.prefix as inventory_prefix,
             case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
           SQL
         ).as_json
-        build_tree.call(collects,false)
+        build_tree.call(collects, false)
       end
 
       desc "Return all shared serialized collections"
       get :shared_roots do
         collects = Collection.shared(current_user.id)
-                             .joins('LEFT JOIN inventories ON collections.inventory_id = inventories.id')
+                             .includes(:inventories)
                              .order('id').select(
           <<~SQL
             collections.id, user_id, label, ancestry, permission_level, user_as_json(user_id) as shared_to,
-            is_shared, is_locked, is_synchronized, false as is_remoted, tabs_segment, inventory_id,
+            is_shared, is_locked, is_synchronized, false as is_remoted, tabs_segment,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
-            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root, inventories.prefix as inventory_prefix
+            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
           SQL
         ).as_json
-        build_tree.call(collects,true)
+        build_tree.call(collects, true)
       end
 
       desc "Return all remote serialized collections"
       get :remote_roots do
         collects = Collection.remote(current_user.id)
-                             .joins('LEFT JOIN inventories ON collections.inventory_id = inventories.id')
+                             .includes(:inventories)
                              .where(user_id: current_user.id).order(:id).select(
           <<~SQL
             collections.id, user_id, label, ancestry, permission_level, user_as_json(shared_by_id) AS shared_by, tabs_segment,
             CASE WHEN ancestry IS NULL THEN CAST(collections.id AS TEXT) ELSE CONCAT(ancestry, '/', collections.id) END AS ancestry_root,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared,
             shared_user_as_json(user_id, #{current_user.id}) AS shared_to,
-            position, inventory_id, inventories.prefix AS inventory_prefix
+            position
           SQL
         ).as_json
-        build_tree.call(collects,true)
+        build_tree.call(collects, true)
       end
 
       # TODO: check if this endpoint is really obsolete

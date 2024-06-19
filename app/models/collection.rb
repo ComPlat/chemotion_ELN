@@ -69,6 +69,8 @@ class Collection < ApplicationRecord
 
   has_one :metadata
 
+  delegate :id, :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
+
   # A collection is locked if it is not allowed to rename or rearrange it
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
