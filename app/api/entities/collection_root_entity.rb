@@ -1,5 +1,7 @@
 module Entities
   class CollectionRootEntity < Grape::Entity
+    expose :inventory_id, :inventory_prefix, :inventory_name
+
     expose :id do |obj|
         obj['id']
     end
@@ -50,12 +52,6 @@ module Entities
     end
     expose :ancestry do |obj|
       obj['ancestry']
-    end
-    expose :inventory_id do |obj|
-      obj['inventory_id']
-    end
-    expose :inventory_prefix do |obj|
-      obj['inventory_prefix']
     end
     expose :children, as: 'children', using: 'Entities::CollectionRootEntity'
   end
