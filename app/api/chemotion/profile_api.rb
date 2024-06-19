@@ -74,7 +74,7 @@ module Chemotion
                 if File.exist?(file_path)
                   content = File.read(file_path)
                   content = JSON(content)
-                  content['path'] = x
+                  content['props']['path'] = x
                   templates_list.push(content);
                 end
             end
