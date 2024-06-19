@@ -38,6 +38,7 @@ class App extends Component {
     UserActions.fetchOlsChmo();
     UserActions.fetchOlsBao();
     UserActions.fetchProfile();
+    UserActions.setUsertemplates()
     UserActions.fetchUserLabels();
     UserActions.fetchGenericEls();
     UserActions.fetchSegmentKlasses();

@@ -68,10 +68,10 @@ class UserActions {
       data: { authenticity_token: DocumentHelper.getMetaContent("csrf-token") }
     })
       .then(response => {
-        if (response.status == 204) {
-          location = '/home';
-        }
-      });
+      if (response.status == 204) {
+        location = '/home';
+      }
+    });
   }
 
   fetchProfile() {
@@ -80,6 +80,17 @@ class UserActions {
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
+  }
+
+  setUsertemplates() {
+    const storage_key = 'ketcher-tmpls';
+    UsersFetcher.fetchProfile().then((res) => {
+      if (res?.user_templates) {
+        console.log(res.user_templates);
+        localStorage.setItem(storage_key, '');
+        localStorage.setItem(storage_key, JSON.stringify(res.user_templates));
+      }
+    });
   }
 
   selectTab(tab) {
@@ -143,7 +154,8 @@ class UserActions {
       GenericDSsFetcher.fetchKlass()
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
+        })
+        .catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
@@ -156,8 +168,8 @@ class UserActions {
         cache: 'no-store',
         headers: { 'cache-control': 'no-cache' }
       }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     }
   }
 

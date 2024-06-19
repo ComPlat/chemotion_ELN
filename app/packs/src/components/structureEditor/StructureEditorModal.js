@@ -19,6 +19,7 @@ import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import ProfilesFetcher from '../../fetchers/ProfilesFetcher';
 
 const DEFAULT_EDITOR_KETCHER2 = 'ketcher2';
 const notifyError = (message) => {
@@ -37,10 +38,11 @@ const loadEditor = (editor, scripts) => {
     loadScripts({
       es: scripts,
       id: editor,
-      cbError: () => notifyError(
-        `The ${editor} failed to initialize! Please contact your system administrator!`
-      ),
-      cbLoaded: () => { },
+      cbError: () =>
+        notifyError(
+          `The ${editor} failed to initialize! Please contact your system administrator!`
+        ),
+      cbLoaded: () => {},
     });
   }
 };
@@ -65,7 +67,8 @@ const createEditor = (configs, availableEditors) => {
 };
 
 const createEditors = (_state = {}) => {
-  const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
+  const matriceConfigs =
+    _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors || {};
   const grantEditors = matriceConfigs
     .map(({ configs }) => createEditor(configs, availableEditors.editors))
@@ -83,9 +86,7 @@ const createEditors = (_state = {}) => {
   return editors;
 };
 
-function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
-}) {
+function Editor({ type, editor, molfile, iframeHeight, iframeStyle, fnCb }) {
   switch (type) {
     case 'ketcher2':
       return (
@@ -221,7 +222,6 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
-      templatesCount: 0
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -232,7 +232,7 @@ export default class StructureEditorModal extends React.Component {
   componentDidMount() {
     this.resetEditor(this.editors);
     this.setDefaultEditorForce();
-    this.fetchProfileUserTemplates();
+    this.localStorageEventListener();
   }
 
   componentDidUpdate(prevProps) {
@@ -248,33 +248,46 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  async fetchProfileUserTemplates() {
-    localStorage.setItem('ketcher-tmpls', '');
-    const userProfile = await UsersFetcher.fetchProfile();
-    const list = userProfile.user_templates.map((i) => JSON.parse(i));
-    this.setState({ templatesCount: list.length });
-    localStorage.setItem('ketcher-tmpls', JSON.stringify(list));
-    this.localStorageEventListener();
-  }
-
   localStorageEventListener() {
-    const { templatesCount } = this.state;
     const key = 'ketcher-tmpls';
+    const copyOfLocalStorage = JSON.parse(localStorage.getItem(key)) | [];
 
-    window.addEventListener('storage', (event) => {
-      if (event.key === key) {
-        const localTemplates = JSON.parse(localStorage[key]);
-        const offlineTemplates = localTemplates.slice(templatesCount, localTemplates.length);
-        offlineTemplates.map((i) => new Blob([JSON.stringify(i)], { type: 'application/json' }));
-        
+    window.addEventListener(
+      'storage',
+      async (event) => {
+        if (event.key === key) {
+          const localTemplates = JSON.parse(localStorage.getItem(key)) | [];
+          
+          if (copyOfLocalStorage?.length < localTemplates?.length) {
+            const res = await ProfilesFetcher.uploadUserTemplates({
+              content: JSON.stringify(
+                localTemplates[localTemplates.length - 1]
+              ),
+            });
+            await UsersFetcher.updateUserProfile({
+              user_templates: res?.template_details?.attachment_data?.id,
+            });
+          }
 
-        // const userProfile = {
-        //   user_templates: ""
-        // };
-        // console.log(userProfile.user_templates);
-        // UsersFetcher.updateUserProfile(userProfile);
-      }
-    }, false);
+          // if (copyOfLocalStorage.length > localTemplates.length) {
+          //   // an item is being removed!!
+          //   // identify which index is removed
+          //   // send the index number to the api (delete db entry + file)
+          //   const deletedIdx = null;
+
+          //   for (let i = 0; i < copyOfLocalStorage.length; i++) {
+          //     for (let j = 0; j < localTemplates.length; j++) {
+          //       // TODO: Match by names, parse struck matching by names.
+          //       if (copyOfLocalStorage[i].struct == localTemplates[j].struct)
+          //         break;
+          //       else console.log(i);
+          //     }
+          //   }
+          // }
+        }
+      },
+      false
+    );
   }
 
   handleEditorSelection(e) {
@@ -510,8 +523,8 @@ StructureEditorModal.defaultProps = {
   showModal: false,
   hasChildren: false,
   hasParent: false,
-  onCancel: () => { },
-  onSave: () => { },
+  onCancel: () => {},
+  onSave: () => {},
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
 };

@@ -24,6 +24,7 @@ module Chemotion
         data = profile.data || {}
         layout = {}
         layout = Rails.configuration.profile_default&.layout if Rails.configuration.respond_to?(:profile_default)
+        templates_list = []
 
         layout&.each_key do |ll|
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
@@ -64,13 +65,24 @@ module Chemotion
           data[dt] = sorted_layout
         end
 
+        if profile && profile.user_templates 
+            profile.user_templates.each do |x|
+              file_path = Rails.root.join('uploads', Rails.env, x) # TODO: path needs to be replaced by neutral-> development/production
+
+              if File.exist?(file_path)
+                content = File.read(file_path)
+                templates_list.push(JSON(content));
+              end
+            end
+        end
+
         {
           data: data,
           show_external_name: profile.show_external_name,
           show_sample_name: profile.show_sample_name,
           show_sample_short_label: profile.show_sample_short_label,
           curation: profile.curation,
-          user_templates: profile.user_templates,
+          user_templates: templates_list,
         }
       end
 
@@ -98,7 +110,7 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
-        optional :user_templates, type: Array[String]
+        optional :user_templates, type: String
       end
       put do
         declared_params = declared(params, include_missing: false)
@@ -131,13 +143,54 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
-          user_templates: current_user.profile.user_templates + declared_params[:user_templates],
+          user_templates: current_user.profile.user_templates.push(declared_params[:user_templates]),
         }
 
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
       end
+
+    desc 'post user template'
+      params do
+        requires :content, type: String, desc: 'ketcher file content'
+      end
+
+      post do
+      file_path = Rails.root.join('uploads', Rails.env, 'template.txt')
+      begin
+        if (!File.exist?(file_path))
+          File.new(file_path, 'w')
+        end
+
+        # overwrite a file in tmp
+        File.open(file_path, 'w') do |file|
+          file.write(params[:content])
+        end
+
+        # upload the file to storage
+        templateAttachment = Attachment.new(
+            bucket: 1,
+            filename: Time.now.to_s + 'template.txt',
+            key: 'user_template',
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: 'text/html',
+            file_path: file_path,
+          )
+          begin
+            templateAttachment.save!
+          rescue StandardError
+            error_messages.push(templateAttachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+          ensure
+            File.delete(file_path) if File.exist?(file_path)
+          end
+          {template_details: templateAttachment}
+        # --
+      rescue Errno::EACCES
+        error!('Save files error!', 500)
+      end
     end
+  end
   end
 end
 # rubocop: enable Style/MultilineIfModifier
