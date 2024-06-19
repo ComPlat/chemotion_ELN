@@ -241,9 +241,13 @@ export default class SampleDetailsComponents extends React.Component {
     const componentIndex = this.props.sample.components.findIndex(
       (component) => component.id === sampleID
     );
+    const refIndex = this.props.sample.components.findIndex(
+      (component) => component.reference === true
+    );
+    const referenceMoles = sample.components[refIndex].amount_mol;
     const totalVolume = sample.amount_l;
 
-    sample.components[componentIndex].updateRatio(newRatio, materialGroup, adjustAmount, totalVolume)
+    sample.components[componentIndex].updateRatio(newRatio, materialGroup, totalVolume, referenceMoles)
 
     sample.updateMixtureMolecularWeight();
 

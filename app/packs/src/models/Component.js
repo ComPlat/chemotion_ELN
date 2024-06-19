@@ -38,7 +38,7 @@ export default class Component extends Sample {
 
     setAmount(amount, totalVolume) {
         if (!amount.unit || isNaN(amount.value)) { return }
-        if (this.density && this.density > 0) {
+        if (this.density && this.density > 0 && this.material_group !== 'solid') {
             this.setAmountDensity(amount, totalVolume)
         } else {
             this.setAmountConc(amount, totalVolume)
@@ -75,12 +75,14 @@ export default class Component extends Sample {
                 this.molarity_value = this.concn = 0;
             }
         }
+
+        this.density = 0;
     }
 
     setConc(amount, totalVolume, concType, updateVolume) {
         if (!amount.unit || isNaN(amount.value) || amount.unit !== 'mol/l') { return }
 
-        if (this.density && this.density > 0 && concType !== 'startingConc') {
+        if (this.density && this.density > 0 && concType !== 'startingConc' && this.material_group !== 'solid') {
             this.setMolarityDensity(amount, totalVolume)
         } else {
             this.setMolarity(amount, totalVolume, concType, updateVolume)
@@ -143,30 +145,27 @@ export default class Component extends Sample {
         }
     }
 
-    updateRatio(newRatio, materialGroup, adjustAmount, totalVolume) {
+    updateRatio(newRatio, materialGroup, totalVolume, referenceMoles) {
         if (this.equivalent === newRatio) { return }
-
-        const newMols = (newRatio / this.equivalent) * this.amount_mol;
-        this.amount_mol = newMols;
-        
+    
+        const purity = this.purity || 1.0;
+        this.amount_mol = newRatio * referenceMoles;
         this.equivalent = newRatio;
-
+        
         if (materialGroup === 'liquid') {
-            if (adjustAmount) {
-                const concentration = this.molarity_value;
-                const updatedVolume = newMols / concentration;
-                this.amount_l = updatedVolume;
-            } else {
-                const concentration = newMols / this.amount_l;
-                this.concn = concentration;
-                this.molarity_value = concentration;
-                this.molarity_unit = 'M'
+            if (!this.has_density) {
+                this.amount_l = this.amount_mol / (this.starting_molarity_value * purity);
+                this.molarity_value = this.concn = this.amount_mol / (totalVolume * purity);
+                this.molarity_unit = 'M';
+            } else if (this.has_density) {
+                this.amount_g = (this.amount_mol * this.molecule_molecular_weight) / purity;
+                this.amount_l = this.amount_g / (this.density * 1000);
+                this.molarity_value = this.concn = this.amount_mol / (totalVolume * purity);
+                this.molarity_unit = 'M';
             }
         } else if (materialGroup === 'solid') {
-                this.amount_g = newMols * this.molecule_molecular_weight;
-
-                this.concn = newMols / totalVolume;
-                this.molarity_value = this.concn;
+            this.amount_g = (this.amount_mol * this.molecule_molecular_weight) / purity;
+            this.molarity_value = this.concn = this.amount_mol / (totalVolume * purity);
         }
     }
 
