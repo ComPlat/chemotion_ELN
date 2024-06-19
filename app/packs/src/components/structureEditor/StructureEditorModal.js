@@ -275,7 +275,6 @@ export default class StructureEditorModal extends React.Component {
           const { copyOfLocalStorage } = this.state;
 
           if (copyOfLocalStorage?.length < localTemplates?.length) {
-            alert('Attemp to ADD');
             const item = localTemplates[localTemplates.length - 1];
             item.props.id = Math.random().toString(16).slice(2);
 
@@ -297,8 +296,6 @@ export default class StructureEditorModal extends React.Component {
 
             this.updateCopyOfStorageTemplates();
           } else if (localTemplates.length < copyOfLocalStorage.length) {
-
-            alert('Attemp to REMOVE');
             const listOfLocalid = localTemplates.map((item) => item?.props?.id);
 
             for (let i = 0; i < copyOfLocalStorage.length; i++) {
@@ -315,8 +312,7 @@ export default class StructureEditorModal extends React.Component {
             }
             this.updateCopyOfStorageTemplates();
           } else {
-            alert('BOTH ATTEMPTS FAILED!!!!!');
-            console.log({ copyOfLocalStorage, localTemplates });
+            // 'BOTH ATTEMPTS FAILED!!!!!
           }
         }
       },
