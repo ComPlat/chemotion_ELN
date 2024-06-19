@@ -18,6 +18,8 @@
 class Inventory < ApplicationRecord
   has_many :collections, dependent: :nullify
 
+  scope :by_collection_id, ->(collection_id) { joins(:collections).where(collections: { id: collection_id }) }
+
   def self.compare_associations(collection_ids)
     inventory_collection_ids = []
     collection_ids.map do |collection_id|
