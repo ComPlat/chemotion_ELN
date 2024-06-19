@@ -206,29 +206,69 @@ export default class Reaction extends Element {
         "id": <number>,
         "notes": <string>,
         "properties": {
-            "temperature": {"value": <number>, "unit": <string>},
-            "duration": {"value": <number>, "unit": <string>}
+          "temperature": {"value": <number>, "unit": <string>},
+          "duration": {"value": <number>, "unit": <string>}
         },
         "analyses": [<id>, <id>, ...],
         "startingMaterials": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
         "reactants": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
         "products": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
         "solvents": {
-            <material_id: {"value": <number>, "unit": <string>, "aux": {...}},
-            <material_id>: {"value": <number>, "unit": <string>, "aux": {...}},
-            ...
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          <material_id>: {
+            "mass": {"value": <number>, "unit": <string>},
+            "amount": {"value": <number>, "unit": <string>},
+            "volume": {"value": <number>, "unit": <string>},
+            "aux": {...}
+          },
+          ...
         },
       },
       {
