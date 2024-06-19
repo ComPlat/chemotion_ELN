@@ -32,6 +32,7 @@ const notifyError = (message) => {
     autoDismiss: 10,
   });
 };
+const key = 'ketcher-tmpls';
 
 const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
@@ -222,6 +223,7 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
+      copyOfLocalStorage: JSON.parse(localStorage.getItem(key)) || [],
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -249,41 +251,60 @@ export default class StructureEditorModal extends React.Component {
   }
 
   localStorageEventListener() {
-    const key = 'ketcher-tmpls';
-    const copyOfLocalStorage = JSON.parse(localStorage.getItem(key)) | [];
+    // const copyOfLocalStorage = JSON.parse(localStorage.getItem(key)) || [];
 
     window.addEventListener(
       'storage',
       async (event) => {
         if (event.key === key) {
-          const localTemplates = JSON.parse(localStorage.getItem(key)) | [];
-          
+          alert("CHANGED!")
+          const { copyOfLocalStorage } = this.state;
+          const localTemplates = JSON.parse(localStorage.getItem(key)) || [];
           if (copyOfLocalStorage?.length < localTemplates?.length) {
+            alert('IN LESS THAN');
+            const item = localTemplates[localTemplates.length - 1];
+            item.props.id = Math.random().toString(16).slice(2);
+
             const res = await ProfilesFetcher.uploadUserTemplates({
-              content: JSON.stringify(
-                localTemplates[localTemplates.length - 1]
-              ),
+              content: JSON.stringify(item),
             });
+            const attachment_id = res?.template_details?.attachment_data?.id;
+
+            // update localstorage entry with file path!!!
+            const updatedLS = localTemplates[localTemplates.length - 1];
+            updatedLS.path = attachment_id;
+            localTemplates[localTemplates.length - 1] = updatedLS;
+            localStorage.setItem(key, JSON.stringify(localTemplates));
+
+            // udpate user profile
             await UsersFetcher.updateUserProfile({
-              user_templates: res?.template_details?.attachment_data?.id,
+              user_templates: attachment_id,
+            });
+            this.setState({
+              copyOfLocalStorage: JSON.parse(localStorage.getItem(key)),
             });
           }
 
-          // if (copyOfLocalStorage.length > localTemplates.length) {
-          //   // an item is being removed!!
-          //   // identify which index is removed
-          //   // send the index number to the api (delete db entry + file)
-          //   const deletedIdx = null;
+          if (copyOfLocalStorage.length > localTemplates.length) {
+            alert('IN GREATER THAN');
+            const listOfLocalid = localTemplates.map((item) => item?.props?.id);
 
-          //   for (let i = 0; i < copyOfLocalStorage.length; i++) {
-          //     for (let j = 0; j < localTemplates.length; j++) {
-          //       // TODO: Match by names, parse struck matching by names.
-          //       if (copyOfLocalStorage[i].struct == localTemplates[j].struct)
-          //         break;
-          //       else console.log(i);
-          //     }
-          //   }
-          // }
+            for (let i = 0; i < copyOfLocalStorage.length; i++) {
+              const localItem = copyOfLocalStorage[i];
+              const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
+                localItem.props.id
+              );
+              if (itemIndexShouldBeRemoved == -1) {
+                alert('Deleted');
+                // API: call to remove the ID with file attachment!!
+                console.log({ localItem });
+                await ProfilesFetcher.deleteUserTemplate({
+                  path: localItem?.path,
+                });
+                break;
+              }
+            }
+          }
         }
       },
       false

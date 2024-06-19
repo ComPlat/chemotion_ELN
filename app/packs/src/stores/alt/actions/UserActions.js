@@ -86,7 +86,6 @@ class UserActions {
     const storage_key = 'ketcher-tmpls';
     UsersFetcher.fetchProfile().then((res) => {
       if (res?.user_templates) {
-        console.log(res.user_templates);
         localStorage.setItem(storage_key, '');
         localStorage.setItem(storage_key, JSON.stringify(res.user_templates));
       }

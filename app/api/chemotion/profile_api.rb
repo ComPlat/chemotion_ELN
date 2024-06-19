@@ -71,7 +71,9 @@ module Chemotion
 
               if File.exist?(file_path)
                 content = File.read(file_path)
-                templates_list.push(JSON(content));
+                content = JSON(content)
+                content['path'] = x
+                templates_list.push(content);
               end
             end
         end
@@ -143,6 +145,7 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
+          # user_templates: [],
           user_templates: current_user.profile.user_templates.push(declared_params[:user_templates]),
         }
 
@@ -189,6 +192,33 @@ module Chemotion
       rescue Errno::EACCES
         error!('Save files error!', 500)
       end
+    end
+
+    desc 'delete user template'
+    params do
+      requires :path, type: String, desc: 'file path of user template'
+    end
+    delete do
+      # remove path from profile.user_templates
+      user_templates = current_user.profile.user_templates;
+      puts user_templates.length
+      user_templates.delete(params[:path]);
+      puts user_templates.length
+
+      new_profile = {
+        user_templates: user_templates,
+      }
+      
+      
+      # remove file from store
+      file_path = Rails.root.join("uploads", Rails.env, params[:path]);
+      File.delete(file_path) if File.exist?(file_path)
+
+      # update profile
+      (current_user.profile.update!(**new_profile) &&
+      new_profile) || error!('profile update failed', 500)
+
+      {status: true}
     end
   end
   end
