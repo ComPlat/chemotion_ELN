@@ -118,6 +118,7 @@ export default class SampleDetailsComponents extends React.Component {
       (component) => component.id === sampleID
     );
     sample.components[componentIndex].setPurity(purity, sample.amount_l);
+    sample.updateMixtureComponentEquivalent()
   }
   
   updatedSampleForMetricsChange(changeEvent) {
