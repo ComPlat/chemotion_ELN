@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: inventories
+#
+#  id         :bigint           not null, primary key
+#  prefix     :string           not null
+#  name       :string           not null
+#  counter    :integer          default(0)
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_inventories_on_prefix  (prefix) UNIQUE
+#
 class Inventory < ApplicationRecord
   has_many :collections, dependent: :nullify
 
