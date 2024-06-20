@@ -33,11 +33,14 @@ module Usecases
 
       def delete_from_all_previous_owner_collections(previous_owner_id, collection)
         API::ELEMENTS.each do |element|
-          elements = collection.send(element + 's')
-          collection_ids = elements.map{|s| s.collections.where(user_id: previous_owner_id)}.flatten.pluck(:id).uniq
+          elements = element.eql?('cell_line') ? collection.cellline_samples : collection.send("#{element}s")
+          col_element = element.eql?('cell_line') ? 'CollectionsCellline' : "Collections#{element.split('_').map(&:capitalize).join}"
+
+          collection_ids = elements.map { |s| s.collections.where(user_id: previous_owner_id) }.flatten.pluck(:id).uniq
           collection_ids -= [collection.id]
-          col_element = 'Collections' + (element.split('_').map(&:capitalize).join(''))
-          col_element.constantize.where(collection_id: collection_ids, "#{element}_id": [elements.pluck(:id)]).destroy_all
+
+          col_element.constantize.where(collection_id: collection_ids, "#{element}_id": [elements.pluck(:id)])
+                     .destroy_all
         end
       end
     end
