@@ -293,7 +293,7 @@ describe Chemotion::AttachmentAPI do
              label: 'shared by owner_user')
     end
 
-    let(:attachment) { create(:attachment) }
+    let(:attachment) { create(:attachment, :with_png_image) }
 
     context 'when attachment is directly linked to the research plan' do
       let(:research_plan) do
@@ -312,8 +312,8 @@ describe Chemotion::AttachmentAPI do
         expect(response).to have_http_status :ok
       end
 
-      xit 'expecting attachment as binary stream' do
-        pending 'not yet implemented'
+      it 'expecting attachment as binary stream of correct size' do
+        expect(response.body.size).to be 318425
       end
     end
 
