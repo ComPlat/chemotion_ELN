@@ -273,7 +273,7 @@ class UserLabelModal extends Component {
           </Col>
           <Col sm={10}>
             <InputGroup>
-              <InputGroup.Addon style={bcStyle} />
+              <InputGroup.Text style={bcStyle} />
               <FormControl
                 type="text"
                 readOnly

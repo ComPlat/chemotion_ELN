@@ -46,13 +46,13 @@ export default class AdminDashboard extends React.Component {
       <div>
         <Panel>
           <InputGroup>
-            <InputGroup.Addon>Disk Available   (MB)</InputGroup.Addon>
+            <InputGroup.Text>Disk Available   (MB)</InputGroup.Text>
             <FormControl
               type="text"
               defaultValue={diskAvailable || ''}
               readOnly
             />
-            <InputGroup.Addon>Disk Percent Used (%)</InputGroup.Addon>
+            <InputGroup.Text>Disk Percent Used (%)</InputGroup.Text>
             <FormControl
               type="text"
               style={style}
