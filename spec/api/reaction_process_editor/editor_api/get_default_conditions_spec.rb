@@ -14,7 +14,7 @@ describe ReactionProcessEditor::EditorAPI, '.get /default_conditions' do
 
   let(:expected_default_conditions) do
     { default_conditions: {
-      global: Entitites::ReactionProcessEditor::SelectOptions::Conditions::GLOBAL_DEFAULTS,
+      global: Entities::ReactionProcessEditor::SelectOptions::Conditions::GLOBAL_DEFAULTS,
       user: anything,
       select_options: { activity_type_equipment: select_options::Equipment.per_activity_type,
                         condition_additional_information: select_options::Conditions.additional_information },
