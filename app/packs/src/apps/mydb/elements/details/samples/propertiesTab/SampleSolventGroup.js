@@ -9,8 +9,9 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
+function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType }) {
   if (!solvent) {
     return null;
   }
@@ -25,7 +26,14 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
     onChangeSolvent(solvent);
   };
 
+  const changeVolume = (event) => {
+    solvent.amount_l = event.value;
+    onChangeSolvent(solvent);
+  };
+
   // onChangeRatio
+  const metricPrefixes = ['m', 'n', 'u'];
+  const metric = (solvent.metrics && solvent.metrics.length > 2 && metricPrefixes.indexOf(solvent.metrics[1]) > -1) ? solvent.metrics[1] : 'm';
   return (
     <tr>
       <td>
@@ -37,6 +45,18 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
           disabled
         />
       </td>
+      {sampleType && sampleType === 'Mixture' && (
+        <td style={{verticalAlign: 'bottom'}}>
+          <NumeralInputWithUnitsCompo
+            value={solvent.amount_l}
+            unit="l"
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={3}
+            onChange={changeVolume}
+          />
+        </td>
+      )}
       <td>
         <FormControl
           type="number"
@@ -70,6 +90,7 @@ function SampleSolventGroup({
   const contents = [];
   const sampleSolvents = sample.solvent;
   const minPadding = { padding: '4px 4px 4px 4px' };
+  const sampleType = sample.sample_type;
 
   if (sampleSolvents && sampleSolvents.length > 0) {
     let key = -1;
@@ -81,6 +102,7 @@ function SampleSolventGroup({
           solvent={solv}
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
+          sampleType={sampleType}
         />
       ));
     });
@@ -133,7 +155,14 @@ function SampleSolventGroup({
                 menuContainerStyle={{ minHeight: '200px' }}
                 style={{ marginBottom: '10px' }}
               />
-              { sampleSolvents && sampleSolvents.length > 0 && (
+              { sampleSolvents && sampleSolvents.length > 0 && sampleType === 'Mixture' && (
+                <>
+                  <td style={{ width: '35%', fontWeight: 'bold' }}>Label:</td>
+                  <td style={{ width: '35%', fontWeight: 'bold' }}>Volume:</td>
+                  <td style={{ width: '30%', fontWeight: 'bold' }}>Ratio:</td>
+                </>
+              )}
+              { sampleSolvents && sampleSolvents.length > 0 && sampleType !== 'Mixture' && (
                 <>
                   <td style={{ width: '50%', fontWeight: 'bold' }}>Label:</td>
                   <td style={{ width: '50%', fontWeight: 'bold' }}>Ratio:</td>

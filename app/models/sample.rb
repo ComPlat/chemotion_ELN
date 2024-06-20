@@ -160,7 +160,6 @@ class Sample < ApplicationRecord
     Sample.where(id: samples.map(&:id))
   }
 
-
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
@@ -201,6 +200,9 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
+  belongs_to :micromolecule, optional: true
+  has_many :components, dependent: :destroy
+
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
   belongs_to :molecule_name, optional: true
@@ -233,6 +235,7 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
+  delegate :molfile, :molfile_version, :stereo, to: :micromolecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
 
@@ -583,7 +586,7 @@ private
   end
 
   def check_molfile_polymer_section
-    return if decoupled
+    return if decoupled || sample_type == 'Mixture'
     return unless self.molfile.include? 'R#'
 
     lines = self.molfile.lines
