@@ -571,8 +571,12 @@ class Sample < ApplicationRecord
 
     next_inventory_counter = inventory.counter + 1
     # auto generate inventory_label on sample create if inventory exists for collection
-    inventory_label = inventory.construct_inventory_label(inventory.prefix, next_inventory_counter)
-      if inventory_label.nil?
+    if inventory_label.nil?
+      inventory_label = inventory.construct_inventory_label(
+        inventory.prefix,
+        next_inventory_counter,
+      )
+    end
 
     condition = inventory.match_inventory_counter(inventory_label, next_inventory_counter)
 

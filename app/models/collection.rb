@@ -188,5 +188,17 @@ class Collection < ApplicationRecord
       collections_group_by_inventory(collections, inventory)
     end
   end
+
+  def as_json(options = {})
+    if options[:include_inventory]
+      super(options).merge(
+        inventory_id: inventory&.id,
+        inventory_prefix: inventory&.prefix,
+        inventory_name: inventory&.name,
+      )
+    else
+      super(options)
+    end
+  end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity

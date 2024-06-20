@@ -407,7 +407,7 @@ export default class SampleForm extends React.Component {
        + ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         <ControlLabel> &nbsp; </ControlLabel>
         <OverlayTrigger
           placement="top"
@@ -814,7 +814,7 @@ export default class SampleForm extends React.Component {
                         {this.textInput(sample, 'external_label', 'External label')}
                       </div>
                       <div style={{
-                        width: '26%', paddingLeft: '5px', display: 'flex', justifyContent: 'space-between'
+                        maxWidth: '26%', paddingLeft: '5px', display: 'flex', justifyContent: 'space-between'
                       }}
                       >
                         {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
