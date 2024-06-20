@@ -688,7 +688,8 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const isDisabled = !sample.can_update;
+    const hasComponents = sample.sample_type === 'Mixture' && sample.components && sample.components.length > 0;
+    const isDisabled = !sample.can_update || !hasComponents;
     if (closeView) submitLabel += ' and close';
 
     return (
@@ -967,7 +968,8 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
+    const hasComponents = sample.sample_type === 'Mixture' && sample.components && sample.components.length > 0;
+    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents; 
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (
@@ -1461,7 +1463,7 @@ export default class SampleDetails extends React.Component {
 
   splitSmiles(editor, svgFile) {
     const { sample } = this.state;
-    if (sample.sample_type !== 'Mixture') { return }
+    if (sample.sample_type !== 'Mixture' || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '')  { return }
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.')
     if (mixtureSmiles) {
