@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, InputGroup, Button } from 'react-bootstrap';
+import { Form, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -155,29 +154,26 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const inputDisabled = disabled ? true : block;
     // BsStyle-s for Input and buttonAfter have differences
     const variantBtnAfter = variant === 'error' ? 'danger' : variant;
-    const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
     if (unit !== 'n') {
       const prefixSwitch = (
-        <InputGroup.Button>
-          <Button
-            disabled={inputDisabled}
-            active
-            onClick={() => { this.togglePrefix(); }}
-            variant={variantBtnAfter}
-            bsSize={bsSize}
-          >
-            {mp + unit}
-          </Button>
-        </InputGroup.Button>
+        <Button
+          disabled={inputDisabled}
+          active
+          onClick={() => { this.togglePrefix(); }}
+          variant={variantBtnAfter}
+          bsSize={bsSize}
+        >
+          {mp + unit}
+        </Button>
       );
 
       return (
         <div className={`numeric-input-unit_${this.props.unit}`}>
-          {labelWrap}
+          {label && <Form.Label>{label}</Form.Label>}
           <InputGroup
             onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
-            <FormControl
+            <Form.Control
               type="text"
               bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
@@ -196,9 +192,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
     return (
       <div className="numeric-input-unit">
-        {labelWrap}
+        {label && <Form.Label>{label}</Form.Label>}
         <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
-          <FormControl
+          <Form.Control
             type="text"
             bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
