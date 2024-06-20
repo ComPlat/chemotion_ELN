@@ -5,7 +5,6 @@ import {
   InputGroup, Button, Form
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default function NumericInputUnit(props) {
   const {
