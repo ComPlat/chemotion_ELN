@@ -312,18 +312,18 @@ describe Chemotion::AttachmentAPI do
         expect(response).to have_http_status :ok
       end
 
-      it 'expecting attachment as binary stream' do
-        pending
+      xit 'expecting attachment as binary stream' do
+        pending 'not yet implemented'
       end
     end
 
     context 'when attachment is nested in a analysis container' do
-      it 'expecting return code 200' do
-        pending
+      xit 'expecting return code 200' do
+        pending 'not yet implemented'
       end
 
-      it 'expecting attachment as binary stream' do
-        pending
+      xit 'expecting attachment as binary stream' do
+        pending 'not yet implemented'
       end
     end
   end
