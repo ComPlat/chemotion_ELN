@@ -734,7 +734,6 @@ export default class SampleForm extends React.Component {
   }
 
   densityMolarityInput(sample, isPolymer, molarityBlocked, densityBlocked) {
-    options=[{ label: 'Density', value: 'density' }, { label: 'Molarity', value: 'molarity' }]
     return (
       <>
         <ButtonGroup className='mb-2'>
