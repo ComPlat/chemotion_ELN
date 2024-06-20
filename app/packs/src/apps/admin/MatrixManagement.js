@@ -245,19 +245,19 @@ export default class MatrixManagement extends React.Component {
             <Form horizontal className="input-form">
               <FormGroup controlId="formControlId">
                 <InputGroup>
-                  <InputGroup.Addon>ID</InputGroup.Addon>
+                  <InputGroup.Text>ID</InputGroup.Text>
                   <FormControl type="text" defaultValue={matrice.id} readOnly />
                 </InputGroup>
               </FormGroup>
               <FormGroup controlId="formControlName">
                 <InputGroup>
-                  <InputGroup.Addon>Function name</InputGroup.Addon>
+                  <InputGroup.Text>Function name</InputGroup.Text>
                   <FormControl type="text" defaultValue={matrice.name} readOnly />
                 </InputGroup>
               </FormGroup>
               <FormGroup controlId="formControlLabel">
                 <InputGroup>
-                  <InputGroup.Addon>Description</InputGroup.Addon>
+                  <InputGroup.Text>Description</InputGroup.Text>
                   <FormControl type="text" defaultValue={matrice.label} inputRef={(ref) => { this.m_label = ref; }} />
                 </InputGroup>
               </FormGroup>
@@ -266,7 +266,7 @@ export default class MatrixManagement extends React.Component {
               </FormGroup>
               <FormGroup controlId="formControlInclude">
                 <InputGroup>
-                  <InputGroup.Addon>Include Users</InputGroup.Addon>
+                  <InputGroup.Text>Include Users</InputGroup.Text>
                   <Select.Async
                     multi
                     isLoading
@@ -284,7 +284,7 @@ export default class MatrixManagement extends React.Component {
               </FormGroup>
               <FormGroup controlId="formControlExclude">
                 <InputGroup>
-                  <InputGroup.Addon>Exclude Users</InputGroup.Addon>
+                  <InputGroup.Text>Exclude Users</InputGroup.Text>
                   <Select.Async
                     multi
                     isLoading
@@ -331,13 +331,13 @@ export default class MatrixManagement extends React.Component {
             <Form horizontal className="input-form">
               <FormGroup controlId="formControlId">
                 <InputGroup>
-                  <InputGroup.Addon>ID</InputGroup.Addon>
+                  <InputGroup.Text>ID</InputGroup.Text>
                   <FormControl type="text" defaultValue={matrice.id} readOnly />
                 </InputGroup>
               </FormGroup>
               <FormGroup controlId="formControlName">
                 <InputGroup>
-                  <InputGroup.Addon>Function name</InputGroup.Addon>
+                  <InputGroup.Text>Function name</InputGroup.Text>
                   <FormControl type="text" defaultValue={matrice.name} readOnly />
                 </InputGroup>
               </FormGroup>
