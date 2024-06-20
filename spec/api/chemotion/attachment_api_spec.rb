@@ -313,17 +313,29 @@ describe Chemotion::AttachmentAPI do
       end
 
       it 'expecting attachment as binary stream of correct size' do
-        expect(response.body.size).to be 318425
+        expect(response.body.size).to be 318_425
       end
     end
 
     context 'when attachment is nested in a analysis container' do
-      xit 'expecting return code 200' do
-        pending 'not yet implemented'
+      let(:research_plan) do
+        create(:research_plan,
+               creator: owner_user,
+               collections: [shared_collection],
+               container: create(:container, :with_jpg_in_dataset))
+      end
+      let(:attachment) { research_plan.container.children.first.children.first.children.first.attachments.first }
+
+      before do
+        get "/api/v1/attachments/#{attachment.id}"
       end
 
-      xit 'expecting attachment as binary stream' do
-        pending 'not yet implemented'
+      it 'expecting return code 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'expecting attachment as binary stream of correct size' do
+        expect(response.body.size).to be 163_233
       end
     end
   end
