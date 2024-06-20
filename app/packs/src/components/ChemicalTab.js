@@ -490,7 +490,7 @@ export default class ChemicalTab extends React.Component {
       <div>
         {ParentLabel}
         <InputGroup className="location-chemicalTab">
-          <InputGroup.Addon>{subLabel}</InputGroup.Addon>
+          <InputGroup.Text>{subLabel}</InputGroup.Text>
           <FormGroup controlId="subLabel">
             <FormControl
               componentClass="input"
