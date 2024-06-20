@@ -281,7 +281,51 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/{attachment_id}' do
-    pending 'not yet implemented'
+    let(:owner_user) { create(:person) }
+    let(:receiving_user) { logged_in_user }
+    let(:shared_collection) do
+      create(:collection,
+             user_id: receiving_user.id,
+             is_shared: true,
+             shared_by_id: owner_user.id,
+             is_locked: true,
+             permission_level: 0,
+             label: 'shared by owner_user')
+    end
+
+    let(:attachment) { create(:attachment) }
+
+    context 'when attachment is directly linked to the research plan' do
+      let(:research_plan) do
+        create(:research_plan,
+               creator: owner_user,
+               attachments: [attachment],
+               collections: [shared_collection])
+      end
+
+      before do
+        research_plan
+        get "/api/v1/attachments/#{attachment.id}"
+      end
+
+      it 'expecting return code 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'expecting attachment as binary stream' do
+        pending
+      end
+    end
+
+    context 'when attachment is nested in a analysis container' do
+      it 'expecting return code 200' do
+        pending
+      end
+
+      it 'expecting attachment as binary stream' do
+        pending
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/zip/{container_id}' do
@@ -423,7 +467,7 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/thumbnails' do
-    pending 'not yet implemented'
+    pending
   end
 
   describe 'POST /api/v1/attachments/files' do
