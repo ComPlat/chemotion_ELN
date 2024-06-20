@@ -60,7 +60,7 @@ export default class NumeralInput extends Component {
     let { numeralValue } = this.state;
     let addonAfterWrapper, buttonAfterWrapper;
     if (addonAfter) {
-      addonAfterWrapper = <InputGroup.Addon>{addonAfter}</InputGroup.Addon>;
+      addonAfterWrapper = <InputGroup.Text>{addonAfter}</InputGroup.Text>;
     }
 
     if(buttonAfter) {

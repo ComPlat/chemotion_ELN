@@ -133,7 +133,7 @@ const content = (
                   disabled
                   placeholder="Value"
                 />
-                <InputGroup.Addon disabled>{readout.unit}</InputGroup.Addon>
+                <InputGroup.Text disabled>{readout.unit}</InputGroup.Text>
               </InputGroup>
             </div>
           ))}
@@ -158,7 +158,7 @@ const content = (
           </Col>
           <Col sm={9} style={{ marginLeft: '35px', width: '65%' }}>
             <InputGroup>
-              <InputGroup.Addon style={bcStyle} />
+              <InputGroup.Text style={bcStyle} />
               <FormControl
                 className="input-sm"
                 type="text"
