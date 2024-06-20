@@ -5,11 +5,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar,
-  InputGroup, FormGroup, FormControl,
-  ListGroup, ListGroupItem, Tabs, Tab, Row, Col,
+  Button, InputGroup, FormGroup, FormControl,
+  ListGroupItem, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton,
-  Modal, Alert, Card, Form
+  Modal, Alert, Card, Form,
+  Accordion
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -51,7 +51,7 @@ import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsCo
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 import Utils from 'src/utilities/Functions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import SampleDetailsLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { chmoConversions } from 'src/components/OlsComponent';
@@ -456,14 +456,14 @@ export default class SampleDetails extends React.Component {
 
     const saveAndCloseBtn = belongToReaction && !sample.isNew ? this.saveBtn(sample, true) : null;
     return (
-      <ButtonToolbar>
+      <div className='d-flex gap-1'>
         <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
         {saveAndCloseBtn}
         {downloadAnalysesBtn}
-      </ButtonToolbar>
+      </div>
     );
   }
 
@@ -551,11 +551,9 @@ export default class SampleDetails extends React.Component {
         {
           !sample.isNew && <CommentSection section="sample_references" element={sample} />
         }
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <SampleDetailsLiteratures
-            element={sample}
-          />
-        </ListGroupItem>
+        <DetailsTabLiteratures
+          element={sample}
+        />
       </Tab>
     );
   }
@@ -571,19 +569,17 @@ export default class SampleDetails extends React.Component {
         {
           !sample.isNew && <CommentSection section="sample_results" element={sample} />
         }
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <FormGroup controlId="importedReadoutInput">
-            <ControlLabel>Imported Readout</ControlLabel>
-            <InputGroup>
-              <FormControl
-                type="text"
-                value={sample.imported_readout || ''}
-                disabled
-                readOnly
-              />
-            </InputGroup>
-          </FormGroup>
-        </ListGroupItem>
+        <FormGroup controlId="importedReadoutInput">
+          <ControlLabel>Imported Readout</ControlLabel>
+          <InputGroup>
+            <FormControl
+              type="text"
+              value={sample.imported_readout || ''}
+              disabled
+              readOnly
+            />
+          </InputGroup>
+        </FormGroup>
       </Tab>
     );
   }
@@ -597,9 +593,7 @@ export default class SampleDetails extends React.Component {
         title="Measurements"
         key={`Measurements${sample.id.toString()}`}
       >
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <MeasurementsTab sample={sample} />
-        </ListGroupItem>
+        <MeasurementsTab sample={sample} />
       </Tab>
     );
   }
@@ -622,9 +616,7 @@ export default class SampleDetails extends React.Component {
         title={title}
         key={key}
       >
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <ComputedPropsContainer sample={sample} />
-        </ListGroupItem>
+        <ComputedPropsContainer sample={sample} />
       </Tab>
     );
   }
@@ -654,11 +646,9 @@ export default class SampleDetails extends React.Component {
         {
           !sample.isNew && <CommentSection section="sample_qc_curation" element={sample} />
         }
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <QcMain
-            sample={sample}
-          />
-        </ListGroupItem>
+        <QcMain
+          sample={sample}
+        />
       </Tab>
     );
   }
@@ -672,11 +662,9 @@ export default class SampleDetails extends React.Component {
         title="NMR Simulation"
         key={`NMR_${sample.id}_${ind}`}
       >
-        <ListGroupItem style={{ paddingBottom: 20 }}>
-          <NmrSimTab
-            sample={sample}
-          />
-        </ListGroupItem>
+        <NmrSimTab
+          sample={sample}
+        />
       </Tab>
     );
   }
@@ -703,7 +691,7 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  elementalPropertiesItemHeader(sample) {
+  elementalPropertiesItem(sample) {
     let label;
     if (sample.contains_residues) {
       label = 'Polymer section';
@@ -714,108 +702,61 @@ export default class SampleDetails extends React.Component {
       label = 'Elemental composition';
     }
 
-    return (
-      <ListGroupItem onClick={() => this.handleElementalSectionToggle()}>
-        <Col className="padding-right elem-composition-header" md={6}>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label>{label}</label>
-        </Col>
-        <div className="col-md-6">
-          <ToggleSection show={this.state.showElementalComposition} />
-        </div>
-      </ListGroupItem>
-    );
-  }
-
-  elementalPropertiesItemContent(sample, materialGroup, show) {
-    if (!show) return false;
-
-    if (sample.contains_residues) {
-      return (
-        <ListGroupItem className="ea-section">
-          <PolymerSection
-            sample={sample}
-            parent={this}
-            show={sample.contains_residues}
-            materialGroup={materialGroup}
-          />
-        </ListGroupItem>
-      );
-    }
-    return (
-      <ListGroupItem className="ea-section">
-        <Row>
-          <Col md={6}>
-            <ElementalCompositionGroup
-              handleSampleChanged={(s) => this.handleSampleChanged(s)}
-              sample={sample}
-            />
-          </Col>
-        </Row>
-      </ListGroupItem>
-    );
-  }
-
-  elementalPropertiesItem(sample) {
-    // avoid empty ListGroupItem
-    if (!sample.molecule_formula) {
-      return false;
-    }
-
     const { showElementalComposition, materialGroup } = this.state;
 
     return (
-      <div width="100%" className="polymer-section">
-        {this.elementalPropertiesItemHeader(sample)}
-
-        {this.elementalPropertiesItemContent(sample, materialGroup, showElementalComposition)}
-      </div>
-    );
-  }
-
-  chemicalIdentifiersItemHeader(sample) {
-    return (
-      <ListGroupItem onClick={() => this.handleChemIdentSectionToggle()}>
-        <Col className="padding-right chem-identifiers-header" md={6}>
-          <b>Chemical identifiers</b>
-          {sample.decoupled
-            && (
-            <span className="text-danger">
-              &nbsp;[decoupled]
-            </span>
+      <Accordion className="polymer-section">
+        <Accordion.Item eventKey="0">
+          <Accordion.Header>{label}</Accordion.Header>
+          <Accordion.Body>
+            {showElementalComposition && (
+              sample.contains_residues ? (
+                <PolymerSection
+                  sample={sample}
+                  parent={this}
+                  show={sample.contains_residues}
+                  materialGroup={materialGroup}
+                />
+              ) : (     
+                <ElementalCompositionGroup
+                  handleSampleChanged={(s) => this.handleSampleChanged(s)}
+                  sample={sample}
+                />
+              )
             )}
-        </Col>
-        <div className="col-md-6">
-          <ToggleSection show={this.state.showChemicalIdentifiers} />
-        </div>
-      </ListGroupItem>
-    );
-  }
-
-  chemicalIdentifiersItemContent(sample, show) {
-    if (!show) return false;
-    return (
-      <ListGroupItem>
-        {this.moleculeInchi(sample)}
-        {this.moleculeCanoSmiles(sample)}
-        {this.moleculeMolfile(sample)}
-      </ListGroupItem>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     );
   }
 
   chemicalIdentifiersItem(sample) {
-    const show = this.state.showChemicalIdentifiers;
     return (
-      <div
-        width="100%"
+      <Accordion
         className={classNames({
           'chem-identifiers-section': true,
           decoupled: sample.decoupled
         })}
-      >
-        {this.chemicalIdentifiersItemHeader(sample)}
-        {this.chemicalIdentifiersItemContent(sample, show)}
-      </div>
+        >
+        <Accordion.Item eventKey="0">
+          <Accordion.Header>
+            <b>Chemical identifiers</b>
+            {sample.decoupled
+              && (
+              <span className="text-danger">
+                &nbsp;[decoupled]
+              </span>
+              )}
+          </Accordion.Header>
+          {this.state.showChemicalIdentifiers && (
+            <Accordion.Body>
+              {this.moleculeInchi(sample)}
+              {this.moleculeCanoSmiles(sample)}
+              {this.moleculeMolfile(sample)}
+            </Accordion.Body>
+          )}
+          </Accordion.Item>
+      </Accordion>
     );
   }
 
@@ -827,17 +768,15 @@ export default class SampleDetails extends React.Component {
         {
           !sample.isNew && <CommentSection section="sample_properties" element={sample} />
         }
-        <ListGroupItem>
-          <SampleForm
-            sample={sample}
-            parent={this}
-            customizableField={this.customizableField}
-            enableSampleDecoupled={this.enableSampleDecoupled}
-            decoupleMolecule={this.decoupleMolecule}
-          />
-        </ListGroupItem>
+        <SampleForm
+          sample={sample}
+          parent={this}
+          customizableField={this.customizableField}
+          enableSampleDecoupled={this.enableSampleDecoupled}
+          decoupleMolecule={this.decoupleMolecule}
+        />
         <EditUserLabels element={sample} />
-        {this.elementalPropertiesItem(sample)}
+        {sample.molecule_formula && this.elementalPropertiesItem(sample)}
         {this.chemicalIdentifiersItem(sample)}
       </Tab>
     );
@@ -891,9 +830,9 @@ export default class SampleDetails extends React.Component {
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
     const options = casArr?.map((element) => ({ label: element, value: element }));
     return (
-      <div className="form-row" style={{ maxWidth: '300px' }}>
-        <InputGroup className="sample-molecule-identifier">
-          <InputGroup.Addon>CAS</InputGroup.Addon>
+      <div className='my-4'>
+        <InputGroup>
+          <InputGroup.Text>CAS</InputGroup.Text>
           <Select.Creatable
             name="cas"
             multi={false}
@@ -904,22 +843,20 @@ export default class SampleDetails extends React.Component {
             value={cas}
             onBlur={validate}
             disabled={!sample.can_update}
+            className="flex-grow-1"
           />
-          <InputGroup.Button>
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button
-                active
-                className="clipboardBtn"
-                data-clipboard-text={cas}
-              >
-                <i className="fa fa-clipboard" />
-              </Button>
-            </OverlayTrigger>
-          </InputGroup.Button>
+          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+            <Button
+              active
+              variant="light"
+              className="clipboardBtn"
+              data-clipboard-text={cas}
+            >
+              <i className="fa fa-clipboard" />
+            </Button>
+          </OverlayTrigger>
         </InputGroup>
-        <div style={{ marginTop: '-11px' }}>
-          {!validCas && errorMessage}
-        </div>
+        {!validCas && errorMessage}
       </div>
     );
   }
@@ -1023,7 +960,7 @@ export default class SampleDetails extends React.Component {
     const inventorySample = (
       <Form.Check
         type="checkbox"
-        className="sample-inventory-header"
+        className="mx-3 sample-inventory-header"
         checked={sample.inventory_sample}
         onChange={(e) => this.handleInventorySample(e)}
         label="Inventory"
@@ -1033,7 +970,7 @@ export default class SampleDetails extends React.Component {
     const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
       <Form.Check
         type="checkbox"
-        className="sample-header-decouple"
+        className="mx-3 sample-header-decouple"
         checked={sample.decoupled}
         onChange={(e) => this.decoupleChanged(e)}
         label="Decoupled"
@@ -1113,7 +1050,7 @@ export default class SampleDetails extends React.Component {
     const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid
       ? sample.pubchem_tag.pubchem_cid : 0;
     const lcssSign = pubchemLcss && !sample.decoupled
-      ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
+      ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
 
     return (
       <Row style={style}>
@@ -1198,7 +1135,7 @@ export default class SampleDetails extends React.Component {
     }
     return (
       <InputGroup className="sample-molecule-identifier">
-        <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
+        <InputGroup.Text>Canonical Smiles</InputGroup.Text>
         <FormGroup controlId="smilesInput">
           <FormControl
             type="text"
@@ -1250,7 +1187,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <InputGroup className="sample-molecule-identifier">
-        <InputGroup.Addon>Molfile</InputGroup.Addon>
+        <InputGroup.Text>Molfile</InputGroup.Text>
         <FormGroup controlId="molfileInput">
           <FormControl
             componentClass="textarea"
@@ -1615,27 +1552,22 @@ export default class SampleDetails extends React.Component {
           {messageBlock}
         </Card.Header>
         <Card.Body>
-          <Card.Text>
-            Content
-            {/* {this.sampleInfo(sample)}
-            <ListGroup>
-              <ElementDetailSortTab
-                type="sample"
-                availableTabs={Object.keys(tabContentsMap)}
-                tabTitles={tabTitlesMap}
-                onTabPositionChanged={this.onTabPositionChanged}
-                addInventoryTab={sample.inventory_sample}
-              />
-              {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
-              <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-                {tabContents}
-              </Tabs>
-            </ListGroup>
-            {this.sampleFooter()}
-            {this.structureEditorModal(sample)}
-            {this.renderMolfileModal()}
-            <CommentModal element={sample} /> */}
-          </Card.Text>
+          {this.sampleInfo(sample)}
+          {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
+          <div className='tabs-container--with-borders'>
+            <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+              {this.samplePropertiesTab('properties')}
+              {this.sampleContainerTab('analyses')}
+              {this.sampleLiteratureTab()}
+              {this.sampleImportReadoutTab('results')}
+              {this.qualityCheckTab('qc_curation')}
+              {this.measurementsTab('measurements')}
+            </Tabs>
+          </div>
+          {this.sampleFooter()}
+          {this.structureEditorModal(sample)}
+          {/*this.renderMolfileModal()}
+          <CommentModal element={sample} /> */}
         </Card.Body>
       </Card>
     );
