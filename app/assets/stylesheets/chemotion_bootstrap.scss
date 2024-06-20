@@ -56,3 +56,14 @@ $table-bg: tranparent;
   border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
   border-radius: 0;
 }
+
+.tabs-container--with-borders {
+  @extend .mb-4;
+  .tab-content {
+    @extend .border-start;
+    @extend .border-bottom;
+    @extend .border-end;
+    @extend .p-3;
+    @extend .rounded-bottom;
+  }
+}

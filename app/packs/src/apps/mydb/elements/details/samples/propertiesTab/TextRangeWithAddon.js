@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, InputGroup, FormControl } from 'react-bootstrap';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import { FormGroup, InputGroup, Form } from 'react-bootstrap';
 
 export default class TextRangeWithAddon extends Component {
   handleInputChange(e) {
@@ -59,9 +58,9 @@ export default class TextRangeWithAddon extends Component {
     } = this.props;
     return (
       <FormGroup size="sm">
-        <ControlLabel>{label}</ControlLabel>
+        <Form.Label>{label}</Form.Label>
         <InputGroup data-cy={"cy_"+label}>
-          <FormControl
+          <Form.Control
             title={tipOnText}
             type="text"
             disabled={disabled}
@@ -71,7 +70,7 @@ export default class TextRangeWithAddon extends Component {
             onFocus={() => this.handleInputFocus()}
             onBlur={() => this.handleInputBlur()}
           />
-          <InputGroup.Addon>{addon}</InputGroup.Addon>
+          <InputGroup.Text>{addon}</InputGroup.Text>
         </InputGroup>
       </FormGroup>
     );

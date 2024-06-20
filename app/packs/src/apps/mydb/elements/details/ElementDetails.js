@@ -251,7 +251,7 @@ export default class ElementDetails extends Component {
     const variant = el.isPendingToSave ? 'info' : 'primary';
     const focusing = elKey === this.state.activeKey;
 
-    let iconElement = (<i className={`icon-${el.type}`} />);
+    let iconElement = (<i className={`me-1 icon-${el.type}`} />);
 
     const tab = tabInfoHash[el.type] || {};
     const title = tab.title || el.title();
@@ -261,9 +261,7 @@ export default class ElementDetails extends Component {
     return (
       <div>
         {icon}
-        &nbsp;&nbsp;&nbsp;
         {title}
-        &nbsp;
       </div>
     );
   }
