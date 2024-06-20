@@ -8,6 +8,7 @@ import Molecule from 'src/models/Molecule';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -171,6 +172,7 @@ export default class Sample extends Element {
   static buildEmpty(collection_id) {
     const sample = new Sample({
       collection_id,
+      name: '',
       type: 'sample',
       external_label: '',
       target_amount_value: 0,
@@ -200,7 +202,9 @@ export default class Sample extends Element {
       inventory_sample: false,
       molecular_mass: 0,
       sum_formula: '',
-      xref: {}
+      xref: {},
+      sample_type: 'Micromolecule',
+      components: []
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -332,6 +336,8 @@ export default class Sample extends Element {
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
+      sample_type: this.sample_type,
+      sample_details: this.sample_details,
     });
 
     return serialized;
@@ -488,19 +494,42 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
+    if (this.sample_type === 'Mixture' && this.reference_component) {
+      return this.reference_molarity_value;
+    }
     return this._molarity_value;
   }
 
   set molarity_value(molarity_value) {
     this._molarity_value = molarity_value;
+    this.concn = molarity_value
   }
 
   get molarity_unit() {
+    if (this.sample_type === 'Mixture' && this.reference_component) {
+      return this.reference_molarity_unit;
+    }
     return this._molarity_unit;
   }
 
   set molarity_unit(molarity_unit) {
     this._molarity_unit = molarity_unit;
+  }
+
+  get starting_molarity_value() {
+    return this._starting_molarity_value;
+  }
+
+  set starting_molarity_value(starting_molarity_value) {
+    this._starting_molarity_value = starting_molarity_value;
+  }
+
+  get starting_molarity_unit() {
+    return this._starting_molarity_unit;
+  }
+
+  set starting_molarity_unit(starting_molarity_unit) {
+    this._starting_molarity_unit = starting_molarity_unit;
   }
 
   get imported_readout() {
@@ -528,9 +557,13 @@ export default class Sample extends Element {
   }
 
   setAmount(amount) {
+    const prevTotalVolume = this.amount_l;
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
+    }
+    if (this.sample_type === 'Mixture' && this.components) {
+      this.updateMixtureComponentVolume(prevTotalVolume);
     }
   }
 
@@ -630,7 +663,7 @@ export default class Sample extends Element {
   }
 
   get has_molarity() {
-    return this.molarity_value > 0 && this.density === 0;
+    return this.molarity_value > 0 && (this.density === 0 || !this.density);
   }
 
   get has_density() {
@@ -784,6 +817,9 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
+    if (this.sample_type === 'Mixture') {
+      return this.reference_molecular_weight;
+    }
     if (this.decoupled) {
       return this.molecular_mass;
     }
@@ -887,7 +923,8 @@ export default class Sample extends Element {
   }
 
   get isValid() {
-    return (this && ((this.molfile && !this.decoupled) || this.decoupled)
+    const isValidMixture = this.sample_type === 'Mixture' && this.components?.length > 0;
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
       && !this.error_loading && !this.error_polymer_type);
   }
 
@@ -935,6 +972,55 @@ export default class Sample extends Element {
     return this._maxAmount;
   }
 
+  set sample_details(sample_details) {
+    this._sample_details = sample_details
+  }
+
+  get sample_details() {
+    return this._sample_details;
+  }
+
+  set total_molecular_weight(total_molecular_weight) {
+    this.sample_details.total_molecular_weight = total_molecular_weight;
+  }
+
+  get total_molecular_weight() {
+    if (!this.sample_details) { return null }
+    return this.sample_details.total_molecular_weight;
+  }
+
+  get reference_component() {
+    if (!this.components || this.components.length < 1) { return null }
+    return this.components.find(
+      (component) => component.reference === true
+    );
+  }
+
+  get reference_molecular_weight() {
+    if (this.sample_details) {
+      return this.sample_details.reference_molecular_weight;
+    }
+
+    if (!this.reference_component) { return null}
+    return this.reference_component.molecule.molecular_weight
+  }
+
+  set reference_molecular_weight(reference_molecular_weight) {
+    this.sample_details.reference_molecular_weight = reference_molecular_weight;
+  }
+
+  get reference_molarity_value() {
+    if (!this.reference_component) { return null}
+
+    return this.reference_component.molarity_value
+  }
+
+  get reference_molarity_unit() {
+    if (!this.reference_component) { return null}
+
+    return this.reference_component.molarity_unit
+  }
+
   serializeMaterial() {
     const params = this.serialize();
     const extra_params = {
@@ -944,10 +1030,14 @@ export default class Sample extends Element {
       show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
       waste: this.waste,
       coefficient: this.coefficient,
+      components: this.components && this.components.length > 0 
+      ? this.components.map(s => s.serializeComponent()) 
+      : []
     };
     _.merge(params, extra_params);
     return params;
   }
+
 
   // Container & Analyses routines
   addAnalysis(analysis) {
@@ -1037,9 +1127,243 @@ export default class Sample extends Element {
         && solv.inchikey && solventToUpdate.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents[filteredIndex] = solventToUpdate;
+
+      if (tmpSolvents.length > 1 && tmpSolvents.every(solv => solv.amount_l)) {
+        const totalVolume = tmpSolvents.reduce((acc, solv) => acc + solv.amount_l, 0);
+        const minRatio = Math.min(...tmpSolvents.map(solv => solv.amount_l / totalVolume));
+        const scale = 1 / minRatio;
+
+        tmpSolvents.forEach(solv => {
+          solv.ratio = Number((solv.amount_l / totalVolume) * scale).toFixed(1);
+        });
+      }
     }
     this.solvent = tmpSolvents;
   }
+
+  updateSampleType(newSampleType) {
+    this.sample_type = newSampleType;
+  }
+
+  initialComponents(components) {
+    this.components = components.sort((a, b) => a.position - b.position);
+  }
+
+  async addMixtureComponent(newComponent) { 
+    const tmpComponents = [...(this.components || [])];
+    const isNew = !tmpComponents.some(component => component.molecule.iupac_name === newComponent.molecule.iupac_name
+                                || component.molecule.inchikey === newComponent.molecule.inchikey
+                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound) 
+
+    if (!newComponent.material_group){
+      newComponent.material_group = 'liquid';
+    }
+
+    if (!newComponent.purity) {
+      newComponent.purity = 1;
+    }
+
+    if (isNew){
+      tmpComponents.push(newComponent);
+      this.components = tmpComponents;
+      this.setComponentPositions()
+
+      if (!this.molecule_cano_smiles
+        || !this.molecule_cano_smiles.split('.').some(smiles => smiles === newComponent.molecule_cano_smiles)) {
+        const newSmiles = this.molecule_cano_smiles ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}` : newComponent.molecule_cano_smiles;
+
+        const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+        this.molecule = result;
+        this.molfile = result.molfile;
+      }
+    }
+  }
+ 
+  async deleteMixtureComponent(componentToDelete) {
+    const tmpComponents = [...(this.components || [])];
+    const filteredComponents = tmpComponents.filter(
+      (comp) => comp !== componentToDelete
+    );
+    this.components = filteredComponents;
+
+    if (!this.molecule_cano_smiles || this.molecule_cano_smiles === '') {
+      this.molecule = null;
+      this.molfile = '';
+      return;
+    }
+
+    const smilesToRemove = componentToDelete.molecule_cano_smiles;
+    const newSmiles = this.molecule_cano_smiles
+    .split('.')
+    .filter(smiles => smiles !== smilesToRemove && !smilesToRemove.split('.').includes(smiles))
+    .join('.');
+
+    if (newSmiles !== this.molecule_cano_smiles ){
+      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2')
+      this.molecule = result;
+      this.molfile = result.molfile; 
+    }
+    this.setComponentPositions()
+  } 
+
+
+  updateMixtureComponentVolume(prevTotalVolume) {
+    if (this.components.length < 1) {
+      return;
+    }
+    const totalVolume = this.amount_l;
+  
+    this.components.forEach((component) => {
+      const purity = component.purity || 1.0;
+      if (component.material_group === 'liquid') {
+        if (component.concn > 0 && component.starting_molarity_value > 0) {
+          component.amount_l = component.concn * totalVolume / component.starting_molarity_value;
+        } else if (component.density && component.density > 0) {
+          component.amount_l = component.amount_l * (totalVolume / prevTotalVolume);
+        }
+      } else if (component.material_group === 'solid') {
+        if (component.concn > 0) {
+          component.amount_mol = component.concn * totalVolume;
+          component.amount_g = component.molecule_molecular_weight * component.amount_mol;
+        }
+      }
+
+      component.amount_mol = totalVolume * component.molarity_value * purity;
+    });
+  }
+
+  setReferenceComponent(componentIndex) {
+    this.components[componentIndex].equivalent = 1
+    this.components[componentIndex].reference = true
+
+    this.components.forEach((component, index) => {
+      if (index !== componentIndex) {
+          component.reference = false;
+      }
+    });
+
+    if (!this.sample_details) {
+      this.sample_details = {};
+    }
+    this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
+
+    this.updateMixtureComponentEquivalent()
+  }
+
+  updateMixtureComponentEquivalent() {
+    let referenceIndex = this.components.findIndex(component => component.reference);
+
+    if (referenceIndex === -1) {
+      referenceIndex = this.components.findIndex(component => component.position === 0);
+      if (referenceIndex !== -1) {
+        this.setReferenceComponent(referenceIndex);
+      }
+    }
+
+    const referenceMol = this.components[referenceIndex].amount_mol;
+
+    for (let i = 0; i < this.components.length; i++) {
+        if (i === referenceIndex) continue;
+        this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
+    }
+
+    this.updateMixtureMolecularWeight();
+  }
+
+  updateMixtureMolecularWeight() {
+    if (this.components && this.components.length <= 1) { return };
+
+    const totalAmount = this.components.reduce((acc, component) => acc + component.amount_mol, 0);
+    let totalMolecularWeight = 0;
+
+    if (!this.sample_details) {
+      this.sample_details = {};
+    }
+
+    if (totalAmount === 0) {
+      this.sample_details.total_molecular_weight = 0;
+      return;
+    }
+
+    for (let i = 0; i < this.components.length; i++) {
+      const moleFraction = this.components[i].amount_mol / totalAmount
+      totalMolecularWeight += this.components[i].molecule.molecular_weight * moleFraction;
+    }
+
+    this.sample_details.total_molecular_weight = totalMolecularWeight
+  }
+
+  moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
+    const srcIndex = this.components.findIndex(mat => mat === srcMat);
+    const tagIndex = this.components.findIndex(mat => mat === tagMat);
+
+    if (srcIndex === tagIndex) {
+      return;
+    }
+
+    this.components[srcIndex].material_group = tagGroup;
+
+    if (!tagMat && srcMat !== tagGroup) {
+      return this.setComponentPositions()
+    }
+
+    const movedMat = this.components.splice(srcIndex, 1)[0];
+    this.components.splice(tagIndex, 0, movedMat);
+    this.setComponentPositions()
+  }
+
+  async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
+    const srcIndex = this.components.findIndex(mat => mat === srcMat);
+    const tagIndex = this.components.findIndex(mat => mat === tagMat);
+  
+    if (srcIndex === -1 || tagIndex === -1) {
+      console.error('Source or target material not found in components.');
+      return;
+    }
+    const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
+  
+    try {
+      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+      const newComponent = Sample.buildNew(newMolecule, this.collection_id);
+      newComponent.material_group = tagGroup;
+
+      await this.deleteMixtureComponent(tagMat)
+      await this.deleteMixtureComponent(srcMat)
+      await this.addMixtureComponent(newComponent);
+  
+    } catch (error) {
+      console.error('Error merging components:', error);
+    }
+  }
+  
+  setComponentPositions() {
+    this.components.forEach((mat, index) => {
+      mat.position = index;
+    });
+  }  
+
+  splitSmilesToMolecule(mixtureSmiles, editor) {
+    const promises = mixtureSmiles.map(smiles => {
+      return MoleculesFetcher.fetchBySmi(smiles, null, null, editor);
+    });
+    
+    return Promise.all(promises)
+      .then(mixtureMolecules => {
+        return this.mixtureMoleculeToSubsample(mixtureMolecules);
+      })
+      .catch(errorMessage => {
+        console.log(errorMessage);
+        return [];
+      });
+  }
+
+  mixtureMoleculeToSubsample(mixtureMolecules){
+    mixtureMolecules.map(async molecule => {
+      const newSample = Sample.buildNew(molecule, this.collection_id);
+      await this.addMixtureComponent(newSample);
+    });
+  }
+
 }
 
 Sample.counter = 0;

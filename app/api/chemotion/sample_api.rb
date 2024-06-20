@@ -347,6 +347,8 @@ module Chemotion
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
         # use :root_container_params
+        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
 
       route_param :id do
@@ -393,7 +395,14 @@ module Chemotion
           attributes.delete(:melting_point_lowerbound)
           attributes.delete(:melting_point_upperbound)
 
+          micro_att = {
+            name: params[:name],
+            molfile: params[:molfile],
+            stereo: params[:stereo],
+          }
+
           @sample.update!(attributes)
+          @sample.micromolecule&.update(micro_att)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
           # save to profile
@@ -453,6 +462,8 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -475,7 +486,6 @@ module Chemotion
           dry_solvent: params[:dry_solvent],
           solvent: params[:solvent],
           location: params[:location],
-          molfile: params[:molfile],
           molecule_id: molecule_id,
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
@@ -484,12 +494,20 @@ module Chemotion
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
           xref: params[:xref],
-          stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id],
           decoupled: params[:decoupled],
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
+          sample_type: params[:sample_type],
+          molfile: params[:molfile],
+          stereo: params[:stereo],
+          sample_details: params[:sample_details],
+        }
+        micro_att = {
+          name: params[:name],
+          molfile: params[:molfile],
+          stereo: params[:stereo],
         }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
@@ -543,9 +561,15 @@ module Chemotion
           sample.collections << all_coll
         end
 
+        case params[:sample_type]
+        when 'Micromolecule'
+          micromolecule = Micromolecule.new(micro_att)
+          micromolecule.samples << sample
+          micromolecule.save!
+        end
+
         sample.container = update_datamodel(params[:container])
         sample.save!
-
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
         # save to profile
@@ -566,7 +590,9 @@ module Chemotion
 
         delete do
           sample = Sample.find(params[:id])
+          micromolecule = Micromolecule.find_by(id: sample.micromolecule_id)
           sample.destroy
+          micromolecule&.destroy
         end
       end
     end
