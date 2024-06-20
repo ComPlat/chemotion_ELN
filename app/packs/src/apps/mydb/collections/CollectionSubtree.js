@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Glyphicon, OverlayTrigger } from 'react-bootstrap';
+import { Glyphicon, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import GatePushBtn from 'src/components/common/GatePushBtn';
@@ -134,9 +134,11 @@ export default class CollectionSubtree extends React.Component {
 
     if (root.canTakeOwnership()) {
       return (
-        <div className="take-ownership-btn">
-          <i className="fa fa-exchange" onClick={() => this.handleTakeOwnership(root)} />
-        </div>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="takeOwnership">Take Ownership</Tooltip>}>
+          <div className="take-ownership-btn">
+            <i className="fa fa-exchange" onClick={() => this.handleTakeOwnership(root)} />
+          </div>
+        </OverlayTrigger>
       )
     }
     return (<div />);
