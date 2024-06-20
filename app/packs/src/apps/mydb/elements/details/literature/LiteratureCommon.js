@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, FormControl, OverlayTrigger, Tooltip
+  Form, Button, FormControl, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import Literature from 'src/models/Literature';
@@ -39,7 +39,7 @@ function LiteralType({
   citationMap = createCitationTypeMap('')
 }) {
   return (
-    <FormControl
+    <Form.Select
       componentClass="select"
       onChange={(event) => handleInputChange('litype', event)}
       placeholder="type"
@@ -56,7 +56,7 @@ function LiteralType({
           </option>
         )
       )}
-    </FormControl>
+    </Form.Select>
   );
 }
 

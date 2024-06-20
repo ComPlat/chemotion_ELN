@@ -1,11 +1,10 @@
 import React from 'react';
 import {
-  ButtonGroup, Button, OverlayTrigger, Tooltip, Popover
+  Accordion, ButtonGroup, Button, OverlayTrigger, Tooltip, Popover
 } from 'react-bootstrap';
 import { uniq } from 'lodash';
 import { Citation, literatureContent } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import { CitationType, CitationTypeMap, CitationTypeEOL } from 'src/apps/mydb/elements/details/literature/CitationType';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const changeTypeBtn = (litype, updId, fn, typeMap, readOnly = false) => {
   const cands = Object.keys(typeMap).filter((e) => (e !== litype) && e !== 'uncategorized');
@@ -106,19 +105,17 @@ function CitationPanel(props) {
 
   result = (result.length > 0) ? result : <span>(No Data)</span>;
   return (
-    <Panel id={`_citation_panel_${title}`} defaultExpanded className="panel-cite">
-      <Panel.Heading>
-        <Panel.Title toggle>
+    <Accordion defaultActiveKey="0" className='mb-4'>
+      <Accordion.Item eventKey="0">
+        <Accordion.Header>
           &bull;&nbsp;
           {citationMap.def}
-        </Panel.Title>
-      </Panel.Heading>
-      <Panel.Collapse>
-        <Panel.Body>
+        </Accordion.Header>
+        <Accordion.Body>
           {result}
-        </Panel.Body>
-      </Panel.Collapse>
-    </Panel>
+        </Accordion.Body>
+      </Accordion.Item>
+    </Accordion>
   );
 }
 
