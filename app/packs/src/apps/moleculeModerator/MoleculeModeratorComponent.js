@@ -194,13 +194,13 @@ export default class MoleculeModeratorComponent extends Component {
               <Form horizontal className="input-form">
                 <FormGroup controlId="formControlId">
                   <InputGroup>
-                    <InputGroup.Addon>Attr.</InputGroup.Addon>
+                    <InputGroup.Text>Attr.</InputGroup.Text>
                     <FormControl type="text" defaultValue={molName.description} readOnly />
                   </InputGroup>
                 </FormGroup>
                 <FormGroup controlId="formControlName">
                   <InputGroup>
-                    <InputGroup.Addon>Molecule name</InputGroup.Addon>
+                    <InputGroup.Text>Molecule name</InputGroup.Text>
                     <FormControl type="text" defaultValue={molName.name} inputRef={(ref) => { this.m_name = ref; }} />
                   </InputGroup>
                 </FormGroup>

@@ -85,7 +85,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       <div>
         <FormGroup style={{ width: '30%' }}>
           <InputGroup>
-            <InputGroup.Addon>Zoom</InputGroup.Addon>
+            <InputGroup.Text>Zoom</InputGroup.Text>
             <FormControl
               type="number"
               max="100"
@@ -94,7 +94,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
               defaultValue={field.value.zoom}
               onChange={(event) => this.handleResizeChange(event)}
             />
-            <InputGroup.Addon>%</InputGroup.Addon>
+            <InputGroup.Text>%</InputGroup.Text>
             <div className="image-annotation-button-researchplan">
               <ImageAnnotationEditButton
                 parent={this}
