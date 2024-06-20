@@ -287,7 +287,7 @@ const DetailSearch = () => {
             value={selectedValue ? selectedValue[column].value : ''}
             onChange={handleFieldChanged(option, column, type)}
           />
-          <InputGroup.Addon>{option.addon}</InputGroup.Addon>
+          <InputGroup.Text>{option.addon}</InputGroup.Text>
         </InputGroup>
       </FormGroup>
     );
@@ -304,7 +304,7 @@ const DetailSearch = () => {
       );
     } else {
       return (
-        <InputGroup.Addon dangerouslySetInnerHTML={{ __html: value }} />
+        <InputGroup.Text dangerouslySetInnerHTML={{ __html: value }} />
       );
     }
   }
@@ -425,7 +425,7 @@ const DetailSearch = () => {
           validationState={validationState}
         >
           <InputGroup>
-            <InputGroup.Addon>{field.addon}</InputGroup.Addon>
+            <InputGroup.Text>{field.addon}</InputGroup.Text>
             <FormControl
               id={`input_${column}_${field.key}`}
               type="text"
