@@ -43,7 +43,7 @@ module Chemotion
       route_param :collection_id do
         desc 'get inventory label and counter for a collection'
         get do
-          inventory = Collection.by_collection_id(params[:collection_id]).first
+          inventory = Inventory.by_collection_id(params[:collection_id]).first
           present inventory, with: Entities::InventoryEntity
         rescue ActiveRecord::RecordNotFound => e
           error!({ error: e.message }, 404)
