@@ -1,5 +1,5 @@
 shared:
-  :desc: 'configuration missing - service disabled'
+  :desc: 'configuration missing or invalid - service disabled'
   :disabled: true
   :disabled?: true
   :enabled: false
