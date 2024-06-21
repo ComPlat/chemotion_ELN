@@ -1,22 +1,36 @@
 # frozen_string_literal: true
 
-# This initializer loads the optional configuration for the backend ketcher rendering service
-ref = "Initializing #{File.basename(__FILE__, '.rb')}:"
+# This initializer loads the optional configuration for:
+#   the ketcher rendering service
+
+# Specific
+validations = lambda do |config, service|
+  url = URI.parse(config.send(service)&.url)
+  raise ArgumentError, "Invalid URL: #{url}" unless url.host && %w[http https].include?(url.scheme)
+
+  # set description
+  config.send(service).desc = "service hosted at: #{url}"
+end
+
+# Generic initialization
+service = File.basename(__FILE__, '.rb').to_sym # Service name
+service_setter = "#{service}=".to_sym # Service setter
+ref = "Initializing #{service}:" # Message prefix
 
 Rails.application.configure do
-  config.ketcher_service = config_for :ketcher_service # Load config/.yml
+  config.send(service_setter, config_for(service)) # Load config/.yml
 
-  # Validate expected settings (url)
-  url = URI.parse(config.ketcher_service.url)
-  raise ArgumentError, "#{ref} Invalid URL: #{url}" unless url.host && %w[http https].include?(url.scheme)
-  ##################################
+  validations.call(config, service) # Validate configuration
 
-rescue RuntimeError, ArgumentError, URI::InvalidURIError # Rescue: RuntimeError is raised if the file is not found
-  config.ketcher_service = nil                           # Create service key or clear config
+# Rescue:
+# - RuntimeError is raised if the file is not found
+# - NoMethodError is raised if the yml file cannot be parsed
+rescue RuntimeError, NoMethodError, ArgumentError, URI::InvalidURIError => e
+  Rails.logger.warn "#{ref} Error while loading configuration #{e.message}"
+  # Create service key or clear config
+  config.send(service_setter, nil)
 ensure
   # Load default missing configuration if the yml file not found or no config is defined for the environment
-  config.ketcher_service ||= config_for :default_missing
-
-  info = config.ketcher_service.url.presence || config.ketcher_service.desc
-  Rails.logger.info "#{ref} Ketcher-render service: #{info}"
+  config.send(service_setter, config_for(:default_missing)) unless config.send(service)
+  Rails.logger.info "#{ref} #{config.send(service).desc}"
 end

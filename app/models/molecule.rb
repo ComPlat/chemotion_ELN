@@ -253,7 +253,7 @@ class Molecule < ApplicationRecord
   end
 
   def self.svg_reprocess(svg, molfile)
-    return svg unless Rails.configuration.ketcher_service.url.present?
+    return svg if Rails.configuration.ketcher_service.disabled?
     return svg if svg.present? && !svg&.include?('Open Babel')
 
     svg = KetcherService::RenderSvg.svg(molfile)
