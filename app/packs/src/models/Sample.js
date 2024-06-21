@@ -211,6 +211,7 @@ export default class Sample extends Element {
       molecular_mass: 0,
       sum_formula: '',
       xref: {},
+      gas_type: 'off',
     });
     
     sample.short_label = Sample.buildNewShortLabel();
@@ -232,6 +233,7 @@ export default class Sample extends Element {
     sample.container = Container.init();
     sample.can_update = true;
     sample.can_copy = false;
+    sample.gas_type = 'off';
     return sample;
   }
   
@@ -257,6 +259,7 @@ export default class Sample extends Element {
     newSample.density = sample.density;
     newSample.metrics = sample.metrics;
     newSample.molfile = sample.molfile || '';
+    newSample.gas_type = 'off';
     return newSample;
   }
   
@@ -288,6 +291,7 @@ export default class Sample extends Element {
     splitSample.split_label = splitSample.buildSplitShortLabel();
     // Todo ???
     splitSample.container = Container.init();
+    splitSample.gas_type = 'off';
     return splitSample;
   }
   
