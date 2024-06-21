@@ -11320,14 +11320,6 @@ raw-body@2.5.2:
     iconv-lite "0.4.24"
     unpipe "1.0.0"
 
-raw-loader@^4.0.2:
-  version "4.0.2"
-  resolved "https://registry.npmjs.org/raw-loader/-/raw-loader-4.0.2.tgz"
-  integrity sha512-ZnScIV3ag9A4wPX/ZayxL/jZH+euYb6FcUinPcgiQW0+UBtEv0O6Q3lGd3cqJ+GHH+rksEv3Pj99oxJ3u3VIKA==
-  dependencies:
-    loader-utils "^2.0.0"
-    schema-utils "^3.0.0"
-
 rc-cascader@~3.25.0:
   version "3.25.0"
   resolved "https://registry.yarnpkg.com/rc-cascader/-/rc-cascader-3.25.0.tgz#0967b75f2ea0d5bed41dce4505c3531ec7bb949d"
@@ -12489,11 +12481,6 @@ redux-form@^8.3.7:
     lodash "^4.17.15"
     prop-types "^15.6.1"
     react-is "^16.4.2"
-
-redux-immutable@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/redux-immutable/-/redux-immutable-4.0.0.tgz"
-  integrity sha1-Ohoy32Y2ZGK2NpHw4dw15HK7yfM=
 
 redux-logger@^3.0.6:
   version "3.0.6"
