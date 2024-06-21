@@ -56,9 +56,51 @@ const formatBytes = (bytes, decimals = 2) => {
   return `${parseFloat((bytes / (k ** i)).toFixed(dm))} ${sizes[i]}`;
 };
 
+/**
+ * Parse a string into a number.
+ *
+ * All characters other than digits, commas, and periods are ignored,
+ * with the exception of an optional leading dash to indicate a negative number.
+ * The string may contain a decimal separator, which can be either a comma or a period.
+ * All other periods or commas (such as thousands separators) are ignored.
+ *
+ * @param {string} numberString - The string to parse.
+ * @returns {number|NaN} - The parsed number or NaN if parsing fails.
+ */
+function parseNumericString(numberString) {
+  if (typeof numberString !== 'string') {
+    return NaN;
+  }
+  let sanitizedNumberString = numberString;
+
+  // Remove all characters that aren't digits, commas, or periods.
+  sanitizedNumberString = sanitizedNumberString.replace(/[^0-9,.]/g, '');
+  if (sanitizedNumberString === '') {
+    return NaN;
+  }
+
+  // Decimal separator can be comma or period. Convert to period.
+  sanitizedNumberString = sanitizedNumberString.replaceAll(',', '.');
+  // Keep only final (non-terminal) period under the assumption that it's meant as the decimal separator.
+  // Assume that preceding periods were meant as thousands separators.
+  const finalPeriodIndex = sanitizedNumberString.lastIndexOf('.');
+  if (finalPeriodIndex !== -1) {
+    sanitizedNumberString = `${sanitizedNumberString.slice(0, finalPeriodIndex).replaceAll('.', '')
+    }.${
+      sanitizedNumberString.slice(finalPeriodIndex + 1)}`;
+  }
+
+  if (numberString.startsWith('-')) {
+    sanitizedNumberString = `-${sanitizedNumberString}`;
+  }
+
+  return Number(sanitizedNumberString);
+}
+
 export {
   fixDigit,
   validDigit,
   correctPrefix,
   formatBytes,
+  parseNumericString,
 };
