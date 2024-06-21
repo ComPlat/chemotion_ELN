@@ -14,14 +14,12 @@ end
 
 # Generic initialization
 service = File.basename(__FILE__, '.rb').to_sym # Service name
-service_setter = "#{service}=".to_sym # Service setter
+service_setter = :"#{service}=" # Service setter
 ref = "Initializing #{service}:" # Message prefix
 
 Rails.application.configure do
   config.send(service_setter, config_for(service)) # Load config/.yml
-
   validations.call(config, service) # Validate configuration
-
 # Rescue:
 # - RuntimeError is raised if the file is not found
 # - NoMethodError is raised if the yml file cannot be parsed
