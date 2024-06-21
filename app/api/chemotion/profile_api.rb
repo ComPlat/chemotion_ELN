@@ -69,7 +69,7 @@ module Chemotion
             profile.user_templates.each do |x|
               if(x)
                 file_path = Rails.root.join('uploads', Rails.env, x) 
-                # TODO:H path needs to be replaced by neutral-> development/production
+                # TODO:H how file will be uploaded to cloud storage
 
                 if File.exist?(file_path)
                   content = File.read(file_path)

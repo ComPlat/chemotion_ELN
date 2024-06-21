@@ -20,7 +20,6 @@ import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import ProfilesFetcher from '../../fetchers/ProfilesFetcher';
-import UserActions from '../../../src/stores/alt/actions/UserActions';
 
 const DEFAULT_EDITOR_KETCHER2 = 'ketcher2';
 const notifyError = (message) => {
@@ -225,6 +224,7 @@ export default class StructureEditorModal extends React.Component {
       matriceConfigs: [],
       editor: initEditor(),
       copyOfLocalStorage: JSON.parse(localStorage.getItem(key)) || [],
+      deleteAllowed: true,
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -252,31 +252,33 @@ export default class StructureEditorModal extends React.Component {
   }
 
   updateCopyOfStorageTemplates() {
-    // may be need to call the API to overwrite the storage again!!!! as having issues with updation of local storage and sudden issues of not reflecting the data correctly.
-    // UserActions.setUsertemplates().then(() => {
-    //   this.setState({
-    //     copyOfLocalStorage: JSON.parse(localStorage.getItem(key)),
-    //   });
-    // });
-    console.log(JSON.parse(localStorage.getItem(key)));
-
     this.setState({
       copyOfLocalStorage: JSON.parse(localStorage.getItem(key)),
     });
+  }
+
+  async deleteAndStoreItemAgain(item) {
+    const res = await ProfilesFetcher.uploadUserTemplates({
+      content: JSON.stringify(item),
+    });
+    const attachment_id = res?.template_details?.attachment_data?.id;
+    console.log(attachment_id);
+    await UsersFetcher.updateUserProfile({
+      user_templates: attachment_id,
+    }).catch((err) => console.log('ISSUE WITH create'));
   }
 
   localStorageEventListener() {
     window.addEventListener(
       'storage',
       async (event) => {
-        alert('IN EVENT');
-        if (event.key === key) {
+        const { deleteAllowed } = this.state;
+        if (event.key === key && deleteAllowed) { // add
           const localTemplates = JSON.parse(localStorage.getItem(key)) || [];
           const { copyOfLocalStorage } = this.state;
 
           if (copyOfLocalStorage?.length < localTemplates?.length) {
             const item = localTemplates[localTemplates.length - 1];
-            item.props.id = Math.random().toString(16).slice(2);
 
             const res = await ProfilesFetcher.uploadUserTemplates({
               content: JSON.stringify(item),
@@ -284,8 +286,9 @@ export default class StructureEditorModal extends React.Component {
             const attachment_id = res?.template_details?.attachment_data?.id;
 
             // update localstorage entry with file path!!!
-            const updatedLS = localTemplates[localTemplates.length - 1];
+            let updatedLS = localTemplates[localTemplates.length - 1];
             updatedLS.props.path = attachment_id;
+            // updatedLS.props.id = Math.random().toString(16).slice(2);;
             localTemplates[localTemplates.length - 1] = updatedLS;
             localStorage.setItem(key, JSON.stringify(localTemplates));
 
@@ -295,13 +298,12 @@ export default class StructureEditorModal extends React.Component {
             });
 
             this.updateCopyOfStorageTemplates();
-          } else if (localTemplates.length < copyOfLocalStorage.length) {
-            const listOfLocalid = localTemplates.map((item) => item?.props?.id);
-
+          } else if (localTemplates.length < copyOfLocalStorage.length) { // delete
+            const listOfLocalid = localTemplates.map((item) => item.props.path);
             for (let i = 0; i < copyOfLocalStorage.length; i++) {
               const localItem = copyOfLocalStorage[i];
               const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
-                localItem.props.id
+                localItem.props.path
               );
               if (itemIndexShouldBeRemoved == -1) {
                 await ProfilesFetcher.deleteUserTemplate({
@@ -311,9 +313,33 @@ export default class StructureEditorModal extends React.Component {
               }
             }
             this.updateCopyOfStorageTemplates();
-          } else {
-            // 'BOTH ATTEMPTS FAILED!!!!!
+          } else { // edited 
+            const listOfLocalNames = localTemplates.map(
+              (item) => JSON.parse(item.struct).header.moleculeName
+            );
+
+            for (let i = 0; i < copyOfLocalStorage.length; i++) {
+              const localItem = JSON.parse(copyOfLocalStorage[i].struct);
+
+              const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
+                localItem.header.moleculeName
+              );
+
+              if (itemIndexShouldBeRemoved == -1) {
+                await ProfilesFetcher.deleteUserTemplate({
+                  path: localTemplates[i].props.path,
+                }).catch((err) =>
+                  console.log('ISSUE WITH DELETE', localItem?.props?.path)
+                );
+                this.deleteAndStoreItemAgain(localTemplates[i]);
+                break;
+              } else {
+                console.log('INDEX NOT FOUND@');
+              }
+            }
           }
+        } else {
+          this.setState({ deleteAllowed: true });
         }
       },
       false
