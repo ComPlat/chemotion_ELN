@@ -31,9 +31,9 @@ function KetcherEditor(props) {
 
   useEffect(() => {
     const iframe = iframeRef.current;
-    // if (iframe) {
-    //   injectGlobalValues(iframe);
-    // }
+    if (iframe) {
+      injectGlobalValues(iframe);
+    }
     window.addEventListener('message', loadContent);
     return () => {
       window.removeEventListener('message', loadContent);
