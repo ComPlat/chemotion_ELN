@@ -21,18 +21,16 @@ export default class ElementsTableSettings extends React.Component {
       showSampleExternalLabel: false,
       showSampleShortLabel: false,
       showSampleName: false,
-      tableSchemePreviews: true,
-      showTabLayoutContainer: false
+      tableSchemePreviews: true
     }
 
-    this.onCloseTabLayoutContainer = this.onCloseTabLayoutContainer.bind(this);
+    this.onToggleTabLayoutContainer = this.onToggleTabLayoutContainer.bind(this);
     this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
     this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
     this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
     this.handleToggleScheme = this.handleToggleScheme.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
   }
 
   // to force popups to stay anchored to button
@@ -72,27 +70,28 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  onCloseTabLayoutContainer() {
-    this.toggleTabLayoutContainer();
-    this.updateLayout();
-
-    if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
-      const show_previews = UIStore.getState().showPreviews;
-      const cur_previews = this.state.tableSchemePreviews;
-      if (cur_previews != show_previews) {
-        UIActions.toggleShowPreviews(cur_previews);
-
+  onToggleTabLayoutContainer(show) {
+    if (!show) {
+      this.updateLayout();
+  
+      if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
+        const show_previews = UIStore.getState().showPreviews;
+        const cur_previews = this.state.tableSchemePreviews;
+        if (cur_previews != show_previews) {
+          UIActions.toggleShowPreviews(cur_previews);
+  
+        }
+  
       }
-
+  
+      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+  
+      UserActions.updateUserProfile({
+        show_external_name: showSampleExternalLabel,
+        show_sample_short_label: showSampleShortLabel,
+        show_sample_name: showSampleName
+      });
     }
-
-    const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-
-    UserActions.updateUserProfile({
-      show_external_name: showSampleExternalLabel,
-      show_sample_short_label: showSampleShortLabel,
-      show_sample_name: showSampleName
-    });
   }
 
   // eslint-disable-next-line camelcase
@@ -149,10 +148,6 @@ export default class ElementsTableSettings extends React.Component {
     const userProfile = UserStore.getState().profile;
     _.set(userProfile, 'data.layout', layout);
     UserActions.updateUserProfile(userProfile);
-  }
-
-  toggleTabLayoutContainer() {
-    this.setState({ showTabLayoutContainer: !this.state.showTabLayoutContainer });
   }
 
   render() {
@@ -226,7 +221,12 @@ export default class ElementsTableSettings extends React.Component {
 
     return (
       <div className="position-absolute top-0 end-0">
-        <OverlayTrigger trigger="click" placement="bottom" overlay={popoverSettings}>
+        <OverlayTrigger
+          trigger="click"
+          placement="bottom"
+          overlay={popoverSettings}
+          onToggle={this.onToggleTabLayoutContainer}
+        >
           <Button
             size="xsm"
             variant="light"
