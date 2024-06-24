@@ -70,7 +70,6 @@ module Chemotion
             next unless x
 
             file_path = Rails.root.join('uploads', Rails.env, x)
-            # TODO:H how file will be uploaded to cloud storage
             next unless File.exist?(file_path)
 
             content = File.read(file_path)
@@ -177,7 +176,7 @@ module Chemotion
           rescue StandardError
             error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
           ensure
-            FileUtils.rm_f(file_path)
+            File.delete(file_path)
           end
           { template_details: template_attachment }
         rescue Errno::EACCES
@@ -195,7 +194,7 @@ module Chemotion
 
         # remove file from store
         file_path = Rails.root.join('uploads', Rails.env, params[:path])
-        FileUtils.rm_f(file_path)
+        File.delete(file_path)
 
         # update profile
         new_profile = {
