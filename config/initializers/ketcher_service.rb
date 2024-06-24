@@ -1,13 +1,34 @@
 # frozen_string_literal: true
 
-if File.exist? Rails.root.join('config', 'ketcher_service.yml')
-  ketcher_svc_config = Rails.application.config_for(:ketcher_service)
-  url = ketcher_svc_config[:url]
+# This initializer loads the optional configuration for:
+#   the ketcher rendering service
 
-  Rails.application.configure do
-    config.ketcher_service = ActiveSupport::OrderedOptions.new
-    config.ketcher_service.url = url
-  end
+# Specific
+validations = lambda do |config, service|
+  url = URI.parse(config.send(service)&.url)
+  raise ArgumentError, "Invalid URL: #{url}" unless url.host && %w[http https].include?(url.scheme)
 
-  Rails.logger.info("Render service configured at: #{Rails.configuration.try(:ketcher_service).try(:url)}")
+  # set description
+  config.send(service).desc = "service hosted at: #{url}"
+end
+
+# Generic initialization
+service = File.basename(__FILE__, '.rb').to_sym # Service name
+service_setter = :"#{service}=" # Service setter
+ref = "Initializing #{service}:" # Message prefix
+
+Rails.application.configure do
+  config.send(service_setter, config_for(service)) # Load config/.yml
+  validations.call(config, service) # Validate configuration
+# Rescue:
+# - RuntimeError is raised if the file is not found
+# - NoMethodError is raised if the yml file cannot be parsed
+rescue RuntimeError, NoMethodError, ArgumentError, URI::InvalidURIError => e
+  Rails.logger.warn "#{ref} Error while loading configuration #{e.message}"
+  # Create service key or clear config
+  config.send(service_setter, nil)
+ensure
+  # Load default missing configuration if the yml file not found or no config is defined for the environment
+  config.send(service_setter, config_for(:default_missing)) unless config.send(service)
+  Rails.logger.info "#{ref} #{config.send(service).desc}"
 end
