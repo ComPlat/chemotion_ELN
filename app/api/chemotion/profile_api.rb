@@ -65,20 +65,19 @@ module Chemotion
           data[dt] = sorted_layout
         end
 
-        if profile && profile.user_templates 
-            profile.user_templates.each do |x|
-              if(x)
-                file_path = Rails.root.join('uploads', Rails.env, x) 
-                # TODO:H how file will be uploaded to cloud storage
+        if profile.user_templates?
+          profile.user_templates.each do |x|
+            next unless x
 
-                if File.exist?(file_path)
-                  content = File.read(file_path)
-                  content = JSON(content)
-                  content['props']['path'] = x
-                  templates_list.push(content);
-                end
-            end
-            end
+            file_path = Rails.root.join('uploads', Rails.env, x)
+            # TODO:H how file will be uploaded to cloud storage
+            next unless File.exist?(file_path)
+
+            content = File.read(file_path)
+            content = JSON(content)
+            content['props']['path'] = x
+            templates_list.push(content)
+          end
         end
 
         {
@@ -150,33 +149,23 @@ module Chemotion
           show_sample_short_label: declared_params[:show_sample_short_label],
           user_templates: current_user.profile.user_templates.push(declared_params[:user_templates]),
         }
-
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
       end
 
-    
       desc 'post user template'
       params do
         requires :content, type: String, desc: 'ketcher file content'
       end
-      # TODO:H current_user validation??
       post do
-      file_path = Rails.root.join('uploads', Rails.env, 'template.txt')
-      begin
-        if (!File.exist?(file_path))
-          File.new(file_path, 'w')
-        end
-
-        # overwrite a file in tmp
-        File.open(file_path, 'w') do |file|
-          file.write(params[:content])
-        end
-
-        # upload the file to storage
-        templateAttachment = Attachment.new(
+        file_name = 'template.txt'
+        file_path = Rails.root.join('uploads', Rails.env, file_name)
+        begin
+          File.new(file_path, 'w') unless File.exist?(file_path)
+          File.write(file_path, params[:content])
+          template_attachment = Attachment.new(
             bucket: 1,
-            filename: Time.now.to_s + 'template.txt',
+            filename: file_name,
             key: 'user_template',
             created_by: current_user.id,
             created_for: current_user.id,
@@ -184,40 +173,40 @@ module Chemotion
             file_path: file_path,
           )
           begin
-            templateAttachment.save!
+            template_attachment.save!
           rescue StandardError
-            error_messages.push(templateAttachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+            error_messages.push(template_attachment.errors.to_h[:attachment]) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
           ensure
-            File.delete(file_path) if File.exist?(file_path)
+            FileUtils.rm_f(file_path)
           end
-          {template_details: templateAttachment}
-      rescue Errno::EACCES
-        error!('Save files error!', 500)
+          { status: true }
+        rescue Errno::EACCES
+          error!('Save files error!', 500)
+        end
+      end
+
+      desc 'delete user template'
+      params do
+        requires :path, type: String, desc: 'file path of user template'
+      end
+      delete do
+        user_templates = current_user.profile.user_templates
+        user_templates.delete(params[:path])
+
+        # remove file from store
+        file_path = Rails.root.join('uploads', Rails.env, params[:path])
+        FileUtils.rm_f(file_path)
+
+        # update profile
+        new_profile = {
+          user_templates: user_templates,
+        }
+        (current_user.profile.update!(**new_profile) &&
+        new_profile) || error!('profile update failed', 500)
+
+        { status: true }
       end
     end
-
-    desc 'delete user template'
-    params do
-      requires :path, type: String, desc: 'file path of user template'
-    end
-    delete do
-      user_templates = current_user.profile.user_templates;
-      user_templates.delete(params[:path]);
-
-      # remove file from store
-      file_path = Rails.root.join("uploads", Rails.env, params[:path]);
-      File.delete(file_path) if File.exist?(file_path)
-
-      # update profile
-      new_profile = {
-        user_templates: user_templates,
-      }
-      (current_user.profile.update!(**new_profile) &&
-      new_profile) || error!('profile update failed', 500)
-
-      {status: true}
-    end
-  end
   end
 end
 # rubocop: enable Style/MultilineIfModifier
