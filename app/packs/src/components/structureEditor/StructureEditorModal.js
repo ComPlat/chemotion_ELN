@@ -251,18 +251,11 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  updateCopyOfStorageTemplates() {
-    this.setState({
-      copyOfLocalStorage: JSON.parse(localStorage.getItem(key)),
-    });
-  }
-
   async deleteAndStoreItemAgain(item) {
     const res = await ProfilesFetcher.uploadUserTemplates({
       content: JSON.stringify(item),
     });
     const attachment_id = res?.template_details?.attachment_data?.id;
-    console.log(attachment_id);
     await UsersFetcher.updateUserProfile({
       user_templates: attachment_id,
     }).catch((err) => console.log('ISSUE WITH create'));
@@ -272,36 +265,34 @@ export default class StructureEditorModal extends React.Component {
     window.addEventListener(
       'storage',
       async (event) => {
+        let { newValue, oldValue } = event;
+        newValue = JSON.parse(newValue);
+        oldValue = JSON.parse(oldValue);
         const { deleteAllowed } = this.state;
-        if (event.key === key && deleteAllowed) { // add
-          const localTemplates = JSON.parse(localStorage.getItem(key)) || [];
-          const { copyOfLocalStorage } = this.state;
 
-          if (copyOfLocalStorage?.length < localTemplates?.length) {
-            const item = localTemplates[localTemplates.length - 1];
+        if (event.key === key && deleteAllowed) {
 
+          if (newValue.length > oldValue.length) {
+            let newItem = newValue[newValue.length - 1];
             const res = await ProfilesFetcher.uploadUserTemplates({
-              content: JSON.stringify(item),
+              content: JSON.stringify(newItem),
             });
-            const attachment_id = res?.template_details?.attachment_data?.id;
 
-            // update localstorage entry with file path!!!
-            let updatedLS = localTemplates[localTemplates.length - 1];
-            updatedLS.props.path = attachment_id;
-            // updatedLS.props.id = Math.random().toString(16).slice(2);;
-            localTemplates[localTemplates.length - 1] = updatedLS;
-            localStorage.setItem(key, JSON.stringify(localTemplates));
+            const attachment_id = res?.template_details?.attachment_data?.id;
+            newItem.props.path = attachment_id;
+            newValue[newValue.length - 1] = newItem;
+            localStorage.setItem(key, JSON.stringify(newValue));
+            this.setState({ deleteAllowed: false });
 
             // udpate user profile
             await UsersFetcher.updateUserProfile({
               user_templates: attachment_id,
             });
-
-            this.updateCopyOfStorageTemplates();
-          } else if (localTemplates.length < copyOfLocalStorage.length) { // delete
-            const listOfLocalid = localTemplates.map((item) => item.props.path);
-            for (let i = 0; i < copyOfLocalStorage.length; i++) {
-              const localItem = copyOfLocalStorage[i];
+          } else if (newValue.length < oldValue.length) {
+            // delete
+            const listOfLocalid = newValue.map((item) => item.props.path);
+            for (let i = 0; i < oldValue.length; i++) {
+              const localItem = oldValue[i];
               const itemIndexShouldBeRemoved = listOfLocalid.indexOf(
                 localItem.props.path
               );
@@ -312,14 +303,13 @@ export default class StructureEditorModal extends React.Component {
                 break;
               }
             }
-            this.updateCopyOfStorageTemplates();
-          } else { // edited 
-            const listOfLocalNames = localTemplates.map(
+          } else if (newValue.length == oldValue.length) {
+            const listOfLocalNames = newValue.map(
               (item) => JSON.parse(item.struct).header.moleculeName
             );
 
-            for (let i = 0; i < copyOfLocalStorage.length; i++) {
-              const localItem = JSON.parse(copyOfLocalStorage[i].struct);
+            for (let i = 0; i < oldValue.length; i++) {
+              const localItem = JSON.parse(oldValue[i].struct);
 
               const itemIndexShouldBeRemoved = listOfLocalNames.indexOf(
                 localItem.header.moleculeName
@@ -327,11 +317,11 @@ export default class StructureEditorModal extends React.Component {
 
               if (itemIndexShouldBeRemoved == -1) {
                 await ProfilesFetcher.deleteUserTemplate({
-                  path: localTemplates[i].props.path,
+                  path: newValue[i].props.path,
                 }).catch((err) =>
                   console.log('ISSUE WITH DELETE', localItem?.props?.path)
                 );
-                this.deleteAndStoreItemAgain(localTemplates[i]);
+                this.deleteAndStoreItemAgain(newValue[i]);
                 break;
               } else {
                 console.log('INDEX NOT FOUND@');
