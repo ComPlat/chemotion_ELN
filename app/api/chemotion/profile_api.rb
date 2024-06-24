@@ -114,7 +114,7 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
-        optional :user_templates, type: String
+        optional :user_template, type: String
       end
       put do
         declared_params = declared(params, include_missing: false)
@@ -147,7 +147,7 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
-          user_templates: current_user.profile.user_templates.push(declared_params[:user_templates]),
+          user_templates: current_user.profile.user_templates.push(declared_params[:user_template]),
         }
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)
@@ -179,7 +179,7 @@ module Chemotion
           ensure
             FileUtils.rm_f(file_path)
           end
-          { status: true }
+          { template_details: template_attachment }
         rescue Errno::EACCES
           error!('Save files error!', 500)
         end

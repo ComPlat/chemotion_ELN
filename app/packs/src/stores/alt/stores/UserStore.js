@@ -20,7 +20,7 @@ class UserStore {
       unitsSystem: {},
       matriceConfigs: [],
       omniauthProviders: [],
-      bao:[]
+      bao: []
     };
 
     this.bindListeners({
@@ -71,11 +71,11 @@ class UserStore {
 
   handleFetchProfile(result) {
     // DEFAULT_KETCHER2: disable to remove default ketcher2
-    result.data.default_structure_editor = "ketcher2"
+    // result.data.default_structure_editor = "ketcher2"
     this.state.profile = result;
-    const { layout } = this.state.profile.data;
+    const {layout} = this.state.profile.data;
     if (this.state.currentType === '') {
-      const { currentTab } = this.state
+      const {currentTab} = this.state
       const type = Object.keys(layout).filter((e) => {
         return layout[e] === currentTab + 1
       })[0]
@@ -90,7 +90,7 @@ class UserStore {
   }
 
   handleSelectTab(tab) {
-    const { layout } = this.state.profile.data;
+    const {layout} = this.state.profile.data;
     const type = Object.keys(layout).filter((e) => {
       return layout[e] === tab + 1
     })[0]
@@ -100,7 +100,7 @@ class UserStore {
   }
 
   handleFetchNoVNCDevices(devices) {
-    if (devices) { this.state.devices = devices; }
+    if (devices) {this.state.devices = devices;}
   }
 
   handleSegementKlasses(result) {

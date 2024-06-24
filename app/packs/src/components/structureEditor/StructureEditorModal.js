@@ -250,7 +250,7 @@ export default class StructureEditorModal extends React.Component {
     });
     const attachment_id = template_response?.template_details?.attachment_data?.id;
     await UsersFetcher.updateUserProfile({
-      user_templates: attachment_id,
+      user_template: attachment_id,
     }).catch((err) => console.log('ISSUE WITH create'));
   }
 
@@ -286,7 +286,7 @@ export default class StructureEditorModal extends React.Component {
             const attachment_id = res?.template_details?.attachment_data?.id;
             await this.updatePathToNewTemplate(newValue, newItem, attachment_id)
             await UsersFetcher.updateUserProfile({
-              user_templates: attachment_id,
+              user_template: attachment_id,
             });
           } else if (newValue.length < oldValue.length) {
             const listOfLocalid = newValue.map((item) => item.props.path);
