@@ -250,6 +250,15 @@ module AttachmentJcampProcess
     write_infer_to_file(decision)
   end
 
+  def write_history_logs(content)
+    json_att = generate_json_att(content, 'history_log')
+    delete_related_jsons(json_att)
+  end
+
+  def update_history_log(data)
+    write_history_logs(data)
+  end
+
   def create_process(is_regen)
     params = build_params
 
@@ -257,7 +266,7 @@ module AttachmentJcampProcess
       return generate_spectrum_from_nmrium
     end
 
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, _, _, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
     check_invalid_molfile(invalid_molfile)
 
@@ -284,7 +293,7 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, _, _, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, _, _, arr_csv, arr_nmrium, arr_json, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
     check_invalid_molfile(invalid_molfile)
 
@@ -299,6 +308,11 @@ module AttachmentJcampProcess
       csv_att = generate_csv_att(curr_tmp_csv, 'edit', false, params)
       tmp_files_to_be_deleted.push(*arr_csv)
       delete_related_csv(csv_att)
+    end
+
+    unless arr_json.nil? || arr_json.empty?
+      curr_tmp_json = arr_json[0]
+      jcamp_att.update_history_log(curr_tmp_json)
     end
 
     # set_backup
@@ -332,7 +346,7 @@ module AttachmentJcampProcess
       return
     end
 
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = Tempfile.create('molfile') do |t_molfile|
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, arr_json, spc_type, invalid_molfile = Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind

@@ -857,6 +857,14 @@ RSpec.describe Attachment do
       end
     end
 
+    context 'with spc_type = CYCLIC VOLTAMMETRY' do
+      it 'returns the result of #auto_infer_n_clear_json' do
+        expect(attachment).to receive(:auto_infer_n_clear_json).with('CYCLIC VOLTAMMETRY', false)
+
+        attachment.update_prediction({ foo: :bar }, 'CYCLIC VOLTAMMETRY', false)
+      end
+    end
+
     context 'with keep_pred in params hash' do
       pending 'not yet implemented'
     end
@@ -866,6 +874,16 @@ RSpec.describe Attachment do
         expect(attachment).to receive(:write_infer_to_file).with('foobar')
 
         attachment.update_prediction({ 'predict' => 'foobar' }, 'foo', false)
+      end
+    end
+  end
+
+  describe '#update_history_log' do
+    context 'with spc_type = CYCLIC VOLTAMMETRY' do
+      it 'calls #write_history_logs' do
+        expect(attachment).to receive(:write_history_logs).with({ 'history' => 'foobar' })
+
+        attachment.update_history_log({ 'history' => 'foobar' })
       end
     end
   end
