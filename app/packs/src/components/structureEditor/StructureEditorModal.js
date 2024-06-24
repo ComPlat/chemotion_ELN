@@ -229,7 +229,6 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-
   handleEditorSelection(e) {
     this.setState((prevState) => ({ ...prevState, editor: this.editors[e.value] }));
   }
@@ -336,8 +335,7 @@ export default class StructureEditorModal extends React.Component {
         fnCb={this.updateEditor}
       />
     );
-    const editorOptions = Object.keys(this.editors).map((e) => (
-      {
+    const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
       name: this.editors[e].label,
       label: this.editors[e].label,
@@ -403,8 +401,8 @@ StructureEditorModal.defaultProps = {
   showModal: false,
   hasChildren: false,
   hasParent: false,
-  onCancel: () => { },
-  onSave: () => { },
+  onCancel: () => {},
+  onSave: () => {},
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
 };
