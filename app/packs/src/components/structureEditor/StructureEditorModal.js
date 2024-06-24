@@ -20,7 +20,6 @@ import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 
-const DEFAULT_EDITOR_KETCHER2 = 'ketcher2';
 const notifyError = (message) => {
   NotificationActions.add({
     title: 'Structure Editor error',
@@ -221,7 +220,6 @@ export default class StructureEditorModal extends React.Component {
 
   componentDidMount() {
     this.resetEditor(this.editors);
-    this.setDefaultEditorForce()
   }
 
   componentDidUpdate(prevProps) {
@@ -231,11 +229,6 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  setDefaultEditorForce() {
-    if (this.editors[DEFAULT_EDITOR_KETCHER2]) {
-      this.setState({ editor: this.editors[DEFAULT_EDITOR_KETCHER2] });
-    }
-  }
 
   handleEditorSelection(e) {
     this.setState((prevState) => ({ ...prevState, editor: this.editors[e.value] }));
