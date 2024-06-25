@@ -24,6 +24,7 @@ describe('ReactionVariationsUtils', () => {
     const reactant = Object.values(row.reactants)[0];
     expect(row.id).toBe(4);
     expect(row.analyses).toEqual([]);
+    expect(row.notes).toEqual('');
     expect(row.properties).toEqual({
       temperature: { value: '', unit: '°C' },
       duration: { value: NaN, unit: 'Second(s)' },
@@ -36,9 +37,11 @@ describe('ReactionVariationsUtils', () => {
     const reaction = await setUpReaction();
     const row = reaction.variations[0];
     row.analyses = [42];
+    row.notes = 'foo bar baz';
     const copiedRow = copyVariationsRow(row, reaction.variations);
     expect(copiedRow.id).toBeGreaterThan(row.id);
     expect(copiedRow.analyses).toEqual([]);
+    expect(copiedRow.notes).toEqual('');
   });
   it('updates a row in the variations table', async () => {
     const reaction = await setUpReaction();

@@ -204,6 +204,7 @@ export default class Reaction extends Element {
     [
       {
         "id": <number>,
+        "notes": <string>,
         "properties": {
             "temperature": {"value": <number>, "unit": <string>},
             "duration": {"value": <number>, "unit": <string>}
