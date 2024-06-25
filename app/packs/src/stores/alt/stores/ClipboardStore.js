@@ -10,34 +10,34 @@ class ClipboardStore {
     };
 
     this.bindListeners({
-      handleFetchSamplesByUIStateAndLimit: [ClipboardActions.fetchSamplesByUIStateAndLimit, ClipboardActions.fetchElementAndBuildCopy],
+      handleFetchSamplesByUIStateAndLimit: [
+        ClipboardActions.fetchSamplesByUIStateAndLimit, ClipboardActions.fetchElementAndBuildCopy
+      ],
       handleFetchWellplatesByUIState: ClipboardActions.fetchWellplatesByUIState
-    })
+    });
   }
 
   handleFetchSamplesByUIStateAndLimit(result) {
     this.state.samples = result.samples;
 
-    switch(result.action) {
+    switch (result.action) {
       case 'template_wellplate':
-        Aviator.navigate(result.isSync
-          ? `/scollection/${result.collection_id}/wellplate/template`
-          : `/collection/${result.collection_id}/wellplate/template`);
+        Aviator.navigate(`/collection/${result.collection_id}/wellplate/template`);
         break;
       case 'copy_sample':
-        Aviator.navigate(result.isSync
-          ? `/scollection/${result.collection_id}/sample/copy`
-          : `/collection/${result.collection_id}/sample/copy`);
+        Aviator.navigate(`/collection/${result.collection_id}/sample/copy`);
+        break;
+      default:
     }
   }
 
   handleFetchWellplatesByUIState(result) {
     this.state.wellplates = result.wellplates;
-    switch(result.action) {
+    switch (result.action) {
       case 'template_screen':
-        Aviator.navigate(result.isSync
-          ? `/scollection/${result.collection_id}/screen/template`
-          : `/collection/${result.collection_id}/screen/template`);
+        Aviator.navigate(`/collection/${result.collection_id}/screen/template`);
+        break;
+      default:
     }
   }
 }

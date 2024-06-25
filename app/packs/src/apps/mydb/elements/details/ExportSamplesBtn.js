@@ -11,7 +11,7 @@ export default class ExportSamplesBtn extends Component {
 
   handleExport(type, id) {
     this.setState({ startExport: true });
-    CollectionsFetcher.expotSamples(type, id)
+    CollectionsFetcher.exportSamples(type, id)
       .then(() => { this.setState({ startExport: false }); })
       .catch((errorMessage) => { console.log(errorMessage); });
   }

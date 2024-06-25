@@ -24,6 +24,7 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
+#  con_state       :integer
 #
 # Indexes
 #

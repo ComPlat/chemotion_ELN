@@ -87,7 +87,7 @@ export default class LiteraturesFetcher {
   }
 
   static fetchReferencesByCollection(params) {
-    return fetch(`/api/v1/literatures/collection?id=${params.id}&is_sync_to_me=${params.is_sync_to_me || false}`, {
+    return fetch(`/api/v1/literatures/collection?id=${params.id}`, {
       credentials: 'same-origin',
     }).then((response) => response.json())
       .then((json) => {

@@ -4,15 +4,17 @@
 #
 # Table name: wellplates
 #
-#  id             :integer          not null, primary key
-#  name           :string
-#  size           :integer
-#  description    :string
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  deleted_at     :datetime
-#  short_label    :string
-#  readout_titles :jsonb
+#  id                     :integer          not null, primary key
+#  name                   :string
+#  description            :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  deleted_at             :datetime
+#  short_label            :string
+#  readout_titles         :jsonb
+#  plain_text_description :text
+#  width                  :integer          default(12)
+#  height                 :integer          default(8)
 #
 # Indexes
 #
@@ -80,8 +82,6 @@ class Wellplate < ApplicationRecord
 
   has_many :research_plans_wellplates, dependent: :destroy
   has_many :research_plans, through: :research_plans_wellplates
-
-  has_many :sync_collections_users, through: :collections
 
   has_many :comments, as: :commentable, dependent: :destroy
 

@@ -44,6 +44,7 @@ module Chemotion
       params do
         use :export_params
       end
+
       post :export_samples_from_selections do
         env['api.format'] = :binary
         t = time_now
@@ -55,25 +56,30 @@ module Chemotion
           force_molfile_selection
         end
         c_id = params[:uiState][:currentCollection]
-        c_id = SyncCollectionsUser.find(c_id)&.collection_id if params[:uiState][:isSync]
 
-        table_params = {
-          ui_state: params[:uiState],
-          c_id: c_id,
-        }
+        %i[sample reaction wellplate].each do |table|
+          next unless (p_t = params[:uiState][table])
 
-        if params[:columns][:chemicals].blank?
-          generate_sheets_for_tables(%i[sample reaction wellplate], table_params, export)
+          ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+          next unless p_t[:checkedAll] || ids.present?
+          column_query = build_column_query(filter_column_selection(table), current_user.id)
+          sql_query = send("build_sql_#{table}_sample", column_query, c_id, ids, p_t[:checkedAll])
+          next unless sql_query
+          result = db_exec_query(sql_query)
+          export.generate_sheet_with_samples(table, result)
         end
 
         if params[:exportType] == 1 && params[:columns][:analyses].present?
-          generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:analyses], :analyses)
-        end
-
-        if params[:exportType] == 1 && params[:columns][:chemicals].present?
-          generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:chemicals],
-                                     :chemicals)
-          generate_sheets_for_tables(%i[reaction wellplate], table_params, export)
+          %i[sample].each do |table|
+            next unless (p_t = params[:uiState][table])
+            ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+            next unless p_t[:checkedAll] || ids
+            column_query = build_column_query(filter_column_selection("#{table}_analyses".to_sym), current_user.id)
+            sql_query = send("build_sql_#{table}_analyses", column_query, c_id, ids, p_t[:checkedAll])
+            next unless sql_query
+            result = db_exec_query(sql_query)
+            export.generate_analyses_sheet_with_samples("#{table}_analyses".to_sym, result, params[:columns][:analyses])
+          end
         end
 
         case export.file_extension
@@ -100,9 +106,11 @@ module Chemotion
         content_type('text/csv')
         filename = CGI.escape("reaction_smiles_#{time_now}.csv")
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
-        real_coll_id = fetch_collection_id_w_current_user(
-          params[:uiState][:currentCollection], params[:uiState][:isSync]
+        real_coll_id = Collection.find_by(
+          id: params[:uiState][:currentCollection].to_i,
+          user_id: user_ids
         )
+        return unless real_coll_id
         return unless (p_t = params[:uiState][:reaction])
 
         results = reaction_smiles_hash(

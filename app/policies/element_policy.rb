@@ -15,25 +15,25 @@ class ElementPolicy
   # 2. there exists a shared collection, containing the sample, which he owns and where the user has
   # the required permission_level
   def read?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 0
+    maximum_permission_level(user_collections, acl_collections) >= 0
   end
 
   def update?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 1
+    maximum_permission_level(user_collections, acl_collections) >= 1
   end
 
   def copy?
-    maximum_element_permission_level(user_collections) >= 1 || maximum_element_permission_level(user_scollections) >= 1
+    maximum_element_permission_level(user_collections) >= 1 || maximum_element_permission_level(acl_collections) >= 1
   end
 
   def share?
     return true unless record
 
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 2
+    maximum_permission_level(user_collections, acl_collections) >= 2
   end
 
   def destroy?
-    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections,user_scollections) >= 3
+    maximum_permission_level(user_collections, acl_collections) >= 3
   end
 
   def scope
@@ -55,8 +55,8 @@ class ElementPolicy
 
   private
 
-  def maximum_permission_level(collections,sync_collections=SyncCollectionsUser.none)
-    (collections.pluck(:permission_level) + sync_collections.pluck(:permission_level)).max || -1
+  def maximum_permission_level(collections, collection_acl)
+    (collections.pluck(:permission_level) + collection_acl.pluck(:permission_level)).max || -1
   end
 
   def maximum_element_permission_level(sync_collections = SyncCollectionsUser.none)
@@ -71,9 +71,9 @@ class ElementPolicy
     record.collections.where(user_id: user_ids)
   end
 
-  def user_scollections
+  def acl_collections
     coll_ids = record.collections.pluck :id
-    SyncCollectionsUser.where("collection_id IN (?) and user_id IN (?)",coll_ids, user_ids)
+    CollectionAcl.where("collection_id IN (?) and user_id IN (?)", coll_ids, user_ids)
   end
 
   # TODO move to appropriate class

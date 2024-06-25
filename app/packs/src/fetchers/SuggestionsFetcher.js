@@ -1,14 +1,9 @@
-export default class SuggestionsFetcher {
-  static fetchSuggestionsForCurrentUser(elementType, query, collectId, isSync = false) {
-    const urlParams=new URLSearchParams({
-      query: encodeURIComponent(query),
-      collection_id: collectId,
-      is_sync: isSync}) 
-      
-      elementType=elementType.replaceAll(" ", "_");
+import 'whatwg-fetch';
 
+export default class SuggestionsFetcher {
+  static fetchSuggestionsForCurrentUser(elementType, query, collectId) {
     return fetch(
-      `/api/v1/suggestions/${elementType}?`+urlParams,
+      `/api/v1/suggestions/${elementType}?query=${encodeURIComponent(query)}&collection_id=${collectId}`,
       { credentials: 'same-origin' }
     ).then(response => response.json())
       .then(json => json.suggestions)
