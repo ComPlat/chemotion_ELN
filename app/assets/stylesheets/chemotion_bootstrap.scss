@@ -11,6 +11,8 @@ $input-btn-padding-y: 0.3rem;
 
 $table-bg: tranparent;
 
+$modal-xxxl: 90vw;
+
 @import "bootstrap";
 
 .btn {
@@ -66,4 +68,7 @@ $table-bg: tranparent;
     @extend .p-3;
     @extend .rounded-bottom;
   }
+
+.modal-xxxl {
+  --bs-modal-width: 90vw;
 }
