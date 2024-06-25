@@ -54,6 +54,7 @@ const handleSearch = (store, uiState) => {
 
   if (filters.length > 0 && store.errorMessages.length == 1) {
     store.showSearchResults();
+    store.enableAccordionToggle();
     store.removeErrorMessage(message);
 
     const selection = {
@@ -134,8 +135,6 @@ const panelVariables = (store) => {
       invisibleClassName: (store.search_result_panel_visible ? '' : ' inactive'),
       inactiveSearchClass: (!store.searchVisible ? 'inactive' : ''),
       inactiveResultClass: (!store.searchResultVisible ? 'inactive' : ''),
-      searchIcon: `fa fa-chevron-${store.search_icon} icon-right`,
-      resultIcon: `fa fa-chevron-${store.result_icon} icon-right`,
       searchTitle: (store.searchVisible ? 'Search' : 'Refine search'),
       resultTitle: (store.searchResultVisible ? 'Result' : 'Back to result'),
     }

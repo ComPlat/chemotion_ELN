@@ -1,5 +1,8 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import {
+  Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, 
+  Stack, Accordion, AccordionContext, useAccordionButton,
+} from 'react-bootstrap';
 import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -8,13 +11,14 @@ import DetailSearch from './DetailSearch';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 const TextSearch = () => {
-  const elnElements = ['cell_line', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
+  const elnElements = ['cell_lines', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
   const genericElements = UserStore.getState().genericEls || [];
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
+  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
 
   useEffect(() => {
     let advancedValues = searchStore.advancedSearchValues;
@@ -52,10 +56,27 @@ const TextSearch = () => {
     searchStore.addAdvancedSearchValue(0, searchValues);
   }
 
+  const AccordeonHeaderButtonForSearchForm = ({ title, eventKey, callback }) => {
+    const { activeEventKey } = useContext(AccordionContext);
+    const isCurrentEventKey = activeEventKey === eventKey;
+    const activeClass = isCurrentEventKey ? 'active' : 'collapsed';
+
+    const decoratedOnClick = useAccordionButton(eventKey, () => callback && callback(eventKey));
+
+    return (
+      <button
+        type="button"
+        className={`accordion-button ${activeClass}`}
+        onClick={decoratedOnClick}
+        disabled={searchStore.search_accordion_toggle_disabled}
+      >
+        {title}
+      </button>
+    );
+  }
+
   const SelectSearchTable = () => {
     const layout = UserStore.getState().profile.data.layout;
-
-    const elnElements = ['cell_line', 'sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
 
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0
@@ -63,10 +84,10 @@ const TextSearch = () => {
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
         const genericElement = (genericElements && genericElements.find(el => el.name === value[0])) || {};
-        if (genericElement.id === undefined && !elnElements.includes(value[0])) { return }
+        if (genericElement.id === undefined && !elnElements.includes(`${value[0]}s`)) { return }
 
         let iconClass = `icon-${value[0]}`;
-        if (!elnElements.includes(value[0])) {
+        if (!elnElements.includes(`${value[0]}s`)) {
           iconClass = `${genericElement.icon_name} icon_generic_nav`;
         }
         let tooltip = (
@@ -78,7 +99,10 @@ const TextSearch = () => {
         return (
           <ToggleButton
             key={value[0]}
-            value={`${value[0]}s`}>
+            id={value[0]}
+            value={`${value[0]}s`}
+            variant="outline-dark"
+          >
             <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
               <i className={iconClass} />
             </OverlayTrigger>
@@ -93,8 +117,8 @@ const TextSearch = () => {
         key="element-options"
         value={searchStore.searchElement.element_table}
         onChange={handleChangeElement}
-        defaultValue={0}
-        className="toggle-elements">
+        className="advanced-search-toggle-elements"
+      >
         {buttons}
       </ToggleButtonGroup>
     );
@@ -113,6 +137,7 @@ const TextSearch = () => {
           type="checkbox"
         />
         <label
+          role="button"
           className={`advanced-detail-switch-label${activeClass}`}
           htmlFor={`advanced-detail-switch-new`}
         >
@@ -141,41 +166,37 @@ const TextSearch = () => {
   };
 
   return (
-    <>
-      <Panel
-        id="collapsible-search"
-        className={panelVars.defaultClassName}
-        onToggle={togglePanel(searchStore)}
-        expanded={searchStore.searchVisible}
-      >
-        <Panel.Heading className={panelVars.inactiveSearchClass}>
-          <Panel.Title toggle>
-            {panelVars.searchTitle}
-            <i className={panelVars.searchIcon} />
-          </Panel.Title>
-        </Panel.Heading>
-        <Panel.Collapse>
-          <Panel.Body>
-            <div className="advanced-search">
+    <Accordion defaultActiveKey={0} activeKey={searchStore.search_accordion_active_key} className="search-modal" flush>
+      <Accordion.Item eventKey={0} className={activeSearchAccordionClass}>
+        <h2 className="accordion-header">
+          <AccordeonHeaderButtonForSearchForm
+            title={panelVars.searchTitle}
+            eventKey={0}
+            callback={togglePanel(searchStore)}
+          />
+        </h2>
+        <Accordion.Collapse eventKey={0}>
+          <div className="accordion-body">
+            <Stack direction="horizontal" className="advanced-search-content-header" gap={2}>
               <SelectSearchTable />
               <SwitchToAdvancedOrDetailSearch />
-              <div className="scrollable-content">
-                {showErrorMessage(searchStore)}
-                {
-                  searchStore.searchType == 'advanced' ? (
-                    <>
-                      <AdvancedSearchRow idx={0} key={"selection_0"} />
-                      {renderDynamicRow()}
-                    </>
-                  ) : (
-                    <DetailSearch
-                      key={searchStore.searchElement.element_table}
-                    />
-                  )
-                }
-              </div>
+            </Stack>
+            <div className="advanced-search-content-scrollable-body">
+              {showErrorMessage(searchStore)}
+              {
+                searchStore.searchType == 'advanced' ? (
+                  <>
+                    <AdvancedSearchRow idx={0} key={"selection_0"} />
+                    {renderDynamicRow()}
+                  </>
+                ) : (
+                  <DetailSearch
+                    key={searchStore.searchElement.element_table}
+                  />
+                )
+              }
             </div>
-            <ButtonToolbar>
+            <ButtonToolbar className="advanced-search-buttons">
               <Button variant="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
@@ -183,34 +204,30 @@ const TextSearch = () => {
                 Reset
               </Button>
               <Button variant="primary" id="advanced-search-button"
-                onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
+                onClick={() => handleSearch(searchStore, UIStore.getState())}>
                 Search
               </Button>
             </ButtonToolbar>
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
-      <Panel
-        id="collapsible-result"
-        className={panelVars.defaultClassName + panelVars.invisibleClassName}
-        onToggle={togglePanel(searchStore)}
-        expanded={searchStore.searchResultVisible}
-      >
-        <Panel.Heading className={panelVars.inactiveResultClass}>
-          <Panel.Title toggle>
-            {panelVars.resultTitle}
-            <i className={panelVars.resultIcon} />
-          </Panel.Title>
-        </Panel.Heading>
-        <Panel.Collapse>
-          <Panel.Body style={{ minHeight: '120px' }}>
+          </div>
+        </Accordion.Collapse>
+      </Accordion.Item>
+      <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
+        <h2 className="accordion-header">
+          <AccordeonHeaderButtonForSearchForm
+            title={panelVars.resultTitle}
+            eventKey={1}
+            callback={togglePanel(searchStore)}
+          />
+        </h2>
+        <Accordion.Collapse eventKey={1}>
+          <div className="accordion-body">
             <SearchResult
               handleClear={() => handleClear(searchStore)}
             />
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
-    </>
+          </div>
+        </Accordion.Collapse>
+      </Accordion.Item>
+    </Accordion>
   );
 }
 
