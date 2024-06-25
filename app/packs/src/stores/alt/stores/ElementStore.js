@@ -31,10 +31,10 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ModalImportConfirm from 'src/components/contextActions/ModalImportConfirm';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { elementShowOrNew, UrlSilentNavigation } from 'src/utilities/routesUtils';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { SameEleTypId } from 'src/utilities/ElementUtils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -155,9 +155,8 @@ class ElementStore {
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
-      handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+      handleFetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
-
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
@@ -367,7 +366,7 @@ class ElementStore {
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
       case "NMR":
-        const { currentCollection, isSync } = UIStore.getState();
+        const { currentCollection } = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
 
         // update Device in case of sample was added by dnd and device was not saved
@@ -375,15 +374,9 @@ class ElementStore {
         ElementActions.saveDevice(device)
 
         if (deviceAnalysis) {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-          )
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`)
         } else {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-          )
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`)
         }
         break
     }
@@ -474,13 +467,10 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection, isSync } = UIStore.getState();
-    this.state.currentElement = analysis
+    const { currentCollection } = UIStore.getState();
+    this.state.currentElement = analysis;
 
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-    )
+    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
   }
 
   handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
@@ -564,19 +554,18 @@ class ElementStore {
   }
 
   handleUpdateElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchMyCollections();
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
 
   handleAssignElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchMyCollections();
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
 
   handleRemoveElementsCollection() {
-    // CollectionActions.fetchUnsharedCollectionRoots();
     // UIActions.clearSearchSelection.defer()
     UIActions.uncheckWholeSelection.defer();
     this.waitFor(UIStore.dispatchToken)
@@ -586,7 +575,7 @@ class ElementStore {
 
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
-    const isSync = !!(currentCollection && currentCollection.is_sync_to_me);
+    const isShared = !!(currentCollection && currentCollection.is_shared);
     if (currentSearchSelection != null) {
       const { currentType } = UserStore.getState();
       this.handleRefreshElements(currentType);
@@ -594,14 +583,13 @@ class ElementStore {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-        
+
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
-        if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
-
+        if (!isShared && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
         const { currentUser, genericEls } = UserStore.getState();
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
@@ -651,7 +639,7 @@ class ElementStore {
     this.state.elements.screens = result;
   }
 
-  handlefetchResearchPlansByCollectionId(result) {
+  handleFetchResearchPlansByCollectionId(result) {
     this.state.elements.research_plans = result;
   }
   handlefetchCellLinesByCollectionId(result) {
@@ -729,8 +717,7 @@ class ElementStore {
 
   handleSplitAsSubsamples(ui_state) {
     ElementActions.fetchSamplesByCollectionId(
-      ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort
+      ui_state.currentCollection.id, {}, this.state.moleculeSort
     );
   }
 
@@ -746,8 +733,7 @@ class ElementStore {
   handleSplitAsSubwellplates(ui_state) {
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchSamplesByCollectionId(
-      ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort
+      ui_state.currentCollection.id, {}, this.state.moleculeSort
     );
   }
 
@@ -1088,7 +1074,6 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        isSync: uiState.isSync,
         moleculeSort
       });
     } else if (currentSearchByID != null) {
@@ -1108,10 +1093,10 @@ class ElementStore {
         'fetchCellLinesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions[fn](uiState.currentCollection.id, params, moleculeSort);
       } else {
-        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, moleculeSort);
       }
     }
 

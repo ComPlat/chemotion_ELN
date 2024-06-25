@@ -24,8 +24,8 @@ export default class WellplatesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'wellplates', Wellplate);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'wellplates', Wellplate);
   }
 
   static bulkCreateWellplates(params) {

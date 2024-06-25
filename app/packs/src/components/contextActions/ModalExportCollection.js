@@ -2,43 +2,47 @@ import React from 'react';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 
+const gatherCheckboxes = (collections, checkboxes) => {
+  if (Array.isArray(collections) && collections.length > 0) {
+    collections.forEach((collection) => {
+      checkboxes[collection.id] = false;
+    });
+  }
+};
+
 export default class ModalExportCollection extends React.Component {
   constructor(props) {
     super(props);
 
-    let collecState = CollectionStore.getState()
+    const {
+      lockedCollectionTree, myCollectionTree, sharedCollectionTree
+    } = CollectionStore.getState();
 
-    let checkboxes = {}
-    this.gatherCheckboxes(collecState.unsharedRoots, checkboxes)
-    this.gatherCheckboxes(collecState.sharedRoots, checkboxes)
-    this.gatherCheckboxes(collecState.remoteRoots, checkboxes)
-    this.gatherCheckboxes(collecState.lockedRoots, checkboxes)
+    const flattenLocked = CollectionStore.flattenCollectionTree(lockedCollectionTree);
+    const flattenCollectionTree = CollectionStore.flattenCollectionTree(myCollectionTree);
+    const flattenSharedTree = CollectionStore.flattenCollectionTree(sharedCollectionTree)
+      .filter((collection) => collection.canExport());
+
+    const checkboxes = {};
+    gatherCheckboxes(flattenLocked, checkboxes);
+    gatherCheckboxes(flattenCollectionTree, checkboxes);
+    gatherCheckboxes(flattenSharedTree, checkboxes);
 
     this.state = {
       processing: false,
-      unsharedRoots: collecState.unsharedRoots,
-      sharedRoots: collecState.sharedRoots,
-      remoteRoots: collecState.remoteRoots,
-      lockedRoots: collecState.lockedRoots,
-      checkboxes: checkboxes
-    }
+      lockedCollections: flattenLocked,
+      collections: flattenCollectionTree,
+      sharedCollections: flattenSharedTree,
+      checkboxes,
+    };
 
     this.handleCheckAll = this.handleCheckAll.bind(this)
     this.handleCheckboxChange = this.handleCheckboxChange.bind(this)
     this.handleClick = this.handleClick.bind(this)
   }
 
-  gatherCheckboxes(roots, checkboxes) {
-    if (Array.isArray(roots) && roots.length > 0) {
-      roots.map((root, index) => {
-        checkboxes[root.id] = false;
-        this.gatherCheckboxes(root.children, checkboxes)
-      })
-    }
-  }
-
   hasChecked() {
-    let checkboxes = this.state.checkboxes
+    const { checkboxes } = this.state;
     if (Object.keys(checkboxes).every(key => checkboxes[key] === false)) {
       // all checkboxes are unchecked
       return false
@@ -102,76 +106,36 @@ export default class ModalExportCollection extends React.Component {
   }
 
   renderCollections(label, key) {
-    let roots = this.state[key]
+    let collections = this.state[key]
 
-    if (Array.isArray(roots) && roots.length > 0) {
+    if (Array.isArray(collections) && collections.length > 0) {
       return (
         <div>
           <h4>{label}</h4>
-          {this.renderSubtrees(roots)}
+          {this.renderSubtrees(collections)}
         </div>
       )
     }
   }
 
-  renderSharedCollections(label, key) {
-    let roots = this.state[key]
 
-    if (Array.isArray(roots) && roots.length > 0) {
-      return (
-        <div>
-          <h4>{label}</h4>
-          {this.renderUserSubtrees(roots)}
-        </div>
-      )
-    }
-  }
-
-  renderUserSubtrees(roots) {
-    if (Array.isArray(roots) && roots.length > 0) {
-
-      let nodes = roots.map((root, index) => {
-
-        let label
-        if (root.shared_by) {
-          label = 'by ' + root.shared_by.initials
-        } else if (root.shared_to) {
-          label = 'with ' + root.shared_to.initials
-        } else {
-          label = root.label
-        }
-
+  renderSubtrees(collections, withUserInfo = false) {
+    if (Array.isArray(collections) && collections.length > 0) {
+      const nodes = collections.map((collection, index) => {
+        const indent = collection.depth > 0 ? (
+          `${'\u00A0'.repeat(3 * collection.depth)}└─ `
+        ) : '';
+        const userInfo = (withUserInfo && collection.user?.name) ? ` from ${collection.user.name}` : '';
         return (
-          <li key={index}>
-            <h6>{label}</h6>
-            {this.renderSubtrees(root.children)}
-          </li>
-        )
-      })
-
-      return (
-        <ul className="list-unstyled">
-          {nodes}
-        </ul>
-      )
-    }
-  }
-
-  renderSubtrees(roots) {
-    if (Array.isArray(roots) && roots.length > 0) {
-      let nodes = roots.map((root, index) => {
-        return (
-          <li key={index}>
+          <li key={`export-collection-${collection.id}`}>
             <input className="common-checkbox" type="checkbox"
-              id={"export-collection-" + root.id}
-              value={root.id}
+              id={"export-collection-" + collection.id}
+              value={collection.id}
               onChange={this.handleCheckboxChange}
-              checked={this.isChecked(root.id)} />
-            <label className="g-marginLeft--10" htmlFor={"export-collection-" + root.id}>
-              {root.label}
+              checked={this.isChecked(collection.id)} />
+            <label className="g-marginLeft--10" htmlFor={"export-collection-" + collection.id}>
+              {indent + collection.label + userInfo}
             </label>
-
-            {this.renderSubtrees(root.children)}
           </li>
         )
       })
@@ -222,11 +186,10 @@ export default class ModalExportCollection extends React.Component {
     const { full } = this.props;
     return (
       <div className="export-collections-modal">
-        {this.renderCollections('Global collections', 'lockedRoots')}
-        {this.renderCollections('My collections', 'unsharedRoots')}
-        {this.renderSharedCollections('My shared collections', 'sharedRoots')}
-        {this.renderSharedCollections('Shared with me', 'remoteRoots')}
         {this.renderCheckAll()}
+        {this.renderCollections('My collections', 'lockedCollections')}
+        {this.renderCollections('', 'collections')}
+        {this.renderCollections('Shared with me', 'sharedCollections')}
         {this.renderButtonBar()}
       </div>
     )

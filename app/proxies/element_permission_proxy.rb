@@ -11,7 +11,7 @@ class ElementPermissionProxy
     @policy = policy
 
     @collections = user_collections_for_element
-    @sync_collections = sync_collections_users_for_element
+    @acl_collections = acl_collections_users_for_element
     @detail_level = detail_level_for_element
   end
 
@@ -30,10 +30,10 @@ class ElementPermissionProxy
     max_detail_level = max_detail_level_by_element_class
     # get collections where element belongs to
     c = @collections
-    sc= @sync_collections
+    sc= @acl_collections
     # if user owns none of the collections which include the element, return minimum level
     @dl = 0
-    return @dl if c.empty? && sc.empty?
+    return @dl if c.empty?
 
     # Fall 1: User gehört eine unshared Collection, die das Element enthält -> alles
     # Fall 2: User besitzt mindestens einen Share, der das Element enthält...von diesen Shares nutzt man das maximale
@@ -56,13 +56,13 @@ class ElementPermissionProxy
   def nested_details_levels_for_element
     nested_detail_levels = {}
     c = @collections.map { |c| [c.sample_detail_level, c.wellplate_detail_level, c.researchplan_detail_level] } || []
-    sc= @sync_collections.map { |sc| [sc.sample_detail_level, sc.wellplate_detail_level, sc.researchplan_detail_level] } || []
+    sc= @acl_collections.map { |sc| [sc.sample_detail_level, sc.wellplate_detail_level, sc.researchplan_detail_level] } || []
     s_dl, w_dl, rp_dl= 0, 0, 0
     if element.is_a?(Sample)
       nested_detail_levels[:sample] = @dl
       nested_detail_levels[:wellplate] = (
         @collections.map { |c| [c.wellplate_detail_level] } +
-        @sync_collections.map { |c| [c.wellplate_detail_level] }
+        @acl_collections.map { |c| [c.wellplate_detail_level] }
         ).max
     else
       (c+sc).each do |dls|
@@ -100,10 +100,10 @@ class ElementPermissionProxy
     element.collections.select { |c| @user_ids.include?(c.user_id) }
   end
 
-  def sync_collections_users_for_element
+  def acl_collections_users_for_element
     coll_ids = element.collections.map(&:id)
-    element.collections.map(&:sync_collections_users).flatten.select do |sc|
-      @user_ids.include?(sc.user_id) && coll_ids.include?(sc.collection_id)
+    element.collections.map(&:collection_acls).flatten.select do |acl|
+      @user_ids.include?(acl.user_id) && coll_ids.include?(acl.collection_id)
     end
   end
 end

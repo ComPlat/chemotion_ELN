@@ -15,6 +15,7 @@ module Chemotion
 
     resource :samples do
       # TODO: Refactoring: Use Grape Entities
+
       namespace :ui_state do
         desc 'Get samples by UI state'
         params do
@@ -25,13 +26,12 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :collection_id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: 'Limit number of samples'
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          cid = fetch_collection_w_current_user(params[:ui_state][:collection_id])&.id
           @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read?
         end
@@ -167,9 +167,6 @@ module Chemotion
       desc 'Return serialized molecules_samples_groups of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id,
-                 type: Integer,
-                 desc: 'SyncCollectionsUser id'
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -179,36 +176,12 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        own_collection = false
         sample_scope = Sample.none
         if params[:collection_id]
-          begin
-            c = Collection.belongs_to_or_shared_by(
-              current_user.id, current_user.group_ids
-            ).find(params[:collection_id])
-
-            !c.is_shared && (c.shared_by_id != current_user.id) &&
-              (own_collection = true)
-
-            sample_scope = Collection.belongs_to_or_shared_by(
-              current_user.id, current_user.group_ids
-            ).find(params[:collection_id]).samples
-          rescue ActiveRecord::RecordNotFound
-            Sample.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            own_collection = false
-            c = current_user.all_sync_in_collections_users
-                            .find(params[:sync_collection_id])
-
-            sample_scope = c.collection.samples
-          rescue ActiveRecord::RecordNotFound
-            Sample.none
-          end
+          collection = fetch_collection_w_current_user(params[:collection_id])
+          sample_scope = collection.samples if collection.present?
         else
           # All collection
-          own_collection = true
           sample_scope = Sample.for_user(current_user.id).distinct
         end
         sample_scope = sample_scope.includes_for_list_display
@@ -522,26 +495,8 @@ module Chemotion
         attributes.delete(:segments)
 
         sample = Sample.new(attributes)
-
-        if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
-          sample.collections << collection if collection.present?
-        end
-
-        is_shared_collection = false
-        if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-          if sync_collection.present?
-            is_shared_collection = true
-            sample.collections << Collection.find(sync_collection['collection_id'])
-            sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
-        end
-
-        unless is_shared_collection
-          all_coll = Collection.get_all_collection_for_user(current_user.id)
-          sample.collections << all_coll
-        end
+        collection = params[:collection_id].present? ? fetch_collection_w_current_user(params[:collection_id], 1) : nil
+        add_element_to_collection_n_all(sample, collection)
 
         sample.container = update_datamodel(params[:container])
         sample.save!

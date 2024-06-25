@@ -8,14 +8,12 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers LiteratureHelpers
-    helpers ReflectionHelpers
 
     namespace :ui_state do
       desc 'Delete elements by UI state'
       params do
         optional :currentCollection, default: Hash.new, type: Hash do
           optional :id, type: Integer
-          optional :is_sync_to_me, type: Boolean, default: false
         end
         optional :options, type: Hash do
           optional :deleteSubsamples, type: Boolean, default: false
@@ -48,28 +46,16 @@ module Chemotion
         if params.fetch(:currentCollection, {}).fetch(:id, 0).zero?
           @collection = Collection.get_all_collection_for_user(current_user)
         else
-          pl =  case request.request_method
-          when 'POST' then -1
-                when 'DELETE' then 2
-                else 5
-                end
-          if params[:currentCollection][:is_sync_to_me]
-            @s_collection = SyncCollectionsUser.where(
-              'id = ? and user_id in (?) and permission_level > ?',
-              params[:currentCollection][:id],
-              user_ids,
-              pl
-            ).first
-            @collection = Collection.find(@s_collection.collection_id)
-          else
-            @collection = Collection.where(
-              'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?)) OR shared_by_id = ?)',
-              params[:currentCollection][:id],
-              user_ids,
-              pl,
-              current_user.id
-            ).first
+          pl = case request.request_method
+               when 'POST' then -1
+               when 'DELETE' then 2
+               else 5
           end
+
+          @collection = fetch_collection_w_current_user(
+            params[:currentCollection][:id],
+            pl,
+          )
         end
         error!('401 Unauthorized', 401) unless @collection
       end
@@ -77,12 +63,13 @@ module Chemotion
       desc "delete element from ui state selection."
       delete do
         deleted = { 'sample' => [] }
-        %w[sample reaction wellplate screen research_plan cell_line].each do |element|
+        message = ''
+        API::ELEMENTS.each do |element|
           next unless params[element]
           next unless params[element][:checkedAll] || params[element][:checkedIds].present?
 
-          assoziation_name = get_assoziation_name_in_collections(element)
-          deleted[element] = @collection.send(assoziation_name).by_ui_state(params[element]).destroy_all.map(&:id)
+          ids = element_class_ids(element, @collection.id, params[element])
+          message = join_element_class(element, 'collections').remove_in_collection(ids, @collection.id)
         end
 
         # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
@@ -92,12 +79,15 @@ module Chemotion
         deleted['sample'] += Sample.joins(sql_join).joins(:collections)
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
-        klasses = Labimotion::ElementKlass.find_each do |klass|
-          next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
-          deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
+        if deleted['sample'].blank?
+          message
+        else
+           Labimotion::ElementKlass.find_each do |klass|
+             next unless params[klass.name].present? && (params[klass.name][:checkedAll] || params[klass.name][:checkedIds].present?)
+             deleted[klass.name] = @collection.send('elements').by_ui_state(params[klass.name]).destroy_all.map(&:id)
+           end
+           { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
         end
-
-        { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
       end
 
       desc "return selected elements from the list. (only samples an reactions)"
@@ -134,7 +124,6 @@ module Chemotion
         params do
           optional :currentCollection, default: Hash.new, type: Hash do
             optional :id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :sample, type: Hash do
             use :ui_state_params

@@ -22,10 +22,16 @@ module Entities
       expose :comments,                                     using: 'Entities::CommentEntity'
       expose :comment_count
       expose :dry_solvent
+      expose :molfile
+      expose :sample_svg_file
+      expose! :name
+      expose! :melting_point,           unless: :displayed_in_list
+      expose! :boiling_point,           unless: :displayed_in_list
+      expose! :showed_name
+      expose! :density
+      expose! :short_label
+      expose! :stereo
     end
-
-    # Level 1 attributes
-    expose! :molfile, anonymize_below: 1
 
     # Level 2 attributes and relations
     with_options(unless: :displayed_in_list, anonymize_below: 2, using: 'Entities::ContainerEntity') do
@@ -39,20 +45,16 @@ module Entities
     with_options(anonymize_below: 10) do
       expose! :_contains_residues,      unless: :displayed_in_list, anonymize_with: false
       expose! :ancestor_ids,                                        anonymize_with: []
-      expose! :boiling_point,           unless: :displayed_in_list
       expose! :children_count,          unless: :displayed_in_list
-      expose! :density
       expose! :description,             unless: :displayed_in_list
       expose! :elemental_compositions,  unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ElementalCompositionEntity'
       expose! :imported_readout,        unless: :displayed_in_list
       expose! :is_top_secret
       expose! :location,                unless: :displayed_in_list
-      expose! :melting_point,           unless: :displayed_in_list
       expose! :metrics
       expose! :molarity_unit,           unless: :displayed_in_list
       expose! :molarity_value,          unless: :displayed_in_list
       expose! :molecule_name_hash,                                  anonymize_with: {}
-      expose! :name
       expose! :parent_id,               unless: :displayed_in_list
       expose! :pubchem_tag
       expose! :purity
@@ -60,12 +62,8 @@ module Entities
       expose! :real_amount_unit,        unless: :displayed_in_list
       expose! :real_amount_value,       unless: :displayed_in_list
       expose! :residues,                unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ResidueEntity'
-      expose! :sample_svg_file
       expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
-      expose! :short_label
-      expose! :showed_name
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
-      expose! :stereo
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
@@ -101,7 +99,7 @@ module Entities
     # molecule returns only minimal values for detail level 0
     # Due to the way Grape::Entity works, the MoleculeEntity will return all keys nil except those two defined here
     def molecule
-      return object.molecule if detail_levels[Sample] > 0 # rubocop:disable Style/NumericPredicate
+      return object.molecule
 
       {
         molecular_weight: object.molecule.try(:molecular_weight),

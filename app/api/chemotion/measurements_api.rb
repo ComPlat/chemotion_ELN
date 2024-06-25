@@ -14,7 +14,10 @@ module Chemotion
       end
       paginate per_page: 100, offset: 0
       before do
-        # TODO: check if sample is readable
+        @element_policy = ElementPolicy.new(current_user, Sample.find(params[:sample_id]))
+        error!('401 Unauthorized', 401) unless @element_policy.read?
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Not Found', 404)
       end
 
       # Gewünschter Output:
@@ -35,17 +38,8 @@ module Chemotion
       # }
 
       get do
-        sample = Sample.joins(:collections)
-                       .where(collections: { user_id: current_user.id})
-                       .distinct
-                       .find(params[:sample_id])
-
-        samples = []
-        if params[:show_hierarchy]
-          samples = [sample.root, sample.root.descendants].flatten.compact
-        else
-          samples = [sample]
-        end
+        sample = Sample.find(params[:sample_id])
+        samples = params[:show_hierarchy] ? [sample.root, sample.root.descendants].flatten.compact : [sample]
 
         scope = Measurement.where(sample_id: samples.pluck(:id))
         if params.key?(:source_type) && params.key?(:source_id)
@@ -65,7 +59,7 @@ module Chemotion
                 value: measurement.value.to_f,
                 unit: measurement.unit,
                 source_type: measurement.source_type.underscore,
-                source_id: measurement.source_id
+                source_id: measurement.source_id,
               }
             end
           }

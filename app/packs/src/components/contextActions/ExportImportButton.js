@@ -13,8 +13,9 @@ import ModalExportRadarCollection from 'src/components/contextActions/ModalExpor
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js';
 
-function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
-  const showRadar = UIStore.getState().hasRadar ? (
+const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => {
+  const { currentCollection, hasRadar } = UIStore.getState();
+  const showRadar = hasRadar ? (
     <>
       <MenuItem divider />
       <MenuItem
@@ -172,12 +173,8 @@ const importCollectionFunction = (updateModalProps) => {
 };
 
 const editMetadataFunction = () => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/metadata`
-    : `/collection/${currentCollection.id}/metadata`;
-  Aviator.navigate(uri, { silent: true });
-
+  const { currentCollection } = UIStore.getState();
+  AviatorNavigation({ element: { type: 'metadata' }, silent: true });
   elementShowOrNew({
     type: 'metadata',
     params: { collectionID: currentCollection.id }

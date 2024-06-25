@@ -1,10 +1,12 @@
-import { List, fromJS } from 'immutable';
+import { List, fromJS, Collection } from 'immutable';
 import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 
 class UIStore {
@@ -71,7 +73,7 @@ class UIStore {
       currentSearchByID: null,
       showCollectionManagement: false,
       showDeviceManagement: false,
-      isSync: false,
+      isShared: false,
       showModal: false,
       modalParams: {},
       hasChemSpectra: false,
@@ -298,14 +300,16 @@ class UIStore {
   }
 
   handleSelectCollection(collection, hasChanged = false) {
+    this.state.pendingCollectionId = null;
+    this.waitFor(CollectionStore);
+
     const state = this.state;
-    const isSync = collection.is_sync_to_me ? true : false;
+    const isShared = collection.is_shared ? true : false;
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
       hasChanged = hasChanged || state.currentCollection.id != collection.id;
-      hasChanged = hasChanged || isSync != state.isSync;
       hasChanged = hasChanged || state.currentSearchSelection != null;
       hasChanged = hasChanged || state.currentSearchByID != null;
     }
@@ -317,7 +321,15 @@ class UIStore {
     }
 
     if (hasChanged && !collection.noFetch) {
-      this.state.isSync = isSync;
+      const pendingCollection = CollectionStore.findCollectionById(collection.id);
+      if (!pendingCollection) {
+        // if CollectionStore not ready, return (should wait for it to be ready)
+        this.state.pendingCollectionId = collection.id;
+        return;
+      }
+      const id = pendingCollection.id;
+      this.state.currentCollection = CollectionStore.findCollectionById(collection.id);
+
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, productOnly };
@@ -325,66 +337,56 @@ class UIStore {
 
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
-
-        if (state.currentSearchByID) {
-          this.handleSelectCollectionForSearchById(layout, collection);
-        } else {
-          if (layout.sample && layout.sample > 0) {
-            ElementActions.fetchSamplesByCollectionId(
-              collection.id, Object.assign(params, { page: state.sample.page }),
-              isSync, ElementStore.getState().moleculeSort
-            );
-          }
-          if (layout.reaction && layout.reaction > 0) {
-            ElementActions.fetchReactionsByCollectionId(
-              collection.id, Object.assign(params, { page: state.reaction.page }),
-              isSync
-            );
-          }
-          if (layout.wellplate && layout.wellplate > 0) {
-            ElementActions.fetchWellplatesByCollectionId(
-              collection.id, Object.assign(params, { page: state.wellplate.page }),
-              isSync
-            );
-          }
-          if (layout.screen && layout.screen > 0) {
-            ElementActions.fetchScreensByCollectionId(
-              collection.id, Object.assign(params, { page: state.screen.page }),
-              isSync
-            );
-          }
-          if (!isSync && layout.research_plan && layout.research_plan > 0) {
-            ElementActions.fetchResearchPlansByCollectionId(
-              collection.id,
-              Object.assign(params, { page: state.research_plan.page }),
-            );
-          }
-          if (!isSync && layout.cell_line && layout.cell_line > 0) {
-            ElementActions.fetchCellLinesByCollectionId(
-              collection.id,
-              Object.assign(params, { page: state.cell_line.page }),
-            );
-          }
-
-          Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].includes(l)).forEach((key) => {
-            if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
-              const page = state[key] ? state[key].page : 1;
-              ElementActions.fetchGenericElsByCollectionId(
-                collection.id,
-                Object.assign(params, { page, name: key }),
-                isSync,
-                key
-              );
-            }
-          });
+        if (layout.sample && layout.sample > 0) {
+          ElementActions.fetchSamplesByCollectionId(
+            id, Object.assign(params, { page: state.sample.page }),
+            ElementStore.getState().moleculeSort
+          );
         }
+        if (layout.reaction && layout.reaction > 0) {
+          ElementActions.fetchReactionsByCollectionId(
+            id, Object.assign(params, { page: state.reaction.page }),
+          );
+        }
+        if (layout.wellplate && layout.wellplate > 0) {
+          ElementActions.fetchWellplatesByCollectionId(
+            id, Object.assign(params, { page: state.wellplate.page }));
+        }
+        if (layout.screen && layout.screen > 0) {
+          ElementActions.fetchScreensByCollectionId(
+            id, Object.assign(params, { page: state.screen.page }),
+          );
+        }
+        if (layout.research_plan && layout.research_plan > 0) {
+          ElementActions.fetchResearchPlansByCollectionId(
+            id,
+            Object.assign(params, { page: state.research_plan.page }),
+          );
+        }
+        if (!isShared && layout.cell_line && layout.cell_line > 0) {
+          ElementActions.fetchCellLinesByCollectionId(
+            collection.id,
+            Object.assign(params, { page: state.cell_line.page }),
+          );
+        }
+
+        Object.keys(layout).filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].includes(l)).forEach((key) => {
+          if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
+            const page = state[key] ? state[key].page : 1;
+            ElementActions.fetchGenericElsByCollectionId(
+              id,
+              Object.assign(params, { page, name: key }),
+              key
+            );
+          }
+        });
       }
     }
   }
 
   handleSelectCollectionForSearchById(layout, collection) {
     const state = this.state;
-    const isSync = state.isSync;
+    const isShared = state.isShared;
     const searchResult = { ...state.currentSearchByID };
     const { filterCreatedAt, fromDate, toDate, productOnly } = state;
     const { moleculeSort } = ElementStore.getState();
@@ -424,7 +426,7 @@ class UIStore {
         ElementActions.fetchBasedOnSearchResultIds.defer({
           selection,
           collectionId: collection.id,
-          isSync: isSync,
+          isShared: isShared,
           page_size: per_page,
           page: searchResult[key].page,
           moleculeSort
@@ -434,7 +436,7 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    this.handleSelectCollection(collection)
+    this.handleSelectCollection(collection, false)
   }
 
   // FIXME this method is also defined in ElementStore
@@ -453,7 +455,6 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
-    this.state.isSync = collection.is_sync_to_me ? true : false;
   }
 
   handleClearSearchSelection() {
