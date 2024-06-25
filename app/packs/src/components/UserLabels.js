@@ -370,17 +370,20 @@ class EditUserLabels extends React.Component {
         (r) => (curLableIds || []).includes(r.id)
           && (r.access_level > 0 || r.user_id === currentUser.id)
       )
-      .map((ll) => ({
-        value: ll.id,
+      .map((label) => ({
+        value: label.id,
         label: (
           <Badge
             bg="custom"
             style={{
-              backgroundColor: ll.color,
-              borderRadius: ll.access_level === 2 ? '0.25em' : '10px',
+              backgroundColor: label.color,
+              borderRadius:
+                label.access_level === 2
+                  ? 'unset'
+                  : '10px',
             }}
           >
-            {ll.title}
+            {label.title}
           </Badge>
         ),
       }));
@@ -391,14 +394,14 @@ class EditUserLabels extends React.Component {
 
     const labelOptions = (this.state.labels || [])
       .filter((r) => r.access_level === 2 || r.user_id === currentUser.id)
-      .map((ll) => ({
-        value: ll.id,
+      .map((label) => ({
+        value: label.id,
         label: (
           <Badge
             bg="custom"
-            style={{ backgroundColor: ll.color }}
+            style={{ backgroundColor: label.color }}
           >
-            {ll.title}
+            {label.title}
           </Badge>
         ),
       })) || [];
@@ -475,10 +478,6 @@ class ShowUserLabels extends React.Component {
         bg="custom"
         style={{
           backgroundColor: ll.color,
-          color: 'white',
-          borderColor: 'white',
-          borderStyle: 'solid',
-          borderWidth: 'thin',
           borderRadius: ll.access_level === 2 ? '0.25em' : '10px',
         }}
       >
