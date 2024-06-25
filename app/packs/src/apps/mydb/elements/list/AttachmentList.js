@@ -48,6 +48,7 @@ export const attachmentThumbnail = (attachment) => (
         popObject={
         attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
           ? {
+            fetchNeeded:true,
             src: `/api/v1/attachments/${attachment.id}/annotated_image`,
           }
           : {
