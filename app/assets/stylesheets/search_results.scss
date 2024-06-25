@@ -1,109 +1,57 @@
-.search-result-tab-navbar.navbar-default {
-  background-color: #fff;
-  margin-bottom: 0;
-  border: none;
+.search-value-list {
+  position: relative;
+  max-height: 12vh;
+  min-height: 92px;
+  overflow-y: auto;
 }
 
-.search-result-tab-navbar.navbar-default .container {
-  padding: 0;
-  margin: 0;
-  width: 100%;
+.search-result-tabs {
+  flex: 1 1 auto;
+  margin-bottom: 1.5rem;
 }
 
-.search-result-tab-navbar.navbar-default .navbar-nav {
-  border: 1px solid rgba(0, 0, 0, 0.4);
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
+.tab-spinner {
+  color: var(--bs-gray-400);
+  position: relative;
+  top: 1rem;
+  left: 1rem;
 }
 
-.search-result-tab-navbar.navbar-default .navbar-nav li a {
-  border: none;
-  border-right: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 0;
-  padding: 10px 30px;
-  line-height: 27px;
-  color: #337ab7;
-}
-
-.search-result-tab-navbar.navbar-default .navbar-nav li:last-child a {
-  border-right: none;
-}
-
-.search-result-tab-navbar.navbar-default .navbar-nav li.active a {
-  border: none;
-  border-right: 1px solid rgba(0, 0, 0, 0.4);
-  color: #337ab7;
-  background-color: #5bc0de75;
-}
-
-.search-result-tab-navbar.navbar-default .navbar-nav a i {
-  font-size: 2.2em;
-}
-
-.search-result-tab-navbar.navbar-default .navbar-nav a i.icon-research_plan {
-  font-size: 1.6em;
-}
-
-.search-result-tab-navbar.navbar-default .navbar-nav a i.icon_generic_nav {
-  font-size: 1.8em;
-  padding-top: 2px;
-}
-
-.search-result-tab-navbar.navbar-default .navbar-nav a span {
-  font-size: 1.4em;
-  padding-top: 2px;
-}
-
-.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a {
-  color: rgba(0, 0, 0, 0.2);
-}
-
-.search-result-tab-content.tab-content {
-  border: none;
-}
-
-.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i {
-  font-size: 1.8em;
-}
-
-.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i.icon-research_plan {
-  font-size: 1.4em;
-  padding-top: 2px;
-}
-
-.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a i.icon_generic_nav {
-  font-size: 1.5em;
-  padding-top: 4px;
-}
-
-.search-result-tab-navbar.navbar-default .elements-list-tab.no-result a span {
-  font-size: 1.2em;
+.search-result-tab-content-container {
+  overflow-y: auto;
+  min-height: 150px;
+  max-height: calc(85vh - 470px);
+  height: 100vh;
+  position: relative;
+  border: 1px solid var(--bs-gray-600);
+  border-top: none;
 }
 
 .search-result-tab-content-list {
-  background-color: rgb(245, 245, 245);
-  padding: 0 15px 15px 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--bs-gray-100);
+  padding: 0 1rem 1rem 1rem;
+  border-bottom: 1px solid var(--bs-gray-200);
+  border-top: 1px solid var(--bs-gray-100);
 }
+
 .search-result-tab-content-list:first-child {
   border-top: none;
 }
 
 .search-result-tab-content-list p {
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 0.5rem;
 }
 
 .search-result-tab-content-list p:first-child {
-  margin-top: 15px;
+  margin-top: 1rem;
 }
 
 .search-result-tab-content-list-white {
-  background-color: #fff;
-  padding: 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--bs-white);
+  padding: 1rem;
+  border-bottom: 1px solid var(--bs-gray-200);
+  border-top: 1px solid var(--bs-gray-100);
 }
 
 .search-result-tab-content-list-white:last-child {
@@ -117,8 +65,8 @@
 .search-result-molecule .preview-table {
   max-width: 100px;
   min-height: 100px;
-  margin-right: 10px;
-  margin-bottom: 10px;
+  margin-right: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .search-result-molecule.reaction .preview-table {
@@ -127,51 +75,16 @@
 
 .search-result-tab-content-list-name {
   display: block;
-  margin: -16px -15px -15px -15px;
-  padding: 9px 15px;
-  background-color: #fff;
+  margin: -1rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--bs-white);
 }
 
 .search-result-tab-content-list-name:hover, .search-result-tab-content-list-white div:hover {
   cursor: pointer;
 }
 
-.search-result-pagination {
-  margin-top: 20px;
-  margin-bottom: -6px;
-}
-
-.search-result-pagination .pagination {
+.search-result-pagination.pagination {
+  margin-top: 1.5rem !important;
   margin-bottom: 0;
-}
-
-.result-button-toolbar {
-  border-top: 1px solid #ddd;
-  margin-top: 20px;
-  padding-top: 15px;
-}
-
-.search-result-tab-content-container {
-  overflow-x: auto;
-  min-height: 80px;
-  max-height: 34.3vh;
-  position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.4);
-  @media screen and (min-width: 1600px) {
-    max-height: 40vh;
-  }
-}
-
-.tab-spinner {
-  color: #ddd;
-  position: absolute;
-  top: 20%;
-  left: 2%;
-}
-
-.search-value-list {
-  position: relative;
-  max-height: 12vh;
-  min-height: 92px;
-  overflow-y: auto;
 }
