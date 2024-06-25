@@ -119,59 +119,6 @@
   color: #333;
 }
 
-.advanced-search {
-  margin-top: 10px;
-
-  .adv-search-row {
-    display: flex;
-    overflow: visible !important;
-    margin-left: 10px;
-  }
-
-  button {
-    margin-left: 5px;
-  }
-
-  .field-select {
-    margin: 5px;
-    flex: 0 0 205px;
-  }
-
-  .link-select {
-    margin: 5px;
-    flex: 0 0 117px;
-  }
-
-  .match-select {
-    margin: 5px;
-    flex: 0 0 150px;
-  }
-
-  .value-field-select {
-    margin: 5px;
-    flex: 0 0 205px;
-
-    .ant-select {
-      width: 100%;
-    }
-    .ant-select-selection--single {
-      height: 34px;
-    }
-    .value-select-unit {
-      height: 34px;
-    }
-  }
-
-  .value-select {
-    margin: 5px;
-  }
-
-  .footer {
-    margin: 10px;
-    z-index: 1;
-  }
-}
-
 .loading-modal {
   .modal-content {
     height: 100px;
