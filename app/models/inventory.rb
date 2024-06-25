@@ -1,7 +1,24 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: inventories
+#
+#  id         :bigint           not null, primary key
+#  prefix     :string           not null
+#  name       :string           not null
+#  counter    :integer          default(0)
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_inventories_on_prefix  (prefix) UNIQUE
+#
 class Inventory < ApplicationRecord
   has_many :collections, dependent: :nullify
+
+  scope :by_collection_id, ->(collection_id) { joins(:collections).where(collections: { id: collection_id }) }
 
   def self.compare_associations(collection_ids)
     inventory_collection_ids = []
@@ -61,5 +78,15 @@ class Inventory < ApplicationRecord
 
   def self.fetch_inventories(user_id)
     joins(collections: :user).where(users: { id: user_id })
+  end
+
+  def match_inventory_counter(inventory_label, next_inventory_counter)
+    label_number_match = inventory_label.match(/(?<=-)?\d+/)
+    label_number = label_number_match[0].to_i if label_number_match
+    label_number == next_inventory_counter
+  end
+
+  def construct_inventory_label(prefix, conuter)
+    "#{prefix}-#{conuter}"
   end
 end

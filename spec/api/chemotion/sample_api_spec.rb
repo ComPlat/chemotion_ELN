@@ -92,7 +92,7 @@ describe Chemotion::SampleAPI do
       s4 = subsamples[1]
       except_attr = %w[
         id created_at updated_at ancestry created_by
-        short_label name external_label
+        short_label name external_label xref
       ]
       sample1_attributes = s1.attributes.except(*except_attr)
       subsample1_attributes = s3.attributes.except(*except_attr)
@@ -572,6 +572,7 @@ describe Chemotion::SampleAPI do
 
       context 'when updating sample 1' do
         let(:sample) { s1 }
+        let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
 
         it 'returns 200 status code' do
           expect(response).to have_http_status :ok
@@ -582,6 +583,49 @@ describe Chemotion::SampleAPI do
           expect(s).not_to be_nil
           expect(s.target_amount_value).to eq 0
           expect(s.xref['cas']).to eq cas
+        end
+      end
+
+      context 'when updating sample inventory label' do
+        let(:inventory_sample) { create(:sample_with_valid_inventory_label) }
+        let(:inventory_collection) { inventory_sample.collections.first }
+        let(:params) do
+          {
+            name: 'updated inventory sample',
+            xref: { 'inventory_label' => 'prefix-1' },
+            container: {
+              attachments: [],
+              children: [],
+              is_new: true,
+              is_deleted: false,
+              name: 'new',
+            },
+            location: '',
+            molfile: '',
+            collection_id: inventory_collection.id,
+          }
+        end
+
+        before do
+          unless CollectionsSample.exists?(sample: s1, collection: inventory_collection)
+            CollectionsSample.create!(sample: s1, collection: inventory_collection)
+          end
+          put "/api/v1/samples/#{s1.id}", params: params, as: :json
+        end
+
+        it 'returns 200 status code' do
+          expect(response).to have_http_status :ok
+        end
+
+        it 'sample inventory label matches the prefix-counter of the collection' do
+          sample = Sample.find_by(id: s1.id)
+          expected_label = expected_inventory_label(inventory_collection)
+          expect(sample.xref['inventory_label']).to eq expected_label
+        end
+
+        def expected_inventory_label(inventory_collection)
+          inventory = Inventory.find_by(id: inventory_collection.inventory_id)
+          "#{inventory['prefix']}-#{inventory['counter']}"
         end
       end
 

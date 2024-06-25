@@ -6,32 +6,39 @@
 #
 # Table name: collections
 #
-#  id                        :integer          not null, primary key
-#  user_id                   :integer          not null
-#  ancestry                  :string
-#  label                     :text             not null
-#  shared_by_id              :integer
-#  is_shared                 :boolean          default(FALSE)
-#  permission_level          :integer          default(0)
-#  sample_detail_level       :integer          default(10)
-#  reaction_detail_level     :integer          default(10)
-#  wellplate_detail_level    :integer          default(10)
-#  created_at                :datetime         not null
-#  updated_at                :datetime         not null
-#  position                  :integer
-#  screen_detail_level       :integer          default(10)
-#  is_locked                 :boolean          default(FALSE)
-#  deleted_at                :datetime
-#  is_synchronized           :boolean          default(FALSE), not null
-#  researchplan_detail_level :integer          default(10)
-#  element_detail_level      :integer          default(10)
-#  tabs_segment              :jsonb
+#  id                          :integer          not null, primary key
+#  user_id                     :integer          not null
+#  ancestry                    :string
+#  label                       :text             not null
+#  shared_by_id                :integer
+#  is_shared                   :boolean          default(FALSE)
+#  permission_level            :integer          default(0)
+#  sample_detail_level         :integer          default(10)
+#  reaction_detail_level       :integer          default(10)
+#  wellplate_detail_level      :integer          default(10)
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  position                    :integer
+#  screen_detail_level         :integer          default(10)
+#  is_locked                   :boolean          default(FALSE)
+#  deleted_at                  :datetime
+#  is_synchronized             :boolean          default(FALSE), not null
+#  researchplan_detail_level   :integer          default(10)
+#  element_detail_level        :integer          default(10)
+#  tabs_segment                :jsonb
+#  celllinesample_detail_level :integer          default(10)
+#  inventory_id                :bigint
 #
 # Indexes
 #
-#  index_collections_on_ancestry    (ancestry)
-#  index_collections_on_deleted_at  (deleted_at)
-#  index_collections_on_user_id     (user_id)
+#  index_collections_on_ancestry      (ancestry)
+#  index_collections_on_deleted_at    (deleted_at)
+#  index_collections_on_inventory_id  (inventory_id)
+#  index_collections_on_user_id       (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (inventory_id => inventories.id)
 #
 
 class Collection < ApplicationRecord
@@ -61,6 +68,8 @@ class Collection < ApplicationRecord
   has_many :shared_users, through: :sync_collections_users, source: :user
 
   has_one :metadata
+
+  delegate :id, :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
 
   # A collection is locked if it is not allowed to rename or rearrange it
   scope :unlocked, -> { where(is_locked: false) }
@@ -177,6 +186,18 @@ class Collection < ApplicationRecord
       collections = collections_group.map { |c| { id: c.id, label: c.label } }
       inventory = collections_group.first&.inventory
       collections_group_by_inventory(collections, inventory)
+    end
+  end
+
+  def as_json(options = {})
+    if options[:include_inventory]
+      super(options).merge(
+        inventory_id: inventory&.id,
+        inventory_prefix: inventory&.prefix,
+        inventory_name: inventory&.name,
+      )
+    else
+      super(options)
     end
   end
 end
