@@ -364,20 +364,20 @@ class EditUserLabels extends React.Component {
         (r) => (curLableIds || []).includes(r.id)
           && (r.access_level > 0 || r.user_id === currentUser.id)
       )
-      .map((ll) => ({
-        value: ll.id,
+      .map((label) => ({
+        value: label.id,
         label: (
           <Badge
             bg="custom"
             style={{
-              backgroundColor: ll.color,
+              backgroundColor: label.color,
               borderRadius:
-                ll.access_level === 1 && ll.user_id !== currentUser.id
+                label.access_level === 1 && label.user_id !== currentUser.id
                   ? 'unset'
                   : '10px',
             }}
           >
-            {ll.title}
+            {label.title}
           </Badge>
         ),
       }));
@@ -388,14 +388,14 @@ class EditUserLabels extends React.Component {
 
     const labelOptions = (this.state.labels || [])
       .filter((r) => r.access_level === 2 || r.user_id === currentUser.id)
-      .map((ll) => ({
-        value: ll.id,
+      .map((label) => ({
+        value: label.id,
         label: (
           <Badge 
             bg="custom"
-            style={{ backgroundColor: ll.color }}
+            style={{ backgroundColor: label.color }}
           >
-            {ll.title}
+            {label.title}
           </Badge>
         ),
       })) || [];
@@ -449,29 +449,32 @@ class ShowUserLabels extends React.Component {
   render() {
     const { element } = this.props;
     const { currentUser, labels } = this.state;
-    const curLableIds = element.tag && element.tag.taggable_data
-      ? element.tag.taggable_data.user_labels
-      : [];
-
-    if (!MatrixCheck(currentUser && currentUser.matrix, UL_FUNC_NAME)) {
+  
+    if (!currentUser || !MatrixCheck(currentUser.matrix, UL_FUNC_NAME)) {
       return null;
     }
-    const elementLabels = (labels || []).filter((r) => (
-      (curLableIds || []).includes(r.id) && (r.access_level > 0 || r.user_id === currentUser.id)
-    )).map((ll) => (
-      <Badge
-        key={`bg_${ll.id}`}
-        bg="custom"
-        style={{
-          backgroundColor: ll.color,
-          borderRadius: (ll.access_level === 1 && ll.user_id !== currentUser.id) ? 'unset' : '10px'
-        }}
-      >
-        {ll.title}
-      </Badge>
-    ));
-
-    return ({elementLabels});
+  
+    const curLabelIds = element.tag?.taggable_data?.user_labels || [];
+    const visibleLabels = labels?.filter(label => 
+      curLabelIds.includes(label.id) && (label.access_level > 0 || label.user_id === currentUser.id)
+    ) || [];
+  
+    return (
+      <>
+        {visibleLabels.map(label => (
+          <Badge
+            key={`bg_${label.id}`}
+            bg="custom"
+            style={{
+              backgroundColor: label.color,
+              borderRadius: label.access_level === 1 && label.user_id !== currentUser.id ? 'unset' : '10px'
+            }}
+          >
+            {label.title}
+          </Badge>
+        ))}
+      </>
+    );
   }
 }
 
