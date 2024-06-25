@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
-import { Tabs, Col, Nav, NavItem, Row, Tab, OverlayTrigger, Tooltip, Alert, Button } from 'react-bootstrap';
+import { Tabs, Tab, Tooltip, Alert, Button } from 'react-bootstrap';
 import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
