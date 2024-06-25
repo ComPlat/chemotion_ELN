@@ -1027,7 +1027,7 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
     t.datetime "updated_at", null: false
     t.string "template", default: "standard"
     t.text "mol_serials", default: "--- []\n"
-    t.text "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
+    t.text "si_reaction_settings", default: "---\nName: true\nCAS: true\nFormula: true\nSmiles: true\nInCHI: true\nMolecular Mass: true\nExact Mass: true\nEA: true\n"
     t.text "prd_atts", default: "--- []\n"
     t.integer "report_templates_id"
     t.index ["author_id"], name: "index_reports_on_author_id"
@@ -1179,7 +1179,6 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
     t.integer "molecule_name_id"
     t.string "molfile_version", limit: 20
     t.jsonb "stereo"
-    t.string "mol_rdkit"
     t.string "metrics", default: "mmm"
     t.boolean "decoupled", default: false, null: false
     t.float "molecular_mass"
@@ -1344,14 +1343,6 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
-  end
-
-  create_table "third_party_apps", force: :cascade do |t|
-    t.string "url"
-    t.string "name", limit: 100, null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
@@ -1697,58 +1688,6 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
       end
       $function$
   SQL
-  create_function :group_user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-             begin
-             	if (in_user_id = in_current_user_id) then
-             		return null;
-             	else
-             		return (select row_to_json(result) from (
-             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-             		from users where id = $1
-             		) as result);
-             	end if;
-              end;
-           $function$
-  SQL
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1772,64 +1711,15 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
       end
       $function$
   SQL
-  create_function :pub_reactions_by_molecule, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.pub_reactions_by_molecule(collection_id integer, molecule_id integer)
-       RETURNS TABLE(reaction_ids integer)
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-          (select r.id from collections c, collections_reactions cr, reactions r, reactions_samples rs, samples s,molecules m
-           where c.id=$1 and c.id = cr.collection_id and cr.reaction_id = r.id
-           and r.id = rs.reaction_id and rs.sample_id = s.id and rs.type in ('ReactionsProductSample')
-           and c.deleted_at is null and cr.deleted_at is null and r.deleted_at is null and rs.deleted_at is null and s.deleted_at is null and m.deleted_at is null
-           and s.molecule_id = m.id and m.id=$2)
-        $function$
-  SQL
-  create_function :set_segment_klasses_identifier, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_segment_klasses_identifier()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	update segment_klasses set identifier = gen_random_uuid() where identifier is null;
-        return new;
-      end
-      $function$
-  SQL
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-             select row_to_json(result) from (
-            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           	   from users where id = $1
-         	   ) as result
-           $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select $1 as id
-             union
-             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-             and users.type in ('Group') and users_groups.user_id = $1)
-           $function$
-  SQL
-  create_function :user_instrument, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-             select distinct extended_metadata -> 'instrument' as instrument from containers c
-             where c.container_type='dataset' and c.id in
-             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-             order by extended_metadata -> 'instrument' limit 10
-           $function$
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
+       $function$
   SQL
 
 
@@ -1893,19 +1783,5 @@ ActiveRecord::Schema.define(version: 2024_07_09_095243) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
-  SQL
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
   SQL
 end
