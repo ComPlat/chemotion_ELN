@@ -1370,7 +1370,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant="success"
-              onClick={() => handleResetPassword(g.id, true, handleShowAlert)}
+              onClick={() => handleResetPassword(g.id, true, this.handleShowAlert)}
               className="me-1"
             >
               <i className="fa fa-key" />
@@ -1380,7 +1380,7 @@ export default class UserManagement extends React.Component {
             <Button
               size="sm"
               variant="primary"
-              onClick={() => handleResetPassword(g.id, false, handleShowAlert)}
+              onClick={() => handleResetPassword(g.id, false, this.handleShowAlert)}
               className="me-1"
             >
               <i className="fa fa-key" />
