@@ -506,6 +506,7 @@ module Chemotion
         optional :simulatenmr, type: Boolean
         optional :axesUnits, type: String
         optional :detector, type: String
+        optional :dscMetaData, type: String
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(
