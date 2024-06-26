@@ -139,6 +139,7 @@ export default class WellplateDetailsContainers extends Component {
                           readOnly={readOnly}
                           container={container}
                           onChange={container => this.handleChange(container)}
+                          elementID={wellplate.id}
                         />
                       </Panel.Body>
                     </Panel>

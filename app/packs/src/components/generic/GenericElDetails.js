@@ -38,6 +38,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import { handleSaveDataset } from 'src/utilities/ElementUtils';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -141,6 +142,8 @@ export default class GenericElDetails extends Component {
         });
       }
     }
+    const { genericEl } = this.state;
+    handleSaveDataset(genericEl, state, this.handleSubmit, false);
   }
 
   handleElChanged(el) {
@@ -188,7 +191,7 @@ export default class GenericElDetails extends Component {
       });
       return false;
     }
-    LoadingActions.start();
+    LoadingActions.start.defer();
     genericEl.name = genericEl.name.trim();
     // filter is_deleted analysis
     const { container } = genericEl;

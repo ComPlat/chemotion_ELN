@@ -34,6 +34,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import { handleSaveDataset } from 'src/utilities/ElementUtils';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -50,6 +51,7 @@ export default class ScreenDetails extends Component {
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.updateComponentGraphData = this.updateComponentGraphData.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentDidMount() {
@@ -83,14 +85,8 @@ export default class ScreenDetails extends Component {
         activeTab: state.screen.activeTab
       });
     }
-  }
-
-  onUIStoreChange(state) {
-    if (state.screen.activeTab != this.state.activeTab) {
-      this.setState({
-        activeTab: state.screen.activeTab
-      });
-    }
+    const { screen } = this.state;
+    handleSaveDataset(screen, state, this.handleSubmit);
   }
 
   onTabPositionChanged(visible) {
@@ -99,7 +95,7 @@ export default class ScreenDetails extends Component {
 
   handleSubmit() {
     const { screen } = this.state;
-    LoadingActions.start();
+    LoadingActions.start.defer();
 
     if (screen.isNew) {
       ElementActions.createScreen(screen);

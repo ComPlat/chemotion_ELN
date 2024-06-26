@@ -19,6 +19,7 @@ import WellplateDetailsContainers from
   'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
 import WellplateDetailsAttachments from
   'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
+import { handleSaveDataset } from 'src/utilities/ElementUtils';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
@@ -94,7 +95,7 @@ export default class WellplateDetails extends Component {
 
   handleSubmit() {
     const { wellplate } = this.state;
-    LoadingActions.start();
+    LoadingActions.start.defer();
     if (wellplate.isNew) {
       ElementActions.createWellplate(wellplate);
     } else {
@@ -236,6 +237,8 @@ export default class WellplateDetails extends Component {
         activeTab: state.wellplate.activeTab
       });
     }
+    const { wellplate } = this.state;
+    handleSaveDataset(wellplate, state, this.handleSubmit);
   }
 
   wellplateHeader(wellplate) {

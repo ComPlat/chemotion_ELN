@@ -6,7 +6,8 @@ import {
   searchAndReplace
 } from '../../../app/packs/src/utilities/markdownUtils';
 import {
-  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat
+  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg, rfValueFormat,
+  handleSaveDataset
 } from '../../../app/packs/src/utilities/ElementUtils';
 import { contentToText } from '../../../app/packs/src/utilities/quillFormat';
 import { nmrData1H } from '../fixture/nmr1H';
@@ -216,5 +217,140 @@ describe('Mass pattern', () => {
     const expected = 'something C1H2O3 HRMS (' +
       'C<sub>15</sub>H<sub>16</sub>O<sub>17</sub>N<sub>18</sub>S<sub>19</sub>)';
     expect(org).toEqual(expected);
+  });
+});
+
+describe('Handle container dataset saving', () => {
+  const handleSubmit = (params) => {
+    expect('function triggered').toEqual('function triggered');
+    expect(params).toEqual(params);
+  }
+
+  describe('ignore when invalid data', () => {
+    it('when sample is null', () => {
+      const uiState = {};
+      const triggered = handleSaveDataset(null, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when uiState is null', () => {
+      const element = {};
+      const uiState = null;
+      const triggered = handleSaveDataset(element, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when uiState does not have container dataset info', () => {
+      const element = {};
+      const uiState = {};
+      const triggered = handleSaveDataset(element, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when container dataset is not for saving', () => {
+      const element = {};
+      const containerDataSet = { isSaving: false };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(element, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+  });
+
+  describe('save dataset for sample', () => {
+    it('when it is not the same sample id', () => {
+      const sample = { id: 100 };
+      const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same sample id', () => {
+      const sample = { id: 100 };
+      const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(sample, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+
+    it('when element is an array of samples', () => {
+      const element = [{ id: 100 }, { id: 101 }];
+      const containerDataSet = { elementType: 'sample', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(element, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
+
+  describe('save dataset for reaction', () => {
+    it('when it is not the same reaction id', () => {
+      const reaction = { id: 100 };
+      const containerDataSet = { elementType: 'reaction', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(reaction, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same reaction id', () => {
+      const reaction = { id: 100 };
+      const containerDataSet = { elementType: 'reaction', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(reaction, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
+
+  describe('save dataset for research plan', () => {
+    it('when it is not the same research plan id', () => {
+      const researchPlan = { id: 100 };
+      const containerDataSet = { elementType: 'researchPlan', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(researchPlan, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same research plan id', () => {
+      const researchPlan = { id: 100 };
+      const containerDataSet = { elementType: 'researchPlan', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(researchPlan, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
+
+  describe('save dataset for wellplate', () => {
+    it('when it is not the same wellplate id', () => {
+      const wellplate = { id: 100 };
+      const containerDataSet = { elementType: 'wellplate', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(wellplate, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same wellplate id', () => {
+      const wellplate = { id: 100 };
+      const containerDataSet = { elementType: 'wellplate', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(wellplate, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
+  });
+
+  describe('save dataset for screen', () => {
+    it('when it is not the same screen id', () => {
+      const screen = { id: 100 };
+      const containerDataSet = { elementType: 'screen', isSaving: true, elementID: 101 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(screen, uiState, handleSubmit);
+      expect(triggered).toEqual(false);
+    });
+
+    it('when it is the same screen id', () => {
+      const screen = { id: 100 };
+      const containerDataSet = { elementType: 'screen', isSaving: true, elementID: 100 };
+      const uiState = { containerDataSet };
+      const triggered = handleSaveDataset(screen, uiState, handleSubmit, true);
+      expect(triggered).toEqual(true);
+    });
   });
 });
