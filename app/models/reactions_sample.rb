@@ -29,6 +29,8 @@ class ReactionsSample < ApplicationRecord
 
   include ReactionSampleCollections
 
+  enum gas_type: { off: 0, feedstock: 1, catalyst: 2, gas: 3 }
+
   def self.get_samples(reaction_ids)
     where(reaction_id: reaction_ids).pluck(:sample_id).compact.uniq
   end
@@ -47,34 +49,24 @@ end
 class ReactionsStartingMaterialSample < ReactionsSample
   include Tagging
   include Reactable
-
-  enum gas_type: { off: 0, feedstock: 1, catalyst: 2 }
 end
 
 class ReactionsReactantSample < ReactionsSample
   include Tagging
   include Reactable
-
-  enum gas_type: { off: 0, feedstock: 1, catalyst: 2 }
 end
 
 class ReactionsSolventSample < ReactionsSample
   include Reactable
-
-  enum gas_type: { off: 0 }
 end
 
 class ReactionsPurificationSolventSample < ReactionsSample
   include Reactable
-
-  enum gas_type: { off: 0 }
 end
 
 class ReactionsProductSample < ReactionsSample
   include Reactable
   include Tagging
-
-  enum gas_type: { off: 0, gas: 3 }
 
   def formatted_yield
     eq = self.equivalent
