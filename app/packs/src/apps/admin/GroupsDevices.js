@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Table, Button, FormGroup, Form, FormControl, Card } from 'react-bootstrap';
+import { Modal, Table, Button, Form, Card } from 'react-bootstrap';
 import Select from 'react-select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -329,41 +329,41 @@ export default class GroupsDevices extends React.Component {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <FormGroup controlId="formInlineName" className='mb-3 fs-4  fw-bold'>
+            <Form.Group controlId="formInlineName" className='mb-3 fs-4  fw-bold'>
               <Form.Label>Name*</Form.Label>
-              <FormControl
+              <Form.Control
                 type="text"
                 ref={(m) => { this.firstInput = m; }}
                 placeholder="eg: AK"
                 className='py-2'
               />
-            </FormGroup>
-            <FormGroup controlId="formInlineName" className='mb-3 fs-4  fw-bold'>
-              <FormControl
+            </Form.Group>
+            <Form.Group controlId="formInlineName" className='mb-3 fs-4  fw-bold'>
+              <Form.Control
                 type="text"
                 ref={(m) => { this.lastInput = m; }}
                 placeholder="J. Moriarty"
                 className='py-2'
               />
-            </FormGroup>
-            <FormGroup controlId="formInlineNameAbbr" className='mb-3 fs-4 fw-bold'>
+            </Form.Group>
+            <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-4 fw-bold'>
               <Form.Label>Name abbreviation*</Form.Label>
-              <FormControl
+              <Form.Control
                 type="text"
                 ref={(m) => { this.abbrInput = m; }}
                 placeholder="AK-JM"
                 className='py-2'
               />
-            </FormGroup>
-            <FormGroup controlId="formInlineEmail" className='mb-4 fs-4 fw-bold'>
+            </Form.Group>
+            <Form.Group controlId="formInlineEmail" className='mb-4 fs-4 fw-bold'>
               <Form.Label>Email</Form.Label>
-              <FormControl
+              <Form.Control
                 type="text"
                 ref={(m) => { this.emailInput = m; }}
                 placeholder="eg: abc@kit.edu"
                 className='py-2'
               />
-            </FormGroup>
+            </Form.Group>
             <Modal.Footer>
               <Button size="lg" variant="success" onClick={() => this.createGroup()}>
                 Create new {rootType === 'Group' ? 'group' : 'device'}
