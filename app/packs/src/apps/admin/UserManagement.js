@@ -779,50 +779,50 @@ export default class UserManagement extends React.Component {
           <Modal.Title>New User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tabs id="createUserTabs" >
+          <Tabs id="createUserTabs" className='fs-4'>
             <Tab eventKey="singleUser" title="Single user">
               <Form className='m-3'>
                 <Form.Group as={Row} className='mb-3' controlId="formControlEmail">
-                  <Form.Label column sm="2" className="fw-bold">
+                  <Form.Label column sm="3" className="fs-4">
                     Email:
                   </Form.Label>
-                  <Col sm="10">
+                  <Col sm="9">
                     <Form.Control type="email" name="email" ref={(ref) => { this.email = ref; }} />
                   </Col>
                 </Form.Group>
                 <Form.Group as={Row} className='mb-3' controlId="formControlPassword">
-                  <Form.Label column sm="2" className="fw-bold">Password: </Form.Label>
-                  <Col sm="10">
+                  <Form.Label column sm="3" className="fs-4">Password: </Form.Label>
+                  <Col sm="9">
                     <Form.Control type="password" name="password" ref={(ref) => { this.password = ref; }} />
                   </Col>
                 </Form.Group>
                 <Form.Group as={Row} className='mb-3' controlId="formControlPasswordConfirmation">
-                  <Form.Label column sm="2" className="fw-bold"> Password Confirmation:</Form.Label>
-                  <Col sm="10">
+                  <Form.Label column sm="3" className="fs-4 pull-right"> Password Confirmation:</Form.Label>
+                  <Col sm="9">
                     <Form.Control type="password" ref={(ref) => { this.passwordConfirm = ref; }} />
                   </Col>
                 </Form.Group>
                 <Form.Group as={Row} className='mb-3' controlId="formControlFirstName">
-                  <Form.Label column sm="2" className="fw-bold"> First name: </Form.Label>
-                  <Col sm="10">
+                  <Form.Label column sm="3" className="fs-4"> First name: </Form.Label>
+                  <Col sm="9">
                     <Form.Control type="text" name="firstname" ref={(ref) => { this.firstname = ref; }} />
                   </Col>
                 </Form.Group>
                 <Form.Group as={Row} className='mb-3' controlId="formControlLastName">
-                  <Form.Label column sm="2" className="fw-bold"> Last name:  </Form.Label>
-                  <Col sm="10">
+                  <Form.Label column sm="3" className="fs-4"> Last name:  </Form.Label>
+                  <Col sm="9">
                     <Form.Control type="text" name="lastname" ref={(ref) => { this.lastname = ref; }} />
                   </Col>
                 </Form.Group>
                 <Form.Group as={Row} className='mb-3' controlId="formControlAbbr">
-                  <Form.Label column sm="2" className="fw-bold">Abbr (3) *: </Form.Label>
-                  <Col sm="10">
+                  <Form.Label column sm="3" className="fs-4">Abbr (3) *: </Form.Label>
+                  <Col sm="9">
                     <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
                   </Col>
                 </Form.Group>
                 <Form.Group as={Row} className='mb-3' controlId="formControlsType">
-                  <Form.Label column sm={2} className="fw-bold"> Type:</Form.Label>
-                  <Col sm="10">
+                  <Form.Label column sm="3" className="fs-4"> Type:</Form.Label>
+                  <Col sm="9">
                     <Form.Select ref={(ref) => { this.type = ref; }}>
                       <option value="Person">Person</option>
                       <option value="Admin">Admin</option>
@@ -831,7 +831,7 @@ export default class UserManagement extends React.Component {
 
                 </Form.Group>
                 <Form.Group>
-                  <Button variant="primary" className='mt-3' onClick={() => this.handleCreateNewUser()}>
+                  <Button variant="primary" className='mt-2 fs-5' onClick={() => this.handleCreateNewUser()}>
                       Create user&nbsp;
                       <i className="fa fa-plus" />
                     </Button>
@@ -839,7 +839,7 @@ export default class UserManagement extends React.Component {
               </Form>
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
-              <Form className='m-3'>
+              <Form className='m-3 fs-4'>
                 <Form.Group>
                   <Form.Label className='fw-bold'>Please format the user file like the table below.</Form.Label>
                   <Table striped bordered hover className='mt-1'>
@@ -889,7 +889,7 @@ export default class UserManagement extends React.Component {
                   </CSVReader>
                 </Form.Group>
                 <Form.Group>
-                  <Button variant="primary" className='my-3' onClick={() => this.handleCreateNewUsersFromFile()}>
+                  <Button variant="primary" className='my-3 fs-5' onClick={() => this.handleCreateNewUsersFromFile()}>
                     Create users&nbsp;
                     <i className="fa fa-plus" />
                   </Button>
@@ -913,7 +913,7 @@ export default class UserManagement extends React.Component {
           <Form.Group controlId="formControlMessage" className="flex-grow-1">
             <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
           </Form.Group>
-            <Button variant="warning" onClick={() => this.handleNewUserClose()}>Cancel</Button>
+          <Button variant="warning" className='fs-5' onClick={() => this.handleNewUserClose()}>Cancel</Button>
         </Modal.Footer>
       </Modal>
     );
@@ -947,65 +947,70 @@ export default class UserManagement extends React.Component {
               <Tab.Pane eventKey="first">
                 <Form className="m-3">
                   <Form.Group as={Row} className="mb-3" controlId="formControlEmail">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4">
                       Email:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="email"
                         name="u_email"
                         defaultValue={user.email}
                         ref={(ref) => { this.u_email = ref; }}
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3" controlId="formControlFirstName">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4">
                       First name:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="text"
                         name="u_firstname"
                         defaultValue={user.first_name}
                         ref={(ref) => { this.u_firstname = ref; }}
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3" controlId="formControlLastName">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4">
                       Last name:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="text"
                         name="u_lastname"
                         defaultValue={user.last_name}
                         ref={(ref) => { this.u_lastname = ref; }}
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3" controlId="formControlAbbr">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4">
                       Abbr:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="text"
                         name="u_abbr"
                         defaultValue={user.initials}
                         ref={(ref) => { this.u_abbr = ref; }}
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} className="mb-3" controlId="formControlsType">
-                    <Form.Label column sm="2" className="fw-bold">
+                    <Form.Label column sm="3" className="fs-4">
                       Type:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Select
                         defaultValue={user.type}
                         ref={(ref) => { this.u_type = ref; }}
+                        className='fs-4'
                       >
                         <option value="Person">Person</option>
                         <option value="Group">Group</option>
@@ -1020,7 +1025,7 @@ export default class UserManagement extends React.Component {
                         readOnly
                         name="messageEditUserModal"
                         value={this.state.messageEditUserModal}
-                        className="my-3 form-control text-danger text-center"
+                        className="my-3 form-control text-danger text-center fs-4"
                       />
                     </Col>
                   </Form.Group>
@@ -1042,65 +1047,70 @@ export default class UserManagement extends React.Component {
               <Tab.Pane eventKey="second">
                 <Form className="m-3">
                   <Form.Group as={Row} className="mb-3" controlId="formControlEmail">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4 mb-3">
                       Email:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="email"
                         name="u_email"
                         defaultValue={user.email}
                         disabled
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} controlId="formControlFirstName">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4 mb-3">
                       First name:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="text"
                         name="u_firstname"
                         defaultValue={user.first_name}
                         disabled
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} controlId="formControlLastName">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4 mb-3">
                       Last name:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="text"
                         name="u_lastname"
                         defaultValue={user.last_name}
                         disabled
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} controlId="formControlAbbr">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4 mb-3">
                       Abbr:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         type="text"
                         name="u_abbr"
                         defaultValue={user.initials}
                         disabled
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
                   <Form.Group as={Row} controlId="formControlsType">
-                    <Form.Label column sm="2" className="fw-bold mb-3">
+                    <Form.Label column sm="3" className="fs-4 mb-3">
                       Type:
                     </Form.Label>
-                    <Col sm="10">
+                    <Col sm="9">
                       <Form.Control
                         disabled
                         defaultValue={user.type}
+                        className='fs-4'
                       />
                     </Col>
                   </Form.Group>
@@ -1111,7 +1121,7 @@ export default class UserManagement extends React.Component {
                         readOnly
                         name="messageEditUserModal"
                         value="Delete User Account. Are you sure?"
-                        className="my-3 form-control text-danger text-center"
+                        className="my-3 fs-4 form-control text-danger text-center"
                       />
                     </Col>
                   </Form.Group>
@@ -1141,7 +1151,7 @@ export default class UserManagement extends React.Component {
     return (
       <Modal centered show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
-          <Modal.Title className='fs-4'>Restore Account</Modal.Title>
+          <Modal.Title className='fs-3'>Restore account</Modal.Title>
         </Modal.Header>
         <Modal.Body className='d-flex justify-content-center align-items-center' >
           <Form className='w-75'>
@@ -1155,6 +1165,7 @@ export default class UserManagement extends React.Component {
                     type="text"
                     name="nameAbbreviation"
                     placeholder="Please enter the name abbreviation .."
+                    className='flex-grow-1'
                     ref={(ref) => {
                       this.nameAbbreviation = ref;
                     }}
@@ -1200,12 +1211,12 @@ export default class UserManagement extends React.Component {
           </Form>
         </Modal.Body>
         <Modal.Footer >
-          <Button variant="primary" onClick={() => this.handleRestoreAccount()}>
+          <Button variant="primary" className='fs-5' onClick={() => this.handleRestoreAccount()}>
             Restore&nbsp;
             <i className="fa fa-save" />
           </Button>
           &nbsp;
-          <Button variant="warning" onClick={() => this.handleRestoreAccountClose()}>
+          <Button variant="warning" className='fs-5' onClick={() => this.handleRestoreAccountClose()}>
             Cancel&nbsp;
           </Button>
         </Modal.Footer>
