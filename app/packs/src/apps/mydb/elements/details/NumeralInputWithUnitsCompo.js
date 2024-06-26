@@ -155,7 +155,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return valueString;
     };
     const inputDisabled = disabled ? true : block;
-    const alwaysAllowDisplayUnit = ['TON', 'TON/h', 'TON/m', 'TON/s', 'g', 'mg', 'μg'];
+    const alwaysAllowDisplayUnit = ['TON', 'TON/h', 'TON/m', 'TON/s', 'g', 'mg', 'μg', 'mol', 'mmol'];
     const unitDisplayMode = alwaysAllowDisplayUnit.includes(unit) ? false : inputDisabled;
     // BsStyle-s for Input and buttonAfter have differences
     const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
