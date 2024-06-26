@@ -187,6 +187,7 @@ module Chemotion
         params do
           requires :spectra_ids, type: [Integer]
           requires :front_spectra_idx, type: Integer # index of front spectra
+          optional :extras, type: String
         end
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
@@ -204,7 +205,7 @@ module Chemotion
           end
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
-            list_file, pm[:front_spectra_idx], list_file_names
+            list_file, pm[:front_spectra_idx], list_file_names, pm[:extras]
           )
 
           content_type('application/json')

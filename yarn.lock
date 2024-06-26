@@ -1460,12 +1460,12 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@complat/chem-spectra-client@1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.2.2.tgz#2f4a71b648d1eba824da6fa23cd46558d1f5e637"
-  integrity sha512-7k86yQUkIt50cLtgEaCgAp/E9gr5xnZupkO0PycWEeap8amLggSWtBxZe4gWS33AfrbGYTAYQdW31y07u4WOog==
+"@complat/chem-spectra-client@1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.3.1.tgz#5dee2ded891cb8dcae69d61ccbfee15c991fdfd2"
+  integrity sha512-Hw8YEkdEszUZm48+Xw7JWM1yT9e0XD3mpjGf7mwNf3EfEXT/OUyqKGnIT/Zetv/EHcYYDf4aeQjdjYc3Mz/jzQ==
   dependencies:
-    "@complat/react-spectra-editor" "1.2.2"
+    "@complat/react-spectra-editor" "1.3.1"
     "@emotion/react" "^11.11.1"
     "@emotion/styled" "^11.11.0"
     "@mui/icons-material" "^5.14.9"
@@ -1483,10 +1483,10 @@
     redux-form "^8.3.7"
     redux-saga "^1.1.3"
 
-"@complat/react-spectra-editor@1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.2.2.tgz#40f5129bdc48d04a8e4ac36f76b9b7a1eebb2d2f"
-  integrity sha512-nskyHPg90b0PqQIihgNDz5/cYYEe9Md7OVukoxDbDL/Vb4L1Y2r3qOlvspFFi1yj5AK01pgyqx7hzRszOGnAkA==
+"@complat/react-spectra-editor@1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.1.tgz#f7dcf843c8a473452227ed0ed12c2095c8d1dbf7"
+  integrity sha512-9FnXcyW2VMFLlQznLfBZDxEA8HSLo+2NX77+uygrdjHWy+1jEbkywwBCsPfzae/fpYfT+99/3t9ctGd7b7ivLA==
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.4"
     "@emotion/react" "^11.11.1"
