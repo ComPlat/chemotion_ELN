@@ -215,6 +215,7 @@ const convertTurnoverFrequency = (valueToFormat, currentUnit) => {
 
 export {
   // eslint-disable-next-line import/prefer-default-export
+  handleFloatNumbers,
   convertTemperature,
   convertTemperatureToKelvin,
   convertTime,
