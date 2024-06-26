@@ -3,15 +3,10 @@ import { cloneDeep } from 'lodash';
 import PropTypes from 'prop-types';
 import Delta from 'quill-delta';
 import React from 'react';
-import {
-  Button,
-  Form, FormControl, FormGroup
-} from 'react-bootstrap';
+import { Button, Form, Container, Col, InputGroup, Row } from 'react-bootstrap';
 
 import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function RemoveRowBtn({ removeRow, node }) {
   const { data } = node;
@@ -228,61 +223,64 @@ export default class TextTemplate extends React.Component {
     const { selectedTemplate, text, icon } = this.state;
 
     return (
-      <Panel style={{ height: 'calc(100vh - 150px)' }}>
-        <Panel.Body style={{ height: '100%' }}>
-          <div style={{ display: 'flex', height: '100%' }}>
-            <div style={{ width: '35%' }}>
-              <div style={{ height: '100%' }} className="ag-theme-balham">
+      <Container fluid className="vh-100">
+        <Row className="vh-100">
+          <Col md={4}>
+            <div className="h-100 d-flex flex-column">
+              <div className="ag-theme-balham flex-grow-1">
                 <AgGridReact
                   suppressHorizontalScroll
                   columnDefs={this.columnDefs}
-                  defaultColDef={{ resizable: true }}
+                  defaultColDef
                   rowSelection="single"
                   onGridReady={this.onGridReady}
                   onSelectionChanged={this.onSelectionChanged}
                   rowData={predefinedTemplateNames}
+                  className='fs-6 py-5'
                 />
               </div>
             </div>
-            <div style={{ marginLeft: '10px', width: '65%' }}>
-              <div style={{ margin: '10px' }}>
-                <ControlLabel style={{ width: '65px' }}>
-                  Preview
-                </ControlLabel>
-                &nbsp;
-                <TextTemplateIcon template={selectedTemplate} />
-              </div>
-              <div style={{ margin: '10px' }}>
-                <Form inline>
-                  <ControlLabel style={{ width: '65px' }}>Text</ControlLabel>
-                  <FormControl value={text} onChange={this.onChangeText} />
-                </Form>
-              </div>
-              <div style={{ margin: '10px 10px 20px 10px' }}>
-                <Form inline>
-                  <ControlLabel style={{ width: '65px' }}>Icon</ControlLabel>
-                  <FormControl value={icon} onChange={this.onChangeIcon} />
-                </Form>
-              </div>
-              <div>
-                <FormGroup>
+          </Col>
+          <Col md={8}>
+            <div className="p-3">
+              <InputGroup className="mb-3">
+                <InputGroup.Text className='fs-4 fw-bold me-3'>Preview</InputGroup.Text>
+                <TextTemplateIcon className='fs-3 my-3' template={selectedTemplate} />
+              </InputGroup>
+              <Form>
+                <Form.Group className="mb-3">
+                  <Form.Label className='fw-bold fs-5'>Text</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={text}
+                    onChange={selectedTemplate ? this.onChangeText : () => { }}
+                    className='py-3'
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label className='fw-bold fs-5'>Icon</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={icon}
+                    onChange={selectedTemplate ? this.onChangeIcon : () => { }}
+                    className='py-3'
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
                   <QuillEditor
                     ref={this.reactQuillRef}
                     value={(selectedTemplate || {}).data}
                     onChange={event => this.handleInputChange(event)}
                   />
-                </FormGroup>
-              </div>
-              &nbsp;&nbsp;
-              <div style={{ marginTop: '30px' }}>
-                <Button variant="primary" onClick={this.saveTemplate}>
-                  Save
-                </Button>
-              </div>
+                </Form.Group>
+              </Form>
+              <Button variant="primary" onClick={selectedTemplate ? this.saveTemplate : () => { }}>
+                Save
+              </Button>
             </div>
-          </div>
-        </Panel.Body>
-      </Panel>
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
