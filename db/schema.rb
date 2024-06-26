@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_06_25_105013) do
+ActiveRecord::Schema.define(version: 2024_06_10_144934) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -956,6 +956,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.text "plain_text_description"
     t.text "plain_text_observation"
     t.jsonb "variations", default: []
+    t.boolean "gaseous", default: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -974,6 +975,8 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
+    t.integer "gas_type", default: 0
+    t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"K", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1438,6 +1441,7 @@ ActiveRecord::Schema.define(version: 2024_06_25_105013) do
 
   create_table "wellplates", id: :serial, force: :cascade do |t|
     t.string "name"
+    t.integer "size"
     t.string "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

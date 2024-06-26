@@ -26,6 +26,8 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { convertTemperature, convertTime, convertTurnoverFrequency } from 'src/utilities/UnitsConversion';
+import GaseousReactionActions from 'src/stores/alt/actions/GaseousReactionActions';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -224,8 +226,20 @@ export default class ReactionDetailsScheme extends Component {
     this.onReactionChange(reaction, { schemaChanged: true });
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup) {
+    const updatedSample = reaction.sampleById(srcMat.id);
+    const conditions = tagGroup === 'solvents'
+    || ((srcGroup === 'reactants' || srcGroup === 'starting_materials') && tagGroup === 'products')
+    || ((srcGroup === 'products') && (tagGroup === 'reactants' || tagGroup === 'starting_materials'));
+    if (conditions) {
+      updatedSample.gas_type = 'off';
+    }
+  }
+
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction } = this.state;
+    this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
     reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
     this.onReactionChange(reaction, { schemaChanged: true });
   }
@@ -304,6 +318,21 @@ export default class ReactionDetailsScheme extends Component {
       case 'addToDesc':
         this.addSampleTo(changeEvent, 'description');
         this.addSampleTo(changeEvent, 'observation');
+        break;
+      case 'gasType':
+        this.onReactionChange(
+          this.updatedReactionForGasTypeChange(changeEvent)
+        );
+        break;
+      case 'gasFieldsChanged':
+        this.onReactionChange(
+          this.updatedReactionForGasProductFieldsChange(changeEvent)
+        );
+        break;
+      case 'gasFieldsUnitsChanged':
+        this.onReactionChange(
+          this.updatedReactionForGasFieldsUnitsChange(changeEvent)
+        );
         break;
       default:
         break;
@@ -386,7 +415,15 @@ export default class ReactionDetailsScheme extends Component {
     const updatedSample = this.props.reaction.sampleById(sampleID);
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
+    // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
+    if (updatedSample.gas_type === 'feedstock') {
+      GaseousReactionActions.setFeedStockReferenceVolume(updatedSample.amount_l);
+    }
+
+    if (updatedSample.gas_type === 'catalyst') {
+      GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
@@ -434,6 +471,156 @@ export default class ReactionDetailsScheme extends Component {
     updatedSample.equivalent = equivalent;
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  updateMolValueForUpdatedSample(updatedSample) {
+    const molValue = updatedSample.amount_mol;
+    if (molValue || molValue === 0) {
+      if (updatedSample.gas_type === 'feedstock') {
+        GaseousReactionActions.setFeedStockReferenceVolume(updatedSample.amount_l);
+      }
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  /* calculateMolValueForUpdatedSample(updatedSample, materialGroup) {
+    const pressure = 1;
+    let temperature;
+    const idealGasConstant = 0.0821;
+    const purity = updatedSample.purity || 1;
+    const volume = updatedSample.amount_l;
+    const amountGram = updatedSample.amount_g;
+    const { density } = updatedSample.density;
+    let molValue = 0;
+    if (materialGroup === 'products') {
+      const ppm = updatedSample.gas_phase_data?.part_per_million || null;
+      if (updatedSample.gas_phase_data.temperature.unit === 'K') {
+        temperature = updatedSample.gas_phase_data.temperature.value;
+      } else if (updatedSample.gas_phase_data.temperature.unit === '°C') {
+        const { value } = updatedSample.gas_phase_data.temperature;
+        temperature = value + 273.15;
+      } else if (updatedSample.gas_phase_data.temperature.unit === '°F') {
+        const { value } = updatedSample.gas_phase_data.temperature;
+        temperature = (((value - 32) * 5) / 9) + 273.15;
+      }
+      if (ppm !== null && temperature !== 0) {
+        if (volume) {
+          molValue = (ppm * purity * pressure * volume) / (idealGasConstant * temperature * 1000000);
+        } else {
+          molValue = density ? (ppm * purity * pressure * amountGram)
+          / (idealGasConstant * temperature * 1000000 * density) : 0;
+        }
+      }
+    } else {
+      temperature = 294;
+      if (volume) {
+        molValue = (purity * pressure * volume) / (idealGasConstant * temperature);
+      } else {
+        molValue = density ? (purity * pressure * amountGram) / (idealGasConstant * temperature * density) : 0;
+      }
+    }
+    return molValue;
+  }
+ */
+  updatedReactionForGasTypeChange(changeEvent) {
+    const {
+      sampleID,
+      materialGroup,
+      value
+    } = changeEvent;
+    const { reaction } = this.props;
+    const updatedSample = reaction.sampleById(sampleID);
+    const isFeedstockMaterialPresent = reaction.isFeedstockMaterialPresent();
+    if (materialGroup === 'products') {
+      if (value === 'gas') {
+        updatedSample.gas_type = 'off';
+      } else {
+        updatedSample.gas_type = 'gas';
+      }
+      if (!updatedSample.gas_phase_data) {
+        updatedSample.gas_phase_data = null;
+      }
+    } else if (materialGroup === 'starting_materials' || materialGroup === 'reactants') {
+      if (isFeedstockMaterialPresent && value === 'off') {
+        updatedSample.gas_type = 'catalyst';
+      } else if (value === 'FES') {
+        updatedSample.gas_type = 'off';
+        GaseousReactionActions.setFeedStockReferenceVolume(null);
+      } else if (value === 'CAT') {
+        updatedSample.gas_type = 'off';
+        GaseousReactionActions.setCatalystReferenceMole(null);
+      } else if (value === 'off' && !isFeedstockMaterialPresent) {
+        updatedSample.gas_type = 'feedstock';
+      } else if (value === 'off') {
+        updatedSample.gas_type = 'catalyst';
+      }
+    }
+    this.updateMolValueForUpdatedSample(updatedSample);
+    if (updatedSample.gas_type === 'catalyst') {
+      GaseousReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
+    }
+    return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForGasProductFieldsChange(changeEvent) {
+    const {
+      sampleID,
+      value,
+      materialGroup,
+      field
+    } = changeEvent;
+    const { reaction } = this.props;
+    const updatedSample = reaction.sampleById(sampleID);
+    if (materialGroup === 'products') {
+      switch (field) {
+        case 'temperature':
+        case 'time':
+        case 'turnover_frequency':
+          updatedSample.gas_phase_data[field].value = value;
+          break;
+        case 'turnover_number':
+          updatedSample.gas_phase_data.turnover_number = value;
+          break;
+        case 'part_per_million':
+          updatedSample.gas_phase_data.part_per_million = value;
+          break;
+        default:
+          break;
+      }
+    }
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForGasProductFieldsChange.bind(this),
+      updatedSample,
+      field
+    );
+  }
+
+  updatedReactionForGasFieldsUnitsChange(changeEvent) {
+    const {
+      sampleID,
+      unit,
+      value,
+      field,
+    } = changeEvent;
+    const { reaction } = this.props;
+    const updatedSample = reaction.sampleById(sampleID);
+    let convertedValues;
+    if (field === 'temperature') {
+      convertedValues = convertTemperature(value, unit);
+    } else if (field === 'time') {
+      convertedValues = convertTime(value, unit);
+    } else if (field === 'turnover_frequency') {
+      convertedValues = convertTurnoverFrequency(value, unit);
+    }
+    updatedSample.gas_phase_data[field].value = convertedValues[0];
+    updatedSample.gas_phase_data[field].unit = convertedValues[1];
+
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForGasProductFieldsChange.bind(this),
+      updatedSample,
+      field
+    );
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -577,12 +764,12 @@ export default class ReactionDetailsScheme extends Component {
               if (!lockEquivColumn) {
                 sample.equivalent = sample.amount_g / sample.maxAmount;
               } else {
-                if (referenceMaterial && referenceMaterial.amount_value) {
+                if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock') {
                   sample.setAmountAndNormalizeToGram({
                     value: sample.equivalent * referenceMaterial.amount_mol,
                     unit: 'mol',
                   });
-                } else if (sample.amount_value) {
+                } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
                   sample.setAmountAndNormalizeToGram({
                     value: sample.equivalent * sample.amount_mol,
                     unit: 'mol'
@@ -606,7 +793,7 @@ export default class ReactionDetailsScheme extends Component {
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value) {
+            if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock') {
               sample.setAmountAndNormalizeToGram({
                 value: sample.equivalent * referenceMaterial.amount_mol,
                 unit: 'mol',
@@ -648,12 +835,13 @@ export default class ReactionDetailsScheme extends Component {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
         sample.equivalent = updatedSample.equivalent;
-        if (referenceMaterial && referenceMaterial.amount_value) {
+        if (referenceMaterial && referenceMaterial.amount_value
+          && updatedSample.gas_type !== 'feedstock') {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
           });
-        } else if (sample.amount_value) {
+        } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
             unit: 'mol'
@@ -751,12 +939,52 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  updatedReactionWithSample(updateFunction, updatedSample) {
+  updatedSamplesForGasTypeChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.gas_type = updatedSample.gas_type;
+      } else if (sample.id !== updatedSample.id) {
+        if ((updatedSample.gas_type === 'feedstock' && sample.gas_type === 'feedstock')
+        || (updatedSample.gas_type === 'catalyst' && sample.gas_type === 'catalyst')) {
+          sample.gas_type = 'off';
+        }
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForGasProductFieldsChange(samples, updatedSample, MaterialGroup, field) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        if (MaterialGroup === 'products') {
+          switch (field) {
+            case 'temperature':
+            case 'time':
+            case 'turnover_frequency':
+              sample.gas_phase_data[field].value = updatedSample.gas_phase_data[field].value;
+              sample.gas_phase_data[field].unit = updatedSample.gas_phase_data[field].unit;
+              break;
+            case 'turnover_number':
+              sample.gas_phase_data.turnover_number = updatedSample.gas_phase_data[field];
+              break;
+            case 'part_per_million':
+              sample.gas_phase_data.part_per_million = updatedSample.gas_phase_data[field];
+              break;
+            default:
+              break;
+          }
+        }
+      }
+      return sample;
+    });
+  }
+
+  updatedReactionWithSample(updateFunction, updatedSample, type) {
     const { reaction } = this.state;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials');
-    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants');
-    reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents');
-    reaction.products = updateFunction(reaction.products, updatedSample, 'products');
+    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
+    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
+    reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
+    reaction.products = updateFunction(reaction.products, updatedSample, 'products', type);
     return reaction;
   }
 

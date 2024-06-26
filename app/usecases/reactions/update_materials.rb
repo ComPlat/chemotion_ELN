@@ -111,7 +111,8 @@ module Usecases
           :id, :is_new, :is_split, :reference, :equivalent, :position,
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
-          :melting_point_lowerbound, :melting_point_upperbound, :segments
+          :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
+          :gas_phase_data
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -178,7 +179,9 @@ module Usecases
             waste: sample.waste,
             coefficient: sample.coefficient,
             position: sample.position,
-            type: reactions_sample_klass
+            type: reactions_sample_klass,
+            gas_type: sample.gas_type,
+            gas_phase_data: sample.gas_phase_data,
           )
         # sample was moved to other materialgroup
         else
@@ -191,7 +194,9 @@ module Usecases
             waste: sample.waste,
             coefficient: sample.coefficient,
             position: sample.position,
-            type: reactions_sample_klass
+            type: reactions_sample_klass,
+            gas_type: sample.gas_type,
+            gas_phase_data: sample.gas_phase_data,
           )
         end
       end
