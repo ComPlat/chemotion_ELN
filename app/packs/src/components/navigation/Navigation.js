@@ -9,6 +9,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import NavNewSession from 'src/components/navigation/NavNewSession'
+import NavHead from 'src/components/navigation/NavHead';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 import NavigationModal from 'src/components/navigation/NavigationModal';
 import PropTypes from 'prop-types';
@@ -97,16 +98,19 @@ export default class Navigation extends React.Component {
 
   navHeader() {
     return (
-      <Navbar.Text>
-        <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
-          <i
-            className="fa fa-list"
-            style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}
-            onClick={this.toggleCollectionTree}
-            role='button'
-          />
-        </OverlayTrigger>
-      </Navbar.Text>
+      <React.Fragment>
+        <Navbar.Text>
+          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+            <i
+              className="fa fa-list"
+              style={{ visibility: this.props.isHidden ? 'hidden' : 'visible' }}
+              onClick={this.toggleCollectionTree}
+              role='button'
+            />
+          </OverlayTrigger>
+        </Navbar.Text>
+        <NavHead />
+      </React.Fragment>
     )
   }
 
