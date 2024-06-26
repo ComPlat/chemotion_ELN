@@ -266,16 +266,15 @@ class Material extends Component {
 
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
-    const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
+    const { value, unit } = this.getFieldData(field, gasPhaseData);
 
     const style = { maxWidth: '5px', paddingRight: '3px' };
-    const colSpan = isTimeField ? '2' : '1';
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
 
     return (
-      <td colSpan={colSpan} style={style}>
+      <td colSpan={1} style={style}>
         <NumeralInputWithUnitsCompo
           precision={4}
           bsStyle="success"
@@ -293,13 +292,13 @@ class Material extends Component {
   getFieldData(field, gasPhaseData) {
     switch (field) {
       case 'turnover_number':
-        return { value: gasPhaseData.turnover_number, unit: 'TON', isTimeField: false };
+        return { value: gasPhaseData.turnover_number, unit: 'TON' };
       case 'part_per_million':
-        return { value: gasPhaseData.part_per_million, unit: 'ppm', isTimeField: false };
+        return { value: gasPhaseData.part_per_million, unit: 'ppm' };
       case 'time':
-        return { value: gasPhaseData.time?.value, unit: gasPhaseData.time?.unit, isTimeField: true };
+        return { value: gasPhaseData.time?.value, unit: gasPhaseData.time?.unit };
       default:
-        return { value: gasPhaseData[field]?.value, unit: gasPhaseData[field]?.unit, isTimeField: false };
+        return { value: gasPhaseData[field]?.value, unit: gasPhaseData[field]?.unit };
     }
   }
 
@@ -334,11 +333,11 @@ class Material extends Component {
           {this.pseudoField()}
           {this.pseudoField()}
           {this.pseudoField()}
+          {this.pseudoField()}
+          {this.pseudoField()}
           {this.gaseousInputFields('time', material)}
           {this.gaseousInputFields('temperature', material)}
           {this.gaseousInputFields('part_per_million', material)}
-          {this.gaseousInputFields('turnover_number', material)}
-          {this.gaseousInputFields('turnover_frequency', material)}
         </tr>
       );
     }
@@ -583,6 +582,39 @@ class Material extends Component {
     return this.props.material;
   }
 
+  amountField(material, metricPrefixes, reaction, massBsStyle, metric) {
+    const { lockEquivColumn, materialGroup } = this.props;
+    return (
+      <OverlayTrigger
+        delay="100"
+        placement="top"
+        overlay={
+          <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
+        }
+      >
+        <div>
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={material.amount_g}
+            unit="g"
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={4}
+            disabled={
+              !permitOn(reaction)
+              || (materialGroup !== 'products' && !material.reference && lockEquivColumn)
+              || material.gas_type === 'feedstock' || material.gas_type === 'gas'
+            }
+            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
+            onMetricsChange={this.handleMetricsChange}
+            bsStyle={material.error_mass ? 'error' : massBsStyle}
+            name="molecular-weight"
+          />
+        </div>
+      </OverlayTrigger>
+    );
+  }
+
   generalMaterial(props, style) {
     const { material, deleteMaterial, connectDragSource, connectDropTarget,
       showLoadingColumn, reaction } = props;
@@ -642,45 +674,24 @@ class Material extends Component {
               </div>
             </OverlayTrigger>
           </td>
+          {
+            material.gas_type === 'gas' ? this.gaseousInputFields('turnover_number', material)
+              : (
+                <td>
+                  {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
+                </td>
+              )
+          }
 
-          <td>
-            <OverlayTrigger
-              delay="100"
-              placement="top"
-              overlay={
-                <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material,reaction)}</Tooltip>
-              }>
-              <div>
-                <NumeralInputWithUnitsCompo
-                  key={material.id}
-                  value={material.amount_g}
-                  unit="g"
-                  metricPrefix={metric}
-                  metricPrefixes={metricPrefixes}
-                  precision={4}
-                  disabled={
-                    !permitOn(reaction)
-                    || (this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn)
-                    || material.gas_type === 'feedstock' || material.gas_type === 'gas'
-                  }
-                  onChange={e => this.debounceHandleAmountUnitChange(e, material.amount_g)}
-                  onMetricsChange={this.handleMetricsChange}
-                  bsStyle={material.error_mass ? 'error' : massBsStyle}
-                  name="molecular-weight"
-                />
-              </div>
-            </OverlayTrigger>
-          </td>
-
-          {this.materialVolume(material)}
-
+          {material.gas_type === 'gas' ? this.gaseousInputFields('turnover_frequency', material)
+            : this.materialVolume(material)}
           <td>
             <NumeralInputWithUnitsCompo
               key={material.id}
               value={material.amount_mol}
               unit="mol"
               metricPrefix={metricMol}
-              metricPrefixes={metricPrefixesMol}
+              metricPrefixes={metricPrefixes}
               precision={4}
               disabled={!permitOn(reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
