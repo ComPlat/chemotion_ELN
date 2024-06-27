@@ -56,6 +56,10 @@
   margin-bottom: 1.5rem;
 }
 
+.advanced-search-content-scrollable-body.without-header {
+  max-height: calc(85vh - 215px);
+}
+
 .advanced-search-buttons {
   gap: 0.5rem;
 }

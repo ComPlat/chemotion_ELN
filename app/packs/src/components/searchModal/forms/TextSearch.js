@@ -1,10 +1,9 @@
 import React, { useEffect, useContext } from 'react';
+import { ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, Stack, Accordion } from 'react-bootstrap';
 import {
-  Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, 
-  Stack, Accordion, AccordionContext, useAccordionButton,
-} from 'react-bootstrap';
-import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
-import UIStore from 'src/stores/alt/stores/UIStore';
+  togglePanel, handleClear, showErrorMessage, handleSearch,
+  AccordeonHeaderButtonForSearchForm, SearchButtonToolbar, panelVariables
+} from './SearchModalFunctions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
 import DetailSearch from './DetailSearch';
@@ -54,25 +53,6 @@ const TextSearch = () => {
     searchValues.table = table;
     searchValues.element_id = (genericElement.id || 0);
     searchStore.addAdvancedSearchValue(0, searchValues);
-  }
-
-  const AccordeonHeaderButtonForSearchForm = ({ title, eventKey, callback }) => {
-    const { activeEventKey } = useContext(AccordionContext);
-    const isCurrentEventKey = activeEventKey === eventKey;
-    const activeClass = isCurrentEventKey ? 'active' : 'collapsed';
-
-    const decoratedOnClick = useAccordionButton(eventKey, () => callback && callback(eventKey));
-
-    return (
-      <button
-        type="button"
-        className={`accordion-button ${activeClass}`}
-        onClick={decoratedOnClick}
-        disabled={searchStore.search_accordion_toggle_disabled}
-      >
-        {title}
-      </button>
-    );
   }
 
   const SelectSearchTable = () => {
@@ -172,6 +152,7 @@ const TextSearch = () => {
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.searchTitle}
             eventKey={0}
+            disabled={searchStore.search_accordion_toggle_disabled}
             callback={togglePanel(searchStore)}
           />
         </h2>
@@ -196,18 +177,7 @@ const TextSearch = () => {
                 )
               }
             </div>
-            <ButtonToolbar className="advanced-search-buttons">
-              <Button variant="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
-                Cancel
-              </Button>
-              <Button variant="info" onClick={() => handleClear(searchStore)}>
-                Reset
-              </Button>
-              <Button variant="primary" id="advanced-search-button"
-                onClick={() => handleSearch(searchStore, UIStore.getState())}>
-                Search
-              </Button>
-            </ButtonToolbar>
+            <SearchButtonToolbar store={searchStore} />
           </div>
         </Accordion.Collapse>
       </Accordion.Item>
