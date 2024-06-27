@@ -20,3 +20,13 @@
     overflow-wrap: break-word;
   }
 }
+
+.alert.remove-search-result {
+  padding: 4px;
+}
+
+.alert.remove-search-result button {
+  --bs-btn-border-color: transparent;
+  font-size: 15px;
+  text-decoration: none;
+}
