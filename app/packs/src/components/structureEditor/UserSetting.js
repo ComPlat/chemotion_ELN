@@ -6,6 +6,7 @@ import Select from 'react-select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';
+
 const UserSetting = () => {
   const [editors, setEditors] = useState([]);
   const [editor, setEditor] =
@@ -53,7 +54,6 @@ const UserSetting = () => {
   let options = editors
     .map(e => ({ value: e.configs.editor, label: `${e.label} (${e.configs.editor})` }));
   options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }].concat(options);
-
 
   return (
     <Panel>

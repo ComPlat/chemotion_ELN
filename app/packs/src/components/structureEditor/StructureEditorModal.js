@@ -66,6 +66,7 @@ const createEditor = (configs, availableEditors) => {
 const createEditors = (_state = {}) => {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors || {};
+
   const grantEditors = matriceConfigs
     .map(({ configs }) => createEditor(configs, availableEditors.editors))
     .filter(Boolean);
@@ -79,6 +80,7 @@ const createEditors = (_state = {}) => {
     },
     ...grantEditors,
   ].reduce((acc, args) => ({ ...acc, ...args }), {});
+
   return editors;
 };
 
