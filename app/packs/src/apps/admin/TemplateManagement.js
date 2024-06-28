@@ -194,6 +194,7 @@ export default class TemplateManagement extends React.Component {
 
     return (
       <Modal
+        centered
         show={this.state.showNewTemplateModal}
         onHide={this.handleNewTemplateClose}
       >
@@ -256,6 +257,7 @@ export default class TemplateManagement extends React.Component {
 
     return (
       <Modal
+        centered
         show={this.state.showEditUserModal}
         onHide={this.handleEditTemplateClose}
       >

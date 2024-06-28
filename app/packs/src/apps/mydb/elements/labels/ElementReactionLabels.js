@@ -60,7 +60,7 @@ export default class ElementReactionLabels extends React.Component {
     return (
       <>
         <i className="icon-reaction" onClick={this.handleOnClick} key={element.id}/>
-        <Modal show={clicked} onHide={this.closeWarning}>
+        <Modal centered show={clicked} onHide={this.closeWarning}>
           <Modal.Header closeButton>
             <Modal.Title>No Access to Element</Modal.Title>
           </Modal.Header>

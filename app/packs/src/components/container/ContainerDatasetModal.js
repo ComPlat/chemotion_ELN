@@ -120,6 +120,7 @@ export default class ContainerDatasetModal extends Component {
     if (show) {
       return (
         <Modal
+          centered
           show={show}
           size="lg"
           dialogClassName="attachment-modal"
