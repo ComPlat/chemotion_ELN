@@ -62,7 +62,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     const validationState = columnNameError ? 'error' : null;
 
     return (
-      <Modal animation show={modal.show} onHide={onHide}>
+      <Modal centered animation show={modal.show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             {title}

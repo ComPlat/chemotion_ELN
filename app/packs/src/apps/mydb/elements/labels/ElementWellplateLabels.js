@@ -63,7 +63,7 @@ export default class ElementWellplateLabels extends React.Component {
     return (
       <>
         <i className='icon-wellplate' onClick={this.handleOnClick} key={element.id} />
-        <Modal show={showWarning && clicked} onHide={this.closeWarning}>
+        <Modal centered show={showWarning && clicked} onHide={this.closeWarning}>
           <Modal.Header closeButton>
             <Modal.Title>No Access to Element</Modal.Title>
           </Modal.Header>

@@ -147,7 +147,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
     const { measurementCandidates } = this.state;
 
     return (
-      <Modal animation size="lg" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
+      <Modal centered animation size="lg" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
         <Modal.Header closeButton>
           <Modal.Title>
             Export measurements to samples

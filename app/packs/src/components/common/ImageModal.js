@@ -133,7 +133,7 @@ export default class ImageModal extends Component {
             role="button"
           />
         </div>
-        <Modal show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
+        <Modal centered show={this.state.showModal} onHide={this.handleModalClose} dialogClassName="noticeModal">
           <Modal.Header closeButton>
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>

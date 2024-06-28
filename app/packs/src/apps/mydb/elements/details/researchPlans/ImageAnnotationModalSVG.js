@@ -14,6 +14,7 @@ export default class ImageAnnotationModalSVG extends Component {
   render() {
     return (
       <Modal
+        centered
         backdrop="static"
         size="lg"
         show={this.props.isShow}

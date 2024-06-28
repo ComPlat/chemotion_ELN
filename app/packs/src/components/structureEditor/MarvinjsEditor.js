@@ -8,7 +8,7 @@ import loadScripts from 'src/components/structureEditor/loadScripts';
 const LoadingModal = (props) => {
   const { loading } = props;
   return (
-    <Modal className="chemdraw-loading" animation show={loading}>
+    <Modal centered className="chemdraw-loading" animation show={loading}>
       <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
       <span className="sr-only">Initializing...</span>
     </Modal>
