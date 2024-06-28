@@ -61,7 +61,6 @@ export default class MessagePublish extends React.Component {
     const { selectedChannel, channels } = this.state;
 
     return (
-      <Container fluid className=" min-vh-100 border d-flex flex-column" >
         <Row className="flex-grow-1 d-flex">
           <Col md={3} className="d-flex flex-column">
             <Form.Group controlId="channelSelect" className="flex-grow-1 d-flex flex-column m-3">
@@ -88,13 +87,12 @@ export default class MessagePublish extends React.Component {
                 className='mt-3 ms-3'
                 size='lg'
                 >
-                Publish&nbsp;
-                <i className="fa fa-paper-plane" />
+              Publish
+              <i className="fa fa-paper-plane ms-1" />
               </Button>
             </Form>
           </Col>
-        </Row>
-      </Container>
+      </Row>
     );
   }
 }

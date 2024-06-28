@@ -156,7 +156,7 @@ export default class TemplateManagement extends React.Component {
     if (template.attachment_id) {
       return (
         <div>
-          {template.attachment.filename} &nbsp;
+          {template.attachment.filename}
           <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
             <i className="fa fa-trash-o"></i>
           </Button>
@@ -165,7 +165,7 @@ export default class TemplateManagement extends React.Component {
     } else if (attachment) {
       return (
         <div>
-          {attachment.name} &nbsp;
+          {attachment.name}
           <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
             <i className="fa fa-trash-o"></i>
           </Button>
@@ -176,8 +176,7 @@ export default class TemplateManagement extends React.Component {
         <Dropzone
           accept="application/pdf,.docx,.xlsx,.html,.csv,.erb"
           onDrop={attachment_file => this.handleFileDrop(attachment_file)}
-          style={{ border: '3px dashed lightgray' }}
-          className='d-flex align-items-center justify-content-center pb-3 w-100'
+          className='d-flex align-items-center justify-content-center pb-3 w-100 drop-zone-style'
         >
           <div className='text-center pt-3 text-secondary fs-5'>
             Drop File, or Click to Select.
@@ -226,14 +225,14 @@ export default class TemplateManagement extends React.Component {
             </Form>
           </Container>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="modal-footer border-0 mb-2">
           <Button variant="primary" onClick={() => this.handleCreateNewTemplate()} >
-            Create&nbsp;
-            <i className="fa fa-plus" />
+            Create
+            <i className="fa fa-plus ms-1" />
           </Button>
           &nbsp;
           <Button variant="warning" onClick={() => this.handleNewTemplateClose()} >
-            Cancel&nbsp;
+            Cancel
           </Button>
         </Modal.Footer>
       </Modal>
@@ -276,14 +275,13 @@ export default class TemplateManagement extends React.Component {
             </Form>
           </Container>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="modal-footer border-0">
           <Button variant="primary" className="me-2" onClick={() => this.handleUpdateTemplate(template.id)} >
-            Update&nbsp;
-            <i className="fa fa-save" />
+            Update
+            <i className="fa fa-save ms-1" />
           </Button>
-          &nbsp;
           <Button variant="warning" className="me-2" onClick={() => this.handleEditTemplateClose()} >
-            Cancel&nbsp;
+            Cancel
           </Button>
         </Modal.Footer>
       </Modal>
@@ -297,10 +295,9 @@ export default class TemplateManagement extends React.Component {
           Delete this template?
         </Popover.Header>
         <Popover.Body className='ps-5'>
-          <Button size="sm" variant="danger" onClick={() => this.handleDeleteTemplate(template)}>
+          <Button size="sm" variant="danger" className='me-1' onClick={() => this.handleDeleteTemplate(template)}>
             Yes
           </Button>
-          <span>&nbsp;&nbsp;</span>
           <Button size="sm" variant="warning" onClick={this.handleClick} >
             No
           </Button>
@@ -364,7 +361,6 @@ export default class TemplateManagement extends React.Component {
           <div className="d-inline-block">
             {this.renderDeleteButton(g)}
           </div>
-          &nbsp;
         </td>
       </tr>
     ));
@@ -374,7 +370,7 @@ export default class TemplateManagement extends React.Component {
         <Card>
           <Card.Body>
             <Button variant="primary" size="md" onClick={() => this.handleNewTemplateShow()}>
-              Add new template&nbsp;<i className="fa fa-plus" />
+              Add new template<i className="fa fa-plus ms-1" />
             </Button>
           </Card.Body>
         </Card>
