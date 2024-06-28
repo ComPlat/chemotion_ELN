@@ -280,7 +280,7 @@ export default class MySharedCollections extends React.Component {
           renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
         />
         {trees()}
-        <Modal animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal centered animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
           <Modal.Header closeButton>
             <Modal.Title>{this.state.modalProps.title}</Modal.Title>
           </Modal.Header>
