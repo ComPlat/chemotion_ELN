@@ -1,9 +1,7 @@
 /* eslint-disable no-param-reassign */
 import React, { Component } from 'react';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
-import {
-  Table, Button, Form, Modal, Popover, OverlayTrigger, Alert, Card
-} from 'react-bootstrap';
+import { Table, Button, Form, Modal, Popover, OverlayTrigger, Alert } from 'react-bootstrap';
 import Select from 'react-select';
 
 export default class ChemSpectraLayouts extends Component {
@@ -184,6 +182,7 @@ export default class ChemSpectraLayouts extends Component {
           variant='secondary'
           size='md'
           onClick={this.handleShowNewTypeLayoutModal}
+          className='mb-2'
         >
           Add New Data Type
         </Button>
@@ -230,13 +229,7 @@ export default class ChemSpectraLayouts extends Component {
           </Modal.Footer>
         </Modal>
 
-
-        <Card className='mt-1'>
-          <Card.Header>
-            <Card.Title className="fs-4">Data Types</Card.Title>
-          </Card.Header>
-        </Card>
-
+        <h3 className='bg-light p-3 rounded'>Data Types</h3>
         <Table responsive hover bordered>
           <thead>
             <tr>

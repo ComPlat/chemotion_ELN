@@ -1,4 +1,4 @@
-import { Button, OverlayTrigger, Table, Tooltip, Card } from 'react-bootstrap';
+import { Button, OverlayTrigger, Table, Tooltip } from 'react-bootstrap';
 import React, { Component } from 'react';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
@@ -32,7 +32,6 @@ export default class DelayedJobs extends Component {
   }
 
   renderShowBtn(job) {
-    // if (job.last_error) {
     if (true) {
       return (
         <OverlayTrigger placement="top" overlay={tipRestartJob}>
@@ -45,7 +44,6 @@ export default class DelayedJobs extends Component {
           </Button>
         </OverlayTrigger>);
     }
-    return '';
   }
 
   render() {
@@ -80,21 +78,15 @@ export default class DelayedJobs extends Component {
 
     return (
       <div>
-        <Card>
-          <Card.Header>
-            <Card.Title className="fs-4">Delayed Jobs</Card.Title>
-          </Card.Header>
-          <Card.Body>
-            <Table responsive hover bordered>
-              <thead>
-                {tcolumn}
-              </thead>
-              <tbody>
-                {tbody}
-              </tbody>
-            </Table>
-          </Card.Body>
-        </Card>
+        <h3 className='bg-light p-3 rounded'>Delayed Jobs</h3>
+        <Table responsive hover bordered>
+          <thead>
+            {tcolumn}
+          </thead>
+          <tbody>
+            {tbody}
+          </tbody>
+        </Table>
       </div>
     );
   }

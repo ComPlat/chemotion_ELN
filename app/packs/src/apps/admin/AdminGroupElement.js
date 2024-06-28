@@ -59,7 +59,7 @@ export default class AdminGroupElement extends React.Component {
         <div className="d-inline-block me-2">
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersShow">List Group-Users</Tooltip>}>
             <Button size="sm" type="button" variant="info" onClick={this.toggleUsers} >
-              <i className="fa fa-users" />&nbsp;({group.users.length < 10 ? `0${group.users.length}` : group.users.length})
+              <i className="fa fa-users me-1" />({group.users.length < 10 ? `0${group.users.length}` : group.users.length})
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add user to group</Tooltip>}>
@@ -72,7 +72,7 @@ export default class AdminGroupElement extends React.Component {
         <div className="d-inline-block">
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupDevicesShow">List Group-Devices</Tooltip>}>
             <Button size="sm" type="button" variant="success" onClick={this.toggleDevices} >
-              <i className="fa fa-server" />&nbsp;({group.devices.length < 10 ? `0${group.devices.length}` : group.devices.length})
+              <i className="fa fa-server me-1" />({group.devices.length < 10 ? `0${group.devices.length}` : group.devices.length})
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="top" overlay={<Tooltip id="groupUsersAdd">Add device to group</Tooltip>}>
@@ -80,8 +80,8 @@ export default class AdminGroupElement extends React.Component {
               <i className="fa fa-laptop" /><i className="fa fa-plus" />
             </Button>
           </OverlayTrigger>
-        </div>&nbsp;&nbsp;
-        <div className="d-inline-block">
+        </div>
+        <div className="d-inline-block ms-2">
           <DeleteGroupDeviceButton rootType={'Group'}
             groupRec={group}
             isRoot={true}
@@ -133,7 +133,7 @@ export default class AdminGroupElement extends React.Component {
           <td>{groupElement.name}</td>
           <td>{groupElement.name_abbreviation}</td>
           <td>
-            {groupElement.admins && groupElement.admins.map(x => x.name).join(', ')}&nbsp;&nbsp;
+            {groupElement.admins && groupElement.admins.map(x => x.name).join(', ')}
           </td>
           <td>{groupElement.email}</td>
         </tr>

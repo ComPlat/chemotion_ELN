@@ -293,7 +293,7 @@ export default class TemplateManagement extends React.Component {
         <Popover.Header id="popover-positioned-scrolling-left" as="h5">
           Delete this template?
         </Popover.Header>
-        <Popover.Body className='ps-5'>
+        <Popover.Body>
           <Button size="sm" variant="danger" className='me-1' onClick={() => this.handleDeleteTemplate(template)}>
             Yes
           </Button>

@@ -76,9 +76,9 @@ export default class DeleteGroupDeviceButton extends React.Component {
           {msg}
         </Popover.Header>
         <Popover.Body>
-          <Button size="sm" variant="danger" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
+          <Button size="sm" variant="danger" className='me-2' onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
             Yes
-          </Button><span>&nbsp;&nbsp;</span>
+          </Button>
           <Button size="sm" variant="warning" onClick={this.handleClick} >
             No
           </Button>

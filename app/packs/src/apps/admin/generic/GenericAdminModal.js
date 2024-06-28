@@ -33,7 +33,7 @@ export default class GenericAdminModal extends Component {
     const params = _params || [];
     return params.map((p, i) => (
       <li key={`_description_${ALL_TYPES[i]}`} className=' fs-6 ms-5 my-2 align-items-center'>
-        Currently {p ? '' : 'NOT'} acting as the Designer of the Generic&nbsp;
+        Currently {p ? '' : 'NOT'} acting as the Designer of the Generic
         {ALL_TYPES[i]}
       </li>
     ));

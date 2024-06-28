@@ -820,7 +820,7 @@ export default class UserManagement extends React.Component {
                     <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
                   </Col>
                 </Form.Group>
-                <Form.Group as={Row} className='mb-3' controlId="formControlsType">
+                <Form.Group as={Row} className='mb-2' controlId="formControlsType">
                   <Form.Label column sm="3" className="fs-4"> Type:</Form.Label>
                   <Col sm="9">
                     <Form.Select ref={(ref) => { this.type = ref; }}>
@@ -830,12 +830,10 @@ export default class UserManagement extends React.Component {
                   </Col>
 
                 </Form.Group>
-                <Form.Group>
-                  <Button variant="primary" className='mt-2 fs-5' onClick={() => this.handleCreateNewUser()}>
-                      Create user&nbsp;
-                      <i className="fa fa-plus" />
-                    </Button>
-                </Form.Group>
+                <Button variant="primary" className='mt-2' onClick={() => this.handleCreateNewUser()}>
+                  Create user
+                  <i className="fa fa-plus ms-1" />
+                </Button>
               </Form>
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
@@ -888,12 +886,10 @@ export default class UserManagement extends React.Component {
                     </span>
                   </CSVReader>
                 </Form.Group>
-                <Form.Group>
                   <Button variant="primary" className='my-3 fs-5' onClick={() => this.handleCreateNewUsersFromFile()}>
-                    Create users&nbsp;
-                    <i className="fa fa-plus" />
-                  </Button>
-                </Form.Group>
+                  Create users
+                  <i className="fa fa-plus ms-1" />
+                </Button>
                 <Form.Group>
                   <Form.Label className="fw-bold">Processing Summary</Form.Label>
                   <Form.Control
@@ -901,7 +897,6 @@ export default class UserManagement extends React.Component {
                     as="textarea"
                     id="processingSummary"
                     rows={5}
-                    style={{ whiteSpace: 'pre-wrap', overflowY: 'scroll' }}
                     value={this.state.processingSummaryUserFile}
                   />
                 </Form.Group>
@@ -1037,8 +1032,8 @@ export default class UserManagement extends React.Component {
                     </Col>
                     <Col sm="6">
                       <Button variant="primary" className="w-100" onClick={() => this.handleUpdateUser(user)}>
-                        Update&nbsp;
-                        <i className="fa fa-save" />
+                        Update
+                        <i className="fa fa-save ms-1" />
                       </Button>
                     </Col>
                   </Form.Group>
@@ -1133,8 +1128,8 @@ export default class UserManagement extends React.Component {
                     </Col>
                     <Col sm="6">
                       <Button variant="danger" className="w-100" onClick={() => this.handleDeleteUser(user)}>
-                        Delete&nbsp;
-                        <i className="fa fa-trash" />
+                        Delete
+                        <i className="fa fa-trash ms-1" />
                       </Button>
                     </Col>
                   </Form.Group>
@@ -1484,25 +1479,24 @@ export default class UserManagement extends React.Component {
         <MessageAlert message={this.state.alertMessage} onHide={this.handleDismissAlert} />
         <Card>
           <Card.Body>
-            <Button variant="warning" size="md" onClick={() => this.handleMsgShow()}>
-            Send Message&nbsp;
-            <i className="fa fa-commenting-o" />
-          </Button>
-          &nbsp;
-            <Button variant="primary" size="md" onClick={() => this.handleNewUserShow()} data-cy="create-user">
-            New User&nbsp;
-            <i className="fa fa-plus" />
-          </Button>
-          &nbsp;
-          <Button
-            variant="primary"
+            <Button variant="warning" size="md" className='me-1' onClick={() => this.handleMsgShow()}>
+              Send Message;
+              <i className="fa fa-commenting-o ms-1" />
+            </Button>
+            <Button variant="primary" size="md" className='me-1' onClick={() => this.handleNewUserShow()} data-cy="create-user">
+              New User
+              <i className="fa fa-plus ms-1" />
+            </Button>
+            <Button
+              variant="primary"
               size="md"
-            onClick={() => this.handleRestoreAccountShow()}
-            data-cy="restore-user"
-          >
-            Restore Account&nbsp;
-            <i className="fa fa-undo" />
-          </Button>
+              onClick={() => this.handleRestoreAccountShow()}
+              data-cy="restore-user"
+              className='me-1'
+            >
+              Restore Account
+              <i className="fa fa-undo ms-1" />
+            </Button>
           </Card.Body>
         </Card>
         <div ref={this.tableBodyRef}>

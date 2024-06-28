@@ -19,7 +19,7 @@ function RemoveRowBtn({ removeRow, node }) {
     <Button
       active
       onClick={btnClick}
-      size="sm"
+      size='xxsm'
       variant="danger"
     >
       <i className="fa fa-trash" />
@@ -38,7 +38,7 @@ function AddRowBtn({ addRow }) {
     <Button
       active
       onClick={() => addRow()}
-      size="sm"
+      size="xxsm"
       variant="primary"
     >
       <i className="fa fa-plus" />
@@ -227,7 +227,7 @@ export default class TextTemplate extends React.Component {
         <Row className="vh-100">
           <Col md={4}>
             <div className="h-100 d-flex flex-column">
-              <div className="ag-theme-balham flex-grow-1">
+              <div className="ag-theme-balham flex-grow-1 py-4">
                 <AgGridReact
                   suppressHorizontalScroll
                   columnDefs={this.columnDefs}
@@ -236,7 +236,7 @@ export default class TextTemplate extends React.Component {
                   onGridReady={this.onGridReady}
                   onSelectionChanged={this.onSelectionChanged}
                   rowData={predefinedTemplateNames}
-                  className='fs-6 py-5'
+                  className='fs-6'
                 />
               </div>
             </div>
