@@ -15,6 +15,7 @@ import GenericElementAdmin from 'src/apps/admin/GenericElementAdmin';
 import SegmentElementAdmin from 'src/apps/admin/SegmentElementAdmin';
 import DatasetElementAdmin from 'src/apps/admin/DatasetElementAdmin';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
+import DictionaryCuration from 'src/apps/admin/AutomaticCuration'
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
@@ -74,6 +75,8 @@ class AdminHome extends React.Component {
       return this.renderTemplateManagement();
     } else if (pageIndex === 13) {
       return this.renderDelayedJobs();
+    } else if (pageIndex === 14) {
+      return this.renderCurateDictionary();
     }
     return (<div />);
   }
@@ -102,6 +105,7 @@ class AdminHome extends React.Component {
             <NavItem eventKey={5}>Load OLS Terms</NavItem>
 	    {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
             <NavItem eventKey={13}>Delayed Jobs </NavItem>
+            <NavItem eventKey={14}>Curate Custom Dictionary </NavItem>
           </Nav>
         </Col>
       </div>
@@ -206,6 +210,16 @@ class AdminHome extends React.Component {
       </Col>
     );
   }
+
+  renderCurateDictionary(){
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <DictionaryCuration />
+      </Col>
+    );
+  }
+  
 
   render() {
     return (

@@ -200,16 +200,15 @@ export default class ReactionDescriptionEditor extends React.Component {
           overlay={templateCreatorPopover}
           onHide={this.onCloseTemplateCreator}
         >
-
             <button>
               <span className="fa fa-cog" />
             </button>
-          
         </OverlayTrigger>
-        <div class="child inline-block-child"><CurationModal 
-              description= {this.props.value.ops} 
-              acOnChange = {this.props.acOnChange}
-              />
+        <div class="child inline-block-child">
+          <CurationModal 
+                description= {this.props.value.ops} 
+                onChange = {( event) => this.props.onChange( event)}
+                />
         </div>  
       </DynamicToolbarEditor>
     );

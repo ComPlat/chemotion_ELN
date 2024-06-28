@@ -117,6 +117,7 @@ export default class ReactionDetailsScheme extends Component {
   onChangeRole(e) {
     const { onInputChange } = this.props;
     const value = e && e.value;
+
     onInputChange('role', value);
   }
 
@@ -961,7 +962,7 @@ export default class ReactionDetailsScheme extends Component {
                           value={reaction.description}
                           updateTextTemplates={this.updateTextTemplates}
                           onChange={event => this.props.onInputChange('description', event)}
-                          acOnChange = {this.handleDescChange}
+                          // acOnChange = {this.handleDescChange}
                         /> : <QuillViewer value={reaction.description} />
                     }
                   </div>

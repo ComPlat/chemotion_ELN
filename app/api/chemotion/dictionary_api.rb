@@ -36,6 +36,21 @@ module Chemotion
         file.close
       end
     end
+
+
+    namespace :save do
+      desc "admin save"
+      params do
+       requires :new_dic,  type: String
+      end
+      get do
+        file_path = "public/typojs/custom/custom.dic"
+        file = File.open(file_path, "w+")
+        file.write(params[:new_dic])
+        file.close
+      end
+    end
+
   end
 end
 end
