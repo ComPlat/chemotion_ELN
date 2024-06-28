@@ -52,7 +52,7 @@ export default class GenericAdminModal extends Component {
     const { user, fnShowModal } = this.props;
     const { elements, segments, datasets } = user.generic_admin || {};
     return (
-      <Modal show onHide={() => fnShowModal(false)}>
+      <Modal centered show onHide={() => fnShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
         </Modal.Header>

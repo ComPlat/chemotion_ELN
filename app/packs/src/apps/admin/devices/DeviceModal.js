@@ -182,6 +182,7 @@ const DeviceModal = () => {
   return (
     <Draggable handle=".handle">
       <Modal
+        centered
         show={devicesStore.deviceModalVisible}
         onHide={() => handleCancel()}
         backdrop={false}

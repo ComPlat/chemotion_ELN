@@ -345,6 +345,7 @@ export default class StructureEditorModal extends React.Component {
     return (
       <div>
         <Modal
+          centered
           dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
           animation
           show={this.state.showModal}

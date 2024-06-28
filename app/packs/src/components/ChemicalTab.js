@@ -1124,6 +1124,7 @@ export default class ChemicalTab extends React.Component {
     if (viewChemicalPropertiesModal) {
       return (
         <Modal
+          centered
           show={viewChemicalPropertiesModal}
           onHide={() => this.closePropertiesModal()}
         >

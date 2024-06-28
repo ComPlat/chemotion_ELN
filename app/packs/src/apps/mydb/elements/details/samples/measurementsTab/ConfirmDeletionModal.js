@@ -5,7 +5,7 @@ import { Button, Modal } from 'react-bootstrap';
 export default class ConfirmDeletionModal extends Component {
   render() {
     return (
-      <Modal show={this.props.show} onHide={this.props.onCancel}>
+      <Modal centered show={this.props.show} onHide={this.props.onCancel}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm deletion</Modal.Title>
         </Modal.Header>

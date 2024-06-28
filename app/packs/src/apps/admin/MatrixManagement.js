@@ -238,7 +238,7 @@ export default class MatrixManagement extends React.Component {
     }
 
     return (
-      <Modal show={this.state.showEditModal} onHide={this.handleClose}>
+      <Modal centered show={this.state.showEditModal} onHide={this.handleClose}>
         <Modal.Header closeButton><Modal.Title>Edit Permisson</Modal.Title></Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">
@@ -324,7 +324,7 @@ export default class MatrixManagement extends React.Component {
     const { matrice, showJsonBtn } = this.state;
 
     return (
-      <Modal show={this.state.showJsonModal} onHide={this.handleJsonClose}>
+      <Modal centered show={this.state.showJsonModal} onHide={this.handleJsonClose}>
         <Modal.Header closeButton><Modal.Title>JSON Configurations</Modal.Title></Modal.Header>
         <Modal.Body style={{ overflow: 'auto' }}>
           <div className="col-md-12">

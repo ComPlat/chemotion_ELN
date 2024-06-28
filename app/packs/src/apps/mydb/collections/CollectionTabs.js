@@ -192,7 +192,7 @@ export default class CollectionTabs extends React.Component {
           onChange={this.handleChange.bind(this)}
           renderNode={this.renderNode.bind(this)}
         />
-        <Modal className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
+        <Modal centered className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
           <Modal.Header closeButton>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
