@@ -63,13 +63,13 @@ class AdminHome extends React.Component {
     } else if (pageIndex === 14) {
       return this.renderContent(<ChemSpectraLayouts />);
     }
-    return (<div />);
+    return (null);
   }
 
   renderTree() {
     const { showTree, pageIndex } = this.state;
     if (!showTree) {
-      return <div />;
+      return null;
     }
 
     return (

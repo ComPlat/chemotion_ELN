@@ -292,7 +292,7 @@ export default class GroupsDevices extends React.Component {
           <Card.Title className='fs-3 mt-1 py-1'>
             Group List
             ({groups.length})
-            <Button variant="secondary" className='ms-2' size='md' onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
+            <Button variant="primary" className='ms-2' size='md' onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
           </Card.Title>
         </Card.Header>
         <Card.Body>

@@ -179,7 +179,7 @@ export default class ChemSpectraLayouts extends Component {
     return (
       <div>
         <Button
-          variant='secondary'
+          variant='primary'
           size='md'
           onClick={this.handleShowNewTypeLayoutModal}
           className='mb-2'

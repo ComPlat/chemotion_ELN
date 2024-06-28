@@ -21,6 +21,7 @@ function RemoveRowBtn({ removeRow, node }) {
       onClick={btnClick}
       size='xxsm'
       variant="danger"
+      className='mt-1'
     >
       <i className="fa fa-trash" />
     </Button>
@@ -237,6 +238,7 @@ export default class TextTemplate extends React.Component {
                   onSelectionChanged={this.onSelectionChanged}
                   rowData={predefinedTemplateNames}
                   className='fs-6'
+                  rowHeight={35}
                 />
               </div>
             </div>
