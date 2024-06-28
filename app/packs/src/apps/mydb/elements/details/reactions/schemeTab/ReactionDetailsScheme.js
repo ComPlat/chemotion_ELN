@@ -26,7 +26,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import CurationModal from "src/apps/mydb/elements/details/reactions/curation_modal.js";
+import CurationModal from "src/apps/mydb/elements/details/reactions/CurationModal.js";
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
