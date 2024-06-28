@@ -24,7 +24,7 @@ class MigrateElementTagData < ActiveRecord::Migration[6.1]
       klass = "collections_#{element_tag.taggable_type.underscore.pluralize}"
       collection_ids = element.respond_to?(klass) ? element.send(klass).pluck(:collection_id) : []
       taggable_data = element_tag.taggable_data&.except('collection_labels') || {}
-      taggable_data[:collection_ids] = collection_ids
+      taggable_data['collection_ids'] = collection_ids
       element_tag.update_columns(taggable_data: taggable_data)
     end
   end
