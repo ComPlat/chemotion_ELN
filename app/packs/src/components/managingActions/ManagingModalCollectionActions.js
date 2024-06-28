@@ -1,10 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, FormGroup, FormControl } from 'react-bootstrap';
+import { Form, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import Select from 'react-select'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
@@ -75,6 +73,7 @@ export default class ManagingModalCollectionActions extends React.Component {
       const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
       const className = leaf.first ? "separator" : "";
       return {
+        key: leaf.id,
         value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
         label: indent + leaf.label,
         className: className
@@ -118,27 +117,33 @@ export default class ManagingModalCollectionActions extends React.Component {
       });
     }
     return (
-      <div>
-        <FormGroup>
-          <ControlLabel>Select a Collection</ControlLabel>
-          <Select
-            options={options}
+      <Form>
+        <Form.Group className="mb-3">
+          <Form.Label>Select a Collection</Form.Label>
+          <Form.Select
             value={selected}
             onChange={this.onSelectChange}
             className="select-assign-collection"
-          />
-        </FormGroup>
-        <FormGroup>
-          <ControlLabel>or Create a new Collection</ControlLabel>
-          <FormControl
+          >
+            {
+              options.map((o) => (
+                <option key={o.key} value={o.value} className={o.className}>{o.label}</option>
+              ))
+            }
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>or Create a new Collection</Form.Label>
+          <Form.Control
             type="text"
             placeholder="-- Please insert collection name --"
             onChange={onChange}
           />
-        </FormGroup>
+        </Form.Group>
         {this.submitButton()}
-      </div>
-    )
+      </Form>
+    );
   }
 }
 
