@@ -2,7 +2,11 @@ import React from 'react';
 import { ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { List } from 'immutable';
-import { ShareButton, MoveOrAssignButton, RemoveOrDeleteButton } from 'src/components/managingActions/ManagingActionButtons';
+import {
+  ShareButton,
+  MoveOrAssignButton,
+  RemoveOrDeleteButton
+} from 'src/components/managingActions/ManagingActionButtons';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -101,9 +105,7 @@ export default class ManagingActions extends React.Component {
   }
 
   async onChange(state) {
-    const {
-       currentCollection
-    } = state;
+    const { currentCollection } = state;
     if (this.collectionChanged(state)) {
       this.setState({
         sharing_allowed: false,
@@ -162,7 +164,7 @@ export default class ManagingActions extends React.Component {
 
   checkUIState(state) {
     const genericNames = (this.state.genericEls && this.state.genericEls.map(el => el.name)) || [];
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'].concat(genericNames);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericNames);
     const result = elNames.find(el => (this.state[el] && state[el] && (
       state[el].checkedIds !== this.state[el].checkedIds ||
       state[el].checkedAll !== this.state[el].checkedAll ||
@@ -211,6 +213,7 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
+    const { customClass } = this.props;
     const {
       currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
     } = this.state;
@@ -230,18 +233,18 @@ export default class ManagingActions extends React.Component {
           assignDisabled={assignDisabled}
           moveDisabled={moveDisabled}
           onClick={this.handleButtonClick}
-          customClass={this.props.customClass}
+          customClass={customClass}
         />
         <RemoveOrDeleteButton
           removeDisabled={removeDisabled}
           deleteDisabled={deleteDisabled}
           onClick={this.handleButtonClick}
-          customClass={this.props.customClass}
+          customClass={customClass}
         />
         <ShareButton
           isDisabled={shareDisabled}
           onClick={this.handleButtonClick}
-          customClass={this.props.customClass}
+          customClass={customClass}
         />
       </ButtonGroup>
     );
