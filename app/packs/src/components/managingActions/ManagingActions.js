@@ -115,11 +115,9 @@ export default class ManagingActions extends React.Component {
         hasSel: false,
         currentCollection
       });
-    }
-    else if (this.checkUIState(state)) {
-      let hasSel = false;
+    } else if (this.checkUIState(state)) {
       const klassArray = await elementNames(true);
-      hasSel = klassArray.find((el) => (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
+      const hasSel = klassArray.some((el) => (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
       PermissionActions.fetchPermissionStatus(state);
       const upStateResult = await upState(state);
       this.setState({
