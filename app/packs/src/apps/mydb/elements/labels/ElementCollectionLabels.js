@@ -6,6 +6,7 @@ import { Label, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 import uuid from 'uuid';
 import { AviatorNavigation } from 'src/utilities/routesUtils';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import SharedByIcon from 'src/components/common/SharedByIcon';
 import _ from 'lodash';
 
@@ -31,10 +32,11 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   formatLabels(collections) {
+    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     return collections.map((collection) => (
       <span className="collection-label" key={uuid.v4()}>
         <Button
-          disabled={(collection?.acl?.length > 0) && collection?.ownedByMe()}
+          disabled={this.isDisabledTag(collection, currentUser)}
           bsStyle="default" bsSize="xs"
           onClick={(e) => this.handleOnClick(collection, e)}
         >
@@ -45,6 +47,16 @@ export default class ElementCollectionLabels extends React.Component {
         &nbsp;
       </span>
     ));
+  }
+
+  isDisabledTag(collection, currentUser) {
+    const collectionAcls = collection?.acl || [];
+
+    const noUserAcl = collectionAcls.some((acl) => acl.user_id !== currentUser?.id);
+
+    const isNotOwnedByMe = !collection.ownedByMe();
+
+    return noUserAcl && isNotOwnedByMe;
   }
 
   renderCollectionsLabels(collectionName, labels) {
@@ -63,7 +75,7 @@ export default class ElementCollectionLabels extends React.Component {
   render() {
     const { element } = this.state;
 
-    if (!element.tag || !element.tag.taggable_data || !element.tag.taggable_data.collection_labels) {
+    if (!element.tag || !element.tag.taggable_data || !element.tag.taggable_data.collection_ids) {
       return (<span />);
     }
 
@@ -76,13 +88,15 @@ export default class ElementCollectionLabels extends React.Component {
 
     let shared_labels = [];
     let labels = [];
-    collections.map((collection) => {
-      if (collection?.ownedByMe()) {
-        labels.push(collection);
-      } else {
-        shared_labels.push(collection);
-      }
-    });
+    collections
+      .filter((collection) => collection != null)
+      .forEach((collection) => {
+        if (collection?.ownedByMe()) {
+          labels.push(collection);
+        } else {
+          shared_labels.push(collection);
+        }
+      });
 
     if (labels.length == 0 && shared_labels.length == 0)
       return (<span />);
