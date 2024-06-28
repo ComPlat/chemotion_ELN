@@ -58,6 +58,7 @@
 
 .advanced-search-content-scrollable-body.without-header {
   max-height: calc(85vh - 215px);
+  margin-top: 0;
 }
 
 .advanced-search-buttons {
@@ -335,6 +336,25 @@
   position: absolute;
   top: 0;
   left: 50%;
+}
+
+.ketcher-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 3.5rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.ketcher-buttons .btn-toolbar {
+  gap: 0.5rem;
+}
+
+.ketcher-buttons form {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2.5rem;
 }
 
 .result-error-message {

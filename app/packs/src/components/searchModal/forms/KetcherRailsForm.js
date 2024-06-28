@@ -1,14 +1,11 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, Form, FormControl, Row, Col } from 'react-bootstrap';
-import { togglePanel, showErrorMessage, panelVariables } from './SearchModalFunctions';
+import { Button, ButtonToolbar, Form, Accordion } from 'react-bootstrap';
+import { togglePanel, showErrorMessage, AccordeonHeaderButtonForSearchForm, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import StructureEditor from 'src/models/StructureEditor';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import Grid from 'src/components/legacyBootstrap/Grid'
-import Radio from 'src/components/legacyBootstrap/Radio'
 
 const KetcherRailsform = () => {
   const ketcherStructure = {
@@ -26,6 +23,8 @@ const KetcherRailsform = () => {
 
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
+  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
   let iframe;
   
   useEffect(() => {
@@ -107,94 +106,81 @@ const KetcherRailsform = () => {
   }
 
   return (
-    <>
-      <Panel
-        id="collapsible-search"
-        className={panelVars.defaultClassName}
-        onToggle={togglePanel(searchStore)}
-        expanded={searchStore.searchVisible}
-      >
-        <Panel.Heading className={panelVars.inactiveSearchClass}>
-          <Panel.Title toggle>
-            {panelVars.searchTitle}
-            <i className={panelVars.searchIcon} />
-          </Panel.Title>
-        </Panel.Heading>
-        <Panel.Collapse>
-          <Panel.Body>
+    <Accordion defaultActiveKey={0} activeKey={searchStore.search_accordion_active_key} className="search-modal" flush>
+      <Accordion.Item eventKey={0} className={activeSearchAccordionClass}>
+        <h2 className="accordion-header">
+          <AccordeonHeaderButtonForSearchForm
+            title={panelVars.searchTitle}
+            eventKey={0}
+            disabled={searchStore.search_accordion_toggle_disabled}
+            callback={togglePanel(searchStore)}
+          />
+        </h2>
+        <Accordion.Collapse eventKey={0}>
+          <div className="accordion-body">
             {showErrorMessage(searchStore)}
             <iframe
               id="ketcher"
               src="/ketcher"
               title="Ketcher Rails"
               width="100%"
-              style={{ border: 'none', minHeight: '53.9vh' }}
+              style={{ border: 'none', minHeight: 'calc(85vh - 242px)' }}
             />
-            <Grid style={{ margin: 0, paddingLeft: 0 }}>
-              <Row style={{ marginTop: '20px' }}>
-                <Col sm={4} md={3}>
-                  <ButtonToolbar>
-                    <Button variant="warning" onClick={() => searchStore.handleCancel()}>
-                      Cancel
-                    </Button>
-                    <Button variant="primary" onClick={handleSearch} style={{ marginRight: '20px' }} >
-                      Search
-                    </Button>
-                  </ButtonToolbar>
-                </Col>
-                <Col sm={6} md={4}>
-                  <Form inline>
-                    <Radio
-                      value="similar"
-                      checked={searchStore.ketcherRailsValues.searchType === 'similar'}
-                      onChange={handleSearchTypeChange}
-                    >
-                      &nbsp; Similarity Search &nbsp;
-                    </Radio>
-                    &nbsp;&nbsp;
-                    <FormControl
-                      style={{ width: '40%' }}
-                      type="text"
-                      value={searchStore.ketcherRailsValues.tanimotoThreshold}
-                      onChange={handleTanimotoChange}
-                    />
-                  </Form>
-                </Col>
-                <Col sm={4} md={2}>
-                  <Radio
-                    value="sub"
-                    checked={searchStore.ketcherRailsValues.searchType === 'sub'}
-                    onChange={handleSearchTypeChange}
-                  >
-                    Substructure Search
-                  </Radio>
-                </Col>
-              </Row>
-            </Grid>
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
-      <Panel
-        id="collapsible-result"
-        className={panelVars.defaultClassName + panelVars.invisibleClassName}
-        onToggle={togglePanel(searchStore)}
-        expanded={searchStore.searchResultVisible}
-      >
-        <Panel.Heading className={panelVars.inactiveResultClass}>
-          <Panel.Title toggle>
-            {panelVars.resultTitle}
-            <i className={panelVars.resultIcon} />
-          </Panel.Title>
-        </Panel.Heading>
-        <Panel.Collapse>
-          <Panel.Body style={{ minHeight: '120px' }}>
+            <div className="ketcher-buttons">
+              <ButtonToolbar>
+                <Button variant="warning" onClick={() => searchStore.handleCancel()}>
+                  Cancel
+                </Button>
+                <Button variant="primary" onClick={handleSearch}>
+                  Search
+                </Button>
+              </ButtonToolbar>
+              <Form inline>
+                <Form.Check
+                  type="radio"
+                  value="similar"
+                  label="Similarity Search"
+                  checked={searchStore.ketcherRailsValues.searchType === 'similar'}
+                  onChange={handleSearchTypeChange}
+                />
+                <Form.Control
+                  style={{ width: '40%' }}
+                  type="text"
+                  value={searchStore.ketcherRailsValues.tanimotoThreshold}
+                  onChange={handleTanimotoChange}
+                />
+              </Form>
+              <Form inline>
+                <Form.Check
+                  type="radio"
+                  value="sub"
+                  label="Substructure Search"
+                  checked={searchStore.ketcherRailsValues.searchType === 'sub'}
+                  onChange={handleSearchTypeChange}
+                />
+              </Form>
+            </div>
+          </div>
+        </Accordion.Collapse>
+      </Accordion.Item>
+      <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
+        <h2 className="accordion-header">
+          <AccordeonHeaderButtonForSearchForm
+            title={panelVars.resultTitle}
+            eventKey={1}
+            disabled={false}
+            callback={togglePanel(searchStore)}
+          />
+        </h2>
+        <Accordion.Collapse eventKey={1}>
+          <div className="accordion-body">
             <SearchResult
-              handleClear={handleClear}
+              handleClear={() => handleClear(searchStore)}
             />
-          </Panel.Body>
-        </Panel.Collapse>
-      </Panel>
-    </>
+          </div>
+        </Accordion.Collapse>
+      </Accordion.Item>
+    </Accordion>
   );
 }
 
