@@ -301,6 +301,7 @@ class UserLabelModal extends Component {
     const { showLabelModal } = this.props;
     return (
       <Modal
+        centered
         show={showLabelModal}
         onHide={this.props.onHide}
       >

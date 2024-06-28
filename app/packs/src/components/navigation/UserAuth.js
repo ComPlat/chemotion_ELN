@@ -370,6 +370,7 @@ export default class UserAuth extends Component {
 
     return (
       <Modal
+        centered
         show={showModal}
         dialogClassName="importChemDrawModal"
         onHide={this.handleClose}
@@ -504,6 +505,7 @@ export default class UserAuth extends Component {
 
     return (
       <Modal
+        centered
         show={this.state.showSubscription}
         onHide={this.handleSubscriptionClose}
       >
@@ -526,6 +528,7 @@ export default class UserAuth extends Component {
     const title = 'Device Metadata';
     return (
       <Modal
+        centered
         show={showDeviceMetadataModal}
         onHide={this.handleDeviceMetadataModalClose}
       >

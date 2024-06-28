@@ -1469,6 +1469,7 @@ export default class SampleDetails extends React.Component {
       molfile = molfile.replace(/\r?\n/g, '<br />');
       return (
         <Modal
+          centered
           show={this.state.showMolfileModal}
           dialogClassName="importChemDrawModal"
           onHide={this.handleMolfileClose}

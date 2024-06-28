@@ -319,6 +319,7 @@ export default class GroupsDevices extends React.Component {
     const title = (rootType === 'Group') ? 'Add new group' : 'Add new device';
     return (
       <Modal
+        centered
         show={showCreateModal}
         onHide={this.handleCloseGroup}
       >
@@ -406,6 +407,7 @@ export default class GroupsDevices extends React.Component {
 
     return (
       <Modal
+        centered
         show={showModal}
         onHide={this.handleClose}
       >

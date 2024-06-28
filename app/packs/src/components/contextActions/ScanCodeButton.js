@@ -179,7 +179,7 @@ export default class ScanCodeButton extends React.Component {
   scanModal() {
     if (this.state.showModal === true) {
       return (
-        <Modal show={this.state.showModal} onHide={this.close}>
+        <Modal centered show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
             <Modal.Title>Scan barcode or QR code</Modal.Title>
           </Modal.Header>

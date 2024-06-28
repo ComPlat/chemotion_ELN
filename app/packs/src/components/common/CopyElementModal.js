@@ -84,7 +84,7 @@ export default class CopyElementModal extends React.Component {
             <i className="fa fa-clone" />
           </Button>
         </OverlayTrigger>
-        <Modal show={showModal} onHide={this.handleModalClose}>
+        <Modal centered show={showModal} onHide={this.handleModalClose}>
           <Modal.Header closeButton>
             <Modal.Title>Copy</Modal.Title>
           </Modal.Header>
