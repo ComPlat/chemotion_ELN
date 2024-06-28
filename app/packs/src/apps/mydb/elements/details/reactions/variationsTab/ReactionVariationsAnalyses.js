@@ -154,7 +154,7 @@ function AnalysesCellEditor({
   );
 
   const cellContent = (
-    <Modal show>
+    <Modal centered show>
       <Modal.Header>
         {`Link analyses to ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
       </Modal.Header>

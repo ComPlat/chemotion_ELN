@@ -52,7 +52,7 @@ export default class GenericElementLabels extends React.Component {
     return (
       <>
         <i className={`${klass.icon_name}`} onClick={this.handleOnClick}  key={element.id}/>
-        <Modal show={showWarning && clicked} onHide={this.closeWarning}>
+        <Modal centered show={showWarning && clicked} onHide={this.closeWarning}>
           <Modal.Header closeButton>
             <Modal.Title>No Access to Element</Modal.Title>
           </Modal.Header>

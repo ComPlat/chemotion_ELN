@@ -179,7 +179,7 @@ export default class MoleculeModeratorComponent extends Component {
   renderModal() {
     const { show, isNew, molName } = this.state;
     return (
-      <Modal show={show} onHide={this.handleCloseModal}>
+      <Modal centered show={show} onHide={this.handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}</Modal.Title>
         </Modal.Header>

@@ -102,6 +102,7 @@ export default class CustomSizeModal extends Component {
     const { height, width } = this.state;
     return (
       <Modal
+        centered
         show={showCustomSizeModal}
         onHide={handleClose}
         onShow={() => this.updateDimensionsFromWellplate()}

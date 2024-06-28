@@ -407,6 +407,7 @@ export default class NoticeButton extends React.Component {
     if (this.state.showModal) {
       return (
         <Modal
+          centered
           show={this.state.showModal}
           onHide={this.handleHide}
           dialogClassName="noticeModal"

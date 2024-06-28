@@ -788,6 +788,7 @@ class ViewSpectra extends React.Component {
     return (
       <div className="spectra-editor">
         <Modal
+          centered
           show={showModal}
           dialogClassName={dialogClassName}
           animation

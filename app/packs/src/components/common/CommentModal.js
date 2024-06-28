@@ -231,6 +231,7 @@ export default class CommentModal extends Component {
     return (
       <Draggable enableUserSelectHack={false}>
         <Modal
+          centered
           dialogClassName="comment-modal"
           show={showCommentModal}
           onHide={() => CommentActions.toggleCommentModal(false)}
