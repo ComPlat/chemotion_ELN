@@ -12,7 +12,7 @@ import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateCont
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
-import TemplateManagement from 'src/apps/admin/TemplateManagement';
+// import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
