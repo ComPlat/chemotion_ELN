@@ -82,7 +82,7 @@ export default class DelayedJobs extends Component {
       <div>
         <Card>
           <Card.Header>
-            <Card.Title className="fs-2 py-3">Delayed Jobs</Card.Title>
+            <Card.Title className="fs-4">Delayed Jobs</Card.Title>
           </Card.Header>
           <Card.Body>
             <Table responsive hover bordered>

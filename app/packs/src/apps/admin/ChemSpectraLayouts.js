@@ -182,7 +182,7 @@ export default class ChemSpectraLayouts extends Component {
       <div>
         <Button
           variant='secondary'
-          size='lg'
+          size='md'
           onClick={this.handleShowNewTypeLayoutModal}
         >
           Add New Data Type
@@ -231,9 +231,9 @@ export default class ChemSpectraLayouts extends Component {
         </Modal>
 
 
-        <Card className='mt-3'>
+        <Card className='mt-1'>
           <Card.Header>
-            <Card.Title className="fs-2">Data Types</Card.Title>
+            <Card.Title className="fs-4">Data Types</Card.Title>
           </Card.Header>
         </Card>
 

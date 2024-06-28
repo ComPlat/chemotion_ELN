@@ -139,7 +139,7 @@ class AdminHome extends React.Component {
             >
               {this.state.showTree && this.renderTree()}
             </Col >
-            <Col className="main-content flex-grow-1"
+            <Col className="flex-grow-1"
               style={{
                 transition: 'none',
                 width: this.state.showTree ? 'calc(100% - 25rem)' : '100%',

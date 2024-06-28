@@ -1362,11 +1362,11 @@ export default class UserManagement extends React.Component {
     );
 
     const tbody = filteredUsers.map((g, idx) => (
-      <tr key={`row_${g.id}`} className="align-middle fs-5 py-3" >
-        <td className="col-auto fs-4 py-3">
+      <tr key={`row_${g.id}`} className="align-middle" >
+        <td className="col-auto py-3">
           {idx + 1}
         </td>
-        <td className="col-md-3 col-lg-2 fs-4 py-3">
+        <td className="col-md-3 col-lg-2">
           <OverlayTrigger placement="bottom" overlay={editTooltip}>
             <Button
               size="sm"
@@ -1459,22 +1459,22 @@ export default class UserManagement extends React.Component {
           {renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id)}
           {renderReConfirmButton(g.unconfirmed_email, g.id)}
         </td>
-        <td className="col-md-2 fs-4 py-3">
+        <td className="col-md-2 py-3">
           {g.name}
         </td>
-        <td className="col-md-1 fs-4 py-3">
+        <td className="col-md-1 py-3">
           {g.initials}
         </td>
-        <td className="col-md-2 fs-4 py-3">
+        <td className="col-md-2 py-3">
           {g.email}
         </td>
-        <td className="col-md-1 fs-4 py-3">
+        <td className="col-md-1 py-3">
           {g.type}
         </td>
-        <td className="col-md-2 fs-4 py-3">
+        <td className="col-md-2 py-3">
           {g.current_sign_in_at}
         </td>
-        <td className="col-auto fs-4 py-3">
+        <td className="col-auto py-3">
           {g.id}
         </td>
       </tr>
@@ -1507,7 +1507,7 @@ export default class UserManagement extends React.Component {
           </Card.Body>
         </Card>
         <div ref={this.tableBodyRef}>
-          <Table responsive>
+          <Table responsive className='table border'>
             {tcolumn}
             <tbody>
               {tbody}
