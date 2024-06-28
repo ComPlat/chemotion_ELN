@@ -205,10 +205,8 @@ export default class ManagingActions extends React.Component {
 
   render() {
     const { customClass } = this.props;
-    const {
-      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
-    } = this.state;
-    const { is_locked, is_shared, sharer, is_sync_to_me, label } = currentCollection;
+    const { currentCollection, sharing_allowed, deletion_allowed, hasSel } = this.state;
+    const { is_locked, label } = currentCollection;
     const isAll = is_locked && label === 'All';
     const noSel = !hasSel
 
