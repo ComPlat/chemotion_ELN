@@ -40,7 +40,7 @@ export default class DeleteComment extends Component {
         >
           <i className="fa fa-trash-o" />
         </Button>
-        <Modal show={showConfirmModal} onHide={this.handleModalClose}>
+        <Modal centered show={showConfirmModal} onHide={this.handleModalClose}>
           <Modal.Header closeButton>
             <Modal.Title>
               Confirm Delete

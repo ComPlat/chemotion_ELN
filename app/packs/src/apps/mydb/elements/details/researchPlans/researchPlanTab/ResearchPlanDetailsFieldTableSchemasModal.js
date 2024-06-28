@@ -62,7 +62,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
     }
 
     return (
-      <Modal animation show={modal.show} onHide={onHide}>
+      <Modal centered animation show={modal.show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             Table schemas

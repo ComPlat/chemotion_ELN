@@ -3,7 +3,7 @@ import { Button, Modal, ButtonToolbar } from 'react-bootstrap';
 
 const ConfirmModal = ({ showModal, title, content, onClick, dialogClassName }) => {
   return (
-    <Modal animation show={showModal} dialogClassName={dialogClassName} onHide={() => onClick(false)}>
+    <Modal centered animation show={showModal} dialogClassName={dialogClassName} onHide={() => onClick(false)}>
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>

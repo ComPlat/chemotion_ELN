@@ -348,7 +348,7 @@ export default class MyCollections extends React.Component {
           onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
           renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
         />
-        <Modal animation show={mPs.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal centered animation show={mPs.show} onHide={this.handleModalHide.bind(this)}>
           <Modal.Header closeButton>
             <Modal.Title>{mPs.title}</Modal.Title>
           </Modal.Header>

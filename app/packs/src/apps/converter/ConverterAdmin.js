@@ -377,7 +377,7 @@ class ConverterAdmin extends Component {
           <a href="/">Back to MyDB</a>
         </div>
 
-        <Modal show={this.state.createdModal}>
+        <Modal centered show={this.state.createdModal}>
           <Modal.Header>
             <Modal.Title>Profile successfully created!</Modal.Title>
           </Modal.Header>
@@ -387,7 +387,7 @@ class ConverterAdmin extends Component {
           </Modal.Footer>
         </Modal>
 
-        <Modal show={this.state.deleteModal}>
+        <Modal centered show={this.state.deleteModal}>
           <Modal.Header>
             <Modal.Title>Do you really want to delete this profile?</Modal.Title>
           </Modal.Header>
