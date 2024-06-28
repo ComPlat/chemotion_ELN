@@ -756,10 +756,10 @@ export default class UserManagement extends React.Component {
             </Form.Group>
           </Form>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="modal-footer border-0">
           <Button variant="primary" onClick={() => this.messageSend()}>
-            Send&nbsp;
-            <i className="fa fa-paper-plane" />
+            Send
+            <i className="fa fa-paper-plane ms-1" />
           </Button>
         </Modal.Footer>
       </Modal>
@@ -909,7 +909,7 @@ export default class UserManagement extends React.Component {
             </Tab>
           </Tabs>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="modal-footer border-0">
           <Form.Group controlId="formControlMessage" className="flex-grow-1">
             <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
           </Form.Group>
@@ -1210,14 +1210,13 @@ export default class UserManagement extends React.Component {
                 && renderDeletedUsersTable(this.state.deletedUsers)}
           </Form>
         </Modal.Body>
-        <Modal.Footer >
+        <Modal.Footer className="modal-footer border-0">
           <Button variant="primary" className='fs-5' onClick={() => this.handleRestoreAccount()}>
-            Restore&nbsp;
-            <i className="fa fa-save" />
+            Restore
+            <i className="fa fa-save ms-1" />
           </Button>
-          &nbsp;
           <Button variant="warning" className='fs-5' onClick={() => this.handleRestoreAccountClose()}>
-            Cancel&nbsp;
+            Cancel
           </Button>
         </Modal.Footer>
       </Modal>

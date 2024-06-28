@@ -220,11 +220,11 @@ export default class ChemSpectraLayouts extends Component {
             </Form>
 
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="primary" size='lg' onClick={this.handleAddDataType}>
+          <Modal.Footer className='modal-footer border-0'>
+            <Button variant="primary" size='md' onClick={this.handleAddDataType}>
               Add Data Type
             </Button>
-            <Button variant="warning" size='lg' onClick={this.handleCloseNewTypeLayoutModal}>
+            <Button variant="warning" size='md' onClick={this.handleCloseNewTypeLayoutModal}>
               Cancel
             </Button>
           </Modal.Footer>

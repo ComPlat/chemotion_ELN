@@ -364,8 +364,8 @@ export default class GroupsDevices extends React.Component {
                 className='py-2'
               />
             </Form.Group>
-            <Modal.Footer>
-              <Button size="lg" variant="success" onClick={() => this.createGroup()}>
+            <Modal.Footer className='modal-footer border-0'>
+              <Button size="lg" variant="primary" onClick={() => this.createGroup()}>
                 Create new {rootType === 'Group' ? 'group' : 'device'}
               </Button>
             </Modal.Footer>

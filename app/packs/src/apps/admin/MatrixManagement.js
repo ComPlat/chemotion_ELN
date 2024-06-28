@@ -201,12 +201,9 @@ export default class MatrixManagement extends React.Component {
 
     return (
       <div>
-        <div>
           <Table responsive condensed hover>
             <thead className='fs-4'>
-              <tr
-                style={{ backgroundColor: '#ddd' }}
-              >
+            <tr className='grey-bg'>
                 <th>#</th>
                 <th>Actions</th>
                 <th>ID</th>
@@ -218,8 +215,7 @@ export default class MatrixManagement extends React.Component {
               </tr>
             </thead>
             {tbody}
-          </Table>
-        </div>
+        </Table>
       </div>
     );
   }
@@ -320,13 +316,13 @@ export default class MatrixManagement extends React.Component {
           </Form>
         </Modal.Body>
 
-        <Modal.Footer>
+        <Modal.Footer className='modal-footer border-0'>
           <Button variant="warning" onClick={() => this.handleClose()} className='me-1' >
             Cancel
           </Button>
           <Button variant="primary" onClick={() => this.handleSave(matrice)} >
             Update
-            <i className="fa fa-save" />
+            <i className="fa fa-save ms-1" />
           </Button>
         </Modal.Footer>
       </Modal>
@@ -368,7 +364,7 @@ export default class MatrixManagement extends React.Component {
           </Form>
         </Modal.Body>
 
-        <Modal.Footer>
+        <Modal.Footer className='modal-footer border-0'>
           <Button variant="warning" onClick={() => this.handleJsonClose()} >
             Cancel
           </Button>

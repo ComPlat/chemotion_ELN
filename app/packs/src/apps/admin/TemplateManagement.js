@@ -218,20 +218,19 @@ export default class TemplateManagement extends React.Component {
                   onChange={this.onTemplateTypeChange}
                 />
               </FormGroup>
-              <FormGroup controlId="formControlAttachment" className='mb-3'>
+              <FormGroup controlId="formControlAttachment" className='mb-1'>
                 <Form.Label className='fs-4'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
               </FormGroup>
             </Form>
           </Container>
         </Modal.Body>
-        <Modal.Footer className="modal-footer border-0 mb-2">
+        <Modal.Footer className="modal-footer border-0">
           <Button variant="primary" onClick={() => this.handleCreateNewTemplate()} >
             Create
             <i className="fa fa-plus ms-1" />
           </Button>
-          &nbsp;
-          <Button variant="warning" onClick={() => this.handleNewTemplateClose()} >
+          <Button variant="warning" className='ms-1' onClick={() => this.handleNewTemplateClose()} >
             Cancel
           </Button>
         </Modal.Footer>
