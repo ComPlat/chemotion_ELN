@@ -10,7 +10,7 @@ export default class UnsortedDatasetModal extends React.Component {
     if (show) {
       return (
         <div>
-          <Modal animation show={show} size="lg" onHide={() => onHide()}>
+          <Modal centered animation show={show} size="lg" onHide={() => onHide()}>
             <Modal.Header closeButton>
               <Modal.Title>
                 Upload files to Inbox

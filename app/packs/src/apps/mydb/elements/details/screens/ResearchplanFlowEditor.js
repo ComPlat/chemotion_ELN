@@ -160,6 +160,7 @@ const ResearchplanFlowEditor = (props) => {
   return (
     <div>
       <Modal
+        centered
         show={visible}
         animation
         dialogClassName="researchplan-flow-editor-modal"

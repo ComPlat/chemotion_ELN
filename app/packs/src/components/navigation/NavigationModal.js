@@ -11,6 +11,7 @@ function NavigationModal({
 
   return (
     <Modal
+      centered
       dialogClassName={customModal}
       animation={false}
       show={show}

@@ -488,6 +488,7 @@ export default class NMRiumDisplayer extends React.Component {
     return (
       <div className="spectra-editor">
         <Modal
+          centered
           show={showModalNMRDisplayer}
           dialogClassName="spectra-editor-dialog"
           animation

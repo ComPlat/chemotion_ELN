@@ -162,7 +162,7 @@ export default class CreateButton extends React.Component {
     const { modalProps } = this.state;
 
     return (
-      <Modal animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
+      <Modal centered animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
         <Modal.Header closeButton>
           <Modal.Title>Create Wellplates from Samples</Modal.Title>
         </Modal.Header>
