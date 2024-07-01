@@ -26,6 +26,7 @@ const KetcherRailsform = () => {
   const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
   const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
   let iframe;
+  const iframeHeight = panelVars.invisibleClassName ? '88.3vh' : '85vh';
   
   useEffect(() => {
     iframe = document.getElementById('ketcher');
@@ -124,7 +125,7 @@ const KetcherRailsform = () => {
               src="/ketcher"
               title="Ketcher Rails"
               width="100%"
-              style={{ border: 'none', minHeight: 'calc(85vh - 242px)' }}
+              style={{ border: 'none', minHeight: 'calc(' + iframeHeight + ' - 242px)' }}
             />
             <div className="ketcher-buttons">
               <ButtonToolbar>
