@@ -267,8 +267,12 @@ export default class ElementsList extends React.Component {
     }
 
     return (
-      <div className='position-relative'>
-        <Tabs id="tabList" defaultActiveKey={0}>
+      <div className="position-relative">
+        <Tabs
+          id="tabList"
+          defaultActiveKey={0}
+          onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+        >
           {tabItems}
         </Tabs>
         <ElementsTableSettings
