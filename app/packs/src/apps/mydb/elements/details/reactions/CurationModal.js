@@ -72,27 +72,24 @@ export default class CurationModal extends Component {
       }
       new_array = new_array.flat()
       for (let i = 0 ; i < new_array.length; i++){
-        // console.log(new_array[i])
         if (new_array[i].match(/\d/) && new_array[i].length == 1){
           new_array[i] = {"attributes":{"script":"sub"}, "insert":new_array[i]}
         }
         else
           new_array[i] = {"insert": new_array[i]}
       };
-      // this.setState({descriptionObject:new_array});
       output_object = {"ops" : new_array}
       output_object["ops"] = output_object["ops"].filter((x)=> x["insert"] != "" )
       this.setState({descriptionObject:output_object});
+      // add await comand here maybe
       console.log(output_object["ops"]);
       return output_object
     }
-
 
     handleSuggestChange(e){
       const new_word = e.target.value
       this.setState({correctWord:new_word})
     }
-
 
     advanceSuggestion(input,miss_spelled_words){
       if (input < miss_spelled_words.length ){
@@ -104,7 +101,6 @@ export default class CurationModal extends Component {
       this.setState( {suggestionIndex : input} ) 
     }
 
-
     reverseSuggestion(input,miss_spelled_words){
       if (input < miss_spelled_words.length){
       input = input -1 }
@@ -115,17 +111,15 @@ export default class CurationModal extends Component {
       this.setState( {suggestionIndex : input} ) 
     }
 
-
     handleClose() {
       this.setState({ show: false });
     }
 
-  
+
     handleShow() {
       this.setState({ show: true });
       this.spellCheck(this.state.desc)
     }
-
 
     handleSuggest(miss_spelled_words, index){
       var Typo = require("typo-js");
@@ -142,7 +136,6 @@ export default class CurationModal extends Component {
       }
     }
 
-
     useAllDicitonary(en_dictionary,custom_dictionary, word){
       var Typo = require("typo-js");
       var is_word_correct = false ;
@@ -153,7 +146,6 @@ export default class CurationModal extends Component {
       }}
       return is_word_correct
     }
-
 
     checkSubScript(input_text){
       if(/\b[a-z]\w*\d[a-z]*/gi.test(input_text)){
@@ -169,7 +161,6 @@ export default class CurationModal extends Component {
           </React.Fragment>
         )) 
     }}
-
 
     spellCheck(description){
       if(description !== undefined){
@@ -199,8 +190,10 @@ export default class CurationModal extends Component {
             var spell_checked_word = true
           }
           else
-            {var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);}
-        }
+            {if(/[a-z]*-[a-z]*/){}
+            else{
+              var spell_checked_word = this.useAllDicitonary(en_dictionary,cus_dictionary,word_array[i]);}
+            }}
         else
           {if(/\b[a-z]\w*\d[a-z]*/gi.test(word_array[i]))
             {
@@ -219,14 +212,12 @@ export default class CurationModal extends Component {
       }
       else{}}
 
-
     cleanMisspelledArray(input_array){
       const counts = {};
       input_array.forEach(function (x) { counts[x] = (counts[x] || 0) + 1; });
       console.log(counts.values)
       return counts
     }
-
 
     changeMisspelling(description,selected_choice,ms_words,index){
       if (selected_choice !== ""){
@@ -243,7 +234,6 @@ export default class CurationModal extends Component {
       this.setState({correctWord: ""})
     }
 
-    
     getHighlightedText(text, mispelledWords,ms_index,subscriptList) {
       // this.clean_misspelled_array(mispelledWords)
       if(text !== undefined){
@@ -279,7 +269,6 @@ export default class CurationModal extends Component {
           </div>
         );}}
 
-
     uniq(a) {
       var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];
       return a.filter(function(item) {
@@ -294,7 +283,6 @@ export default class CurationModal extends Component {
     changeCorectWord(changeEvent) {
       this.setState({correctWord: changeEvent.target.value}) 
     }
-
 
     cleanData(description){
       if (description !== undefined){
@@ -421,9 +409,11 @@ export default class CurationModal extends Component {
               <Panel.Footer><ButtonToolbar>
                 <Button onClick={()=>this.advanceSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Ignore</Button>
                 <Button onClick={()=>this.reverseSuggestion(this.state.suggestionIndex,this.state.mispelledWords)}>Go Back</Button>
-                <Button onClick={()=>{this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);this.convertStringToObject(this.state.desc)}}>Correct</Button>
+                <Button onClick={()=>
+                {this.changeMisspelling(this.state.desc, this.state.correctWord, this.state.mispelledWords, this.state.suggestionIndex);
+                this.convertStringToObject(this.state.desc)}}>Correct</Button>
                 <Button onClick={()=> this.convertStringToObject(this.state.desc)}>convert string</Button>
-                <div className='pull-right'><Button onClick={()=> {this.props.onChange(this.state.descriptionObject);console.log(this.state.descriptionObject); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button></div>
+                <div className='pull-right'><Button onClick={()=> {this.props.onChange(this.state.descriptionObject);console.log(this.state.descriptionObject);this.convertStringToObject(this.state.desc); this.handleClose()}}> <i class="fa fa-floppy-o"></i> </Button></div>
               </ButtonToolbar> 
               </Panel.Footer>
             </Panel>

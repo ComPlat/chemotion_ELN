@@ -2,7 +2,6 @@
 
 module Chemotion
   class DictionaryAPI < Grape::API
-    
     resource :dictionary do
       desc "amend custom dictionary"
       namespace :amend do
@@ -21,7 +20,6 @@ module Chemotion
       end
     end
   
-
     namespace :remove do
       desc "remove last entry"
       params do
@@ -38,7 +36,6 @@ module Chemotion
       end
     end
 
-
     namespace :save do
       desc "admin save"
       params do
@@ -51,7 +48,6 @@ module Chemotion
         file.close
       end
     end
-
   end
 end
 end
