@@ -5,7 +5,6 @@ import {
   FormGroup, Modal
 } from 'react-bootstrap';
 import Aviator from 'aviator';
-import { filter } from 'lodash';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -248,7 +247,9 @@ export default class CreateButton extends React.Component {
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
     const { elements, genericEls } = elementList();
-    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+    const sortedLayout = Object.entries(layout)
+      .filter((o) => o[1] && o[1] > 0)
+      .sort((a, b) => a[1] - b[1]);
 
     const itemTables = [];
     sortedLayout?.forEach(([sl]) => {
