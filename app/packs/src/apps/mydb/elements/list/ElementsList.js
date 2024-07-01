@@ -270,7 +270,7 @@ export default class ElementsList extends React.Component {
             <i className={iconClass} />
           </OverlayTrigger>
           <span style={{ paddingLeft: 5 }}>
-            {elementState.totalElements && elementState.totalElements[`${value}s`]}
+            {elementState.totalElements && elementState.totalElements[`${value}s`] || 0}
             (
             {totalCheckedElements[value] || 0}
             )
