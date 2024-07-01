@@ -122,7 +122,7 @@ const exportFunction = (updateModalProps) => {
     show: true,
     title,
     component,
-    customModal: 'exportModal'
+    customModal: 'modal-lg'
   };
   updateModalProps(modalProps);
 };
@@ -132,8 +132,7 @@ const exportReactionFunction = (updateModalProps) => {
   const modalProps = {
     show: true,
     title: 'Reaction Smiles Export',
-    component,
-    customModal: 'exportModal'
+    component
   };
   updateModalProps(modalProps);
 };
