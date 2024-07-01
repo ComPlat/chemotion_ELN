@@ -44,10 +44,10 @@ export default class SharedWithMeCollections extends React.Component {
   label(node) {
     if(node.label == "Shared with me Collections") {
       return (
-        <FormControl 
-        value ="Synchronized with me Collections" 
-        type="text" 
-        className="root-label" 
+        <FormControl
+        value ="Shared with me Collections"
+        type="text"
+        className="root-label"
         disabled/>);
     } else {
       return (
