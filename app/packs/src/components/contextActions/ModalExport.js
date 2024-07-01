@@ -4,7 +4,6 @@ import {
 } from 'react-bootstrap';
 import CheckBoxs from 'src/components/common/CheckBoxs';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
@@ -33,7 +32,7 @@ const filterUIState = (uiState) => {
   };
 };
 
-const exportSelections = (uiState, userState, columns, e) => {
+const exportSelections = (uiState, columns, e) => {
   ReportsFetcher.createDownloadFile({ exportType: e, uiState: filterUIState(uiState), columns });
 };
 
@@ -257,10 +256,9 @@ export default class ModalExport extends React.Component {
 
   handleClick(e) {
     const uiState = UIStore.getState();
-    const userState = UserStore.getState();
     const { onHide } = this.props;
     onHide();
-    exportSelections(uiState, userState, this.filteredColumns(), e);
+    exportSelections(uiState, this.filteredColumns(), e);
   }
 
   filteredColumns() {
