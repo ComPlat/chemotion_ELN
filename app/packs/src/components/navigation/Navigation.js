@@ -26,7 +26,7 @@ export default class Navigation extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
+        component: null,
         action: null,
         listSharedCollections: false,
       },
