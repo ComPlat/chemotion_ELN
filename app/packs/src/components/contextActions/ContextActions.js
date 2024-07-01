@@ -56,7 +56,7 @@ export default class ContextActions extends React.Component {
   render() {
     const { updateModalProps, customClass } = this.props;
     return (
-      <div className='d-flex gap-2'>
+      <div className="d-flex gap-2">
         <ButtonGroup>
           <SplitElementBtn />
           <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
