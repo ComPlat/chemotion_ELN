@@ -111,7 +111,11 @@ export default class ModalExport extends React.Component {
           { value: 'required_date', text: 'required date', checked: false },
           { value: 'ordered_date', text: 'ordered date', checked: false },
           { value: 'required_by', text: 'required by', checked: false },
-          { value: ['safety_sheet_link_merck', 'safety_sheet_link_thermofischer'], text: 'safety sheet link', checked: false },
+          {
+            value: ['safety_sheet_link_merck', 'safety_sheet_link_thermofischer'],
+            text: 'safety sheet link',
+            checked: false
+          },
           { value: ['product_link_merck', 'product_link_thermofischer'], text: 'product link', checked: false },
           { value: 'pictograms', text: 'pictograms', checked: false },
           { value: 'h_statements', text: 'h statements', checked: false },
@@ -139,6 +143,19 @@ export default class ModalExport extends React.Component {
       },
     };
     this.handleClick = this.handleClick.bind(this);
+
+    this.toggleColumnsSample = this.toggleColumnsSample.bind(this);
+    this.toggleColumnsAllSample = this.toggleColumnsAllSample.bind(this);
+    this.toggleColumnsMolecule = this.toggleColumnsMolecule.bind(this);
+    this.toggleColumnsAllMolecule = this.toggleColumnsAllMolecule.bind(this);
+    this.toggleColumnsReaction = this.toggleColumnsReaction.bind(this);
+    this.toggleColumnsAllReaction = this.toggleColumnsAllReaction.bind(this);
+    this.toggleColumnsWellplate = this.toggleColumnsWellplate.bind(this);
+    this.toggleColumnsAllWellplate = this.toggleColumnsAllWellplate.bind(this);
+    this.toggleColumnsAnalyses = this.toggleColumnsAnalyses.bind(this);
+    this.toggleColumnsAllAnalyses = this.toggleColumnsAllAnalyses.bind(this);
+    this.toggleColumnsChemicals = this.toggleColumnsChemicals.bind(this);
+    this.toggleColumnsAllChemicals = this.toggleColumnsAllChemicals.bind(this);
   }
 
   toggleColumns(text, checked, section) {
@@ -262,41 +279,41 @@ export default class ModalExport extends React.Component {
     const uiState = UIStore.getState();
     return (
       <div>
-        <div className='export-container'>
+        <div className="export-container">
           <h4>Sample properties</h4>
           <CheckBoxs items={this.state.columns.sample}
-            toggleCheckbox={this.toggleColumnsSample.bind(this)}
-            toggleCheckAll={this.toggleColumnsAllSample.bind(this)}
+            toggleCheckbox={this.toggleColumnsSample}
+            toggleCheckAll={this.toggleColumnsAllSample}
             checkedAll={this.state.checkedAllColumns.sample}
           />
           <h4>Molecule properties</h4>
           <CheckBoxs items={this.state.columns.molecule}
-            toggleCheckbox={this.toggleColumnsMolecule.bind(this)}
-            toggleCheckAll={this.toggleColumnsAllMolecule.bind(this)}
+            toggleCheckbox={this.toggleColumnsMolecule}
+            toggleCheckAll={this.toggleColumnsAllMolecule}
             checkedAll={this.state.checkedAllColumns.molecule}
           />
           <h4>Reaction properties</h4>
           <CheckBoxs items={this.state.columns.reaction}
-            toggleCheckbox={this.toggleColumnsReaction.bind(this)}
-            toggleCheckAll={this.toggleColumnsAllReaction.bind(this)}
+            toggleCheckbox={this.toggleColumnsReaction}
+            toggleCheckAll={this.toggleColumnsAllReaction}
             checkedAll={this.state.checkedAllColumns.reaction}
           />
           <h4>Wellplate and well properties</h4>
           <CheckBoxs items={this.state.columns.wellplate}
-            toggleCheckbox={this.toggleColumnsWellplate.bind(this)}
-            toggleCheckAll={this.toggleColumnsAllWellplate.bind(this)}
+            toggleCheckbox={this.toggleColumnsWellplate}
+            toggleCheckAll={this.toggleColumnsAllWellplate}
             checkedAll={this.state.checkedAllColumns.wellplate}
           />
           <h4>Analyses</h4>
           <CheckBoxs items={this.state.columns.analyses}
-            toggleCheckbox={this.toggleColumnsAnalyses.bind(this)}
-            toggleCheckAll={this.toggleColumnsAllAnalyses.bind(this)}
+            toggleCheckbox={this.toggleColumnsAnalyses}
+            toggleCheckAll={this.toggleColumnsAllAnalyses}
             checkedAll={this.state.checkedAllColumns.analyses}
           />
           <h4>Chemicals</h4>
           <CheckBoxs items={this.state.columns.chemicals}
-            toggleCheckbox={this.toggleColumnsChemicals.bind(this)}
-            toggleCheckAll={this.toggleColumnsAllChemicals.bind(this)}
+            toggleCheckbox={this.toggleColumnsChemicals}
+            toggleCheckAll={this.toggleColumnsAllChemicals}
             checkedAll={this.state.checkedAllColumns.chemicals}
           />
         </div>
