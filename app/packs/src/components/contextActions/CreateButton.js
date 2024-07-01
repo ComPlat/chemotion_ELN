@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   SplitButton, Button, ButtonToolbar, FormControl,
-  FormGroup, Modal
+  FormGroup, Modal, Dropdown
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
@@ -12,8 +12,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel';
 
 const elementList = () => {
   const elements = [
@@ -251,33 +250,50 @@ export default class CreateButton extends React.Component {
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
-    const itemTables = [];
-    sortedLayout?.forEach(([sl]) => {
+    const sortedGenericEls = [];
+    sortedLayout.forEach(([sl]) => {
       const el = elements.concat(genericEls).find((ael) => ael.name === sl);
-      if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
+      if (typeof el !== 'undefined') {
+        sortedGenericEls.push(el);
+      }
     });
 
     return (
-
-        <SplitButton
-          id='create-split-button'
-          variant={customClass ? null : 'primary'}
-          className={customClass}
-          title={this.createBtn(type)}
-          disabled={isDisabled}
-          onClick={() => this.createElementOfType(type)}
-        >
-          {this.createWellplateModal()}
-          {itemTables}
-          <MenuItem divider />
-          <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
-          <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
-          <MenuItem divider />
-          <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
-          <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
-        </SplitButton>
-
-    )
+      <SplitButton
+        id="create-split-button"
+        variant={customClass ? null : 'primary'}
+        className={customClass}
+        title={this.createBtn(type)}
+        disabled={isDisabled}
+        onClick={() => this.createElementOfType(type)}
+      >
+        {this.createWellplateModal()}
+        {sortedGenericEls.map((el) => (
+          <Dropdown.Item
+            key={el.name}
+            id={`create-${el.name}-button`}
+            onClick={() => this.createElementOfType(el.name)}
+          >
+            Create
+            {el.label}
+          </Dropdown.Item>
+        ))}
+        <Dropdown.Divider />
+        <Dropdown.Item onClick={() => this.createWellplateFromSamples()}>
+          Create Wellplate from Samples
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.createScreenFromWellplates()}>
+          Create Screen from Wellplates
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item onClick={() => this.copySample()} disabled={this.isCopySampleDisabled()}>
+          Copy Sample
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>
+          Copy Reaction
+        </Dropdown.Item>
+      </SplitButton>
+    );
   }
 }
 
