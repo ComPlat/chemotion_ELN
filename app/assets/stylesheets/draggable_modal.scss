@@ -1,8 +1,19 @@
+.modal.draggable-modal-dialog {
+  width: auto;
+  height: auto;
+  top: calc(100% - 95vh);
+  left: calc((100% - 90vw) / 2);
+  padding-right: 0 !important;
+}
+
+.modal.draggable-modal-dialog.minimized {
+  height: 55px;
+  overflow: hidden;
+}
+
 .modal-dialog.draggable-modal {
   transform: none !important;
   margin: 0;
-  top: calc(100% - 95vh);
-  left: calc((100% - 90vw) / 2);
   width: 90vw;
   height: 85vh;
 }
