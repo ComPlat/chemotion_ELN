@@ -258,14 +258,6 @@ export default class ModalExport extends React.Component {
     }, {});
   }
 
-  chainedItems(items) {
-    return items.map(item => {
-      return !item.checked
-        ? item.value
-        : null
-    }).filter(r => r != null);
-  }
-
   render() {
     const uiState = UIStore.getState();
     return (
