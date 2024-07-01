@@ -274,7 +274,11 @@ export default class ElementsList extends React.Component {
       <>
         {removeSearchResultAlert}
         <div className="position-relative">
-          <Tabs id="tabList" defaultActiveKey={0}>
+          <Tabs
+            id="tabList"
+            defaultActiveKey={0}
+            onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+          >
             {tabItems}
           </Tabs>
           <ElementsTableSettings
