@@ -137,7 +137,7 @@ export default class ModalExport extends React.Component {
         molecule: true,
         wellplate: false,
         reaction: false,
-        analysis: false,
+        analyses: false,
       },
     };
     this.handleClick = this.handleClick.bind(this);
@@ -238,7 +238,7 @@ export default class ModalExport extends React.Component {
           <ButtonToolbar>
             <Button variant="primary" onClick={onHide}>Cancel</Button>
             <DropdownButton
-              dropup
+              drop="up"
               variant="warning"
               id="md-export-dropdown"
               title="XLSX/SD Export"
@@ -275,44 +275,42 @@ export default class ModalExport extends React.Component {
   render() {
     return (
       <div>
-        <div className="export-container">
-          <h4>Sample properties</h4>
-          <CheckBoxs items={this.state.columns.sample}
-            toggleCheckbox={this.toggleColumnsSample}
-            toggleCheckAll={this.toggleColumnsAllSample}
-            checkedAll={this.state.checkedAllColumns.sample}
-          />
-          <h4>Molecule properties</h4>
-          <CheckBoxs items={this.state.columns.molecule}
-            toggleCheckbox={this.toggleColumnsMolecule}
-            toggleCheckAll={this.toggleColumnsAllMolecule}
-            checkedAll={this.state.checkedAllColumns.molecule}
-          />
-          <h4>Reaction properties</h4>
-          <CheckBoxs items={this.state.columns.reaction}
-            toggleCheckbox={this.toggleColumnsReaction}
-            toggleCheckAll={this.toggleColumnsAllReaction}
-            checkedAll={this.state.checkedAllColumns.reaction}
-          />
-          <h4>Wellplate and well properties</h4>
-          <CheckBoxs items={this.state.columns.wellplate}
-            toggleCheckbox={this.toggleColumnsWellplate}
-            toggleCheckAll={this.toggleColumnsAllWellplate}
-            checkedAll={this.state.checkedAllColumns.wellplate}
-          />
-          <h4>Analyses</h4>
-          <CheckBoxs items={this.state.columns.analyses}
-            toggleCheckbox={this.toggleColumnsAnalyses}
-            toggleCheckAll={this.toggleColumnsAllAnalyses}
-            checkedAll={this.state.checkedAllColumns.analyses}
-          />
-          <h4>Chemicals</h4>
-          <CheckBoxs items={this.state.columns.chemicals}
-            toggleCheckbox={this.toggleColumnsChemicals}
-            toggleCheckAll={this.toggleColumnsAllChemicals}
-            checkedAll={this.state.checkedAllColumns.chemicals}
-          />
-        </div>
+        <h4>Sample properties</h4>
+        <CheckBoxs items={this.state.columns.sample}
+          toggleCheckbox={this.toggleColumnsSample}
+          toggleCheckAll={this.toggleColumnsAllSample}
+          checkedAll={this.state.checkedAllColumns.sample}
+        />
+        <h4>Molecule properties</h4>
+        <CheckBoxs items={this.state.columns.molecule}
+          toggleCheckbox={this.toggleColumnsMolecule}
+          toggleCheckAll={this.toggleColumnsAllMolecule}
+          checkedAll={this.state.checkedAllColumns.molecule}
+        />
+        <h4>Reaction properties</h4>
+        <CheckBoxs items={this.state.columns.reaction}
+          toggleCheckbox={this.toggleColumnsReaction}
+          toggleCheckAll={this.toggleColumnsAllReaction}
+          checkedAll={this.state.checkedAllColumns.reaction}
+        />
+        <h4>Wellplate and well properties</h4>
+        <CheckBoxs items={this.state.columns.wellplate}
+          toggleCheckbox={this.toggleColumnsWellplate}
+          toggleCheckAll={this.toggleColumnsAllWellplate}
+          checkedAll={this.state.checkedAllColumns.wellplate}
+        />
+        <h4>Analyses</h4>
+        <CheckBoxs items={this.state.columns.analyses}
+          toggleCheckbox={this.toggleColumnsAnalyses}
+          toggleCheckAll={this.toggleColumnsAllAnalyses}
+          checkedAll={this.state.checkedAllColumns.analyses}
+        />
+        <h4>Chemicals</h4>
+        <CheckBoxs items={this.state.columns.chemicals}
+          toggleCheckbox={this.toggleColumnsChemicals}
+          toggleCheckAll={this.toggleColumnsAllChemicals}
+          checkedAll={this.state.checkedAllColumns.chemicals}
+        />
         {this.buttonBar()}
       </div>
     );

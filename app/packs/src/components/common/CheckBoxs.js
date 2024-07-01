@@ -1,75 +1,62 @@
-import React from 'react'
-import {Table} from 'react-bootstrap'
-import PropTypes from 'prop-types'
+import React from 'react';
+import {
+  Form,
+  Container,
+  Row,
+  Col,
+  Card
+} from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
-const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll, customClass = 'check-box-list' , customStyle = {}}) => {
-  let checkBoxs = items.map( (setting, i) => {
-    const {text, checked} = setting
-    return(
-        <CheckBox key={i}
-                  text={text}
-                  checked={checked}
-                  toggleCheckbox={toggleCheckbox.bind(null, text, checked)} />
-    )
-  })
-  const lgth = items && items.length
-  if (customClass == 'check-box-list') {
-    customClass =  lgth && lgth < 4 ? `check-box-list-${lgth}` : 'check-box-list'
-  }
+const CheckBoxs = ({
+  items,
+  toggleCheckbox,
+  toggleCheckAll,
+  checkedAll,
+}) => {
+  const checkBoxs = items.map((setting) => {
+    const { text, checked } = setting;
+    return (
+      <Col key={text} sm={3}>
+        <Form.Check
+          type="checkbox"
+          checked={checked}
+          label={text}
+          id={text}
+          onChange={() => toggleCheckbox(text, checked)}
+        />
+      </Col>
+    );
+  });
+
+  const genId = Math.random().toString().substr(2, 10);
+
   return (
-    <Table striped>
-      <thead>
-        <tr>
-          <th>
-            <input type="checkbox"
-                   checked={checkedAll}
-                   onChange={toggleCheckAll.bind(null)}
-                   className="common-checkbox" />
-            <span className="g-marginLeft--10">
-              {checkedAll ? "Deselect all" : "Select all"}
-            </span>
-          </th>
-        </tr>
-      </thead>
+    <Card className="mb-3">
+      <Card.Header>
+        <Form.Check
+          id={genId}
+          type="checkbox"
+          checked={checkedAll}
+          label={checkedAll ? "Deselect all" : "Select all"}
+          onChange={() => toggleCheckAll()}
+        />
+      </Card.Header>
 
-      <tbody>
-        <tr >
-          <td>
-            <ul className={customClass} style={customStyle}>
-              {checkBoxs}
-            </ul>
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  )
-}
+      <Card.Body>
+        <Row className="align-items-center">
+          {checkBoxs}
+        </Row>
+      </Card.Body>
+    </Card>
+  );
+};
+
 CheckBoxs.propTypes = {
   items: PropTypes.array,
   checkedAll: PropTypes.bool,
   toggleCheckAll: PropTypes.func,
   toggleCheckbox: PropTypes.func,
-  customClass: PropTypes.string,
-  customStyle: PropTypes.object,
-}
+};
 
-const CheckBox = ({text, checked, toggleCheckbox}) => {
-  return (
-    <li>
-      <input type="checkbox"
-               onChange={toggleCheckbox}
-               checked={checked}
-               className="common-checkbox" />
-      <span className="g-marginLeft--10"> {text} </span>
-    </li>
-
-  )
-}
-
-CheckBox.propTypes = {
-  text: PropTypes.string,
-  checked: PropTypes.bool,
-  toggleCheckbox: PropTypes.func,
-}
-
-export default CheckBoxs
+export default CheckBoxs;
