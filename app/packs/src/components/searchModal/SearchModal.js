@@ -77,7 +77,7 @@ const SearchModal = () => {
           onHide={() => searchStore.handleCancel()}
           backdrop={false}
           keyboard={false}
-          centered
+          className={`draggable-modal-dialog${minimizedClass}`}
           size="xxxl"
           dialogClassName="draggable-modal"
           contentClassName={`draggable-modal-content${minimizedClass}`}
