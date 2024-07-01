@@ -1,11 +1,10 @@
 import React from 'react';
 import {
-  Button, ButtonToolbar, DropdownButton
+  Button, ButtonToolbar, Dropdown, DropdownButton
 } from 'react-bootstrap';
 import CheckBoxs from 'src/components/common/CheckBoxs';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const filterUIState = (uiState) => {
   const {
@@ -245,8 +244,8 @@ export default class ModalExport extends React.Component {
               title="XLSX/SD Export"
               onSelect={this.handleClick}
             >
-              <MenuItem eventKey="1">XLSX Export</MenuItem>
-              <MenuItem eventKey="2" disabled={sdfChemicalExport}>SDF Export</MenuItem>
+              <Dropdown.Item eventKey="1">XLSX Export</Dropdown.Item>
+              <Dropdown.Item eventKey="2" disabled={sdfChemicalExport}>SDF Export</Dropdown.Item>
             </DropdownButton>
           </ButtonToolbar>
         </div>
@@ -274,7 +273,6 @@ export default class ModalExport extends React.Component {
   }
 
   render() {
-    const uiState = UIStore.getState();
     return (
       <div>
         <div className="export-container">
