@@ -31,9 +31,8 @@ const elementList = () => {
   if (MatrixCheck(currentUser.matrix, 'genericElement')) {
     genericEls = UserStore.getState().genericEls || [];
   }
-  const itemTables = [];
 
-  return { elements, genericEls, itemTables };
+  return { elements, genericEls };
 };
 
 export default class CreateButton extends React.Component {
@@ -248,9 +247,10 @@ export default class CreateButton extends React.Component {
     const { isDisabled, customClass } = this.props;
     const { layout } = this.state;
     const type = UserStore.getState().currentType;
-    const { elements, genericEls, itemTables } = elementList();
+    const { elements, genericEls } = elementList();
     const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
 
+    const itemTables = [];
     sortedLayout?.forEach(([sl]) => {
       const el = elements.concat(genericEls).find((ael) => ael.name === sl);
       if (el) itemTables.push(<MenuItem id={`create-${el.name}-button`} key={el.name} onSelect={() => this.createElementOfType(`${el.name}`)}>Create {el.label}</MenuItem>);
@@ -287,5 +287,3 @@ CreateButton.propTypes = {
 CreateButton.defaultProps = {
   customClass: null,
 };
-
-export { elementList };
