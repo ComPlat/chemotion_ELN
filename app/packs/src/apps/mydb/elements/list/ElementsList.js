@@ -274,7 +274,6 @@ export default class ElementsList extends React.Component {
         <ElementsTableSettings
           visible={visible}
           hidden={hidden}
-          ref={(m) => { this.elementsTableSettings = m; }}
         />
       </div>
     );
