@@ -273,14 +273,13 @@ export default class ElementsList extends React.Component {
     return (
       <>
         {removeSearchResultAlert}
-        <div className='position-relative'>
+        <div className="position-relative">
           <Tabs id="tabList" defaultActiveKey={0}>
             {tabItems}
           </Tabs>
           <ElementsTableSettings
             visible={visible}
             hidden={hidden}
-            ref={(m) => { this.elementsTableSettings = m; }}
           />
         </div>
       </>
