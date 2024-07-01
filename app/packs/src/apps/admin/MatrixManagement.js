@@ -239,7 +239,7 @@ export default class MatrixManagement extends React.Component {
     return (
       <Modal centered show={this.state.showEditModal} onHide={this.handleClose} className='fs-4' backdrop='static'>
         <Modal.Header closeButton>
-          <Modal.Title className='fs-3'>Edit Permisson</Modal.Title>
+          <Modal.Title>Edit Permisson</Modal.Title>
         </Modal.Header>
 
         <Modal.Body className="overflow-auto">
@@ -270,7 +270,7 @@ export default class MatrixManagement extends React.Component {
                 onChange={e => this.handleChange(!matrice.enabled, e)}
                 label='Enable globally'
               />
-              <p className='ms-3'>
+              <p className='ms-3 fs-6'>
                 (When [checked], all users can see/use this feature, when [unchecked], only allowed users can see/use this function)
               </p>
 
@@ -337,7 +337,7 @@ export default class MatrixManagement extends React.Component {
         onHide={this.handleJsonClose}
         backdrop='static'>
         <Modal.Header closeButton>
-          <Modal.Title className='fs-3'>JSON Configurations</Modal.Title>
+          <Modal.Title>JSON Configurations</Modal.Title>
         </Modal.Header>
 
         <Modal.Body className="overflow-auto">
@@ -370,7 +370,7 @@ export default class MatrixManagement extends React.Component {
           </Button>
           <Button variant="primary" disabled={!showJsonBtn} onClick={() => this.handleJsonSave(matrice)} >
             Update
-            <i className="fa fa-save" />
+            <i className="fa fa-save ms-1" />
           </Button>
         </Modal.Footer>
       </Modal>

@@ -322,14 +322,13 @@ export default class GroupsDevices extends React.Component {
         centered
         show={showCreateModal}
         onHide={this.handleCloseGroup}
-        dialogClassName='preview-modal'
       >
         <Modal.Header closeButton className='bg-light'>
-          <Modal.Title className='fs-3'>{title}</Modal.Title>
+          <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group controlId="formInlineName" className='mb-3 fs-4  fw-bold'>
+            <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
               <Form.Label>Name*</Form.Label>
               <Form.Control
                 type="text"
@@ -338,7 +337,7 @@ export default class GroupsDevices extends React.Component {
                 className='py-2'
               />
             </Form.Group>
-            <Form.Group controlId="formInlineName" className='mb-3 fs-4  fw-bold'>
+            <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
               <Form.Control
                 type="text"
                 ref={(m) => { this.lastInput = m; }}
@@ -346,7 +345,7 @@ export default class GroupsDevices extends React.Component {
                 className='py-2'
               />
             </Form.Group>
-            <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-4 fw-bold'>
+            <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-5 fw-bold'>
               <Form.Label>Name abbreviation*</Form.Label>
               <Form.Control
                 type="text"
@@ -355,7 +354,7 @@ export default class GroupsDevices extends React.Component {
                 className='py-2'
               />
             </Form.Group>
-            <Form.Group controlId="formInlineEmail" className='mb-4 fs-4 fw-bold'>
+            <Form.Group controlId="formInlineEmail" className='mb-4 fs-5 fw-bold'>
               <Form.Label>Email</Form.Label>
               <Form.Control
                 type="text"
@@ -408,14 +407,11 @@ export default class GroupsDevices extends React.Component {
         centered
         show={showModal}
         onHide={this.handleClose}
-        dialogClassName='preview-modal'
       >
         <Modal.Header closeButton>
-          <Modal.Title className='fs-3'>{title}</Modal.Title>
+          <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Card>
-            <Card.Body>
               <Select.Async
                 multi
                 isLoading
@@ -429,9 +425,7 @@ export default class GroupsDevices extends React.Component {
                 loadOptions={this.loadUserByNameType}
                 onChange={this.handleSelectUser}
               />
-              <Button size="md" type="button" variant="warning" className='mt-3' onClick={() => this.addToRoot(root)}>Add</Button>
-            </Card.Body>
-          </Card>
+          <Button size="md" type="button" variant="warning" className='mt-3' onClick={() => this.addToRoot(root)}>Add</Button>
         </Modal.Body>
       </Modal>
     );

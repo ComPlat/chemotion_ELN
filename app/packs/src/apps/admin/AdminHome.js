@@ -12,7 +12,7 @@ import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateCont
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
-// import TemplateManagement from 'src/apps/admin/TemplateManagement';
+import TemplateManagement from 'src/apps/admin/TemplateManagement';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -98,9 +98,9 @@ class AdminHome extends React.Component {
         <NavItem>
           <Nav.Link eventKey={5}>Load OLS Terms</Nav.Link>
         </NavItem>
-        {/* <NavItem>
+        <NavItem>
           <Nav.Link eventKey={12}>Report-template Management</Nav.Link>
-        </NavItem> */}
+        </NavItem>
         <NavItem>
           <Nav.Link eventKey={13}>Delayed Jobs</Nav.Link>
         </NavItem>

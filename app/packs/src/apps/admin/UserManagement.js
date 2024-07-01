@@ -726,7 +726,6 @@ export default class UserManagement extends React.Component {
         centered
         show={this.state.showMsgModal}
         onHide={this.handleMsgClose}
-        dialogClassName='preview-modal'
       >
         <Modal.Header closeButton>
           <Modal.Title>Send Message</Modal.Title>
@@ -772,7 +771,7 @@ export default class UserManagement extends React.Component {
         centered
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
-        size='xl'
+        size='lg'
         backdrop='static'
       >
         <Modal.Header closeButton>
@@ -781,63 +780,77 @@ export default class UserManagement extends React.Component {
         <Modal.Body>
           <Tabs id="createUserTabs" className='fs-4'>
             <Tab eventKey="singleUser" title="Single user">
-              <Form className='m-3'>
-                <Form.Group as={Row} className='mb-3' controlId="formControlEmail">
-                  <Form.Label column sm="3" className="fs-4">
+              <Form
+                className='ms-2 mt-2'
+              >
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlEmail">
+                  <Form.Label
+                  >
                     Email:
                   </Form.Label>
-                  <Col sm="9">
-                    <Form.Control type="email" name="email" ref={(ref) => { this.email = ref; }} />
-                  </Col>
+                  <Form.Control type="email" name="email" ref={(ref) => { this.email = ref; }} />
                 </Form.Group>
-                <Form.Group as={Row} className='mb-3' controlId="formControlPassword">
-                  <Form.Label column sm="3" className="fs-4">Password: </Form.Label>
-                  <Col sm="9">
-                    <Form.Control type="password" name="password" ref={(ref) => { this.password = ref; }} />
-                  </Col>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlPassword">
+                  <Form.Label
+                  >
+                    Password: </Form.Label>
+                  <Form.Control type="password" name="password" ref={(ref) => { this.password = ref; }} />
                 </Form.Group>
-                <Form.Group as={Row} className='mb-3' controlId="formControlPasswordConfirmation">
-                  <Form.Label column sm="3" className="fs-4 pull-right"> Password Confirmation:</Form.Label>
-                  <Col sm="9">
-                    <Form.Control type="password" ref={(ref) => { this.passwordConfirm = ref; }} />
-                  </Col>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlPasswordConfirmation">
+                  <Form.Label
+                  >
+                    Password Confirmation:</Form.Label>
+                  <Form.Control type="password" ref={(ref) => { this.passwordConfirm = ref; }} />
                 </Form.Group>
-                <Form.Group as={Row} className='mb-3' controlId="formControlFirstName">
-                  <Form.Label column sm="3" className="fs-4"> First name: </Form.Label>
-                  <Col sm="9">
-                    <Form.Control type="text" name="firstname" ref={(ref) => { this.firstname = ref; }} />
-                  </Col>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlFirstName">
+                  <Form.Label
+                  >
+                    First name: </Form.Label>
+                  <Form.Control type="text" name="firstname" ref={(ref) => { this.firstname = ref; }} />
                 </Form.Group>
-                <Form.Group as={Row} className='mb-3' controlId="formControlLastName">
-                  <Form.Label column sm="3" className="fs-4"> Last name:  </Form.Label>
-                  <Col sm="9">
-                    <Form.Control type="text" name="lastname" ref={(ref) => { this.lastname = ref; }} />
-                  </Col>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlLastName">
+                  <Form.Label
+                  > Last name:  </Form.Label>
+                  <Form.Control type="text" name="lastname" ref={(ref) => { this.lastname = ref; }} />
                 </Form.Group>
-                <Form.Group as={Row} className='mb-3' controlId="formControlAbbr">
-                  <Form.Label column sm="3" className="fs-4">Abbr (3) *: </Form.Label>
-                  <Col sm="9">
-                    <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
-                  </Col>
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlAbbr">
+                  <Form.Label
+                  >
+                    Abbr (3) *: </Form.Label>
+                  <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
                 </Form.Group>
-                <Form.Group as={Row} className='mb-2' controlId="formControlsType">
-                  <Form.Label column sm="3" className="fs-4"> Type:</Form.Label>
-                  <Col sm="9">
-                    <Form.Select ref={(ref) => { this.type = ref; }}>
-                      <option value="Person">Person</option>
-                      <option value="Admin">Admin</option>
-                    </Form.Select>
-                  </Col>
-
+                <Form.Group
+                  className='w-75 mb-3'
+                  controlId="formControlsType">
+                  <Form.Label
+                  >
+                    Type:</Form.Label>
+                  <Form.Select ref={(ref) => { this.type = ref; }}>
+                    <option value="Person">Person</option>
+                    <option value="Admin">Admin</option>
+                  </Form.Select>
                 </Form.Group>
-                <Button variant="primary" className='mt-2' onClick={() => this.handleCreateNewUser()}>
-                  Create user
-                  <i className="fa fa-plus ms-1" />
-                </Button>
               </Form>
+              <Button variant="primary" className='mt-3 ms-2' onClick={() => this.handleCreateNewUser()}>
+                Create user
+                <i className="fa fa-plus ms-1" />
+              </Button>
+
             </Tab>
             <Tab eventKey="multiUser" title="Multiple users from file">
-              <Form className='m-3 fs-4'>
+              <Form className='my-3'>
                 <Form.Group>
                   <Form.Label className='fw-bold'>Please format the user file like the table below.</Form.Label>
                   <Table striped bordered hover className='mt-1'>
@@ -886,7 +899,7 @@ export default class UserManagement extends React.Component {
                     </span>
                   </CSVReader>
                 </Form.Group>
-                  <Button variant="primary" className='my-3 fs-5' onClick={() => this.handleCreateNewUsersFromFile()}>
+                <Button variant="primary" className='my-3' onClick={() => this.handleCreateNewUsersFromFile()}>
                   Create users
                   <i className="fa fa-plus ms-1" />
                 </Button>
@@ -922,7 +935,6 @@ export default class UserManagement extends React.Component {
           centered
           show={this.state.showEditUserModal}
           onHide={this.handleEditUserClose}
-          size='xl'
           backdrop='static'
         >
           <Modal.Header closeButton>
@@ -940,72 +952,72 @@ export default class UserManagement extends React.Component {
           <Modal.Body >
             <Tab.Content animation>
               <Tab.Pane eventKey="first">
-                <Form className="m-3">
-                  <Form.Group as={Row} className="mb-3" controlId="formControlEmail">
-                    <Form.Label column sm="3" className="fs-4">
+                <Form>
+                  <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
+                    <Form.Label column sm="3" className="fs-5">
                       Email:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="email"
                         name="u_email"
                         defaultValue={user.email}
                         ref={(ref) => { this.u_email = ref; }}
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} className="mb-3" controlId="formControlFirstName">
-                    <Form.Label column sm="3" className="fs-4">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
+                    <Form.Label column sm="3" className="fs-5">
                       First name:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="text"
                         name="u_firstname"
                         defaultValue={user.first_name}
                         ref={(ref) => { this.u_firstname = ref; }}
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} className="mb-3" controlId="formControlLastName">
-                    <Form.Label column sm="3" className="fs-4">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
+                    <Form.Label column sm="3" className="fs-5">
                       Last name:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="text"
                         name="u_lastname"
                         defaultValue={user.last_name}
                         ref={(ref) => { this.u_lastname = ref; }}
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} className="mb-3" controlId="formControlAbbr">
-                    <Form.Label column sm="3" className="fs-4">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
+                    <Form.Label column sm="3" className="fs-5">
                       Abbr:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="text"
                         name="u_abbr"
                         defaultValue={user.initials}
                         ref={(ref) => { this.u_abbr = ref; }}
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} className="mb-3" controlId="formControlsType">
-                    <Form.Label column sm="3" className="fs-4">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
+                    <Form.Label column sm="3" className="fs-5">
                       Type:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Select
                         defaultValue={user.type}
                         ref={(ref) => { this.u_type = ref; }}
-                        className='fs-4'
+                        className='fs-5'
                       >
                         <option value="Person">Person</option>
                         <option value="Group">Group</option>
@@ -1013,14 +1025,14 @@ export default class UserManagement extends React.Component {
                       </Form.Select>
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} className="mb-3" controlId="formControlMessage">
-                    <Col sm="12">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
+                    <Col sm="10">
                       <Form.Control
                         type="text"
                         readOnly
                         name="messageEditUserModal"
                         value={this.state.messageEditUserModal}
-                        className="my-3 form-control text-danger text-center fs-4"
+                        className="my-3 form-control text-danger text-center fs-5"
                       />
                     </Col>
                   </Form.Group>
@@ -1040,83 +1052,83 @@ export default class UserManagement extends React.Component {
                 </Form>
               </Tab.Pane>
               <Tab.Pane eventKey="second">
-                <Form className="m-3">
-                  <Form.Group as={Row} className="mb-3" controlId="formControlEmail">
-                    <Form.Label column sm="3" className="fs-4 mb-3">
+                <Form>
+                  <Form.Group as={Row} className="mb-3 mt-2 ms-5" controlId="formControlEmail">
+                    <Form.Label column sm="3" className="fs-5">
                       Email:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="email"
                         name="u_email"
                         defaultValue={user.email}
                         disabled
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} controlId="formControlFirstName">
-                    <Form.Label column sm="3" className="fs-4 mb-3">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
+                    <Form.Label column sm="3" className="fs-5">
                       First name:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="text"
                         name="u_firstname"
                         defaultValue={user.first_name}
                         disabled
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} controlId="formControlLastName">
-                    <Form.Label column sm="3" className="fs-4 mb-3">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
+                    <Form.Label column sm="3" className="fs-5">
                       Last name:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="text"
                         name="u_lastname"
                         defaultValue={user.last_name}
                         disabled
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} controlId="formControlAbbr">
-                    <Form.Label column sm="3" className="fs-4 mb-3">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
+                    <Form.Label column sm="3" className="fs-5">
                       Abbr:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         type="text"
                         name="u_abbr"
                         defaultValue={user.initials}
                         disabled
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} controlId="formControlsType">
-                    <Form.Label column sm="3" className="fs-4 mb-3">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
+                    <Form.Label column sm="3" className="fs-5">
                       Type:
                     </Form.Label>
-                    <Col sm="9">
+                    <Col sm="7">
                       <Form.Control
                         disabled
                         defaultValue={user.type}
-                        className='fs-4'
+                        className='fs-5'
                       />
                     </Col>
                   </Form.Group>
-                  <Form.Group as={Row} className="mb-3" controlId="formControlMessage">
-                    <Col sm="12">
+                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
+                    <Col sm="10">
                       <Form.Control
                         type="text"
                         readOnly
                         name="messageEditUserModal"
                         value="Delete User Account. Are you sure?"
-                        className="my-3 fs-4 form-control text-danger text-center"
+                        className="my-3 fs-5 form-control text-danger text-center"
                       />
                     </Col>
                   </Form.Group>
@@ -1146,7 +1158,7 @@ export default class UserManagement extends React.Component {
     return (
       <Modal centered show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
         <Modal.Header closeButton>
-          <Modal.Title className='fs-3'>Restore account</Modal.Title>
+          <Modal.Title>Restore account</Modal.Title>
         </Modal.Header>
         <Modal.Body className='d-flex justify-content-center align-items-center' >
           <Form className='w-75'>

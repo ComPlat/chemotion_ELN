@@ -197,7 +197,6 @@ export default class TemplateManagement extends React.Component {
         centered
         show={this.state.showNewTemplateModal}
         onHide={this.handleNewTemplateClose}
-        dialogClassName='preview-modal'
       >
         <Modal.Header closeButton>
           <Modal.Title>New Template</Modal.Title>
@@ -206,11 +205,11 @@ export default class TemplateManagement extends React.Component {
           <Container>
             <Form>
               <FormGroup controlId="formControlName" className='mb-3'>
-                <Form.Label className='fs-4'>Name:</Form.Label>
+                <Form.Label className='fs-5'>Name:</Form.Label>
                 <Form.Control type="text" name="templateName" ref={(ref) => { this.templateName = ref; }} />
               </FormGroup>
               <FormGroup controlId="formControlReportTemplateType" className='mb-3'>
-                <Form.Label className='fs-4'>Type:</Form.Label>
+                <Form.Label className='fs-5'>Type:</Form.Label>
                 <Select
                   options={this.state.reportTemplateTypes}
                   value={this.state.templateType}
@@ -219,7 +218,7 @@ export default class TemplateManagement extends React.Component {
                 />
               </FormGroup>
               <FormGroup controlId="formControlAttachment" className='mb-1'>
-                <Form.Label className='fs-4'>File:</Form.Label>
+                <Form.Label className='fs-5'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
               </FormGroup>
             </Form>
@@ -246,7 +245,6 @@ export default class TemplateManagement extends React.Component {
         centered
         show={this.state.showEditUserModal}
         onHide={this.handleEditTemplateClose}
-        dialogClassName='preview-modal'
       >
         <Modal.Header closeButton>
           <Modal.Title>Edit Template</Modal.Title>
@@ -255,11 +253,11 @@ export default class TemplateManagement extends React.Component {
           <Container>
             <Form>
               <FormGroup controlId="formControlName" className='mb-3'>
-                <Form.Label className='fs-4'>Name:</Form.Label>
+                <Form.Label className='fs-5'>Name:</Form.Label>
                 <FormControl type="text" name="templateName" defaultValue={template.name} ref={(ref) => { this.templateName = ref; }} />
               </FormGroup>
               <FormGroup controlId="formControlReportTemplateType" className='mb-3'>
-                <Form.Label className='fs-4'>Type:</Form.Label>
+                <Form.Label className='fs-5'>Type:</Form.Label>
                 <Select
                   options={this.state.reportTemplateTypes}
                   value={this.state.templateType}
@@ -268,7 +266,7 @@ export default class TemplateManagement extends React.Component {
                 />
               </FormGroup>
               <FormGroup controlId="formControlAttachment" className='mb-3'>
-                <Form.Label className='fs-4'>File:</Form.Label>
+                <Form.Label className='fs-5'>File:</Form.Label>
                 {this.dropzoneOrfilePreview()}
               </FormGroup>
             </Form>
@@ -331,10 +329,10 @@ export default class TemplateManagement extends React.Component {
     const tcolumn = (
       <tr>
         <th>#</th>
-        <th >Name</th>
-        <th >Report Type</th>
+        <th>Name</th>
+        <th>Report Type</th>
         <th>ID</th>
-        <th >Actions</th>
+        <th>Actions</th>
       </tr>
     )
 
@@ -369,7 +367,7 @@ export default class TemplateManagement extends React.Component {
         <Card>
           <Card.Body>
             <Button variant="primary" size="md" onClick={() => this.handleNewTemplateShow()}>
-              Add new template<i className="fa fa-plus ms-1" />
+              Add new template <i className="fa fa-plus ms-1" />
             </Button>
           </Card.Body>
         </Card>

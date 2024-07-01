@@ -188,7 +188,11 @@ export default class ChemSpectraLayouts extends Component {
         </Button>
 
         <Modal centered show={showNewTypeLayoutModal} onHide={this.handleCloseNewTypeLayoutModal}>
-          <Modal.Header closeButton />
+          <Modal.Header closeButton>
+            <Modal.Title>
+              New Data Type
+            </Modal.Title>
+          </Modal.Header>
           <Modal.Body>
             {alertMessage && (
               <Alert variant="warning">

@@ -19,7 +19,7 @@ export default class GenericAdminModal extends Component {
         key={`_auth_designer_button_${ALL_TYPES[i]}`}
         size="sm"
         variant={p ? 'warning' : 'light'}
-        className='me-2 fs-5'
+        className='me-2'
         onClick={() =>
           this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)
         }
@@ -32,7 +32,7 @@ export default class GenericAdminModal extends Component {
   renderDescription(_params) {
     const params = _params || [];
     return params.map((p, i) => (
-      <li key={`_description_${ALL_TYPES[i]}`} className=' fs-6 ms-5 my-2 align-items-center'>
+      <li key={`_description_${ALL_TYPES[i]}`} className=' fs-6 ms-3 my-2 align-items-center'>
         Currently {p ? '' : 'NOT'} acting as the Designer of the Generic
         {ALL_TYPES[i]}
       </li>
@@ -53,12 +53,12 @@ export default class GenericAdminModal extends Component {
     const { user, fnShowModal } = this.props;
     const { elements, segments, datasets } = user.generic_admin || {};
     return (
-      <Modal centered show onHide={() => fnShowModal(false)}>
+      <Modal centered show onHide={() => fnShowModal(false)} >
         <Modal.Header closeButton>
           <Modal.Title className='fs-4'>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="d-flex flex-wrap">
+          <div className="d-flex flex-wrap ms-3">
             {this.renderButton([elements, segments, datasets], user)}
           </div>
           <ul>{this.renderDescription([elements, segments, datasets])}</ul>
