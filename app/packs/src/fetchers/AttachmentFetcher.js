@@ -17,7 +17,11 @@ const fileFromAttachment = (attachment, containerId) => {
 
 export default class AttachmentFetcher {
   static fetchImageAttachment(params) {
-    return fetch(`/api/v1/attachments/image/${params.id}`, {
+    const url = params.annotated
+      ? `/api/v1/attachments/${params.id}/annotated_image`
+      : `/api/v1/attachments/image/${params.id}`;
+
+    return fetch(url, {
       credentials: 'same-origin',
       method: 'GET',
     })
@@ -515,9 +519,9 @@ export default class AttachmentFetcher {
       predict,
       keepPred,
       waveLength: waveLengthStr,
-      cyclicvolta: cyclicvolta,
-      curveIdx: curveIdx,
-      simulatenmr: simulatenmr,
+      cyclicvolta,
+      curveIdx,
+      simulatenmr,
       axesUnits: axesUnitsStr,
       detector
     };
@@ -536,16 +540,12 @@ export default class AttachmentFetcher {
         if (!isSaveCombined) {
           return json;
         }
-        const oldSpcInfos = [...previousSpcInfos].filter((spc) => {
-          return spc.idx !== attId;
-        });
+        const oldSpcInfos = [...previousSpcInfos].filter((spc) => spc.idx !== attId);
         let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
         const fetchedFilesIdxs = json.files.map((file) => (file.id));
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
 
-        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx).then((res) => {
-          return json;
-        }).catch((errMsg) => {
+        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx).then((res) => json).catch((errMsg) => {
           console.log(errMsg); // eslint-disable-line
         });
       })
@@ -636,7 +636,7 @@ export default class AttachmentFetcher {
       },
       body: JSON.stringify({
         edited: jcampIds.edited,
-        molfile: molfile,
+        molfile,
       }),
     })
       .then((response) => response.json())
@@ -665,12 +665,8 @@ export default class AttachmentFetcher {
         }),
       },
     )
-      .then((response) => {
-        return response.json();
-      })
-      .then((json) => {
-        return json;
-      })
+      .then((response) => response.json())
+      .then((json) => json)
       .catch((errorMessage) => {
         console.log(errorMessage);
       });

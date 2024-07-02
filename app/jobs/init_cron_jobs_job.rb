@@ -27,7 +27,7 @@ class InitCronJobsJob < ApplicationJob
       active_job = job[:job_class].set(wait_until: next_run_time, cron: cron_schedule).perform_later
       success_message(active_job)
     rescue StandardError => e
-      Delayed::Worker.logger.error { "Error enqueuing job: #{job.inspect} - #{e.message}" }
+      Delayed::Worker.logger.error { "Error enqueuing job: #{job.inspect}\n #{active_job.inspect}\n#{e.message}" }
     ensure
       Delayed::Worker.logger.info { @message }
       reset_instance_variables
@@ -92,7 +92,7 @@ class InitCronJobsJob < ApplicationJob
   def success_message(active_job)
     dj = Delayed::Job.find_by(id: active_job.provider_job_id)
     @message = "Enqueuing #{job[:job_class]}:  cron schedule: #{cron_schedule} - "
-    @message += "#{dj.cron}, next run at: #{dj.run_at}"
+    @message += dj.present? ? "#{dj.cron}, next run at: #{dj.run_at}" : "Job not found. run_at was #{next_run_time}"
   end
 
 

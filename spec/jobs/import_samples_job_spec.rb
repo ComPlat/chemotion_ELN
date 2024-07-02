@@ -2,7 +2,6 @@
 
 require 'securerandom'
 describe ImportSamplesJob, active_job: true do
-  include ActiveJob::TestHelper
 
   context 'when import file format is xlsx' do
     let(:file_path) { 'spec/fixtures/import/sample_import_template.xlsx' }

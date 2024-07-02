@@ -243,7 +243,7 @@ module AttachmentJcampProcess
   end
 
   def update_prediction(params, spc_type, is_regen)
-    return auto_infer_n_clear_json(spc_type, is_regen) if spc_type == 'MS'
+    return auto_infer_n_clear_json(spc_type, is_regen) if ['MS', 'CYCLIC VOLTAMMETRY'].include?(spc_type)
 
     ori_infer = get_infer_json_content
     decision = params[:keep_pred] ? ori_infer : params['predict']

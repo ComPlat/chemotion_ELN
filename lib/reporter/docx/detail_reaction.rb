@@ -430,8 +430,7 @@ module Reporter
 
       def observation
         delta_obs = obj.observation.deep_stringify_keys['ops']
-        one_line_obs = remove_redundant_space_break(delta_obs)
-        clean_obs = { 'ops' => rm_head_tail_space(one_line_obs) }
+        clean_obs = { 'ops' => rm_redundant_newline(delta_obs) }
         [Sablon.content(:html, Delta.new(clean_obs, @font_family).getHTML), clean_obs]
       end
 

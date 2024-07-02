@@ -9,6 +9,7 @@
 # Delayed::Worker.delay_jobs = !Rails.env.test?
 # Delayed::Worker.raise_signal_exceptions = :term
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
+Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 
 # NB: this initialiser is NOT idempotent (yet), do NOT use:  `Rails.application.reloader.to_prepare do` block
 # to supress:

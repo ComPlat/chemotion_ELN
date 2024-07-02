@@ -27,6 +27,7 @@ import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineCont
 export default class ElementsTable extends React.Component {
   constructor(props) {
     super(props);
+    this.elementRef = React.createRef();
 
     this.state = {
       elements: [],
@@ -76,9 +77,15 @@ export default class ElementsTable extends React.Component {
       }, () => {
         const { page } = this.state;
         UIActions.setPagination({ type, page });
+        this.handleScrollToElement(this.elementRef);
       });
     }
   }
+  handleScrollToElement = () => {
+    if (this.elementRef.current) {
+      this.elementRef.current.scrollTo({ top: 0, left: 0, behavior: "smooth", });
+    }
+  };
 
   onChangeUI(state) {
     const { type } = this.props;
@@ -682,7 +689,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div className="list-elements">
+      <div ref={this.elementRef} className="list-elements">
         {elementsTableEntries}
       </div>
     );

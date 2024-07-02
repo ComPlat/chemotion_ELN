@@ -198,6 +198,8 @@ public/sprite.png
 
 #svgeditor
 /public/svgedit
+# pdf worker
+/public/pdf.worker.min.js
 
 !spec/fixtures/import/sample_import_template.xlsx
 

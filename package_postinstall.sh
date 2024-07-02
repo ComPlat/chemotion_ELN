@@ -48,6 +48,8 @@ src_d3=(
   "@complat/react-spectra-editor/dist/helpers/compass.js"
   "@complat/react-spectra-editor/dist/helpers/init.js"
   "@complat/react-spectra-editor/dist/helpers/zoom.js"
+  "@complat/react-svg-file-zoom-pan/dist/components/zoomable.js"
+  "@complat/react-svg-file-zoom-pan/dist/components/svg_wrapper.js"
 )
 
 # Rewrite import for d3.js

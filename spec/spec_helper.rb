@@ -61,6 +61,8 @@ RSpec.configure do |config|
 
   config.include FactoryBot::Syntax::Methods
 
+  config.include ActiveJob::TestHelper, :active_job
+
   config.before do
     [
       'XLYOFNOQVPJJNP-UHFFFAOYSA-N',

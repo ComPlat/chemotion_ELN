@@ -31,6 +31,10 @@ RSpec.describe Report, type: :report do
     Delayed::Worker.delay_jobs = false
   end
 
+  after do
+    Delayed::Worker.delay_jobs = true
+  end
+
   describe '.create_reaction_docx' do
     it 'returns a Docx string & file name' do
       params = { template: 'single_reaction', id: r1.id }
