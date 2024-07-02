@@ -36,7 +36,7 @@ module Entities
       end
 
       def reaction_default_conditions
-        #  Piggyback reaction_process_id for convenience in UI Navbar which is outside .
+        #  Piggyback reaction_process_id for convenience in UI Navbar which is outside the reaction_process scope.
         object.reaction_default_conditions.merge({ reaction_process_id: object.id })
       end
 

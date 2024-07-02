@@ -26,10 +26,6 @@ module Entities
         object.reaction_process_activities.order('position')
       end
 
-      def reaction_process_id
-        object.reaction_process_id
-      end
-
       def reaction_id
         reaction.id
       end

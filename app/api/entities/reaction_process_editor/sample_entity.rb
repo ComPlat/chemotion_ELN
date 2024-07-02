@@ -13,6 +13,7 @@ module Entities
       expose :hide_in_eln
 
       expose :amounts
+      expose :icon
 
       private
 
@@ -22,6 +23,10 @@ module Entities
           mmol: object.amount_mmol,
           ml: object.amount_ml,
         }
+      end
+
+      def icon
+        object.sample_svg_file
       end
     end
   end

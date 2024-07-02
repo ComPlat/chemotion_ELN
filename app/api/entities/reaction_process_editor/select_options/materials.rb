@@ -17,14 +17,13 @@ module Entities
 
           intermediates = reaction.intermediate_samples
           {
-            SAMPLE: samples_options(samples, 'SAMPLE'),
-            SOLVENT: samples_options(solvents, 'SOLVENT') + samples_options(diverse_solvents, 'DIVERSE_SOLVENT'),
-            MEDIUM: samples_options(Medium::MediumSample.all, 'MEDIUM'),
-            ADDITIVE: samples_options(Medium::Additive.all, 'ADDITIVE'),
-            MODIFIER: samples_options(Medium::Modifier.all, 'MODIFIER') +
-              samples_options(diverse_solvents, 'DIVERSE_SOLVENT'),
-            DIVERSE_SOLVENT: samples_options(diverse_solvents, 'DIVERSE_SOLVENT'),
-            INTERMEDIATE: samples_options(intermediates, 'SAMPLE'),
+            ADDITIVE: samples_info_options(Medium::Additive.all, 'ADDITIVE'),
+            DIVERSE_SOLVENT: samples_info_options(diverse_solvents, 'DIVERSE_SOLVENT'),
+            INTERMEDIATE: samples_info_options(intermediates, 'SAMPLE'),
+            MEDIUM: samples_info_options(Medium::MediumSample.all, 'MEDIUM'),
+            SAMPLE: samples_info_options(samples, 'SAMPLE'),
+            SOLVENT: samples_info_options(solvents,
+                                          'SOLVENT') + samples_info_options(diverse_solvents, 'DIVERSE_SOLVENT'),
           }
         end
       end
