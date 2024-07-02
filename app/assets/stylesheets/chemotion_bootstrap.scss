@@ -9,7 +9,7 @@ $h6-font-size: $font-size-base;
 
 $input-btn-padding-y: 0.3rem;
 
-$table-bg: tranparent;
+$table-bg: transparent;
 
 @import "bootstrap";
 
@@ -17,6 +17,7 @@ $table-bg: tranparent;
   --bs-btn-border-color: rgba(0,0,0,0.1);
   --bs-btn-disabled-border-color: rgba(0,0,0,0.1);
 }
+
 
 @mixin xsm-form-elements {
   padding: 1px 5px;

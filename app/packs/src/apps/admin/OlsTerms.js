@@ -1,13 +1,11 @@
 import React from 'react';
-import { Row, Col, DropdownButton } from 'react-bootstrap';
+import { Row, Col, Dropdown, DropdownButton, Button } from 'react-bootstrap';
 import Tree from 'antd/lib/tree';
-import { ButtonToolbar, Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { difference } from 'lodash';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {
   if (enable === true) {
@@ -80,10 +78,10 @@ export default class OlsTerms extends React.Component {
       </div>
     ) : (
       <Dropzone
-        onDrop={attach => this.handleFileDrop(attach)}
-        style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+          onDrop={attach => this.handleFileDrop(attach)}
+          className='d-flex align-items-center justify-content-center py-4 w-100 ms-2 drop-zone-style'
       >
-        <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+          <div className='text-center pt-2 text-secondary fs-4'>
           Drop File, or Click to Select.
         </div>
       </Dropzone>
@@ -148,7 +146,7 @@ export default class OlsTerms extends React.Component {
     AdminFetcher.olsTermDisableEnable({ owl_name: this.state.selectName, enableIds, disableIds })
       .then((result) => {
         if (result === true) {
-          alert('update successfully!');
+          alert('Updated successfully!');
           this.setState({ enableIds: [], disableIds: [] });
           this.initialOls(this.state.selectName);
         } else {
@@ -164,35 +162,32 @@ export default class OlsTerms extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
           {this.dropzoneOrfilePreview()}
-          <ButtonToolbar>
-            <Button variant="warning" onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
-          </ButtonToolbar>
-        </Row>
-        <Row style={{ maxWidth: '2000px', maxHeight: '1000px', margin: 'auto' }}>
+        <Button variant="warning" size='md' className='mt-3' onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
+        <Row className="mx-auto mt-4"
+        >
           <Col md={6}>
-            <DropdownButton title={this.state.selectName === '' ? 'Ols Terms' : this.state.selectName}>
-              <MenuItem key="rxno" onSelect={() => this.handleSelectName('rxno')}>
-                rxno
-              </MenuItem>
-              <MenuItem key="chmo" onSelect={() => this.handleSelectName('chmo')}>
-                chmo
-              </MenuItem>
+            <DropdownButton variant='light' className='mb-3' id="dropdown-basic-button" title={this.state.selectName === '' ? 'Ols Terms' : this.state.selectName}>
+              <Dropdown.Item key="rxno" onClick={() => this.handleSelectName('rxno')}>rxno</Dropdown.Item>
+              <Dropdown.Item key="chmo" onClick={() => this.handleSelectName('chmo')}>chmo</Dropdown.Item>
             </DropdownButton>
-            <div><h3>{this.state.selectName}</h3></div>
+            <h3>{this.state.selectName}</h3>
             <Button
               variant="primary"
               onClick={() => this.handleSaveBtn()}
+              className='me-3'
             >Save
-            </Button> &nbsp; &nbsp;
+            </Button>
             <Button
               variant="primary"
               onClick={() => this.handleAssociateBtn()}
-            >switch mode
+              className='me-3'
+            >Switch mode
             </Button>
-            &nbsp;
-            {this.state.checkStrictly === true ? 'Check Strickly' : 'Associated'}
+            <div className='fs-5 fw-bold d-inline-block'>
+              {this.state.checkStrictly === true ? 'Check Strictly' : 'Associated'}
+            </div>
+
             <Tree
               name={this.state.selectName}
               checkable
