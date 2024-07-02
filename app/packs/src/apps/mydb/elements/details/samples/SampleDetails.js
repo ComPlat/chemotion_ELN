@@ -1554,7 +1554,7 @@ export default class SampleDetails extends React.Component {
         </Card.Header>
         <Card.Body>
           {this.sampleInfo(sample)}
-          {this.state.sfn ? <ScifinderSearch el={sample} /> : null}
+          {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className='tabs-container--with-borders'>
             <Tabs activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
               {this.samplePropertiesTab('properties')}
