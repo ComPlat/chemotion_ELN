@@ -1,11 +1,12 @@
 import React from 'react'
-import { ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem } from 'react-bootstrap'
+import { ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button } from 'react-bootstrap'
 import UIActions from 'src/stores/alt/actions/UIActions'
 import ElementActions from 'src/stores/alt/actions/ElementActions'
 import ElementStore from 'src/stores/alt/stores/ElementStore'
 import UserStore from 'src/stores/alt/stores/UserStore'
 import UIStore from 'src/stores/alt/stores/UIStore'
 import connectToStores from 'alt-utils/lib/connectToStores'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const DeviceButtonSplit = ({ devices, selectedDeviceId }) => {
   const handleShowDeviceManagement = () => {
@@ -27,7 +28,7 @@ const DeviceButtonSplit = ({ devices, selectedDeviceId }) => {
         overlay={<Tooltip id="open-device">Open Device</Tooltip>}
       >
         <Button
-          bsStyle="warning"
+          variant="warning"
           disabled={selectedDeviceId === -1 || selectedDeviceId === null}
           onClick={() => handleOpenDevice()}
         >
@@ -35,7 +36,7 @@ const DeviceButtonSplit = ({ devices, selectedDeviceId }) => {
         </Button>
       </OverlayTrigger>
       <DropdownButton
-        bsStyle="warning"
+        variant="warning"
         title={<div></div>}
         style={{ width: "26px", paddingLeft: "8px" }}
         id="device-selection"

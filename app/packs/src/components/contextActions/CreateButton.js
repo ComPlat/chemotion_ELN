@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   SplitButton, Button, ButtonToolbar, FormControl,
-  FormGroup, ControlLabel, Modal, MenuItem
+  FormGroup, Modal
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import { filter } from 'lodash';
@@ -13,6 +13,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const elementList = () => {
   const elements = [
@@ -160,7 +162,7 @@ export default class CreateButton extends React.Component {
     const { modalProps } = this.state;
 
     return (
-      <Modal animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
+      <Modal centered animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
         <Modal.Header closeButton>
           <Modal.Title>Create Wellplates from Samples</Modal.Title>
         </Modal.Header>
@@ -177,8 +179,8 @@ export default class CreateButton extends React.Component {
           </FormGroup>
 
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
-            <Button bsStyle="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
+            <Button variant="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
+            <Button variant="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
           </ButtonToolbar>
         </Modal.Body>
       </Modal>
@@ -258,7 +260,7 @@ export default class CreateButton extends React.Component {
 
         <SplitButton
           id='create-split-button'
-          bsStyle={customClass ? null : 'primary'}
+          variant={customClass ? null : 'primary'}
           className={customClass}
           title={this.createBtn(type)}
           disabled={isDisabled}

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Glyphicon, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import VirtualizedSelect from 'react-virtualized-select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
@@ -12,6 +12,7 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
@@ -87,8 +88,8 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
     <OverlayTrigger placement="top" overlay={switchEquivTooltip()} >
       <Button
         id="lock_equiv_column_btn"
-        bsSize="xsmall"
-        bsStyle={lockEquivColumn ? 'warning' : 'default'}
+        size="sm"
+        variant={lockEquivColumn ? 'warning' : 'light'}
         onClick={switchEquiv}
       >
         <i className={lockEquivColumn ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -164,8 +165,8 @@ const GeneralMaterialGroup = ({
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
-      bsStyle="success"
-      bsSize="xs"
+      variant="success"
+      size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
       <Glyphicon glyph="plus" />
@@ -219,8 +220,8 @@ const SolventsMaterialGroup = ({
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
-      bsStyle="success"
-      bsSize="xs"
+      variant="success"
+      size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
       <Glyphicon glyph="plus" />

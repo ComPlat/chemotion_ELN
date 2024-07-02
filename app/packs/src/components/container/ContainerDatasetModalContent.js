@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 
 import {
-  FormGroup, FormControl, ControlLabel, ListGroup,
+  FormGroup, FormControl, ListGroup,
   ListGroupItem, Button, Overlay
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
@@ -36,6 +36,7 @@ import {
   attachmentThumbnail
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ContainerDatasetModalContent extends Component {
   constructor(props) {
@@ -500,8 +501,8 @@ export default class ContainerDatasetModalContent extends Component {
         <div className="attachment-row-actions" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           {attachment.is_deleted ? (
             <Button
-              bsSize="xs"
-              bsStyle="danger"
+              size="sm"
+              variant="danger"
               className="attachment-button-size"
               onClick={() => this.handleUndo(attachment)}
             >

@@ -173,15 +173,16 @@ const DeviceModal = () => {
 
   const showMessage = () => {
     if (errorMessage !== '') {
-      return <Alert bsStyle="danger" className="device-alert">{errorMessage}</Alert>;
+      return <Alert variant="danger" className="device-alert">{errorMessage}</Alert>;
     } else if (successMessage !== '') {
-      return <Alert bsStyle="success" className="device-alert">{successMessage}</Alert>;
+      return <Alert variant="success" className="device-alert">{successMessage}</Alert>;
     }
   }
 
   return (
     <Draggable handle=".handle">
       <Modal
+        centered
         show={devicesStore.deviceModalVisible}
         onHide={() => handleCancel()}
         backdrop={false}
@@ -254,10 +255,10 @@ const DeviceModal = () => {
                 </Tabs>
               </div>
               <ButtonToolbar className={`draggable-modal-form-buttons ${buttonsWithAlertClass}`}>
-                <Button bsStyle="warning" onClick={() => handleCancel()}>
+                <Button variant="warning" onClick={() => handleCancel()}>
                   Cancel
                 </Button>
-                <Button bsStyle="primary" onClick={saveDeviceOrRelation} >
+                <Button variant="primary" onClick={saveDeviceOrRelation} >
                   Save
                 </Button>
               </ButtonToolbar>

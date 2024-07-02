@@ -27,8 +27,8 @@
 @import "react-vis/dist/style.css";
 @import "reactflow/dist/style.css";
 
-@import "bootstrap-sprockets";
-@import "bootstrap";
+@import "chemotion_bootstrap.scss";
+
 @import "icons";
 @import "font-awesome";
 @import "autocomplete";
@@ -72,6 +72,17 @@ label.required:after {
   position: absolute;
 }
 
+.drop-zone-style {
+  border: 3px dashed lightgray;
+}
+
+.grey-bg{
+  background-color: #ddd;
+}
+
+.custom-light-grey-bg {
+  background-color: #eee;
+}
 
 #app {
   -webkit-user-select: none;
@@ -170,12 +181,13 @@ span.pseudo-link:hover {
   min-height: 350px;
 }
 
+
 .full-main {
   width: 99%;
 }
 
-.collec-tree {
-  width: 15%;
+.collection-tree {
+  max-width: 15%;
   margin-left: 3px;
 }
 

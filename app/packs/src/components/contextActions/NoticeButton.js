@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  PanelGroup, Panel, Button, Modal, Table
+  Button, Modal, Table
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -13,6 +13,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
@@ -405,6 +407,7 @@ export default class NoticeButton extends React.Component {
     if (this.state.showModal) {
       return (
         <Modal
+          centered
           show={this.state.showModal}
           onHide={this.handleHide}
           dialogClassName="noticeModal"
@@ -433,22 +436,21 @@ export default class NoticeButton extends React.Component {
 
   render() {
     const noticeNum = Object.keys(this.state.dbNotices).length;
-    let btnStyle = 'default';
-    let btnClass = 'fa fa-bell-o fa-lg';
+    let btnStyle = 'light';
+    let btnClass = 'fa fa-bell-o';
 
     if (noticeNum > 0) {
       btnStyle = 'warning';
-      btnClass = 'fa fa-bell fa-lg';
+      btnClass = 'fa fa-bell';
     }
 
     return (
-      <div style={{ position: 'relative', marginLeft: '-10px' }}>
+      <>
         <Button
           id="notice-button"
-          bsStyle={btnStyle}
+          variant={btnStyle}
           onClick={this.handleShow}
           style={{
-            height: '34px',
             width: '40px',
             display: 'flex',
             alignItems: 'center',
@@ -477,7 +479,7 @@ export default class NoticeButton extends React.Component {
           )}
         </Button>
         {this.renderModal()}
-      </div>
+      </>
     );
   }
 }

@@ -2,12 +2,13 @@ import Aviator from 'aviator';
 import equal from 'deep-equal';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton, MenuItem } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, ButtonGroup, DropdownButton } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 class MeasurementCandidate extends Component {
   static propTypes = {
@@ -146,7 +147,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
     const { measurementCandidates } = this.state;
 
     return (
-      <Modal animation bsSize="large" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
+      <Modal centered animation size="lg" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
         <Modal.Header closeButton>
           <Modal.Title>
             Export measurements to samples
@@ -183,10 +184,10 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
           </table>
           <div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={this.props.onHide}>
+              <Button variant="warning" onClick={this.props.onHide}>
                 Close
               </Button>
-              <Button bsStyle="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
+              <Button variant="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
                 Link data to sample
               </Button>
             </ButtonToolbar>

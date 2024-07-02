@@ -10,7 +10,7 @@ const CollapseButton = (props) => {
         <ButtonGroup vertical block>
         <Button
             id={props.name}
-            bsSize="xsmall"
+            size="sm"
             style={{ backgroundColor: '#ddd' }}
             onClick={() =>  props.setOpenTab(!openTab)}
         >

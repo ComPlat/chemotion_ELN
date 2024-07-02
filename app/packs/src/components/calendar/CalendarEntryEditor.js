@@ -2,7 +2,6 @@ import React from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
 import {
   Form,
-  ControlLabel,
   FormControl,
   FormGroup,
   Button,
@@ -13,6 +12,7 @@ import Select from 'react-select';
 import CalendarStore, { CalendarTypes } from 'src/stores/alt/stores/CalendarStore';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import PropTypes from 'prop-types';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 function capitalize(s) {
   return s && s[0].toUpperCase() + s.slice(1);
@@ -243,7 +243,7 @@ export default class CalendarEntryEditor extends React.Component {
               />
             </FormGroup>
             {notAccessible ? (
-              <Alert bsStyle="danger">
+              <Alert variant="danger">
                 Your access to
                 &nbsp;
                 {entry.element_name}
@@ -272,10 +272,10 @@ export default class CalendarEntryEditor extends React.Component {
                   </div>
                 ) : null }
               </div>
-              <Button bsStyle="primary" onClick={closeModal}>Cancel</Button>
+              <Button variant="primary" onClick={closeModal}>Cancel</Button>
               { entry.id !== undefined && editable ? (
                 <Button
-                  bsStyle="danger"
+                  variant="danger"
                   onClick={() => {
                     // eslint-disable-next-line no-restricted-globals, no-alert
                     if (confirm('Are you sure you want to delete the calendar entry?')) {
@@ -286,7 +286,7 @@ export default class CalendarEntryEditor extends React.Component {
                   Delete
                 </Button>
               ) : null }
-              { (editable && accessible) ? <Button bsStyle="warning" onClick={saveEntry}>Save</Button> : null }
+              { (editable && accessible) ? <Button variant="warning" onClick={saveEntry}>Save</Button> : null }
             </ButtonToolbar>
           </Form>
         </section>

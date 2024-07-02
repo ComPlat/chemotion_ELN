@@ -17,8 +17,8 @@ class ContainerDatasetField extends Component {
     if (!readOnly) {
       return (
         <Button
-          bsSize="xsmall"
-          bsStyle="danger"
+          size="sm"
+          variant="danger"
           onClick={() => handleRemove(datasetContainer)}
           disabled={disabled}
         >
@@ -41,8 +41,8 @@ class ContainerDatasetField extends Component {
 
           <Button
             className="pull-right"
-            bsSize="xsmall"
-            bsStyle="danger"
+            size="sm"
+            variant="danger"
             onClick={() => handleUndo(datasetContainer)}
             disabled={disabled}
           >
@@ -56,8 +56,8 @@ class ContainerDatasetField extends Component {
       || typeof datasetContainer.dataset === 'undefined') ? (<span />) : (
         <OverlayTrigger placement="top" overlay={<Tooltip id="download metadata">download metadata</Tooltip>}>
           <Button
-            bsSize="xsmall"
-            bsStyle="success"
+            size="sm"
+            variant="success"
             onClick={() => AttachmentFetcher.downloadDataset(datasetContainer.id)}
           >
             <i className="fa fa-download" />
@@ -69,13 +69,13 @@ class ContainerDatasetField extends Component {
         {datasetContainer.dataset && datasetContainer.dataset.klass_ols !== absOlsTermId(kind)
           ? <GenericDSMisType /> : null}
         {/* eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <a style={{ cursor: 'pointer' }} onClick={() => handleModalOpen(datasetContainer)}>
+        <a onClick={() => handleModalOpen(datasetContainer)} role="button">
           {datasetContainer.name || 'new'}
         </a>
         <ButtonToolbar className="pull-right">
           {gdsDownload}
           <OverlayTrigger placement="top" overlay={<Tooltip id="download data">download data + metadata</Tooltip>}>
-            <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
+            <Button size="sm" variant="info" onClick={() => AttachmentFetcher.downloadZip(datasetContainer.id)}>
               <i className="fa fa-download" />
             </Button>
           </OverlayTrigger>

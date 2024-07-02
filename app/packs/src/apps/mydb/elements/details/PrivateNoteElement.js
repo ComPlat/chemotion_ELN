@@ -3,10 +3,11 @@ object-property-newline, semi, react/no-unused-prop-types, react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, OverlayTrigger, Tooltip
+  FormGroup, FormControl, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import PrivateNote from 'src/models/PrivateNote';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class PrivateNoteElement extends React.Component {
   constructor(props) {

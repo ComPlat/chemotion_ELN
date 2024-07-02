@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon, Tooltip, OverlayTrigger
+  Pagination, Form, InputGroup, FormGroup, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -23,6 +23,7 @@ import Select from 'react-select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -252,19 +253,17 @@ export default class ElementsTable extends React.Component {
 
   collapseButton = () => {
     const { collapseAll } = this.state;
-    const collapseIcon = collapseAll ? 'chevron-right' : 'chevron-down';
 
     return (
-      <Glyphicon
-        glyph={collapseIcon}
-        title="Collapse/Uncollapse"
+      <ChevronIcon
+        direction={collapseAll ? 'right' : 'down'}
         onClick={() => this.changeCollapse(collapseAll)}
         style={{
           fontSize: '20px',
-          cursor: 'pointer',
           color: '#337ab7',
           top: 0
         }}
+        role="button"
       />
     );
   };
@@ -301,15 +300,12 @@ export default class ElementsTable extends React.Component {
   numberOfResultsInput() {
     const { ui } = this.state;
     return (
-      <Form horizontal className="list-show-count">
+      <Form horizontal className="list-show-count col-1">
         <FormGroup>
           <InputGroup>
-            <InputGroup.Addon>Show</InputGroup.Addon>
-            <FormControl
+            <InputGroup.Text>Show</InputGroup.Text>
+            <Form.Control
               type="text"
-              style={
-                { textAlign: 'center', zIndex: 0 }
-              }
               onChange={(event) => this.handleNumberOfResultsChange(event)}
               value={ui.number_of_results ? ui.number_of_results : 0}
             />
@@ -321,10 +317,6 @@ export default class ElementsTable extends React.Component {
 
   pagination() {
     const { page, pages } = this.state;
-    if (pages <= 1) {
-      return null;
-    }
-
     const items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
@@ -355,9 +347,11 @@ export default class ElementsTable extends React.Component {
 
     return (
       <div className="list-pagination">
-        <Pagination>
-          {items}
-        </Pagination>
+        {(pages > 1) &&
+          <Pagination>
+            {items}
+          </Pagination>
+        }
       </div>
     )
   }
@@ -394,9 +388,10 @@ export default class ElementsTable extends React.Component {
             type="button"
             style={{ border: 'none' }}
             onClick={this.toggleProductOnly}
+            role="button"
           >
             <i
-              style={{ cursor: 'pointer', color }}
+              style={{ color }}
               className="fa fa-lg fa-product-hunt"
             />
           </button>
@@ -586,13 +581,7 @@ export default class ElementsTable extends React.Component {
           />
         </div>
         <div
-          className="header-right"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            flexWrap: 'wrap'
-          }}
+          className="header-right d-flex gap-1 align-items-center"
         >
           <OverlayTrigger placement="top" overlay={filterTooltip}>
             <button
@@ -700,11 +689,9 @@ export default class ElementsTable extends React.Component {
       <div className="list-container">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="list-container-bottom">
-          <Row>
-            <Col sm={6}>{this.pagination()}</Col>
-            <Col sm={6}>{this.numberOfResultsInput()}</Col>
-          </Row>
+        <div className="d-flex justify-content-between">
+          {this.pagination()}
+          {this.numberOfResultsInput()}
         </div>
       </div>
     );

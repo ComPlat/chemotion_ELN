@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown, MenuItem, Glyphicon } from 'react-bootstrap';
+import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -12,75 +12,78 @@ import ModalExportCollection from 'src/components/contextActions/ModalExportColl
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
   const showRadar = UIStore.getState().hasRadar ? (
     <>
-      <MenuItem divider />
-      <MenuItem
-        onSelect={() => editMetadataFunction()}
+      <Dropdown.Divider />
+      <Dropdown.Item
+        onClick={() => editMetadataFunction()}
         disabled={isDisabled}
         title="Edit metadata"
       >
         Edit collection metadata
-      </MenuItem>
-      <MenuItem
-        onSelect={() => exportCollectionToRadarFunction(updateModalProps)}
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={() => exportCollectionToRadarFunction(updateModalProps)}
         disabled={isDisabled}
         title="Export to RADAR"
       >
         Publish current collection via RADAR
-      </MenuItem>
+      </Dropdown.Item>
     </>
   ) : <span />;
 
   return (
-    <Dropdown id="export-dropdown">
-      <Dropdown.Toggle className={customClass}>
-        <Glyphicon glyph="import" />
-        <Glyphicon glyph="export" />
+    <Dropdown as={ButtonGroup} id="export-dropdown">
+      <Dropdown.Toggle  variant="light" className={customClass}>
+        <i className='fa fa-download'/>
+        &nbsp;
+        <i className='fa fa-upload'/>
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        <MenuItem
-          onSelect={() => exportFunction(updateModalProps)}
+        <Dropdown.Item
+          onClick={() => exportFunction(updateModalProps)}
           title="Export to spreadsheet"
         >
           Export samples from selection
-        </MenuItem>
-        <MenuItem
-          onSelect={() => exportReactionFunction(updateModalProps)}
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => exportReactionFunction(updateModalProps)}
           title="Export reaction smiles to csv"
         >
           Export reactions from selection
-        </MenuItem>
-        <MenuItem divider />
-        <MenuItem
-          onSelect={() => importSampleFunction(updateModalProps, false)}
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item
+          onClick={() => importSampleFunction(updateModalProps, false)}
           disabled={isDisabled}
           title="Import from spreadsheet or sdf"
         >
           Import samples to collection
-        </MenuItem>
-        <MenuItem
-          onSelect={() => importSampleFunction(updateModalProps, true)}
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => importSampleFunction(updateModalProps, true)}
           disabled={isDisabled}
           title="Import chemicals from spreadsheet"
         >
           Import chemicals to collection
-        </MenuItem>
-        <MenuItem divider />
-        <MenuItem
-          onSelect={() => exportCollectionFunction(updateModalProps)}
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item
+          onClick={() => exportCollectionFunction(updateModalProps)}
           title="Export as ZIP archive"
         >
           Export collections
-        </MenuItem>
-        <MenuItem
-          onSelect={() => importCollectionFunction(updateModalProps)}
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => importCollectionFunction(updateModalProps)}
           title="Import collections from ZIP archive"
         >
           Import collections
-        </MenuItem>
+        </Dropdown.Item>
 
         {showRadar}
       </Dropdown.Menu>

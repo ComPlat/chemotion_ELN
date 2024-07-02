@@ -1,7 +1,7 @@
 import React from 'react';
-import { Panel } from 'react-bootstrap';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import CheckBoxs from 'src/components/common/CheckBoxs';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const toggleSplSettings = (text, checked) => {
   ReportActions.updateSplSettings({ text, checked });
@@ -22,7 +22,7 @@ const toggleRxnSettingsAll = () => {
 const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
   checkedAllRxnSettings }) => (
   <div>
-    <Panel bsStyle="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Sample
@@ -37,7 +37,7 @@ const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
         />
       </Panel.Body>
     </Panel>
-    <Panel bsStyle="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Reaction
@@ -65,7 +65,7 @@ const toggleSiRxnSettingsAll = () => {
 
 const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
   <div>
-    <Panel bsStyle="default">
+    <Panel variant="light">
       <Panel.Heading>
         <Panel.Title>
           Synthesis Products Information

@@ -37,31 +37,8 @@ th.drag {
   margin-top: 11px;
 }
 
-.decoupled-icon span {
-  border: 1px solid grey;
-  background-color: white;
-  color: black;
-  cursor: auto;
-}
-
-.collection-label {
-  display: inline-block;
-  cursor: pointer;
-}
-
-.collection-label span {
-  border: 1px solid grey;
-  background-color: white;
-  color: black;
-}
-
-.collection-label span:hover {
-  background-color: #19B5FE;
-}
-
-.collection-overlay > .popover-content {
+.scrollable-popover > .popover-body {
   overflow-y: scroll;
-  padding: 0px !important;
 }
 
 .fa-user-secret {
@@ -90,10 +67,6 @@ th.drag {
   }
 }
 
-.list-container-bottom {
-  width: 100%;
-}
-
 .list-elements {
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
@@ -106,12 +79,6 @@ th.drag {
 
 .list-pagination {
   margin: 5px 0 0 0;
-}
-
-.list-show-count {
-  float: right;
-  margin: 3px 15px 0px 0px;
-  width: 80px;
 }
 
 .table-header {

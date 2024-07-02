@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
+  Row, Col, FormGroup, FormControl,
   ListGroupItem, ListGroup, InputGroup, DropdownButton
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -13,6 +13,8 @@ import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/St
 import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {

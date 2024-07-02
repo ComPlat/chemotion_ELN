@@ -1,11 +1,12 @@
 import React from 'react';
 import Select from 'react-select';
 import {
-  FormGroup, OverlayTrigger, ControlLabel, FormControl, Tooltip,
+  FormGroup, OverlayTrigger, FormControl, Tooltip,
   Row, Col
 } from 'react-bootstrap';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import CheckBoxs from 'src/components/common/CheckBoxs';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const imgFormatOpts = () => (
   [

@@ -14,8 +14,9 @@ export default class ImageAnnotationModalSVG extends Component {
   render() {
     return (
       <Modal
+        centered
         backdrop="static"
-        bsSize="large"
+        size="lg"
         show={this.props.isShow}
         dialogClassName="attachment-annotation-modal"
       >
@@ -211,7 +212,7 @@ export default class ImageAnnotationModalSVG extends Component {
             Discard changes and close
           </Button>
           <Button
-            bsStyle="primary"
+            variant="primary"
             disabled={!this.state.canSave}
             onClick={() => {
               this.setState({ canSave: false });

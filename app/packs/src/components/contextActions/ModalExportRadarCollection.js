@@ -238,7 +238,7 @@ export default class ModalExportRadarCollection extends React.Component {
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
+            <Button variant="primary" onClick={onHide}>Cancel</Button>
             <Button onClick={this.handleEdit}>Edit collection metadata</Button>
             <a href={archiveUrl} target="_blank"
                className="btn btn-danger"

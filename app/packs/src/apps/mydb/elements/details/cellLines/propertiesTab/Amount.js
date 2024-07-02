@@ -57,8 +57,7 @@ class Amount extends React.Component {
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="detailed-info-button">Switch representation mode</Tooltip>}>
         <Button
-          className="button-right"
-          bsSize="xsmall"
+          size="sm"
           onClick={(event) => {
             event.stopPropagation();
             const isScientific = String(currentValue).toUpperCase().includes('E');

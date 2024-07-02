@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Panel, Button, Table } from 'react-bootstrap';
+import { Button, Table } from 'react-bootstrap';
+import Panel from 'src/components/legacyBootstrap/Panel';
 
 import ComputeTaskActions from 'src/stores/alt/actions/ComputeTaskActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -66,20 +67,17 @@ export default class ComputeTaskContainer extends React.Component {
     const { tasks } = this.state;
 
     return (
-      <Panel className="eln-panel-detail" bsStyle="primary">
+      <Panel className="eln-panel-detail" variant="primary">
         <Panel.Heading>
           {'Task'}
-          <div className="button-right">
-            <Button
-              key="closeBtn"
-              onClick={this.onClose}
-              bsStyle="danger"
-              bsSize="xsmall"
-              className="button-right"
-            >
-              <i className="fa fa-times" />
-            </Button>
-          </div>
+          <Button
+            key="closeBtn"
+            onClick={this.onClose}
+            variant="danger"
+            size="sm"
+          >
+            <i className="fa fa-times" />
+          </Button>
         </Panel.Heading>
         <Panel.Body>
           <Table striped condensed hover>

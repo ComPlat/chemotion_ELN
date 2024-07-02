@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import {
   Button,
   ButtonToolbar,
-  FormGroup,
-  Checkbox
+  FormGroup
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 
 const MyCell = ({col,data,rowIndex, ...props})=>{
@@ -241,8 +241,8 @@ export default class ModalImportConfirm extends React.Component {
         &nbsp;
 
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+          <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
     )

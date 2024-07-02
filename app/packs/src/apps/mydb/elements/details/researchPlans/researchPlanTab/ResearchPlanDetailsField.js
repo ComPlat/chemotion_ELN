@@ -1,7 +1,7 @@
 /* eslint-disable react/prefer-stateless-function */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonGroup, Row, Col, ControlLabel, Tooltip, OverlayTrigger, DropdownButton, MenuItem } from 'react-bootstrap';
+import { Button, ButtonGroup, Row, Col, Tooltip, OverlayTrigger, DropdownButton } from 'react-bootstrap';
 import ResearchPlanDetailsDragSource from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsDragSource';
 import ResearchPlanDetailsDropTarget from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsDropTarget';
 import ResearchPlanDetailsFieldRichText from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldRichText';
@@ -10,6 +10,8 @@ import ResearchPlanDetailsFieldImage from 'src/apps/mydb/elements/details/resear
 import ResearchPlanDetailsFieldTable from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTable';
 import ResearchPlanDetailsFieldSample from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldSample';
 import ResearchPlanDetailsFieldReaction from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldReaction';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ResearchPlanDetailsField extends Component {
   render() {
@@ -129,8 +131,8 @@ export default class ResearchPlanDetailsField extends Component {
                 id="copyMetadataButton"
                 title=""
                 className="fa fa-laptop"
-                bsStyle="info"
-                bsSize="xsmall"
+                variant="info"
+                size="sm"
                 pullRight
                 disabled={isNew}
               >
@@ -156,7 +158,7 @@ export default class ResearchPlanDetailsField extends Component {
         <div className="research-plan-field-header">
           {/* TODO: make label editable */}
           <ControlLabel>{label}</ControlLabel>
-          <Button className="pull-right" bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id,this.props.attachments )} data-cy="researchplan-item-delete">
+          <Button className="pull-right" variant="danger" size="sm" onClick={() => onDelete(field.id,this.props.attachments )} data-cy="researchplan-item-delete">
             <i className="fa fa-times" />
           </Button>
           {copyToMetadataButton}

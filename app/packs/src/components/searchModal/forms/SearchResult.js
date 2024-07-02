@@ -95,7 +95,7 @@ const SearchResult = ({ handleClear }) => {
 
   const showResultErrorMessage = () => {
     if (searchStore.resultErrorMessage.length >= 1) {
-      return <Alert bsStyle="danger" className="result-error-message">{searchStore.resultErrorMessage.join(', ')}</Alert>;
+      return <Alert variant="danger" className="result-error-message">{searchStore.resultErrorMessage.join(', ')}</Alert>;
     }
   }
 
@@ -204,7 +204,7 @@ const SearchResult = ({ handleClear }) => {
         <Row className="clearfix">
           <Col sm={12}>
             <Navbar className="search-result-tab-navbar">
-              <Nav bsStyle="tabs">
+              <Nav variant="tabs">
                 {navItems}
               </Nav>
             </Navbar>
@@ -224,13 +224,13 @@ const SearchResult = ({ handleClear }) => {
 
     return (
       <ButtonToolbar className="result-button-toolbar">
-        <Button bsStyle="warning" onClick={() => searchStore.handleCancel()}>
+        <Button variant="warning" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
-        <Button bsStyle="info" onClick={handleClear}>
+        <Button variant="info" onClick={handleClear}>
           Reset
         </Button>
-        <Button bsStyle="primary" onClick={handleAdoptResult} style={{ marginRight: '20px' }} >
+        <Button variant="primary" onClick={handleAdoptResult} style={{ marginRight: '20px' }} >
           Adopt Result
         </Button>
       </ButtonToolbar>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import update from 'immutability-helper';
 import Aviator from 'aviator';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -220,7 +220,7 @@ export default class CollectionTree extends React.Component {
   collectionManagementButton() {
     return (
       <div className="take-ownership-btn">
-        <Button id="collection-management-button" bsSize="xsmall" bsStyle="danger"
+        <Button id="collection-management-button" size="xsm" variant="danger"
           title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
           onClick={() => this.handleCollectionManagementToggle()}>
           <i className="fa fa-cog"></i>
@@ -266,7 +266,7 @@ export default class CollectionTree extends React.Component {
     const ownCollectionDisplay = ownCollectionVisible ? '' : 'none';
 
     return (
-      <div>
+      <div className='collection-tree'>
         <div className="tree-view">
           {this.collectionManagementButton()}
           <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>

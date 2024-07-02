@@ -3,8 +3,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Checkbox, Table, Col, Badge, Panel, ButtonGroup, Button,
-  Form, FormGroup, FormControl, ControlLabel, InputGroup,
+  Modal, Table, Col, Badge, ButtonGroup, Button,
+  Form, FormGroup, FormControl, InputGroup,
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import Select from 'react-select';
@@ -13,6 +13,9 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const UL_FUNC_NAME = 'userLabel';
 
@@ -154,15 +157,15 @@ class UserLabelModal extends Component {
       }
       return (
         <tr key={`row_${g.id}`}>
-          <td md={3}><Badge style={badgeStyle}>{g.title}</Badge></td>
+          <td md={3}><Badge bg="custom" style={badgeStyle}>{g.title}</Badge></td>
           <td md={3}>{accessLabel}</td>
           <td md={3}>{g.description}</td>
           <td md={3}>{g.color}</td>
           <td md={3}>
             <Button
-              bsSize="xs"
+              size="sm"
               disabled={g.access_level === 2}
-              bsStyle={g.access_level === 2 ? 'default' : 'success'}
+              variant={g.access_level === 2 ? 'light' : 'success'}
               onClick={(e) => this.handleEditLabelClick(e, g)}
             >
               {g.access_level === 2 ? 'Global' : 'Edit'}
@@ -180,11 +183,11 @@ class UserLabelModal extends Component {
     }
     return (
       <div>
-        <Panel bsStyle="success">
+        <Panel variant="success">
           <Panel.Heading>
             <div>
               <ButtonGroup>
-                <Button bsStyle="primary" onClick={() => this.handelNewLabel()}>
+                <Button variant="primary" onClick={() => this.handelNewLabel()}>
                   Create&nbsp;
                   <i className="fa fa-plus" />
                 </Button>
@@ -262,7 +265,7 @@ class UserLabelModal extends Component {
           </Col>
           <Col sm={10}>
             <InputGroup>
-              <InputGroup.Addon style={bcStyle} />
+              <InputGroup.Text style={bcStyle} />
               <FormControl
                 type="text"
                 readOnly
@@ -290,6 +293,7 @@ class UserLabelModal extends Component {
     const { showLabelModal } = this.props;
     return (
       <Modal
+        centered
         show={showLabelModal}
         onHide={this.props.onHide}
       >
@@ -361,19 +365,20 @@ class EditUserLabels extends React.Component {
         (r) => (curLableIds || []).includes(r.id)
           && (r.access_level > 0 || r.user_id === currentUser.id)
       )
-      .map((ll) => ({
-        value: ll.id,
+      .map((label) => ({
+        value: label.id,
         label: (
           <Badge
+            bg="custom"
             style={{
-              backgroundColor: ll.color,
+              backgroundColor: label.color,
               borderRadius:
-                ll.access_level === 1 && ll.user_id !== currentUser.id
+                label.access_level === 1 && label.user_id !== currentUser.id
                   ? 'unset'
                   : '10px',
             }}
           >
-            {ll.title}
+            {label.title}
           </Badge>
         ),
       }));
@@ -384,10 +389,15 @@ class EditUserLabels extends React.Component {
 
     const labelOptions = (this.state.labels || [])
       .filter((r) => r.access_level === 2 || r.user_id === currentUser.id)
-      .map((ll) => ({
-        value: ll.id,
+      .map((label) => ({
+        value: label.id,
         label: (
-          <Badge style={{ backgroundColor: ll.color }}>{ll.title}</Badge>
+          <Badge 
+            bg="custom"
+            style={{ backgroundColor: label.color }}
+          >
+            {label.title}
+          </Badge>
         ),
       })) || [];
 
@@ -440,37 +450,31 @@ class ShowUserLabels extends React.Component {
   render() {
     const { element } = this.props;
     const { currentUser, labels } = this.state;
-    const curLableIds = element.tag && element.tag.taggable_data
-      ? element.tag.taggable_data.user_labels
-      : [];
-
-    if (!MatrixCheck(currentUser && currentUser.matrix, UL_FUNC_NAME)) {
-      return (<span />);
+  
+    if (!currentUser || !MatrixCheck(currentUser.matrix, UL_FUNC_NAME)) {
+      return null;
     }
-    const elementLabels = (labels || []).filter((r) => (
-      (curLableIds || []).includes(r.id) && (r.access_level > 0 || r.user_id === currentUser.id)
-    )).map((ll) => (
-      <Badge
-        key={`bg_${ll.id}`}
-        style={{
-          backgroundColor: ll.color,
-          color: 'white',
-          borderColor: 'white',
-          borderStyle: 'solid',
-          borderWidth: 'thin',
-          borderRadius: (ll.access_level === 1 && ll.user_id !== currentUser.id) ? 'unset' : '10px'
-        }}
-      >
-        {ll.title}
-      </Badge>
-    ));
-
+  
+    const curLabelIds = element.tag?.taggable_data?.user_labels || [];
+    const visibleLabels = labels?.filter(label => 
+      curLabelIds.includes(label.id) && (label.access_level > 0 || label.user_id === currentUser.id)
+    ) || [];
+  
     return (
-      <span>
-        &nbsp;
-        {elementLabels}
-        &nbsp;
-      </span>
+      <>
+        {visibleLabels.map(label => (
+          <Badge
+            key={`bg_${label.id}`}
+            bg="custom"
+            style={{
+              backgroundColor: label.color,
+              borderRadius: label.access_level === 1 && label.user_id !== currentUser.id ? 'unset' : '10px'
+            }}
+          >
+            {label.title}
+          </Badge>
+        ))}
+      </>
     );
   }
 }

@@ -1,12 +1,15 @@
 import React, { Component } from 'react'
 import connectToStores from 'alt-utils/lib/connectToStores'
 import {
-  PanelGroup, Panel, ButtonGroup, Button, ControlLabel, FormControl
+  ButtonGroup, Button, FormControl
 } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions'
 import UIActions from 'src/stores/alt/actions/UIActions'
 import ElementStore from 'src/stores/alt/stores/ElementStore'
 import UIStore from 'src/stores/alt/stores/UIStore'
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const DeviceManagement = ({ devices, activeAccordionDevice }) => {
   const handleCloseDeviceManagement = () => {
@@ -42,8 +45,8 @@ const DeviceManagement = ({ devices, activeAccordionDevice }) => {
         Device-Management
       </h1>
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         style={{ margin: "10px" }}
         onClick={() => handleCloseDeviceManagement()}
       >
@@ -85,7 +88,7 @@ const Devices = ({ devices, activeAccordionDevice }) => {
               eventKey={key}
               key={key}
               onClick={() => ElementActions.changeActiveAccordionDevice(key)}
-              bsStyle={styleByDeviceState(device)}
+              variant={styleByDeviceState(device)}
             >
               <Panel.Heading>{<DeviceHeader device={device} />}</Panel.Heading>
               <Panel.Body>
@@ -153,25 +156,25 @@ const Device = ({ device }) => {
         style={bottomSpacer}
       >
         <Button
-          bsStyle={styleBySelectedType("NMR")}
+          variant={styleBySelectedType("NMR")}
           onClick={() => handleTypeClick("NMR")}
         >
           NMR
         </Button>
         <Button
-          bsStyle={styleBySelectedType("EA")}
+          variant={styleBySelectedType("EA")}
           onClick={() => handleTypeClick("EA")}
         >
           EA
         </Button>
         <Button
-          bsStyle={styleBySelectedType("MS")}
+          variant={styleBySelectedType("MS")}
           onClick={() => handleTypeClick("MS")}
         >
           MS
         </Button>
         <Button
-          bsStyle={styleBySelectedType("IR")}
+          variant={styleBySelectedType("IR")}
           onClick={() => handleTypeClick("IR")}
         >
           IR
@@ -197,15 +200,14 @@ const DeviceHeader = ({ device, state, onChangeState }) => {
   }
 
   return (
-    <div style={{
-      width: '100%',
-      cursor: "pointer"
-    }}>
+    <div
+      style={{width: '100%'}}
+      role="button"
+    >
       {device.title}
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
-        className="button-right"
+        size="sm"
+        variant="danger"
         onClick={(e) => handleRemoveDevice(e)}
       >
         <i className="fa fa-trash"></i>
@@ -218,7 +220,7 @@ const AddDeviceButton = () => {
   return (
     <p>
       &nbsp;
-      <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => ElementActions.createDevice()}>
+      <Button size="sm" variant="success" onClick={() => ElementActions.createDevice()}>
         Add device
       </Button>
     </p>

@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, FormGroup, ControlLabel, FormControl, HelpBlock } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, FormGroup, FormControl } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import HelpBlock from 'src/components/legacyBootstrap/HelpBlock'
 
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {
@@ -60,7 +62,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     const validationState = columnNameError ? 'error' : null;
 
     return (
-      <Modal animation show={modal.show} onHide={onHide}>
+      <Modal centered animation show={modal.show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             {title}
@@ -80,10 +82,10 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
           </div>
           <div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={onHide}>
+              <Button variant="warning" onClick={onHide}>
                 Cancel
               </Button>
-              <Button bsStyle="primary" onClick={this.handleSubmit.bind(this)}>
+              <Button variant="primary" onClick={this.handleSubmit.bind(this)}>
                 {title}
               </Button>
             </ButtonToolbar>

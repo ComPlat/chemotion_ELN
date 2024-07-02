@@ -1,5 +1,5 @@
 import React from 'react';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -18,12 +18,12 @@ export default function CommentIcon(props) {
             placement="bottom"
             overlay={<Tooltip id="showCommentsCount">{`${commentCount} comment/s`}</Tooltip>}
           >
-            <span className="commentIcon">
+            <Button variant="light" size="xxsm">
               <i className="fa fa-comments" />
-            </span>
+            </Button>
           </OverlayTrigger>
         )
-        : <span />
+        : null
     );
   }
   return null;

@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
-import { FormGroup, ControlLabel, Form } from 'react-bootstrap';
+import { FormGroup, Form } from 'react-bootstrap';
 import AsyncSelect from 'react-select3/async';
 import { selectUserOptionFormater, selectedUserFormater } from 'src/utilities/selectHelper';
 
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const DeviceUserGroupsTab = () => {
   const devicesStore = useContext(StoreContext).devices;

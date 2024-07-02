@@ -104,7 +104,6 @@ class ResearchPlanDetailsFieldReaction extends Component {
       <button
         type="button"
         style={{
-          cursor: 'pointer',
           color: '#003366',
           backgroundColor: 'transparent',
           border: '1px solid #003366',
@@ -113,6 +112,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
           outline: 'none',
         }}
         onClick={() => this.showReaction()}
+        role="button"
       >
         {reaction.title()}
       </button>

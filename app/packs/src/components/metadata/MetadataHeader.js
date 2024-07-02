@@ -12,9 +12,8 @@ const MetadataHeader = ({ title, saveBtnDisplay, onSave, onClose }) => {
      <OverlayTrigger placement="bottom" key="closeMetadata"
         overlay={<Tooltip id="closeMetadata">Close Metadata</Tooltip>}>
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
-        className="button-right"
+        variant="danger"
+        size="sm"
         onClick={onClose}>
         <i className="fa fa-times" />
       </Button>
@@ -24,7 +23,7 @@ const MetadataHeader = ({ title, saveBtnDisplay, onSave, onClose }) => {
     btns.push(
       <OverlayTrigger placement="bottom" key="saveCloseMetadata"
           overlay={<Tooltip id="saveCloseMetadata">Save and Close Metadata</Tooltip>}>
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+        <Button variant="warning" size="sm"
           onClick={onSaveAndClose}>
           <i className="fa fa-floppy-o" />
           <i className="fa fa-times"  />
@@ -32,7 +31,7 @@ const MetadataHeader = ({ title, saveBtnDisplay, onSave, onClose }) => {
       </OverlayTrigger>,
       <OverlayTrigger placement="bottom" key="saveMetadata"
           overlay={<Tooltip id="saveMetadata">Save Metadata</Tooltip>}>
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+        <Button variant="warning" size="sm"
           onClick={onSave}>
           <i className="fa fa-floppy-o "></i>
         </Button>

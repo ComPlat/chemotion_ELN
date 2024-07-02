@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 
 const LoadingModal = ({ loading }) => (
-  <Modal className="loading-modal" animation show={loading}>
+  <Modal centered className="loading-modal" animation show={loading}>
     <i className="fa fa-refresh fa-spin fa-3x fa-fw" />
   </Modal>
 );

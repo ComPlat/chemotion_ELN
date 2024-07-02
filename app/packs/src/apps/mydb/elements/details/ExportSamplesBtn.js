@@ -20,7 +20,7 @@ export default class ExportSamplesBtn extends Component {
     const { type, id } = this.props;
     const { startExport } = this.state;
     return (
-      <Button bsStyle="info" onClick={() => this.handleExport(type, id)}>
+      <Button variant="info" onClick={() => this.handleExport(type, id)}>
         Export samples{startExport ? <span>&nbsp;<i className="fa fa-spin fa-spinner" /></span> : null}
       </Button>
     );

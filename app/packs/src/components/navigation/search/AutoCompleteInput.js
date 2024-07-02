@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem}
+import { FormGroup, InputGroup, FormControl, Overlay, ListGroup, ListGroupItem }
   from 'react-bootstrap';
 import debounce from 'es6-promise-debounce';
 import { isString } from 'lodash';
@@ -370,12 +370,9 @@ export default class AutoCompleteInput extends React.Component {
 
     return (
       <div style={{ position: 'relative' }} >
-        <FormGroup ref={this.overlayTarget}
-        >
+        <FormGroup ref={this.overlayTarget}>
           <InputGroup >
-            <InputGroup.Button >
-              {this.props.buttonBefore}
-            </InputGroup.Button>
+            {this.props.buttonBefore}
             <FormControl
               {...this.props.inputAttributes}
               disabled={this.state.inputDisabled || this.props.inputDisabled}
@@ -388,9 +385,7 @@ export default class AutoCompleteInput extends React.Component {
               onChange={event => this.handleValueChange(event, this.doneTyping)}
               onKeyDown={event => this.handleKeyDown(event)}
             />
-            <InputGroup.Button>
-              {this.props.buttonAfter}
-            </InputGroup.Button>
+            {this.props.buttonAfter}
           </InputGroup>
         </FormGroup>
         <Overlay

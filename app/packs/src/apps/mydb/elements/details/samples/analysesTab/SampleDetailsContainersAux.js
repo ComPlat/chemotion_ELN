@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import { stopBubble } from 'src/utilities/DomHelper';
@@ -14,6 +14,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { previewContainerImage } from 'src/utilities/imageHelper';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const qCheckPass = () => (
   <div style={{ display: 'inline', color: 'green' }}>
@@ -56,8 +57,8 @@ const qCheckMsg = (sample, container) => {
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
-    bsSize="xsmall"
-    bsStyle="primary"
+    size="sm"
+    variant="primary"
     onClick={toggleMode}
     disabled={isDisabled}
   >
@@ -70,8 +71,8 @@ const editModeBtn = (toggleMode, isDisabled) => (
 
 const orderModeBtn = (toggleMode, isDisabled) => (
   <Button
-    bsSize="xsmall"
-    bsStyle="success"
+    size="sm"
+    variant="success"
     onClick={toggleMode}
     disabled={isDisabled}
   >
@@ -98,8 +99,8 @@ const undoBtn = (container, mode, handleUndo) => {
     return (
       <Button
         className="pull-right"
-        bsSize="xsmall"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         onClick={clickUndo}
       >
         <i className="fa fa-undo" />
@@ -122,7 +123,7 @@ const HeaderDeleted = ({ container, handleUndo, mode }) => {
         {kind}
         {status}
       </strike>
-      <div className="button-right undo-middle">
+      <div className="undo-middle">
         {undoBtn(container, mode, handleUndo)}
       </div>
     </div>
@@ -193,9 +194,8 @@ const headerBtnGroup = (
   return (
     <div className="upper-btn">
       <Button
-        bsSize="xsmall"
-        bsStyle="danger"
-        className="button-right"
+        size="sm"
+        variant="danger"
         disabled={readOnly || isDisabled}
         onClick={confirmDelete}
       >
@@ -219,7 +219,7 @@ const headerBtnGroup = (
         hasNMRium={hasNMRium}
       />
       <span
-        className="button-right add-to-report"
+        className="add-to-report"
         onClick={stopBubble}
       >
         <Checkbox

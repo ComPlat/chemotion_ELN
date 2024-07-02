@@ -52,6 +52,7 @@ export default class SvgWithModal extends Component {
 
     return (
       <Modal
+        centered
         show={show}
         onHide={this.handleClose}
         dialogClassName="preview-modal"

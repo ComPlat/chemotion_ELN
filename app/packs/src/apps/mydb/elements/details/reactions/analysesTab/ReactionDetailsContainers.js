@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  PanelGroup,
-  Panel,
   Button,
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
@@ -24,6 +22,8 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -170,9 +170,8 @@ export default class ReactionDetailsContainers extends Component {
     return (
       <div className="upper-btn">
         <Button
-          bsSize="xsmall"
-          bsStyle="danger"
-          className="button-right"
+          size="sm"
+          variant="danger"
           disabled={readOnly}
           onClick={() => this.handleOnClickRemove(container)}
         >
@@ -214,9 +213,8 @@ export default class ReactionDetailsContainers extends Component {
     if (!readOnly) {
       return (
         <Button
-          className="button-right"
-          bsSize="xsmall"
-          bsStyle="success"
+          size="sm"
+          variant="success"
           onClick={this.handleAdd}
         >
           Add analysis
@@ -306,7 +304,7 @@ export default class ReactionDetailsContainers extends Component {
             {titleKind}
             {titleStatus}
           </strike>
-          <Button className="pull-right" bsSize="xsmall" bsStyle="danger"
+          <Button className="pull-right" size="sm" variant="danger"
             onClick={() => this.handleUndo(container)}>
             <i className="fa fa-undo"></i>
           </Button>

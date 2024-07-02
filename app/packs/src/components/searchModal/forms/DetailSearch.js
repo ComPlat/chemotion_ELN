@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Button, Checkbox, FormControl, FormGroup, ControlLabel, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import { Button, FormControl, FormGroup, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import Select from 'react-select3';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
@@ -12,6 +12,8 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import * as FieldOptions from 'src/components/staticDropdownOptions/options';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
@@ -285,7 +287,7 @@ const DetailSearch = () => {
             value={selectedValue ? selectedValue[column].value : ''}
             onChange={handleFieldChanged(option, column, type)}
           />
-          <InputGroup.Addon>{option.addon}</InputGroup.Addon>
+          <InputGroup.Text>{option.addon}</InputGroup.Text>
         </InputGroup>
       </FormGroup>
     );
@@ -295,14 +297,14 @@ const DetailSearch = () => {
     if (units.length > 1) {
       return (
         <InputGroup.Button>
-          <Button key={units} bsStyle="success"
+          <Button key={units} variant="success"
             dangerouslySetInnerHTML={{ __html: value }}
             onClick={changeUnit(units, value, column, option, subFieldId)} />
         </InputGroup.Button>
       );
     } else {
       return (
-        <InputGroup.Addon dangerouslySetInnerHTML={{ __html: value }} />
+        <InputGroup.Text dangerouslySetInnerHTML={{ __html: value }} />
       );
     }
   }
@@ -423,7 +425,7 @@ const DetailSearch = () => {
           validationState={validationState}
         >
           <InputGroup>
-            <InputGroup.Addon>{field.addon}</InputGroup.Addon>
+            <InputGroup.Text>{field.addon}</InputGroup.Text>
             <FormControl
               id={`input_${column}_${field.key}`}
               type="text"

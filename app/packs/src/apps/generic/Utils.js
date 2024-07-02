@@ -119,8 +119,8 @@ export const FlowViewerBtn = props => {
     >
       <Button
         onClick={() => renderFlowModal(generic, true, flowType)}
-        bsSize="xsmall"
-        bsStyle="primary"
+        size="sm"
+        variant="primary"
       >
         <i className="fa fa-sitemap" aria-hidden="true" />{` ${label}`}
       </Button>

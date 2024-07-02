@@ -1,9 +1,10 @@
 import React from 'react';
-import { Button, ButtonToolbar, Radio, FormGroup } from 'react-bootstrap';
+import { Button, ButtonToolbar, FormGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import Radio from 'src/components/legacyBootstrap/Radio'
 
 export default class ModalReactionExport extends React.Component {
   constructor(props) {
@@ -20,8 +21,8 @@ export default class ModalReactionExport extends React.Component {
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
-            <Button bsStyle="warning" id="md-export-dropdown"
+            <Button variant="primary" onClick={onHide}>Cancel</Button>
+            <Button variant="warning" id="md-export-dropdown"
               title="Reaction Smiles CSV Export" onClick={this.handleClick}>
               Smiles Export
             </Button>

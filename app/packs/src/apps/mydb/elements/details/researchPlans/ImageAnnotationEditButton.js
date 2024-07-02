@@ -15,8 +15,8 @@ export default class ImageAnnotationEditButton extends Component {
       >
         <span>
           <Button
-            bsSize="xs"
-            bsStyle="warning"
+            size="sm"
+            variant="warning"
             style={this.props.style}
             className={this.props.className}
             onClick={() => {

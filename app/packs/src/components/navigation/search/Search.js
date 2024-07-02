@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, Button, DropdownButton, MenuItem } from 'react-bootstrap';
+import { Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
@@ -10,6 +10,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class Search extends React.Component {
   static contextType = StoreContext;
@@ -72,9 +73,9 @@ export default class Search extends React.Component {
     ];
 
     const menu = elements.map(element => (
-      <MenuItem key={element} onSelect={() => this.handleElementSelection(element.toLowerCase())}>
+      <Dropdown.Item key={element} onClick={() => this.handleElementSelection(element.toLowerCase())}>
         {element}
-      </MenuItem>
+      </Dropdown.Item>
     ));
 
     return menu;
@@ -85,14 +86,14 @@ export default class Search extends React.Component {
     const { customClass } = (profile && profile.data) || {};
 
     const buttonAfter = (
-      <ButtonGroup>
-        <Button bsStyle={customClass ? null : 'info'} className={customClass} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
+      <>
+        <Button variant={customClass ? null : 'info'} className={customClass} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
-        <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
+        <Button variant={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times" />
         </Button>
-      </ButtonGroup>
+      </>
     );
 
     const inputAttributes = {
@@ -120,10 +121,10 @@ export default class Search extends React.Component {
 
     const innerDropdown = (
       <DropdownButton
+        variant="light"
         className={customClass}
         id="search-inner-dropdown"
         title={searchIcon(this.state.elementType)}
-        style={{ width: '50px' }}
       >
         {this.renderMenuItems()}
       </DropdownButton>

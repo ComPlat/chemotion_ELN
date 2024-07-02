@@ -2,7 +2,8 @@ import Immutable from 'immutable';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import scriptLoader from 'react-async-script-loader';
-import { Grid, Row, Col } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
+import Grid from 'src/components/legacyBootstrap/Grid'
 
 import AbbreviationContainer from 'src/apps/chemscanner/containers/AbbreviationContainer';
 import HeaderMenuContainer from 'src/apps/chemscanner/containers/HeaderMenuContainer';

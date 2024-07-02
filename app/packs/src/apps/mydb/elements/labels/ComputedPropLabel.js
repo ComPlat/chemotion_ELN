@@ -8,9 +8,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 const ComputedPropLabel = ({ cprops }) => {
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
-  if (!enableComputedProps) return <span />;
-
-  if (!cprops || cprops.length === 0) return <span />;
+  if (!enableComputedProps || !cprops || cprops.length === 0) return null;
   cprops.sort((a, b) => a.updated_at - b.updated_at);
   const { status } = cprops[cprops.length - 1];
 

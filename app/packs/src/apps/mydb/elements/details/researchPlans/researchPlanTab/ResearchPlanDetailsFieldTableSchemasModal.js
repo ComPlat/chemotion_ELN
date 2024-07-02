@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Table, Modal, Button, FormGroup, ControlLabel, FormControl, HelpBlock, InputGroup } from 'react-bootstrap';
+import { Table, Modal, Button, FormGroup, FormControl, InputGroup } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import HelpBlock from 'src/components/legacyBootstrap/HelpBlock'
 
 class ResearchPlanDetailsFieldTableSchemasModal extends Component {
   constructor(props) {
@@ -47,10 +49,10 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
               {schema.value.rows.length}
             </td>
             <td>
-              <Button bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(schema)}>
+              <Button variant="danger" size="sm" onClick={() => onDelete(schema)}>
                 Delete
               </Button>
-              <Button bsStyle="warning" bsSize="xsmall" onClick={() => onUse(schema)}>
+              <Button variant="warning" size="sm" onClick={() => onUse(schema)}>
                 Use
               </Button>
             </td>
@@ -60,7 +62,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
     }
 
     return (
-      <Modal animation show={modal.show} onHide={onHide}>
+      <Modal centered animation show={modal.show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             Table schemas
@@ -77,7 +79,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
                   onChange={this.handleSchemaNameChange.bind(this)}
                 />
                 <InputGroup.Button>
-                  <Button bsStyle="success" onClick={this.handleSubmit.bind(this)}>
+                  <Button variant="success" onClick={this.handleSubmit.bind(this)}>
                     Save
                   </Button>
                 </InputGroup.Button>
@@ -102,7 +104,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
             </Table>
           </div>
           <div>
-            <Button bsStyle="default" onClick={onHide}>
+            <Button variant="light" onClick={onHide}>
               Close
             </Button>
           </div>

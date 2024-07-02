@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
+import { Form, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -31,7 +32,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const hasChanged = nextProps.value !== this.props.value
       || nextProps.block !== this.props.block
       || nextProps.metricPrefix !== this.props.metricPrefix
-      || nextProps.bsStyle !== this.props.bsStyle
+      || nextProps.variant !== this.props.variant
       || nextProps.disabled !== this.props.disabled
       || nextState.value !== this.state.value
       || nextState.block !== this.state.block
@@ -135,7 +136,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      bsSize, bsStyle, disabled, label, unit, name
+      bsSize, variant, disabled, label, unit, name
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -153,35 +154,32 @@ export default class NumeralInputWithUnitsCompo extends Component {
     };
     const inputDisabled = disabled ? true : block;
     // BsStyle-s for Input and buttonAfter have differences
-    const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
-    const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
+    const variantBtnAfter = variant === 'error' ? 'danger' : variant;
     if (unit !== 'n') {
       const prefixSwitch = (
-        <InputGroup.Button>
-          <Button
-            disabled={inputDisabled}
-            active
-            onClick={() => { this.togglePrefix(); }}
-            bsStyle={bsStyleBtnAfter}
-            bsSize={bsSize}
-          >
-            {mp + unit}
-          </Button>
-        </InputGroup.Button>
+        <Button
+          disabled={inputDisabled}
+          active
+          onClick={() => { this.togglePrefix(); }}
+          variant={variantBtnAfter}
+          bsSize={bsSize}
+        >
+          {mp + unit}
+        </Button>
       );
 
       return (
         <div className={`numeric-input-unit_${this.props.unit}`}>
-          {labelWrap}
+          {label && <Form.Label>{label}</Form.Label>}
           <InputGroup
             onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
-            <FormControl
+            <Form.Control
               type="text"
               bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
               bsSize={bsSize}
-              bsStyle={bsStyle}
+              variant={variant}
               value={val() || ''}
               onChange={event => this._handleInputValueChange(event)}
               onFocus={event => this._handleInputValueFocus(event)}
@@ -195,14 +193,14 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
     return (
       <div className="numeric-input-unit">
-        {labelWrap}
+        {label && <Form.Label>{label}</Form.Label>}
         <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
-          <FormControl
+          <Form.Control
             type="text"
             bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
             bsSize={bsSize}
-            bsStyle={bsStyle}
+            variant={variant}
             value={val() || ''}
             onChange={event => this._handleInputValueChange(event)}
             onFocus={event => this._handleInputValueFocus(event)}
@@ -227,7 +225,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   disabled: PropTypes.bool,
   label: PropTypes.node,
   bsSize: PropTypes.string,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
   name: PropTypes.string
 };
 
@@ -238,6 +236,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   bsSize: 'small',
-  bsStyle: 'default',
+  variant: 'light',
   name: ''
 };

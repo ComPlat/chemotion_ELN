@@ -3,7 +3,8 @@ import ReactFlow, {
   ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
   Panel as ReactFlowPanel, useUpdateNodeInternals
 } from 'reactflow'
-import { Modal, Button, ButtonGroup, InputGroup, Panel } from 'react-bootstrap'
+import { Modal, Button, ButtonGroup, InputGroup } from 'react-bootstrap'
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const buildUnassignedNodes = (nodes, researchplans) => {
   return researchplans.reduce((newNodes, plan) => {
@@ -106,7 +107,7 @@ const ResearchplanFlowEditor = (props) => {
     if (!currentEdge) { return (<div></div>); }
 
     return (
-      <Panel bsStyle="primary">
+      <Panel variant="primary">
         <Panel.Heading>
           <Panel.Title>Connection name</Panel.Title>
         </Panel.Heading>
@@ -140,7 +141,7 @@ const ResearchplanFlowEditor = (props) => {
     if (unassignedNodes.length == 0) { return (<div></div>) };
 
     return (
-      <Panel bsStyle="primary">
+      <Panel variant="primary">
         <Panel.Heading>
           <Panel.Title>Unused Research Plans</Panel.Title>
         </Panel.Heading>
@@ -159,6 +160,7 @@ const ResearchplanFlowEditor = (props) => {
   return (
     <div>
       <Modal
+        centered
         show={visible}
         animation
         dialogClassName="researchplan-flow-editor-modal"
@@ -189,10 +191,10 @@ const ResearchplanFlowEditor = (props) => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button className="pull-left" bsStyle="default" onClick={onHide}>
+          <Button className="pull-left" variant="light" onClick={onHide}>
             Cancel
           </Button>
-          <Button className="pull-right" bsStyle="success" onClick={onClickSave}>
+          <Button className="pull-right" variant="success" onClick={onClickSave}>
             Save
           </Button>
         </Modal.Footer>

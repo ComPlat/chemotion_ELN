@@ -4,9 +4,9 @@ import Numeral from 'numeral';
 import {
   FormGroup,
   FormControl,
-  ControlLabel,
   InputGroup,
 } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class NumeralInput extends Component {
   constructor(props) {
@@ -56,11 +56,11 @@ export default class NumeralInput extends Component {
   }
 
   render() {
-    let { bsSize, bsStyle, addonAfter, buttonAfter, label, disabled } = this.props;
+    let { bsSize, variant, addonAfter, buttonAfter, label, disabled } = this.props;
     let { numeralValue } = this.state;
     let addonAfterWrapper, buttonAfterWrapper;
     if (addonAfter) {
-      addonAfterWrapper = <InputGroup.Addon>{addonAfter}</InputGroup.Addon>;
+      addonAfterWrapper = <InputGroup.Text>{addonAfter}</InputGroup.Text>;
     }
 
     if(buttonAfter) {
@@ -72,7 +72,7 @@ export default class NumeralInput extends Component {
         <ControlLabel>{label}</ControlLabel>
         <InputGroup>
           <FormControl type='text'  value={numeralValue || ''} bsSize={bsSize}
-            bsStyle={bsStyle}
+            variant={variant}
             disabled={disabled}
             onChange={ event => this._handleInputValueChange(event)} />
           {buttonAfterWrapper}
@@ -98,5 +98,5 @@ NumeralInput.propTypes = {
   buttonAfter: PropTypes.node,
   label: PropTypes.node,
   bsSize: PropTypes.string,
-  bsStyle: PropTypes.string,
+  variant: PropTypes.string,
 };

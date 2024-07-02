@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, FormGroup, ControlLabel, FormControl, Button,
+  Row, Col, FormGroup, FormControl, Button,
   InputGroup, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
 import { permitOn } from 'src/components/common/uis';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
@@ -142,7 +143,7 @@ export default class ReactionDetailsDuration extends Component {
               />
               <InputGroup.Button>
                 <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
-                  <Button disabled={!permitOn(reaction)} bsStyle="success" onClick={() => this.changeDurationUnit()}>
+                  <Button disabled={!permitOn(reaction)} variant="success" onClick={() => this.changeDurationUnit()}>
                     {reaction.durationUnit}
                   </Button>
                 </OverlayTrigger>

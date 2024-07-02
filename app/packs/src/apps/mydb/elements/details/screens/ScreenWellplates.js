@@ -65,7 +65,7 @@ class ScreenWellplates extends Component {
                 <td>
                   <a
                     onClick={() => this.handleWellplateClick(wellplate)}
-                    style={{ cursor: 'pointer' }}
+                    role="button"
                   >
                     {wellplate.name}
                   </a>
@@ -79,7 +79,7 @@ class ScreenWellplates extends Component {
                 </td>
                 <td style={{ verticalAlign: 'middle' }}>
                   <Button
-                    bsStyle="danger"
+                    variant="danger"
                     style={{ marginLeft: '10px' }}
                     onClick={() => deleteWellplate(wellplate)}
                   >

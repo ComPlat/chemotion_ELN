@@ -18,7 +18,7 @@ export default class ResearchPlanDetailsAddField extends Component {
     const { onAdd } = this.props;
     return (
       <span className="research-plan-field-drop-add-field">
-        <ButtonGroup bsSize="xsmall">
+        <ButtonGroup size="sm">
           {
             buttonObjects.map(button => (
               <OverlayTrigger key={uuid.v4()} placement="top" overlay={<Tooltip id={`rp_tooptip_${button.type}`}>{button.label}</Tooltip>}>

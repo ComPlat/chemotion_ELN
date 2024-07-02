@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import {
-  Button, Modal, FormGroup, FormControl, ControlLabel, Col, Row
+  Button, Modal, FormGroup, FormControl, Col, Row
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class CustomSizeModal extends Component {
   static isInteger(value) {
@@ -101,6 +102,7 @@ export default class CustomSizeModal extends Component {
     const { height, width } = this.state;
     return (
       <Modal
+        centered
         show={showCustomSizeModal}
         onHide={handleClose}
         onShow={() => this.updateDimensionsFromWellplate()}

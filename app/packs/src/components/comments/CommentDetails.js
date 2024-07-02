@@ -68,8 +68,8 @@ export default class CommentDetails extends Component {
                   ? (
                     <Button
                       id="editCommentBtn"
-                      bsSize="xsmall"
-                      bsStyle="primary"
+                      size="sm"
+                      variant="primary"
                       onClick={() => editComment(comment)}
                       disabled={disableEditComment(comment)}
                     >

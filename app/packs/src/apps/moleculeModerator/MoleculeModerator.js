@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Navbar, FormGroup, ControlLabel, FormControl, Button } from 'react-bootstrap';
+import { Navbar, FormGroup, FormControl, Button } from 'react-bootstrap';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import LoadingModal from 'src/components/common/LoadingModal';
@@ -7,6 +7,7 @@ import MoleculeModeratorComponent from 'src/apps/moleculeModerator/MoleculeModer
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import Notifications from 'src/components/Notifications';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const pageNav = (
   <Navbar fixedTop>

@@ -194,9 +194,9 @@ export default class ModalExportCollection extends React.Component {
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
+            <Button variant="primary" onClick={onHide}>Cancel</Button>
             <Button
-              bsStyle={bStyle}
+              variant={bStyle}
               id="md-export-dropdown"
               disabled={this.isDisabled()}
               title="Export as ZIP file (incl. attachments)"

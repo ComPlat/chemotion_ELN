@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import {
-  Button, FormControl, Modal, Col, ButtonGroup,
+  Button, Form, Modal, Col
 } from 'react-bootstrap';
 import _ from 'lodash';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
@@ -128,14 +128,14 @@ export default class CollectionTabs extends React.Component {
   label(node) {
     if (node.label === 'My Collections') {
       return (
-        <FormControl 
+        <Form.Control 
         value ="My Collections" 
         type="text" 
         className="root-label" 
         disabled/>);
     }
     return (
-      <FormControl className="collection-label" type="text" value={node.label || ''} disabled />
+      <Form.Control className="collection-label" type="text" value={node.label || ''} disabled />
     );
   }
 
@@ -160,17 +160,15 @@ export default class CollectionTabs extends React.Component {
               </span>
             </td>
             <td colSpan='6'>
-              <ButtonGroup className='collection-tab-edit-btn'>
-                <Button
-                  className='collection-tab-edit-btn'
-                  bsSize='xsmall'
-                  bsStyle='primary'
-                  onClick={this.onClickCollection.bind(this, node)}
-                  title='Click to edit collection tab sorting'
-                >
-                  <i className='glyphicon glyphicon-pencil'/>
-                </Button>
-              </ButtonGroup>
+              <Button
+                className='collection-tab-edit-btn'
+                size='sm'
+                variant='primary'
+                onClick={this.onClickCollection.bind(this, node)}
+                title='Click to edit collection tab sorting'
+              >
+                <i className='fa fa-pencil'/>
+              </Button>
             </td>
           </tr>
         );
@@ -194,7 +192,7 @@ export default class CollectionTabs extends React.Component {
           onChange={this.handleChange.bind(this)}
           renderNode={this.renderNode.bind(this)}
         />
-        <Modal className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
+        <Modal centered className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
           <Modal.Header closeButton>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
@@ -228,7 +226,7 @@ export default class CollectionTabs extends React.Component {
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
               </p>
             </div>
-            <Button bsStyle="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
+            <Button variant="primary" onClick={() => this.handleSave(showModal)}>Save</Button>
           </Modal.Footer>
         </Modal>
       </div>

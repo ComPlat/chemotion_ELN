@@ -47,7 +47,7 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent }) {
       </td>
       <td>
         <Button
-          bsStyle="danger"
+          variant="danger"
           onClick={() => deleteSolvent(solvent)}
           style={{
             width: '30px',

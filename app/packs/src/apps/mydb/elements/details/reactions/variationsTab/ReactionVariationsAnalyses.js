@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import {
-  Label, FormGroup, Checkbox, Button, Modal
+  FormGroup, Button, Modal
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import Label from 'src/components/legacyBootstrap/Label'
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);
@@ -72,7 +74,7 @@ function AnalysisVariationLink({ reaction, analysisID }) {
   }
   return (
     <Label
-      bsStyle="info"
+      variant="info"
       onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: 'variations' })}
     >
       {`Linked to ${linkedVariations.length} variation(s)`}
@@ -142,7 +144,7 @@ function AnalysesCellEditor({
             >
               {analysis.name}
             </Checkbox>
-            <Button bsSize="xs" onClick={() => navigateToAnalysis(analysis.id)}>
+            <Button size="sm" onClick={() => navigateToAnalysis(analysis.id)}>
               <i className="fa fa-external-link" />
             </Button>
           </div>
@@ -152,7 +154,7 @@ function AnalysesCellEditor({
   );
 
   const cellContent = (
-    <Modal show>
+    <Modal centered show>
       <Modal.Header>
         {`Link analyses to ${getVariationsRowName(reactionShortLabel, variationsRow.id)}`}
       </Modal.Header>

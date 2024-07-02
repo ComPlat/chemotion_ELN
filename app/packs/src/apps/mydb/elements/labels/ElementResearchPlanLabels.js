@@ -1,5 +1,6 @@
 import React from 'react';
-import { Label, Button, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
+import Label from 'src/components/legacyBootstrap/Label'
 
 export default class ElementResearchPlanLabels extends React.Component {
   constructor(props) {
@@ -28,7 +29,7 @@ export default class ElementResearchPlanLabels extends React.Component {
     return labels.map((label, index) => {
       return (
         <span className="collection-label" key={index}>
-          <Button bsStyle="default" bsSize="xs" onClick={e => this.handleOnClick(label, e)}>
+          <Button variant="light" size="sm" onClick={e => this.handleOnClick(label, e)}>
             {label.name}
           </Button>
           &nbsp;
@@ -37,45 +38,33 @@ export default class ElementResearchPlanLabels extends React.Component {
     });
   }
 
-  renderCollectionsLabels(research_plans) {
-    if (research_plans == undefined) return <span />;
-
-    return (
-      <div>
-        <h3 className="popover-title">Research Plans</h3>
-        <div className="popover-content">
-          {this.formatLabels(research_plans)}
-        </div>
-      </div>
-    );
-  }
-
   render() {
     const { research_plans } = this.state;
 
-    let placement = 'right';
     let researchPlanOverlay = (
-      <Popover className="collection-overlay" id="element-collections">
-        {this.renderCollectionsLabels(research_plans)}
+      <Popover className="scrollable-popover" id="element-collections">    
+        <Popover.Header as="h3">Research Plans</Popover.Header>
+        <Popover.Body>
+          {this.formatLabels(research_plans)}
+        </Popover.Body>
       </Popover>
     );
 
     return (
-      <div style={{display: "inline-block"}} onClick={this.preventOnClick}>
-        <OverlayTrigger
-          trigger="click"
-          rootClose
-          placement={placement}
-          overlay={researchPlanOverlay}
-        >
-          <span className="collection-label" >
-            <Label>
-              <i className="fa fa-file-text-o" />
-                {" " + research_plans.length}
-            </Label>
-          </span>
-        </OverlayTrigger>
-      </div>
+      <OverlayTrigger
+        trigger="click"
+        rootClose
+        placement="right"
+        overlay={researchPlanOverlay}
+        className="d-inline-block"
+      >
+        <span className="collection-label" >
+          <Label>
+            <i className="fa fa-file-text-o me-1" />
+            {research_plans.length}
+          </Label>
+        </span>
+      </OverlayTrigger>
     );
   }
 }

@@ -5,16 +5,12 @@ import {
   Nav,
   NavDropdown,
   NavItem,
-  MenuItem,
-  Glyphicon,
   Modal,
   Button,
   Table,
-  Panel,
   Form,
   FormControl,
   FormGroup,
-  ControlLabel,
   Col,
   Row,
 } from 'react-bootstrap';
@@ -22,7 +18,6 @@ import _ from 'lodash';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -30,6 +25,8 @@ import { UserLabelModal } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -250,9 +247,9 @@ export default class UserAuth extends Component {
     return (
       <td>
         <Button
-          bsSize="xsmall"
+          size="sm"
           type="button"
-          bsStyle="info"
+          variant="info"
           className="fa fa-laptop"
           onClick={() => this.handleDeviceMetadataModalShow(device)}
         />
@@ -354,6 +351,7 @@ export default class UserAuth extends Component {
 
     return (
       <Modal
+        centered
         show={showModal}
         dialogClassName="importChemDrawModal"
         onHide={this.handleClose}
@@ -412,8 +410,8 @@ export default class UserAuth extends Component {
                   </FormGroup>
                   &nbsp;&nbsp;
                   <Button
-                    bsSize="small"
-                    bsStyle="success"
+                    size="sm"
+                    variant="success"
                     onClick={() => this.createGroup()}
                     style={{
                       height: '32px',
@@ -469,43 +467,41 @@ export default class UserAuth extends Component {
 
   // render modal
   renderSubscribeModal() {
-    if (this.state.showSubscription) {
-      const tbody = this.state.currentSubscriptions.map((g) => (
-        <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
-          <td width="10%" style={{ border: 'none' }}>
-            <Button
-              bsSize="xsmall"
-              bsStyle={g.user_id == null ? 'success' : 'default'}
-              onClick={() => this.subscribe(g)}
-            >
-              {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
-            </Button>
-          </td>
-          <td width="90%" style={{ border: 'none' }}>
-            <div>{g.subject}</div>
-          </td>
-        </tr>
-      ));
+    const tbody = this.state.currentSubscriptions.map((g) => (
+      <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
+        <td width="10%" style={{ border: 'none' }}>
+          <Button
+            size="sm"
+            variant={g.user_id == null ? 'success' : 'light'}
+            onClick={() => this.subscribe(g)}
+          >
+            {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
+          </Button>
+        </td>
+        <td width="90%" style={{ border: 'none' }}>
+          <div>{g.subject}</div>
+        </td>
+      </tr>
+    ));
 
-      return (
-        <Modal
-          show={this.state.showSubscription}
-          onHide={this.handleSubscriptionClose}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>My Subscription</Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto' }}>
-            <div>
-              <Table>
-                <tbody>{tbody}</tbody>
-              </Table>
-            </div>
-          </Modal.Body>
-        </Modal>
-      );
-    }
-    return <div />;
+    return (
+      <Modal
+        centered
+        show={this.state.showSubscription}
+        onHide={this.handleSubscriptionClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>My Subscription</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ overflow: 'auto' }}>
+          <div>
+            <Table>
+              <tbody>{tbody}</tbody>
+            </Table>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   renderDeviceMetadataModal() {
@@ -513,6 +509,7 @@ export default class UserAuth extends Component {
     const title = 'Device Metadata';
     return (
       <Modal
+        centered
         show={showDeviceMetadataModal}
         onHide={this.handleDeviceMetadataModalClose}
       >
@@ -641,60 +638,60 @@ export default class UserAuth extends Component {
 
   render() {
     const templatesLink = (
-      <MenuItem eventKey="2" href="/ketcher/common_templates">
+      <NavDropdown.Item eventKey="2" href="/ketcher/common_templates">
         Template Management
-      </MenuItem>
+      </NavDropdown.Item>
     );
     const moderatorLink = (
-      <MenuItem eventKey="6" href="/molecule_moderator">
+      <NavDropdown.Item eventKey="6" href="/molecule_moderator">
         Molecule Moderator
-      </MenuItem>
+      </NavDropdown.Item>
     );
 
     let userLabel = <span />;
     if (MatrixCheck(this.state.currentUser.matrix, 'userLabel')) {
-      userLabel = <MenuItem onClick={this.handleLabelShow}>My Labels</MenuItem>;
+      userLabel = <NavDropdown.Item onClick={this.handleLabelShow}>My Labels</NavDropdown.Item>;
     }
 
     return (
-      <div>
-        <Nav navbar pullRight>
+      <>
+        <Nav className='align-items-center'>
           <NavDropdown
             title={`${this.state.currentUser.name}`}
             id="bg-nested-dropdown"
           >
-            <MenuItem eventKey="1" href="/pages/settings">
+            <NavDropdown.Item eventKey="1" href="/pages/settings">
               Account &amp; Profile
-            </MenuItem>
+            </NavDropdown.Item>
             {this.state.currentUser.is_templates_moderator
               ? templatesLink
               : null}
-            <MenuItem eventKey="3" href="/users/edit">
+            <NavDropdown.Item eventKey="3" href="/users/edit">
               Change Password
-            </MenuItem>
-            <MenuItem eventKey="5" href="/pages/affiliations">
+            </NavDropdown.Item>
+            <NavDropdown.Item eventKey="5" href="/pages/affiliations">
               My Affiliations
-            </MenuItem>
-            <MenuItem onClick={this.handleShow}>My Groups & Devices</MenuItem>
+            </NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
             {userLabel}
-            {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
+            {/* <NavDropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</NavDropdown.Item>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            <MenuItem eventKey="7" href="/command_n_control">
+            <NavDropdown.Item eventKey="7" href="/command_n_control">
               My Devices
-            </MenuItem>
+            </NavDropdown.Item>
             {this.state.currentUser.molecule_editor ? moderatorLink : null}
-            <MenuItem eventKey="12" href="/converter_admin">
+            <NavDropdown.Item eventKey="12" href="/converter_admin">
               Converter Profile
-            </MenuItem>
-            <MenuItem eventKey="8" href="/generic_elements_admin">Generic Designer</MenuItem>
+            </NavDropdown.Item>
+            <NavDropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</NavDropdown.Item>
           </NavDropdown>
           <NavItem
             onClick={() => this.logout()}
-            style={{ marginRight: '5px' }}
-            className=""
             title="Log out"
+            className='ms-2'
+            role='button'
           >
-            <Glyphicon glyph="log-out" />
+            <i className="fa fa-sign-out" />
           </NavItem>
         </Nav>
         {this.renderModal()}
@@ -702,9 +699,9 @@ export default class UserAuth extends Component {
           showLabelModal={this.state.showLabelModal}
           onHide={() => this.handleLabelClose()}
         />
-        {this.renderSubscribeModal()}
+        {this.state.showSubscription && this.renderSubscribeModal()}
         {this.renderDeviceMetadataModal()}
-      </div>
+      </>
     );
   }
 }

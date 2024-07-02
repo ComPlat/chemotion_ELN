@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
+  FormGroup, FormControl, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
@@ -34,6 +34,8 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -206,9 +208,8 @@ export default class ScreenDetails extends Component {
           overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
         >
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
+            variant="warning"
+            size="sm"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >
@@ -220,9 +221,8 @@ export default class ScreenDetails extends Component {
           overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
+            variant="info"
+            size="sm"
             onClick={() => this.props.toggleFullScreen()}
           >
             <i className="fa fa-expand" />
@@ -433,7 +433,7 @@ export default class ScreenDetails extends Component {
 
     return (
       <Panel
-        bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
+        variant={screen.isPendingToSave ? 'info' : 'primary'}
         className="eln-panel-detail"
       >
         <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
@@ -453,8 +453,8 @@ export default class ScreenDetails extends Component {
             {tabContents}
           </Tabs>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+            <Button variant="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
+            <Button variant="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
           <CommentModal element={screen} />
         </Panel.Body>

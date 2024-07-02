@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { Jumbotron } from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
+import Jumbotron from 'src/components/legacyBootstrap/Jumbotron'
 
 function Message(props) {
   const { post } = props;

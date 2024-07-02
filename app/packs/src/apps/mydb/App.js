@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Col, Grid, Row } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
@@ -15,6 +15,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Calendar from 'src/components/calendar/Calendar';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
+import Grid from 'src/components/legacyBootstrap/Grid'
 
 class App extends Component {
   constructor(_props) {
@@ -104,19 +105,6 @@ class App extends Component {
     });
   }
 
-  collectionTree() {
-    const { showCollectionTree } = this.state;
-    if (!showCollectionTree) {
-      return <div />;
-    }
-
-    return (
-      <Col className="small-col collec-tree">
-        <CollectionTree />
-      </Col>
-    );
-  }
-
   mainContent() {
     const { showCollectionManagement, mainContentClassName } = this.state;
     return (
@@ -134,8 +122,8 @@ class App extends Component {
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
-        <Row className="card-content container-fluid">
-          {this.collectionTree()}
+        <Row className="card-content container-fluid pt-3">
+          {showCollectionTree && <CollectionTree />}
           {this.mainContent()}
         </Row>
         <Row>

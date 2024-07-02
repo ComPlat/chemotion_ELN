@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel, ListGroupItem, ButtonToolbar, Button,
+  ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
@@ -44,6 +44,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -203,7 +204,7 @@ export default class ReactionDetails extends Component {
         &nbsp;
         <span className="pseudo-link"
           onClick={() => this.handleProductClick(product)}
-          style={{ cursor: 'pointer' }}
+          role="button"
           title="Open sample window">
           <i className="icon-sample" />&nbsp;{product.title()}
         </span>
@@ -309,9 +310,8 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
+            variant="warning"
+            size="sm"
             onClick={() => this.handleSubmit(true)}
             disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
             style={{ display: hasChanged }}
@@ -322,7 +322,7 @@ export default class ReactionDetails extends Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+          <Button variant="warning" size="sm"
             onClick={() => this.handleSubmit()}
             disabled={!permitOn(reaction) || !this.reactionIsValid()}
             style={{ display: hasChanged }} >
@@ -335,9 +335,8 @@ export default class ReactionDetails extends Component {
           overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
+            variant="info"
+            size="sm"
             onClick={() => this.props.toggleFullScreen()}
           >
             <i className="fa fa-expand" />
@@ -348,9 +347,8 @@ export default class ReactionDetails extends Component {
           overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
         >
           <Button
-            bsStyle="success"
-            bsSize="xsmall"
-            className="button-right"
+            variant="success"
+            size="sm"
             disabled={reaction.changed || reaction.isNew}
             title={(reaction.changed || reaction.isNew) ?
               "Report can be generated after reaction is saved."
@@ -518,7 +516,7 @@ export default class ReactionDetails extends Component {
 
     return (
       <Panel className="eln-panel-detail"
-        bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
+        variant={reaction.isPendingToSave ? 'info' : 'primary'}>
         <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
         <Panel.Body>
           {this.reactionSVG(reaction)}
@@ -528,16 +526,16 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
+          {this.state.sfn && <ScifinderSearch el={reaction} />}
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
             {tabContents}
           </Tabs>
           <hr />
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
+            <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
               Close
             </Button>
-            <Button id="submit-reaction-btn" bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
+            <Button id="submit-reaction-btn" variant="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
               {submitLabel}
             </Button>
             {exportButton}

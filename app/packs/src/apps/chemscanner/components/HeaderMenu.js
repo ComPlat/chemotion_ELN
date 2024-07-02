@@ -8,7 +8,6 @@ import {
   ButtonGroup,
   Button,
   DropdownButton,
-  MenuItem,
   OverlayTrigger
 } from 'react-bootstrap';
 
@@ -39,6 +38,7 @@ import {
   generateExcelMoleculeRow,
   generateExcelReactionRow
 } from 'src/apps/chemscanner/utils';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const SUPPORTED_FILE_TYPES = ['cdx', 'cdxml', 'doc', 'docx', 'xml', 'zip'];
 

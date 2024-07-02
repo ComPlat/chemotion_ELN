@@ -15,7 +15,7 @@ const handleClear = (store) => {
 
 const showErrorMessage = (store) => {
   if (store.errorMessages.length >= 1) {
-    return <Alert bsStyle="danger">{store.errorMessages.join(', ')}</Alert>;
+    return <Alert variant="danger">{store.errorMessages.join(', ')}</Alert>;
   }
 }
 

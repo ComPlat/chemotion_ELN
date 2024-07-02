@@ -1,12 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
+import { ButtonGroup, Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import ComputedPropsGraphContainer from 'src/components/computedProps/ComputedPropsGraphContainer';
 import SampleComputedProps from 'src/components/computedProps/SampleComputedProps';
 import { ConfirmModal } from 'src/components/common/ConfirmModal';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ComputedPropsContainer extends React.Component {
   constructor(props) {
@@ -65,9 +66,8 @@ export default class ComputedPropsContainer extends React.Component {
       <div>
         <SampleComputedProps cprops={cprops} />
         <Button
-          bsStyle="success"
-          bsSize="small"
-          className="button-right"
+          variant="success"
+          size="sm"
           onClick={this.onClickComputeBtn}
           style={{ marginTop: '10px', marginBottom: '10px' }}
         >
@@ -76,7 +76,7 @@ export default class ComputedPropsContainer extends React.Component {
         </Button>
         <ButtonGroup vertical block>
           <Button
-            bsSize="xsmall"
+            size="sm"
             style={{ marginBottom: '20px', backgroundColor: '#ddd' }}
             onClick={this.toggleGraph}
           >

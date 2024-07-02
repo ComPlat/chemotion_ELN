@@ -3,10 +3,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { GenInterface, GenButtonReload, GenButtonExport } from 'chem-generic-ui';
-import { Panel, ButtonToolbar } from 'react-bootstrap';
+import { ButtonToolbar } from 'react-bootstrap';
 import { FlowViewerBtn } from 'src/apps/generic/Utils';
 import RevisionViewerBtn from 'src/components/generic/RevisionViewerBtn';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 class GenericSGDetails extends Component {
   constructor(props) {

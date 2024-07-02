@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ControlLabel, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
+  FormGroup, FormControl, Button, OverlayTrigger, Tooltip, Tabs, Tab, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup, Collapse, Modal
 } from 'react-bootstrap';
 import Select from 'react-select';
@@ -12,6 +12,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import CollapseButton from 'src/components/common/CollapseButton';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -465,7 +466,7 @@ export default class ChemicalTab extends React.Component {
     }
     return (
       <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip(value)}>
-        <Button active bsSize="xs">
+        <Button active size="sm">
           <a href={value} target="_blank" rel="noreferrer">
             <i className="fa fa-external-link" />
           </a>
@@ -489,7 +490,7 @@ export default class ChemicalTab extends React.Component {
       <div>
         {ParentLabel}
         <InputGroup className="location-chemicalTab">
-          <InputGroup.Addon>{subLabel}</InputGroup.Addon>
+          <InputGroup.Text>{subLabel}</InputGroup.Text>
           <FormGroup controlId="subLabel">
             <FormControl
               componentClass="input"
@@ -557,8 +558,8 @@ export default class ChemicalTab extends React.Component {
   removeButton(index, document) {
     return (
       <Button
-        bsSize="xs"
-        bsStyle="danger"
+        size="sm"
+        variant="danger"
         onClick={() => this.handleRemove(index, document)}
       >
         <i className="fa fa-trash-o" />
@@ -667,8 +668,8 @@ export default class ChemicalTab extends React.Component {
     return (
       <Button
         id="saveSafetySheetButton"
-        bsSize="xs"
-        bsStyle="warning"
+        size="sm"
+        variant="warning"
         disabled={checkMark}
         onClick={() => this.saveSdsFile(productInfo)}
       >
@@ -1123,6 +1124,7 @@ export default class ChemicalTab extends React.Component {
     if (viewChemicalPropertiesModal) {
       return (
         <Modal
+          centered
           show={viewChemicalPropertiesModal}
           onHide={() => this.closePropertiesModal()}
         >
@@ -1143,7 +1145,7 @@ export default class ChemicalTab extends React.Component {
               </FormGroup>
             </div>
             <div>
-              <Button bsStyle="warning" onClick={() => this.closePropertiesModal()}>
+              <Button variant="warning" onClick={() => this.closePropertiesModal()}>
                 Close
               </Button>
             </div>

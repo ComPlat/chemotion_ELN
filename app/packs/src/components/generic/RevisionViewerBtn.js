@@ -46,8 +46,8 @@ const RevisionViewerBtn = props => {
       >
         <Button
           onClick={() => setShowModal(!showModal)}
-          bsSize="xsmall"
-          bsStyle="primary"
+          size="sm"
+          variant="primary"
         >
           <i className="fa fa-book" aria-hidden="true" /> Revision
         </Button>

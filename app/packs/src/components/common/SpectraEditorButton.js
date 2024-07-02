@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem
+  Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup
 } from 'react-bootstrap';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default function SpectraEditorButton({
   element, spcInfos, hasJcamp, hasChemSpectra,
@@ -22,12 +23,12 @@ export default function SpectraEditorButton({
 )}
       >
         {spcInfos.length > 0 ? (
-          <ButtonGroup className="button-right">
+          <ButtonGroup>
             <SplitButton
               id="spectra-editor-split-button"
               pullRight
-              bsStyle="info"
-              bsSize="xsmall"
+              variant="info"
+              size="sm"
               title={<i className="fa fa-area-chart" />}
               onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}
               onClick={toggleSpectraModal}
@@ -67,9 +68,8 @@ export default function SpectraEditorButton({
           </ButtonGroup>
         ) : (
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
+            variant="warning"
+            size="sm"
             onClick={confirmRegenerate}
             disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
           >
@@ -86,12 +86,12 @@ export default function SpectraEditorButton({
               delayShow={500}
               overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
             >
-              <ButtonGroup className="button-right">
+              <ButtonGroup>
                 <Button
                   id="spectra-editor-split-button"
                   pullRight
-                  bsStyle="info"
-                  bsSize="xsmall"
+                  variant="info"
+                  size="sm"
                   onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}
                   onClick={toggleNMRDisplayerModal}
                   disabled={!hasJcamp && !(spcInfos.length > 0)}

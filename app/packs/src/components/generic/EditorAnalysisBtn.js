@@ -3,7 +3,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
-import { Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup, MenuItem } from 'react-bootstrap';
+import { Tooltip, Button, OverlayTrigger, SplitButton, ButtonGroup } from 'react-bootstrap';
+import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const EditorAnalysisBtn = ({
   element, spcInfos, hasJcamp, hasChemSpectra,
@@ -14,12 +15,12 @@ const EditorAnalysisBtn = ({
     delayShow={500}
     overlay={<Tooltip id="spectra">Spectra Editor {spcInfos.length > 0 ? '' : ': Reprocess'}</Tooltip>}
   >{spcInfos.length > 0 ? (
-    <ButtonGroup className="button-right">
+    <ButtonGroup>
       <SplitButton
         id="spectra-editor-split-button"
         pullRight
-        bsStyle="info"
-        bsSize="xsmall"
+        variant="info"
+        size="sm"
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
@@ -40,9 +41,8 @@ const EditorAnalysisBtn = ({
     </ButtonGroup>
   ) : (
     <Button
-      bsStyle="warning"
-      bsSize="xsmall"
-      className="button-right"
+      variant="warning"
+      size="sm"
       onClick={confirmRegenerate}
       disabled={!hasJcamp || !element.can_update || !hasChemSpectra}
     >

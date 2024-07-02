@@ -3,11 +3,12 @@ import Draggable from 'react-draggable';
 import React, { useContext } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
 import SampleTaskReloadButton from 'src/components/sampleTaskInbox/SampleTaskReloadButton';
-import { Button, Panel } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const SampleTaskInbox = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
@@ -94,7 +95,7 @@ const SampleTaskInbox = ({}) => {
       bounds="body"
     >
       <Panel
-        bsStyle="primary"
+        variant="primary"
         className="sampleTaskInbox small-col col-md-6"
         style={{
           zIndex: 10, position: 'absolute', top: '70px', left: '10px', display: display_value,
@@ -109,9 +110,8 @@ const SampleTaskInbox = ({}) => {
             <div className="col-md-10">{openSampleTaskCount()} open SampleTasks</div>
             <div className="col-md-1">
               <Button
-                bsStyle="danger"
-                bsSize="xsmall"
-                className="button-right"
+                variant="danger"
+                size="sm"
                 onClick={sampleTasksStore.hideSampleTaskInbox}
               >
                 <i className="fa fa-times" />

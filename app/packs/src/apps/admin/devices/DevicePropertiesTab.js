@@ -1,9 +1,11 @@
 import React, { useContext } from 'react';
-import { FormGroup, ControlLabel, Form, FormControl, Checkbox } from 'react-bootstrap';
+import { FormGroup, Form, FormControl } from 'react-bootstrap';
 import Select from 'react-select3';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DevicePropertiesTab = () => {
   const devicesStore = useContext(StoreContext).devices;

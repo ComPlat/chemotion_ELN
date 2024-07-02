@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { PanelGroup, Panel, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 export default class WellplateDetailsContainers extends Component {
   constructor(props) {
@@ -68,7 +70,7 @@ export default class WellplateDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+        <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
           Add analysis
         </Button>
       )
@@ -87,8 +89,8 @@ export default class WellplateDetailsContainers extends Component {
       {(container.extended_metadata['status'] &&
         container.extended_metadata['status'] != '')
         ? (' - Status: ' + container.extended_metadata['status']) : ''}
-      <Button bsSize="xsmall" bsStyle="danger"
-        className="button-right" disabled={readOnly}
+      <Button size="sm" variant="danger"
+        disabled={readOnly}
         onClick={() => {
           if (confirm('Delete the container?')) {
             this.handleRemove(container)
@@ -106,7 +108,7 @@ export default class WellplateDetailsContainers extends Component {
         ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
       {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) : ''}
     </strike>
-      <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
+      <Button className="pull-right" size="sm" variant="danger" onClick={() => this.handleUndo(container)}>
         <i className="fa fa-undo"></i>
       </Button>
     </p>

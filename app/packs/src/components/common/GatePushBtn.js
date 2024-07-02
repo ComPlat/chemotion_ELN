@@ -59,8 +59,8 @@ class GatePushBtn extends React.Component {
           Mirror Sample and Reaction data to your chemotion.net account ?
           <ButtonGroup>
             <Button
-              bsStyle="danger"
-              bsSize="xsmall"
+              variant="danger"
+              size="sm"
               onClick={e =>
                 this.transmitting(e, this.props.collection_id, 'POST')
               }
@@ -68,8 +68,8 @@ class GatePushBtn extends React.Component {
               Yes
             </Button>
             <Button
-              bsStyle="warning"
-              bsSize="xsmall"
+              variant="warning"
+              size="sm"
               onClick={() => this.ovltg.hide()}
             >
               No
@@ -84,8 +84,8 @@ class GatePushBtn extends React.Component {
           moment
           <ButtonGroup>
             <Button
-              bsStyle="warning"
-              bsSize="xsmall"
+              variant="warning"
+              size="sm"
               onClick={() => this.ovltg.hide()}
             >
               OK
@@ -99,8 +99,8 @@ class GatePushBtn extends React.Component {
           {message} &nbsp;
           <ButtonGroup>
             <Button
-              bsStyle="danger"
-              bsSize="xsmall"
+              variant="danger"
+              size="sm"
               onClick={e => {
                 this.ovltg.hide();
                 window.location.assign(
@@ -114,8 +114,8 @@ class GatePushBtn extends React.Component {
               Yes
             </Button>
             <Button
-              bsStyle="warning"
-              bsSize="xsmall"
+              variant="warning"
+              size="sm"
               onClick={() => this.ovltg.hide()}
             >
               No
@@ -141,8 +141,8 @@ class GatePushBtn extends React.Component {
           }}
         >
           <Button
-            bsStyle="success"
-            bsSize="xsmall"
+            variant="success"
+            size="sm"
             onClick={e => this.transmitting(e, this.props.collection_id)}
           >
             <i className="fa fa-cloud" />

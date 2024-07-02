@@ -2,7 +2,11 @@ import React from 'react';
 import { ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { List } from 'immutable';
-import { ShareButton, MoveOrAssignButton, RemoveOrDeleteButton } from 'src/components/managingActions/ManagingActionButtons';
+import {
+  ShareButton,
+  MoveOrAssignButton,
+  RemoveOrDeleteButton
+} from 'src/components/managingActions/ManagingActionButtons';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -100,9 +104,7 @@ export default class ManagingActions extends React.Component {
   }
 
   onChange(state) {
-    const {
-       currentCollection
-    } = state;
+    const { currentCollection } = state;
     if (this.collectionChanged(state)) {
       this.setState({
         sharing_allowed: false,
@@ -112,10 +114,10 @@ export default class ManagingActions extends React.Component {
         hasSel: false,
         currentCollection
       });
-    }
-    else if (this.checkUIState(state)) {
-      const hasSel = elementNames(true).find(el => (
-        state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
+    } else if (this.checkUIState(state)) {
+      const hasSel = elementNames(true).some((el) => (
+        state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)
+      ));
       PermissionActions.fetchPermissionStatus(state);
       this.setState({
         ...upState(state), hasSel
@@ -154,7 +156,7 @@ export default class ManagingActions extends React.Component {
 
   checkUIState(state) {
     const genericNames = (this.state.genericEls && this.state.genericEls.map(el => el.name)) || [];
-    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan','cell_line'].concat(genericNames);
+    const elNames = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line'].concat(genericNames);
     const result = elNames.find(el => (this.state[el] && state[el] && (
       state[el].checkedIds !== this.state[el].checkedIds ||
       state[el].checkedAll !== this.state[el].checkedAll ||
@@ -203,10 +205,9 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
-    const {
-      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
-    } = this.state;
-    const { is_locked, is_shared, sharer, is_sync_to_me, label } = currentCollection;
+    const { customClass } = this.props;
+    const { currentCollection, sharing_allowed, deletion_allowed, hasSel } = this.state;
+    const { is_locked, label } = currentCollection;
     const isAll = is_locked && label === 'All';
     const noSel = !hasSel
 
@@ -217,27 +218,25 @@ export default class ManagingActions extends React.Component {
     const shareDisabled = noSel || !sharing_allowed;
 
     return (
-      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
-        <ButtonGroup>
-          <MoveOrAssignButton
-            assignDisabled={assignDisabled}
-            moveDisabled={moveDisabled}
-            onClick={this.handleButtonClick}
-            customClass={this.props.customClass}
-          />
-          <RemoveOrDeleteButton
-            removeDisabled={removeDisabled}
-            deleteDisabled={deleteDisabled}
-            onClick={this.handleButtonClick}
-            customClass={this.props.customClass}
-          />
-          <ShareButton
-            isDisabled={shareDisabled}
-            onClick={this.handleButtonClick}
-            customClass={this.props.customClass}
-          />
-        </ButtonGroup>
-      </div>
+      <ButtonGroup>
+        <MoveOrAssignButton
+          assignDisabled={assignDisabled}
+          moveDisabled={moveDisabled}
+          onClick={this.handleButtonClick}
+          customClass={customClass}
+        />
+        <RemoveOrDeleteButton
+          removeDisabled={removeDisabled}
+          deleteDisabled={deleteDisabled}
+          onClick={this.handleButtonClick}
+          customClass={customClass}
+        />
+        <ShareButton
+          isDisabled={shareDisabled}
+          onClick={this.handleButtonClick}
+          customClass={customClass}
+        />
+      </ButtonGroup>
     );
   }
 }

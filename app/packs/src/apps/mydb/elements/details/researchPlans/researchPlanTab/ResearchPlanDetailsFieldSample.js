@@ -105,7 +105,6 @@ class ResearchPlanDetailsFieldSample extends Component {
       <button
         type="button"
         style={{
-          cursor: 'pointer',
           color: '#003366',
           backgroundColor: 'transparent',
           border: '1px solid #003366',
@@ -114,6 +113,7 @@ class ResearchPlanDetailsFieldSample extends Component {
           outline: 'none',
         }}
         onClick={() => this.showSample()}
+        role="button"
       >
         {sample.title()}
       </button>

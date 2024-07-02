@@ -1,13 +1,14 @@
 import Aviator from 'aviator';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Glyphicon } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
 import ConfirmDeletionModal from 'src/apps/mydb/elements/details/samples/measurementsTab/ConfirmDeletionModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 class MeasurementsList extends Component {
   static propTypes = {
@@ -52,8 +53,8 @@ class MeasurementsList extends Component {
   renderDeleteButton(measurement) {
     return (
       <Button
-        bsStyle="danger"
-        bsSize="xsmall"
+        variant="danger"
+        size="sm"
         key={`Measurement${measurement.id}-DeleteButton`}
         onClick={() => { this.setState({ measurementToDelete: measurement }) }}
       >
@@ -70,7 +71,7 @@ class MeasurementsList extends Component {
           <a
             key={`Measurement${measurement.id}-SourceLink`}
             onClick={() => this.navigateToSource(measurement)}
-            style={{ cursor: 'pointer' }}
+            role="button"
           >
             {measurement.description}: {measurement.value}{measurement.unit}
           </a>

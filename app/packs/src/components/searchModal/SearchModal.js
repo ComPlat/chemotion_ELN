@@ -63,6 +63,7 @@ const SearchModal = () => {
   return (
     <Draggable handle=".handle">
       <Modal
+        centered
         show={searchStore.searchModalVisible}
         onHide={() => searchStore.handleCancel()}
         backdrop={false}

@@ -33,14 +33,14 @@ export default class ConfirmClose extends Component {
         Unsaved data will be lost.<br /> Close {el.type}?<br />
         <ButtonGroup>
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
+            variant="danger"
+            size="sm"
             onClick={DetailActions.confirmDelete}
           >Yes
           </Button>
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
+            variant="warning"
+            size="sm"
             onClick={() => this.setState({ showTooltip: false })}
           >No
           </Button>
@@ -55,12 +55,11 @@ export default class ConfirmClose extends Component {
     };
 
     return (
-      <span>
+      <>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeSample">Close {el.type}</Tooltip>}>
           <Button
-            bsStyle="danger"
-            bsSize="xsmall"
-            className="button-right"
+            variant="danger"
+            size="xxsm"
             onClick={() => this.onClickButton(el)}
             ref={(button) => { this.target = button; }}
           >
@@ -74,7 +73,7 @@ export default class ConfirmClose extends Component {
         >
           { popover }
         </Overlay>
-      </span>
+      </>
     );
   }
 }

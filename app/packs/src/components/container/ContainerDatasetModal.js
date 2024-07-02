@@ -66,7 +66,7 @@ export default class ContainerDatasetModal extends Component {
 
     const AttachmentsButton = (
       <Button
-        bsStyle={mode === 'attachments' ? 'info' : 'default'}
+        variant={mode === 'attachments' ? 'info' : 'light'}
         style={{
           pointerEvents: 'none',
           backgroundColor: mode !== 'attachments' ? '#E8E8E8' : undefined,
@@ -81,7 +81,7 @@ export default class ContainerDatasetModal extends Component {
 
     const MetadataButton = (
       <Button
-        bsStyle={mode === 'metadata' ? 'info' : 'default'}
+        variant={mode === 'metadata' ? 'info' : 'light'}
         onClick={() => this.handleSwitchMode('metadata')}
         style={{
           pointerEvents: 'none',
@@ -99,7 +99,6 @@ export default class ContainerDatasetModal extends Component {
       <div
         role="button"
         tabIndex={0}
-        style={{ cursor: 'pointer' }}
         onClick={() => {
           if (mode === 'attachments') {
             this.handleSwitchMode('metadata');
@@ -121,8 +120,9 @@ export default class ContainerDatasetModal extends Component {
     if (show) {
       return (
         <Modal
+          centered
           show={show}
-          bsSize="large"
+          size="lg"
           dialogClassName="attachment-modal"
           onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
@@ -156,7 +156,8 @@ export default class ContainerDatasetModal extends Component {
                       className="fa fa-pencil"
                       aria-hidden="true"
                       onClick={this.toggleNameEditing}
-                      style={{ cursor: 'pointer', fontSize: '.8em', color: '#0275d8' }}
+                      style={{ fontSize: '.8em', color: '#0275d8' }}
+                      role="button"
                     />
                     )}
                   </div>
@@ -211,7 +212,7 @@ export default class ContainerDatasetModal extends Component {
                 Discard Changes
               </Button> */}
               <Button
-                bsStyle="primary"
+                variant="primary"
                 style={{ alignSelf: 'center', marginLeft: 'auto' }}
                 onClick={this.handleSave}
               >

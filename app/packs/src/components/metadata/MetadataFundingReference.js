@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
+import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
 import Select from 'react-select3';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 import { funderIdentifierTypes } from 'src/components/staticDropdownOptions/radar/funderIdentifierTypes'
 
@@ -87,7 +88,7 @@ const MetadataFundingReference = ({ fundingReference, index, onChange, onRemove 
           </FormGroup>
         </Col>
         <Col sm={12}>
-          <Button bsStyle="danger" bsSize="small" onClick={() => onRemove('fundingReferences', index)}>
+          <Button variant="danger" size="sm" onClick={() => onRemove('fundingReferences', index)}>
             Remove funding reference
           </Button>
         </Col>

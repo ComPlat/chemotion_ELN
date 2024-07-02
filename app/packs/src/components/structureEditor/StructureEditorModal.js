@@ -5,9 +5,7 @@ import {
   Button,
   ButtonToolbar,
   Modal,
-  Panel,
   FormGroup,
-  ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -19,6 +17,8 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -170,7 +170,7 @@ EditorList.propTypes = {
 
 const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
   (
-    <Panel bsStyle="info">
+    <Panel variant="info">
       <Panel.Heading>
         <Panel.Title>
           Parents/Descendants will not be changed!
@@ -180,10 +180,10 @@ const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
         <p>This sample has parents or descendants, and they will not be changed.</p>
         <p>Are you sure?</p>
         <br />
-        <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
+        <Button variant="danger" onClick={handleCancelBtn} className="g-marginLeft--10">
           Cancel
         </Button>
-        <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">
+        <Button variant="warning" onClick={hideWarning} className="g-marginLeft--10">
           Continue Editing
         </Button>
       </Panel.Body>
@@ -345,6 +345,7 @@ export default class StructureEditorModal extends React.Component {
     return (
       <div>
         <Modal
+          centered
           dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
           animation
           show={this.state.showModal}
@@ -369,11 +370,11 @@ export default class StructureEditorModal extends React.Component {
             {useEditor}
             <div style={buttonToolStyle}>
               <ButtonToolbar>
-                <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
+                <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
                   {cancelBtnText}
                 </Button>
                 {!handleSaveBtn ? null : (
-                  <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
+                  <Button variant="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }}>
                     {submitBtnText}
                   </Button>
                 )}

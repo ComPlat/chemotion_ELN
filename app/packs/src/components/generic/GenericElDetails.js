@@ -4,7 +4,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Panel,
   Button,
   ButtonToolbar,
   ListGroupItem,
@@ -38,6 +37,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -433,9 +433,8 @@ export default class GenericElDetails extends Component {
           overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}
         >
           <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
+            variant="info"
+            size="sm"
             onClick={() => this.props.toggleFullScreen()}
           >
             <i className="fa fa-expand" aria-hidden="true" />
@@ -446,9 +445,8 @@ export default class GenericElDetails extends Component {
           overlay={<Tooltip id="saveScreen">Save</Tooltip>}
         >
           <Button
-            bsStyle="warning"
-            bsSize="xsmall"
-            className="button-right"
+            variant="warning"
+            size="sm"
             onClick={() => this.handleSubmit()}
             style={{ display: saveBtnDisplay }}
           >
@@ -502,7 +500,7 @@ export default class GenericElDetails extends Component {
     return (
       <Panel
         className="panel-detail"
-        bsStyle={genericEl.isPendingToSave ? 'info' : 'primary'}
+        variant={genericEl.isPendingToSave ? 'info' : 'primary'}
       >
         <Panel.Heading>{this.header(genericEl)}</Panel.Heading>
         <Panel.Body>
@@ -526,13 +524,13 @@ export default class GenericElDetails extends Component {
           <hr />
           <ButtonToolbar>
             <Button
-              bsStyle="primary"
+              variant="primary"
               onClick={() => DetailActions.close(genericEl, true)}
             >
               Close
             </Button>
             <Button
-              bsStyle="warning"
+              variant="warning"
               onClick={() => this.handleSubmit()}
               style={saveBtnDisplay}
             >

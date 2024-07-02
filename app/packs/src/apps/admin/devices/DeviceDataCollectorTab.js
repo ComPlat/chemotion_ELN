@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  FormControl, FormGroup, ControlLabel, Form, InputGroup, Tooltip, OverlayTrigger, Button, Checkbox
+  FormControl, FormGroup, Form, InputGroup, Tooltip, OverlayTrigger, Button
 } from 'react-bootstrap';
 import Select from 'react-select3';
 import Clipboard from 'clipboard';
@@ -9,6 +9,8 @@ import { startsWith, endsWith } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 const DeviceDataCollectorTab = () => {
   const devicesStore = useContext(StoreContext).devices;
@@ -80,11 +82,11 @@ const DeviceDataCollectorTab = () => {
           {
             localCollectorValues.map((c, i) => (
               <div key={`list-collector-${i}`}>
-                <FormGroup bsSize="small">
+                <FormGroup size="sm">
                   <InputGroup>
                     <InputGroup.Button>
                       <OverlayTrigger placement="right" overlay={tipCopyClipboard}>
-                        <Button bsSize="xsmall" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
+                        <Button size="sm" active className="clipboardBtn" data-clipboard-target={`#copy-input-${i}`} >
                           <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>

@@ -1,15 +1,13 @@
 import Immutable from 'immutable';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {
-  PanelGroup,
-  Panel
-} from 'react-bootstrap';
 
 import PreviewFileZoomPan from 'src/apps/chemscanner/components/PreviewFileZoomPan';
 import ScannedItemsContainer from 'src/apps/chemscanner/containers/ScannedItemsContainer';
 
 import DeleteBtn from 'src/apps/chemscanner/components/DeleteBtn';
+import Panel from 'src/components/legacyBootstrap/Panel'
+import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const MainContent = (props) => {
   const { files, modal, removeFile } = props;

@@ -1,5 +1,5 @@
 import React, { useEffect, useContext } from 'react';
-import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Panel, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Button, ButtonToolbar, ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import { togglePanel, handleClear, showErrorMessage, handleSearch, panelVariables } from './SearchModalFunctions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -8,6 +8,7 @@ import DetailSearch from './DetailSearch';
 import SearchResult from './SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Panel from 'src/components/legacyBootstrap/Panel'
 
 const TextSearch = () => {
   const elnElements = ['cell_line', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
@@ -175,13 +176,13 @@ const TextSearch = () => {
               </div>
             </div>
             <ButtonToolbar>
-              <Button bsStyle="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
+              <Button variant="warning" id="advanced-cancel-button" onClick={() => searchStore.handleCancel()}>
                 Cancel
               </Button>
-              <Button bsStyle="info" onClick={() => handleClear(searchStore)}>
+              <Button variant="info" onClick={() => handleClear(searchStore)}>
                 Reset
               </Button>
-              <Button bsStyle="primary" id="advanced-search-button"
+              <Button variant="primary" id="advanced-search-button"
                 onClick={() => handleSearch(searchStore, UIStore.getState())} style={{ marginRight: '20px' }} >
                 Search
               </Button>

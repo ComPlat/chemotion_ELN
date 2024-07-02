@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Col, ControlLabel, FormControl, FormGroup, Row } from 'react-bootstrap';
+import { Button, Col, FormControl, FormGroup, Row } from 'react-bootstrap';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const MetadataRightsHolder = ({ rightsHolder, index, onChange, onRemove }) => (
   <div>
@@ -15,7 +16,7 @@ const MetadataRightsHolder = ({ rightsHolder, index, onChange, onRemove }) => (
         </FormGroup>
       </Col>
       <Col sm={1}>
-        <Button bsStyle="danger" onClick={() => onRemove('rightsHolders', index)}>
+        <Button variant="danger" onClick={() => onRemove('rightsHolders', index)}>
           <i className="fa fa-trash-o" />
         </Button>
       </Col>

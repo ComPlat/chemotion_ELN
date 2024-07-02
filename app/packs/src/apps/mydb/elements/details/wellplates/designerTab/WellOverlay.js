@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Button, Popover, Overlay, ControlLabel, FormGroup, FormControl, Col, InputGroup, ButtonGroup
+  Button, Popover, Overlay, FormGroup, FormControl, Col, InputGroup, ButtonGroup
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
@@ -8,6 +8,7 @@ import Select from 'react-select';
 import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
 
 const handleSampleClick = (sample) => {
   const { params, uri } = Aviator.getCurrentRequest();
@@ -23,7 +24,10 @@ const sampleName = (sample) => { /* eslint-disable camelcase */
       return sampleNameLabel;
     }
     return (
-      <a onClick={() => handleSampleClick(sample)} style={{ cursor: 'pointer' }}>
+      <a
+        onClick={() => handleSampleClick(sample)} 
+        role="button"
+      >
         {sampleNameLabel}
       </a>
     );
@@ -49,7 +53,7 @@ const renderWellContent = (well, removeSampleFromWell) => {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     moleculeName = sample.molecule.iupac_name;
     removeButton = (
-      <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
+      <Button className="pull-right" size="sm" variant="danger" onClick={() => removeSampleFromWell(well)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -129,7 +133,7 @@ const content = (
                   disabled
                   placeholder="Value"
                 />
-                <InputGroup.Addon disabled>{readout.unit}</InputGroup.Addon>
+                <InputGroup.Text disabled>{readout.unit}</InputGroup.Text>
               </InputGroup>
             </div>
           ))}
@@ -154,7 +158,7 @@ const content = (
           </Col>
           <Col sm={9} style={{ marginLeft: '35px', width: '65%' }}>
             <InputGroup>
-              <InputGroup.Addon style={bcStyle} />
+              <InputGroup.Text style={bcStyle} />
               <FormControl
                 className="input-sm"
                 type="text"
@@ -179,7 +183,7 @@ const title = (handleClose) => (
   <div>
     Well Details
     <span className="pull-right" style={{ marginRight: -8, marginTop: -3 }}>
-      <Button bsSize="xsmall" onClick={() => handleClose()}>
+      <Button size="sm" onClick={() => handleClose()}>
         <i className="fa fa-times" />
       </Button>
     </span>
