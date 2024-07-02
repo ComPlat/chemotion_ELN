@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger } from 'react-bootstrap';
+import { Button, Tooltip, Overlay, OverlayTrigger } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -31,20 +31,21 @@ export default class ConfirmClose extends Component {
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
         Unsaved data will be lost.<br /> Close {el.type}?<br />
-        <ButtonGroup>
+        <div className='d-inline-block'>
           <Button
             variant="danger"
-            size="sm"
+            size="xxsm"
             onClick={DetailActions.confirmDelete}
+            className='me-1'
           >Yes
           </Button>
           <Button
             variant="warning"
-            size="sm"
+            size="xxsm"
             onClick={() => this.setState({ showTooltip: false })}
           >No
           </Button>
-        </ButtonGroup>
+        </div>
       </Tooltip>
     );
     const sharedProps = {
@@ -59,7 +60,7 @@ export default class ConfirmClose extends Component {
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="closeSample">Close {el.type}</Tooltip>}>
           <Button
             variant="danger"
-            size="xxsm"
+            size="xsm"
             onClick={() => this.onClickButton(el)}
             ref={(button) => { this.target = button; }}
           >

@@ -37,6 +37,7 @@ export default class DeleteComment extends Component {
           variant="danger"
           size="sm"
           onClick={() => this.handleModalShow(true)}
+          className='me-1'
         >
           <i className="fa fa-trash-o" />
         </Button>
@@ -50,8 +51,8 @@ export default class DeleteComment extends Component {
             <p>Are you sure you want to delete?</p>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">Close</Button>
-            <Button variant="success" onClick={this.handleDelete} className="pull-left">Delete</Button>
+            <Button variant="secondary" onClick={this.handleModalClose} className="pull-left">Close</Button>
+            <Button variant="danger" onClick={this.handleDelete} className="pull-left">Delete</Button>
           </Modal.Footer>
         </Modal>
       </span>

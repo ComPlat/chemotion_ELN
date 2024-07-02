@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar, FormControl, Modal, Table
+  Button, Modal, Table, Form
 } from 'react-bootstrap';
 import Draggable from 'react-draggable';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
@@ -19,7 +19,6 @@ import {
   selectCurrentUser,
 } from 'src/utilities/CommentHelper';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class CommentModal extends Component {
   constructor(props) {
@@ -167,18 +166,20 @@ export default class CommentModal extends Component {
     if (sectionComments?.length > 0) {
       return sectionComments.map((comment) => (
         <tr key={comment.id}>
-          <td width="20%">
+          <td className='w-20'>
             <span className="text-info">
               {formatDate(comment.created_at)}
             </span>
           </td>
-          <td width="35%">{comment.content}</td>
-          <td width="15%">{comment.submitter}</td>
-          <td width="15%">
-            <ButtonToolbar>
+          <td className='w-35'>{comment.content}</td>
+          <td className='w-15'>{comment.submitter}</td>
+          <td className='w-15'>
+            <div className='d-inline-block'>
               <Button
                 disabled={this.disableEditComment(comment)}
                 onClick={() => this.markCommentResolved(comment)}
+                size='sm'
+                className='me-1'
               >
                 {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
               </Button>
@@ -191,6 +192,7 @@ export default class CommentModal extends Component {
                       variant="primary"
                       onClick={() => this.editComment(comment)}
                       disabled={this.disableEditComment(comment)}
+                      className='me-1'
                     >
                       <i className="fa fa-edit" />
                     </Button>
@@ -206,9 +208,9 @@ export default class CommentModal extends Component {
                     />
                   ) : null
               }
-            </ButtonToolbar>
+            </div>
           </td>
-          <td width="15%">{comment.resolver_name}</td>
+          <td className='w-15'>{comment.resolver_name}</td>
         </tr>
       ));
     }
@@ -235,7 +237,7 @@ export default class CommentModal extends Component {
           dialogClassName="comment-modal"
           show={showCommentModal}
           onHide={() => CommentActions.toggleCommentModal(false)}
-          size="lg"
+          size="xl"
         >
           <Modal.Header closeButton>
             <Modal.Title>
@@ -249,11 +251,11 @@ export default class CommentModal extends Component {
                 <Table striped bordered hover>
                   <thead>
                   <tr>
-                    <th width="20%">Date</th>
-                    <th width="35%">Comment</th>
-                    <th width="15%">From User</th>
-                    <th width="17%">Actions</th>
-                    <th width="17%">Resolved By</th>
+                      <th className=''>Date</th>
+                      <th className='w-35'>Comment</th>
+                      <th className='w-15'>From User</th>
+                      <th className='w-17'>Actions</th>
+                      <th className='w-17'>Resolved By</th>
                   </tr>
                   </thead>
                   <tbody>{this.renderCommentTable()}</tbody>
@@ -265,11 +267,7 @@ export default class CommentModal extends Component {
                   ? (
                     <Button onClick={this.toggleCollapse} id="detailsBtn">
                       <span>Details </span>
-                      <Glyphicon
-                        className="comment-details"
-                        glyph={collapseIcon}
-                        title="Collapse/Uncollapse"
-                      />
+                      <i class="fa-solid fa-angle-down"></i>
                     </Button>
                   )
                   : null
@@ -292,22 +290,27 @@ export default class CommentModal extends Component {
               }
             </div>
 
-            <FormControl
-              componentClass="textarea"
+            <Form.Control
+              as="textarea"
+              rows={5}
               autoFocus
-              style={{
-                height: '100px',
-                marginBottom: '20px',
-              }}
               value={commentBody}
-              ref={(input) => { this.nameInput = input; }}
-              inputRef={(m) => {
+              // ref={(input) => { this.nameInput = input; }}
+              ref={(m) => {
                 this.commentInput = m;
               }}
               onChange={this.handleInputChange}
             />
-            <ButtonToolbar>
-              <Button onClick={() => CommentActions.toggleCommentModal(false)}>
+
+
+          </Modal.Body>
+          <Modal.Footer className='modal-footer border-0'>
+            <div className='d-inline-block'>
+              <Button
+                variant='secondary'
+                onClick={() => CommentActions.toggleCommentModal(false)}
+                className='me-1'
+              >
                 Close
               </Button>
               <Button
@@ -323,8 +326,8 @@ export default class CommentModal extends Component {
               >
                 {isEditing ? 'Update' : 'Save'}
               </Button>
-            </ButtonToolbar>
-          </Modal.Body>
+            </div>
+          </Modal.Footer>
         </Modal>
       </Draggable>
     );
