@@ -10,7 +10,6 @@ import QrReader from 'react-qr-reader';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -29,6 +28,7 @@ export default class ScanCodeButton extends React.Component {
     this.startBarcodeScan = this.startBarcodeScan.bind(this);
     this.startQrCodeScan = this.startQrCodeScan.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.handleScan = this.handleScan.bind(this);
   }
 
   componentDidMount() {
@@ -91,19 +91,6 @@ export default class ScanCodeButton extends React.Component {
     this.setState({ showQrReader: true });
   }
 
-  qrReader(state) {
-    if (state.showQrReader === true) {
-      return (
-        <QrReader
-          previewStyle={{ width: 550 }}
-          onScan={this.handleScan.bind(this)}
-          onError={this.handleError}
-        />
-      );
-    }
-    return '';
-  }
-
   checkJSONResponse(json) {
     if (json.error) {
       var error = new Error(json.error);
@@ -164,43 +151,50 @@ export default class ScanCodeButton extends React.Component {
   }
 
   scanModal() {
-    if (this.state.showModal === true) {
-      return (
-        <Modal centered show={this.state.showModal} onHide={this.close}>
-          <Modal.Header closeButton>
-            <Modal.Title>Scan barcode or QR code</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
-              <FormGroup>
-                <FormControl
-                  autoFocus
-                  type="text"
-                  inputRef={(m) => { this.codeInput = m; }}
-                  onKeyPress={this.handleKeyPress}
-                />
-              </FormGroup>
-              <input
-                type="button"
-                style={{ display: 'none' }}
-                ref={(scanInput) => { this.scanInput = scanInput; }}
-                onClick={() => this.handleScan()}
+    const { showModal, showQrReader } = this.state;
+    return (
+      <Modal centered show={showModal} onHide={this.close}>
+        <Modal.Header closeButton>
+          <Modal.Title>Scan barcode or QR code</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
+            <FormGroup>
+              <FormControl
+                autoFocus
+                type="text"
+                inputRef={(m) => { this.codeInput = m; }}
+                onKeyPress={this.handleKeyPress}
               />
+            </FormGroup>
+            <input
+              type="button"
+              style={{ display: 'none' }}
+              ref={(scanInput) => { this.scanInput = scanInput; }}
+              onClick={() => this.handleScan()}
+            />
 
-              <div id="barcode-scanner" {...this.state.showQrReader && { style: { display: 'none' } }}></div>
-              {this.qrReader(this.state)}
-            </div>
-            <br />
-            {this.scanAlert()}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
-            <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-    return '';
+            {showQrReader
+              ? (
+                <QrReader
+                  previewStyle={{ width: 550 }}
+                  onScan={this.handleScan}
+                  onError={this.handleError}
+                />
+              )
+              : (
+                <div id="barcode-scanner" />
+              )}
+          </div>
+          <br />
+          {this.scanAlert()}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
+          <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
+        </Modal.Footer>
+      </Modal>
+    );
   }
 
   scanAlert() {
@@ -239,7 +233,7 @@ export default class ScanCodeButton extends React.Component {
 
     const title = (
       <span className="fa-stack" style={{ height: 16 }}>
-        <i className="fa fa-barcode fa-stack-1x" style={{ marginTop: -8 }}/>
+        <i className="fa fa-barcode fa-stack-1x" style={{ marginTop: -8 }} />
         <i className="fa fa-search fa-stack-1x" style={{ left: 7, marginTop: -8 }} />
       </span>
     );
@@ -253,12 +247,11 @@ export default class ScanCodeButton extends React.Component {
           title={title}
           onClick={this.open}
         >
-          {menuItems.map(e => (
+          {menuItems.map((e) => (
             <Dropdown.Item
               key={e.key}
               disabled={disabledPrint}
-              onSelect={(eventKey, event) => {
-                event.stopPropagation();
+              onClick={() => {
                 Utils.downloadFile({ contents: e.contents });
               }}
             >
@@ -272,7 +265,6 @@ export default class ScanCodeButton extends React.Component {
     );
   }
 }
-
 
 ScanCodeButton.propTypes = {
   customClass: PropTypes.string,
