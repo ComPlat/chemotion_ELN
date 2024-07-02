@@ -16,13 +16,15 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
   let(:expected_process_step_hash) do
     {
       reaction_process_id: anything,
-      actions: [],
+      activities: [],
+      reaction_process_vessel: anything,
       select_options: {
         added_materials: [],
         removable_materials: { 'ADDITIVE' => [], 'MEDIUM' => [], 'SOLVENT' => [], 'DIVERSE_SOLVENT' => [] },
         transferable_samples: [],
-        transferable_to: array_including(hash_including({ value: reaction_process_step.id }.deep_stringify_keys)),
+        transfer_targets: array_including(hash_including({ value: reaction_process_step.id }.deep_stringify_keys)),
         mounted_equipment: [],
+        save_sample_origins: [],
       },
     }.deep_stringify_keys
   end
@@ -33,6 +35,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
 
   it 'returns reaction_process_step' do
     get_process_step_request
+    puts(parsed_json_response['reaction_process_step'])
     expect(parsed_json_response['reaction_process_step']).to include expected_process_step_hash
   end
 
@@ -85,7 +88,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
     end
 
     it 'transferable_to' do
-      expect(parsed_select_options['transferable_to']).to include(
+      expect(parsed_select_options['transfer_targets']).to include(
         hash_including({ value: reaction_process_step.id, saved_sample_ids: [saved_sample.id] }.stringify_keys),
         hash_including({ value: other_process_step.id, saved_sample_ids: [] }.stringify_keys),
       )
