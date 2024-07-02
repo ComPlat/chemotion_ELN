@@ -12,8 +12,6 @@ import ModalExportCollection from 'src/components/contextActions/ModalExportColl
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
 import { elementShowOrNew } from 'src/utilities/routesUtils.js';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
   const showRadar = UIStore.getState().hasRadar ? (
@@ -34,14 +32,14 @@ function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
         Publish current collection via RADAR
       </Dropdown.Item>
     </>
-  ) : <span />;
+  ) : null;
 
   return (
     <Dropdown as={ButtonGroup} id="export-dropdown">
-      <Dropdown.Toggle  variant="light" className={customClass}>
-        <i className='fa fa-download'/>
+      <Dropdown.Toggle variant="light" className={customClass}>
+        <i className="fa fa-download"/>
         &nbsp;
-        <i className='fa fa-upload'/>
+        <i className="fa fa-upload"/>
       </Dropdown.Toggle>
       <Dropdown.Menu>
         <Dropdown.Item
