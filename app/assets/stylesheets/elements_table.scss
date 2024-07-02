@@ -37,9 +37,8 @@ th.drag {
   margin-top: 11px;
 }
 
-.collection-overlay > .popover-content {
+.scrollable-popover > .popover-body {
   overflow-y: scroll;
-  padding: 0px !important;
 }
 
 .fa-user-secret {
