@@ -1,11 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { FormGroup, FormControl, Button } from 'react-bootstrap';
+import { FormGroup, FormControl, Form, Button, Container, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+
 
 export default class MessagePublish extends React.Component {
   constructor(props) {
@@ -62,37 +61,38 @@ export default class MessagePublish extends React.Component {
     const { selectedChannel, channels } = this.state;
 
     return (
-      <div>
-        <Panel style={{ height: 'calc(100vh - 20px)' }}>
-          <Panel.Body>
-            <div className="col-md-3">
-              <ControlLabel>Channel</ControlLabel>
+        <Row className="flex-grow-1 d-flex">
+          <Col md={3} className="d-flex flex-column">
+            <Form.Group controlId="channelSelect" className="flex-grow-1 d-flex flex-column m-3">
+              <Form.Label className='fw-bold fs-4'>Channel</Form.Label>
               <Select
                 value={selectedChannel}
                 onChange={this.handleChannelChange}
                 options={channels}
                 placeholder="Select your channel"
                 autoFocus
+                className='mt-1'
               />
-            </div>
-            <div className="col-md-9">
-              <form>
-                <FormGroup controlId="formControlsTextarea">
-                  <ControlLabel>Message</ControlLabel>
-                  <FormControl componentClass="textarea" placeholder="message..." rows="20" inputRef={(ref) => { this.myMessage = ref; }} />
-                </FormGroup>
-                <Button
-                  variant="primary"
-                  onClick={() => this.messageSend()}
+            </Form.Group>
+          </Col>
+          <Col md={9} className="d-flex flex-column">
+            <Form>
+              <FormGroup controlId="formControlsTextarea" className="flex-grow-1 d-flex flex-column m-3">
+                <Form.Label className='fw-bold fs-4'>Message</Form.Label>
+                <FormControl as="textarea" placeholder="message..." rows="20" ref={(ref) => { this.myMessage = ref; }} className='fs-4 mt-1' />
+              </FormGroup>
+              <Button
+                variant="primary"
+                onClick={() => this.messageSend()}
+                className='mt-3 ms-3'
+                size='lg'
                 >
-                  Publish&nbsp;
-                  <i className="fa fa-paper-plane" />
-                </Button>
-              </form>
-            </div>
-          </Panel.Body>
-        </Panel>
-      </div>
+              Publish
+              <i className="fa fa-paper-plane ms-1" />
+              </Button>
+            </Form>
+          </Col>
+      </Row>
     );
   }
 }
