@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Nav, NavItem } from 'react-bootstrap';
+import { Row, Col, Nav, NavItem, Container } from 'react-bootstrap';
 import AdminNavigation from 'src/apps/admin/AdminNavigation';
 import Notifications from 'src/components/Notifications';
 import AdminDashboard from 'src/apps/admin/AdminDashboard';
@@ -20,7 +20,6 @@ class AdminHome extends React.Component {
     this.state = {
       showTree: true,
       pageIndex: 0,
-      contentClassName: 'small-col main-content',
     };
     this.toggleTree = this.toggleTree.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
@@ -30,167 +29,93 @@ class AdminHome extends React.Component {
     const { showTree } = this.state;
     this.setState({
       showTree: !showTree,
-      contentClassName: showTree ? 'small-col full-main' : 'small-col main-content'
     });
   }
 
   handleSelect(pageIndex) {
     this.setState({
-      pageIndex
+      pageIndex: Number(pageIndex)
     });
   }
-
 
   mainContent() {
     const { pageIndex } = this.state;
     if (pageIndex === 0) {
-      return this.renderDashboard();
+      return this.renderContent(<AdminDashboard />);
     } else if (pageIndex === 1) {
-      return this.renderUserManagement();
+      return this.renderContent(<UserManagement />);
     } else if (pageIndex === 2) {
-      return this.renderMessagePublish();
+      return this.renderContent(<MessagePublish />);
     } else if (pageIndex === 4) {
-      return this.renderGroupMgnt();
+      return this.renderContent(<GroupsDevices />);
     } else if (pageIndex === 5) {
-      return this.renderOlsTerms();
+      return this.renderContent(<OlsTerms />);
     } else if (pageIndex === 7) {
       return this.renderContent(<MatrixManagement />);
     } else if (pageIndex === 8) {
-      return this.renderTextTemplates();
+      return this.renderContent(<TextTemplateContainer />);
     } else if (pageIndex === 9) {
-      return this.renderDevices();
+      return this.renderContent(<DevicesList />);
     } else if (pageIndex === 12) {
-      return this.renderTemplateManagement();
+      return this.renderContent(<TemplateManagement />);
     } else if (pageIndex === 13) {
-      return this.renderDelayedJobs();
+      return this.renderContent(<DelayedJobs />);
     } else if (pageIndex === 14) {
-      return this.renderChemSpectraLayouts();
+      return this.renderContent(<ChemSpectraLayouts />);
     }
-    return (<div />);
+    return (null);
   }
 
-  tree() {
+  renderTree() {
     const { showTree, pageIndex } = this.state;
     if (!showTree) {
-      return <div />;
+      return null;
     }
 
     return (
-      <div>
-        <Col className="small-col collec-tree">
-          <Nav variant="pills" stacked activeKey={pageIndex} onSelect={this.handleSelect}>
-            <NavItem eventKey={0}>Dashboard</NavItem>
-            <NavItem eventKey={1}>User Management</NavItem>
-            <NavItem eventKey={9}>Devices</NavItem>
-            <NavItem eventKey={4}>Groups</NavItem>
-            <NavItem eventKey={7}>UI features</NavItem>
-            <NavItem eventKey={8}>Text Templates</NavItem>
-            <NavItem eventKey={2}>Message Publish</NavItem>
-            <NavItem eventKey={5}>Load OLS Terms</NavItem>
-            {/* <NavItem eventKey={12}>Report-template Management</NavItem> */}
-            <NavItem eventKey={13}>Delayed Jobs </NavItem>
-            <NavItem eventKey={14}>ChemSpectra Layouts </NavItem>
-          </Nav>
-        </Col>
-      </div>
-    );
-  }
+      <Nav className="flex-column fs-4" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
+        <NavItem>
+          <Nav.Link eventKey={0}>Dashboard</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={1}>User Management</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={9}>Devices</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={4}>Groups</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={7}>UI features</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={8}>Text Templates</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={2}>Message Publish</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={5}>Load OLS Terms</Nav.Link>
+        </NavItem>
+        {/* <NavItem>
+          <Nav.Link eventKey={12}>Report-template Management</Nav.Link>
+        </NavItem> */}
+        <NavItem>
+          <Nav.Link eventKey={13}>Delayed Jobs</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={14}>ChemSpectra Layouts</Nav.Link>
+        </NavItem>
+      </Nav>
 
-  renderDashboard() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <AdminDashboard />
-      </Col>
-    );
-  }
-
-  renderUserManagement() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <UserManagement />
-      </Col>
-    );
-  }
-
-  renderMessagePublish() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <MessagePublish />
-      </Col>
-    );
-  }
-
-  renderGroupMgnt() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <GroupsDevices />
-      </Col>
-    );
-  }
-
-  renderOlsTerms() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <OlsTerms />
-      </Col>
-    );
-  }
-
-  renderTextTemplates() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <TextTemplateContainer />
-      </Col>
     );
   }
 
   renderContent(component) {
-    const { contentClassName } = this.state;
     return (
-      <Col className={contentClassName} >
+      <Col >
         {component}
-      </Col>
-    );
-  }
-
-  renderDelayedJobs() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <DelayedJobs />
-      </Col>
-    );
-  }
-
-  renderTemplateManagement() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <TemplateManagement />
-      </Col>
-    );
-  }
-
-  renderChemSpectraLayouts() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName}>
-        <ChemSpectraLayouts />
-      </Col>
-    );
-  }
-
-  renderDevices() {
-    const { contentClassName } = this.state;
-    return (
-      <Col className={contentClassName} >
-        <DevicesList />
       </Col>
     );
   }
@@ -198,18 +123,37 @@ class AdminHome extends React.Component {
   render() {
     return (
       <div>
-        <Grid fluid>
-          <Row className="card-navigation">
+        <Container fluid>
+          <Row className="mb-3">
             <AdminNavigation toggleTree={this.toggleTree} />
           </Row>
-          <Row className="card-content container-fluid" >
-            {this.tree()}
-            {this.mainContent()}
+          <Row className='flex-grow-1'>
+            <Col
+              xs={2}
+              className={`sidebar ${this.state.showTree ? '' : 'collapsed'}`}
+              style={{
+                overflow: 'hidden',
+                maxWidth: this.state.showTree ? '25rem' : '0',
+                transition: 'none'
+              }}
+            >
+              {this.state.showTree && this.renderTree()}
+            </Col >
+            <Col className="flex-grow-1"
+              style={{
+                transition: 'none',
+                width: this.state.showTree ? 'calc(100% - 25rem)' : '100%',
+                maxWidth: this.state.showTree ? 'calc(100% - 25rem)' : '100%',
+              }}>
+              {this.mainContent()}
+            </Col>
           </Row>
           <Row>
-            <Notifications />
+            <Col>
+              <Notifications />
+            </Col>
           </Row>
-        </Grid>
+        </Container>
       </div>
     );
   }
