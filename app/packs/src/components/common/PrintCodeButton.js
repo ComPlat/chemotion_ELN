@@ -44,6 +44,7 @@ const PrintCodeButton = ({
           disabled={element.isNew}
           onClick={() => Utils.downloadFile({ contents: menuItems[0].contents })}
           size="xxsm"
+          className='me-1'
           >
             <i className="fa fa-barcode fa-lg" />
         </Button>
