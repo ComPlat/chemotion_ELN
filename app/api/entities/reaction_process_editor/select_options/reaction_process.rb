@@ -10,12 +10,7 @@ module Entities
             vessel_preparations: SelectOptions::Vessels.preparations,
             step_name_suggestions: step_name_suggestions(reaction_process),
             activity_type_equipment: SelectOptions::Equipment.per_activity_type,
-            purify: {
-              crystallization: { modes: SelectOptions::Custom.crystallization_modes },
-              extraction: { phases: SelectOptions::Custom.extraction_phases },
-              filtration: { modes: SelectOptions::Custom.filtration_modes },
-              chromatography: SelectOptions::Chromatography.select_options,
-            },
+            purify: SelectOptions::Purify.select_options(reaction_process),
             condition_additional_information: SelectOptions::Conditions.additional_information,
             addition_speed_types: SelectOptions::Custom.addition_speed_types,
             materials: SelectOptions::Materials.all_for(reaction_process),
@@ -24,14 +19,15 @@ module Entities
             motion_types: SelectOptions::Custom.motion_types,
             remove_sample_types: SelectOptions::Samples.remove_sample_types,
             save_sample_types: SelectOptions::Samples.save_sample_types,
+            save_sample_origin_types: SelectOptions::Samples.save_sample_origin_types,
             analysis_types: SelectOptions::Custom.analysis_types,
           }
         end
 
         def self.sample_preparation_options(reaction_process)
           {
-            prepared_samples: samples_options(prepared_samples(reaction_process), 'SAMPLE'),
-            unprepared_samples: samples_options(unprepared_samples(reaction_process), 'SAMPLE'),
+            prepared_samples: samples_info_options(prepared_samples(reaction_process), 'SAMPLE'),
+            unprepared_samples: samples_info_options(unprepared_samples(reaction_process), 'SAMPLE'),
             equipment: SelectOptions::Equipment.all,
             preparation_types: SelectOptions::Samples.preparation_types,
           }

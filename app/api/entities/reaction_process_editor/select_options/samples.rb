@@ -10,6 +10,12 @@ module Entities
            { value: 'DIVERSE_SOLVENT', label: 'Diverse Solvent' }]
         end
 
+        def self.save_sample_origin_types
+          [{ value: 'ALL', label: 'All' },
+           { value: 'SPLIT', label: 'Split' },
+           { value: 'PURIFICATION', label: 'Purification' }]
+        end
+
         def self.save_sample_types
           [{ value: 'PURE', label: 'Pure' },
            { value: 'CRUDE', label: 'Crude' },
