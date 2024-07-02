@@ -8,10 +8,16 @@
   }
 }
 
+.suggestion-search-container {
+  position: absolute;
+  margin-top: -15px;
+  z-index: 20;
+}
+
 .chemotion-search {
   div > div > div:nth-child(2) {
     position: relative;
-    z-index: 2;
+    z-index: 20;
   }
 }
 
@@ -19,6 +25,13 @@
   .list-group-item-heading {
     overflow-wrap: break-word;
   }
+  i {
+    margin-right: 4px;
+  }
+}
+
+.btn-info.btn.search-button {
+  color: var(--bs-white);
 }
 
 .alert.remove-search-result {
