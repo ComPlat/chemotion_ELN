@@ -11,10 +11,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 
-const MyCell = ({col,data,rowIndex, ...props})=>{
-  return <Cell width={300}>{data[rowIndex][col]}</Cell>
-
-}
 const SvgCellRenderer = ({ value, ...props})=>{
   return <SVG src={"/images/"+value} className="molecule-fixed-data" />
 }
@@ -183,10 +179,6 @@ export default class ModalImportConfirm extends React.Component {
     this.setState({defaultSelected:defaultSelected})
   }
 
-  isDisabled() {
-    false
-  }
-
   render() {
     let {rows,defaultSelected} = this.state
     const {onHide,custom_data_keys} = this.props
@@ -242,7 +234,7 @@ export default class ModalImportConfirm extends React.Component {
 
         <ButtonToolbar>
           <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button variant="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
         </ButtonToolbar>
       </div>
     )
