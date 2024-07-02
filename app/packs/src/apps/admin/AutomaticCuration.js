@@ -16,12 +16,14 @@ export default class DictionaryCuration extends Component  {
             establishedValue:"",
             file: null,
             customSearch: "",
-            establishedSearch :""
+            establishedSearch :"",
+            affixFile: ""
         }}
 
     componentDidMount(){
         var customDictionaryText = ""
         var establishedDictionaryText = ""
+        var affixText =""
         fetch("/typojs/custom/custom.dic")
         .then ((res)=> res.text())
         .then((text) => {
@@ -36,6 +38,51 @@ export default class DictionaryCuration extends Component  {
          this.setState({establishedValue : establishedDictionaryText}, () =>{
          });
         })
+        fetch("/typojs/en_US/en_US.aff")
+        .then ((res)=> res.text())
+        .then((text) => {
+         affixText = text;
+         this.setState({affixFile : affixText}, () =>{
+         });
+        })
+        
+    }
+
+    convertAffxStrtoObj(affixStr){
+      var affixArray =affixStr.split("\n")
+      var iArray = []
+      var affixObject = {}
+      for (var i =0 ; i < affixArray.length; i++){
+        var affixLine = affixArray[i]
+        if (affixLine.match(/((SFX)|(PFX)) [A-Z] ((Y)|(N)) \d/g)){
+          iArray.push(i)
+        }
+      }
+      for (var i =0 ; i < iArray.length; i++){
+        var startingLine = (affixArray[iArray[i]])
+        var numOfLines = startingLine.match(/\d/).join()
+        var affixLetter= startingLine.match(/ [A-Z] /)
+        var affixMap = new Map
+        // affixObject[affixLetter] = {"num of lines": numOfLines}
+        var endingLine = iArray[i] + parseInt(numOfLines)
+          for (var j = iArray[i] +1; j <= endingLine; j++){
+            var selectedLine = affixArray[j];
+            var slicedLine = selectedLine.slice(14,selectedLine.length);
+            var splitSlicedLine = slicedLine.split(" ");
+            var filteredLine = splitSlicedLine.filter((x)=> x != "" );
+            var affix = filteredLine[0]
+            var lastChar = filteredLine[1]
+            affixMap.set(lastChar, affix)
+            affixObject[affixLetter] = [affixMap]
+             }
+             var sORp = (startingLine.match(/((SFX)|(PFX))/)[0])
+             affixObject[affixLetter].push(sORp)
+          }
+      return affixObject
+    }
+
+    workWithaffObject (input, affixObject){
+      
     }
 
     saveFile(){
@@ -54,12 +101,10 @@ export default class DictionaryCuration extends Component  {
     }
 
     handleChangeCustomSearch(e) {
-      console.log(e)
       this.setState({ customSearch: e.target.value });
     }
 
     handleChangeEstablishedSearch(e) {
-      console.log(e)
       this.setState({ establishedSearch: e.target.value });
     }
 
@@ -119,6 +164,7 @@ export default class DictionaryCuration extends Component  {
             {this.dropzoneOrfilePreview()}
             <Button onClick={()=> this.convertDictionaryToArray(this.state.customValue,this.state.establishedValue)}>Check Custom Dictionary</Button>
             <Button onClick={()=> this.saveFile()}>Save dictionary</Button>
+            <Button onClick={()=> this.convertAffxStrtoObj(this.state.affixFile)}>load affix</Button>
             <Row>
               <Col lg={6}>
                   <FormGroup controlId="customDictionary">
@@ -128,8 +174,8 @@ export default class DictionaryCuration extends Component  {
                             <FormControl
                               type="text"
                               placeholder="Enter Search"
-                              onChange={this.handleChangeCustomSearch}
-                          /></Col>
+                              onChange={this.handleChangeCustomSearch}/>
+                          </Col>
                           <Col lg={5}> <Button>Submit</Button></Col>
                         </Row>
                       </ControlLabel>
