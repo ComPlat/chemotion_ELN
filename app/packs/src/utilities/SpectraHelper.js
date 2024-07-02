@@ -1,3 +1,4 @@
+import { FN } from '@complat/react-spectra-editor';
 const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip'];
 
 const JcampIds = (container) => {
@@ -225,4 +226,83 @@ const cleaningNMRiumData = (nmriumData) => {
   return cleanedNMRiumData;
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData }; // eslint-disable-line
+const inlineNotation = (layout, data) => {
+  let formattedString = '';
+  let quillData = [];
+  if (!data) return { quillData, formattedString };
+
+  const {
+    scanRate, voltaData, sampleName,
+    concentration, solvent, internalRef,
+  } = data;
+  switch (layout) {
+    case FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY: {
+      if (!voltaData) {
+        break;
+      }
+      let refString = '';
+      let nonRefString = '';
+      let refOps = [];
+      const nonRefOps = [];
+      const { listPeaks, xyData } = voltaData;
+      const { x } = xyData;
+      listPeaks.forEach((item) => {
+        const {
+          isRef, e12, max, min,
+        } = item;
+        const e12Str = e12 ? FN.strNumberFixedLength(e12, 3) : '0';
+        const scanRateStr = scanRate ? FN.strNumberFixedLength(scanRate, 3) : '0';
+        if (isRef) {
+          const posNegString = x[0] > x[1] ? 'neg.' : 'pos.';
+          const concentrationStr = concentration ? concentration : '<conc. of sample>';
+          const solventStr = solvent ? solvent : '<solvent>';
+          let internalRefStr = "(Fc+/Fc)";
+          refOps = [
+            { insert: `CV (${concentrationStr} mM in ${solventStr} vs. Ref ` },
+            { insert: `(Fc` },
+            { insert: '+', attributes: { script: 'super' } },
+            { insert: `/Fc) ` },
+            { insert: `= ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):` },
+          ];
+          if (internalRef === 'decamethylferrocene') {
+            internalRefStr = "(Me10Fc+/Me10Fc)";
+            refOps = [
+              { insert: `CV (${concentrationStr} mM in ${solventStr} vs. Ref ` },
+              { insert: `(Me` },
+              { insert: '10', attributes: { script: 'sub' } },
+              { insert: `Fc` },
+              { insert: '+', attributes: { script: 'super' } },
+              { insert: `/Me` },
+              { insert: '10', attributes: { script: 'sub' } },
+              { insert: `Fc) ` },
+              { insert: `= ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):` },
+            ];
+          }
+          refString = `CV (${concentrationStr} mM in ${solventStr} vs. Ref ${internalRefStr} = ${e12Str} V, v = ${scanRateStr} V/s, to ${posNegString}):`;
+
+        } else {
+          const delta = (max && min) ? FN.strNumberFixedLength(Math.abs(max.x - min.x) * 1000, 3) : '0';
+          nonRefString += `\nE1/2 = ([${sampleName}] , ΔEp) = ${e12Str} V (${delta} mV)`;
+          const currentNoneOps = [
+            { insert: '\nE' },
+            { insert: '1/2', attributes: { script: 'sub' } },
+            { insert: ` = ([${sampleName}] , ΔE` },
+            { insert: 'p', attributes: { script: 'sub' } },
+            { insert: `) = ${e12Str} V (${delta} mV)` },
+          ];
+          nonRefOps.push(...currentNoneOps);
+        }
+      });
+
+      formattedString = refString + nonRefString;
+      quillData = [...refOps, ...nonRefOps];
+      break;
+    }
+    default:
+      break;
+  }
+
+  return { quillData, formattedString };
+};
+
+export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation }; // eslint-disable-line
