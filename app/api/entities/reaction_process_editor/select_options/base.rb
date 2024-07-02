@@ -16,14 +16,16 @@ module Entities
           end
         end
 
-        def self.samples_options(samples, acts_as)
+        def self.samples_info_options(samples, acts_as)
           samples.map do |sample|
-            sample_option(sample, acts_as)
+            sample_info_option(sample, acts_as)
           end
         end
 
-        def self.sample_option(sample, acts_as)
-          sample_info_option(sample, acts_as)
+        def self.sample_purify_options(samples, acts_as)
+          samples.map do |sample|
+            sample_purify_option(sample, acts_as)
+          end
         end
 
         def self.sample_info_option(sample, acts_as)
@@ -43,6 +45,16 @@ module Entities
               ml: sample.amount_ml,
             },
             sample_svg_file: sample&.sample_svg_file,
+            icon: sample&.sample_svg_file,
+            acts_as: acts_as,
+          }
+        end
+
+        def self.sample_purify_option(sample, acts_as)
+          {
+            id: sample.id,
+            value: sample.id,
+            label: sample.preferred_label || sample.short_label,
             acts_as: acts_as,
           }
         end
