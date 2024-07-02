@@ -529,7 +529,7 @@ export default class ReactionDetails extends Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          {this.state.sfn ? <ScifinderSearch el={reaction} /> : null}
+          {this.state.sfn && <ScifinderSearch el={reaction} />}
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
             {tabContents}
           </Tabs>

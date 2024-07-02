@@ -8,6 +8,24 @@ import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
+
+const buttons = [
+  {
+    name: 'substances',
+    icon: 'icon-sample'
+  },
+  {
+    name: 'reactions',
+    icon: 'icon-reaction' },
+  {
+    name: 'references',
+    icon: 'fa fa-book' },
+  {
+    name: 'suppliers',
+    icon: 'fa fa-shopping-cart'
+  }
+];
+
 const notify = (params) => {
   NotificationActions.add({
     title: params.title, message: params.msg, level: params.lvl, position: 'tc', dismissible: 'button', uid: uuid.v4()
@@ -60,39 +78,23 @@ const ScifinderSearch = (props) => {
       }).finally(() => LoadingActions.stop());
   };
 
-  const renderButtons = () => {
-    const BTNS = [
-      { substances: 'icon-sample' }, { reactions: 'icon-reaction' }, { references: 'fa fa-book' }, { suppliers: 'fa fa-shopping-cart' }
-    ];
-    if (el.type === 'reaction') { [BTNS[0], BTNS[1]] = [BTNS[1], BTNS[0]]; }
-    const btn = (name, icon) => (
-      <Button key={`_sfn_btn_${name}`} onClick={() => search(name)}>
-        <span style={{ float: 'left' }}><i className={icon} aria-hidden="true" /></span>&nbsp;
-        <span><b>{name}</b></span>
-      </Button>
-    );
-    return BTNS.map(b => Object.entries(b).map(([key, value]) => btn(key, value)));
-  };
-
-  const popoverSettings = (
-    <Popover
-      className="collection-overlay"
-      id="popover-layout"
-      style={{ maxWidth: 'none', width: 'auto' }}
-    >
-      <div>
-        <h3 className="popover-title">SciFinder-n Search for</h3>
-        <div className="popover-content" style={{ display: 'flex', flexDirection: 'column' }}>
-          {renderButtons()}
-        </div>
-      </div>
+  const popover = (
+    <Popover className="scrollable-popover" id="scifinder-popover">
+      <Popover.Header as="h3">SciFinder-n Search for</Popover.Header>
+        <Popover.Body className='d-flex flex-column gap-1'>
+          {buttons.map((button) => (
+            <Button key={`_sfn_btn_${button.name}`} onClick={() => search(button.name)} className='text-start'>
+            <i className={button.icon + ' me-1'} aria-hidden="true" />{button.name}
+          </Button>
+          ))}
+        </Popover.Body>
     </Popover>
   );
 
   return (
-    <OverlayTrigger trigger="click" placement="left" overlay={popoverSettings} rootClose>
-      <Button style={{ padding: '0px' }}>
-        <div style={{ fontSize: '1.2vmin', padding: '2px', color: '#337ab7' }}><i className="fa fa-search" aria-hidden="true" />&nbsp;Search CAS</div>
+    <OverlayTrigger trigger="click" placement="left" overlay={popover} rootClose>
+      <Button className='mb-3'>
+        <i className="fa fa-search me-1" aria-hidden="true" />Search CAS
       </Button>
     </OverlayTrigger>
   );
