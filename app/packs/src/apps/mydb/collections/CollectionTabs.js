@@ -128,11 +128,13 @@ export default class CollectionTabs extends React.Component {
   label(node) {
     if (node.label === 'My Collections') {
       return (
-        <Form.Control 
-        value ="My Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
+        <Form.Control
+          value="My Collections"
+          type="text"
+          className="root-label"
+          disabled
+        />
+      );
     }
     return (
       <Form.Control className="collection-label" type="text" value={node.label || ''} disabled />
@@ -192,15 +194,22 @@ export default class CollectionTabs extends React.Component {
           onChange={this.handleChange.bind(this)}
           renderNode={this.renderNode.bind(this)}
         />
-        <Modal centered className="collection-tab-modal" animation show={showModal} onHide={() => this.handleModalOptions(showModal)}>
+
+        <Modal
+          size="lg"
+          centered
+          animation
+          show={showModal}
+          onHide={() => this.handleModalOptions(showModal)}
+        >
           <Modal.Header closeButton>
             <Modal.Title>{this.state.currentCollection.label}</Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ paddingTop: '2px', paddingBottom: '2px', overflow: 'auto' }} className="collection-tab-modal-body">
+          <Modal.Body>
             {layouts.map((lay, index) => {
               const callbackRef = (node) => this.tabRef[index] = node;
               return (
-                <div style={{ textAlign: 'left' }}>
+                <div key={elements[index].name} style={{ textAlign: 'left' }}>
                   <Col md={6}>
                     <p className="collection-tag-element">{elements[index].label}</p>
                   </Col>
