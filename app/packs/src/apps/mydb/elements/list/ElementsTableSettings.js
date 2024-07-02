@@ -201,7 +201,7 @@ export default class ElementsTableSettings extends React.Component {
 
     const popoverSettings = (
       <Popover
-        className="collection-overlay w-auto mw-100"
+        className="scrollable-popover w-auto mw-100"
         id="popover-layout"
       >
         <Popover.Header>
