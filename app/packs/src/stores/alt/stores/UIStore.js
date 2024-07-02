@@ -478,7 +478,7 @@ class UIStore {
     this.state.modalParams = {
       show: false,
       title: "",
-      component: "",
+      component: null,
       action: null
     }
   }
