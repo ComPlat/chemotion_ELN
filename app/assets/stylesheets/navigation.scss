@@ -42,11 +42,6 @@
   }
 }
 
-.export-container {
-  overflow: auto;
-  margin-bottom: 10px;
-}
-
 @mixin check-box-list-common($i) {
   list-style-type: none;
   -moz-column-gap: 20px;
@@ -55,7 +50,6 @@
   -moz-column-count: $i;
   -webkit-column-count: $i;
   column-count: $i;
-
 }
 .check-box-list {
   @include check-box-list-common(4);

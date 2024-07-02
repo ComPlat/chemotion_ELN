@@ -1,12 +1,10 @@
 import React from 'react';
-import _ from 'lodash';
 import PropTypes from 'prop-types';
 import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 const showReportContainer = () => {
   ElementActions.showReportContainer();
@@ -61,7 +59,7 @@ const ReportUtilButton = ({ customClass }) => {
 
   return (
     <Dropdown as={ButtonGroup} id="format-dropdown">
-      <Dropdown.Toggle customClass={customClass} variant='success'>
+      <Dropdown.Toggle customClass={customClass} variant="success">
         <i className="fa fa-file-text-o" style={{ marginRight: 4 }} />
         <i className="fa fa-pencil" style={{ marginRight: 4 }} />
         <i className="fa fa-percent" />

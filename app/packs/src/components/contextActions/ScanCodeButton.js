@@ -29,6 +29,7 @@ export default class ScanCodeButton extends React.Component {
     this.startBarcodeScan = this.startBarcodeScan.bind(this);
     this.startQrCodeScan = this.startQrCodeScan.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.handleScan = this.handleScan.bind(this);
   }
 
   componentDidMount() {
@@ -91,12 +92,12 @@ export default class ScanCodeButton extends React.Component {
     this.setState({ showQrReader: true });
   }
 
-  qrReader(state) {
-    if (state.showQrReader === true) {
+  qrReader() {
+    if (this.state.showQrReader === true) {
       return (
         <QrReader
           previewStyle={{ width: 550 }}
-          onScan={this.handleScan.bind(this)}
+          onScan={this.handleScan}
           onError={this.handleError}
         />
       );
@@ -188,7 +189,7 @@ export default class ScanCodeButton extends React.Component {
               />
 
               <div id="barcode-scanner" {...this.state.showQrReader && { style: { display: 'none' } }}></div>
-              {this.qrReader(this.state)}
+              {this.qrReader()}
             </div>
             <br />
             {this.scanAlert()}
@@ -239,7 +240,7 @@ export default class ScanCodeButton extends React.Component {
 
     const title = (
       <span className="fa-stack" style={{ height: 16 }}>
-        <i className="fa fa-barcode fa-stack-1x" style={{ marginTop: -8 }}/>
+        <i className="fa fa-barcode fa-stack-1x" style={{ marginTop: -8 }} />
         <i className="fa fa-search fa-stack-1x" style={{ left: 7, marginTop: -8 }} />
       </span>
     );
@@ -253,12 +254,11 @@ export default class ScanCodeButton extends React.Component {
           title={title}
           onClick={this.open}
         >
-          {menuItems.map(e => (
+          {menuItems.map((e) => (
             <Dropdown.Item
               key={e.key}
               disabled={disabledPrint}
-              onSelect={(eventKey, event) => {
-                event.stopPropagation();
+              onClick={() => {
                 Utils.downloadFile({ contents: e.contents });
               }}
             >

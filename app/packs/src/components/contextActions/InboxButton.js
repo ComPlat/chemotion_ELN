@@ -48,6 +48,7 @@ export default class InboxButton extends React.Component {
         variant={btnStyle}
         onClick={InboxActions.toggleInboxModal}
         style={{
+          position: 'relative',
           width: '40px',
           display: 'flex',
           alignItems: 'center',
@@ -56,18 +57,20 @@ export default class InboxButton extends React.Component {
       >
         <i className={btnClass} />
         {numberOfAttachments > 0 && (
-          <span
-            className="badge badge-pill"
+          <Badge
+            pill
+            bg="light"
+            text="warning"
             style={{
               top: '25px',
               left: '25px',
-              fontSize: '8px',
+              fontSize: '9px',
               position: 'absolute',
               display: 'flex',
             }}
           >
             {numberOfAttachments}
-          </span>
+          </Badge>
         )}
       </Button>
     );

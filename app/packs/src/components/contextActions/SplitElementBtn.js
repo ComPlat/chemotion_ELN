@@ -1,12 +1,10 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
 import { Dropdown, DropdownButton, ButtonGroup } from 'react-bootstrap';
-import { filter } from 'lodash';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import MenuItem from 'src/components/legacyBootstrap/MenuItem'
 
 export default class SplitElementBtn extends React.Component {
   constructor(props) {
@@ -64,20 +62,32 @@ export default class SplitElementBtn extends React.Component {
       genericEls = UserStore.getState().genericEls || [];
     }
     const itemTables = [];
-    const sortedLayout = filter(Object.entries(layout), (o) => o[1] && o[1] > 0).sort((a, b) => a[1] - b[1]);
+    const sortedLayout = Object.entries(layout)
+      .filter((o) => o[1] && o[1] > 0)
+      .sort((a, b) => a[1] - b[1]);
 
     sortedLayout?.forEach(([k]) => {
       const el = genericEls.find((ael) => ael.name === k);
-      // eslint-disable-next-line max-len
-      if (el) itemTables.push(<Dropdown.Item id={`split-${el.name}-button`} key={el.name} onClick={() => this.splitElements(`${el.name}`)} disabled={this.noSelected(`${el.name}`) || this.isAllCollection()}>Split {el.label}</Dropdown.Item>);
+      if (typeof el === 'undefined') return;
+
+      itemTables.push(
+        <Dropdown.Item
+          id={`split-${el.name}-button`}
+          key={el.name}
+          onClick={() => this.splitElements(`${el.name}`)}
+          disabled={this.noSelected(`${el.name}`) || this.isAllCollection()}
+        >
+          Split {el.label}
+        </Dropdown.Item>
+      );
     });
 
     return (
-      <DropdownButton 
+      <DropdownButton
         as={ButtonGroup}
         variant="primary"
-        title={<i className="fa fa-code-fork" />
-      }>
+        title={<i className="fa fa-code-fork" />}
+      >
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubsamples()}
           disabled={this.noSelected('sample') || this.isAllCollection()}
