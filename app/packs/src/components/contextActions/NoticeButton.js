@@ -410,7 +410,7 @@ export default class NoticeButton extends React.Component {
           centered
           show={this.state.showModal}
           onHide={this.handleHide}
-          dialogClassName="noticeModal"
+          dialogClassName="modal-xl noticeModal"
         >
           <Modal.Header closeButton>
             <Modal.Title>Unread Notifications</Modal.Title>
