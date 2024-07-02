@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Button, Modal, Table
+  Button, Modal, Card, Row, Col
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -13,8 +13,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
@@ -313,125 +311,96 @@ export default class NoticeButton extends React.Component {
   renderBody() {
     const { dbNotices } = this.state;
 
-    let bMessages = (
-      <Panel
-        id="panel-modal-body-allread"
-        key="panel-modal-body-allread"
-        eventKey="0"
-        collapsible="true"
-        defaultExpanded
-        style={{ border: '0px' }}
-      >
-        <Table>
-          <tbody>
-            <tr>
-              <td
-                style={{ border: '0px', width: '100vw', textAlign: 'center' }}
-              >
-                No new notifications.
-              </td>
-            </tr>
-          </tbody>
-        </Table>
-      </Panel>
-    );
-
-    if (Object.keys(dbNotices).length > 0) {
-      bMessages = dbNotices.map((not, index) => {
-        const infoTimeString = formatDate(not.created_at);
-
-        const newText = not.content.data
-          .split('\n')
-          .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
-
-        const { url, urlTitle } = not.content;
-        if (url) {
-          newText.push(
-            <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
-          );
-        }
-
-        return (
-          <Panel
-            key={`panel-modal-body-${not.id}`}
-            eventKey={index}
-            collapsible="true"
-            defaultExpanded
-            ref={(pl) => {
-              this[`myPl${index}`] = pl;
-            }}
-          >
-            <Panel.Heading>
-              <i className="fa fa-commenting-o" aria-hidden="true" />
-              &nbsp;
-              {not.subject}
-              &nbsp;&nbsp;
-              <span>
-                <strong>From: </strong>
-                {not.sender_name}
-              </span>
-              &nbsp;&nbsp;
-              <span>
-                <strong>Created On: </strong>
-                {formatDate(not.created_at)}
-              </span>
-            </Panel.Heading>
-            <Panel.Body>
-              <Table>
-                <tbody>
-                  <tr>
-                    <td width="10%">
-                      <Button
-                        id={`notice-button-ack-${not.id}`}
-                        key={`notice-button-ack-${not.id}`}
-                        onClick={() => this.messageAck(not.id, false)}
-                      >
-                        <i className="fa fa-check" aria-hidden="true" />
-                        &nbsp;Got it
-                      </Button>
-                    </td>
-                    <td width="90%">{newText}</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Panel.Body>
-          </Panel>
-        );
-      });
+    if (dbNotices.length === 0) {
+      return (
+        <Card className="text-center" eventKey="0">
+          <Card.Body>No new notifications.</Card.Body>
+        </Card>
+      );
     }
 
-    return <PanelGroup id="panel-group-modal-body">{bMessages}</PanelGroup>;
+    return dbNotices.map((not, index) => {
+      const infoTimeString = formatDate(not.created_at);
+
+      const newText = not.content.data
+        .split('\n')
+        .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+
+      const { url, urlTitle } = not.content;
+      if (url) {
+        newText.push(
+          <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+        );
+      }
+
+      return (
+        <Card
+          key={`panel-modal-body-${not.id}`}
+          eventKey={index}
+          className="mb-3"
+        >
+          <Card.Header>
+            <i className="fa fa-commenting-o" aria-hidden="true" />
+            &nbsp;
+            {not.subject}
+            &nbsp;&nbsp;
+            <span>
+              <strong>From: </strong>
+              {not.sender_name}
+            </span>
+            &nbsp;&nbsp;
+            <span>
+              <strong>Created On: </strong>
+              {formatDate(not.created_at)}
+            </span>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col lg="auto">
+                <Button
+                  id={`notice-button-ack-${not.id}`}
+                  key={`notice-button-ack-${not.id}`}
+                  onClick={() => this.messageAck(not.id, false)}
+                >
+                  <i className="fa fa-check" aria-hidden="true" />
+                  &nbsp;Got it
+                </Button>
+              </Col>
+              <Col>{newText}</Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      );
+    });
   }
 
   renderModal() {
-    if (this.state.showModal) {
-      return (
-        <Modal
-          centered
-          show={this.state.showModal}
-          onHide={this.handleHide}
-          dialogClassName="modal-xl noticeModal"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Unread Notifications</Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto' }}>
-            {this.renderBody()}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              id="notice-button-ack-all"
-              key="notice-button-ack-all"
-              onClick={() => this.messageAck(0, true)}
-            >
-              <i className="fa fa-check" aria-hidden="true" />
-              &nbsp;Mark all notifications as read
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-    return <div />;
+    const { showModal } = this.state;
+    return (
+      <Modal
+        centered
+        show={showModal}
+        onHide={this.handleHide}
+        dialogClassName="modal-xl"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Unread Notifications</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="vh-70">
+          {this.renderBody()}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            id="notice-button-ack-all"
+            key="notice-button-ack-all"
+            onClick={() => this.messageAck(0, true)}
+          >
+            <i className="fa fa-check" aria-hidden="true" />
+            &nbsp;Mark all notifications as read
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
   }
 
   render() {
