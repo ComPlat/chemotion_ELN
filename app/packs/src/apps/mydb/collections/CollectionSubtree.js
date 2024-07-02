@@ -9,7 +9,6 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfos from 'src/apps/mydb/collections/UserInfos';
 import GatePushBtn from 'src/components/common/GatePushBtn';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -114,8 +113,8 @@ export default class CollectionSubtree extends React.Component {
 
     if (this.hasChildren()) {
       return (
-        <Glyphicon
-          glyph={icon}
+        <i
+          className={`fa fa-${icon}`}
           style={{ float: 'right', marginLeft: '5px' }}
           onClick={this.toggleExpansion}
         />
