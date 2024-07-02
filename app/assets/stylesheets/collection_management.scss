@@ -52,9 +52,7 @@
   }
 
   .inner {
-    //color: #9DA5B4;
     font-size: 14px;
-    font-family: sans-serif;
     color: black;
     position: relative;
     cursor: pointer;
@@ -67,9 +65,6 @@
 
     .collection-label {
       @extend .inner;
-      font-size: 14px;
-      //background-color: #31363F;
-      color: #000000 !important;
       width: 400px;
       height: 22px;
       float: left;

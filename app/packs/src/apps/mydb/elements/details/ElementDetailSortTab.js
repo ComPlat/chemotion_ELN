@@ -121,16 +121,14 @@ export default class ElementDetailSortTab extends Component {
     const wd = 200 + ((visible && visible.size * 75) || 0) + ((hidden && hidden.size * 75) || 0);
     const popoverSettings = (
       <Popover
-        className="collection-overlay"
-        id="popover-layout"
+        className="scrollable-popover"
+        id="tab-layout-popover"
         style={{ maxWidth: 'none', width: `${wd}px`, position: 'absolute' }}
       >
-        <div>
-          <h3 className="popover-title">Tab Layout</h3>
-          <div className="popover-content">
-            {tabLayoutContainerElement}
-          </div>
-        </div>
+        <Popover.Header as="h3">Tab Layout</Popover.Header>
+        <Popover.Body>
+          {tabLayoutContainerElement}
+        </Popover.Body>
       </Popover>
     );
     // Using a ref object for the Popover placement

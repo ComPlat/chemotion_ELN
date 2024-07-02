@@ -102,7 +102,7 @@ export default class ElementCollectionLabels extends React.Component {
     if (labels.length === 0 && total_shared_collections === 0) { return (<span />); }
 
     const collectionOverlay = (
-      <Popover className="collection-overlay" id="element-collections">
+      <Popover className="scrollable-popover" id="element-collections">
         {this.renderCollectionsLabels('My Collections', labels)}
         {this.renderCollectionsLabels('Shared Collections', shared_labels)}
         {this.renderCollectionsLabels('Synchronized Collections', sync_labels, true)}
