@@ -21,7 +21,6 @@ export default class MySharedCollections extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
         action: null
       }
     }
@@ -224,7 +223,6 @@ export default class MySharedCollections extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
         action: null
       }
     });

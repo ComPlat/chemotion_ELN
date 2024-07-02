@@ -23,7 +23,6 @@ export default class MyCollections extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
         action: null,
         collection: {},
         selectUsers: true,
@@ -315,7 +314,6 @@ export default class MyCollections extends React.Component {
       modalProps: {
         show: false,
         title: "",
-        component: "",
         action: null,
         collection: {},
         selectUsers: true,
