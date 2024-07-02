@@ -69,7 +69,7 @@ export default class Search extends React.Component {
     const elements = [
       'All',
       'Samples', 'Reactions',
-      'Wellplates', 'Screens','Cell lines'
+      'Wellplates', 'Screens', 'Cell lines'
     ];
 
     const menu = elements.map(element => (
@@ -84,10 +84,11 @@ export default class Search extends React.Component {
   render() {
     const { profile } = UserStore.getState();
     const { customClass } = (profile && profile.data) || {};
+    const searchButtonClass = customClass === undefined ? 'search-button' : customClass;
 
     const buttonAfter = (
       <>
-        <Button variant={customClass ? null : 'info'} className={customClass} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
+        <Button variant={customClass ? null : 'info'} className={`search-button ${customClass}`} id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
           <i className="fa fa-search" />
         </Button>
         <Button variant={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
@@ -112,7 +113,7 @@ export default class Search extends React.Component {
     const searchIcon = (elementType) => {
       if (elementType === 'all') return 'All';
       if (['samples', 'reactions', 'screens', 'wellplates'].includes(elementType.toLowerCase())) return (<i className={`icon-${elementType.toLowerCase().slice(0, -1)}`} />);
-      if(elementType == 'cell lines'){
+      if (elementType == 'cell lines') {
         return (<i className={`icon-cell_line`} />);
       }
       if (this.state.genericEl) return (<i className={this.state.genericEl.icon_name} />);
@@ -132,9 +133,7 @@ export default class Search extends React.Component {
 
     return (
       <div className="chemotion-search">
-        <div className="search-modal-draw">
-          <SearchModal />
-        </div>
+        <SearchModal />
         <div className="search-autocomplete">
           <AutoCompleteInput
             inputAttributes={inputAttributes}
