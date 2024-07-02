@@ -15,6 +15,9 @@ import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertie
 import { solventOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import Checkbox from 'src/components/legacyBootstrap/Checkbox'
+import ControlLabel from 'src/components/legacyBootstrap/ControlLabel'
+import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 export default class SampleForm extends React.Component {
   constructor(props) {

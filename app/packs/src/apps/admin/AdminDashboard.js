@@ -1,7 +1,6 @@
 import React from 'react';
-import { FormControl, InputGroup } from 'react-bootstrap';
+import { FormControl, InputGroup, Card } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import Panel from 'src/components/legacyBootstrap/Panel';
 
 export default class AdminDashboard extends React.Component {
   constructor(props) {
@@ -44,23 +43,25 @@ export default class AdminDashboard extends React.Component {
 
     return (
       <div>
-        <Panel>
-          <InputGroup>
-            <InputGroup.Text>Disk Available   (MB)</InputGroup.Text>
-            <FormControl
-              type="text"
-              defaultValue={diskAvailable || ''}
-              readOnly
-            />
-            <InputGroup.Text>Disk Percent Used (%)</InputGroup.Text>
-            <FormControl
-              type="text"
-              style={style}
-              defaultValue={`${diskPercentUsed}%` || ''}
-              readOnly
-            />
-          </InputGroup>
-        </Panel>
+        <Card>
+          <Card.Body className='p-0'>
+            <InputGroup >
+              <InputGroup.Text >Disk Available (MB)</InputGroup.Text>
+              <FormControl
+                type="text"
+                defaultValue={diskAvailable || ''}
+                readOnly
+              />
+              <InputGroup.Text >Disk Percent Used (%)</InputGroup.Text>
+              <FormControl
+                type="text"
+                style={style}
+                defaultValue={`${diskPercentUsed}%` || ''}
+                readOnly
+              />
+            </InputGroup>
+          </Card.Body>
+        </Card>
       </div>
     );
   }

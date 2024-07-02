@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar } from 'react-bootstrap';
+import { Nav, Navbar, Container, Button, } from 'react-bootstrap';
 
 import UserAuth from 'src/components/navigation/UserAuth';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -39,41 +39,23 @@ export default class AdminNavigation extends React.Component {
     this.props.toggleTree();
   }
 
-  navHeader() {
-    return (
-      <Navbar.Header className="collec-tree">
-        <Navbar.Text>
-          <i
-            className="fa fa-list"
-            onClick={this.toggleTree}
-            role='button'
-          />
-        </Navbar.Text>
-        <Navbar.Text />
-        <NavHead />
-      </Navbar.Header>
-    );
-  }
 
   render() {
-    return this.state.currentUser ? (
-      <Navbar fluid className="navbar-custom">
-        {this.navHeader()}
-        <Nav navbar className="navbar-form">
-          <h1>ELN Administration</h1>
-        </Nav>
-        <UserAuth />
-        <div style={{ clear: 'both' }} />
-      </Navbar>
-    ) : (
-      <Navbar fluid className="navbar-custom" >
-        {this.navHeader()}
-        <Nav navbar className="navbar-form" />
-        <div>
-          <h1>ELN Administration</h1>
-        </div>
-        <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />
-        <div style={{ clear: 'both' }} />
+    const { currentUser } = this.state;
+    return (
+      <Navbar bg="grey" expand="lg" className="navbar-custom py-4" >
+        <Container fluid>
+          <Navbar.Brand className="d-flex align-items-center">
+            <Button variant="light" className="me-2 p-0 border-0 bg-transparent" onClick={this.toggleTree} aria-label="Toggle Tree">
+              <i className='fa fa-list' size="lg" />
+            </Button>
+            <NavHead />
+          </Navbar.Brand>
+          <div className="h1 mb-0 ms-5 ps-5">ELN Administration</div>
+          <Nav className="ms-auto fs-4">
+            {currentUser ? <UserAuth /> : <NavNewSession authenticityToken={DocumentHelper.getMetaContent('csrf-token')} />}
+          </Nav>
+        </Container>
       </Navbar>
     );
   }
