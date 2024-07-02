@@ -3,12 +3,11 @@ import PropTypes from 'prop-types';
 import {
   Button,
   ButtonToolbar,
-  FormGroup
+  Form
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
 
 
 const SvgCellRenderer = ({ value, ...props})=>{
@@ -19,16 +18,13 @@ SvgCellRenderer.propTypes = {
   value: PropTypes.string,
 }
 
-const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props})=>{
- return props.data.inchikey ?
-    <FormGroup>
-      <Checkbox
-       onChange={(e)=>onSelectChange(e.target.checked,rowIndex)}
-       defaultChecked={value}
+const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props }) => {
+  return props.data.inchikey
+    ? <Form.Check
+         onChange={(e)=>onSelectChange(e.target.checked, rowIndex)}
+         defaultChecked={value}
         />
-    </FormGroup>
-  : null
-
+    : null;
 }
 
 
