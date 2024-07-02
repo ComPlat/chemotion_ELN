@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { Button, ButtonGroup, Modal } from 'react-bootstrap';
+import React, { useContext, useState } from 'react';
+import { Button, ButtonGroup, Modal, Stack } from 'react-bootstrap';
 import Draggable from "react-draggable";
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -18,6 +18,7 @@ const Components = {
 
 const SearchModal = () => {
   const searchStore = useContext(StoreContext).search;
+  const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
 
   let FormData = [
     {
@@ -55,73 +56,85 @@ const SearchModal = () => {
     );
   }
 
+  const handleDrag = (e, ui) => {
+    const { x, y } = deltaPosition;
+    setDeltaPosition({
+      x: x + ui.deltaX,
+      y: y + ui.deltaY,
+    });
+  }
+
   let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
-  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : '';
-  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : '';
-  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : '';
+  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'bg-white';
+  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'bg-white';
+  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'bg-white';
 
   return (
-    <Draggable handle=".handle">
-      <Modal
-        centered
-        show={searchStore.searchModalVisible}
-        onHide={() => searchStore.handleCancel()}
-        backdrop={false}
-        dialogas="full-search"
-        dialogClassName="searching"
-      >
-        <Modal.Header className="handle" closeButton>
-          <div className="col-md-4 col-sm-11">
-            <Modal.Title>
-              <i className="fa fa-arrows move" />
-              Please select your search criteria
-            </Modal.Title>
-          </div>
-          <div className="col-md-7 col-sm-11">
-            <ButtonGroup className="search-selection">
-              <Button
-                onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[0])}
-                className={searchTypeTextClass}
-              >
-                <span className="search-icon">
-                  <i className="fa fa-align-justify" />
-                </span>
-                Text search
+    <Draggable handle=".modal-header" onDrag={handleDrag}>
+      <div>
+        <Modal
+          show={searchStore.searchModalVisible}
+          onHide={() => searchStore.handleCancel()}
+          backdrop={false}
+          keyboard={false}
+          className={`draggable-modal-dialog${minimizedClass}`}
+          size="xxxl"
+          dialogClassName="draggable-modal"
+          contentClassName={`draggable-modal-content${minimizedClass}`}
+          style={{
+            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+          }}
+        >
+     
+          <Modal.Header closeButton>
+            <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
+              <Modal.Title className="draggable-modal-stack-title">
+                <i className="fa fa-arrows move" />
+                Please select your search criteria
+              </Modal.Title>
+              <ButtonGroup className="ms-5 ms-lg-auto me-lg-5 gap-2 order-2 order-lg-1">
+                <Button
+                  onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[0])}
+                  className={searchTypeTextClass}
+                  variant="outline-dark"
+                >
+                  <i className="fa fa-align-justify button-icon" />
+                  Text search
+                </Button>
+                <Button
+                  onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[2])}
+                  className={searchTypePublicationClass}
+                  variant="outline-dark"
+                >
+                  <i className="fa fa-newspaper-o button-icon" />
+                  Publication search
+                </Button>
+                <Button
+                  onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[1])}
+                  className={searchTypeStructureClass}
+                  variant="outline-dark"
+                >
+                  <img src="/images/wild_card/pubchem.svg" className="pubchem-logo button-icon" />
+                  Structure search
+                </Button>
+              </ButtonGroup>
+              <Button className="order-1 order-lg-2 ms-auto ms-lg-5 pt-2 align-self-start bg-transparent border-0">
+                <i
+                  className="fa fa-window-minimize window-minimize"
+                  onClick={() => searchStore.toggleSearchModalMinimized()} />
               </Button>
-              <Button
-                onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[2])}
-                className={searchTypePublicationClass}
-              >
-                <span className="search-icon">
-                  <i className="fa fa-newspaper-o" />
-                </span>
-                Publication search
-              </Button>
-              <Button
-                onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[1])}
-                className={searchTypeStructureClass}
-              >
-                <span className="search-icon">
-                  <img src="/images/wild_card/pubchem.svg" className="pubchem-logo" />
-                </span>
-                Structure search
-              </Button>
-            </ButtonGroup>
-          </div>
-          <div className="col-md-1 col-sm-1">
-            <i
-              className="fa fa-window-minimize window-minimize"
-              onClick={() => searchStore.toggleSearchModalMinimized()} />
-          </div>
-        </Modal.Header>
-        <Modal.Body>
-          <React.Suspense fallback={<Spinner />}>
-            <div className={`form-container${minimizedClass}`}>
-              {FormComponent(searchStore.searchModalSelectedForm)}
-            </div>
-          </React.Suspense>
-        </Modal.Body>
-      </Modal>
+            </Stack>
+          </Modal.Header>
+        
+          <Modal.Body>
+            <React.Suspense fallback={<Spinner />}>
+              <div className={`draggable-modal-form-container${minimizedClass}`}>
+                {FormComponent(searchStore.searchModalSelectedForm)}
+              </div>
+            </React.Suspense>
+          </Modal.Body>
+        </Modal>
+      </div>
     </Draggable>
   );
 }
