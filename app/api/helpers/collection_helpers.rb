@@ -109,7 +109,7 @@ module CollectionHelpers
     @dl_cl = @dl[:celllinesample_detail_level]
   end
 
-  def create_acl_collection(user_id, collection_id, params, root_col_label)
+  def create_acl_collection(user_id, collection_id, params)
     current_collection = params['ui_state']['currentCollection']
     label = params[:newCollection] || current_collection['label']
 
@@ -117,7 +117,6 @@ module CollectionHelpers
       user_id: user_id,
       collection_id: collection_id,
     )
-    label = root_col_label if label.nil?
     c_acl.update!(
       label: label,
       permission_level: params['ui_state']['currentCollection']['permission_level'],

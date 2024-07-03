@@ -32,8 +32,9 @@ export default class ManagingModalSharing extends React.Component {
       wellplateDetailLevel: props.wellplateDetailLevel,
       screenDetailLevel: props.screenDetailLevel,
       elementDetailLevel: props.elementDetailLevel,
-      label: props.label,
+      label: props.label || '',
       selectedUsers: null,
+      errors: {},
     }
 
     this.onUserChange = this.onUserChange.bind(this);
@@ -202,6 +203,11 @@ export default class ManagingModalSharing extends React.Component {
       permissionLevel, sampleDetailLevel, reactionDetailLevel, label,
       wellplateDetailLevel, screenDetailLevel, elementDetailLevel
     } = this.state;
+
+    if (!label || !label.trim()) {
+      this.setState({ errors: { label: 'Label is required' } });
+      return;
+    }
 
     const current_collection = {
       permission_level: permissionLevel,
@@ -439,11 +445,16 @@ export default class ManagingModalSharing extends React.Component {
           </FormControl>
         </FormGroup>
         <FormGroup controlId="label">
-          <ControlLabel>Label</ControlLabel>
+          <ControlLabel>Label*</ControlLabel>
           <FormControl required id="label" type="text" placeholder="Label" name="label"
              value={this.state.label}
              onChange={(e) => { this.handleLabelChange(e); }}
           />
+          {this.state.errors.label && (
+            <div className="error" style={{ color: 'red' }}>
+              {this.state.errors.label}
+            </div>
+          )}
         </FormGroup>
         {this.selectUsers()}
         <br />

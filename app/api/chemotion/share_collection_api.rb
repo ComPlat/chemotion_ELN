@@ -24,16 +24,16 @@ module Chemotion
         error!('401 Unauthorized import from current collection', 401) unless from_collection
         to_collection_id = fetch_collection_id_for_assign(params, 4)
         error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
-        if !params[:user_ids].blank?
+        if params[:user_ids].blank?
+          create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
+          # create_generic_elements(params, from_collection, to_collection_id)
+        else
           params[:user_ids].each do |user|
             create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
             # create_generic_elements(params, from_collection, to_collection_id)
-            to_collection_id = to_collection_id ? to_collection_id : from_collection&.id
-            create_acl_collection(user[:value], to_collection_id, params, from_collection&.label)
+            to_collection_id ||= from_collection&.id
+            create_acl_collection(user[:value], to_collection_id, params)
           end
-        else
-          create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
-          # create_generic_elements(params, from_collection, to_collection_id)
         end
 
         status 204
