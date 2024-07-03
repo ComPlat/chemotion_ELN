@@ -16,7 +16,7 @@ export default class MySharedCollections extends React.Component {
       tree: {
         label: 'My Shared Collections',
         id: -1,
-        children: [{}]
+        children: []
       },
       modalProps: {
         show: false,
@@ -42,12 +42,11 @@ export default class MySharedCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.sharedRoots.length > 0 ? state.sharedRoots : [{}];
-
+    const { tree } = this.state;
     this.setState({
       tree: {
-        label: 'My Shared Collections',
-        children: children
+        ...tree,
+        children: state.sharedRoots,
       }
     });
   }
@@ -233,24 +232,20 @@ export default class MySharedCollections extends React.Component {
   }
 
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      if (node.is_locked) {
-        return (
-          <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
-            {this.label(node)}
-            {this.actions(node)}
-          </span>
-        )
-      } else {
-        return (
-          <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
-            {this.label(node)}
-            {this.actions(node)}
-          </span>
-        );
-
-      }
-
+    if (node.is_locked) {
+      return (
+        <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
+          {this.label(node)}
+          {this.actions(node)}
+        </span>
+      )
+    } else {
+      return (
+        <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
+          {this.label(node)}
+          {this.actions(node)}
+        </span>
+      );
     }
   }
 

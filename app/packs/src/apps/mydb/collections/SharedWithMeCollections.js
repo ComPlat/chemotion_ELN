@@ -11,7 +11,7 @@ export default class SharedWithMeCollections extends React.Component {
       tree: {
         label: 'Shared with me Collections',
         id: -1,
-        children: [{}]
+        children: []
       }
     }
     this.onStoreChange = this.onStoreChange.bind(this);
@@ -29,7 +29,8 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.remoteRoots.length > 0 ? state.remoteRoots : [{}];
+    const { tree } = this.state;
+    const children = state.remoteRoots;
 
     children.map((child) => {
       if (child.is_locked) {
@@ -47,8 +48,8 @@ export default class SharedWithMeCollections extends React.Component {
 
     this.setState({
       tree: {
-        label: 'Shared with me Collections',
-        children
+        ...tree,
+        children,
       }
     });
   }
@@ -117,17 +118,12 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      return (
-        <span className="node">
-          {this.label(node)}
-          {this.actions(node)}
-        </span>
-      );
-    }
     return (
-      <div />
-    )
+      <span className="node">
+        {this.label(node)}
+        {this.actions(node)}
+      </span>
+    );
   }
 
   render() {

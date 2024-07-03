@@ -31,7 +31,7 @@ export default class CollectionTabs extends React.Component {
       tree: {
         label: 'My Collections',
         id: -1,
-        children: [{}]
+        children: []
       },
     };
     this.tabRef = [];
@@ -58,13 +58,11 @@ export default class CollectionTabs extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
-
+    const { tree } = this.state;
     this.setState({
       tree: {
-        label: 'My Collections',
-        id: -1,
-        children
+        ...tree,
+        children: state.unsharedRoots,
       }
     });
   }
@@ -149,35 +147,33 @@ export default class CollectionTabs extends React.Component {
   }
 
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      if (node.is_locked || node.id < 1) {
-        return (
-          <span className={this.isActive(node)}>
-            {this.label(node)}
-          </span>
-        );
-      } else {
-        return (
-          <tr>
-            <td colSpan='6'>
-              <span className={this.isActive(node)}>
-                {this.label(node)}
-              </span>
-            </td>
-            <td colSpan='6'>
-              <Button
-                className='collection-tab-edit-btn'
-                size='sm'
-                variant='primary'
-                onClick={() => this.onClickCollection(node)}
-                title='Click to edit collection tab sorting'
-              >
-                <i className='fa fa-pencil'/>
-              </Button>
-            </td>
-          </tr>
-        );
-      }
+    if (node.is_locked || node.id < 1) {
+      return (
+        <span className={this.isActive(node)}>
+          {this.label(node)}
+        </span>
+      );
+    } else {
+      return (
+        <tr>
+          <td colSpan='6'>
+            <span className={this.isActive(node)}>
+              {this.label(node)}
+            </span>
+          </td>
+          <td colSpan='6'>
+            <Button
+              className='collection-tab-edit-btn'
+              size='sm'
+              variant='primary'
+              onClick={() => this.onClickCollection(node)}
+              title='Click to edit collection tab sorting'
+            >
+              <i className='fa fa-pencil'/>
+            </Button>
+          </td>
+        </tr>
+      );
     }
   }
 

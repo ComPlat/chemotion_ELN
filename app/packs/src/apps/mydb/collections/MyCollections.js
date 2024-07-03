@@ -18,7 +18,7 @@ export default class MyCollections extends React.Component {
       tree: {
         label: 'My Collections',
         id: -1,
-        children: [{}]
+        children: []
       },
       modalProps: {
         show: false,
@@ -47,13 +47,11 @@ export default class MyCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
-
+    const { tree } = this.state;
     this.setState({
       tree: {
-        label: 'My Collections',
-        id: -1,
-        children: children
+        ...tree,
+        children: state.unsharedRoots,
       }
     });
   }
@@ -67,10 +65,6 @@ export default class MyCollections extends React.Component {
 
   isActive(node) {
     return node === this.state.active ? "node is-active" : "node";
-  }
-
-  hasChildren(node) {
-    return node.children && node.children.length > 0
   }
 
   label(node) {
@@ -326,18 +320,17 @@ export default class MyCollections extends React.Component {
   }
 
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      return (
-        <div>
-          <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
-            {this.label(node)}
-            {this.actions(node)}
-          </span>
-          {this.renderSync(node)}
-        </div>
-      );
-    }
+    return (
+      <div>
+        <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
+          {this.label(node)}
+          {this.actions(node)}
+        </span>
+        {this.renderSync(node)}
+      </div>
+    );
   }
+
   render() {
     let mPs = this.state.modalProps
     let mPsC = mPs.collection

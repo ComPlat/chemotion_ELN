@@ -11,7 +11,7 @@ export default class SyncWithMeCollections extends React.Component {
       tree: {
         label: 'Synchronized with me Collections',
         id: -1,
-        children: [{}],
+        children: [],
       }
     }
     this.onStoreChange = this.onStoreChange.bind(this);
@@ -29,7 +29,9 @@ export default class SyncWithMeCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    const children = state.syncInRoots.length > 0 ? state.syncInRoots : [{}];
+    const { tree } = this.state;
+    const children = state.syncInRoots
+
     children.map((child) => {
       if (child.is_locked) {
         let label = '';
@@ -46,8 +48,8 @@ export default class SyncWithMeCollections extends React.Component {
 
     this.setState({
       tree: {
-        label: 'Synchronized with me Collections',
-        children
+        ...tree,
+        children,
       }
     });
   }
@@ -115,17 +117,12 @@ export default class SyncWithMeCollections extends React.Component {
   }
 
   renderNode(node) {
-    if (!Object.keys(node).length == 0) {
-      return (
-        <span className="node">
-          {this.label(node)}
-          {this.actions(node)}
-        </span>
-      );
-    }
     return (
-      <div />
-    )
+      <span className="node">
+        {this.label(node)}
+        {this.actions(node)}
+      </span>
+    );
   }
 
   render() {
