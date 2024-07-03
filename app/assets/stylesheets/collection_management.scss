@@ -1,13 +1,3 @@
-#collection-management {
-  .nav-tabs {
-    font-size: 13px;
-
-    li.active > a {
-      background: #eee;
-    }
-  }
-}
-
 *, *:before, *:after {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -39,7 +29,6 @@
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: #eee;
 }
 
 .m-node {
