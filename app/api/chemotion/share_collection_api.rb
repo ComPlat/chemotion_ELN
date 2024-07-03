@@ -29,7 +29,7 @@ module Chemotion
             create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
             # create_generic_elements(params, from_collection, to_collection_id)
             to_collection_id = to_collection_id ? to_collection_id : from_collection&.id
-            create_acl_collection(user[:value], to_collection_id, params, from_collection&.label)
+            create_acl_collection(user[:value], to_collection_id, params)
           end
         else
           create_or_move_collection(params[:action], from_collection, to_collection_id, params[:ui_state])
