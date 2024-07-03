@@ -26,6 +26,10 @@ export default class MySharedCollections extends React.Component {
     }
 
     this.onStoreChange = this.onStoreChange.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.bulkUpdate = this.bulkUpdate.bind(this);
+    this.renderNode = this.renderNode.bind(this);
+    this.handleModalHide = this.handleModalHide.bind(this);
   }
 
   componentDidMount() {
@@ -125,7 +129,7 @@ export default class MySharedCollections extends React.Component {
       return (
         <div className="root-actions">
           <Button size="sm" variant="warning"
-            onClick={this.bulkUpdate.bind(this)}
+            onClick={this.bulkUpdate}
             onMouseDown={(e)=>{e.stopPropagation();}}
             >
             Update
@@ -139,7 +143,7 @@ export default class MySharedCollections extends React.Component {
             onClick={() => this.editShare(node)}>
             <i className="fa fa-share-alt"></i>
           </Button>
-          <Button size="sm" variant="danger" onClick={this.deleteCollection.bind(this, node)}>
+          <Button size="sm" variant="danger" onClick={() => this.deleteCollection(node)}>
             <i className="fa fa-trash-o"></i>
           </Button>
         </ButtonGroup>
@@ -232,14 +236,14 @@ export default class MySharedCollections extends React.Component {
     if (!Object.keys(node).length == 0) {
       if (node.is_locked) {
         return (
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+          <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
             {this.label(node)}
             {this.actions(node)}
           </span>
         )
       } else {
         return (
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+          <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
             {this.label(node)}
             {this.actions(node)}
           </span>
@@ -258,10 +262,10 @@ export default class MySharedCollections extends React.Component {
       return (
         <Tree
           key={i}
-          paddingLeft={20}                         // left padding for children nodes in pixels
-          tree={e}                   // tree object
-          onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
-          renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
+          paddingLeft={20}
+          tree={e}
+          onChange={this.handleChange}
+          renderNode={this.renderNode}
         />
       )
     })
@@ -269,22 +273,22 @@ export default class MySharedCollections extends React.Component {
     return (
       <div className="tree">
         <Tree
-          paddingLeft={20}                         // left padding for children nodes in pixels
+          paddingLeft={20}
           tree={{
             label: 'My Shared Collections',
             id: -1,
-          }}                   // tree object
-          onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
-          renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
+          }}
+          onChange={this.handleChange}
+          renderNode={this.renderNode}
         />
         {trees()}
-        <Modal centered animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal centered animation show={this.state.modalProps.show} onHide={this.handleModalHide}>
           <Modal.Header closeButton>
             <Modal.Title>{this.state.modalProps.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <ManagingModalSharing collectionId={actNode.id}
-              onHide={this.handleModalHide.bind(this)}
+              onHide={this.handleModalHide}
               permissionLevel={actNode.permission_level}
               sampleDetailLevel={actNode.sample_detail_level} reactionDetailLevel={actNode.reaction_detail_level}
               wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}

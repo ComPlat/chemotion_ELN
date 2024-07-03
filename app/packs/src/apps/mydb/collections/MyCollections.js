@@ -29,8 +29,12 @@ export default class MyCollections extends React.Component {
         isChange: false
       }
     }
-    this.addSubcollection=this.addSubcollection.bind(this);
+
     this.onStoreChange = this.onStoreChange.bind(this);
+    this.bulkUpdate = this.bulkUpdate.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.renderNode = this.renderNode.bind(this);
+    this.handleModalHide = this.handleModalHide.bind(this);
   }
 
   componentDidMount() {
@@ -121,7 +125,7 @@ export default class MyCollections extends React.Component {
           size="sm" 
           variant="warning" 
           onMouseDown={(e)=>{e.stopPropagation();}}
-          onClick={this.bulkUpdate.bind(this)}> Save </Button>}
+          onClick={this.bulkUpdate}> Save </Button>}
           {this.addCollectionButton(node)}
         </div>
       )
@@ -144,7 +148,7 @@ export default class MyCollections extends React.Component {
             size="sm"
             variant="danger"
             id={`delete-collection-button_${node.id}`}
-            onClick={this.deleteCollection.bind(this, node)}
+            onClick={() => this.deleteCollection(node)}
           >
             <i className="fa fa-trash-o"></i>
           </Button>
@@ -208,7 +212,7 @@ export default class MyCollections extends React.Component {
         id="add-new-collection-button"
         size="sm"
         variant="success"
-        onClick={(e)=>{this.addSubcollection(node);}}
+        onClick={() => this.addSubcollection(node)}
         onMouseDown={(e)=>{e.stopPropagation();}}
       >
         <i className="fa fa-plus"></i>
@@ -222,7 +226,7 @@ export default class MyCollections extends React.Component {
         id={`add-subcollection-to-collection_${node.id}`}
         size="sm"
         variant="success"
-        onClick={this.addSubcollection.bind(this, node)}
+        onClick={() => this.addSubcollection(node)}
       >
         <i className="fa fa-plus"></i>
       </Button>
@@ -325,7 +329,7 @@ export default class MyCollections extends React.Component {
     if (!Object.keys(node).length == 0) {
       return (
         <div>
-          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+          <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
             {this.label(node)}
             {this.actions(node)}
           </span>
@@ -340,19 +344,19 @@ export default class MyCollections extends React.Component {
     return (
       <div className="tree">
         <Tree
-          paddingLeft={20}                         // left padding for children nodes in pixels
-          tree={this.state.tree}                   // tree object
+          paddingLeft={20}
+          tree={this.state.tree}
           isNodeCollapsed={this.isNodeCollapsed}
-          onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
-          renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
+          onChange={this.handleChange}
+          renderNode={this.renderNode}
         />
-        <Modal centered animation show={mPs.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal centered animation show={mPs.show} onHide={this.handleModalHide}>
           <Modal.Header closeButton>
             <Modal.Title>{mPs.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <ManagingModalSharing collectionId={mPsC.id}
-              onHide={this.handleModalHide.bind(this)}
+              onHide={this.handleModalHide}
               permissionLevel={mPsC.permission_level}
               sampleDetailLevel={mPsC.sample_detail_level} reactionDetailLevel={mPsC.reaction_detail_level}
               wellplateDetailLevel={mPsC.wellplate_detail_level} screenDetailLevel={mPsC.screen_detail_level}

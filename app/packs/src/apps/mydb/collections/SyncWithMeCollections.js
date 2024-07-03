@@ -16,6 +16,7 @@ export default class SyncWithMeCollections extends React.Component {
     }
     this.onStoreChange = this.onStoreChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.renderNode = this.renderNode.bind(this);
   }
 
   componentDidMount() {
@@ -135,7 +136,7 @@ export default class SyncWithMeCollections extends React.Component {
           draggable={false}
           paddingLeft={20}
           tree={e}
-          renderNode={this.renderNode.bind(this)}
+          renderNode={this.renderNode}
         />
       )
     })
@@ -151,7 +152,7 @@ export default class SyncWithMeCollections extends React.Component {
             id: -1,
             path: -1
           }}
-          renderNode={this.renderNode.bind(this)}
+          renderNode={this.renderNode}
         />
         {trees()}
       </div>

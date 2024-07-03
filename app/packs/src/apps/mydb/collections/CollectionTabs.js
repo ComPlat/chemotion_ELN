@@ -40,6 +40,9 @@ export default class CollectionTabs extends React.Component {
     this.onClickCollection = this.onClickCollection.bind(this);
     this.clickedOnBack = this.clickedOnBack.bind(this);
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
+
+    this.handleChange = this.handleChange.bind(this);
+    this.renderNode = this.renderNode.bind(this);
   }
 
   componentDidMount() {
@@ -166,7 +169,7 @@ export default class CollectionTabs extends React.Component {
                 className='collection-tab-edit-btn'
                 size='sm'
                 variant='primary'
-                onClick={this.onClickCollection.bind(this, node)}
+                onClick={() => this.onClickCollection(node)}
                 title='Click to edit collection tab sorting'
               >
                 <i className='fa fa-pencil'/>
@@ -191,8 +194,8 @@ export default class CollectionTabs extends React.Component {
           paddingLeft={30}
           tree={tree}
           isElementDetails
-          onChange={this.handleChange.bind(this)}
-          renderNode={this.renderNode.bind(this)}
+          onChange={this.handleChange}
+          renderNode={this.renderNode}
         />
 
         <Modal
