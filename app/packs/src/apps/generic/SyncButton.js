@@ -26,7 +26,7 @@ const SyncBtn = props => {
         }
       >
         <Button
-          style={{ float: 'left' }}
+          className="mb-3 me-1"
           variant="info"
           size="sm"
           onClick={fnModalOpen}

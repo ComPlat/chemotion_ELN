@@ -56,7 +56,7 @@ export const GenericDSMisType = () => {
           </Tooltip>
         }
       >
-        <span style={{ color: 'red' }}>
+        <span className="text-danger">
           <i className="fa fa-exclamation-triangle" />
           &nbsp;
         </span>
