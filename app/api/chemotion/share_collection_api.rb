@@ -72,11 +72,10 @@ module Chemotion
         delete do
           collection_acl = CollectionAcl.includes(:collection).find_by(id: params[:id])
           error!('404 Share collection id not found', 404) unless collection_acl
-          unless user_ids.include?(user_ids) || user_ids.include?(collection_acl.collection.user_id)
+          unless user_ids.include?(collection_acl.user_id) || user_ids.include?(collection_acl.collection.user_id)
             error!('401 Unauthorized delete share collection', 401)
           end
           collection_acl.destroy!
-          status 204
         end
       end
 
