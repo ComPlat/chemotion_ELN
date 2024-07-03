@@ -68,3 +68,7 @@ $table-bg: transparent;
     @extend .rounded-bottom;
   }
 }
+
+.vw-90 {
+  width: 90vw;
+}
