@@ -1,46 +1,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Navbar } from 'react-bootstrap';
-
-const navs = (text, type) =>
-  text === type ? (
-    <Navbar.Text key={type}>
-      <b>
-        <a
-          href={`/${type
-            .split(/(?=[A-Z])/)
-            .join('_')
-            .toLowerCase()}_admin`}
-        >{`${type.split(/(?=[A-Z])/).join(' ')} Designer`}</a>
-      </b>
-    </Navbar.Text>
-  ) : (
-    <Navbar.Text key={type}>
-      <a
-        href={`/${type
-          .split(/(?=[A-Z])/)
-          .join('_')
-          .toLowerCase()}_admin`}
-      >{`${type.split(/(?=[A-Z])/).join(' ')} Designer`}</a>
-    </Navbar.Text>
-  );
+import { Navbar, Nav, Container } from 'react-bootstrap';
 
 const GenericAdminNav = props => {
   const { userName, text } = props;
+
+  const navLinks = (text, type) => {
+    const link = `/${type.split(/(?=[A-Z])/).join('_').toLowerCase()}_admin`;
+    const activeClass = text === type ? 'active text-primary fw-bold' : 'text-primary';
+    return (
+      <Nav.Link href={link} className={activeClass} key={type}>
+        {`${type.split(/(?=[A-Z])/).join(' ')} Designer`}
+      </Nav.Link>
+    );
+  }
+
   return (
-    <Navbar fixedTop>
-      <Navbar.Header>
-        <Navbar.Brand>
-          <a href="/">Back to MyDB</a>
-        </Navbar.Brand>
-        <Navbar.Toggle />
-      </Navbar.Header>
-      <Navbar.Collapse>
-        {['GenericElements', 'GenericSegments', 'GenericDatasets'].map(e =>
-          navs(text, e)
-        )}
-        <Navbar.Text pullRight>Login as: {userName}</Navbar.Text>
-      </Navbar.Collapse>
+    <Navbar fixed="top" expand="lg" className="bg-body-tertiary border-bottom">
+      <Container fluid="lg">
+        <Navbar.Brand href="/">Back to MyDB</Navbar.Brand>
+        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+        <Navbar.Collapse id="responsive-navbar-nav" className="justify-content-between">
+          <Nav>
+            {['GenericElements', 'GenericSegments', 'GenericDatasets'].map(e =>
+              navLinks(text, e)
+            )}
+          </Nav>
+          <Navbar.Text>Login as: {userName}</Navbar.Text>
+        </Navbar.Collapse>
+      </Container>
     </Navbar>
   );
 };
@@ -52,10 +40,10 @@ GenericAdminNav.propTypes = {
 GenericAdminNav.defaultProps = { userName: '' };
 
 const GenericAdminUnauth = props => (
-  <div style={{ width: '90vw', margin: 'auto' }}>
+  <div className="vw-90 mx-auto my-auto">
     <GenericAdminNav {...props} />
     <hr />
-    <div style={{ marginTop: '60px', textAlign: 'center' }}>
+    <div className="text-center mt-5 pt-5">
       <h3>Unauthorized!</h3>
     </div>
   </div>
