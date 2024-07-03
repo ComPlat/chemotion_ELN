@@ -425,7 +425,6 @@ export default class GenericSegmentsAdmin extends React.Component {
             klasses={this.state.klasses}
             showModal={this.state.show.modal === 'NewRepo'}
           />
-          &nbsp;
           {this.renderGrid()}
         </div>
         <Notifications />

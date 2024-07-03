@@ -476,7 +476,6 @@ export default class GenericElementsAdmin extends React.Component {
             klasses={this.state.klasses}
             showModal={this.state.show.modal === 'NewRepo'}
           />
-          &nbsp;
           {this.renderGrid()}
         </div>
         <Notifications />
