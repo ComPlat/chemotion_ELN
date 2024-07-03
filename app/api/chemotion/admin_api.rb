@@ -254,6 +254,18 @@ module Chemotion
             {} # FE does not use the result
           end
         end
+
+        namespace :queue_task do
+          desc 'queue task'
+          params do
+            requires :task, type: String, desc: 'Admin task name'
+          end
+
+          get do
+            AdminJob.perform_later(params[:task])
+            status 204
+          end
+        end
       end
     end
   end

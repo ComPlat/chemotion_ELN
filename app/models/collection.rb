@@ -105,7 +105,7 @@ class Collection < ApplicationRecord
 
   def self.filter_collection_attributes(user_id, collection_attributes)
     c_ids = collection_attributes.filter_map { |ca| (!ca['isNew'] && ca['id'].to_i) || nil }
-    filtered_cids = Collection.where(id: c_ids).filter_map do |c|
+    filtered_cids = Collection.where(id: c_ids, is_locked: false).filter_map do |c|
       if (c.user_id == user_id && !c.is_shared) ||
          (c.is_shared && (c.shared_by_id == user_id || (c.user_id == user_id && c.permission_level == 10)))
         c.id
@@ -133,15 +133,15 @@ class Collection < ApplicationRecord
     return unless collection_attributes && user_id.is_a?(Integer)
 
     filter_collection_attributes(user_id, collection_attributes).each do |attr|
-      parent = Collection.find(attr['id'])
+      parent = Collection.find_by(id: attr['id'])
+      next if parent.nil?
 
       # collection is a new root collection
       parent.update(parent: nil) unless grand_parent
 
       if attr['children']
         filter_collection_attributes(user_id, attr['children']).each do |attr_child|
-          child = Collection.find(attr_child['id'])
-          child.update(parent: parent)
+          Collection.find_by(id: attr_child['id'])&.update(parent: parent)
         end
       end
 
@@ -151,7 +151,7 @@ class Collection < ApplicationRecord
 
   def self.delete_set(user_id, deleted_ids)
     (
-      Collection.where(id: deleted_ids, user_id: user_id) |
+      Collection.where(id: deleted_ids, user_id: user_id, is_shared: false, is_locked: false) |
       Collection.where(id: deleted_ids, shared_by_id: user_id)
     ).each(&:destroy)
   end
