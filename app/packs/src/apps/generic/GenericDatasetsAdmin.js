@@ -218,10 +218,10 @@ export default class GenericDatasetsAdmin extends React.Component {
     }
 
     return (
-      <div style={{ width: '90vw', margin: 'auto' }}>
+      <div className="vw-90 my-auto mx-auto">
         <GenericAdminNav userName={user.name} text="GenericDatasets" />
         <hr />
-        <div style={{ marginTop: '60px' }}>
+        <div className="mt-5 pt-5">
           <h3>Generic Datasets Designer</h3>
           <SyncBtn
             data={this.state.repoData}
