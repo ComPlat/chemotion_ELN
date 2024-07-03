@@ -128,7 +128,7 @@ class User < ApplicationRecord
   before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
 
   after_create :create_chemotion_public_collection
-  after_create :create_all_collection, :has_profile
+  after_create :create_all_collection
   after_create :new_user_text_template
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
@@ -269,31 +269,8 @@ class User < ApplicationRecord
     counters[key]
   end
 
-  def has_profile
-    create_profile unless profile
-    return unless type == 'Person'
-
-    profile = self.profile
-    data = profile.data || {}
-    file = Rails.root.join('db', 'chmo.default.profile.json')
-    result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.file?(file)
-    return if result.nil? || result['ols_terms'].nil?
-
-    data['chmo'] = result['ols_terms']
-    data['is_templates_moderator'] = false
-    data['molecule_editor'] = false
-    data['converter_admin'] = false
-    if data['layout'].nil?
-      data.merge!(layout: {
-                    'sample' => 1,
-                    'reaction' => 2,
-                    'wellplate' => 3,
-                    'screen' => 4,
-                    'research_plan' => 5,
-                    'cell_line' => -1000,
-                  })
-    end
-    self.profile.update_columns(data: data)
+  def profile
+    super || create_profile
   end
 
   has_many :users_groups, dependent: :destroy
