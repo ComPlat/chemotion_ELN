@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, FormControl, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, ButtonGroup, OverlayTrigger, Popover } from 'react-bootstrap';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
@@ -9,8 +9,6 @@ export default class SharedWithMeCollections extends React.Component {
     super(props);
     this.state = {
       tree: {
-        label: 'Shared with me Collections',
-        id: -1,
         children: []
       }
     }
@@ -29,10 +27,9 @@ export default class SharedWithMeCollections extends React.Component {
   }
 
   onStoreChange(state) {
-    const { tree } = this.state;
     const children = state.remoteRoots;
 
-    children.map((child) => {
+    children.forEach((child) => {
       if (child.is_locked) {
         let label = '';
         if (child.shared_by != null) {
@@ -43,12 +40,10 @@ export default class SharedWithMeCollections extends React.Component {
         }
         child.label = label;
       }
-      return child;
     });
 
     this.setState({
       tree: {
-        ...tree,
         children,
       }
     });
@@ -56,26 +51,6 @@ export default class SharedWithMeCollections extends React.Component {
 
   handleClick() {
     this.setState({ show: !this.state.show });
-  }
-
-  label(node) {
-    if(node.label == "Shared with me Collections") {
-      return (
-        <FormControl 
-        value ="Synchronized with me Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
-    } else {
-      return (
-        <FormControl
-          className="collection-label"
-          type="text"
-          disabled
-          value={node.label || ''}
-        />
-      )
-    }
   }
 
   actions(node) {
@@ -86,44 +61,52 @@ export default class SharedWithMeCollections extends React.Component {
           <Button variant="danger" size="sm" onClick={() => CollectionActions.rejectShared({ id: node.id })}>
           Yes
           </Button>
-          <Button variant="warning" size="sm" onClick={this.handleClick} >
+          <Button variant="warning" size="sm" onClick={this.handleClick}>
           No
           </Button>
         </ButtonGroup>
       </Popover>
     );
 
-    if (!node.is_locked && node.label !== 'Shared with me Collections') {
-      if (typeof (node.shared_to) === 'undefined' || !node.shared_to) {
-        return (
-          <ButtonGroup className="actions">
-            <OverlayTrigger
-              animation
-              placement="bottom"
-              root
-              trigger="focus"
-              overlay={popover}
-            >
-              <Button size="sm" variant="danger" >
-                <i className="fa fa-trash-o" />
-              </Button>
-            </OverlayTrigger>
-          </ButtonGroup>
-        )
-      }
+    if (typeof (node.shared_to) === 'undefined' || !node.shared_to) {
+      return (
+        <ButtonGroup className="ms-2">
+          <OverlayTrigger
+            animation
+            placement="bottom"
+            root
+            trigger="focus"
+            overlay={popover}
+          >
+            <Button size="sm" variant="danger">
+              <i className="fa fa-trash-o" />
+            </Button>
+          </OverlayTrigger>
+        </ButtonGroup>
+      )
     }
-    return (
-      <div />
-    )
   }
 
   renderNode(node) {
-    return (
-      <span className="node">
-        {this.label(node)}
-        {this.actions(node)}
-      </span>
-    );
+    if (node.is_locked) {
+      return (
+        <h5
+          className="ms-3"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {node.label}
+        </h5>
+      );
+    } else {
+      return (
+        <div className="d-flex mb-2">
+          <div className="align-self-center ms-3">
+            {node.label}
+          </div>
+          {this.actions(node)}
+        </div>
+      );
+    }
   }
 
   render() {
@@ -140,16 +123,8 @@ export default class SharedWithMeCollections extends React.Component {
     })
 
     return (
-      <div className="tree">
-        <Tree
-          draggable={false}
-          paddingLeft={20}
-          tree={{
-            label: 'Shared with me Collections',
-            id: -1,
-          }}
-          renderNode={this.renderNode}
-        />
+      <div>
+        <h4>Collections shared with me</h4>
         {trees()}
       </div>
     )
