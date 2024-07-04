@@ -14,8 +14,6 @@ export default class MySharedCollections extends React.Component {
       deleted_ids: [],
 
       tree: {
-        label: 'My Shared Collections',
-        id: -1,
         children: []
       },
       modalProps: {
@@ -51,24 +49,21 @@ export default class MySharedCollections extends React.Component {
     });
   }
 
-  handleChange(tree) {
-    let oldTree = this.state.tree
-    let children = oldTree.children
-    children.map((child, i) => {
-      if ('label' in tree && typeof (tree.label) == 'string' && tree.label == child.label) {
-        children[i] = tree
-        return
-      }
-    });
-    oldTree.children = children
+  handleChange(newTree) {
+    const { tree } = this.state;
     this.setState({
-      tree: oldTree
+      tree: {
+        children: tree.children.map((child) => {
+          return (tree.id === child.id)
+            ? newTree
+            : child;
+        })
+      },
     });
-
   }
 
   isActive(node) {
-    return node === this.state.active ? "node is-active" : "node";
+    return node === this.state.active;
   }
 
   hasChildren(node) {
@@ -76,24 +71,16 @@ export default class MySharedCollections extends React.Component {
   }
 
   label(node) {
-    if (node.label == "My Shared Collections") {
+    if (node.is_locked) {
       return (
-        <FormControl 
-        value ="My Shared Collections" 
-        type="text" 
-        className="root-label" 
-        disabled/>);
-    } else if (node.is_locked) {
-      return (
-        <FormControl className="collection-label" type="text"
-          disabled
-          value={node.label || ''}
-        />
+        <h5 onMouseDown={(e) => e.stopPropagation()}>{node.label}</h5>
       )
-
     } else {
       return (
-        <FormControl className="collection-label" type="text"
+        <FormControl
+          className="ms-3 w-75"
+          size="sm"
+          type="text"
           value={node.label || ''}
           onChange={(e) => { this.handleLabelChange(e, node) }}
         />
@@ -124,30 +111,24 @@ export default class MySharedCollections extends React.Component {
   }
 
   actions(node) {
-    if (node.label == "My Shared Collections") {
-      return (
-        <div className="root-actions">
-          <Button size="sm" variant="warning"
-            onClick={this.bulkUpdate}
-            onMouseDown={(e)=>{e.stopPropagation();}}
-            >
-            Update
-          </Button>
-        </div>
-      )
-    } else if (!node.is_locked) {
-      return (
-        <ButtonGroup className="actions">
-          <Button size="sm" variant="primary"
-            onClick={() => this.editShare(node)}>
-            <i className="fa fa-share-alt"></i>
-          </Button>
-          <Button size="sm" variant="danger" onClick={() => this.deleteCollection(node)}>
-            <i className="fa fa-trash-o"></i>
-          </Button>
-        </ButtonGroup>
-      )
-    }
+    return (
+      <ButtonGroup className="ms-auto">
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => this.editShare(node)}
+        >
+          <i className="fa fa-share-alt" />
+        </Button>
+        <Button
+          size="sm"
+          variant="danger"
+          onClick={() => this.deleteCollection(node)}
+        >
+          <i className="fa fa-trash-o" />
+        </Button>
+      </ButtonGroup>
+    )
   }
 
   editShare(node) {
@@ -178,8 +159,6 @@ export default class MySharedCollections extends React.Component {
       children.forEach((child) => {
         parent.children.push(child);
       });
-    } else if (parent.label == 'My Shared Collections') {
-      parent.children.push({});
     }
   }
 
@@ -234,17 +213,19 @@ export default class MySharedCollections extends React.Component {
   renderNode(node) {
     if (node.is_locked) {
       return (
-        <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
+        <div className="ms-3">
           {this.label(node)}
-          {this.actions(node)}
-        </span>
-      )
+        </div>
+      );
     } else {
       return (
-        <span className={this.isActive(node)} onClick={() => this.onClickNode(node)}>
+        <div
+          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex mb-2`}
+          onClick={() => this.onClickNode(node)}
+        >
           {this.label(node)}
           {this.actions(node)}
-        </span>
+        </div>
       );
     }
   }
@@ -266,16 +247,19 @@ export default class MySharedCollections extends React.Component {
     })
 
     return (
-      <div className="tree">
-        <Tree
-          paddingLeft={20}
-          tree={{
-            label: 'My Shared Collections',
-            id: -1,
-          }}
-          onChange={this.handleChange}
-          renderNode={this.renderNode}
-        />
+      <div>
+        <div className="d-flex">
+          <h4>My Shared Collections</h4>
+          <Button
+            className="ms-auto"
+            size="sm"
+            variant="warning"
+            onClick={this.bulkUpdate}
+            onMouseDown={(e) => e.stopPropagation()}
+            >
+            Update
+          </Button>
+        </div>
         {trees()}
         <Modal centered animation show={this.state.modalProps.show} onHide={this.handleModalHide}>
           <Modal.Header closeButton>
