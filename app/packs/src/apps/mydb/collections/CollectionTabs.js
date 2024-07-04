@@ -108,7 +108,7 @@ export default class CollectionTabs extends React.Component {
   handleSave(showModal) {
     const cCol = this.state.currentCollection;
     let layoutSegments = {};
-    elements.map((_e, index) => {
+    elements.forEach((_e, index) => {
       const layout = filterTabLayout(this.tabRef[index].state);
       layoutSegments = { ...layoutSegments, [elements[index].name]: layout };
     });
@@ -126,55 +126,27 @@ export default class CollectionTabs extends React.Component {
     this.handleModalOptions(this.state.showModal);
   }
 
-  label(node) {
-    if (node.label === 'My Collections') {
-      return (
-        <Form.Control
-          value="My Collections"
-          type="text"
-          className="root-label"
-          disabled
-        />
-      );
-    }
-    return (
-      <Form.Control className="collection-label" type="text" value={node.label || ''} disabled />
-    );
-  }
-
-  isActive(node) {
-    return node === this.state.active ? 'node is-active' : 'node';
-  }
-
   renderNode(node) {
     if (node.is_locked || node.id < 1) {
       return (
-        <span className={this.isActive(node)}>
-          {this.label(node)}
-        </span>
-      );
-    } else {
-      return (
-        <tr>
-          <td colSpan='6'>
-            <span className={this.isActive(node)}>
-              {this.label(node)}
-            </span>
-          </td>
-          <td colSpan='6'>
-            <Button
-              className='collection-tab-edit-btn'
-              size='sm'
-              variant='primary'
-              onClick={() => this.onClickCollection(node)}
-              title='Click to edit collection tab sorting'
-            >
-              <i className='fa fa-pencil'/>
-            </Button>
-          </td>
-        </tr>
+        <div className="ms-3 mb-2">{node.label}</div>
       );
     }
+
+    return (
+      <div className="d-flex mb-2">
+        <div className="align-self-center ms-3">{node.label}</div>
+        <Button
+          className="ms-2"
+          size="sm"
+          variant="primary"
+          onClick={() => this.onClickCollection(node)}
+          title="Click to edit collection tab sorting"
+        >
+          <i className="fa fa-pencil" />
+        </Button>
+      </div>
+    );
   }
 
   render() {
@@ -208,7 +180,7 @@ export default class CollectionTabs extends React.Component {
             {layouts.map((lay, index) => {
               const callbackRef = (node) => this.tabRef[index] = node;
               return (
-                <div key={elements[index].name} style={{ textAlign: 'left' }}>
+                <div key={elements[index].name}>
                   <Col md={6}>
                     <p className="collection-tag-element">{elements[index].label}</p>
                   </Col>
@@ -226,9 +198,9 @@ export default class CollectionTabs extends React.Component {
               );
             })}
           </Modal.Body>
-          <Modal.Footer style={{ textAlign: 'left' }}>
-            <div className="alert alert-info" role="alert" style={{ width: 'fit-content' }}>
-              <p style={{ fontSize: '13px' }}>
+          <Modal.Footer>
+            <div className="alert alert-info" role="alert">
+              <p>
                 For the selected collection you can adjust the visibility of segment tabs and their order for each of the above items.
                 Drag and drop to select the order of segment tab layout.
                 Items in the white area will be displayed in the order they are placed and the grey area items will be hidden.
