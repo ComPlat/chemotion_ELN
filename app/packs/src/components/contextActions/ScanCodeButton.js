@@ -232,10 +232,10 @@ export default class ScanCodeButton extends React.Component {
     ];
 
     const title = (
-      <span className="fa-stack" style={{ height: 16 }}>
-        <i className="fa fa-barcode fa-stack-1x" style={{ marginTop: -8 }} />
-        <i className="fa fa-search fa-stack-1x" style={{ left: 7, marginTop: -8 }} />
-      </span>
+      <>
+        <i className="fa fa-barcode" />
+        <i className="fa fa-search ms-n2" />
+      </>
     );
     const { customClass } = this.props;
     return (
