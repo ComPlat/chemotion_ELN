@@ -129,7 +129,6 @@ class User < ApplicationRecord
 
   after_create :create_chemotion_public_collection
   after_create :create_all_collection
-  after_create :new_user_text_template
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
   before_destroy :delete_data
@@ -369,14 +368,8 @@ class User < ApplicationRecord
     log_error 'Error on update_matrix'
   end
 
-  def create_text_template
-    API::TEXT_TEMPLATE.each do |type|
-      klass = type.to_s.constantize
-      template = klass.new
-      template.user_id = id
-      template.data = klass.default_templates
-      template.save!
-    end
+  def text_templates
+    super.presence || TextTemplate.create_default_text_templates_for_user(id)
   end
 
   def self.from_omniauth(provider, uid, email, first_name, last_name)
@@ -421,10 +414,6 @@ class User < ApplicationRecord
 
   def create_all_collection
     Collection.create(user: self, label: 'All', is_locked: true, position: 0)
-  end
-
-  def new_user_text_template
-    create_text_template
   end
 
   def create_chemotion_public_collection
