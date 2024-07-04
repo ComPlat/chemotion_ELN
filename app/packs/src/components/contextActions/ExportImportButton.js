@@ -11,93 +11,8 @@ import ModalReactionExport from 'src/components/contextActions/ModalReactionExpo
 import ModalExportCollection from 'src/components/contextActions/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/ModalExportRadarCollection';
 import ModalImportCollection from 'src/components/contextActions/ModalImportCollection';
-import { elementShowOrNew } from 'src/utilities/routesUtils.js';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 
-function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
-  const showRadar = UIStore.getState().hasRadar ? (
-    <>
-      <Dropdown.Divider />
-      <Dropdown.Item
-        onClick={() => editMetadataFunction()}
-        disabled={isDisabled}
-        title="Edit metadata"
-      >
-        Edit collection metadata
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={() => exportCollectionToRadarFunction(updateModalProps)}
-        disabled={isDisabled}
-        title="Export to RADAR"
-      >
-        Publish current collection via RADAR
-      </Dropdown.Item>
-    </>
-  ) : null;
-
-  return (
-    <Dropdown as={ButtonGroup} id="export-dropdown">
-      <Dropdown.Toggle variant="light" className={customClass}>
-        <i className="fa fa-download"/>
-        &nbsp;
-        <i className="fa fa-upload"/>
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        <Dropdown.Item
-          onClick={() => exportFunction(updateModalProps)}
-          title="Export to spreadsheet"
-        >
-          Export samples from selection
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => exportReactionFunction(updateModalProps)}
-          title="Export reaction smiles to csv"
-        >
-          Export reactions from selection
-        </Dropdown.Item>
-        <Dropdown.Divider />
-        <Dropdown.Item
-          onClick={() => importSampleFunction(updateModalProps, false)}
-          disabled={isDisabled}
-          title="Import from spreadsheet or sdf"
-        >
-          Import samples to collection
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => importSampleFunction(updateModalProps, true)}
-          disabled={isDisabled}
-          title="Import chemicals from spreadsheet"
-        >
-          Import chemicals to collection
-        </Dropdown.Item>
-        <Dropdown.Divider />
-        <Dropdown.Item
-          onClick={() => exportCollectionFunction(updateModalProps)}
-          title="Export as ZIP archive"
-        >
-          Export collections
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => importCollectionFunction(updateModalProps)}
-          title="Import collections from ZIP archive"
-        >
-          Import collections
-        </Dropdown.Item>
-
-        {showRadar}
-      </Dropdown.Menu>
-    </Dropdown>
-  );
-}
-
-ExportImportButton.propTypes = {
-  isDisabled: PropTypes.bool,
-  customClass: PropTypes.string,
-};
-
-ExportImportButton.defaultProps = {
-  isDisabled: false,
-  customClass: null,
-};
 const importSampleFunction = (updateModalProps, importAsChemical) => {
   const title = importAsChemical ? 'Import Chemicals from File' : 'Import Samples from File';
   const component = ModalImport;
@@ -185,7 +100,7 @@ const editMetadataFunction = () => {
 };
 
 const exportCollectionToRadarFunction = (updateModalProps) => {
-  const title = "Publish current collection via RADAR";
+  const title = 'Publish current collection via RADAR';
   const component = ModalExportRadarCollection;
   const action = CollectionActions.exportCollectionToRadar;
 
@@ -198,6 +113,89 @@ const exportCollectionToRadarFunction = (updateModalProps) => {
   };
 
   updateModalProps(modalProps);
+};
+
+function ExportImportButton({ isDisabled, updateModalProps, customClass }) {
+  const showRadar = UIStore.getState().hasRadar;
+  return (
+    <Dropdown as={ButtonGroup} id="export-dropdown">
+      <Dropdown.Toggle variant="light" className={customClass}>
+        <i className="fa fa-download" />
+        <i className="fa fa-upload ms-1" />
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <Dropdown.Item
+          onClick={() => exportFunction(updateModalProps)}
+          title="Export to spreadsheet"
+        >
+          Export samples from selection
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => exportReactionFunction(updateModalProps)}
+          title="Export reaction smiles to csv"
+        >
+          Export reactions from selection
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item
+          onClick={() => importSampleFunction(updateModalProps, false)}
+          disabled={isDisabled}
+          title="Import from spreadsheet or sdf"
+        >
+          Import samples to collection
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => importSampleFunction(updateModalProps, true)}
+          disabled={isDisabled}
+          title="Import chemicals from spreadsheet"
+        >
+          Import chemicals to collection
+        </Dropdown.Item>
+        <Dropdown.Divider />
+        <Dropdown.Item
+          onClick={() => exportCollectionFunction(updateModalProps)}
+          title="Export as ZIP archive"
+        >
+          Export collections
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => importCollectionFunction(updateModalProps)}
+          title="Import collections from ZIP archive"
+        >
+          Import collections
+        </Dropdown.Item>
+        {showRadar && (
+          <>
+            <Dropdown.Divider />
+            <Dropdown.Item
+              onClick={() => editMetadataFunction()}
+              disabled={isDisabled}
+              title="Edit metadata"
+            >
+              Edit collection metadata
+            </Dropdown.Item>
+            <Dropdown.Item
+              onClick={() => exportCollectionToRadarFunction(updateModalProps)}
+              disabled={isDisabled}
+              title="Export to RADAR"
+            >
+              Publish current collection via RADAR
+            </Dropdown.Item>
+          </>
+        )}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}
+
+ExportImportButton.propTypes = {
+  isDisabled: PropTypes.bool,
+  customClass: PropTypes.string,
+};
+
+ExportImportButton.defaultProps = {
+  isDisabled: false,
+  customClass: null,
 };
 
 export default ExportImportButton;
