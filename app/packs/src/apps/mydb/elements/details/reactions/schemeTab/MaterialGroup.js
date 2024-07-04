@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { Button, Tooltip, OverlayTrigger, Table } from 'react-bootstrap';
 import VirtualizedSelect from 'react-virtualized-select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
@@ -12,7 +12,6 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
-import Glyphicon from 'src/components/legacyBootstrap/Glyphicon'
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
@@ -169,16 +168,17 @@ const GeneralMaterialGroup = ({
       size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
-      <Glyphicon glyph="plus" />
+      <i class="fa fa-plus"></i>
     </Button>
   );
 
   return (
-    <div>
-      <table width="100%" className="reaction-scheme">
+    <Table responsive className="w-100 borderless">
         <colgroup>
           <col style={{ width: '4%' }} />
-          <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
+        <col
+          style={{ width: showLoadingColumn ? '8%' : '15%' }}
+        />
           <col style={{ width: '4%' }} />
           <col style={{ width: '2%' }} />
           <col style={{ width: '2%' }} />
@@ -190,13 +190,15 @@ const GeneralMaterialGroup = ({
         </colgroup>
         <thead>
           <tr>
-            <th>{addSampleButton}</th>
+          <th className>{addSampleButton}</th>
             <th>{headers.group}</th>
             {isReactants && <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>}
             {!isReactants && <th>{refTHead}</th>}
             <th>{headers.show_label}</th>
-            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.tr}</th>}
-            {!isReactants && <th style={{ padding: '3px 3px' }}>{headers.reaction_coefficient}</th>}
+          {!isReactants && <th
+          >{headers.tr}</th>}
+          {!isReactants && <th
+          >{headers.reaction_coefficient}</th>}
             {!isReactants && <th>{headers.amount}</th>}
             {!isReactants && <th />}
             {!isReactants && <th />}
@@ -208,8 +210,7 @@ const GeneralMaterialGroup = ({
         <tbody>
           {contents.map(item => item)}
         </tbody>
-      </table>
-    </div>
+    </Table>
   );
 };
 
@@ -224,7 +225,7 @@ const SolventsMaterialGroup = ({
       size="sm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
     >
-      <Glyphicon glyph="plus" />
+      <i class="fa fa-plus"></i>
     </Button>
   );
 
@@ -257,12 +258,11 @@ const SolventsMaterialGroup = ({
   );
 
   return (
-    <div>
-      <table width="100%" className="reaction-scheme">
+    <Table className="w-100">
         <thead>
           <tr>
-            <th width="4%">{addSampleButton}</th>
-            <th width="21%" style={{ paddingRight: '10px' }}>
+          <th>{addSampleButton}</th>
+          <th>
               <VirtualizedSelect
                 disabled={!permitOn(reaction)}
                 className="solvents-select"
@@ -273,19 +273,18 @@ const SolventsMaterialGroup = ({
                 onChange={createDefaultSolventsForReaction}
               />
             </th>
-            <th width="2%" title="Dry Solvent">DS</th>
-            <th width="4%">T/R</th>
-            <th width="24%">Label</th>
-            <th width="13%">Vol</th>
-            <th width="13%">Vol ratio</th>
-            <th width="3%" />
+          <th className='w-2' title="Dry Solvent">DS</th>
+          <th className='w-4' >T/R</th>
+          <th className='w-24'>Label</th>
+          <th className='w-13'>Vol</th>
+          <th className='w-13'>Vol ratio</th>
+          <th className='w-3' />
           </tr>
         </thead>
         <tbody>
           {contents.map(item => item)}
         </tbody>
-      </table>
-    </div>
+    </Table>
   );
 };
 

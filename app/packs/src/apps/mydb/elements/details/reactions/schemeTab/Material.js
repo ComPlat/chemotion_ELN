@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormControl,
+  Form,
   Button,
   InputGroup,
   OverlayTrigger,
@@ -19,8 +19,6 @@ import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
-import Radio from 'src/components/legacyBootstrap/Radio'
 
 const matSource = {
   beginDrag(props) {
@@ -79,7 +77,7 @@ const matTagCollect = (connect, monitor) => ({
 
 const notApplicableInput = () => (
   <td>
-    <FormControl
+    <Form.Control
       bsClass="bs-form--compact form-control"
       size="sm"
       style={{ textAlign: 'center' }}
@@ -195,23 +193,24 @@ class Material extends Component {
       this.props.materialGroup === 'products'
         ? <td />
         : <td>
-          <Radio
+          <Form.Check
+            type='radio'
             disabled={!permitOn(this.props.reaction)}
             name="reference"
             checked={material.reference}
             onChange={e => this.handleReferenceChange(e)}
             size="sm"
-            style={{ margin: 0 }}
+            className='m-1'
           />
         </td>
     );
   }
 
-  materialShowLabel(material, style = { padding: '5px 4px' }) {
+  materialShowLabel(material) {
     return (
       <Button
         active
-        style={style}
+        className='p-1'
         onClick={e => this.handleShowLabelChange(e)}
         variant={material.show_label ? 'success' : 'primary'}
         size="sm"
@@ -238,10 +237,9 @@ class Material extends Component {
       }
       return (
         <div>
-          <FormControl
+          <Form.Control
             name="yield"
             type="text"
-            bsClass="bs-form--compact form-control"
             size="sm"
             value={calculateYield}
             disabled
@@ -496,7 +494,7 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td style={{ width: '22%', maxWidth: '50px' }}>
+        <td>
           {this.materialNameWithIupac(material)}
         </td>
 
@@ -510,7 +508,7 @@ class Material extends Component {
           {this.switchTargetReal(isTarget)}
         </td>
 
-        <td style={{ width: '1%', maxWidth: '5px' }}>
+        <td>
           <OverlayTrigger placement="top" overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
             <div>
               <NumeralInputWithUnitsCompo
@@ -630,12 +628,13 @@ class Material extends Component {
           { dropEffect: 'copy' }
         )}
 
-        <td style={{ width: '25%', maxWidth: '50px' }}>
+        <td>
           {this.materialNameWithIupac(material)}
         </td>
         <td>
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
-            <Checkbox
+            <Form.Check
+              type='checkbox'
               checked={material.dry_solvent}
               onChange={(event) => this.handleDrySolventChange(event)}
             />
@@ -652,10 +651,9 @@ class Material extends Component {
               overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
             >
               <div>
-                <FormControl
+                <Form.Control
                   disabled={!permitOn(reaction)}
                   type="text"
-                  bsClass="bs-form--compact form-control"
                   size="sm"
                   value={material.external_label}
                   placeholder={material.molecule.iupac_name}
@@ -679,9 +677,8 @@ class Material extends Component {
         {this.materialVolume(material)}
 
         <td>
-          <FormControl
+          <Form.Control
             type="text"
-            bsClass="bs-form--compact form-control"
             size="sm"
             value={solvConcentration(material, props.reaction.purificationSolventVolume)}
             disabled
@@ -700,12 +697,12 @@ class Material extends Component {
     );
   }
 
-  switchTargetReal(isTarget, style = { padding: '5px 4px' }) {
+  switchTargetReal(isTarget) {
     return (
       <Button
         disabled={!permitOn(this.props.reaction)}
         active
-        style={style}
+        className='p-1'
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'success' : 'primary'}
         size="sm"
