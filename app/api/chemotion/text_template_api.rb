@@ -2,17 +2,16 @@
 module Chemotion
   class TextTemplateAPI < Grape::API
     resource :text_templates do
-      DEF_ELS ||= %w[research_plan screen wellplate reaction sample reaction_description].freeze
-
       params do
         requires :type, type: String, desc: 'element type'
       end
       get :by_type do
-        template = if params[:type].in?(DEF_ELS)
-          current_user.send(params[:type] + '_text_template')
-        else
-          ElementTextTemplate.find_by(user_id: current_user.id, name: params[:type])
-        end
+        type = "#{params[:type]}_text_template".classify
+        template = if type.in?(TextTemplate::TYPES)
+                     current_user.text_templates.find_by(type: type)
+                   else
+                     current_user.text_templates.find_by(type: 'ElementTextTemplate', name: params[:type])
+                   end
 
         { "#{params[:type]}": template&.data || {} }
       end
@@ -22,11 +21,11 @@ module Chemotion
         requires :data, type: Hash, desc: 'Text template details'
       end
       put :update do
-        template = if params[:type].in?(DEF_ELS)
-          current_user.send(params[:type] + '_text_template')
-        else
-          ElementTextTemplate.find_or_initialize_by(user_id: current_user.id, name: params[:type])
-        end
+        template = if (type = "#{params[:type]}_text_template".classify).in?(TextTemplate::TYPES)
+                     current_user.text_templates.find_by(type: type)
+                   else
+                     ElementTextTemplate.find_or_initialize_by(user_id: current_user.id, name: params[:type])
+                   end
         template.data = params['data']
         template.save!
 
@@ -48,7 +47,7 @@ module Chemotion
       delete :by_name do
         error!('401 Unauthorized', 401) unless Admin.exists?(id: current_user.id)
 
-        template = PredefinedTextTemplate.where(name: params["name"]).first
+        template = PredefinedTextTemplate.where(name: params['name']).first
         error!('404 Not found', 404) if template.nil?
 
         template.destroy
