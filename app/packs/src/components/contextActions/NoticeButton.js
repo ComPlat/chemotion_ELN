@@ -339,16 +339,13 @@ export default class NoticeButton extends React.Component {
           eventKey={index}
           className="mb-3"
         >
-          <Card.Header>
+          <Card.Header className="d-flex gap-2">
             <i className="fa fa-commenting-o" aria-hidden="true" />
-            &nbsp;
             {not.subject}
-            &nbsp;&nbsp;
             <span>
               <strong>From: </strong>
               {not.sender_name}
             </span>
-            &nbsp;&nbsp;
             <span>
               <strong>Created On: </strong>
               {formatDate(not.created_at)}
