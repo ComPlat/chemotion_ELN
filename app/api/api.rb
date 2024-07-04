@@ -141,9 +141,6 @@ class API < Grape::API
 
   ELEMENTS = %w[research_plan screen wellplate reaction sample cell_line].freeze
 
-  TEXT_TEMPLATE = %w[SampleTextTemplate ReactionTextTemplate WellplateTextTemplate ScreenTextTemplate
-                     ResearchPlanTextTemplate ReactionDescriptionTextTemplate ElementTextTemplate].freeze
-
   ELEMENT_CLASS = {
     'research_plan' => ResearchPlan,
     'screen' => Screen,
