@@ -175,7 +175,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
           >
             <Form.Control
               type="text"
-              bsClass="bs-form--compact form-control"
               disabled={inputDisabled}
               bsSize={bsSize}
               variant={variant}
@@ -196,7 +195,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
         <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
           <Form.Control
             type="text"
-            bsClass="bs-form--compact form-control"
             disabled={inputDisabled}
             bsSize={bsSize}
             variant={variant}
