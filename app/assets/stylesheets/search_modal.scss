@@ -121,16 +121,6 @@
     font-size: 1.8em;
     padding: 10px 0 8px 0;
   }
-
-  .icon-with-number {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .icon-with-number span {
-    padding-left: 0.25rem;
-    font-size: 1.3em;
-  }
 }
 
 .advanced-detail-switch {
@@ -344,17 +334,6 @@
   gap: 3.5rem;
   align-items: center;
   margin-top: 1.5rem;
-}
-
-.ketcher-buttons .btn-toolbar {
-  gap: 0.5rem;
-}
-
-.ketcher-buttons form {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 2.5rem;
 }
 
 .result-error-message {

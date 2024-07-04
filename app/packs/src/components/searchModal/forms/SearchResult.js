@@ -168,9 +168,9 @@ const SearchResult = ({ handleClear }) => {
         className={itemClass}
       >
         <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
-          <div className="icon-with-number">
-            <i className={iconClass} />
-            <span>
+          <div className="d-inline-flex align-items-center">
+            <i className={`${iconClass} pe-1`} />
+            <span class="fs-3">
               ({tabResult.total_elements})
             </span>
           </div>

@@ -330,17 +330,15 @@ export default class AutoCompleteInput extends React.Component {
               }
             }
 
-
             return (
               <ListGroup.Item
                 onClick={() => this.selectSuggestion()}
                 onMouseEnter={() => this.focusSuggestion(index)}
                 key={'suggestion_' + index}
                 ref={'suggestion_' + index}
-                className="list-group-item-wrap"
               >
-                <h4 className="list-group-item-heading">{name}</h4>
-                <i className={icon}></i>
+                <h4 className="text-break">{name}</h4>
+                <i className={`pe-1 ${icon}`}></i>
                 {typeLabel}
               </ListGroup.Item>
             )
@@ -357,10 +355,9 @@ export default class AutoCompleteInput extends React.Component {
     const {
       value, showSuggestions, inputWidth, suggestions
     } = this.state;
+    let scrollClass = '';
     if (suggestions && suggestions.length > 6) { // show scroll after 6 results
-      this.props.suggestionsAttributes.className = 'scroll';
-    } else {
-      this.props.suggestionsAttributes.className = '';// hide scroll
+      scrollClass = ' overflow-y-scroll';
     }
 
     return (
@@ -369,7 +366,8 @@ export default class AutoCompleteInput extends React.Component {
           <InputGroup>
             {this.props.buttonBefore}
             <Form.Control
-              {...this.props.inputAttributes}
+              placeholder="IUPAC, InChI, SMILES, RInChI..."
+              style={{ minWidth: 200, maxWidth: 300 }}
               disabled={this.state.inputDisabled || this.props.inputDisabled}
               type="text"
               value={this.props.defaultSearchValue || value || ''}
@@ -391,9 +389,10 @@ export default class AutoCompleteInput extends React.Component {
           rootClose={true}
           target={this.state.target}
         >
-          <div className="suggestion-search-container" style={{ width: inputWidth }} >
+          <div className="position-absolute" style={{ width: inputWidth, zIndex: 20 }} >
             <ListGroup
-              {...this.props.suggestionsAttributes}
+              className={scrollClass}
+              style={{ maxHeight: 400, width: 400 }}
               ref={(alist) => { this.listSuggestions = alist; }}
             >
               {this.renderSuggestions()}

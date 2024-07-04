@@ -128,7 +128,7 @@ const KetcherRailsform = () => {
               style={{ border: 'none', minHeight: 'calc(' + iframeHeight + ' - 242px)' }}
             />
             <div className="ketcher-buttons">
-              <ButtonToolbar>
+              <ButtonToolbar className="gap-2">
                 <Button variant="warning" onClick={() => searchStore.handleCancel()}>
                   Cancel
                 </Button>
@@ -136,7 +136,7 @@ const KetcherRailsform = () => {
                   Search
                 </Button>
               </ButtonToolbar>
-              <Form inline>
+              <Form className="d-inline-flex flex-nowrap align-items-center gap-5" inline>
                 <Form.Check
                   type="radio"
                   value="similar"

@@ -229,9 +229,13 @@ export default class ElementsList extends React.Component {
     let removeSearchResultAlert = '';
     if (UIStore.getState().currentSearchByID) {
       removeSearchResultAlert = (
-        <Alert variant="info" className="remove-search-result">
-          <Button variant="link" onClick={() => this.handleRemoveSearchResult(this.context.search)}>Remove search result</Button>
-        </Alert>
+        <Button
+          variant="info"
+          onClick={() => this.handleRemoveSearchResult(this.context.search)}
+          className="w-100 p-3 mb-3 text-start fs-5"
+        >
+          Remove search result
+        </Button>
       );
     }
 
