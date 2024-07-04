@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Col, Row } from 'react-bootstrap';
+import { Col, Row, Container } from 'react-bootstrap';
 import { FlowViewerModal } from 'chem-generic-ui';
 import CollectionManagement from 'src/apps/mydb/collections/CollectionManagement';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
@@ -15,7 +15,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Calendar from 'src/components/calendar/Calendar';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
-import Grid from 'src/components/legacyBootstrap/Grid'
 
 class App extends Component {
   constructor(_props) {
@@ -117,12 +116,12 @@ class App extends Component {
   render() {
     const { showCollectionTree, showGenericWorkflow, propGenericWorkflow } = this.state;
     return (
-      <Grid fluid>
-        <Row className="card-navigation">
+      <Container fluid>
+        <Row className="top-0 z-index-5 bg-light">
           <Navigation toggleCollectionTree={this.toggleCollectionTree} />
           <SampleTaskInbox />
         </Row>
-        <Row className="card-content container-fluid pt-3">
+        <Row className="container-fluid pt-3">
           {showCollectionTree && <CollectionTree />}
           {this.mainContent()}
         </Row>
@@ -138,7 +137,7 @@ class App extends Component {
         />
         <InboxModal showCollectionTree={showCollectionTree} />
         <Calendar />
-      </Grid>
+      </Container>
     );
   }
 }
