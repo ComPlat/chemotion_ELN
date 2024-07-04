@@ -289,14 +289,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     onReactionChange(reaction);
   }, [reactionVariations]);
 
-  if (!isEqual(reactionMaterials, getReactionMaterials(reaction))) {
+  const updatedReactionMaterials = getReactionMaterials(reaction);
+  if (!isEqual(reactionMaterials, updatedReactionMaterials)) {
     /*
     Keep set of materials up-to-date.
     Materials could have been added or removed in the "Scheme" tab.
     These changes need to be reflected in the variations.
     */
-    const updatedReactionMaterials = getReactionMaterials(reaction);
-
     const updatedColumnDefinitions = updateColumnDefinitionsMaterials(
       columnDefinitions,
       updatedReactionMaterials,
