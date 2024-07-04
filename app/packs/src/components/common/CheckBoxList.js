@@ -1,14 +1,13 @@
 import React from 'react';
 import {
   Form,
-  Container,
   Row,
   Col,
   Card
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-const CheckBoxs = ({
+const CheckBoxList = ({
   items,
   toggleCheckbox,
   toggleCheckAll,
@@ -52,11 +51,11 @@ const CheckBoxs = ({
   );
 };
 
-CheckBoxs.propTypes = {
+CheckBoxList.propTypes = {
   items: PropTypes.array,
   checkedAll: PropTypes.bool,
   toggleCheckAll: PropTypes.func,
   toggleCheckbox: PropTypes.func,
 };
 
-export default CheckBoxs;
+export default CheckBoxList;

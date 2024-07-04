@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Button, ButtonToolbar, Dropdown, DropdownButton
 } from 'react-bootstrap';
-import CheckBoxs from 'src/components/common/CheckBoxs';
+import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 
@@ -276,37 +276,37 @@ export default class ModalExport extends React.Component {
     return (
       <div>
         <h4>Sample properties</h4>
-        <CheckBoxs items={this.state.columns.sample}
+        <CheckBoxList items={this.state.columns.sample}
           toggleCheckbox={this.toggleColumnsSample}
           toggleCheckAll={this.toggleColumnsAllSample}
           checkedAll={this.state.checkedAllColumns.sample}
         />
         <h4>Molecule properties</h4>
-        <CheckBoxs items={this.state.columns.molecule}
+        <CheckBoxList items={this.state.columns.molecule}
           toggleCheckbox={this.toggleColumnsMolecule}
           toggleCheckAll={this.toggleColumnsAllMolecule}
           checkedAll={this.state.checkedAllColumns.molecule}
         />
         <h4>Reaction properties</h4>
-        <CheckBoxs items={this.state.columns.reaction}
+        <CheckBoxList items={this.state.columns.reaction}
           toggleCheckbox={this.toggleColumnsReaction}
           toggleCheckAll={this.toggleColumnsAllReaction}
           checkedAll={this.state.checkedAllColumns.reaction}
         />
         <h4>Wellplate and well properties</h4>
-        <CheckBoxs items={this.state.columns.wellplate}
+        <CheckBoxList items={this.state.columns.wellplate}
           toggleCheckbox={this.toggleColumnsWellplate}
           toggleCheckAll={this.toggleColumnsAllWellplate}
           checkedAll={this.state.checkedAllColumns.wellplate}
         />
         <h4>Analyses</h4>
-        <CheckBoxs items={this.state.columns.analyses}
+        <CheckBoxList items={this.state.columns.analyses}
           toggleCheckbox={this.toggleColumnsAnalyses}
           toggleCheckAll={this.toggleColumnsAllAnalyses}
           checkedAll={this.state.checkedAllColumns.analyses}
         />
         <h4>Chemicals</h4>
-        <CheckBoxs items={this.state.columns.chemicals}
+        <CheckBoxList items={this.state.columns.chemicals}
           toggleCheckbox={this.toggleColumnsChemicals}
           toggleCheckAll={this.toggleColumnsAllChemicals}
           checkedAll={this.state.checkedAllColumns.chemicals}
