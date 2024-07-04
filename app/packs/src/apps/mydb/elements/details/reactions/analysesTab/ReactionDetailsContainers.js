@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button,
+  Button, Card, Accordion
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -22,8 +22,6 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
-import Panel from 'src/components/legacyBootstrap/Panel'
-import PanelGroup from 'src/components/legacyBootstrap/PanelGroup'
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -66,7 +64,7 @@ export default class ReactionDetailsContainers extends Component {
     UIStore.listen(this.onUIStoreChange);
     TextTemplateActions.fetchTextTemplates('reaction');
     if (this.containerRefs[activeContainer]) {
-      this.containerRefs[activeContainer].scrollIntoView({ behavior: 'instant', block: 'start' });
+      this.containerRefs[activeContainer].scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
@@ -212,13 +210,17 @@ export default class ReactionDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <Button
-          size="sm"
-          variant="success"
-          onClick={this.handleAdd}
-        >
-          Add analysis
-        </Button>
+        <div className='mt-2'>
+          <Button
+            size="sm"
+            variant="success"
+            onClick={this.handleAdd}
+
+          >
+            Add analysis
+          </Button>
+        </div>
+
       );
     }
 
@@ -320,19 +322,19 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div style={{ marginBottom: '10px' }}>
-              &nbsp;{this.addButton()}
+            <div className="mb-2 me-1">
+              {this.addButton()}
             </div>
-            <PanelGroup id="reaction-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
+            <Accordion id="reaction-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
-                    <Panel
+                    <Card
                       eventKey={key}
                       key={`reaction_container_deleted_${container.id}`}
                     >
-                      <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
-                    </Panel>
+                      <Card.Header>{containerHeaderDeleted(container)}</Card.Header>
+                    </Card>
                   );
                 }
 
@@ -341,13 +343,13 @@ export default class ReactionDetailsContainers extends Component {
                     ref={(element) => { this.containerRefs[key] = element; }}
                     key={`reaction_container_${container.id}`}
                   >
-                    <Panel eventKey={key}>
-                      <Panel.Heading>
-                        <Panel.Title toggle>
+                    <Card eventKey={key}>
+                      <Card.Header>
+                        <Card.Title toggle>
                           {containerHeader(container)}
-                        </Panel.Title>
-                      </Panel.Heading>
-                      <Panel.Body collapsible="true">
+                        </Card.Title>
+                      </Card.Header>
+                      <Card.Body collapsible="true">
                         <ContainerComponent
                           disabled={readOnly}
                           readOnly={readOnly}
@@ -365,21 +367,18 @@ export default class ReactionDetailsContainers extends Component {
                           handleSampleChanged={this.handleSpChange}
                           handleSubmit={this.props.handleSubmit}
                         />
-                      </Panel.Body>
-                    </Panel>
+                      </Card.Body>
+                    </Card>
                   </div>
                 );
               })}
-            </PanelGroup>
+            </Accordion>
           </div>
         );
       }
 
       return (
-        <div
-          style={{ marginBottom: '10px' }}
-          className="noAnalyses-warning"
-        >
+        <div className="mb-2 noAnalyses-warning">
           There are currently no Analyses.
           {this.addButton()}
         </div>
