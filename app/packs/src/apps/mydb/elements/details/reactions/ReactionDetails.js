@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, OverlayTrigger, Tooltip
+  ListGroupItem, Button, Tabs, Tab, OverlayTrigger, Tooltip, Card
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex } from 'lodash';
@@ -44,7 +43,6 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import Panel from 'src/components/legacyBootstrap/Panel'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -304,75 +302,92 @@ export default class ReactionDetails extends Component {
     );
 
     return (
-      <div>
+      <div className='d-flex justify-content-between'>
         <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-          <span><i className="icon-reaction" />&nbsp;{reaction.title()}</span>
+          <span><i className="icon-reaction me-1" />{reaction.title()}</span>
         </OverlayTrigger>
-        <ConfirmClose el={reaction} />
-        <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => this.handleSubmit(true)}
-            disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-            style={{ display: hasChanged }}
-          >
-            <i className="fa fa-floppy-o" />
-            <i className="fa fa-times" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
-          <Button variant="warning" size="sm"
-            onClick={() => this.handleSubmit()}
-            disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            style={{ display: hasChanged }} >
-            <i className="fa fa-floppy-o "></i>
-          </Button>
-        </OverlayTrigger>
-        {copyBtn}
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-        >
-          <Button
-            variant="info"
-            size="sm"
-            onClick={() => this.props.toggleFullScreen()}
-          >
-            <i className="fa fa-expand" />
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
-        >
-          <Button
-            variant="success"
-            size="sm"
-            disabled={reaction.changed || reaction.isNew}
-            title={(reaction.changed || reaction.isNew) ?
-              "Report can be generated after reaction is saved."
-              : "Generate report for this reaction"}
-            onClick={() => Utils.downloadFile({
-              contents: "/api/v1/reports/docx?id=" + reaction.id,
-              name: reaction.name
-            })}
-          >
-            <i className="fa fa-cogs" />
-          </Button>
-        </OverlayTrigger>
-        <div style={{ display: "inline-block", marginLeft: "10px" }}>
+
+        <div className='ms-1'>
           {colLabel}
           {rsPlanLabel}
           <ElementAnalysesLabels element={reaction} key={reaction.id + "_analyses"} />
           <HeaderCommentSection element={reaction} />
         </div>
-        {reaction.isNew
-          ? null
-          : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
-        <PrintCodeButton element={reaction} />
+        <div className='d-flex align-items-center gap-2'>
+          <div className='d-flex flex-row-reverse'>
+            <ConfirmClose el={reaction} />
+            {reaction.changed ?
+              (
+                <>
+                  <OverlayTrigger placement="bottom"
+                    overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
+                    <Button
+                      variant="warning"
+                      size="xsm"
+                      onClick={() => this.handleSubmit(true)}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
+                      className='me-1'
+                      style={{ display: hasChanged }}
+                    >
+                      <i className="fa fa-floppy-o" />
+                      <i className="fa fa-times" />
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger placement="bottom"
+                    overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
+                    <Button variant="warning" size="xsm"
+                      onClick={() => this.handleSubmit()}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
+                      className='mx-1'
+                      style={{ display: hasChanged }}
+                    >
+                      <i className="fa fa-floppy-o "></i>
+                    </Button>
+                  </OverlayTrigger>
+                </>
+              )
+              : null
+            }
+            {copyBtn}
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+            >
+              <Button
+                variant="info"
+                size="xsm"
+                onClick={() => this.props.toggleFullScreen()}
+                className='mx-1'
+              >
+                <i className="fa fa-expand" />
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+            >
+              <Button
+                variant="success"
+                size="xsm"
+                disabled={reaction.changed || reaction.isNew}
+                title={(reaction.changed || reaction.isNew) ?
+                  "Report can be generated after reaction is saved."
+                  : "Generate report for this reaction"}
+                onClick={() => Utils.downloadFile({
+                  contents: "/api/v1/reports/docx?id=" + reaction.id,
+                  name: reaction.name
+                })}
+                className='ms-1'
+              >
+                <i className="fa fa-cogs" />
+              </Button>
+            </OverlayTrigger>
+            {reaction.isNew
+              ? null
+              : <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
+            <PrintCodeButton element={reaction} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -517,10 +532,11 @@ export default class ReactionDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Panel className="eln-panel-detail"
-        variant={reaction.isPendingToSave ? 'info' : 'primary'}>
-        <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
-        <Panel.Body>
+      <Card>
+        <Card.Header className={" p-2 text-bg-" + (reaction.isPendingToSave ? 'light' : 'primary')} >
+          {this.reactionHeader(reaction)}
+        </Card.Header>
+        <Card.Body>
           {this.reactionSVG(reaction)}
           <ElementDetailSortTab
             type="reaction"
@@ -532,19 +548,20 @@ export default class ReactionDetails extends Component {
           <Tabs activeKey={activeTab} onSelect={this.handleSelect.bind(this)} id="reaction-detail-tab" unmountOnExit={true}>
             {tabContents}
           </Tabs>
-          <hr />
-          <ButtonToolbar>
-            <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+          <CommentModal element={reaction} />
+        </Card.Body>
+        <Card.Footer>
+          <div className='d-inline-block p-1'>
+            <Button variant="primary" onClick={() => DetailActions.close(reaction)} className='me-1'>
               Close
             </Button>
-            <Button id="submit-reaction-btn" variant="warning" onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
+            <Button id="submit-reaction-btn" variant="warning" className='me-1' onClick={() => this.handleSubmit()} disabled={!permitOn(reaction) || !this.reactionIsValid()}>
               {submitLabel}
             </Button>
             {exportButton}
-          </ButtonToolbar>
-          <CommentModal element={reaction} />
-        </Panel.Body>
-      </Panel>
+          </div>
+        </Card.Footer>
+      </Card >
     );
   }
 }
