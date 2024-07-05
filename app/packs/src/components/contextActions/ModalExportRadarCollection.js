@@ -1,8 +1,7 @@
 import React from 'react';
-import {Button, ButtonToolbar} from 'react-bootstrap';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
-import { elementShowOrNew } from 'src/utilities/routesUtils'
 import { subjectAreas } from 'src/components/staticDropdownOptions/radar/subjectAreas'
 import { contributorTypes } from 'src/components/staticDropdownOptions/radar/contributorTypes'
 import { relatedIdentifierTypes } from 'src/components/staticDropdownOptions/radar/relatedIdentifierTypes'
