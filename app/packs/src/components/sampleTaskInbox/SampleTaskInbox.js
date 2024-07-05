@@ -3,7 +3,7 @@ import Draggable from 'react-draggable';
 import React, { useContext, useState } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
 import SampleTaskReloadButton from 'src/components/sampleTaskInbox/SampleTaskReloadButton';
-import { Button, Card, Modal } from 'react-bootstrap';
+import { Button, Card, Col, Container, Modal, Row } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
@@ -117,7 +117,6 @@ const SampleTaskInbox = ({}) => {
           <Modal.Header closeButton>
             <Modal.Title className="handle draggable-modal-stack-title">
               <SampleTaskReloadButton />
-              &nbsp;
               {openSampleTaskCount()} open SampleTasks
             </Modal.Title>
           </Modal.Header>
@@ -127,16 +126,16 @@ const SampleTaskInbox = ({}) => {
           </Modal.Body>
 
           <Modal.Footer className="flex-column openSampleTasks">
-            <div className="container">
-              <div className="row sampleTaskCreationDropzones">
-                <div className="col">
+            <Container>
+              <Row className="sampleTaskCreationDropzones">
+                <Col>
                   {sampleDropzone(singleScanDropRef, 'Drop Sample to create a Single Scan Task', '(weighing only compound)')}
-                </div>
-                <div className="col">
+                </Col>
+                <Col>
                   {sampleDropzone(doubleScanDropRef, 'Drop Sample to create a Double Scan Task', '(weighing vessel and vessel+compound to calculate difference)')}
-                </div>
-              </div>
-            </div>
+                </Col>
+              </Row>
+            </Container>
           </Modal.Footer>
         </Modal>
       </div>

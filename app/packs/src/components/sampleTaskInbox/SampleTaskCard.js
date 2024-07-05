@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { Button, Card } from 'react-bootstrap';
+import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -172,13 +172,17 @@ const SampleTaskCard = ({ sampleTask }) => {
         {panelHeading()}
         {deleteButton()}
       </Card.Header>
-      <Card.Body className="d-flex">
-        <div className="w-50">
-          {contentForSample(sampleTask, dropRef)}
-        </div>
-        <div className="w-50">
-          {contentForSampleTask(sampleTask)}
-        </div>
+      <Card.Body>
+        <Container>
+          <Row className="gx-5">
+            <Col>
+              {contentForSample(sampleTask, dropRef)}
+            </Col>
+            <Col>
+              {contentForSampleTask(sampleTask)}
+            </Col>
+          </Row>
+        </Container>
       </Card.Body>
       <ConfirmModal
         showModal={showDeletionConfirmationDialog}

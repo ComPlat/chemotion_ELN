@@ -8,9 +8,9 @@ const SampleTaskReloadButton = ({}) => {
 
   return (
     <i
-      className="fa fa-refresh"
+      className="fa fa-refresh me-3"
       aria-hidden="true"
-      style={{ cursor: 'Pointer' }}
+      role="button"
       title="Reload sample tasks"
       onClick={sampleTasksStore.load}
     />
