@@ -822,10 +822,10 @@ class ElementStore {
       UIActions.updateModalProps.defer({
         show: true,
         component: ModalImportConfirm,
-        title: "Sample Import Confirmation",
+        title: 'Sample Import Confirmation',
         action: null,
         listSharedCollections: false,
-        customModal: "custom-modal",
+        customModal: 'modal-xl',
         data: data.data,
         //raw_data: data.raw_data,
         custom_data_keys: data.custom_data_keys,

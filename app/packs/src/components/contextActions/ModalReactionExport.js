@@ -1,8 +1,7 @@
 import React from 'react';
-import { Button, ButtonToolbar, FormGroup } from 'react-bootstrap';
+import { Button, ButtonToolbar, Form } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 import Radio from 'src/components/legacyBootstrap/Radio'
 
@@ -29,37 +28,48 @@ export default class ModalReactionExport extends React.Component {
           </ButtonToolbar>
         </div>
       </ButtonToolbar>
-
     )
   }
 
   handleClick() {
     const uiState = UIStore.getState();
-    const userState = UserStore.getState();
     const { onHide } = this.props;
     onHide();
-    exportSelections(uiState, userState, this.state.value);
+    exportSelections(uiState, this.state.value);
   }
 
   render() {
     const onChange = (v) => this.setState(
       previousState => { return { ...previousState, value: v } }
     )
+
+    const options = [
+      ['starting_materials >> products', 0],
+      ['starting_materials.reactants >> products', 1],
+      ['starting_materials.reactants.solvents >> products', 2],
+      ['starting_materials > reactants > products', 3],
+      ['starting_materials > reactants.solvents > products', 4],
+      ['starting_materials > reactants > solvents > products', 5],
+      ['starting_materials , reactants , solvents , products', 6],
+    ];
+
     return (
-      <div>
-        <div className='export-container'>
-          <FormGroup name="options" value={this.state.value} >
-            <Radio onChange={() => onChange(0)} checked={this.state.value == 0} value={0}>starting_materials &gt;&gt; products</Radio>
-            <Radio onChange={() => onChange(1)} checked={this.state.value == 1} value={1}>starting_materials.reactants &gt;&gt; products</Radio>
-            <Radio onChange={() => onChange(2)} checked={this.state.value == 2} value={2}>starting_materials.reactants.solvents &gt;&gt; products</Radio>
-            <Radio onChange={() => onChange(3)} checked={this.state.value == 3} value={3}>starting_materials &gt; reactants &gt; products</Radio>
-            <Radio onChange={() => onChange(4)} checked={this.state.value == 4} value={4}>starting_materials &gt; reactants.solvents &gt; products</Radio>
-            <Radio onChange={() => onChange(5)} checked={this.state.value == 5} value={5}>starting_materials &gt; reactants &gt; solvents &gt; products</Radio>
-            <Radio onChange={() => onChange(6)} checked={this.state.value == 6} value={6}>starting_materials , reactants , solvents , products</Radio>
-          </FormGroup>
-        </div>
+      <Form>
+        <Form.Group className="mb-3" name="options" value={this.state.value}>
+          {options.map(([label, value]) => (
+            <Form.Check
+              key={`reaction-export-option-${value}`}
+              id={`reaction-export-option-${value}`}
+              type="radio"
+              label={label}
+              onChange={() => onChange(value)}
+              checked={this.state.value == value}
+              value={value}
+            />
+          ))}
+        </Form.Group>
         {this.buttonBar()}
-      </div>
+      </Form>
     )
   }
 }
@@ -68,7 +78,7 @@ ModalReactionExport.propTypes = {
   onHide: PropTypes.func,
 }
 
-const exportSelections = (uiState, userState, e) => {
+const exportSelections = (uiState, e) => {
   ReportsFetcher.createDownloadFile({
     exportType: e,
     uiState: filterUIState(uiState),
