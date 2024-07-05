@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Button, Modal
+  Form, Button, Modal, Badge
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-import Checkbox from 'src/components/legacyBootstrap/Checkbox'
-import Label from 'src/components/legacyBootstrap/Label'
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);
@@ -73,14 +71,14 @@ function AnalysisVariationLink({ reaction, analysisID }) {
     return null;
   }
   return (
-    <Label
-      variant="info"
+    <Badge
+      bg="info"
       onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: 'variations' })}
     >
       {`Linked to ${linkedVariations.length} variation(s)`}
       {' '}
       <i className="fa fa-external-link" />
-    </Label>
+    </Badge>
   );
 }
 
@@ -134,22 +132,22 @@ function AnalysesCellEditor({
 
   const analysesSelection = (
     <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-      <FormGroup>
+      < Form.Group>
         {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
           <div key={analysis.id} style={{ display: 'flex', alignItems: 'center' }}>
-            <Checkbox
+            <Form.Check
+              type='checkbox'
               onChange={() => onChange(analysis.id)}
+              label={analysis.name}
               checked={selectedAnalysisIDs.includes(analysis.id)}
               style={{ marginRight: '10px' }}
-            >
-              {analysis.name}
-            </Checkbox>
-            <Button size="sm" onClick={() => navigateToAnalysis(analysis.id)}>
+            />
+            <Button size="sm" variant='light' onClick={() => navigateToAnalysis(analysis.id)}>
               <i className="fa fa-external-link" />
             </Button>
           </div>
         ))}
-      </FormGroup>
+      </ Form.Group>
     </div>
   );
 
