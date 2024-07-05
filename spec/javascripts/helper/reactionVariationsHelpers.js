@@ -32,6 +32,8 @@ function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
   return columnDefinitions.find(
     (columnDefinition) => columnDefinition.groupId === materialType
   ).children.map(
+    // E.g., extract "foo" from "reactants.foo", or "bar" from "startingMaterials.bar",
+    // "foo" and "bar" being the material IDs.
     (child) => child.field.replace(`${materialType}.`, '')
   );
 }
