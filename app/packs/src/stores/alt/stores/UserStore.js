@@ -1,5 +1,4 @@
 import alt from 'src/stores/alt/alt';
-import _ from 'lodash';
 import UserActions from 'src/stores/alt/actions/UserActions';
 
 class UserStore {
@@ -20,7 +19,7 @@ class UserStore {
       unitsSystem: {},
       matriceConfigs: [],
       omniauthProviders: [],
-      bao:[]
+      bao: []
     };
 
     this.bindListeners({
@@ -73,11 +72,9 @@ class UserStore {
     this.state.profile = result;
     const { layout } = this.state.profile.data;
     if (this.state.currentType === '') {
-      const { currentTab } = this.state
-      const type = Object.keys(layout).filter((e) => {
-        return layout[e] === currentTab + 1
-      })[0]
-      this.state.currentType = type
+      const { currentTab } = this.state;
+      const type = Object.keys(layout).find((e) => layout[e] === currentTab + 1);
+      this.state.currentType = type;
     }
   }
 
@@ -89,12 +86,10 @@ class UserStore {
 
   handleSelectTab(tab) {
     const { layout } = this.state.profile.data;
-    const type = Object.keys(layout).filter((e) => {
-      return layout[e] === tab + 1
-    })[0]
+    const type = Object.keys(layout).find((e) => layout[e] === tab + 1);
 
-    this.state.currentTab = tab
-    this.state.currentType = type
+    this.state.currentTab = tab;
+    this.state.currentType = type;
   }
 
   handleFetchNoVNCDevices(devices) {

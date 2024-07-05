@@ -98,23 +98,6 @@ export default class ElementsList extends React.Component {
     UIStore.unlisten(this.onChangeUI);
   }
 
-  handleTabSelect(tab) {
-    UserActions.selectTab(tab);
-
-    // TODO sollte in tab action handler
-    const uiState = UIStore.getState();
-    const { visible } = this.state;
-    const type = visible.get(tab);
-
-    if (!uiState[type] || !uiState[type].page) { return; }
-
-    const { page } = uiState[type];
-
-    UIActions.setPagination({ type, page });
-
-    KeyboardActions.contextChange(type);
-  }
-
   onChange(state) {
     const { totalElements } = this.state;
     Object.keys(state.elements).forEach((key) => {
@@ -290,14 +273,17 @@ export default class ElementsList extends React.Component {
     return (
       <>
         {removeSearchResultAlert}
-        <div className='position-relative'>
-          <Tabs id="tabList" defaultActiveKey={0}>
+        <div className="position-relative">
+          <Tabs
+            id="tabList"
+            defaultActiveKey={0}
+            onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+          >
             {tabItems}
           </Tabs>
           <ElementsTableSettings
             visible={visible}
             hidden={hidden}
-            ref={(m) => { this.elementsTableSettings = m; }}
           />
         </div>
       </>
