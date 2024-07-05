@@ -229,9 +229,13 @@ export default class ElementsList extends React.Component {
     let removeSearchResultAlert = '';
     if (UIStore.getState().currentSearchByID) {
       removeSearchResultAlert = (
-        <Alert variant="info" style={{ padding: '4px' }}>
-          <Button variant="link" style={{ fontSize: '15px' }} onClick={() => this.handleRemoveSearchResult(this.context.search)}>Remove search result</Button>
-        </Alert>
+        <Button
+          variant="info"
+          onClick={() => this.handleRemoveSearchResult(this.context.search)}
+          className="w-100 p-3 mb-3 text-start fs-5"
+        >
+          Remove search result
+        </Button>
       );
     }
 
@@ -284,16 +288,19 @@ export default class ElementsList extends React.Component {
     }
 
     return (
-      <div className='position-relative'>
-        <Tabs id="tabList" defaultActiveKey={0}>
-          {tabItems}
-        </Tabs>
-        <ElementsTableSettings
-          visible={visible}
-          hidden={hidden}
-          ref={(m) => { this.elementsTableSettings = m; }}
-        />
-      </div>
+      <>
+        {removeSearchResultAlert}
+        <div className='position-relative'>
+          <Tabs id="tabList" defaultActiveKey={0}>
+            {tabItems}
+          </Tabs>
+          <ElementsTableSettings
+            visible={visible}
+            hidden={hidden}
+            ref={(m) => { this.elementsTableSettings = m; }}
+          />
+        </div>
+      </>
     );
   }
 }
