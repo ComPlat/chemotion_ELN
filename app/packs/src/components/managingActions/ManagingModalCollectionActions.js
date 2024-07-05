@@ -18,7 +18,7 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   onSelectChange(e) {
-    let selected = e && e.value
+    const selected = e.target && e.target.value;
     this.setState((previousProps, previousState) => {
       return { ...previousState, selected: selected }
     });
